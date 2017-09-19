@@ -1,0 +1,31 @@
+{
+  "private": true,
+  "name": "@quase/unit",
+  "version": "0.1.0",
+  "description": "Unit testing library.",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/unit",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@concordance/react": "^1.0.0",
+    "ansi-styles": "^3.2.0",
+    "babel-code-frame": "^6.22.0",
+    "chalk": "^2.1.0",
+    "concordance": "^3.0.0",
+    "error-stack-parser": "^2.0.0",
+    "fs-extra": "^4.0.2",
+    "ora": "^1.2.0",
+    "require-uncached": "^1.0.3",
+    "source-map": "^0.5.7"
+  },
+  "devDependencies": {
+    "zen-observable": "^0.5.0"
+  }
+}

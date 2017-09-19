@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "name": "@quase/events",
+  "version": "0.1.0",
+  "description": "Events",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/events",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "src"
+  ]
+}

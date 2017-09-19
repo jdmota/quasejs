@@ -1,0 +1,19 @@
+{
+  "private": true,
+  "name": "@quase/source-map",
+  "version": "0.1.0",
+  "description": "Source map tools",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/source-map",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "source-map": "^0.5.7"
+  }
+}

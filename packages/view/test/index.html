@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Demo</title>
+    <meta charset="utf8">
+  </head>
+  <body>
+    <script src="../src/runtime.js"></script>
+
+    <quase-view>
+      <template>
+        <style>
+          span {
+            font-size: 14px;
+          }
+        </style>
+        <div class$={{this.clazz}}>
+          My name is <span>{{this.name}}</span>
+        </div>
+        <quase-if if={{this.if}}>
+          <template>Olá</template>
+        </quase-if>
+        <quase-if if={{!this.if}}>
+          <template>Adeus</template>
+        </quase-if>
+        <quase-for>
+          <template prop="render1" args="c">
+            <quase-if>
+              <template prop="render2" args="d">
+                {{c}}{{d}}
+              </template>
+            </quase-if>
+          </template>
+        </quase-for>
+      </template>
+      <script>
+        class Demo extends QuaseView {
+          static get props() {
+            return {
+              name: {
+                type: String,
+                value: ""
+              },
+              if: {
+                type: Boolean,
+                value: true
+              }
+            };
+          }
+
+          constructor() {
+            super();
+            this.name = "";
+            this.if = true;
+          }
+        }
+        QuaseView.define( "x-demo", Demo );
+        let a = "<\/script>";
+      </script>
+    </quase-view>
+
+    <x-demo name="This is my name"></x-demo>
+
+  </body>
+</html>

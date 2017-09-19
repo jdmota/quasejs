@@ -1,0 +1,26 @@
+{
+  // "babelrc": false,
+  // "sourceMaps": true,
+  "parserOpts": {
+    "sourceType": "module"
+  },
+  "plugins": [
+    // "istanbul",
+    // "external-helpers",
+    [ "fast-async", { "spec": true } ],
+    "transform-flow-strip-types",
+    [ "transform-class-properties", { "loose": true } ]
+  ],
+  "presets": [
+    [ "env", {
+      "targets": {
+        "browsers": [ "last 3 versions", "not ie <= 11", "not ie_mob <= 11" ], // http://browserl.ist/?q=last+3+versions%2C+not+ie+%3C%3D+11%2C+not+ie_mob+%3C%3D+11
+        "node": "6",
+        "electron": "1.4"
+      },
+      // "modules": true,
+      "loose": true,
+      "exclude": [ "transform-regenerator", "transform-async-to-generator" ]
+    } ]
+  ]
+}

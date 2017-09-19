@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "name": "@quase/cli",
+  "version": "0.1.0",
+  "description": "Cli",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/cli",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "bin": {
+    "quase": "bin/quase"
+  },
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "bin",
+    "src"
+  ],
+  "dependencies": {
+    "chalk": "^2.1.0",
+    "has-yarn": "^1.0.0",
+    "meow": "^3.7.0",
+    "update-notifier": "^2.1.0"
+  }
+}

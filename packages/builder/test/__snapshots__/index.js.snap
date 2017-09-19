@@ -1,0 +1,1919 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: dynamic-import 1`] = `
+"$i(\\"./foo\\").then();
+
+function foo(n) {
+  $i(\`./foo-\${n}\`).then();
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default 1`] = `"$e.default = 42;"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-2 1`] = `"$e.default = {};"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-3 1`] = `"$e.default = [];"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-4 1`] = `
+"$e.default = foo;
+
+
+foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-5 1`] = `
+"$e.default = {
+  default: function () {}
+}.default;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-6 1`] = `
+"$e.default = {
+  default: class {}
+}.default;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-7 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});
+function foo() {}
+
+foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-8 1`] = `
+"$g($e, \\"default\\", function () {
+  return Foo;
+});
+class Foo {}
+
+Foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-9 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-10 1`] = `
+"$e.default = function () {
+  return \\"foo\\";
+}();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-11 1`] = `
+"$g($e, \\"Cachier\\", function () {
+  return Cachier;
+});
+$e.default = new Cachier();
+function Cachier(databaseName) {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-12 1`] = `
+"$g($e, \\"Cachier\\", function () {
+  return Cachier;
+});
+$e.default = new Cachier();
+
+
+function Cachier(databaseName) {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-13 1`] = `
+"class Foo {}
+
+$e.default = new Foo();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-extensions 1`] = `
+"var _abc = $r(\\"./abc\\");
+
+$g($e, \\"a\\", function () {
+  return _abc.default;
+});
+$e.b = _abc;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$a($e, _foo);
+$g($e, \\"foo\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-2 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-3 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"bar\\", function () {
+  return _foo.bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-4 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"bar\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-5 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"default\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-6 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"default\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"bar\\", function () {
+  return _foo.bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-7 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.default;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-8 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"foo1\\", function () {
+  return _foo.foo1;
+});
+$g($e, \\"foo2\\", function () {
+  return _foo.foo2;
+});
+$g($e, \\"foo3\\", function () {
+  return _foo.foo3;
+});
+$g($e, \\"foo4\\", function () {
+  return _foo.foo4;
+});
+$g($e, \\"foo5\\", function () {
+  return _foo.foo5;
+});
+$g($e, \\"foo6\\", function () {
+  return _foo.foo6;
+});
+$g($e, \\"foo7\\", function () {
+  return _foo.foo7;
+});
+$g($e, \\"foo8\\", function () {
+  return _foo.foo8;
+});
+$g($e, \\"foo9\\", function () {
+  return _foo.foo9;
+});
+$g($e, \\"foo10\\", function () {
+  return _foo.foo10;
+});
+$g($e, \\"foo11\\", function () {
+  return _foo.foo11;
+});
+$g($e, \\"foo12\\", function () {
+  return _foo.foo12;
+});
+$g($e, \\"foo13\\", function () {
+  return _foo.foo13;
+});
+$g($e, \\"foo14\\", function () {
+  return _foo.foo14;
+});
+$g($e, \\"foo15\\", function () {
+  return _foo.foo15;
+});
+$g($e, \\"foo16\\", function () {
+  return _foo.foo16;
+});
+$g($e, \\"foo17\\", function () {
+  return _foo.foo17;
+});
+$g($e, \\"foo18\\", function () {
+  return _foo.foo18;
+});
+$g($e, \\"foo19\\", function () {
+  return _foo.foo19;
+});
+$g($e, \\"foo20\\", function () {
+  return _foo.foo20;
+});
+$g($e, \\"foo21\\", function () {
+  return _foo.foo21;
+});
+$g($e, \\"foo22\\", function () {
+  return _foo.foo22;
+});
+$g($e, \\"foo23\\", function () {
+  return _foo.foo23;
+});
+$g($e, \\"foo24\\", function () {
+  return _foo.foo24;
+});
+$g($e, \\"foo25\\", function () {
+  return _foo.foo25;
+});
+$g($e, \\"foo26\\", function () {
+  return _foo.foo26;
+});
+$g($e, \\"foo27\\", function () {
+  return _foo.foo27;
+});
+$g($e, \\"foo28\\", function () {
+  return _foo.foo28;
+});
+$g($e, \\"foo29\\", function () {
+  return _foo.foo29;
+});
+$g($e, \\"foo30\\", function () {
+  return _foo.foo30;
+});
+$g($e, \\"foo31\\", function () {
+  return _foo.foo31;
+});
+$g($e, \\"foo32\\", function () {
+  return _foo.foo32;
+});
+$g($e, \\"foo33\\", function () {
+  return _foo.foo33;
+});
+$g($e, \\"foo34\\", function () {
+  return _foo.foo34;
+});
+$g($e, \\"foo35\\", function () {
+  return _foo.foo35;
+});
+$g($e, \\"foo36\\", function () {
+  return _foo.foo36;
+});
+$g($e, \\"foo37\\", function () {
+  return _foo.foo37;
+});
+$g($e, \\"foo38\\", function () {
+  return _foo.foo38;
+});
+$g($e, \\"foo39\\", function () {
+  return _foo.foo39;
+});
+$g($e, \\"foo40\\", function () {
+  return _foo.foo40;
+});
+$g($e, \\"foo41\\", function () {
+  return _foo.foo41;
+});
+$g($e, \\"foo42\\", function () {
+  return _foo.foo42;
+});
+$g($e, \\"foo43\\", function () {
+  return _foo.foo43;
+});
+$g($e, \\"foo44\\", function () {
+  return _foo.foo44;
+});
+$g($e, \\"foo45\\", function () {
+  return _foo.foo45;
+});
+$g($e, \\"foo46\\", function () {
+  return _foo.foo46;
+});
+$g($e, \\"foo47\\", function () {
+  return _foo.foo47;
+});
+$g($e, \\"foo48\\", function () {
+  return _foo.foo48;
+});
+$g($e, \\"foo49\\", function () {
+  return _foo.foo49;
+});
+$g($e, \\"foo50\\", function () {
+  return _foo.foo50;
+});
+$g($e, \\"foo51\\", function () {
+  return _foo.foo51;
+});
+$g($e, \\"foo52\\", function () {
+  return _foo.foo52;
+});
+$g($e, \\"foo53\\", function () {
+  return _foo.foo53;
+});
+$g($e, \\"foo54\\", function () {
+  return _foo.foo54;
+});
+$g($e, \\"foo55\\", function () {
+  return _foo.foo55;
+});
+$g($e, \\"foo56\\", function () {
+  return _foo.foo56;
+});
+$g($e, \\"foo57\\", function () {
+  return _foo.foo57;
+});
+$g($e, \\"foo58\\", function () {
+  return _foo.foo58;
+});
+$g($e, \\"foo59\\", function () {
+  return _foo.foo59;
+});
+$g($e, \\"foo60\\", function () {
+  return _foo.foo60;
+});
+$g($e, \\"foo61\\", function () {
+  return _foo.foo61;
+});
+$g($e, \\"foo62\\", function () {
+  return _foo.foo62;
+});
+$g($e, \\"foo63\\", function () {
+  return _foo.foo63;
+});
+$g($e, \\"foo64\\", function () {
+  return _foo.foo64;
+});
+$g($e, \\"foo65\\", function () {
+  return _foo.foo65;
+});
+$g($e, \\"foo66\\", function () {
+  return _foo.foo66;
+});
+$g($e, \\"foo67\\", function () {
+  return _foo.foo67;
+});
+$g($e, \\"foo68\\", function () {
+  return _foo.foo68;
+});
+$g($e, \\"foo69\\", function () {
+  return _foo.foo69;
+});
+$g($e, \\"foo70\\", function () {
+  return _foo.foo70;
+});
+$g($e, \\"foo71\\", function () {
+  return _foo.foo71;
+});
+$g($e, \\"foo72\\", function () {
+  return _foo.foo72;
+});
+$g($e, \\"foo73\\", function () {
+  return _foo.foo73;
+});
+$g($e, \\"foo74\\", function () {
+  return _foo.foo74;
+});
+$g($e, \\"foo75\\", function () {
+  return _foo.foo75;
+});
+$g($e, \\"foo76\\", function () {
+  return _foo.foo76;
+});
+$g($e, \\"foo77\\", function () {
+  return _foo.foo77;
+});
+$g($e, \\"foo78\\", function () {
+  return _foo.foo78;
+});
+$g($e, \\"foo79\\", function () {
+  return _foo.foo79;
+});
+$g($e, \\"foo80\\", function () {
+  return _foo.foo80;
+});
+$g($e, \\"foo81\\", function () {
+  return _foo.foo81;
+});
+$g($e, \\"foo82\\", function () {
+  return _foo.foo82;
+});
+$g($e, \\"foo83\\", function () {
+  return _foo.foo83;
+});
+$g($e, \\"foo84\\", function () {
+  return _foo.foo84;
+});
+$g($e, \\"foo85\\", function () {
+  return _foo.foo85;
+});
+$g($e, \\"foo86\\", function () {
+  return _foo.foo86;
+});
+$g($e, \\"foo87\\", function () {
+  return _foo.foo87;
+});
+$g($e, \\"foo88\\", function () {
+  return _foo.foo88;
+});
+$g($e, \\"foo89\\", function () {
+  return _foo.foo89;
+});
+$g($e, \\"foo90\\", function () {
+  return _foo.foo90;
+});
+$g($e, \\"foo91\\", function () {
+  return _foo.foo91;
+});
+$g($e, \\"foo92\\", function () {
+  return _foo.foo92;
+});
+$g($e, \\"foo93\\", function () {
+  return _foo.foo93;
+});
+$g($e, \\"foo94\\", function () {
+  return _foo.foo94;
+});
+$g($e, \\"foo95\\", function () {
+  return _foo.foo95;
+});
+$g($e, \\"foo96\\", function () {
+  return _foo.foo96;
+});
+$g($e, \\"foo97\\", function () {
+  return _foo.foo97;
+});
+$g($e, \\"foo98\\", function () {
+  return _foo.foo98;
+});
+$g($e, \\"foo99\\", function () {
+  return _foo.foo99;
+});
+$g($e, \\"foo100\\", function () {
+  return _foo.foo100;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-9 1`] = `
+"let foo = 10;
+
+foo1;
+
+function stuff() {
+  var _foo = $r(\\"foo\\");
+
+  $g($e, \\"foo\\", function () {
+    return _foo.foo;
+  });
+  $g($e, \\"foo1\\", function () {
+    return _foo.foo1;
+  });
+  $g($e, \\"foo2\\", function () {
+    return _foo.foo2;
+  });
+  $g($e, \\"foo3\\", function () {
+    return _foo.foo3;
+  });
+  $g($e, \\"foo4\\", function () {
+    return _foo.foo4;
+  });
+  $g($e, \\"foo5\\", function () {
+    return _foo.foo5;
+  });
+  $g($e, \\"foo6\\", function () {
+    return _foo.foo6;
+  });
+  $g($e, \\"foo7\\", function () {
+    return _foo.foo7;
+  });
+  $g($e, \\"foo8\\", function () {
+    return _foo.foo8;
+  });
+  $g($e, \\"foo9\\", function () {
+    return _foo.foo9;
+  });
+  $g($e, \\"foo10\\", function () {
+    return _foo.foo10;
+  });
+  $g($e, \\"foo11\\", function () {
+    return _foo.foo11;
+  });
+  $g($e, \\"foo12\\", function () {
+    return _foo.foo12;
+  });
+  $g($e, \\"foo13\\", function () {
+    return _foo.foo13;
+  });
+  $g($e, \\"foo14\\", function () {
+    return _foo.foo14;
+  });
+  $g($e, \\"foo15\\", function () {
+    return _foo.foo15;
+  });
+  $g($e, \\"foo16\\", function () {
+    return _foo.foo16;
+  });
+  $g($e, \\"foo17\\", function () {
+    return _foo.foo17;
+  });
+  $g($e, \\"foo18\\", function () {
+    return _foo.foo18;
+  });
+  $g($e, \\"foo19\\", function () {
+    return _foo.foo19;
+  });
+  $g($e, \\"foo20\\", function () {
+    return _foo.foo20;
+  });
+  $g($e, \\"foo21\\", function () {
+    return _foo.foo21;
+  });
+  $g($e, \\"foo22\\", function () {
+    return _foo.foo22;
+  });
+  $g($e, \\"foo23\\", function () {
+    return _foo.foo23;
+  });
+  $g($e, \\"foo24\\", function () {
+    return _foo.foo24;
+  });
+  $g($e, \\"foo25\\", function () {
+    return _foo.foo25;
+  });
+  $g($e, \\"foo26\\", function () {
+    return _foo.foo26;
+  });
+  $g($e, \\"foo27\\", function () {
+    return _foo.foo27;
+  });
+  $g($e, \\"foo28\\", function () {
+    return _foo.foo28;
+  });
+  $g($e, \\"foo29\\", function () {
+    return _foo.foo29;
+  });
+  $g($e, \\"foo30\\", function () {
+    return _foo.foo30;
+  });
+  $g($e, \\"foo31\\", function () {
+    return _foo.foo31;
+  });
+  $g($e, \\"foo32\\", function () {
+    return _foo.foo32;
+  });
+  $g($e, \\"foo33\\", function () {
+    return _foo.foo33;
+  });
+  $g($e, \\"foo34\\", function () {
+    return _foo.foo34;
+  });
+  $g($e, \\"foo35\\", function () {
+    return _foo.foo35;
+  });
+  $g($e, \\"foo36\\", function () {
+    return _foo.foo36;
+  });
+  $g($e, \\"foo37\\", function () {
+    return _foo.foo37;
+  });
+  $g($e, \\"foo38\\", function () {
+    return _foo.foo38;
+  });
+  $g($e, \\"foo39\\", function () {
+    return _foo.foo39;
+  });
+  $g($e, \\"foo40\\", function () {
+    return _foo.foo40;
+  });
+  $g($e, \\"foo41\\", function () {
+    return _foo.foo41;
+  });
+  $g($e, \\"foo42\\", function () {
+    return _foo.foo42;
+  });
+  $g($e, \\"foo43\\", function () {
+    return _foo.foo43;
+  });
+  $g($e, \\"foo44\\", function () {
+    return _foo.foo44;
+  });
+  $g($e, \\"foo45\\", function () {
+    return _foo.foo45;
+  });
+  $g($e, \\"foo46\\", function () {
+    return _foo.foo46;
+  });
+  $g($e, \\"foo47\\", function () {
+    return _foo.foo47;
+  });
+  $g($e, \\"foo48\\", function () {
+    return _foo.foo48;
+  });
+  $g($e, \\"foo49\\", function () {
+    return _foo.foo49;
+  });
+  $g($e, \\"foo50\\", function () {
+    return _foo.foo50;
+  });
+  $g($e, \\"foo51\\", function () {
+    return _foo.foo51;
+  });
+  $g($e, \\"foo52\\", function () {
+    return _foo.foo52;
+  });
+  $g($e, \\"foo53\\", function () {
+    return _foo.foo53;
+  });
+  $g($e, \\"foo54\\", function () {
+    return _foo.foo54;
+  });
+  $g($e, \\"foo55\\", function () {
+    return _foo.foo55;
+  });
+  $g($e, \\"foo56\\", function () {
+    return _foo.foo56;
+  });
+  $g($e, \\"foo57\\", function () {
+    return _foo.foo57;
+  });
+  $g($e, \\"foo58\\", function () {
+    return _foo.foo58;
+  });
+  $g($e, \\"foo59\\", function () {
+    return _foo.foo59;
+  });
+  $g($e, \\"foo60\\", function () {
+    return _foo.foo60;
+  });
+  $g($e, \\"foo61\\", function () {
+    return _foo.foo61;
+  });
+  $g($e, \\"foo62\\", function () {
+    return _foo.foo62;
+  });
+  $g($e, \\"foo63\\", function () {
+    return _foo.foo63;
+  });
+  $g($e, \\"foo64\\", function () {
+    return _foo.foo64;
+  });
+  $g($e, \\"foo65\\", function () {
+    return _foo.foo65;
+  });
+  $g($e, \\"foo66\\", function () {
+    return _foo.foo66;
+  });
+  $g($e, \\"foo67\\", function () {
+    return _foo.foo67;
+  });
+  $g($e, \\"foo68\\", function () {
+    return _foo.foo68;
+  });
+  $g($e, \\"foo69\\", function () {
+    return _foo.foo69;
+  });
+  $g($e, \\"foo70\\", function () {
+    return _foo.foo70;
+  });
+  $g($e, \\"foo71\\", function () {
+    return _foo.foo71;
+  });
+  $g($e, \\"foo72\\", function () {
+    return _foo.foo72;
+  });
+  $g($e, \\"foo73\\", function () {
+    return _foo.foo73;
+  });
+  $g($e, \\"foo74\\", function () {
+    return _foo.foo74;
+  });
+  $g($e, \\"foo75\\", function () {
+    return _foo.foo75;
+  });
+  $g($e, \\"foo76\\", function () {
+    return _foo.foo76;
+  });
+  $g($e, \\"foo77\\", function () {
+    return _foo.foo77;
+  });
+  $g($e, \\"foo78\\", function () {
+    return _foo.foo78;
+  });
+  $g($e, \\"foo79\\", function () {
+    return _foo.foo79;
+  });
+  $g($e, \\"foo80\\", function () {
+    return _foo.foo80;
+  });
+  $g($e, \\"foo81\\", function () {
+    return _foo.foo81;
+  });
+  $g($e, \\"foo82\\", function () {
+    return _foo.foo82;
+  });
+  $g($e, \\"foo83\\", function () {
+    return _foo.foo83;
+  });
+  $g($e, \\"foo84\\", function () {
+    return _foo.foo84;
+  });
+  $g($e, \\"foo85\\", function () {
+    return _foo.foo85;
+  });
+  $g($e, \\"foo86\\", function () {
+    return _foo.foo86;
+  });
+  $g($e, \\"foo87\\", function () {
+    return _foo.foo87;
+  });
+  $g($e, \\"foo88\\", function () {
+    return _foo.foo88;
+  });
+  $g($e, \\"foo89\\", function () {
+    return _foo.foo89;
+  });
+  $g($e, \\"foo90\\", function () {
+    return _foo.foo90;
+  });
+  $g($e, \\"foo91\\", function () {
+    return _foo.foo91;
+  });
+  $g($e, \\"foo92\\", function () {
+    return _foo.foo92;
+  });
+  $g($e, \\"foo93\\", function () {
+    return _foo.foo93;
+  });
+  $g($e, \\"foo94\\", function () {
+    return _foo.foo94;
+  });
+  $g($e, \\"foo95\\", function () {
+    return _foo.foo95;
+  });
+  $g($e, \\"foo96\\", function () {
+    return _foo.foo96;
+  });
+  $g($e, \\"foo97\\", function () {
+    return _foo.foo97;
+  });
+  $g($e, \\"foo98\\", function () {
+    return _foo.foo98;
+  });
+  $g($e, \\"foo99\\", function () {
+    return _foo.foo99;
+  });
+  $g($e, \\"foo100\\", function () {
+    return _foo.foo100;
+  });
+
+
+  bar();
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-2 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-3 1`] = `
+"$g($e, \\"bar\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-4 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-5 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});
+$g($e, \\"foo2\\", function () {
+  return foo2;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});
+$g($e, \\"foo3\\", function () {
+  return foo3;
+});
+$g($e, \\"foo4\\", function () {
+  return foo4;
+});
+$g($e, \\"foo5\\", function () {
+  return foo5;
+});
+$g($e, \\"foo6\\", function () {
+  return foo6;
+});
+$g($e, \\"foo7\\", function () {
+  return foo7;
+});
+$g($e, \\"foo8\\", function () {
+  return foo8;
+});
+$g($e, \\"foo9\\", function () {
+  return foo9;
+});
+$g($e, \\"b\\", function () {
+  return b;
+});
+$g($e, \\"c\\", function () {
+  return c;
+});
+var foo = 1;
+var foo2 = 1,
+    bar = 2;
+var foo3 = function () {};
+var foo4;
+let foo5 = 2;
+let foo6;
+const foo7 = 3;
+function foo8() {}
+class foo9 {}
+const { a: b, c } = {};"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable-2 1`] = `
+"$g($e, \\"test\\", function () {
+  return test;
+});
+$g($e, \\"a\\", function () {
+  return a;
+});
+$g($e, \\"c\\", function () {
+  return b;
+});
+$g($e, \\"e\\", function () {
+  return d;
+});
+$g($e, \\"f\\", function () {
+  return d;
+});
+$g($e, \\"yy\\", function () {
+  return yy;
+});
+$g($e, \\"zz\\", function () {
+  return zz;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});
+$g($e, \\"baz\\", function () {
+  return baz;
+});
+var test = 2;
+test = 5;
+test++;
+
+(function () {
+  var test = 2;
+  test = 3;
+  test++;
+})();
+
+var a = 2;
+
+a = 3;
+
+var b = 2;
+
+b = 3;
+
+var d = 3;
+
+d = 4;
+
+var yy = 0;
+var zz = yy++;
+
+const { foo: bar, baz } = {};
+
+bar++;
+baz++;
+
+bar = 10;
+baz = 10;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: hoist-function-exports 1`] = `
+"var _evens = $r(\\"./evens\\");
+
+$g($e, \\"nextOdd\\", function () {
+  return nextOdd;
+});
+$g($e, \\"isOdd\\", function () {
+  return isOdd;
+});
+function nextOdd(n) {
+  return (0, _evens.isEven)(n) ? n + 1 : n + 2;
+}
+
+var isOdd = function (isEven) {
+  return function (n) {
+    return !isEven(n);
+  };
+}(_evens.isEven);"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-babel-transform-runtime 1`] = `
+"var _taggedTemplateLiteral2 = $r(\\"babel-runtime/helpers/taggedTemplateLiteral\\");
+
+var _templateObject = (0, _taggedTemplateLiteral2.default)([\\"foo\\"], [\\"foo\\"]);
+
+tag(_templateObject);"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.default;
+_foo.default.bar;
+_foo.default.bar.baz;
+
+function a() {
+  let foo = 10;
+  foo;
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default-jsx 1`] = `
+"var _foo = $r(\\"foo\\");
+
+var _bar = $r(\\"bar\\");
+
+<_foo.default></_foo.default>;
+<_foo.default.bar></_foo.default.bar>;
+<_foo.default.bar.baz></_foo.default.bar.baz>;
+<_foo.default.bar.baz.foo></_foo.default.bar.baz.foo>;
+
+function func() {
+  let bar = {};
+  <bar></bar>;
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-glob 1`] = `
+"var _foo = $r(\\"foo\\");
+
+var foo = _foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-hoisting 1`] = `
+"var _foo = $r(\\"./foo\\");
+
+var bar = (0, _foo.default)();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-mixing 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.default;
+_foo.baz;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-named 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.bar;
+_foo.bar2;
+_foo.baz;
+_foo.bar;
+_foo.bar;
+_foo.xyz;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: internals-shadow 1`] = `
+"$g($e, \\"$e\\", function () {
+  return _$e;
+});
+function _$e() {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports 1`] = `
+"if (true) {
+  var _abc = $r(\\"./abc\\");
+
+  var _other = $r(\\"./other\\");
+
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+  function outer() {
+    return [_abc.a, _abc.b, _abc.c];
+  }
+  if (false) {
+    _abc.default;
+  }
+}
+
+foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-2 1`] = `
+"switch (true) {
+  case 0:
+    var _abc = $r(\\"./abc\\");
+
+    break;
+  case true:
+    $g($e, \\"outer\\", function () {
+      return outer;
+    });
+    function outer() {
+      var _abc2 = $r(\\"./abc\\");
+
+      return [_abc2.a, _abc2.b, _abc2.c];
+    }
+    break;
+  case false:
+    var _abc3 = $r(\\"./abc\\");
+
+  default:
+    _abc.default;
+    $e.default = null;
+
+}
+
+foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-3 1`] = `
+"if (true) {
+            var _abc = $r(\\"./abc\\");
+      }
+if (false) {
+            var _abc2 = $r(\\"./abc\\");
+      }
+
+if (true) {
+            $g($e, \\"outer\\", function () {
+                  return outer;
+            });
+            function outer() {
+                  var _abc3 = $r(\\"./abc\\");
+
+                  return [_abc3.a, _abc3.b, _abc3.c];
+            }
+      }if (false) {
+            var _foo = $r(\\"./foo\\");
+
+            $g($e, \\"x\\", function () {
+                  return _foo.x;
+            });
+      }
+
+x; // Stay as x
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-4 1`] = `
+"function a() {
+  var _abc = $r(\\"./abc\\");
+}
+
+function b() {
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+  function outer() {
+    var _abc2 = $r(\\"./abc\\");
+
+    return [_abc2.a, _abc2.b, _abc2.c];
+  }
+}
+
+x; // Stay as x
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-5 1`] = `
+"while (true) {
+      var _abc = $r(\\"./abc\\");
+}
+while (false) {
+      var _abc2 = $r(\\"./abc\\");
+}
+
+for (const a in obj) {
+      $g($e, \\"outer\\", function () {
+            return outer;
+      });
+      function outer() {
+            var _abc3 = $r(\\"./abc\\");
+
+            return [_abc3.a, _abc3.b, _abc3.c];
+      }
+}while (false) {
+      var _foo = $r(\\"./foo\\");
+
+      $g($e, \\"x\\", function () {
+            return _foo.x;
+      });
+}
+
+x; // Stay as x
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: overview 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");
+
+var _foo2 = $r(\\"foo2\\");
+
+var _foo3 = $r(\\"foo3\\");
+
+var _foo4 = $r(\\"foo4\\");
+
+var _foo5 = $r(\\"foo5\\");
+
+$r(\\"foo6\\");
+$r(\\"foo7\\");
+
+var _foo8 = $r(\\"foo8\\");
+
+var foo2 = _foo3;
+$g($e, \\"test\\", function () {
+  return test;
+});
+$g($e, \\"test2\\", function () {
+  return test2;
+});
+var test2 = 5;
+
+_foo4.bar;
+_foo5.foo;
+_foo2.default;
+
+_foo8.a;
+_foo8.a;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: this 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");
+
+var _foo2 = $r(\\"foo2\\");
+
+var _foo3 = $r(\\"foo3\\");
+
+var _foo4 = $r(\\"foo4\\");
+
+var _foo5 = $r(\\"foo5\\");
+
+var foo2 = _foo3;
+
+
+let a = undefined;
+
+if (a) {
+  let b = undefined;
+}
+
+function c() {
+  return this;
+}
+
+let d = () => {
+  return undefined;
+};
+
+let e = () => undefined;"
+`;
+
+exports[`builder Fixture: babel-helpers 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={classCallCheck:function(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError(\\"Cannot call a class as a function\\")}}},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"default\\", function () {
+  return A;
+});
+
+var A = function () {
+  function A() {
+    $b.classCallCheck(this, A);
+  }
+
+  A.prototype.a = function a(_a) {
+    console.log(\\"foo\\");
+  };
+
+  return A;
+}();
+// Comment at the end
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+new _.default().a();
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\",\\"../files/index.js\\"],\\"names\\":[\\"A\\",\\"a\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";+BAAA;AAAA,SAAqBA,CAArB;AAAA;;IAAqBA,C;;;;;cACnBC,C,cAAGA,E,EAAI;AACLC,YAAQC,GAAR,CAAa,KAAb;AACD,G;;;;AAEH;;+BCLc;;AAEd,IAFO,SAEP,GAAQF,CAAR\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default class A {\\\\n  a( a ) {\\\\n    console.log( \\\\\\"foo\\\\\\" );\\\\n  }\\\\n}\\\\n// Comment at the end\\\\n\\",\\"import A from \\\\\\"./func\\\\\\";\\\\n\\\\nnew A().a();\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: basic 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = {
+  default: function _default() {
+    console.log(\\"foo\\"); /* eslint no-console: 0 */
+  }
+}.default;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+(0, _.default)(); // Comment at the end
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\",\\"../files/index.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";+BAAA;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb,EADwB,CACF;AACvB;AAFD;;+BCAiB;;AAEjB,IAFO,SAEP,I,CAAQ\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\",\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc(); // Comment at the end\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: cycles 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_1\\");
+
+$g($e, \\"default\\", function () {
+  return createChildren;
+});
+function createChildren(i) {
+  var children = [];
+
+  while (i--) {
+    children[i] = (0, _.default)(0);
+  }
+
+  return children;
+}
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+$g($e, \\"default\\", function () {
+  return createObject;
+});
+function createObject(numChildren) {
+  return {
+    children: (0, _.default)(numChildren)
+  };
+}
+},
+_2:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_1\\");
+
+console.log((0, _.default)(13).children.length); /* eslint no-console: 0 */
+}});__quase_builder__.r('_2');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/createChildren.js\\",\\"../files/createObject.js\\",\\"../files/index.js\\"],\\"names\\":[\\"createChildren\\",\\"i\\",\\"children\\",\\"createObject\\",\\"numChildren\\",\\"console\\",\\"log\\",\\"length\\"],\\"mappings\\":\\";+BAAyB;;AAEzB;AAAA,SAAwBA,cAAxB;AAAA;AAAe,SAASA,cAAT,CAAyBC,CAAzB,EAA6B;AAC1C,MAAIC,WAAW,EAAf;;AAEA,SAAQD,GAAR,EAAc;AACZC,aAAUD,CAAV,IAAgB,IANb,SAMa,EAAc,CAAd,CAAhB;AACD;;AAED,SAAOC,QAAP;AACD;;+BCV0B;;AAE3B;AAAA,SAAwBC,YAAxB;AAAA;AAAe,SAASA,YAAT,CAAuBC,WAAvB,EAAqC;AAClD,SAAO;AACLF,cAAU,IAJP,SAIO,EAAgBE,WAAhB;AADL,GAAP;AAGD;;+BCNwB;;AAEzBC,QAAQC,GAAR,CAAa,IAFN,SAEM,EAAc,EAAd,EAAmBJ,QAAnB,CAA4BK,MAAzC,E,CAAmD\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nexport default function createChildren( i ) {\\\\n  let children = [];\\\\n\\\\n  while ( i-- ) {\\\\n    children[ i ] = createObject( 0 );\\\\n  }\\\\n\\\\n  return children;\\\\n}\\\\n\\",\\"import createChildren from \\\\\\"./createChildren\\\\\\";\\\\n\\\\nexport default function createObject( numChildren ) {\\\\n  return {\\\\n    children: createChildren( numChildren )\\\\n  };\\\\n}\\\\n\\",\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nconsole.log( createObject( 13 ).children.length ); /* eslint no-console: 0 */\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: hash-entry 1`] = `
+Object {
+  "atual/dist.f41a11aba3.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = {
+  default: function _default() {
+    return \\"foo\\";
+  }
+}.default;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+(0, _.default)();
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.f41a11aba3.js.map",
+  "atual/dist.f41a11aba3.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\",\\"../files/index.js\\"],\\"names\\":[],\\"mappings\\":\\";+BAAA;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD;;+BCAiB;;AAEjB,IAFO,SAEP\\",\\"file\\":\\"dist.f41a11aba3.js\\",\\"sourcesContent\\":[\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\",\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc();\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: imports-exports 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"a\\", function () {
+  return a;
+});
+$g($e, \\"b\\", function () {
+  return b;
+});
+$e.default = 1;
+var a = 2,
+    b = 3;
+},
+_1:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+$g($e, \\"f\\", function () {
+  return f;
+});
+$e.default = 4;
+var foo = 5;
+
+var f = 6;
+},
+_2:function($e,$r,$i,$b,$g,$a){$g($e, \\"g\\", function () {
+  return g;
+});
+$g($e, \\"h\\", function () {
+  return h;
+});
+var _a$h = { a: 7, h: 8 };
+var g = _a$h.a,
+    h = _a$h.h;
+},
+_3:function($e,$r,$i,$b,$g,$a){$e.default = 9;
+},
+_4:function($e,$r,$i,$b,$g,$a){$e.default = 10;
+},
+_5:function($e,$r,$i,$b,$g,$a){$g($e, \\"value\\", function () {
+  return value;
+});
+var value = 11;
+},
+_6:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+var _2 = $r(\\"_1\\");
+
+var _3 = $r(\\"_2\\");
+
+var _4 = $r(\\"_3\\");
+
+var _5 = $r(\\"_4\\");
+
+var _6 = $r(\\"_5\\");
+
+$a($e, _3);
+var _namespace = _;
+$g($e, \\"a\\", function () {
+  return a;
+});
+$g($e, \\"b\\", function () {
+  return b;
+});
+$g($e, \\"c\\", function () {
+  return c;
+});
+$e.default = {
+  default: function _default() {}
+}.default;
+$g($e, \\"d\\", function () {
+  return value;
+});
+$g($e, \\"e\\", function () {
+  return e;
+});
+$g($e, \\"f\\", function () {
+  return _2.f;
+});
+$g($e, \\"i\\", function () {
+  return _4.default;
+});
+$g($e, \\"j\\", function () {
+  return _5.default;
+});
+var _k = _6;
+$g($e, \\"k\\", function () {
+  return _k;
+});
+/* eslint import/no-named-default: 0 */
+
+var a = _.default;
+var _ref = [_namespace.a, _namespace.b];
+var b = _ref[0],
+    c = _ref[1];
+
+
+var value = _2.default;
+var e = _2.foo;
+},
+_7:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_6\\");
+
+console.log(_.a, _.b, _.c, _.d, _.e, _.f, _.g, _.h, _.i, _.j, _.k.value); /* eslint no-console: 0 */
+}});__quase_builder__.r('_7');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/export1.js\\",\\"../files/export2.js\\",\\"../files/export3.js\\",\\"../files/export4.js\\",\\"../files/export5.js\\",\\"../files/export6.js\\",\\"../files/import-and-export.js\\",\\"../files/index.js\\"],\\"names\\":[\\"a\\",\\"b\\",\\"foo\\",\\"f\\",\\"h\\",\\"g\\",\\"value\\",\\"_namespace\\",\\"c\\",\\"e\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";;;;;;;aAAe,C;IAEAA,C,GAAW,C;IAARC,C,GAAW,C;;;;;;;;aCFd,C;AAER,IAAMC,MAAM,CAAZ;;AAEA,IAAMC,IAAI,CAAV;;;;;;;;WCJoB,EAAEH,GAAG,CAAL,EAAQI,GAAG,CAAX,E;IAATC,C,QAAHL,C;IAAMI,C,QAAAA,C;;4CCAN,C;;4CCAA,E;;+BCEN;AAAA;AAAA;AAFT,IAAME,QAAQ,EAAd;;+BCAsC;;AACgB;;AAWxC;;AACe;;AACf;;AACK;;AAHnB;AAZiB,IAAKC,UAAL;;;;;;;;;;AASjB;AAAA,WAAe,oBAAW,CAAE;AAA5B;AACS;AAAA;AAAA;AAAY;AAAA;AAAA;AACZ;AAAA;AAAA;AAEA;AAAA;AAAA;;;;;;;;AAZ0D;;AAE5D,IAAMP,IAHN,SAGA;WACiB,CAAEO,WAAWP,CAAb,EAAgBO,WAAWN,CAA3B,C;IAATA,C;IAAGO,C;;;AAElB,IAAMF,QALG,UAKT;AACA,IAAMG,IANyB,MAM/B;;+BCPgD;;AAEhDC,QAAQC,GAAR,CAFS,GAET,EAFY,GAEZ,EAFe,GAEf,EAFkB,GAElB,EAFqB,GAErB,EAFwB,GAExB,EAF2B,GAE3B,EAF8B,GAE9B,EAFiC,GAEjC,EAFoC,GAEpC,EAFuC,GAEI,CAAEL,KAA7C,E,CAAsD\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 1;\\\\n\\\\nexport const [ a, b ] = [ 2, 3 ];\\\\n\\",\\"export default 4;\\\\n\\\\nexport const foo = 5;\\\\n\\\\nexport const f = 6;\\\\n\\",\\"export const { a: g, h } = { a: 7, h: 8 };\\\\n\\",\\"export default 9;\\\\n\\",\\"export default 10;\\\\n\\",\\"const value = 11;\\\\n\\\\nexport { value };\\\\n\\",\\"import _default, * as _namespace from \\\\\\"./export1\\\\\\";\\\\nimport { default as _default2, foo as fooAlias } from \\\\\\"./export2\\\\\\"; /* eslint import/no-named-default: 0 */\\\\n\\\\nexport const a = _default;\\\\nexport const [ b, c ] = [ _namespace.a, _namespace.b ];\\\\n\\\\nconst value = _default2;\\\\nconst e = fooAlias;\\\\n\\\\nexport default function() {}\\\\nexport { value as d, e };\\\\nexport { f } from \\\\\\"./export2\\\\\\";\\\\nexport * from \\\\\\"./export3\\\\\\";\\\\nexport { default as i } from \\\\\\"./export4\\\\\\";\\\\nexport j from \\\\\\"./export5\\\\\\";\\\\nexport * as k from \\\\\\"./export6\\\\\\";\\\\n\\",\\"import { a, b, c, d, e, f, g, h, i, j, k } from \\\\\\"./import-and-export\\\\\\";\\\\n\\\\nconsole.log( a, b, c, d, e, f, g, h, i, j, k.value ); /* eslint no-console: 0 */\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: inline-sourcemap 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = {
+  default: function _default() {
+    console.log(\\"foo\\"); /* eslint no-console: 0 */
+  }
+}.default;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+(0, _.default)(); // Comment at the end
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2ZpbGVzL2Z1bmMuanMiLCIuLi9maWxlcy9pbmRleC5qcyJdLCJuYW1lcyI6WyJjb25zb2xlIiwibG9nIl0sIm1hcHBpbmdzIjoiOytCQUFBO0FBQUEsV0FBZSxvQkFBVztBQUN4QkEsWUFBUUMsR0FBUixDQUFhLEtBQWIsRUFEd0IsQ0FDRjtBQUN2QjtBQUZEOzsrQkNBaUI7O0FBRWpCLElBRk8sU0FFUCxJLENBQVEiLCJmaWxlIjoiZGlzdC5qcyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKCkge1xuICBjb25zb2xlLmxvZyggXCJmb29cIiApOyAvKiBlc2xpbnQgbm8tY29uc29sZTogMCAqL1xufVxuLy8gQ29tbWVudCBhdCB0aGUgZW5kXG4iLCJpbXBvcnQgZnVuYyBmcm9tIFwiLi9mdW5jXCI7XG5cbmZ1bmMoKTsgLy8gQ29tbWVudCBhdCB0aGUgZW5kXG4iXX0=",
+}
+`;
+
+exports[`builder Fixture: keep-module-for-side-effects 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){console.log(\\"foo\\"); /* eslint no-console: 0 */
+},
+_1:function($e,$r,$i,$b,$g,$a){$r(\\"_0\\");
+},
+_2:function($e,$r,$i,$b,$g,$a){$r(\\"_1\\");
+}});__quase_builder__.r('_2');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/foo.js\\",\\"../files/bar.js\\",\\"../files/index.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";+BAAAA,QAAQC,GAAR,CAAa,KAAb,E,CAAsB;;+BCAP;;+BCAR\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n\\",\\"export {} from \\\\\\"./foo\\\\\\";\\\\n\\",\\"import \\\\\\"./bar\\\\\\";\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: no-sourcemap 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = {
+  default: function _default() {
+    console.log(\\"foo\\"); /* eslint no-console: 0 */
+  }
+}.default;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+(0, _.default)();
+}});__quase_builder__.r('_1');",
+}
+`;
+
+exports[`builder Fixture: override-export-namespace 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = \\"a\\";
+},
+_1:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = \\"b\\";
+},
+_2:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+var _2 = $r(\\"_1\\");
+
+$a($e, _);
+$a($e, _2);
+},
+_3:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_2\\");
+
+console.log(_.foo);
+}});__quase_builder__.r('_3');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/a.js\\",\\"../files/b.js\\",\\"../files/export.js\\",\\"../files/index.js\\"],\\"names\\":[\\"foo\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";;;;AAAO,IAAMA,MAAM,GAAZ;;;;;ACAA,IAAMA,MAAM,GAAZ;;+BCAO;;AACA;;AADd;AACA;;+BCDoB;;AAEpBC,QAAQC,GAAR,CAFS,KAET\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\",\\"export * from \\\\\\"./a\\\\\\";\\\\nexport * from \\\\\\"./b\\\\\\";\\\\n\\",\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: override-export-namespace-named 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = \\"a\\";
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+$a($e, _);
+$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = \\"b\\";
+},
+_2:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_1\\");
+
+console.log(_.foo);
+}});__quase_builder__.r('_2');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/a.js\\",\\"../files/export.js\\",\\"../files/index.js\\"],\\"names\\":[\\"foo\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";;;;AAAO,IAAMA,MAAM,GAAZ;;+BCEO;;AAAd;;;;AAFO,IAAMA,MAAM,GAAZ;;+BCAa;;AAEpBC,QAAQC,GAAR,CAFS,KAET\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\\\nexport * from \\\\\\"./a\\\\\\";\\\\n\\",\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: variable-conflict-exports-require 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = {
+  default: function _default() {
+    return \\"foo\\";
+  }
+}.default;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+var _exports = 10; // eslint-disable-line
+var _require = 20; // eslint-disable-line
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\",\\"../files/index.js\\"],\\"names\\":[\\"exports\\",\\"require\\"],\\"mappings\\":\\";+BAAA;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD;;+BCAiB;;AAEjB,IAAIA,WAAU,EAAd,C,CAAkB;AAClB,IAAIC,WAAU,EAAd,C,CAAkB\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\",\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nlet exports = 10; // eslint-disable-line\\\\nlet require = 20; // eslint-disable-line\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: warn-duplicate-export-namespace 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = 20;
+},
+_2:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+var _2 = $r(\\"_1\\");
+
+$a($e, _);
+$a($e, _2);
+}});__quase_builder__.r('_2');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/a.js\\",\\"../files/b.js\\",\\"../files/index.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";;;;AAAO,IAAMA,MAAM,EAAZ;;;;;ACAA,IAAMA,MAAM,EAAZ;;+BCAO;;AACA;;AADd;AACA\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export const foo = 10;\\\\n\\",\\"export const foo = 20;\\\\n\\",\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\nexport * from \\\\\\"./b\\\\\\"; // eslint-disable-line\\\\n\\"]}",
+}
+`;
+
+exports[`builder Fixture: warn-duplicate-export-namespace-and-named 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$g($e, \\"foo\\", function () {
+  return foo;
+});
+var foo = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+$a($e, _);
+$g($e, \\"foo\\", function () {
+  return foo;
+});
+// eslint-disable-line
+
+var foo = 20;
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/a.js\\",\\"../files/index.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";;;;AAAO,IAAMA,MAAM,EAAZ;;+BCAO;;AAAd;;;;AAAqB;;AAEd,IAAIA,MAAM,EAAV\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export const foo = 10;\\\\n\\",\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\n\\\\nexport let foo = 20;\\\\n\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/basic 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){$r(\\"_0\\");
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/a.js\\",\\"../working/index.js\\"],\\"names\\":[],\\"mappings\\":\\";4CAAe,E;;+BCAR\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 10;\\\\n\\",\\"import \\\\\\"./a\\\\\\";\\\\n\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/basic 2`] = `
+"
+
+Done building.
+Watching 8 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/custom-code-frame 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+
+console.log(_.default);
+
+console.log(_.default);
+
+console.log(_.default);
+
+console.log(_.default);
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/a.js\\",\\"../working/index.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";4CAAe,E;;+BCAD;;AAEdA,QAAQC,GAAR,CAFO,SAEP;;AAEAD,QAAQC,GAAR,CAJO,SAIP;;AAEAD,QAAQC,GAAR,CANO,SAMP;;AAEAD,QAAQC,GAAR,CARO,SAQP\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 10;\\",\\"import a from \\\\\\"./a\\\\\\";\\\\n\\\\nconsole.log( a );\\\\n\\\\nconsole.log( a );\\\\n\\\\nconsole.log( a );\\\\n\\\\nconsole.log( a );\\\\n\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/custom-code-frame 2`] = `
+"
+
+
+Could not resolve ./a
+
+> 1 | import a from \\"./a\\";
+  2 | 
+  3 | console.log( a );
+  4 | 
+  5 | console.log( a );
+  6 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+File working/a.js was changed.
+
+./a exports nothing
+
+> 1 | import a from \\"./a\\";
+  2 | 
+  3 | console.log( a );
+  4 | 
+  5 | console.log( a );
+  6 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+File working/a.js was changed.
+Done building.
+Watching 11 files...
+
+--------
+
+File working/a.js was removed.
+
+Could not resolve ./a
+
+> 1 | import a from \\"./a\\";
+  2 | 
+  3 | console.log( a );
+  4 | 
+  5 | console.log( a );
+  6 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-missing-entry 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){
+}});__quase_builder__.r('_0');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[],\\"names\\":[],\\"mappings\\":\\"\\",\\"file\\":\\"dist.js\\"}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-missing-entry 2`] = `
+"
+
+
+Could not find working/index.js
+
+Build failed.
+Watching 1 files...
+
+--------
+
+File working/index.js was changed.
+Done building.
+Watching 1 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-missing-file 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r(\\"_0\\");
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/a.js\\",\\"../working/index.js\\"],\\"names\\":[],\\"mappings\\":\\";4CAAe,E;;+BCAD\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 10;\\",\\"import a from \\\\\\"./a\\\\\\";\\\\n\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-missing-file 2`] = `
+"
+
+
+Could not resolve ./a
+
+> 1 | import a from \\"./a\\";
+  2 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+File working/a.js was changed.
+
+./a exports nothing
+
+> 1 | import a from \\"./a\\";
+  2 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+File working/a.js was changed.
+Done building.
+Watching 11 files...
+
+--------
+
+File working/a.js was removed.
+
+Could not resolve ./a
+
+> 1 | import a from \\"./a\\";
+  2 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 30;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r('_0');
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/a.js\\",\\"../working/index.js\\"],\\"names\\":[],\\"mappings\\":\\";4CAAe,E;;+BCAD\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 30;\\",\\"import a from './a';\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 2`] = `
+"
+
+Done building.
+Watching 8 files...
+
+--------
+
+File working/index.js was changed.
+
+Could not resolve ./stuff
+
+> 1 | import stuff from './stuff';
+
+Build failed.
+Watching 13 files...
+
+--------
+
+File working/a.js was changed.
+Build not necessary.
+
+--------
+
+File working/index.js was changed.
+Done building.
+Watching 13 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-other-extensions 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 40;
+},
+_1:function($e,$r,$i,$b,$g,$a){$r(\\"_0\\");
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/a.js\\",\\"../working/index.js\\"],\\"names\\":[],\\"mappings\\":\\";4CAAe,E;;+BCAR\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 40;\\",\\"import \\\\\\"./a\\\\\\";\\\\n\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-other-extensions 2`] = `
+"
+
+Done building.
+Watching 9 files...
+
+--------
+
+File working/a.js was changed.
+Done building.
+Watching 9 files...
+
+--------
+
+Closed.
+"
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-rename 1`] = `
+Object {
+  "atual/dist.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){\\"default\\"===K||\\"__esModule\\"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,\\"__esModule\\",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement(\\"script\\");N.type=\\"text/javascript\\",N.charset=\\"utf-8\\",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={},H={};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.a({
+_0:function($e,$r,$i,$b,$g,$a){$e.default = 10;
+},
+_1:function($e,$r,$i,$b,$g,$a){var _ = $r('_0');
+}});__quase_builder__.r('_1');
+//# sourceMappingURL=dist.js.map",
+  "atual/dist.js.map": "{\\"version\\":3,\\"sources\\":[\\"../working/b.js\\",\\"../working/index.js\\"],\\"names\\":[],\\"mappings\\":\\";4CAAe,E;;+BCAD\\",\\"file\\":\\"dist.js\\",\\"sourcesContent\\":[\\"export default 10;\\\\n\\",\\"import b from './b';\\"]}",
+}
+`;
+
+exports[`watcher Fixture: watch-fixtures/watches-rename 2`] = `
+"
+
+Done building.
+Watching 8 files...
+
+--------
+
+File working/a.js was removed.
+
+Could not resolve ./a
+
+> 1 | import a from \\"./a\\";
+  2 | 
+
+Build failed.
+Watching 11 files...
+
+--------
+
+File working/index.js was changed.
+Done building.
+Watching 13 files...
+
+--------
+
+Closed.
+"
+`;

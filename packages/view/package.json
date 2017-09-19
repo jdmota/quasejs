@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "name": "@quase/view",
+  "version": "0.1.0",
+  "description": "Makes it easy to create your own web components.",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/view",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "babel-generator": "^6.24.0",
+    "babylon": "^6.16.1",
+    "fs-extra": "^4.0.2",
+    "parse5": "^3.0.2"
+  }
+}

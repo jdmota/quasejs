@@ -1,0 +1,10 @@
+*.txt
+__dev__
+.nyc_output
+coverage
+dist
+node_modules
+packages/builder/test/watch-fixtures/*/working
+DRAFT-CHANGELOG.md
+npm-debug.log
+old.git

@@ -1,0 +1,13 @@
+[include]
+packages
+
+[ignore]
+.*/node_modules/.*
+<PROJECT_ROOT>/libdefs.js
+
+[libs]
+./libdefs.js
+
+[options]
+suppress_comment=.*\\$FlowFixMe
+suppress_comment=.*\\$FlowIssue
