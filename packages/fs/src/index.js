@@ -1,13 +1,4 @@
-import req from "../../_helper/require";
-import findFilesObservable from "./find-files-observable";
-
-const fs = req( "fs-extra" );
-
-// TODO test findFilesObservable
-
-export {
-  findFilesObservable
-};
+const fs = require( "fs-extra" );
 
 // TODO add https://github.com/zkochan/symlink-dir
 // TODO add https://github.com/IndigoUnited/node-proper-lockfile

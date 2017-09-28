@@ -16,5 +16,5 @@ export function normalize( file ) {
   if ( URL ) {
     return new URL( file, LOCATION ).pathname;
   }
-  return path.relative( process.cwd(), file ).replace( /\\/g, "/" );
+  return path.relative( process.cwd(), file ).replace( /\\/g, "/" ); // FIXME use slash
 }

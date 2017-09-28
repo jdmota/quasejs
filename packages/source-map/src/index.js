@@ -1,4 +1,4 @@
-import _getFile from "../../fs/src/get-file";
+import FileSystem from "../../fs/src/file-system";
 import { makeAbsolute, resolveAsUrl } from "../../pathname/src/path-url";
 import encoding from "./encoding";
 
@@ -17,7 +17,6 @@ export function joinSourceMaps( maps ) {
   }
 
   const inputMapConsumer = new SourceMapConsumer( maps[ 0 ] );
-  const outputMapConsumers = maps.map( ( map, i ) => i && new SourceMapConsumer( map ) );
 
   const mergedGenerator = new SourceMapGenerator( {
     file: inputMapConsumer.file,
@@ -33,9 +32,9 @@ export function joinSourceMaps( maps ) {
       column: m.generatedColumn
     };
 
-    for ( let i = 1; i < outputMapConsumers.length; i++ ) {
+    for ( let i = 1; i < maps.length; i++ ) {
 
-      pos = outputMapConsumers[ i ].generatedPositionFor( {
+      pos = new SourceMapConsumer( maps[ i ] ).generatedPositionFor( {
         source: inputMapConsumer.file,
         line: pos.line,
         column: pos.column
@@ -59,7 +58,6 @@ export function joinSourceMaps( maps ) {
   const map = Object.assign( {}, maps[ 0 ] );
   map.mappings = mergedGenerator.toJSON().mappings;
   return map;
-
 }
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
@@ -87,10 +85,9 @@ export function getOriginalLocation( map, generated ) { // map, generated: { lin
 
 export class SourceMapExtractor {
 
-  constructor() {
-    this.cache = Object.create( null );
-    this.cacheMaps = Object.create( null );
-    this.cacheMapsLocation = Object.create( null );
+  constructor( fs = new FileSystem() ) {
+    this.fs = fs;
+    this.cacheMapLocation = Object.create( null );
     this.mapRequest = Object.create( null );
   }
 
@@ -98,13 +95,9 @@ export class SourceMapExtractor {
     return data == null ? null : new SourceMapConsumer( JSON.parse( data ) );
   }
 
-  getFile( file ) {
-    return this.cache[ file ] || ( this.cache[ file ] = _getFile( file ) );
-  }
-
   async _getMap( file ) {
 
-    const code = await this.getFile( file );
+    const code = await this.fs.getFile( file );
 
     const match = code.match( regex1 ) || code.match( regex2 );
 
@@ -119,14 +112,14 @@ export class SourceMapExtractor {
         };
       }
 
-      const mapLocation = this.cacheMapsLocation[ file ] = resolveAsUrl( file, url );
+      const mapLocation = this.cacheMapLocation[ file ] = resolveAsUrl( file, url );
 
       let sourcemap;
 
       try {
-        sourcemap = await this.getFile( mapLocation );
+        sourcemap = await this.fs.getFile( mapLocation );
       } catch ( e ) {
-        // File was found, but the sourcemap that was supposed to exist, was not found
+        // The sourcemap that was supposed to exist, was not found
       }
 
       return {
@@ -138,15 +131,17 @@ export class SourceMapExtractor {
   }
 
   getMap( file ) {
+    file = makeAbsolute( file );
     return this.mapRequest[ file ] || ( this.mapRequest[ file ] = this._getMap( file ) );
   }
 
   purge( file ) {
-    if ( file && this.cache[ file ] ) {
-      this.cache[ file ] = null;
+    if ( file ) {
+      file = makeAbsolute( file );
+      this.fs.purge( file );
       this.mapRequest[ file ] = null;
-      this.cache[ this.cacheMapsLocation[ file ] ] = null;
-      this.cacheMapsLocation[ file ] = null;
+      this.cache[ this.cacheMapLocation[ file ] ] = null;
+      this.cacheMapLocation[ file ] = null;
     }
   }
 
@@ -162,7 +157,7 @@ export class SourceMapExtractor {
 
       if ( pos.line != null ) {
         const originalFile = resolveAsUrl( mapLocation, pos.source );
-        const originalCode = map.sourceContentFor( pos.source, true ) || await this.getFile( originalFile );
+        const originalCode = map.sourceContentFor( pos.source, true ) || await this.fs.getFile( originalFile );
 
         pos.originalFile = originalFile;
         pos.originalCode = originalCode;
@@ -171,7 +166,7 @@ export class SourceMapExtractor {
       }
     }
 
-    return { code: await this.getFile( file ) };
+    return { code: await this.fs.getFile( file ) };
   }
 
 }

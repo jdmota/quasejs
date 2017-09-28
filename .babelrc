@@ -7,7 +7,7 @@
   "plugins": [
     // "istanbul",
     // "external-helpers",
-    [ "fast-async", { "spec": true } ],
+    [ "module:fast-async", { "spec": true } ],
     "transform-flow-strip-types",
     [ "transform-class-properties", { "loose": true } ]
   ],

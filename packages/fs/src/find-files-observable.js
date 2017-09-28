@@ -1,5 +1,7 @@
 import req from "../../_helper/require";
 
+// TODO test findFilesObservable
+
 const fs = req( "fs-extra" );
 const path = req( "path" );
 const mm = req( "micromatch" ); // FIXME don't depend on micromatch
