@@ -1,8 +1,8 @@
-import astExtractNames from "./utils/ast-extract-names";
-import blank from "./utils/blank";
+import blank from "../utils/blank";
+import astExtractNames from "./ast-extract-names";
 
 const { basename, extname } = require( "path" );
-const template = require( "babel-template" );
+const template = require( "babel-template" ).default;
 
 const vars = {
   exports: "$e",

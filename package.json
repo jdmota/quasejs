@@ -5,7 +5,7 @@
     "test": "jest",
     "node": "babel-node",
     "flowtype": "flow-typed install",
-    "check": "flow check",
+    "check": "flow",
     "lint": "eslint \"**/*.js\"",
     "coverage": "nyc jest && nyc report --reporter=html",
     "bootstrap": "lerna bootstrap",

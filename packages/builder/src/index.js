@@ -1,11 +1,14 @@
-import Bundle from "./bundle";
-import Watcher from "./watcher";
+// @flow
 
-export default function builder( options ) {
+import Builder from "./builder";
+import Watcher from "./watcher";
+import type { Options } from "./types";
+
+export default function builder( options: Options ) {
   if ( options.watch ) {
     return new Watcher( options ).start();
   }
-  return new Bundle( options ).build();
+  return new Builder( options ).build();
 }
 
-export { Bundle, Watcher };
+export { Builder, Watcher };

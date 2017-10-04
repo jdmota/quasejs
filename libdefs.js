@@ -15,3 +15,4 @@ declare module "normalize-path" { declare var exports: any; }
 declare module "parse-npm-tarball-url" { declare var exports: any; }
 declare module "klaw" { declare var exports: any; }
 declare module "symlink-dir" { declare var exports: any; }
+declare module "watchpack" { declare var exports: any; }

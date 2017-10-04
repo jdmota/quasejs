@@ -1,3 +1,4 @@
+import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
 import { Watcher } from "../src";
 
 describe( "watcher", () => {
@@ -21,6 +22,11 @@ describe( "watcher", () => {
 
       const config = require( path.resolve( fixturePath, "config.js" ) );
 
+      config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
+      config.plugins = [ jsPlugin() ];
+      config.resolvers = [ jsResolver( config.resolve ) ];
+      config.checkers = [ jsChecker() ];
+      config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];
       config.cwd = fixturePath;
       config.watch = true;
       config._hideDates = true;
@@ -33,6 +39,8 @@ describe( "watcher", () => {
       config.fs = {
         mkdirp: () => {},
         writeFile: ( file, content ) => {
+          expect( path.isAbsolute( file ) ).toBe( true );
+
           assets[ path.relative( fixturePath, file ).replace( /\\/g, "/" ) ] = content;
         }
       };

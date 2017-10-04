@@ -1,20 +1,23 @@
 import { getOriginalLocation } from "../../../source-map/src";
 
-const codeFrame = require( "babel-code-frame" );
+const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 
-export default ( originalMessage, module, loc ) => {
-  if ( loc && module.finalMap ) {
-    loc = getOriginalLocation( module.finalMap, loc );
+export default ( originalMessage, { id, code, map } = {}, loc ) => {
+  if ( loc && map ) {
+    loc = getOriginalLocation( map, loc );
+    loc = loc.line == null ? null : loc;
   }
-  const error = new Error( originalMessage + ( loc ? `. See ${module.normalizedId}:${loc.line}:${loc.column}` : "" ) );
+  const error = new Error( originalMessage + ( loc ? `. See ${id}:${loc.line}:${loc.column}` : "" ) );
   error.loc = loc;
-  error.originalCode = loc ? module.originalCode : null;
+  error.code = loc ? code : null;
   error.originalMessage = originalMessage;
   throw error;
 };
 
 export function reportText( error, codeFrameOpts ) {
-  return `\n${error.originalMessage || error.message}\n\n${error.loc ? codeFrame( error.originalCode, error.loc.line, undefined, codeFrameOpts ) + "\n\n" : ""}`;
+  return `\n${error.originalMessage || error.message}\n\n${
+    error.loc ? codeFrameColumns( error.code, { start: { line: error.loc.line } }, codeFrameOpts || {} ) + "\n\n" : ""
+  }`;
 }
 
 export function report( error, codeFrameOpts ) {

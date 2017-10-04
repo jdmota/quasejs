@@ -1,221 +1,204 @@
-import { joinSourceMaps } from "../../source-map/src";
-import blank from "./utils/blank";
-import error from "./utils/error";
+// @flow
 
-function isEmpty( obj ) {
-  for ( const name in obj ) {
-    return false;
-  }
-  return true;
+import error from "./utils/error";
+import type Builder from "./builder";
+import type { Result, Deps, Plugin, Resolver } from "./types";
+import { type ID } from "./id";
+
+function isObject( obj ) {
+  return obj != null && typeof obj === "object";
 }
+
+function handleLoaderOutput( obj: any, module: Module ): ?Result { // eslint-disable-line no-use-before-define
+  if ( obj == null ) {
+    return;
+  }
+  if ( typeof obj === "string" ) {
+    return {
+      code: obj
+    };
+  }
+  if ( isObject( obj ) ) {
+    return obj;
+  }
+  throw module.moduleError( "Plugin should return a string of an object." );
+}
+
+async function callChain(
+  array: Plugin[],
+  module: Module, // eslint-disable-line no-use-before-define
+  init: Result
+): Promise<Result[]> {
+  const outputs: Result[] = [];
+  let prev = init;
+  for ( const fn of array ) {
+    const out = handleLoaderOutput( await fn( prev, module.id, module.builder ), module ); // eslint-disable-line no-await-in-loop
+    if ( out ) {
+      outputs.push( out );
+      prev = out;
+    }
+  }
+  if ( outputs.length === 0 ) {
+    module.moduleError( "Zero valid outputs for the provided plugins" );
+  }
+  return outputs;
+}
+
+const depsSorter = ( { resolved: a }, { resolved: b } ) => ( a === b ? 0 : ( a > b ? 1 : -1 ) );
+
+// Note: don't save references for other modules in a module. That can break incremental builds.
 
 export default class Module {
 
-  constructor( { id, originalCode, originalMap, code, mapsChain, finalMap, ast, deps, bundle } ) {
+  id: ID;
+  builder: Builder;
+  loadingCode: ?Promise<string>;
+  code: ?string;
+  loadingOutputs: ?Promise<Result[]>;
+  outputs: ?( Result[] );
+  loadingDeps: ?Promise<Deps>;
+  deps: ?Deps;
+  uuid: number;
+  sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean }>;
+
+  constructor( id: ID, builder: Builder ) {
     this.id = id;
-    this.normalizedId = bundle.normalizeId( id );
-    this.originalCode = originalCode;
-    this.originalMap = originalMap;
+    this.builder = builder;
+    this.uuid = builder.uuid;
 
-    this.code = code;
-    this.mapsChain = mapsChain;
-    this.finalMap = bundle.sourceMaps && ( finalMap || joinSourceMaps( mapsChain ) );
-    this.ast = ast;
+    this.loadingCode = null;
+    this.code = null;
 
-    this.bundle = bundle;
+    this.loadingOutputs = null;
+    this.outputs = null;
 
-    // type Name = { name: string, loc: { line, column } }
+    this.loadingDeps = null;
+    this.deps = null;
 
-    this.deps = deps;
-    this.sources = deps.sources; // Name[]
-    this.exportAllSources = deps.exportAllSources; // Name[]
-    this.importSources = deps.importSources; // source: string -> Name[] (to check if a source exports these names)
-    this.exportSources = deps.exportSources; // source: string -> Name[] (to check if a source exports these names)
-    this.importNames = deps.importNames; // Name[] (imported names)
-    this.exportNames = deps.exportNames; // Name[] (exported names, except the ones from exportAllSources)
-
-    // These should be reset between builds
-    this.uuid = null;
-    this._render = null;
-    this._imports = null;
-    this._exports = null;
-    this.resolvedDepsMap = null; // source: string -> resolved: string
-    this._exportAllModules = null;
+    this.sourceToResolved = new Map();
   }
 
-  clone( bundle ) {
-    if ( !bundle ) {
-      throw new Error( "module needs bundle" );
+  clone( builder: Builder ): Module {
+    if ( !builder ) {
+      throw new Error( "module needs builder" );
     }
-    return new Module( {
-      id: this.id,
-      originalCode: this.originalCode,
-      originalMap: this.originalMap,
-      code: this.code,
-      mapsChain: this.mapsChain,
-      finalMap: this.finalMap,
-      ast: this.ast,
-      deps: this.deps,
-      bundle
-    } );
+    const m = new Module( this.id, builder );
+    m.loadingCode = this.loadingCode;
+    m.code = this.code;
+    m.loadingOutputs = this.loadingOutputs;
+    m.outputs = this.outputs;
+    return m;
   }
 
-  // After the initialization of this module, resolveAndFetchDeps() is the first thing to be called
-  resolveAndFetchDeps() {
-    if ( this.resolvedDepsMap ) {
-      return; // Already resolving...
-    }
-
-    this.resolvedDepsMap = new Map();
-
-    return Promise.all(
-      this.sources.map( ( { name, loc } ) => {
-        if ( !name ) {
-          error( "Empty import", this, loc );
-        }
-        return this.bundle.resolveId( name, this, loc ).then( dep => {
-          if ( dep === this.id ) {
-            error( "A module cannot import itself", this, loc );
-          }
-          this.resolvedDepsMap.set( name, dep );
-          return this.bundle.fetchModule( dep, this.id );
-        } );
-      } )
-    );
+  moduleError( message: string ) {
+    throw new Error( `${message}. Module: ${this.builder.idToString( this.id )}` );
   }
 
-  getModuleBySource( sourceName ) {
-    return this.bundle.modules.get( this.resolvedDepsMap.get( sourceName ) );
+  error( message: string, loc: Object ) {
+    error( message, {
+      id: this.builder.idToString( this.id ),
+      code: this.code
+    }, loc );
   }
 
-  forEachDependency( callback ) {
-    this.sources.forEach( ( { name } ) => callback( this.getModuleBySource( name ) ) );
-  }
-
-  get exportAllModules() {
-    if ( !this._exportAllModules ) {
-      this._exportAllModules = this.exportAllSources.map( ( { name } ) => this.getModuleBySource( name ) );
-    }
-    return this._exportAllModules;
-  }
-
-  get imports() {
-    return this.getImports();
-  }
-
-  getImports() {
-    if ( !this._imports ) {
-      const imports = blank();
-      this.importNames.forEach( ( { name, loc } ) => {
-        if ( imports[ name ] ) {
-          error( `Duplicate import ${name}`, this, loc );
-        }
-        imports[ name ] = true;
-      } );
-      this._imports = imports;
-    }
-    return this._imports;
-  }
-
-  get exports() {
-    return this.getExports();
-  }
-
-  getExports( stack ) {
-
-    if ( this._exports ) {
-      return this._exports;
-    }
-
-    const exports = blank();
-    const exportsAllFrom = blank();
-    let namespaceConflict = false;
-
-    if ( !stack ) {
-      stack = new Map();
-    }
-
-    const checkExport = ( { name, loc } ) => {
-      if ( exports[ name ] ) {
-        error( `Duplicate export ${name}`, this, loc );
+  async _getFile() {
+    try {
+      return await this.builder.fileSystem.getFile( this.id );
+    } catch ( err ) {
+      if ( err.code === "ENOENT" ) {
+        throw new Error( `Could not find ${this.builder.idToString( this.id )}` );
       }
-      exports[ name ] = true;
-    };
+      throw err;
+    }
+  }
 
-    const checkExportFrom = ( name, fromId ) => {
-      const text = `${fromId.name} (${fromId.loc.line}:${fromId.loc.column})`;
-      if ( exportsAllFrom[ name ] ) {
-        exportsAllFrom[ name ].push( text );
-      } else {
-        exportsAllFrom[ name ] = [ text ];
-      }
-      if ( exports[ name ] ) {
-        namespaceConflict = true;
-      }
-      exports[ name ] = true;
-    };
+  // TODO use buffer
+  async getCode(): Promise<string> {
+    if ( this.code == null ) {
+      this.code = await ( this.loadingCode || ( this.loadingCode = this._getFile() ) );
+      this.loadingCode = null;
+    }
+    return this.code;
+  }
 
-    this.exportNames.forEach( checkExport );
+  async _runLoader(): Promise<Result[]> {
+    const code = await this.getCode();
+    return callChain( this.builder.plugins, this, { code } );
+  }
 
-    stack.set( this, true );
+  async runLoader(): Promise<Result[]> {
+    if ( this.outputs == null ) {
+      this.outputs = await ( this.loadingOutputs || ( this.loadingOutputs = this._runLoader() ) );
+      this.loadingOutputs = null;
+    }
+    return this.outputs;
+  }
 
-    this.exportAllModules.forEach( ( module, i ) => {
+  getLastOutput() {
+    if ( !this.outputs ) {
+      throw this.moduleError( "No output found" );
+    }
+    return this.outputs[ this.outputs.length - 1 ];
+  }
 
-      if ( stack.has( module ) ) {
-        const trace = Array.from( stack ).map( entry => entry[ 0 ].normalizedId );
-        while ( trace[ 0 ] !== module.normalizedId ) {
-          trace.shift();
-        }
-        const traceStr = trace.join( "->" ) + "->" + module.normalizedId;
-        error( `Circular 'export * from "";' declarations. ${traceStr}` );
-      }
-
-      const e = module.getExports( stack );
-
-      for ( const name in e ) {
-        if ( name !== "default" ) {
-          checkExportFrom( name, this.exportAllSources[ i ] );
-        }
-      }
-
-    } );
-
-    stack.delete( this );
-
-    if ( namespaceConflict ) {
-      for ( const name in exportsAllFrom ) {
-        this.bundle.warn( `Re-exports '${name}' from ${exportsAllFrom[ name ].join( " and " )}. See ${this.normalizedId}` );
+  async runResolvers( obj: { src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {
+    for ( const fn of this.builder.resolvers ) {
+      const r = await fn( obj, this.id, this.builder ); // eslint-disable-line no-await-in-loop
+      if ( r != null ) {
+        return r;
       }
     }
-
-    this._exports = exports;
-    return exports;
   }
 
-  checkImportsExports() {
-    this.getImports();
-    this.getExports();
-    const check = ( names, source ) => {
-      const m = this.getModuleBySource( source );
-      const exports = m.getExports();
-      if ( names.length > 0 && isEmpty( exports ) ) {
-        error( `${source} exports nothing`, this, names[ 0 ].loc );
+  async _runDepsExtracter(): Promise<Deps> {
+    const output = ( await this.runLoader() ).find( o => Array.isArray( o.deps ) );
+    if ( !output ) {
+      throw this.moduleError( "No output with extracted dependencies found" );
+    }
+
+    const deps = Promise.all( output.deps.map( async( { src, loc, splitPoint } ) => {
+      if ( !src ) {
+        throw this.error( "Empty import", loc );
       }
-      names.forEach( ( { name, loc } ) => {
-        if ( name !== "*" && !exports[ name ] ) {
-          error( `${source} doesn't export ${name}`, this, loc );
-        }
-      } );
-    };
-    this.importSources.forEach( check );
-    this.exportSources.forEach( check );
-    this.exportAllSources.forEach( ( { name, loc } ) => {
-      const m = this.getModuleBySource( name );
-      const exports = m.getExports();
-      if ( isEmpty( exports ) ) {
-        error( `${name} exports nothing`, this, loc );
+
+      const r = await this.runResolvers( { src, loc, splitPoint } );
+      if ( !r ) {
+        throw this.error( `Could not resolve ${src}`, loc );
       }
-    } );
+
+      const resolved = this.builder.resolveId( r );
+
+      if ( resolved === this.id ) {
+        throw this.error( "A module cannot import itself", loc );
+      }
+
+      if ( this.builder.idEntries.find( e => e[ 1 ] === resolved ) ) {
+        throw this.error( "Don't import the destination file", loc );
+      }
+
+      const obj = { resolved, src, loc, splitPoint };
+      this.sourceToResolved.set( src, obj );
+      return obj;
+    } ) );
+
+    return ( await deps ).sort( depsSorter );
+  }
+
+  async runDepsExtracter(): Promise<Deps> {
+    if ( this.deps == null ) {
+      this.deps = await ( this.loadingDeps || ( this.loadingDeps = this._runDepsExtracter() ) );
+      this.loadingDeps = null;
+    }
+    return this.deps;
+  }
+
+  async saveDeps() {
+    const promises = [];
+    const deps = await this.runDepsExtracter();
+    for ( const { resolved } of deps ) {
+      promises.push( this.builder.addModule( resolved ) );
+    }
+    return Promise.all( promises );
   }
 
 }

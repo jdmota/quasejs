@@ -1,3 +1,4 @@
+import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
 import builder from "../src";
 import { testLog } from "../../assert";
 
@@ -25,13 +26,20 @@ describe( "builder", () => {
 
       expect( config ).not.toBe( null );
 
+      config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
+      config.plugins = [ jsPlugin() ];
+      config.resolvers = [ jsResolver( config.resolve ) ];
+      config.checkers = [ jsChecker() ];
+      config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];
       config.cwd = fixturePath;
-      config.onwarn = w => {
+      config.warn = w => {
         warnings.push( w );
       };
       config.fs = {
         mkdirp: () => {},
         writeFile: ( file, content ) => {
+          expect( path.isAbsolute( file ) ).toBe( true );
+
           const f = path.relative( fixturePath, file ).replace( /\\/g, "/" );
           if ( assets[ f ] ) {
             throw new Error( `Overriding ${f}` );
