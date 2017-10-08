@@ -46,12 +46,19 @@ export function joinSourceMaps( maps ) {
 
     }
 
-    mergedGenerator.addMapping( {
-      source: m.source,
+    const newMapping = {
+      source: null,
+      original: null,
       name: m.name,
-      original: m.source == null ? null : { line: m.originalLine, column: m.originalColumn },
       generated: pos
-    } );
+    };
+
+    if ( m.source && typeof m.originalLine === "number" && typeof m.originalColumn === "number" ) {
+      newMapping.source = m.source;
+      newMapping.original = { line: m.originalLine, column: m.originalColumn };
+    }
+
+    mergedGenerator.addMapping( newMapping );
 
   } );
 

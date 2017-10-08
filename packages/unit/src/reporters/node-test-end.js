@@ -4,7 +4,7 @@ import { beautify as beautifyStack } from "../../../error/src";
 import colors from "./colors";
 import concordanceOptions from "./concordance-options";
 
-const codeFrame = require( "babel-code-frame" );
+const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 const concordance = require( "concordance" );
 
 const extractor = new SourceMapExtractor(); // TODO move to reporter
@@ -57,7 +57,7 @@ function showSource( source ) {
     return "";
   }
 
-  return colors.errorStack( normalize( file ) ) + "\n\n" + codeFrame( code, line ) + "\n\n";
+  return colors.errorStack( normalize( file ) ) + "\n\n" + codeFrameColumns( code, { start: { line } } ) + "\n\n";
 }
 
 function logSkipReason( text ) {

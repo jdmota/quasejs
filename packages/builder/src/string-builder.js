@@ -26,15 +26,23 @@ export default class StringBuilder {
     if ( this.sourceMapGenerator && map ) {
       const consumer = new SourceMapConsumer( map );
       consumer.eachMapping( m => {
-        this.sourceMapGenerator.addMapping( {
-          source: m.source,
+
+        const newMapping = {
+          source: null,
+          original: null,
           name: m.name,
-          original: m.source == null ? null : { line: m.originalLine, column: m.originalColumn },
           generated: m.generatedLine === 1 ?
             { line: this.line + m.generatedLine, column: this.column + m.generatedColumn } :
             { line: this.line + m.generatedLine, column: m.generatedColumn }
-        } );
-        if ( m.source != null ) {
+        };
+
+        if ( m.source && typeof m.originalLine === "number" && typeof m.originalColumn === "number" ) {
+          newMapping.source = m.source;
+          newMapping.original = { line: m.originalLine, column: m.originalColumn };
+        }
+
+        this.sourceMapGenerator.addMapping( newMapping );
+        if ( m.source ) {
           this.sourceMapGenerator.setSourceContent( m.source, consumer.sourceContentFor( m.source ) );
         }
       } );
