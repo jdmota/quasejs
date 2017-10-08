@@ -493,7 +493,7 @@ export function renderer( babelOpts ) {
       }
 
       build.append(
-        runtimeCode.replace( runtimeReplace.babel, babelBuildHelpers( Object.keys( usedHelpers ) ) )
+        runtimeCode.replace( runtimeReplace.babel, babelBuildHelpers( usedHelpers ) )
           .replace( runtimeReplace.idToFile, "{}" )
           .replace( runtimeReplace.idToGlobal, "{}" )
       );

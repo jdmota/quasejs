@@ -3,12 +3,39 @@ const generator = require( "babel-generator" ).default;
 const t = require( "babel-types" );
 
 export default function( whitelist ) {
-  const props = [];
+  if ( Object.keys( whitelist ).length === 0 ) {
+    return generator( t.objectExpression( [] ), { minified: true } ).code;
+  }
+
+  const body = [
+    t.variableDeclaration( "var", [ t.variableDeclarator( t.identifier( "$b" ), t.objectExpression( [] ) ) ] )
+  ];
+
   helpers.list.forEach( name => {
-    if ( whitelist.indexOf( name ) < 0 ) {
+    if ( !whitelist[ name ] ) {
       return;
     }
-    props.push( t.objectProperty( t.identifier( name ), helpers.get( name ) ) );
+    const helper = helpers.get( name ); // { nodes: [], globals: [] }
+    for ( const node of helper.nodes ) {
+      if ( node.type === "ExportDefaultDeclaration" ) {
+        if ( node.declaration.type === "FunctionDeclaration" ) {
+          node.declaration.type = "FunctionExpression";
+        }
+        body.push(
+          t.expressionStatement(
+            t.assignmentExpression(
+              "=", t.memberExpression( t.identifier( "$b" ), t.identifier( name ) ), node.declaration
+            )
+          )
+        );
+      } else {
+        body.push( node );
+      }
+    }
   } );
-  return generator( t.objectExpression( props ), { minified: true } ).code;
+
+  body.push( t.returnStatement( t.identifier( "$b" ) ) );
+
+  const ast = t.callExpression( t.functionExpression( null, [], t.blockStatement( body ) ), [] );
+  return generator( ast, { minified: true } ).code;
 }
