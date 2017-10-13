@@ -1,4 +1,4 @@
-import { normalize } from "../../pathname/src/path-url";
+import { prettify } from "../../pathname/src/path-url";
 
 const stackParser = require( "error-stack-parser" );
 
@@ -13,7 +13,7 @@ export async function beautify( originalStack, extractor ) {
     return !ignoreFileRe.test( fileName ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
-  const promises = Promise.all( frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
+  const promises = frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
 
     const stackLine = {
       textLine: `${functionName}${args ? `(${args.join( ", " )})` : ""}`,
@@ -39,10 +39,10 @@ export async function beautify( originalStack, extractor ) {
 
     return stackLine;
 
-  } ) );
+  } );
 
-  const cleaned = await promises;
-  const cleanedText = cleaned.map( ( { textLine, file, line, column } ) => ( `${textLine} (${normalize( file )}:${line}:${column})` ) );
+  const cleaned = await Promise.all( promises );
+  const cleanedText = cleaned.map( ( { textLine, file, line, column } ) => ( `${textLine} (${prettify( file )}:${line}:${column})` ) );
 
   const title = originalStack.split( "\n" ).shift();
   const lines = cleanedText.map( x => `    ${x}` ).join( "\n" );

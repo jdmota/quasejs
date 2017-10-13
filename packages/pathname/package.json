@@ -13,5 +13,9 @@
     "dist/index.js.map",
     "src"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "file-url": "^2.0.2",
+    "is-url-superb": "^2.0.0",
+    "slash": "^1.0.0"
+  }
 }

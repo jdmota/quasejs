@@ -1,4 +1,4 @@
-import { makeAbsolute } from "../../pathname/src/path-url";
+import { makeAbsolutePath } from "../../pathname/src/path-url";
 import { getFileBuffer } from "./get-file";
 import isFile from "./is-file";
 
@@ -41,15 +41,15 @@ export default class FileSystem {
   }
 
   getFileBuffer( file ) {
-    return this._provide( "getFileBuffer", getFileBuffer, makeAbsolute( file ) );
+    return this._provide( "getFileBuffer", getFileBuffer, makeAbsolutePath( file ) );
   }
 
   isFile( file ) {
-    return this._provide( "isFile", isFile, makeAbsolute( file ) );
+    return this._provide( "isFile", isFile, makeAbsolutePath( file ) );
   }
 
   purge( what ) {
-    const file = makeAbsolute( what );
+    const file = makeAbsolutePath( what );
     for ( const name in this.caches ) {
       this.caches[ name ].del( file );
     }

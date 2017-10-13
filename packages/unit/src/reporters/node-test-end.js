@@ -1,5 +1,5 @@
 import { SourceMapExtractor } from "../../../source-map/src/";
-import { normalize } from "../../../pathname/src/path-url";
+import { prettify } from "../../../pathname/src/path-url";
 import { beautify as beautifyStack } from "../../../error/src";
 import colors from "./colors";
 import concordanceOptions from "./concordance-options";
@@ -57,7 +57,7 @@ function showSource( source ) {
     return "";
   }
 
-  return colors.errorStack( normalize( file ) ) + "\n\n" + codeFrameColumns( code, { start: { line } } ) + "\n\n";
+  return colors.errorStack( prettify( file ) ) + "\n\n" + codeFrameColumns( code, { start: { line } } ) + "\n\n";
 }
 
 function logSkipReason( text ) {

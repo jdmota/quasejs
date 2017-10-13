@@ -16,3 +16,6 @@ declare module "parse-npm-tarball-url" { declare var exports: any; }
 declare module "klaw" { declare var exports: any; }
 declare module "symlink-dir" { declare var exports: any; }
 declare module "watchpack" { declare var exports: any; }
+declare module "file-url" { declare var exports: any; }
+declare module "slash" { declare var exports: any; }
+declare module "is-url-superb" { declare var exports: any; }

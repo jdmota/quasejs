@@ -1,20 +1,85 @@
-import req from "../../_helper/require";
+// @flow
 
-const path = req( "path" );
-const URL = typeof window !== "undefined" && window.URL; // eslint-disable-line no-undef
-const LOCATION = typeof window !== "undefined" && window.location; // eslint-disable-line no-undef
+opaque type Url = string;
+opaque type Path = string;
 
-export function makeAbsolute( file ) {
-  return URL ? new URL( file, LOCATION ).href : path.resolve( file );
+// File paths
+
+const path = require( "path" );
+
+export const pathToUrl = require( "file-url" );
+export const slash = require( "slash" );
+
+export function isAbsolutePath( file: Path ) {
+  return path.isAbsolute( file );
 }
 
-export function resolveAsUrl( from, to ) {
-  return URL ? new URL( to, from ).href : path.resolve( path.dirname( from ), to );
+export function makeAbsolutePath( file: Path ) {
+  return resolvePath( process.cwd(), file );
 }
 
-export function normalize( file ) {
-  if ( URL ) {
-    return new URL( file, LOCATION ).pathname;
-  }
-  return path.relative( process.cwd(), file ).replace( /\\/g, "/" ); // FIXME use slash
+export function resolvePath( from: Path, to: Path ) {
+  return path.resolve( from, to );
+}
+
+export function resolvePathAsUrl( from: Path, to: Path ) {
+  return path.resolve( path.dirname( from ), to );
+}
+
+export function prettifyPath( file: Path ) {
+  return slash( path.relative( process.cwd(), file ) );
+}
+
+// Urls
+/* eslint-env browser */
+
+const URL = ( typeof window !== "undefined" && window.URL ) || require( "url" ).URL;
+const LOCATION: Url = ( typeof window !== "undefined" && window.location ) || "http://localhost/";
+
+const reAbsUrl = /^[a-z][a-z0-9+.-]*:/;
+
+export function isAbsoluteUrl( url: Url ) {
+  return reAbsUrl.test( url );
+}
+
+export function makeAbsoluteUrl( url: Url ) {
+  return new URL( url, LOCATION ).href;
+}
+
+export function resolveUrl( from: Url, to: Url ) {
+  return new URL( to, from ).href;
+}
+
+export function prettifyUrl( url: Url, opts: ?{ lastSlash: boolean } ) {
+  return opts && opts.lastSlash === false ?
+    new URL( url, LOCATION ).pathname :
+    removeLastSlash( new URL( url, LOCATION ).pathname );
+}
+
+export function removeLastSlash( url: Url ) {
+  return url.replace( /\/+$/g, "" );
+}
+
+// Both
+
+export const isUrl = require( "is-url-superb" );
+
+export function isAbsolute( name: Url | Path ) {
+  return isUrl( name ) ? isAbsoluteUrl( name ) : isAbsolutePath( name );
+}
+
+export function makeAbsolute( name: Url | Path ) {
+  return isUrl( name ) ? makeAbsoluteUrl( name ) : makeAbsolutePath( name );
+}
+
+export function resolve( from: Url | Path, to: Url | Path ) {
+  return isUrl( from ) ? resolveUrl( from, to ) : resolvePath( from, to );
+}
+
+export function resolveAsUrl( from: Url | Path, to: Url | Path ) {
+  return isUrl( from ) ? resolveUrl( from, to ) : resolvePathAsUrl( from, to );
+}
+
+export function prettify( name: Url | Path, opts: ?{ lastSlash: boolean } ) {
+  return isUrl( name ) ? prettifyUrl( name, opts ) : prettifyPath( name );
 }
