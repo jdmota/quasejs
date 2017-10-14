@@ -63,6 +63,22 @@ export default class Store {
     return id;
   }
 
+  async crawl( folder: string, mapper: Function ): Promise<any> {
+    const promises = [];
+    await new Promise( ( resolve, reject ) => {
+      klaw( folder )
+        .on( "data", item => {
+          const p = mapper( item );
+          if ( p ) {
+            promises.push( p );
+          }
+        } )
+        .on( "error", reject )
+        .on( "end", resolve );
+    } );
+    return Promise.all( promises );
+  }
+
   async linkNodeModules( folder: string, set: ImmutableResolutionSet, opts: InstallOptions, fake: ?boolean ) {
     const promises = [];
 
@@ -72,13 +88,21 @@ export default class Store {
       set.forEach( res => {
         promises.push(
           this.createResolution( res, opts ).then( async resFolder => {
+            const filesFolder = path.join( path.dirname( path.dirname( resFolder ) ), "files" );
             const depFolder = path.join( folder, "node_modules", res.data.name );
-            const json = {
-              name: res.data.name,
-              main: resFolder // FIXME because this will only work with index.js
-            };
 
-            await fs.outputFile( path.join( depFolder, "package.json" ), JSON.stringify( json, null, 2 ) );
+            await this.crawl( filesFolder, item => {
+              if ( item.stats.isFile() ) {
+                const relative = path.relative( filesFolder, item.path );
+                const dest = path.resolve( depFolder, relative );
+                return (
+                  // TODO? !/\..+$/.test( dest )
+                  /\.js$/.test( dest ) ?
+                    fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
+                    fs.copy( item.path, dest )
+                );
+              }
+            } );
           } )
         );
       } );
@@ -124,24 +148,17 @@ export default class Store {
 
         await fs.emptyDir( res );
 
-        const promises = [
-          this.linkNodeModules( res, resolution.set, opts )
-        ];
+        const linking = this.linkNodeModules( res, resolution.set, opts );
 
-        await new Promise( ( resolve, reject ) => { // eslint-disable-line no-loop-func
-          klaw( filesFolder )
-            .on( "data", item => {
-              if ( item.stats.isFile() ) {
-                const relative = path.relative( filesFolder, item.path );
-                const dest = path.resolve( res, relative );
-                promises.push( fs.ensureLink( item.path, dest ) );
-              }
-            } )
-            .on( "error", reject )
-            .on( "end", resolve );
+        await this.crawl( filesFolder, item => {
+          if ( item.stats.isFile() ) {
+            const relative = path.relative( filesFolder, item.path );
+            const dest = path.resolve( res, relative );
+            return fs.ensureLink( item.path, dest );
+          }
         } );
 
-        await Promise.all( promises );
+        await linking;
 
         await fs.outputFile( resFile, resolution.toString() );
 
@@ -153,7 +170,7 @@ export default class Store {
 
       }
 
-      if ( i++ > 50 ) {
+      if ( i++ > 20 ) {
         break;
       }
     }

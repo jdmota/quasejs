@@ -68,11 +68,11 @@ export default async function( folder: string, _opts: Object ) {
 
   const promises = [];
 
-  const installFromLock = index => {
+  async function installFromLock( index ) {
     const [ name, version, resolved, integrity ] = lockfile.resolutions[ index ];
     const obj = { name, version, resolved, integrity };
 
-    return tree.createResolution( obj, async set => {
+    const res = await tree.createResolution( obj, async set => {
       const extraction = store.extract( obj.resolved, opts );
       const promises = [];
 
@@ -85,14 +85,14 @@ export default async function( folder: string, _opts: Object ) {
         set.add( await p );
       }
       await extraction;
-    } ).then( res => {
-      store.createResolution( res, opts );
-      return res;
     } );
-  };
 
-  const install = obj => {
-    return tree.createResolution( obj, async set => {
+    await store.createResolution( res, opts );
+    return res;
+  }
+
+  async function install( obj ) {
+    const res = await tree.createResolution( obj, async set => {
       const extraction = store.extract( obj.resolved, opts );
       const promises = [];
 
@@ -106,15 +106,15 @@ export default async function( folder: string, _opts: Object ) {
         set.add( await p );
       }
       await extraction;
-    } ).then( res => {
-      store.createResolution( res, opts );
-      return res;
     } );
-  };
+
+    await store.createResolution( res, opts );
+    return res;
+  }
 
   const allDeps = [];
 
-  const resolveDep = ( name: string, version: string, depType: DepType ) => {
+  async function resolveDep( name: string, version: string, depType: DepType ) {
     if ( !opts.update ) {
       const deps = lockfile[ depType ] || {};
       const { savedVersion, resolved, i } = deps[ name ] || {};
@@ -124,12 +124,12 @@ export default async function( folder: string, _opts: Object ) {
         return installFromLock( i );
       }
     }
-    return resolve( name, version, opts ).then( obj => {
-      newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
-      allDeps.push( obj.resolved );
-      return obj;
-    } ).then( install );
-  };
+
+    const obj = await resolve( name, version, opts );
+    newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
+    allDeps.push( obj.resolved );
+    return install( obj );
+  }
 
   for ( const name in pkg.dependencies ) {
     promises.push( resolveDep( name, pkg.dependencies[ name ], "deps" ) );
