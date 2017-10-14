@@ -37,6 +37,9 @@ describe( "installer", () => {
 
   it( "basic", async() => {
 
+    // $FlowFixMe
+    jest.setTimeout( 20000 );
+
     let outputs = null;
 
     async function install() {

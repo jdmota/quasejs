@@ -1,31 +1,22 @@
 // @flow
 
 import type { InstallOptions } from "./installer";
+import pacoteOptions from "./pacote-options";
 
 const npa = require( "npm-package-arg" );
 const pacote = require( "pacote" );
-const parseNpmTarballUrl = require( "parse-npm-tarball-url" ).default;
-/* const path = require( "path" );
-const encodeRegistry = require( "encode-registry" );
-const normalize = require( "normalize-path" );
+const filenamify = require( "filenamify" );
 
-function buildIdNpm( spec, pkg ) {
-  return `${encodeRegistry( pkg.dist.tarball )}/${pkg.name}/${pkg.version}`;
+const reSha = /^sha\d+-/;
+
+// Because of case insensitive OS's
+function lowerCaseIntegrity( integrity: string ): string {
+  const prefix = ( integrity.match( reSha ) || [ "" ] )[ 0 ];
+  return prefix + Buffer.from( integrity.substring( prefix.length ), "base64" ).toString( "hex" );
 }
 
-function buildIdLocal( spec ) {
-  return `file:${normalize( path.relative( "prefix", spec.fetchSpec ) )}`;
-}*/
-
-export function buildId( resolved: string ): string {
-  if ( resolved.startsWith( "http://registry.npmjs.org/" ) || resolved.startsWith( "https://registry.npmjs.org/" ) ) {
-    const parsed = parseNpmTarballUrl( resolved );
-    if ( parsed ) {
-      return `${parsed.host}/${parsed.pkg.name}/${parsed.pkg.version}`;
-    }
-  }
-  throw new Error( `Cannot transform '${resolved}' in an id` );
-  // TODO return resolved.replace( /^.*:\/\/(git@)?/, "" ).replace( /\.tgz$/, "" );
+export function buildId( resolved: string, integrity: string ): string {
+  return filenamify( resolved ) + "/" + lowerCaseIntegrity( integrity );
 }
 
 export default async function( name: string, version: string, opts: InstallOptions ) {
@@ -40,7 +31,7 @@ export default async function( name: string, version: string, opts: InstallOptio
 
   const spec = npa.resolve( name, version );
 
-  const pkg = await pacote.manifest( spec, opts );
+  const pkg = await pacote.manifest( spec, pacoteOptions( opts ) );
 
   if ( pkg.name !== spec.name ) {
     throw new Error( `Name '${name}' does not match the name in the manifest: ${pkg.name} (version: ${pkg.version})` );
@@ -50,7 +41,7 @@ export default async function( name: string, version: string, opts: InstallOptio
     name: pkg.name,
     version: pkg.version,
     resolved: pkg._resolved,
-    integrity: pkg._integrity,
+    integrity: pkg._integrity + "",
     deps: pkg.dependencies
   };
 }

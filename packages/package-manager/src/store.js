@@ -1,5 +1,6 @@
 // @flow
 
+import pacoteOptions from "./pacote-options";
 import { buildId } from "./resolve";
 import type { InstallOptions } from "./installer";
 import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
@@ -22,6 +23,9 @@ Resolution set converted to string: STORE/modules/<id>/res/<hash of resolution s
 
 STORE/modules/<id>/res/<hash of resolution set>-<index collision>/<...> === STORE/modules/<id>/files/<...> [hard link]
 STORE/modules/<id>/res/<hash of resolution set>-<index collision>/node_modules
+
+.qpm-integrity and .qpm-res files also serve too tell that the job was done
+
 */
 
 async function read( p ) {
@@ -42,22 +46,23 @@ export default class Store {
   static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
 
   map: Map<string, Promise<string>>;
+  store: string;
 
-  constructor() {
+  constructor( store: string ) {
     this.map = new Map();
+    this.store = path.resolve( store, STORE_VERSION );
   }
 
-  async extract( resolved: string, opts: InstallOptions ) {
-    // TODO deal with more options, like integrity
-    // Atomic write? Make sure if folder exists, the extraction was not left before completion
-    // See https://github.com/npm/npm/blob/latest/lib/config/pacote.js
+  async extract( resolved: string, opts: InstallOptions, integrity: string ) {
+    const id = buildId( resolved, integrity );
+    const folder = path.join( this.store, id, "files" );
+    const integrityFile = path.join( folder, ".qpm-integrity" );
+    const currentIntegrity = await read( integrityFile );
 
-    const id = buildId( resolved );
-    const folder = path.join( opts.store, "modules", id, "files" );
-    const exists = await fs.pathExists( folder );
-
-    if ( !exists ) {
-      await pacote.extract( resolved, folder, opts );
+    if ( !currentIntegrity || currentIntegrity !== integrity ) {
+      await fs.emptyDir( folder );
+      await pacote.extract( resolved, folder, pacoteOptions( opts, integrity ) );
+      await fs.writeFile( integrityFile, integrity );
     }
 
     return id;
@@ -79,7 +84,7 @@ export default class Store {
     return Promise.all( promises );
   }
 
-  async linkNodeModules( folder: string, set: ImmutableResolutionSet, opts: InstallOptions, fake: ?boolean ) {
+  async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
     const promises = [];
 
     await fs.ensureDir( path.join( folder, "node_modules" ) );
@@ -87,7 +92,7 @@ export default class Store {
     if ( fake ) {
       set.forEach( res => {
         promises.push(
-          this.createResolution( res, opts ).then( async resFolder => {
+          this.createResolution( res ).then( async resFolder => {
             const filesFolder = path.join( path.dirname( path.dirname( resFolder ) ), "files" );
             const depFolder = path.join( folder, "node_modules", res.data.name );
 
@@ -96,8 +101,7 @@ export default class Store {
                 const relative = path.relative( filesFolder, item.path );
                 const dest = path.resolve( depFolder, relative );
                 return (
-                  // TODO? !/\..+$/.test( dest )
-                  /\.js$/.test( dest ) ?
+                  /\.js$/.test( dest ) || !/\..+$/.test( dest ) ?
                     fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
                     fs.copy( item.path, dest )
                 );
@@ -109,7 +113,7 @@ export default class Store {
     } else {
       set.forEach( res => {
         promises.push(
-          this.createResolution( res, opts ).then( resFolder => {
+          this.createResolution( res ).then( resFolder => {
             return symlinkDir( resFolder, path.join( folder, "node_modules", res.data.name ) );
           } )
         );
@@ -119,20 +123,20 @@ export default class Store {
     await Promise.all( promises );
   }
 
-  async createResolution( resolution: ImmutableResolution, opts: InstallOptions ): Promise<string> {
+  async createResolution( resolution: ImmutableResolution ): Promise<string> {
     let p = this.map.get( resolution.data.resolved );
     if ( !p ) {
-      p = this._createResolution( resolution, opts );
+      p = this._createResolution( resolution );
       this.map.set( resolution.data.resolved, p );
     }
     return p;
   }
 
-  async _createResolution( resolution: ImmutableResolution, opts: InstallOptions ): Promise<string> {
+  async _createResolution( resolution: ImmutableResolution ): Promise<string> {
 
-    const id = buildId( resolution.data.resolved );
-    const filesFolder = path.join( opts.store, "modules", id, "files" );
-    const resFolders = path.join( opts.store, "modules", id, "res" );
+    const id = buildId( resolution.data.resolved, resolution.data.integrity );
+    const filesFolder = path.join( this.store, id, "files" );
+    const resFolders = path.join( this.store, id, "res" );
     const hash = resolution.hashCode();
     let i = 0;
 
@@ -148,7 +152,7 @@ export default class Store {
 
         await fs.emptyDir( res );
 
-        const linking = this.linkNodeModules( res, resolution.set, opts );
+        const linking = this.linkNodeModules( res, resolution.set );
 
         await this.crawl( filesFolder, item => {
           if ( item.stats.isFile() ) {
@@ -160,7 +164,7 @@ export default class Store {
 
         await linking;
 
-        await fs.outputFile( resFile, resolution.toString() );
+        await fs.writeFile( resFile, resolution.toString() );
 
         return res;
 

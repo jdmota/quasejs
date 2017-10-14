@@ -63,7 +63,7 @@ export default async function( folder: string, _opts: Object ) {
     optionalDeps: {}
   };
 
-  const store = new Store();
+  const store = new Store( opts.store );
   const tree = new Tree();
 
   const promises = [];
@@ -73,7 +73,7 @@ export default async function( folder: string, _opts: Object ) {
     const obj = { name, version, resolved, integrity };
 
     const res = await tree.createResolution( obj, async set => {
-      const extraction = store.extract( obj.resolved, opts );
+      const extraction = store.extract( obj.resolved, opts, obj.integrity );
       const promises = [];
 
       const indexes = lockfile.resolutions[ index ][ 4 ];
@@ -87,13 +87,13 @@ export default async function( folder: string, _opts: Object ) {
       await extraction;
     } );
 
-    await store.createResolution( res, opts );
+    await store.createResolution( res );
     return res;
   }
 
   async function install( obj ) {
     const res = await tree.createResolution( obj, async set => {
-      const extraction = store.extract( obj.resolved, opts );
+      const extraction = store.extract( obj.resolved, opts, obj.integrity );
       const promises = [];
 
       for ( const name in obj.deps ) {
@@ -108,7 +108,7 @@ export default async function( folder: string, _opts: Object ) {
       await extraction;
     } );
 
-    await store.createResolution( res, opts );
+    await store.createResolution( res );
     return res;
   }
 
@@ -140,7 +140,7 @@ export default async function( folder: string, _opts: Object ) {
   }
 
   await Promise.all( promises );
-  await store.linkNodeModules( folder, await tree.extractDeps( allDeps ), opts, true );
+  await store.linkNodeModules( folder, await tree.extractDeps( allDeps ), true );
 
   const map: Map<string, number> = new Map();
   tree.generate( newLockfile.resolutions, map );
