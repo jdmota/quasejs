@@ -11,10 +11,9 @@
     "es6": true,
     "jest/globals": true
   },
-  "plugins": [ "flowtype", "import", "node", "flowtype-errors", "jest" ],
+  "plugins": [ "flowtype", "import", "node", "jest" ],
   "extends": [ "plugin:flowtype/recommended", "plugin:node/recommended", "plugin:import/recommended" ],
   "rules": {
-    "flowtype-errors/show-errors": 0,
     "import/unambiguous": 0,
 
     "accessor-pairs": 2,
