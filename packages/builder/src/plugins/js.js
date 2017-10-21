@@ -4,7 +4,6 @@ import blank from "../utils/blank";
 import error from "../utils/error";
 import isEmpty from "../utils/is-empty";
 import StringBuilder from "../string-builder";
-import cloneAst from "./clone-ast";
 import babelBuildHelpers from "./babel-helpers";
 import babelPluginModules from "./babel-plugin-transform-modules";
 import extractNames from "./ast-extract-names";
@@ -106,10 +105,11 @@ const INTERNAL = "__builderJsLoader";
 
 class JsModule {
 
-  constructor( id, ast ) {
+  constructor( id, ast, parserOpts ) {
     this.id = id;
     this.ast = ast;
     this.builder = null; // Fill!
+    this.lastRender = null;
 
     this.sources = [];
     this.dynamicImports = [];
@@ -122,6 +122,8 @@ class JsModule {
 
     this._imports = null;
     this._exports = null;
+
+    this.getDeps( parserOpts );
   }
 
   getMaps() {
@@ -382,10 +384,7 @@ export function plugin( parserOpts ) {
     opts.plugins = opts.plugins || defaultParserOpts.plugins;
     opts.sourceType = opts.sourceType || defaultParserOpts.sourceType;
 
-    ast = ast || parse( code, opts );
-
-    const js = new JsModule( id, ast );
-    js.getDeps( opts );
+    const js = new JsModule( id, ast || parse( code, opts ), opts );
 
     return {
       code,
@@ -441,6 +440,10 @@ const internalPlugins = [ helpersPlugin, babelPluginModules ];
 
 function renderModule( jsModule, builder, babelOpts ) {
 
+  if ( jsModule.lastRender ) {
+    return jsModule.lastRender;
+  }
+
   const opts = Object.assign( {}, babelOpts, {
     filename: jsModule.id,
     sourceRoot: path.dirname( jsModule.id ),
@@ -453,7 +456,8 @@ function renderModule( jsModule, builder, babelOpts ) {
 
   opts.plugins = ( opts.plugins || [] ).concat( internalPlugins );
 
-  return babel.transformFromAst( cloneAst( jsModule.ast ), jsModule.getCode(), opts );
+  jsModule.lastRender = babel.transformFromAst( jsModule.ast, jsModule.getCode(), opts );
+  return jsModule.lastRender;
 }
 
 export function renderer( babelOpts ) {
@@ -488,8 +492,8 @@ export function renderer( babelOpts ) {
       }
 
       for ( const jsModule of jsModules ) {
-        jsModule._render = renderModule( jsModule, builder, babelOpts );
-        jsModule._render.metadata.usedHelpers.forEach( h => { usedHelpers[ h ] = true; } );
+        renderModule( jsModule, builder, babelOpts );
+        jsModule.lastRender.metadata.usedHelpers.forEach( h => { usedHelpers[ h ] = true; } );
       }
 
       build.append(
@@ -503,7 +507,7 @@ export function renderer( babelOpts ) {
       moduleIdx = 0;
       for ( const jsModule of jsModules ) {
 
-        let { code, map } = jsModule._render;
+        let { code, map } = jsModule.lastRender;
 
         if ( map ) {
           map = joinSourceMaps( jsModule.getMaps().concat( map ) );

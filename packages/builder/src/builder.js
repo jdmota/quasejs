@@ -13,8 +13,6 @@ const path = require( "path" );
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /\[hash\]/ig;
 
-// FIXME fix incremental builds (need to resolve again!)
-
 export default class Builder {
 
   idEntries: [ID, ID][];
@@ -164,7 +162,7 @@ async function callCheckers(
   builder: Builder
 ): Promise<void> {
   for ( const fn of array ) {
-    await fn( builder ); // eslint-disable-line no-await-in-loop
+    await fn( builder );
   }
 }
 
@@ -175,7 +173,7 @@ async function callRenderers(
 ): Promise<void> {
   const write = builder.write.bind( builder );
   for ( const fn of array ) {
-    const out = await fn( builder, finalModules ); // eslint-disable-line no-await-in-loop
-    await Promise.all( out.map( write ) ); // eslint-disable-line no-await-in-loop
+    const out = await fn( builder, finalModules );
+    await Promise.all( out.map( write ) );
   }
 }

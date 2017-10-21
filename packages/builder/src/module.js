@@ -143,7 +143,7 @@ export default class Module {
 
   async runResolvers( obj: { src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {
     for ( const fn of this.builder.resolvers ) {
-      const r = await fn( obj, this.id, this.builder ); // eslint-disable-line no-await-in-loop
+      const r = await fn( obj, this.id, this.builder );
       if ( r != null ) {
         return r;
       }
