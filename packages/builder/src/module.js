@@ -2,7 +2,7 @@
 
 import error from "./utils/error";
 import type Builder from "./builder";
-import type { Result, Deps, Plugin, Resolver } from "./types";
+import type { Result, Deps, Plugin } from "./types";
 import { type ID } from "./id";
 
 function isObject( obj ) {
