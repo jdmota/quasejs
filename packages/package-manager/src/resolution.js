@@ -1,6 +1,7 @@
 // @flow
 
-import type { Entry } from "./installer";
+import type { Name, ExactVersion, Resolved, Integrity } from "./types";
+import type { Entry } from "./lockfile";
 
 const crypto = require( "crypto" );
 
@@ -11,23 +12,23 @@ function hash( input ) {
 const STRING_VERSION = "1\n";
 
 export type Data = {
-  name: string,
-  version: string,
-  resolved: string,
-  integrity: string
+  name: Name,
+  version: ExactVersion,
+  resolved: Resolved,
+  integrity: Integrity
 };
 
 export interface ImmutableResolution {
   +data: Data;
   +set: ImmutableResolutionSet; // eslint-disable-line no-use-before-define
-  buildFlat( arr: Array<Entry>, map: ?Map<string, number> ): number;
+  buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): number;
   hashCode(): string;
 }
 
 export interface ImmutableResolutionSet {
   +size: number;
   forEach( callback: ImmutableResolution => ?boolean ): void;
-  buildFlat( arr: Array<Entry>, map: ?Map<string, number> ): Array<Entry>;
+  buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): Array<Entry>;
 }
 
 class Resolution implements ImmutableResolution {
@@ -67,7 +68,7 @@ class Resolution implements ImmutableResolution {
     return this._string;
   }
 
-  buildFlat( arr: Array<Entry>, _map: ?Map<string, number> ): number {
+  buildFlat( arr: Array<Entry>, _map: ?Map<Resolved, number> ): number {
 
     const map = _map || new Map();
 
@@ -110,7 +111,7 @@ class ResolutionSet implements ImmutableResolutionSet {
     this._root = null;
   }
 
-  buildFlat( arr: Array<Entry>, _map: ?Map<string, number> ): Array<Entry> {
+  buildFlat( arr: Array<Entry>, _map: ?Map<Resolved, number> ): Array<Entry> {
     const map = _map || new Map();
     this.forEach( resolution => {
       resolution.buildFlat( arr, map );
@@ -206,7 +207,7 @@ async function createResolution( globalSet: ResolutionSet, data: Data, callback:
 export class Tree {
 
   set: ResolutionSet;
-  map: Map<string, Promise<ImmutableResolution>>;
+  map: Map<Resolved, Promise<ImmutableResolution>>;
 
   constructor() {
     this.set = new ResolutionSet();
@@ -222,11 +223,11 @@ export class Tree {
     return p;
   }
 
-  generate( arr: Array<Entry>, map: Map<string, number> ) {
+  generate( arr: Array<Entry>, map: Map<Resolved, number> ) {
     this.set.buildFlat( arr, map );
   }
 
-  async extractDeps( allDeps: string[] ): Promise<ImmutableResolutionSet> {
+  async extractDeps( allDeps: Resolved[] ): Promise<ImmutableResolutionSet> {
     const set = new ResolutionSet();
     for ( const key of allDeps ) {
       // $FlowFixMe

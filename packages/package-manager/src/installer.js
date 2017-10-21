@@ -1,7 +1,14 @@
 // @flow
 
+import type { Name, Version, Resolved } from "./types";
 import { read as readPkg } from "./pkg";
-import { read as readLockfile, write as writeLockfile } from "./lockfile";
+import {
+  shouldReuse as shouldReuseLockfile,
+  create as createLockfile,
+  read as readLockfile,
+  write as writeLockfile,
+  type Lockfile
+} from "./lockfile";
 import resolve from "./resolve";
 import { Tree } from "./resolution";
 import Store from "./store";
@@ -21,23 +28,6 @@ export type InstallOptions = {
 
 type DepType = "deps" | "devDeps" | "optionalDeps";
 
-type Deps = { [name: string]: { savedVersion: string, resolved: string, i: number } };
-
-// TODO refactor out lockfile logic, and check for validity of it
-
-// [ name, version, resolution, integrity, deps ]
-export type Entry = [string, string, string, string, number[]];
-
-const LOCK_VERSION = "1"; // TODO deal with different versions
-
-type Lockfile = {
-  v: string,
-  resolutions: Entry[],
-  deps: Deps,
-  devDeps: Deps,
-  optionalDeps: Deps,
-};
-
 /* eslint no-await-in-loop: 0 */
 
 export default async function( folder: string, _opts: Object ) {
@@ -49,19 +39,15 @@ export default async function( folder: string, _opts: Object ) {
   if ( opts.offline == null && opts.preferOnline == null ) {
     opts.preferOffline = true;
   }
-  opts.cache = path.join( opts.store, "cache" );
+  opts.cache = opts.cache || path.join( opts.store, "cache" );
 
   const configPromises = [ readPkg( folder ), readLockfile( folder ) ];
   const pkg = await configPromises[ 0 ];
-  const lockfile = ( await configPromises[ 1 ]: Lockfile );
+  const lockfile: Lockfile = await configPromises[ 1 ];
 
-  const newLockfile: Lockfile = {
-    v: LOCK_VERSION,
-    resolutions: [],
-    deps: {},
-    devDeps: {},
-    optionalDeps: {}
-  };
+  const reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+
+  const newLockfile: Lockfile = createLockfile();
 
   const store = new Store( opts.store );
   const tree = new Tree();
@@ -114,8 +100,8 @@ export default async function( folder: string, _opts: Object ) {
 
   const allDeps = [];
 
-  async function resolveDep( name: string, version: string, depType: DepType ) {
-    if ( !opts.update ) {
+  async function resolveDep( name: Name, version: Version, depType: DepType ) {
+    if ( reuseLockfile ) {
       const deps = lockfile[ depType ] || {};
       const { savedVersion, resolved, i } = deps[ name ] || {};
       if ( savedVersion === version ) {
@@ -142,7 +128,7 @@ export default async function( folder: string, _opts: Object ) {
   await Promise.all( promises );
   await store.linkNodeModules( folder, await tree.extractDeps( allDeps ), true );
 
-  const map: Map<string, number> = new Map();
+  const map: Map<Resolved, number> = new Map();
   tree.generate( newLockfile.resolutions, map );
 
   for ( const name in newLockfile.deps ) {

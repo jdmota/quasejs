@@ -1,5 +1,7 @@
 // @flow
 
+import type { Resolved, Integrity } from "./types";
+import { pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
 import { buildId } from "./resolve";
 import type { InstallOptions } from "./installer";
@@ -45,7 +47,7 @@ export default class Store {
 
   static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
 
-  map: Map<string, Promise<string>>;
+  map: Map<Resolved, Promise<string>>;
   store: string;
 
   constructor( store: string ) {
@@ -53,7 +55,7 @@ export default class Store {
     this.store = path.resolve( store, STORE_VERSION );
   }
 
-  async extract( resolved: string, opts: InstallOptions, integrity: string ) {
+  async extract( resolved: Resolved, opts: InstallOptions, integrity: Integrity ) {
     const id = buildId( resolved, integrity );
     const folder = path.join( this.store, id, "files" );
     const integrityFile = path.join( folder, ".qpm-integrity" );
@@ -94,7 +96,7 @@ export default class Store {
         promises.push(
           this.createResolution( res ).then( async resFolder => {
             const filesFolder = path.join( path.dirname( path.dirname( resFolder ) ), "files" );
-            const depFolder = path.join( folder, "node_modules", res.data.name );
+            const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
             await this.crawl( filesFolder, item => {
               if ( item.stats.isFile() ) {
@@ -114,7 +116,7 @@ export default class Store {
       set.forEach( res => {
         promises.push(
           this.createResolution( res ).then( resFolder => {
-            return symlinkDir( resFolder, path.join( folder, "node_modules", res.data.name ) );
+            return symlinkDir( resFolder, pathJoin( folder, "node_modules", res.data.name ) );
           } )
         );
       } );

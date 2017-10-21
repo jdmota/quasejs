@@ -1,5 +1,6 @@
 // @flow
 
+import type { Name, Version, Resolved, Integrity, ResolvedObj } from "./types";
 import type { InstallOptions } from "./installer";
 import pacoteOptions from "./pacote-options";
 
@@ -10,16 +11,16 @@ const filenamify = require( "filenamify" );
 const reSha = /^sha\d+-/;
 
 // Because of case insensitive OS's
-function lowerCaseIntegrity( integrity: string ): string {
+function lowerCaseIntegrity( integrity: Integrity ): string {
   const prefix = ( integrity.match( reSha ) || [ "" ] )[ 0 ];
   return prefix + Buffer.from( integrity.substring( prefix.length ), "base64" ).toString( "hex" );
 }
 
-export function buildId( resolved: string, integrity: string ): string {
+export function buildId( resolved: Resolved, integrity: Integrity ): string {
   return filenamify( resolved ) + "/" + lowerCaseIntegrity( integrity );
 }
 
-export default async function( name: string, version: string, opts: InstallOptions ) {
+export default async function( name: Name, version: Version, opts: InstallOptions ): Promise<ResolvedObj> {
 
   if ( !name ) {
     throw new Error( "Missing name" );
