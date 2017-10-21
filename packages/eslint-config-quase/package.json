@@ -1,7 +1,7 @@
 {
   "name": "@quase/eslint-config-quase",
   "version": "0.1.0",
-  "description": "Eslint config",
+  "description": "Eslint config used by Quase",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/eslint-config-quase",
@@ -13,10 +13,12 @@
     "quase"
   ],
   "peerDependencies": {
-    "babel-eslint": "^7.2.3",
+    "babel-eslint": "^8.0.1",
     "eslint": "^4.6.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1"
+    "eslint-plugin-flowtype": "^2.39.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jest": "^21.2.0",
+    "eslint-plugin-node": "^5.2.0"
   },
   "engines": {
     "node": ">= 4"
