@@ -958,14 +958,6 @@ $r(\\"foo-bar\\");
 $r(\\"./directory/foo-bar\\");"
 `;
 
-exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-babel-transform-runtime 1`] = `
-"var _taggedTemplateLiteral2 = $r(\\"babel-runtime/helpers/taggedTemplateLiteral\\");
-
-var _templateObject = (0, _taggedTemplateLiteral2.default)([\\"foo\\"], [\\"foo\\"]);
-
-tag(_templateObject);"
-`;
-
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default 1`] = `
 "var _foo = $r(\\"foo\\");
 

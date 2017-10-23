@@ -366,15 +366,26 @@ const defaultParserOpts = {
   sourceType: "module",
   plugins: [
     "asyncGenerators",
+    "bigInt",
+    "classPrivateMethods",
+    "classPrivateProperties",
     "classProperties",
+    "decorators2",
     "doExpressions",
     "dynamicImport",
     "exportExtensions",
     "flow",
     "functionBind",
     "functionSent",
+    "importMeta",
     "jsx",
-    "objectRestSpread"
+    "nullishCoalescingOperator",
+    "numericSeparator",
+    "objectRestSpread",
+    "optionalCatchBinding",
+    "optionalChaining",
+    "pipelineOperator",
+    "throwExpressions"
   ]
 };
 
@@ -428,15 +439,19 @@ const runtimeReplace = {
 };
 
 // Adapted from https://github.com/babel/babel/blob/master/packages/babel-plugin-external-helpers/src/index.js
-function helpersPlugin( ref ) {
+function helpersPlugin( ref, options ) {
   return {
     pre( file ) {
       file.set( "helpersNamespace", ref.types.identifier( "$b" ) );
+
+      const addHelper = file.addHelper;
+      file.addHelper = function( name ) {
+        options.helpers[ name ] = true;
+        return addHelper.call( file, name );
+      };
     }
   };
 }
-
-const internalPlugins = [ helpersPlugin, babelPluginModules ];
 
 function renderModule( jsModule, builder, babelOpts ) {
 
@@ -447,16 +462,23 @@ function renderModule( jsModule, builder, babelOpts ) {
   const opts = Object.assign( {}, babelOpts, {
     filename: jsModule.id,
     sourceRoot: path.dirname( jsModule.id ),
-    sourceMaps: !!builder.sourceMaps, // sourceMaps can be "inline", just make sure we pass a boolean to babel
-    resolveModuleSource( source ) {
-      const m = jsModule.getModuleBySource( source );
-      return m ? m._uuid : source;
-    }
+    sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
   } );
 
-  opts.plugins = ( opts.plugins || [] ).concat( internalPlugins );
+  const helpers = {};
+
+  opts.plugins = ( opts.plugins || [] ).concat( [
+    [ helpersPlugin, { helpers } ],
+    [ babelPluginModules, {
+      resolveModuleSource( source ) {
+        const m = jsModule.getModuleBySource( source );
+        return m ? m._uuid : source;
+      }
+    } ]
+  ] );
 
   jsModule.lastRender = babel.transformFromAst( jsModule.ast, jsModule.getCode(), opts );
+  jsModule.lastRender.helpers = helpers;
   return jsModule.lastRender;
 }
 
@@ -492,8 +514,10 @@ export function renderer( babelOpts ) {
       }
 
       for ( const jsModule of jsModules ) {
-        renderModule( jsModule, builder, babelOpts );
-        jsModule.lastRender.metadata.usedHelpers.forEach( h => { usedHelpers[ h ] = true; } );
+        const helpers = renderModule( jsModule, builder, babelOpts ).helpers;
+        for ( const name in helpers ) {
+          usedHelpers[ name ] = true;
+        }
       }
 
       build.append(

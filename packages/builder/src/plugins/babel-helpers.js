@@ -4,7 +4,7 @@ const t = require( "babel-types" );
 
 export default function( whitelist ) {
   if ( Object.keys( whitelist ).length === 0 ) {
-    return generator( t.objectExpression( [] ), { minified: true } ).code;
+    return "{}";
   }
 
   const body = [

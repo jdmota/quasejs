@@ -25,10 +25,11 @@ const buildExportAll = template( `${vars.exportAll}(${vars.exports}, $0)` );
 
 const THIS_BREAK_KEYS = [ "FunctionExpression", "FunctionDeclaration", "ClassProperty", "ClassMethod", "ObjectMethod" ];
 
-export default ( { types: t } ) => {
+export default ( { types: t }, options ) => {
 
   const REQUIRES = Symbol();
   const TOP_NODES = Symbol();
+  const resolveModuleSource = options.resolveModuleSource || ( x => x );
 
   function remapImport( path, newNode ) {
     if ( path.parentPath.isCallExpression( { callee: path.node } ) ) {
@@ -96,7 +97,7 @@ export default ( { types: t } ) => {
       this.addRequire = ( path, onlySideEffects ) => {
 
         const { node } = path;
-        const source = node.source.value;
+        const source = resolveModuleSource( node.source.value );
         const blockHoist = node._blockHoist;
 
         const context = getContext( path );
