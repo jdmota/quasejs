@@ -36,7 +36,7 @@ describe( "babel transform modules", () => {
         plugins: [ "dynamicImport", "exportExtensions", "jsx" ]
       }, config.parserOpts );
 
-      config.plugins = ( config.plugins || [] ).concat( [ "external-helpers", plugin ] );
+      config.plugins = ( config.plugins || [] ).concat( [ require( "babel-plugin-external-helpers" ), plugin ] );
       config.sourceMaps = true;
 
       const code = await fs.readFile( file, "utf8" );

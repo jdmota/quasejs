@@ -55,25 +55,19 @@
     "babel-jest": "^21.0.0",
     "babel-minify": "^0.2.0",
     "babel-node": "^7.0.0-beta.2",
-    "babel-plugin-external-helpers": "7.0.0-beta.2",
-    "babel-plugin-istanbul": "^4.1.1",
     "babel-plugin-transform-class-properties": "7.0.0-beta.2",
-    "babel-plugin-transform-export-extensions": "^7.0.0-alpha.19",
     "babel-plugin-transform-flow-strip-types": "7.0.0-beta.2",
-    "babel-plugin-transform-runtime": "7.0.0-beta.2",
     "babel-preset-env": "^2.0.0-beta.2",
     "eslint": "^4.6.1",
     "eslint-plugin-flowtype": "^2.35.1",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-jest": "^21.0.0",
     "eslint-plugin-node": "^5.0.0",
-    "fast-async": "^6.2.2",
     "flow-bin": "0.56.0",
     "flow-typed": "^2.1.5",
     "fs-extra": "^4.0.1",
     "jest": "^21.0.0",
     "lerna": "^2.1.2",
-    "npm-check": "^5.4.5",
-    "nyc": "^11.0.2"
+    "npm-check": "^5.4.5"
   }
 }

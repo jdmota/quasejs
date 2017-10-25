@@ -156,6 +156,20 @@ babel-helpers@7.0.0-beta.3:
     babel-traverse "7.0.0-beta.3"
     babel-types "7.0.0-beta.3"
 
+babel-plugin-external-helpers@7.0.0-beta.3:
+  version "7.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/babel-plugin-external-helpers/-/babel-plugin-external-helpers-7.0.0-beta.3.tgz#5518ac58066060df46e2580b6352d00a2b527ee6"
+
+babel-plugin-syntax-export-extensions@7.0.0-alpha.19:
+  version "7.0.0-alpha.19"
+  resolved "https://registry.yarnpkg.com/babel-plugin-syntax-export-extensions/-/babel-plugin-syntax-export-extensions-7.0.0-alpha.19.tgz#aa9d3a2bf6cfb34973f045991c2f8ee76e16443a"
+
+babel-plugin-transform-export-extensions@7.0.0-alpha.19:
+  version "7.0.0-alpha.19"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-export-extensions/-/babel-plugin-transform-export-extensions-7.0.0-alpha.19.tgz#664ed4cd942838bee1287ff81588905614b644aa"
+  dependencies:
+    babel-plugin-syntax-export-extensions "7.0.0-alpha.19"
+
 babel-plugin-transform-runtime@7.0.0-beta.3:
   version "7.0.0-beta.3"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-runtime/-/babel-plugin-transform-runtime-7.0.0-beta.3.tgz#1982bc9ca3148d3dfe16752e9bed217686a78842"
