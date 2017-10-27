@@ -1,5 +1,5 @@
 export default function clone( node, stack ) {
-  if ( node === null || typeof node !== "object" || typeof node === "function" ) {
+  if ( node == null || typeof node !== "object" || typeof node === "function" ) {
     return node;
   }
 

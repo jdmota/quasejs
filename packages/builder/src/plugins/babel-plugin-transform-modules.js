@@ -13,15 +13,13 @@ const vars = {
   exportAll: "$a"
 };
 
-const buildRequire = template( `${vars.require}($0);` );
-
-const buildExportsGetter = template( `${vars.export}(${vars.exports}, $0, function() { return $1; } );` );
-
-const buildExportsAssignment = template( `${vars.exports}.$0 = $1;` );
-
-const buildExportsDefaultsAssignment = template( `${vars.exports}.default = { default: $0 }.default;` );
-
-const buildExportAll = template( `${vars.exportAll}(${vars.exports}, $0)` );
+const templates = {
+  require: template( `${vars.require}($0);` ),
+  exportsGetter: template( `${vars.export}(${vars.exports}, $0, function() { return $1; } );` ),
+  exportsAssignment: template( `${vars.exports}.$0 = $1;` ),
+  exportsDefaultsAssignment: template( `${vars.exports}.default = { default: $0 }.default;` ),
+  exportAll: template( `${vars.exportAll}(${vars.exports}, $0)` )
+};
 
 const THIS_BREAK_KEYS = [ "FunctionExpression", "FunctionDeclaration", "ClassProperty", "ClassMethod", "ObjectMethod" ];
 
@@ -30,6 +28,34 @@ export default ( { types: t }, options ) => {
   const REQUIRES = Symbol();
   const TOP_NODES = Symbol();
   const resolveModuleSource = options.resolveModuleSource || ( x => x );
+  const varsUsed = options.varsUsed || {};
+
+  function getVar( name ) {
+    varsUsed[ vars[ name ] ] = true;
+    return vars[ name ];
+  }
+
+  function runTemplate( name, arg1, arg2 ) {
+    switch ( name ) {
+      case "require":
+        varsUsed[ vars.require ] = true;
+        break;
+      case "exportsGetter":
+        varsUsed[ vars.export ] = true;
+        varsUsed[ vars.exports ] = true;
+        break;
+      case "exportsAssignment":
+      case "exportsDefaultsAssignment":
+        varsUsed[ vars.exports ] = true;
+        break;
+      case "exportAll":
+        varsUsed[ vars.exportAll ] = true;
+        varsUsed[ vars.exports ] = true;
+        break;
+      default:
+    }
+    return arg2 == null ? templates[ name ]( arg1 ) : templates[ name ]( arg1, arg2 );
+  }
 
   function remapImport( path, newNode ) {
     if ( path.parentPath.isCallExpression( { callee: path.node } ) ) {
@@ -124,7 +150,7 @@ export default ( { types: t }, options ) => {
           context[ REQUIRES ] = blank();
         }
 
-        const requireExpression = buildRequire( t.stringLiteral( source ) ).expression;
+        const requireExpression = runTemplate( "require", t.stringLiteral( source ) ).expression;
 
         const varDecl = t.variableDeclaration( "var", [ t.variableDeclarator( ref, requireExpression ) ] );
         const varDeclOnlyEffect = t.expressionStatement( requireExpression );
@@ -264,12 +290,12 @@ export default ( { types: t }, options ) => {
           if ( declarationPath.isFunctionDeclaration() || declarationPath.isClassDeclaration() ) {
 
             const id = declaration.id;
-            this.insertOnTop( path, buildExportsGetter( t.stringLiteral( id.name ), id ) );
+            this.insertOnTop( path, runTemplate( "exportsGetter", t.stringLiteral( id.name ), id ) );
 
           } else { // declarationPath.isVariableDeclaration()
 
             astExtractNames( declaration ).forEach( name => {
-              this.insertOnTop( path, buildExportsGetter( t.stringLiteral( name ), t.identifier( name ) ) );
+              this.insertOnTop( path, runTemplate( "exportsGetter", t.stringLiteral( name ), t.identifier( name ) ) );
             } );
 
           }
@@ -298,8 +324,8 @@ export default ( { types: t }, options ) => {
               }
 
               const exporter = specifier.isExportNamespaceSpecifier() ?
-                buildExportsAssignment( t.identifier( exportedName ), t.identifier( localName ) ) :
-                buildExportsGetter( t.stringLiteral( exportedName ), t.memberExpression( t.identifier( uid ), t.identifier( localName ) ) );
+                runTemplate( "exportsAssignment", t.identifier( exportedName ), t.identifier( localName ) ) :
+                runTemplate( "exportsGetter", t.stringLiteral( exportedName ), t.memberExpression( t.identifier( uid ), t.identifier( localName ) ) );
 
               this.insertOnTop( path, exporter );
               exporter.loc = specifier.node.loc;
@@ -307,7 +333,7 @@ export default ( { types: t }, options ) => {
             }
           } else {
             for ( const specifier of specifiersPath ) {
-              const exporter = buildExportsGetter( t.stringLiteral( specifier.node.exported.name ), specifier.node.local );
+              const exporter = runTemplate( "exportsGetter", t.stringLiteral( specifier.node.exported.name ), specifier.node.local );
               this.insertOnTop( path, exporter );
               exporter.loc = specifier.node.loc;
             }
@@ -332,12 +358,12 @@ export default ( { types: t }, options ) => {
           const id = declaration.id;
 
           if ( id ) {
-            const exporter = buildExportsGetter( t.stringLiteral( "default" ), id );
+            const exporter = runTemplate( "exportsGetter", t.stringLiteral( "default" ), id );
             this.insertOnTop( path, exporter );
             exporter.loc = path.node.loc;
             path.replaceWith( declaration );
           } else {
-            const exporter = buildExportsDefaultsAssignment( t.toExpression( declaration ) );
+            const exporter = runTemplate( "exportsDefaultsAssignment", t.toExpression( declaration ) );
             this.insertOnTop( path, exporter );
             exporter.loc = path.node.loc;
             path.remove();
@@ -345,7 +371,7 @@ export default ( { types: t }, options ) => {
 
         } else {
 
-          path.replaceWith( buildExportsAssignment( t.identifier( "default" ), declaration ) );
+          path.replaceWith( runTemplate( "exportsAssignment", t.identifier( "default" ), declaration ) );
 
         }
 
@@ -355,14 +381,14 @@ export default ( { types: t }, options ) => {
         path = wrapInBlock( path );
 
         const uid = this.addRequire( path, false );
-        const exportNode = buildExportAll( t.identifier( uid ) );
+        const exportNode = runTemplate( "exportAll", t.identifier( uid ) );
         this.insertOnTop( path, exportNode, 1 );
         exportNode.loc = path.node.loc;
         path.remove();
       },
 
       Import( path ) {
-        path.replaceWith( t.identifier( vars.import ) );
+        path.replaceWith( t.identifier( getVar( "import" ) ) );
       }
     }
   };

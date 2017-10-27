@@ -466,10 +466,12 @@ function renderModule( jsModule, builder, babelOpts ) {
   } );
 
   const helpers = {};
+  const varsUsed = {};
 
   opts.plugins = ( opts.plugins || [] ).concat( [
     [ helpersPlugin, { helpers } ],
     [ babelPluginModules, {
+      varsUsed,
       resolveModuleSource( source ) {
         const m = jsModule.getModuleBySource( source );
         return m ? m._uuid : source;
@@ -479,8 +481,11 @@ function renderModule( jsModule, builder, babelOpts ) {
 
   jsModule.lastRender = babel.transformFromAst( jsModule.ast, jsModule.getCode(), opts );
   jsModule.lastRender.helpers = helpers;
+  jsModule.lastRender.varsUsed = varsUsed;
   return jsModule.lastRender;
 }
+
+const moduleArgs = "$e,$r,$i,$b,$g,$a".split( "," );
 
 export function renderer( babelOpts ) {
   return ( builder, finalModules ) => {
@@ -537,7 +542,12 @@ export function renderer( babelOpts ) {
           map = joinSourceMaps( jsModule.getMaps().concat( map ) );
         }
 
-        build.append( `\n${jsModule._uuid}:function($e,$r,$i,$b,$g,$a){` );
+        const args = moduleArgs.slice();
+        while ( args.length > 0 && !jsModule.lastRender.varsUsed[ args[ args.length - 1 ] ] ) {
+          args.pop();
+        }
+
+        build.append( `\n${jsModule._uuid}:function(${args}){` );
         build.append( code, map );
         build.append( moduleIdx === jsModules.length - 1 ? "\n}" : "\n}," );
 
