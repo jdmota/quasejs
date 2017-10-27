@@ -492,8 +492,13 @@ export function renderer( babelOpts ) {
 
     const out = [];
 
-    for ( const { id, srcs, dest } of finalModules ) {
+    for ( const finalModule of finalModules ) {
+      if ( finalModule.built ) {
+        continue;
+      }
+      finalModule.built = true;
 
+      const { id, srcs, dest } = finalModule;
       const jsModules = [];
       const usedHelpers = {};
       let entryUUID = "";

@@ -171,9 +171,11 @@ async function callRenderers(
   builder: Builder,
   finalModules: Object[]
 ): Promise<void> {
+  const writes = [];
   const write = builder.write.bind( builder );
   for ( const fn of array ) {
     const out = await fn( builder, finalModules );
-    await Promise.all( out.map( write ) );
+    writes.push( out.map( write ) );
   }
+  await Promise.all( writes );
 }

@@ -109,7 +109,7 @@ export default function processGraph( builder: Builder ) {
     if ( srcs ) {
       const entrypoint = entrypoints.includes( id );
       const entry = builder.idEntries.find( ( [ entry ] ) => id === entry );
-      modules.push( { id, srcs, entrypoint, dest: entry && entry[ 1 ] } );
+      modules.push( { id, srcs, entrypoint, dest: entry && entry[ 1 ], built: false } );
     }
   } );
 
