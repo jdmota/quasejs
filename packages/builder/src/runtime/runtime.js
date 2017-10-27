@@ -6,7 +6,6 @@
   const Promise = global.Promise;
   const importScripts = global.importScripts;
   const doc = global.document;
-  const resolved = Promise.resolve();
 
   const helpers = { __BABEL_HELPERS__: 1 }; // This will be replaced
 
@@ -17,25 +16,36 @@
   function blank() { return Object.create( NULL ); }
 
   const modules = blank();
-  const fnModules = blank();
-  const externalModules = blank();
-  const fileImports = blank();
-  const fetches = blank();
+  const fnModules = blank(); // Functions that load the module
+  const fileImports = blank(); // Files that were imported already
+  const fetches = blank(); // Fetches
 
   const idToFile = { __ID_TO_FILE_HERE__: 1 }; // This will be replaced
-  const idToGlobal = { __ID_TO_GLOBAL_HERE__: 1 }; // This will be replaced
+
+  let count = 0;
+
+  function require( id ) {
+    if ( id ) {
+      if ( isWorker ) {
+        importScripts( id );
+      } else if ( isNode ) {
+        const c = count;
+        const e = nodeRequire( id );
+        if ( e && c === count ) {
+          return e;
+        }
+      }
+    }
+    return NULL;
+  }
 
   function add( moreModules ) {
     for ( const id in moreModules ) {
       if ( fnModules[ id ] === UNDEFINED ) {
         fnModules[ id ] = moreModules[ id ];
+        count++;
       }
     }
-  }
-
-  function saveExternal( id, obj ) {
-    const e = isNode ? obj : global[ idToGlobal[ id ] ];
-    return ( externalModules[ id ] = e && e.__esModule ? e : { default: e } );
   }
 
   function exportHelper( e, name, get ) {
@@ -53,7 +63,7 @@
     } );
   }
 
-  function load( id ) {
+  function load( id, fallback ) {
 
     if ( modules[ id ] ) {
       return modules[ id ];
@@ -77,47 +87,27 @@
       return moduleExports;
     }
 
+    if ( fallback ) { // In case we imported an external module
+      modules[ id ] = fallback;
+      return fallback;
+    }
+
     throw new Error( `Module ${id} not found` );
   }
 
-  function requireExternalSync( id ) {
-    if ( externalModules[ id ] ) {
-      return externalModules[ id ];
-    }
-    return saveExternal( id, importFile( id ) );
-  }
-
   function requireSync( id ) {
-    if ( fnModules[ id ] === UNDEFINED ) {
-      importFile( idToFile[ id ] );
-    }
-    return load( id );
-  }
-
-  function importFile( id ) {
-    if ( fileImports[ id ] === UNDEFINED ) {
-      if ( isNode ) {
-        fileImports[ id ] = nodeRequire( id );
-      } else if ( isWorker ) {
-        importScripts( id );
-        fileImports[ id ] = NULL;
-      }
-    }
-    return fileImports[ id ];
-  }
-
-  function requireExternalAsync( id ) {
-    if ( externalModules[ id ] ) {
-      return Promise.resolve( externalModules[ id ] );
-    }
-    return importFileAsync( id ).then( e => saveExternal( id, e ) );
+    return load( id, importFileSync( idToFile[ id ] ) );
   }
 
   function requireAsync( id ) {
-    if ( fnModules[ id ] === UNDEFINED ) {
-      return importFileAsync( idToFile[ id ] ).then( () => load( id ) );
+    return importFileAsync( idToFile[ id ] ).then( fallback => load( id, fallback ) );
+  }
+
+  function importFileSync( id ) {
+    if ( fileImports[ id ] === UNDEFINED ) {
+      fileImports[ id ] = require( id );
     }
-    return resolved.then( () => load( id ) );
+    return fileImports[ id ];
   }
 
   function importFileAsync( src ) {
@@ -135,7 +125,7 @@
     const promise = new Promise( ( resolve, reject ) => {
       resolution[ 0 ] = e => {
         fetches[ src ] = UNDEFINED;
-        resolve( fileImports[ src ] = isNode ? e : NULL );
+        resolve( fileImports[ src ] = e );
       };
       resolution[ 1 ] = err => {
         fetches[ src ] = UNDEFINED;
@@ -146,7 +136,7 @@
     fetches[ src ] = promise;
 
     if ( !isBrowser ) {
-      resolved.then( () => ( isNode ? nodeRequire( src ) : importScripts( src ) ) ).then( resolution[ 0 ], resolution[ 1 ] );
+      Promise.resolve( src ).then( require ).then( resolution[ 0 ], resolution[ 1 ] );
       return promise;
     }
 
@@ -162,7 +152,7 @@
     function done( err ) {
       clearTimeout( timeout );
       script.onerror = script.onload = UNDEFINED; // Avoid memory leaks in IE
-      resolution[ err ? 1 : 0 ]( err );
+      resolution[ err ? 1 : 0 ]( err || NULL );
     }
 
     function onError() {
@@ -176,9 +166,6 @@
 
     return promise;
   }
-
-  requireSync.e = requireExternalSync;
-  requireSync.i = requireExternalAsync;
 
   global.__quase_builder__ = { r: requireSync, a: add };
 

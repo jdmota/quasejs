@@ -428,10 +428,6 @@ export function checker() {
   };
 }
 
-const runtimeCode = `
-"use strict";(function(a,b){function c(){return Object.create(s)}function f(I,J){var K=y?J:a[H[I]];return D[I]=K&&K.__esModule?K:{default:K}}function g(I,J,K){Object.defineProperty(I,J,{enumerable:!0,get:K})}function h(I,J){Object.keys(J).forEach(function(K){"default"===K||"__esModule"===K||Object.defineProperty(I,K,{configurable:!0,enumerable:!0,get:function get(){return J[K]}})})}function i(I){if(B[I])return B[I];var J=C[I];if(C[I]=s,J){var K={};return Object.defineProperty(K,"__esModule",{value:!0}),B[I]=K,J(K,l,p,x,g,h),K}throw new Error(\`Module \${I} not found\`)}function l(I){return C[I]===r&&m(G[I]),i(I)}function m(I){return E[I]===r&&(y?E[I]=b(I):u!==r&&(u(I),E[I]=s)),E[I]}function p(I){return C[I]===r?q(G[I]).then(function(){return i(I)}):w.then(function(){return i(I)})}function q(I){function J(P){clearTimeout(O),N.onerror=N.onload=r,L[P?1:0](P)}function K(){J(new Error(\`Fetching \${I} failed\`))}if(E[I]!==r)return t.resolve(E[I]);if(F[I])return F[I];var L=[r,r],M=new t(function(P,Q){L[0]=function(R){F[I]=r,P(E[I]=y?R:s)},L[1]=function(R){F[I]=r,Q(R)}});if(F[I]=M,!A)return w.then(function(){return y?b(I):u(I)}).then(L[0],L[1]),M;var N=v.createElement("script");N.type="text/javascript",N.charset="utf-8",N.async=!0,N.timeout=1.2e5,N.src=I;var O=setTimeout(K,1.2e5);return N.onload=J,N.onerror=K,v.head.appendChild(N),M}var r,s=null,t=a.Promise,u=a.importScripts,v=a.document,w=t.resolve(),x={__BABEL_HELPERS__:1},y=b!==r,A=a.window===a,B=c(),C=c(),D=c(),E=c(),F=c(),G={__ID_TO_FILE_HERE__:1},H={__ID_TO_GLOBAL_HERE__:1};l.e=function(I){return D[I]?D[I]:f(I,m(I))},l.i=function(I){return D[I]?t.resolve(D[I]):q(I).then(function(J){return f(I,J)})},a.__quase_builder__={r:l,a:function(I){for(var J in I)C[J]===r&&(C[J]=I[J])}}})("undefined"==typeof self?Function("return this")():self,"undefined"!=typeof require&&require);
-`.trim();
-
 const runtimeReplace = {
   babel: "{__BABEL_HELPERS__:1}",
   idToFile: "{__ID_TO_FILE_HERE__:1}",
@@ -488,8 +484,9 @@ function renderModule( jsModule, builder, babelOpts ) {
 const moduleArgs = "$e,$r,$i,$b,$g,$a".split( "," );
 
 export function renderer( babelOpts ) {
-  return ( builder, finalModules ) => {
+  return async( builder, finalModules ) => {
 
+    const runtimeCode = await builder.getRuntime();
     const out = [];
 
     for ( const finalModule of finalModules ) {

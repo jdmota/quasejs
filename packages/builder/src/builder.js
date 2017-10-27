@@ -13,6 +13,8 @@ const path = require( "path" );
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /\[hash\]/ig;
 
+const runtimeCode = fs.readFile( path.resolve( __dirname, "runtime/runtime.min.js" ), "utf8" );
+
 export default class Builder {
 
   idEntries: [ID, ID][];
@@ -64,6 +66,10 @@ export default class Builder {
     this.modules = new Map();
     this.uuid = options.uuid || 0;
 
+  }
+
+  async getRuntime(): Promise<string> {
+    return runtimeCode;
   }
 
   // The watcher should use this to keep builds atomic
