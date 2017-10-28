@@ -4,6 +4,13 @@ import encoding from "./encoding";
 
 const { SourceMapConsumer, SourceMapGenerator } = require( "source-map" );
 
+function getConsumer( map ) {
+  if ( typeof map.generatedPositionFor === "function" ) {
+    return map;
+  }
+  return new SourceMapConsumer( map );
+}
+
 export function joinSourceMaps( maps ) {
 
   maps = maps.filter( Boolean );
@@ -16,7 +23,7 @@ export function joinSourceMaps( maps ) {
     return Object.assign( {}, maps[ 0 ] );
   }
 
-  const inputMapConsumer = new SourceMapConsumer( maps[ 0 ] );
+  const inputMapConsumer = getConsumer( maps[ 0 ] );
 
   const mergedGenerator = new SourceMapGenerator( {
     file: inputMapConsumer.file,
@@ -34,7 +41,7 @@ export function joinSourceMaps( maps ) {
 
     for ( let i = 1; i < maps.length; i++ ) {
 
-      pos = new SourceMapConsumer( maps[ i ] ).generatedPositionFor( {
+      pos = getConsumer( maps[ i ] ).generatedPositionFor( {
         source: inputMapConsumer.file,
         line: pos.line,
         column: pos.column
@@ -87,7 +94,7 @@ export function sourceMapToString( map ) {
 }
 
 export function getOriginalLocation( map, generated ) { // map, generated: { line, column, bias? }
-  return new SourceMapConsumer( map ).originalPositionFor( generated ); // { source, line, column, name }
+  return getConsumer( map ).originalPositionFor( generated ); // { source, line, column, name }
 }
 
 export class SourceMapExtractor {
