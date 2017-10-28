@@ -1,7 +1,8 @@
 module.exports = {
   entries: [
-    [ "files/index.js", "atual/dist.[hash].js" ]
+    [ "files/index.js", "atual/dist.js" ]
   ],
+  hashing: true,
   babelOpts: {
     presets: [
       [ "env", {

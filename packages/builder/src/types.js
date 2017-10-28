@@ -34,6 +34,7 @@ type Options = {
   entries: [string, string][],
   cwd?: ?string,
   sourceMaps?: ?boolean | "inline",
+  hashing?: ?boolean,
   warn?: ?Function,
   fileSystem?: ?FileSystem,
   fs?: ?{

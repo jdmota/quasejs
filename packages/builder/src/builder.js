@@ -11,7 +11,7 @@ const fs = require( "fs-extra" );
 const path = require( "path" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
-const rehash = /\[hash\]/ig;
+const rehash = /(\..*)?$/;
 
 const runtimeCode = fs.readFile( path.resolve( __dirname, "runtime/runtime.min.js" ), "utf8" );
 
@@ -21,6 +21,7 @@ export default class Builder {
   entries: [string, string][];
   cwd: string;
   sourceMaps: boolean | "inline";
+  hashing: boolean;
   warn: Function;
   fileSystem: FileSystem;
   fs: {
@@ -54,6 +55,7 @@ export default class Builder {
     this.fs = options.fs || fs;
 
     this.sourceMaps = options.sourceMaps === "inline" ? options.sourceMaps : !!options.sourceMaps;
+    this.hashing = !!options.hashing;
     this.warn = options.warn || ( () => {} );
 
     this.cli = options.cli || {};
@@ -116,11 +118,12 @@ export default class Builder {
     const inlineMap = this.sourceMaps === "inline";
     const directory = path.dirname( dest );
 
-    if ( rehash.test( dest ) ) {
+    if ( this.hashing ) {
       const h = hash( code );
-      dest = dest.replace( rehash, h );
+      const fn = m => ( m ? `.${h}` + m : `-${h}` );
+      dest = dest.replace( rehash, fn );
       if ( map ) {
-        map.file = map.file.replace( rehash, h );
+        map.file = map.file.replace( rehash, fn );
       }
     }
 
