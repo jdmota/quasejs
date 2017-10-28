@@ -134,11 +134,12 @@ export default class Module {
     return this.outputs;
   }
 
-  getLastOutput() {
+  getLastOutput( key: string ) {
     if ( !this.outputs ) {
       throw this.moduleError( "No output found" );
     }
-    return this.outputs[ this.outputs.length - 1 ];
+    const out = this.outputs[ this.outputs.length - 1 ];
+    return key ? out[ key ] : out;
   }
 
   async runResolvers( obj: { src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {

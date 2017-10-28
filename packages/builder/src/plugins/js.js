@@ -7,6 +7,7 @@ import StringBuilder from "../string-builder";
 import babelBuildHelpers from "./babel-helpers";
 import babelPluginModules from "./babel-plugin-transform-modules";
 import extractNames from "./ast-extract-names";
+import LanguageModule from "./language";
 
 const { parse } = require( "babylon" );
 const babel = require( "babel-core" );
@@ -103,15 +104,14 @@ function resolveId( importee, importer, resolveOpts, fileSystem ) {
 
 const INTERNAL = "__builderJsLoader";
 
-class JsModule {
+class JsModule extends LanguageModule {
 
   constructor( id, ast, parserOpts ) {
-    this.id = id;
+    super( id );
+
     this.ast = ast;
-    this.builder = null; // Fill!
     this.lastRender = null;
 
-    this.sources = [];
     this.dynamicImports = [];
     // type Name = { name: string, loc: { line: number, column: number } }
     this.exportAllSources = []; // Name[]
@@ -126,31 +126,15 @@ class JsModule {
     this.getDeps( parserOpts );
   }
 
-  getMaps() {
-    const m = this.builder.getModule( this.id );
-    return m.outputs.map( o => o.map ).filter( Boolean );
-  }
-
-  getCode() {
-    return this.builder.getModule( this.id ).code;
-  }
-
-  error( message, loc ) {
-    error( message, {
-      id: this.builder.idToString( this.id ),
-      code: this.getCode(),
-      map: joinSourceMaps( this.getMaps() )
-    }, loc );
+  getModuleBySource( source ) {
+    return super.getModuleBySource( source, INTERNAL );
   }
 
   getDeps( parserOpts ) {
 
     const program = this.ast.program;
 
-    const addSource = source => {
-      push( this.sources, { src: source.value, name: source.value, loc: source.loc.start } );
-      return source.value;
-    };
+    const addDep = source => this.addDep( { src: source.value, loc: source.loc.start } );
 
     const mapper1 = s => {
       const loc = s.loc.start;
@@ -186,7 +170,7 @@ class JsModule {
 
         add(
           this.importSources,
-          addSource( node.source ),
+          addDep( node.source ),
           node.specifiers.map( mapper1 )
         );
 
@@ -197,7 +181,7 @@ class JsModule {
         } else {
           add(
             this.exportSources,
-            node.source && addSource( node.source ),
+            node.source && addDep( node.source ),
             node.specifiers.map( mapper2 )
           );
         }
@@ -208,7 +192,7 @@ class JsModule {
 
       } else if ( type === "ExportAllDeclaration" ) {
 
-        addSource( node.source );
+        addDep( node.source );
         push( this.exportAllSources, { name: node.source.value, loc: node.loc.start } );
 
       } else if ( type === "CallExpression" ) {
@@ -239,19 +223,6 @@ class JsModule {
       }
 
     } );
-  }
-
-  getModuleBySource( source ) {
-    const dep = this.builder.getModule( this.id ).sourceToResolved.get( source );
-    const module = dep && this.builder.getModule( dep.resolved );
-    const internal = module && module.getLastOutput()[ INTERNAL ];
-    if ( internal ) {
-      return internal;
-    }
-    this.error(
-      `No information about the imports/exports of '${source}' were found. It might not be a JavaScript file.`,
-      dep && dep.loc
-    );
   }
 
   getImports() {
@@ -399,7 +370,7 @@ export function plugin( parserOpts ) {
 
     return {
       code,
-      deps: js.sources,
+      deps: js.deps,
       [ INTERNAL ]: js
     };
   };
@@ -414,13 +385,13 @@ export function resolver( opts ) {
 export function checker() {
   return builder => {
     for ( const [ , module ] of builder.modules ) {
-      const js = module.getLastOutput()[ INTERNAL ];
+      const js = module.getLastOutput( INTERNAL );
       if ( js ) {
         js.builder = builder;
       }
     }
     for ( const [ , module ] of builder.modules ) {
-      const js = module.getLastOutput()[ INTERNAL ];
+      const js = module.getLastOutput( INTERNAL );
       if ( js ) {
         js.checkImportsExports();
       }
@@ -509,7 +480,7 @@ export function renderer( babelOpts ) {
       let moduleIdx = 0;
       for ( const src of srcs ) {
 
-        const jsModule = builder.getModule( src ).getLastOutput()[ INTERNAL ];
+        const jsModule = builder.getModule( src ).getLastOutput( INTERNAL );
         jsModule._uuid = "_" + moduleIdx.toString( 16 );
 
         if ( id === src ) {
