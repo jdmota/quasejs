@@ -25,7 +25,7 @@ console.log( "Testing..." );
 
 require( path.join( __dirname, "runtime.min.js" ) );
 
-global.__quase_builder__.a( {
+global.__quase_builder__.q.push( {
   _0: function() {
     console.log( "Called!" );
   }

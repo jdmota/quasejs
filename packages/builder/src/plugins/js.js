@@ -454,6 +454,19 @@ function renderModule( jsModule, builder, babelOpts ) {
 
 const moduleArgs = "$e,$r,$i,$b,$g,$a".split( "," );
 
+const chunkInit = babel.transform(
+  `( {
+    g: typeof self !== "undefined" ? self : Function( "return this" )(),
+    p: function( m ) {
+      ( this.g.__quase_builder__ = this.g.__quase_builder__ || { q: [] } ).q.push( m );
+    }
+  } )`,
+  {
+    babelrc: false,
+    minified: true
+  }
+).code.replace( /;$/, "" );
+
 export function renderer( babelOpts ) {
   return async( builder, finalModules ) => {
 
@@ -504,7 +517,7 @@ export function renderer( babelOpts ) {
           .replace( runtimeReplace.idToGlobal, "{}" )
       );
 
-      build.append( "__quase_builder__.a({" );
+      build.append( `${chunkInit}.p({` );
 
       moduleIdx = 0;
       for ( const jsModule of jsModules ) {

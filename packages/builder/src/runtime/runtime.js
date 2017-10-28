@@ -39,7 +39,7 @@
     return NULL;
   }
 
-  function add( moreModules ) {
+  function push( moreModules ) {
     for ( const id in moreModules ) {
       if ( fnModules[ id ] === UNDEFINED ) {
         fnModules[ id ] = moreModules[ id ];
@@ -167,6 +167,17 @@
     return promise;
   }
 
-  global.__quase_builder__ = { r: requireSync, a: add };
+  const me = global.__quase_builder__;
+
+  if ( me && Array.isArray( me.q ) ) {
+    for ( let i = 0; i < me.q.length; i++ ) {
+      push( me.q[ i ] );
+    }
+    me.r = requireSync;
+    me.q = { push };
+    return;
+  }
+
+  global.__quase_builder__ = { r: requireSync, q: { push } };
 
 } )( typeof self !== "undefined" ? self : Function( "return this" )(), typeof require !== "undefined" && require ); // eslint-disable-line
