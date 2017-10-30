@@ -92,6 +92,14 @@ export default class Builder {
     return resolveId( id, this.cwd );
   }
 
+  isEntry( id: ID ): boolean {
+    return this.idEntries.findIndex( e => e[ 0 ] === id ) > -1;
+  }
+
+  isDest( id: ID ): boolean {
+    return this.idEntries.findIndex( e => e[ 1 ] === id ) > -1;
+  }
+
   getModule( id: string ): ?Module {
     return this.modules.get( this.resolveId( id ) );
   }

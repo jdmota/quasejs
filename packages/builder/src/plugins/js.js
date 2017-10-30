@@ -401,8 +401,7 @@ export function checker() {
 
 const runtimeReplace = {
   babel: "{__BABEL_HELPERS__:1}",
-  idToFile: "{__ID_TO_FILE_HERE__:1}",
-  idToGlobal: "{__ID_TO_GLOBAL_HERE__:1}"
+  idToFile: "{__ID_TO_FILE_HERE__:1}"
 };
 
 // Adapted from https://github.com/babel/babel/blob/master/packages/babel-plugin-external-helpers/src/index.js
@@ -511,11 +510,12 @@ export function renderer( babelOpts ) {
         }
       }
 
-      build.append(
-        runtimeCode.replace( runtimeReplace.babel, babelBuildHelpers( usedHelpers ) )
-          .replace( runtimeReplace.idToFile, "{}" )
-          .replace( runtimeReplace.idToGlobal, "{}" )
-      );
+      if ( builder.isEntry( id ) ) {
+        build.append(
+          runtimeCode.replace( runtimeReplace.babel, babelBuildHelpers( usedHelpers ) )
+            .replace( runtimeReplace.idToFile, "{}" )
+        );
+      }
 
       build.append( `${chunkInit}.p({` );
 
@@ -540,7 +540,11 @@ export function renderer( babelOpts ) {
         moduleIdx++;
       }
 
-      build.append( `});__quase_builder__.r('${entryUUID}');` );
+      build.append( "});" );
+
+      if ( builder.isEntry( id ) ) {
+        build.append( `__quase_builder__.r('${entryUUID}');` );
+      }
 
       out.push( {
         dest,

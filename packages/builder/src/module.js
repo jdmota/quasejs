@@ -173,7 +173,7 @@ export default class Module {
         throw this.error( "A module cannot import itself", loc );
       }
 
-      if ( this.builder.idEntries.find( e => e[ 1 ] === resolved ) ) {
+      if ( this.builder.isDest( resolved ) ) {
         throw this.error( "Don't import the destination file", loc );
       }
 
