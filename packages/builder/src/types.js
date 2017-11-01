@@ -25,6 +25,7 @@ type Result = {
   map?: ?Object,
   ast?: ?Object,
   deps?: ?Deps,
+  type: string,
   [key: string]: any
 };
 

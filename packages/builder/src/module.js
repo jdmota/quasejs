@@ -3,7 +3,7 @@
 import error from "./utils/error";
 import type Builder from "./builder";
 import type { Result, Deps, Plugin } from "./types";
-import { type ID } from "./id";
+import { type ID, getType } from "./id";
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
@@ -13,15 +13,10 @@ function handleLoaderOutput( obj: any, module: Module ): ?Result { // eslint-dis
   if ( obj == null ) {
     return;
   }
-  if ( typeof obj === "string" ) {
-    return {
-      code: obj
-    };
-  }
   if ( isObject( obj ) ) {
     return obj;
   }
-  throw module.moduleError( "Plugin should return a string of an object." );
+  throw module.moduleError( "Plugin should return an object." );
 }
 
 async function callChain(
@@ -35,7 +30,7 @@ async function callChain(
     const out = handleLoaderOutput( await fn( prev, module.id, module.builder ), module ); // eslint-disable-line no-await-in-loop
     if ( out ) {
       outputs.push( out );
-      prev = out;
+      prev = Object.assign( {}, out );
     }
   }
   if ( outputs.length === 0 ) {
@@ -123,7 +118,7 @@ export default class Module {
 
   async _runLoader(): Promise<Result[]> {
     const code = await this.getCode();
-    return callChain( this.builder.plugins, this, { code } );
+    return callChain( this.builder.plugins, this, { code, type: getType( this.id ) } );
   }
 
   async runLoader(): Promise<Result[]> {
@@ -136,7 +131,7 @@ export default class Module {
 
   getLastOutput( key: string ) {
     if ( !this.outputs ) {
-      throw this.moduleError( "No output found" );
+      throw this.moduleError( "Zero valid outputs for the provided plugins" );
     }
     const out = this.outputs[ this.outputs.length - 1 ];
     return key ? out[ key ] : out;

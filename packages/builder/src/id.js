@@ -17,3 +17,8 @@ export function idToString( id: ID | string, cwd: string ): string {
 export function resolveId( id: ID | string, cwd: string ): ID {
   return path.resolve( cwd, id );
 }
+
+export function getType( id: ID ): string {
+  const match = id.match( /\.(.+)$/ );
+  return match ? match[ 1 ] : "";
+}

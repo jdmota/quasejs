@@ -23,7 +23,15 @@ describe( "watcher", () => {
       const config = require( path.resolve( fixturePath, "config.js" ) );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = [ jsPlugin() ];
+      config.plugins = [
+        obj => {
+          if ( obj.type === "ts" ) {
+            obj.type = "js";
+            return obj;
+          }
+        },
+        jsPlugin()
+      ];
       config.resolvers = [ jsResolver( config.resolve ) ];
       config.checkers = [ jsChecker() ];
       config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];

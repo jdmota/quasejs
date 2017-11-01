@@ -361,7 +361,11 @@ const defaultParserOpts = {
 };
 
 export function plugin( parserOpts ) {
-  return async( { code, ast }, id ) => {
+  return async( { code, ast, type }, id ) => {
+    if ( type !== "js" ) {
+      return;
+    }
+
     const opts = Object.assign( {}, parserOpts );
     opts.plugins = opts.plugins || defaultParserOpts.plugins;
     opts.sourceType = opts.sourceType || defaultParserOpts.sourceType;
@@ -369,6 +373,7 @@ export function plugin( parserOpts ) {
     const js = new JsModule( id, ast || parse( code, opts ), opts );
 
     return {
+      type: "js",
       code,
       deps: js.deps,
       [ INTERNAL ]: js
