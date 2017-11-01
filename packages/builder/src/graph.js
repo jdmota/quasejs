@@ -1,8 +1,10 @@
 // @flow
 
-import { type ID } from "./id";
+import { type ID, idToPath } from "./id";
 import type Builder from "./builder";
 import { type Deps } from "./types";
+
+const path = require( "path" );
 
 // Adapted from https://github.com/samthor/srcgraph
 
@@ -109,7 +111,13 @@ export default function processGraph( builder: Builder ) {
     if ( srcs ) {
       const entrypoint = entrypoints.includes( id );
       const entry = builder.idEntries.find( ( [ entry ] ) => id === entry );
-      modules.push( { id, srcs, entrypoint, dest: entry && entry[ 1 ], built: false } );
+      modules.push( {
+        id,
+        srcs,
+        entrypoint,
+        dest: entry ? entry[ 1 ] : path.resolve( idToPath( builder.commonChunks ), builder.idToString( id ) ),
+        built: false
+      } );
     }
   } );
 

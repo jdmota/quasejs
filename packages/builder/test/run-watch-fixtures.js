@@ -11,6 +11,10 @@ describe( "watcher", () => {
 
   folders.forEach( folder => {
 
+    if ( folder === "__dev__" ) {
+      return;
+    }
+
     it( `Fixture: watch-fixtures/${folder}`, async() => {
 
       const fixturePath = path.resolve( FIXTURES, folder );
@@ -36,6 +40,7 @@ describe( "watcher", () => {
       config.checkers = [ jsChecker() ];
       config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];
       config.cwd = fixturePath;
+      config.commonChunks = "atual";
       config.watch = true;
       config._hideDates = true;
       config.watchOptions = {

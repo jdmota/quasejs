@@ -46,6 +46,7 @@ const depsSorter = ( { resolved: a }, { resolved: b } ) => ( a === b ? 0 : ( a >
 export default class Module {
 
   id: ID;
+  normalizedId: string;
   builder: Builder;
   loadingCode: ?Promise<string>;
   code: ?string;
@@ -58,6 +59,7 @@ export default class Module {
 
   constructor( id: ID, builder: Builder ) {
     this.id = id;
+    this.normalizedId = builder.idToString( id );
     this.builder = builder;
     this.uuid = builder.uuid;
 
@@ -86,12 +88,12 @@ export default class Module {
   }
 
   moduleError( message: string ) {
-    throw new Error( `${message}. Module: ${this.builder.idToString( this.id )}` );
+    throw new Error( `${message}. Module: ${this.normalizedId}` );
   }
 
   error( message: string, loc: Object ) {
     error( message, {
-      id: this.builder.idToString( this.id ),
+      id: this.normalizedId,
       code: this.code
     }, loc );
   }
@@ -101,7 +103,7 @@ export default class Module {
       return await this.builder.fileSystem.getFile( this.id );
     } catch ( err ) {
       if ( err.code === "ENOENT" ) {
-        throw new Error( `Could not find ${this.builder.idToString( this.id )}` );
+        throw new Error( `Could not find ${this.normalizedId}` );
       }
       throw err;
     }
@@ -137,7 +139,7 @@ export default class Module {
     return key ? out[ key ] : out;
   }
 
-  async runResolvers( obj: { src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {
+  async runResolvers( obj: { type: string, src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {
     for ( const fn of this.builder.resolvers ) {
       const r = await fn( obj, this.id, this.builder );
       if ( r != null ) {
@@ -157,7 +159,7 @@ export default class Module {
         throw this.error( "Empty import", loc );
       }
 
-      const r = await this.runResolvers( { src, loc, splitPoint } );
+      const r = await this.runResolvers( { type: output.type, src, loc, splitPoint } );
       if ( !r ) {
         throw this.error( `Could not resolve ${src}`, loc );
       }
@@ -186,6 +188,20 @@ export default class Module {
       this.loadingDeps = null;
     }
     return this.deps;
+  }
+
+  followDirectDeps( set: Set<ID> = new Set() ): Set<ID> {
+    // $FlowFixMe
+    for ( const { resolved, splitPoint } of this.deps ) {
+      if ( !splitPoint && !set.has( resolved ) ) {
+        const m = this.builder.modules.get( resolved );
+        if ( m ) {
+          set.add( m.id );
+          m.followDirectDeps( set );
+        }
+      }
+    }
+    return set;
   }
 
   async saveDeps() {

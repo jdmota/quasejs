@@ -33,7 +33,12 @@ export default class LanguageModule {
     }, loc );
   }
 
-  getModuleBySource( source, internalKey ) {
+  getModuleBySource( source ) {
+    const dep = this.builder.getModule( this.id ).sourceToResolved.get( source );
+    return dep && this.builder.getModule( dep.resolved );
+  }
+
+  getInternalBySource( source, internalKey ) {
     const dep = this.builder.getModule( this.id ).sourceToResolved.get( source );
     const module = dep && this.builder.getModule( dep.resolved );
     const internal = module && module.getLastOutput( internalKey );

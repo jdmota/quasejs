@@ -6,6 +6,15 @@ function isRegExp( obj ) {
   return obj != null && typeof obj.test === "function";
 }
 
+const DEFAULT_BABEL_OPTS = {
+  presets: [
+    [ "env", {
+      targets: { chrome: 50 },
+      loose: true
+    } ]
+  ]
+};
+
 describe( "builder", () => {
 
   const fs = require( "fs-extra" );
@@ -15,6 +24,11 @@ describe( "builder", () => {
   const folders = fs.readdirSync( FIXTURES );
 
   folders.forEach( folder => {
+
+    if ( folder === "__dev__" ) {
+      return;
+    }
+
     it( `Fixture: ${folder}`, async() => {
 
       let assetsNum = 0;
@@ -30,8 +44,11 @@ describe( "builder", () => {
       config.plugins = [ jsPlugin() ];
       config.resolvers = [ jsResolver( config.resolve ) ];
       config.checkers = [ jsChecker() ];
-      config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];
+      config.renderers = [
+        jsRenderer( config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS ),
+      ];
       config.cwd = fixturePath;
+      config.commonChunks = "atual";
       config.warn = w => {
         warnings.push( w );
       };
@@ -58,6 +75,7 @@ describe( "builder", () => {
             config.entries.forEach( ( [ , dest ], i ) => {
               testLog( () => {
                 expect( typeof assets[ dest ] ).toBe( "string" );
+                global.__quase_builder__ = undefined;
                 new Function( assets[ dest ] )(); // eslint-disable-line no-new-func
               }, config._out[ i ] );
             } );
@@ -67,7 +85,7 @@ describe( "builder", () => {
       }
 
       function failure( err ) {
-        if ( config._out ) {
+        if ( config._out || !config._error ) {
           throw err;
         } else {
           if ( isRegExp( config._error ) ) {

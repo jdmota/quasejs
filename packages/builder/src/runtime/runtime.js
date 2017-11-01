@@ -7,7 +7,7 @@
   const importScripts = global.importScripts;
   const doc = global.document;
 
-  const helpers = { __BABEL_HELPERS__: 1 }; // This will be replaced
+  const helpers = {};
 
   const isNode = nodeRequire !== UNDEFINED;
   const isWorker = importScripts !== UNDEFINED;
@@ -20,7 +20,7 @@
   const fileImports = blank(); // Files that were imported already
   const fetches = blank(); // Fetches
 
-  const idToFile = { __ID_TO_FILE_HERE__: 1 }; // This will be replaced
+  const idToFile = {};
 
   let count = 0;
 
@@ -41,8 +41,17 @@
 
   function push( moreModules ) {
     for ( const id in moreModules ) {
-      if ( fnModules[ id ] === UNDEFINED ) {
-        fnModules[ id ] = moreModules[ id ];
+      const module = moreModules[ id ];
+      if ( id === "__b__" ) {
+        for ( const name in module ) {
+          helpers[ name ] = module[ name ];
+        }
+      } else if ( id === "__i__" ) {
+        for ( const name in module ) {
+          idToFile[ name ] = module[ name ];
+        }
+      } else if ( fnModules[ id ] === UNDEFINED ) {
+        fnModules[ id ] = module;
         count++;
       }
     }
@@ -169,15 +178,18 @@
 
   const me = global.__quase_builder__;
 
-  if ( me && Array.isArray( me.q ) ) {
-    for ( let i = 0; i < me.q.length; i++ ) {
-      push( me.q[ i ] );
+  if ( me ) {
+    if ( Array.isArray( me.q ) ) {
+      for ( let i = 0; i < me.q.length; i++ ) {
+        push( me.q[ i ] );
+      }
+      me.r = requireSync;
+      me.i = requireAsync;
+      me.q = { push };
     }
-    me.r = requireSync;
-    me.q = { push };
     return;
   }
 
-  global.__quase_builder__ = { r: requireSync, q: { push } };
+  global.__quase_builder__ = { r: requireSync, i: requireAsync, q: { push } };
 
 } )( typeof self !== "undefined" ? self : Function( "return this" )(), typeof require !== "undefined" && require ); // eslint-disable-line

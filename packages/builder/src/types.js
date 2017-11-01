@@ -33,6 +33,7 @@ type Plugin = ( Result, ID, Builder ) => any | Promise<any>;
 
 type Options = {
   entries: [string, string][],
+  commonChunks: string,
   cwd?: ?string,
   sourceMaps?: ?boolean | "inline",
   hashing?: ?boolean,

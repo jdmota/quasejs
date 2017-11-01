@@ -10,6 +10,10 @@ export function pathToId( id: string ): ID {
   return id;
 }
 
+export function idToPath( id: ID ): string {
+  return id;
+}
+
 export function idToString( id: ID | string, cwd: string ): string {
   return path.relative( cwd, id ).replace( /\\/g, "/" );
 }

@@ -15,11 +15,17 @@ const rehash = /(\..*)?$/;
 
 const runtimeCode = fs.readFile( path.resolve( __dirname, "runtime/runtime.min.js" ), "utf8" );
 
+const runtimeReplace = {
+  babel: "{__BABEL_HELPERS__:1}",
+  idToFile: "{__ID_TO_FILE_HERE__:1}"
+};
+
 export default class Builder {
 
   idEntries: [ID, ID][];
   entries: [string, string][];
   cwd: string;
+  commonChunks: ID;
   sourceMaps: boolean | "inline";
   hashing: boolean;
   warn: Function;
@@ -51,6 +57,12 @@ export default class Builder {
       throw new Error( "Missing entries." );
     }
 
+    if ( typeof options.commonChunks !== "string" ) {
+      throw new Error( "Missing commonChunks options." );
+    }
+
+    this.commonChunks = this.resolveId( options.commonChunks );
+
     this.fileSystem = options.fileSystem || new FileSystem();
     this.fs = options.fs || fs;
 
@@ -76,6 +88,7 @@ export default class Builder {
 
   // The watcher should use this to keep builds atomic
   clone() {
+    // $FlowFixMe
     const builder = new Builder( Object.assign( {}, this ) );
     this.modules.forEach( ( m, id ) => {
       builder.modules.set( id, m.clone( builder ) );

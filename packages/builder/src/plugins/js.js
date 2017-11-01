@@ -111,6 +111,7 @@ class JsModule extends LanguageModule {
 
     this.ast = ast;
     this.lastRender = null;
+    this.uuid = null;
 
     this.dynamicImports = [];
     // type Name = { name: string, loc: { line: number, column: number } }
@@ -126,8 +127,8 @@ class JsModule extends LanguageModule {
     this.getDeps( parserOpts );
   }
 
-  getModuleBySource( source ) {
-    return super.getModuleBySource( source, INTERNAL );
+  getInternalBySource( source ) {
+    return super.getInternalBySource( source, INTERNAL );
   }
 
   getDeps( parserOpts ) {
@@ -274,7 +275,7 @@ class JsModule extends LanguageModule {
 
     this.exportAllSources.forEach( source => {
 
-      const module = this.getModuleBySource( source.name );
+      const module = this.getInternalBySource( source.name );
 
       if ( stack.has( module ) ) {
         const trace = Array.from( stack ).map( entry => entry[ 0 ].id );
@@ -311,7 +312,7 @@ class JsModule extends LanguageModule {
     this.getImports();
     this.getExports();
     const check = ( names, source ) => {
-      const exports = this.getModuleBySource( source ).getExports();
+      const exports = this.getInternalBySource( source ).getExports();
       if ( names.length > 0 && isEmpty( exports ) ) {
         this.error( `${source} exports nothing`, names[ 0 ].loc );
       }
@@ -324,7 +325,7 @@ class JsModule extends LanguageModule {
     this.importSources.forEach( check );
     this.exportSources.forEach( check );
     this.exportAllSources.forEach( ( { name, loc } ) => {
-      const exports = this.getModuleBySource( name ).getExports();
+      const exports = this.getInternalBySource( name ).getExports();
       if ( isEmpty( exports ) ) {
         this.error( `${name} exports nothing`, loc );
       }
@@ -382,7 +383,10 @@ export function plugin( parserOpts ) {
 }
 
 export function resolver( opts ) {
-  return ( { src }, id, builder ) => {
+  return ( { type, src }, id, builder ) => {
+    if ( type !== "js" ) {
+      return;
+    }
     return resolveId( src, id, opts || {}, builder.fileSystem );
   };
 }
@@ -403,11 +407,6 @@ export function checker() {
     }
   };
 }
-
-const runtimeReplace = {
-  babel: "{__BABEL_HELPERS__:1}",
-  idToFile: "{__ID_TO_FILE_HERE__:1}"
-};
 
 // Adapted from https://github.com/babel/babel/blob/master/packages/babel-plugin-external-helpers/src/index.js
 function helpersPlugin( ref, options ) {
@@ -444,8 +443,8 @@ function renderModule( jsModule, builder, babelOpts ) {
     [ babelPluginModules, {
       varsUsed,
       resolveModuleSource( source ) {
-        const m = jsModule.getModuleBySource( source );
-        return m ? m._uuid : source;
+        const m = jsModule.getInternalBySource( source );
+        return m ? m.uuid : source;
       }
     } ]
   ] );
@@ -474,19 +473,24 @@ const chunkInit = babel.transform(
 export function renderer( babelOpts ) {
   return async( builder, finalModules ) => {
 
-    const runtimeCode = await builder.getRuntime();
     const out = [];
 
     for ( const finalModule of finalModules ) {
       if ( finalModule.built ) {
         continue;
       }
-      finalModule.built = true;
 
       const { id, srcs, dest } = finalModule;
+      const jsEntryModule = builder.getModule( id ).getLastOutput( INTERNAL );
+
+      if ( !jsEntryModule ) {
+        continue;
+      }
+
+      finalModule.built = true;
+
       const jsModules = [];
       const usedHelpers = {};
-      let entryUUID = "";
 
       const build = new StringBuilder( {
         sourceMap: builder.sourceMaps,
@@ -494,40 +498,30 @@ export function renderer( babelOpts ) {
         file: path.basename( dest )
       } );
 
-      let moduleIdx = 0;
       for ( const src of srcs ) {
-
-        const jsModule = builder.getModule( src ).getLastOutput( INTERNAL );
-        jsModule._uuid = "_" + moduleIdx.toString( 16 );
-
-        if ( id === src ) {
-          entryUUID = jsModule._uuid;
-        }
-
+        const module = builder.getModule( src );
+        const jsModule = module.getLastOutput( INTERNAL );
+        jsModule.uuid = module.normalizedId;
         jsModules.push( jsModule );
-        moduleIdx++;
-      }
-
-      for ( const jsModule of jsModules ) {
-        const helpers = renderModule( jsModule, builder, babelOpts ).helpers;
-        for ( const name in helpers ) {
-          usedHelpers[ name ] = true;
-        }
       }
 
       if ( builder.isEntry( id ) ) {
-        build.append(
-          runtimeCode.replace( runtimeReplace.babel, babelBuildHelpers( usedHelpers ) )
-            .replace( runtimeReplace.idToFile, "{}" )
-        );
+        build.append( await builder.getRuntime() );
+      } else {
+        build.append( "\"use strict\";" );
       }
 
       build.append( `${chunkInit}.p({` );
 
-      moduleIdx = 0;
+      let first = true;
+
       for ( const jsModule of jsModules ) {
 
-        let { code, map } = jsModule.lastRender;
+        let { code, map, helpers } = renderModule( jsModule, builder, babelOpts );
+
+        for ( const name in helpers ) {
+          usedHelpers[ name ] = true;
+        }
 
         if ( map ) {
           map = joinSourceMaps( jsModule.getMaps().concat( map ) );
@@ -538,17 +532,25 @@ export function renderer( babelOpts ) {
           args.pop();
         }
 
-        build.append( `\n${jsModule._uuid}:function(${args}){` );
+        build.append( `${first ? "" : ","}\n${JSON.stringify( jsModule.uuid )}:function(${args}){` );
         build.append( code, map );
-        build.append( moduleIdx === jsModules.length - 1 ? "\n}" : "\n}," );
+        build.append( "\n}" );
 
-        moduleIdx++;
+        first = false;
       }
+
+      const babelHelpersBuilt = babelBuildHelpers( usedHelpers );
+
+      if ( babelHelpersBuilt ) {
+        build.append( `,\n__b__:${babelHelpersBuilt}` );
+      }
+
+      // build.append( ",\n__i__:{}" );
 
       build.append( "});" );
 
       if ( builder.isEntry( id ) ) {
-        build.append( `__quase_builder__.r('${entryUUID}');` );
+        build.append( `__quase_builder__.r(${JSON.stringify( jsEntryModule.uuid )});` );
       }
 
       out.push( {
