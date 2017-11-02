@@ -10,7 +10,12 @@ type Checker = Builder => Promise<void>;
 
 type ToWrite = { dest: string, code: Buffer | string, map: ?Object };
 
-type Renderer = ( Builder, Object[] ) => Promise<ToWrite[]>;
+type FinalModules = {
+  modules: ( { id: ID, srcs: ID[], entrypoint: boolean, dest: string, built: boolean } )[],
+  moduleToFile: { [name: ID]: ID }
+};
+
+type Renderer = ( Builder, FinalModules ) => Promise<ToWrite[]>;
 
 type Deps = {
   resolved: ID,
@@ -55,4 +60,4 @@ type Options = {
   _hideDates?: ?boolean
 };
 
-export type { Result, Deps, Plugin, Resolver, Checker, Renderer, ToWrite, Options };
+export type { Result, Deps, Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, Options };

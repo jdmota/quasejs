@@ -106,6 +106,8 @@ export default function processGraph( builder: Builder ) {
   };
 
   const modules = [];
+  const moduleToFile = {};
+
   hashes.forEach( ( hash, id ) => {
     const srcs = grow( id );
     if ( srcs ) {
@@ -117,8 +119,11 @@ export default function processGraph( builder: Builder ) {
         dest: path.resolve( idToPath( builder.dest ), builder.idToString( id, builder.context ) ),
         built: false
       } );
+      for ( const src of srcs ) {
+        moduleToFile[ idToPath( src ) ] = id;
+      }
     }
   } );
 
-  return modules;
+  return { modules, moduleToFile };
 }

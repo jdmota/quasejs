@@ -3,7 +3,7 @@
 import FileSystem from "../../fs/src/file-system";
 import hash from "./utils/hash";
 import processGraph from "./graph";
-import type { Plugin, Resolver, Checker, Renderer, ToWrite, Options } from "./types";
+import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, Options } from "./types";
 import { type ID, idToString, resolveId } from "./id";
 import Module from "./module";
 
@@ -198,7 +198,7 @@ async function callCheckers(
 async function callRenderers(
   array: Renderer[],
   builder: Builder,
-  finalModules: Object[]
+  finalModules: FinalModules
 ): Promise<void> {
   const writes = [];
   const write = builder.write.bind( builder );

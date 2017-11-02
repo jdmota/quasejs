@@ -96,7 +96,7 @@ class HtmlModule extends LanguageModule {
     this.treeAdapter.insertBefore( ref.parentNode, node, ref );
   }
 
-  async render( builder, finalModules ) {
+  async render( builder, { moduleToFile } ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
@@ -105,13 +105,6 @@ class HtmlModule extends LanguageModule {
 
       for ( const dep of this.treeAdapter.__deps ) {
         dep.node = cloneStack.get( dep.node );
-      }
-
-      const moduleToFile = new Map();
-      for ( const { id, srcs } of finalModules ) {
-        for ( const src of srcs ) {
-          moduleToFile.set( src, id );
-        }
       }
 
       const firstScript = this.treeAdapter.__deps[ 0 ].node;
@@ -147,7 +140,7 @@ class HtmlModule extends LanguageModule {
       const moreScripts = new Set();
 
       for ( const depId of allDeps ) {
-        const file = moduleToFile.get( depId );
+        const file = moduleToFile[ depId ];
         if ( !deps.has( file ) ) {
           moreScripts.add( idToString( file, this.id ) );
         }
@@ -197,7 +190,7 @@ export function renderer() {
   return async( builder, finalModules ) => {
     const out = [];
 
-    for ( const finalModule of finalModules ) {
+    for ( const finalModule of finalModules.modules ) {
       if ( finalModule.built ) {
         continue;
       }

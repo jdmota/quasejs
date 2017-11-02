@@ -479,7 +479,7 @@ export function renderer( babelOpts ) {
 
     const out = [];
 
-    for ( const finalModule of finalModules ) {
+    for ( const finalModule of finalModules.modules ) {
       if ( finalModule.built ) {
         continue;
       }
