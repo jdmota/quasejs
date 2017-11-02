@@ -1,14 +1,3 @@
 module.exports = {
-  entries: [
-    [ "files/index.js", "atual/dist.js" ]
-  ],
-  babelOpts: {
-    presets: [
-      [ "env", {
-        targets: { chrome: 50 },
-        loose: true
-      } ]
-    ]
-  },
-  _error: "Duplicate import b. See files/index.js:2:9"
+  _error: "Duplicate import b. See index.js:2:9"
 };

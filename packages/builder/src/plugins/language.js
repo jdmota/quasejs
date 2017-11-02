@@ -27,7 +27,7 @@ export default class LanguageModule {
 
   error( message, loc ) {
     error( message, {
-      id: this.builder.idToString( this.id ),
+      id: this.builder.idToString( this.id, this.builder.context ),
       code: this.getCode(),
       map: joinSourceMaps( this.getMaps() )
     }, loc );

@@ -1,7 +1,4 @@
 module.exports = {
-  entries: [
-    [ "files/index.js", "atual/dist.js" ]
-  ],
   babelOpts: {
     presets: [
       [ "env", {

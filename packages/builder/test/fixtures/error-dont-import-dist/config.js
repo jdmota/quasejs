@@ -1,14 +1,4 @@
 module.exports = {
-  entries: [
-    [ "files/index.js", "files/dist.js" ]
-  ],
-  babelOpts: {
-    presets: [
-      [ "env", {
-        targets: { chrome: 50 },
-        loose: true
-      } ]
-    ]
-  },
-  _error: "Don't import the destination file. See files/index.js:1:7"
+  dest: "files/atual",
+  _error: "Don't import the destination file. See index.js:1:7"
 };

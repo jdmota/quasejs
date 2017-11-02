@@ -17,7 +17,7 @@ class BiMap {
   constructor( builder: Builder ) {
     this.deps = new Map();
     this.incs = new Map();
-    this.entrypoints = new Set( builder.idEntries.map( t => t[ 0 ] ) );
+    this.entrypoints = new Set( builder.idEntries );
 
     for ( const [ id, module ] of builder.modules ) {
       this.deps.set( id, module.deps || [] );
@@ -110,12 +110,11 @@ export default function processGraph( builder: Builder ) {
     const srcs = grow( id );
     if ( srcs ) {
       const entrypoint = entrypoints.includes( id );
-      const entry = builder.idEntries.find( ( [ entry ] ) => id === entry );
       modules.push( {
         id,
         srcs,
         entrypoint,
-        dest: entry ? entry[ 1 ] : path.resolve( idToPath( builder.commonChunks ), builder.idToString( id ) ),
+        dest: path.resolve( idToPath( builder.dest ), builder.idToString( id, builder.context ) ),
         built: false
       } );
     }

@@ -226,6 +226,10 @@ class JsModule extends LanguageModule {
     } );
   }
 
+  normalize( id ) {
+    return this.builder.idToString( id, this.builder.context );
+  }
+
   getImports() {
     if ( !this._imports ) {
       const imports = blank();
@@ -282,7 +286,7 @@ class JsModule extends LanguageModule {
         while ( trace[ 0 ] !== module.id ) {
           trace.shift();
         }
-        const traceStr = trace.map( id => this.builder.idToString( id ) ).join( "->" ) + "->" + this.builder.idToString( module.id );
+        const traceStr = trace.map( id => this.normalize( id ) ).join( "->" ) + "->" + this.normalize( module.id );
         error( `Circular 'export * from "";' declarations. ${traceStr}` );
       }
 
@@ -300,7 +304,7 @@ class JsModule extends LanguageModule {
 
     if ( namespaceConflict ) {
       for ( const name in exportsAllFrom ) {
-        this.builder.warn( `Re-exports '${name}' from ${exportsAllFrom[ name ].join( " and " )}. See ${this.builder.idToString( this.id )}` );
+        this.builder.warn( `Re-exports '${name}' from ${exportsAllFrom[ name ].join( " and " )}. See ${this.normalize( this.id )}` );
       }
     }
 

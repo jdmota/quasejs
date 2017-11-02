@@ -59,7 +59,7 @@ export default class Module {
 
   constructor( id: ID, builder: Builder ) {
     this.id = id;
-    this.normalizedId = builder.idToString( id );
+    this.normalizedId = builder.idToString( id, builder.context );
     this.builder = builder;
     this.uuid = builder.uuid;
 

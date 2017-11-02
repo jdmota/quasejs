@@ -1,6 +1,15 @@
 import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
 import { Watcher } from "../src";
 
+const DEFAULT_BABEL_OPTS = {
+  presets: [
+    [ "env", {
+      targets: { chrome: 50 },
+      loose: true
+    } ]
+  ]
+};
+
 describe( "watcher", () => {
 
   const fs = require( "fs-extra" );
@@ -27,20 +36,16 @@ describe( "watcher", () => {
       const config = require( path.resolve( fixturePath, "config.js" ) );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = [
-        obj => {
-          if ( obj.type === "ts" ) {
-            obj.type = "js";
-            return obj;
-          }
-        },
-        jsPlugin()
-      ];
+      config.plugins = ( config.plugins || [] ).concat( [ jsPlugin() ] );
       config.resolvers = [ jsResolver( config.resolve ) ];
       config.checkers = [ jsChecker() ];
-      config.renderers = [ jsRenderer( Object.assign( { babelrc: false }, config.babelOpts ) ) ];
+      config.renderers = [
+        jsRenderer( config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS ),
+      ];
       config.cwd = fixturePath;
-      config.commonChunks = "atual";
+      config.entries = config.entries || [ "index.js" ];
+      config.context = config.context || "working";
+      config.dest = config.dest || "atual";
       config.watch = true;
       config._hideDates = true;
       config.watchOptions = {

@@ -1,6 +1,6 @@
 import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
 import { plugin as htmlPlugin, resolver as htmlResolver, renderer as htmlRenderer } from "../src/plugins/html";
-import builder from "../src";
+import Builder from "../src/builder";
 import { testLog } from "../../assert";
 
 function isRegExp( obj ) {
@@ -32,6 +32,7 @@ describe( "builder", () => {
 
     it( `Fixture: ${folder}`, async() => {
 
+      let builder;
       let assetsNum = 0;
       const assets = {};
       const warnings = [];
@@ -42,7 +43,7 @@ describe( "builder", () => {
       expect( config ).not.toBe( null );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = [ jsPlugin(), htmlPlugin() ];
+      config.plugins = ( config.plugins || [] ).concat( [ jsPlugin(), htmlPlugin() ] );
       config.resolvers = [ jsResolver( config.resolve ), htmlResolver() ];
       config.checkers = [ jsChecker() ];
       config.renderers = [
@@ -50,7 +51,9 @@ describe( "builder", () => {
         htmlRenderer()
       ];
       config.cwd = fixturePath;
-      config.commonChunks = "atual";
+      config.entries = config.entries || [ "index.js" ];
+      config.context = config.context || "files";
+      config.dest = config.dest || "atual";
       config.warn = w => {
         warnings.push( w );
       };
@@ -59,13 +62,15 @@ describe( "builder", () => {
         writeFile: ( file, content ) => {
           expect( path.isAbsolute( file ) ).toBe( true );
 
-          const f = path.relative( fixturePath, file ).replace( /\\/g, "/" );
+          const f = builder.idToString( file );
           if ( assets[ f ] ) {
             throw new Error( `Overriding ${f}` );
           }
           assets[ f ] = content;
         }
       };
+
+      builder = new Builder( config );
 
       function success() {
         if ( config._error ) {
@@ -74,7 +79,8 @@ describe( "builder", () => {
           expect( assets ).toMatchSnapshot();
 
           if ( config._out ) {
-            config.entries.forEach( ( [ , dest ], i ) => {
+            builder.entries.forEach( ( entry, i ) => {
+              const dest = builder.idToString( path.resolve( builder.dest, entry ) );
               testLog( () => {
                 expect( typeof assets[ dest ] ).toBe( "string" );
                 global.__quase_builder__ = undefined;
@@ -109,7 +115,7 @@ describe( "builder", () => {
       }
 
       try {
-        await builder( config );
+        await builder.build();
       } catch ( err ) {
         return failure( err );
       }

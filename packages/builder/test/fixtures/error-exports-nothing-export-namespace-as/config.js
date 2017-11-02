@@ -1,7 +1,4 @@
 module.exports = {
-  entries: [
-    [ "files/index.js", "atual/dist.js" ]
-  ],
   babelOpts: {
     presets: [
       [ "env", {
@@ -11,5 +8,5 @@ module.exports = {
     ],
     plugins: [ "transform-export-extensions" ]
   },
-  _error: "./a exports nothing. See files/index.js:1:7"
+  _error: "./a exports nothing. See index.js:1:7"
 };

@@ -15,17 +15,13 @@ const rehash = /(\..*)?$/;
 
 const runtimeCode = fs.readFile( path.resolve( __dirname, "runtime/runtime.min.js" ), "utf8" );
 
-const runtimeReplace = {
-  babel: "{__BABEL_HELPERS__:1}",
-  idToFile: "{__ID_TO_FILE_HERE__:1}"
-};
-
 export default class Builder {
 
-  idEntries: [ID, ID][];
-  entries: [string, string][];
+  idEntries: ID[];
+  entries: string[];
+  context: ID;
+  dest: ID;
   cwd: string;
-  commonChunks: ID;
   sourceMaps: boolean | "inline";
   hashing: boolean;
   warn: Function;
@@ -46,22 +42,24 @@ export default class Builder {
 
     const options: Options = _opts || { entries: [] };
 
-    this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd(); // Default: process.cwd()
     this.entries = ( options.entries || [] );
-    this.idEntries = this.entries.map( ( [ a, b ] ) => [
-      this.resolveId( a ),
-      this.resolveId( b )
-    ] );
 
     if ( this.entries.length === 0 ) {
       throw new Error( "Missing entries." );
     }
 
-    if ( typeof options.commonChunks !== "string" ) {
-      throw new Error( "Missing commonChunks options." );
+    if ( typeof options.context !== "string" ) {
+      throw new Error( "Missing context option." );
     }
 
-    this.commonChunks = this.resolveId( options.commonChunks );
+    if ( typeof options.dest !== "string" ) {
+      throw new Error( "Missing dest option." );
+    }
+
+    this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd(); // Default: process.cwd()
+    this.context = this.resolveId( options.context );
+    this.dest = this.resolveId( options.dest );
+    this.idEntries = this.entries.map( e => resolveId( e, this.context ) );
 
     this.fileSystem = options.fileSystem || new FileSystem();
     this.fs = options.fs || fs;
@@ -97,24 +95,25 @@ export default class Builder {
     return builder;
   }
 
-  idToString( id: ID | string ): string {
-    return idToString( id, this.cwd );
+  idToString( id: ID | string, cwd: ID | string = this.cwd ): string {
+    return idToString( id, cwd );
   }
 
-  resolveId( id: ID | string ): ID {
-    return resolveId( id, this.cwd );
+  resolveId( id: ID | string, cwd: ID | string = this.cwd ): ID {
+    return resolveId( id, cwd );
   }
 
   isEntry( id: ID ): boolean {
-    return this.idEntries.findIndex( e => e[ 0 ] === id ) > -1;
+    return this.idEntries.findIndex( e => e === id ) > -1;
   }
 
   isDest( id: ID ): boolean {
-    return this.idEntries.findIndex( e => e[ 1 ] === id ) > -1;
+    // $FlowFixMe
+    return id.indexOf( this.dest ) === 0;
   }
 
-  getModule( id: string ): ?Module {
-    return this.modules.get( this.resolveId( id ) );
+  getModule( id: ID ): ?Module {
+    return this.modules.get( id );
   }
 
   async addModule( id: ID ): Promise<Module> {
@@ -174,7 +173,7 @@ export default class Builder {
     this.uuid++;
 
     const promises = [];
-    for ( const [ entry ] of this.idEntries ) {
+    for ( const entry of this.idEntries ) {
       promises.push( this.addModule( entry ) );
     }
     await Promise.all( promises );
