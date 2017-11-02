@@ -1,4 +1,5 @@
 import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
+import { plugin as htmlPlugin, resolver as htmlResolver, renderer as htmlRenderer } from "../src/plugins/html";
 import builder from "../src";
 import { testLog } from "../../assert";
 
@@ -41,11 +42,12 @@ describe( "builder", () => {
       expect( config ).not.toBe( null );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = [ jsPlugin() ];
-      config.resolvers = [ jsResolver( config.resolve ) ];
+      config.plugins = [ jsPlugin(), htmlPlugin() ];
+      config.resolvers = [ jsResolver( config.resolve ), htmlResolver() ];
       config.checkers = [ jsChecker() ];
       config.renderers = [
         jsRenderer( config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS ),
+        htmlRenderer()
       ];
       config.cwd = fixturePath;
       config.commonChunks = "atual";
