@@ -1,4 +1,4 @@
-import { SourceMapExtractor } from "../../../source-map/src/";
+import SourceMapExtractor from "../../../source-map/src/extractor";
 import { prettify } from "../../../pathname/src/path-url";
 import { beautify as beautifyStack } from "../../../error/src";
 import colors from "./colors";
