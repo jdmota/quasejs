@@ -10,5 +10,12 @@ export function assertPath( path ) {
 const SEP = /[\\/]/;
 
 export function split( path ) {
-  return path.split( SEP );
+  return path ? path.split( SEP ) : [];
+}
+
+export function join( arr ) {
+  if ( arr.length === 1 ) {
+    return arr[ 0 ] || "/";
+  }
+  return arr.join( "/" ) || ".";
 }

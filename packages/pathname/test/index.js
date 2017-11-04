@@ -1,4 +1,5 @@
 import "./basename";
+import "./change-base";
 import "./dirname";
 import "./extname";
 import "./is-absolute";

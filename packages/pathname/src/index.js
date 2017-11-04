@@ -1,4 +1,5 @@
 import basename from "./basename";
+import changeBase from "./change-base";
 import dirname from "./dirname";
 import extname from "./extname";
 import isAbsolute from "./is-absolute";
@@ -9,9 +10,9 @@ import pathToRegExp from "./path-to-regexp";
 import relative from "./relative";
 import resolve from "./resolve";
 
-// TODO support paths and urls at the same time
 export default {
   basename,
+  changeBase,
   dirname,
   extname,
   isAbsolute,

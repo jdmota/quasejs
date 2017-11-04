@@ -1,6 +1,5 @@
 import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
 import escapeRegExp from "../../_helper/escapeRegExp";
-import { isAbs } from "./is-absolute";
 import { normalizeArr } from "./normalize";
 import { split, assertPath } from "./vars";
 
@@ -13,9 +12,6 @@ export default function( pathname, ext ) {
   if ( !pathname ) {
     return "";
   }
-  const urlIsAbs = isAbs( pathname ) ? "/" : "";
-  const urlArr = split( pathname );
-  const arr = normalizeArr( urlArr, !urlIsAbs );
-  const base = arr.pop();
+  const base = normalizeArr( split( pathname ) ).pop();
   return ext ? base.replace( createReExt( ext ), "" ) : base;
 }

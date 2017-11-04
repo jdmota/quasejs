@@ -1,13 +1,13 @@
 import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
-import { isAbs } from "./is-absolute";
 import { normalizeArr } from "./normalize";
-import { split, assertPath } from "./vars";
+import { split, join, assertPath } from "./vars";
 
 export default memoizeStringOnly( function( pathname ) {
   assertPath( pathname );
-  const urlIsAbs = isAbs( pathname ) ? "/" : "";
-  const urlArr = split( pathname );
-  const arr = normalizeArr( urlArr, !urlIsAbs );
-  arr.pop();
-  return ( urlIsAbs + arr.join( "/" ) ) || ".";
+  const arr = normalizeArr( split( pathname ) );
+  const last = arr.pop();
+  if ( last === "" && arr.length === 0 ) {
+    return "/";
+  }
+  return join( arr );
 } );

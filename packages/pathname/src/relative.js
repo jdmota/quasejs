@@ -1,18 +1,15 @@
 import { normalizeArr } from "./normalize";
-import { split, assertPath } from "./vars";
+import { split, join, assertPath } from "./vars";
 
-export default function( fromPath, toPath ) {
-
+export function relativeHelper( fromPath, toPath ) {
   assertPath( fromPath );
   assertPath( toPath );
 
-  let fromParts, toParts, length, samePartsLength, outputParts;
+  const fromParts = normalizeArr( split( fromPath ) );
+  const toParts = normalizeArr( split( toPath ) );
 
-  fromParts = normalizeArr( split( fromPath ), true );
-  toParts = normalizeArr( split( toPath ), true );
-
-  length = Math.min( fromParts.length, toParts.length );
-  samePartsLength = length;
+  const length = Math.min( fromParts.length, toParts.length );
+  let samePartsLength = length;
   for ( let i = 0; i < length; i++ ) {
     if ( fromParts[ i ] !== toParts[ i ] ) {
       samePartsLength = i;
@@ -20,13 +17,14 @@ export default function( fromPath, toPath ) {
     }
   }
 
-  outputParts = [];
+  const outputParts = [];
   for ( let i = samePartsLength; i < fromParts.length; i++ ) {
     outputParts.push( ".." );
   }
 
-  outputParts = outputParts.concat( toParts.slice( samePartsLength ) );
+  return outputParts.concat( toParts.slice( samePartsLength ) );
+}
 
-  return outputParts.join( "/" );
-
+export default function( fromPath, toPath ) {
+  return join( relativeHelper( fromPath, toPath ) );
 }

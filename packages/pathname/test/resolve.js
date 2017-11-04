@@ -21,8 +21,8 @@ it( "resolve", () => {
     [ "../1/2/3"       , "/a/b/c/d/1/2/3" ],
     [ "./././1/2/3"    , "/a/b/c/d/e/1/2/3" ],
     [ "./1/2/3"        , "/a/b/c/d/e/1/2/3" ],
-    [ "./././1///2/3"    , "/a/b/c/d/e/1/2/3" ],
-    [ "./1///2/3"        , "/a/b/c/d/e/1/2/3" ],
+    [ "./././1///2/3"  , "/a/b/c/d/e/1/2/3" ],
+    [ "./1///2/3"      , "/a/b/c/d/e/1/2/3" ],
     [ "/../../../1/2/3", "/1/2/3" ],
     [ "/../1/2/3"      , "/1/2/3" ],
     [ "/./././1/2/3"   , "/1/2/3" ],
@@ -54,7 +54,7 @@ it( "resolve", () => {
   assert.strictEqual( pathname.resolve( "/one/two", "/" ), "/" );
   assert.strictEqual( pathname.resolve( "one/two", "/" ), "/" );
   assert.strictEqual( pathname.resolve( "one/two", "../" ), "one" );
-  assert.strictEqual( pathname.resolve( "one/two", "../.." ), "" );
+  assert.strictEqual( pathname.resolve( "one/two", "../.." ), "." );
   assert.strictEqual( pathname.resolve( "one/two", "../../.." ), ".." );
   assert.strictEqual( pathname.resolve( "/one/two/three", "../four" ), "/one/two/four" );
   assert.strictEqual( pathname.resolve( "/one/two/three", "four" ), "/one/two/three/four" );

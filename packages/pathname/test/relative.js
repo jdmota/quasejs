@@ -8,7 +8,7 @@ it( "relative", () => {
     [ "/quasejs/test", "/quasejs/test/aaa", "aaa" ],
     [ "/var/lib", "/var", ".." ],
     [ "/var/lib", "/bin", "../../bin" ],
-    [ "/var/lib", "/var/lib", "" ],
+    [ "/var/lib", "/var/lib", "." ],
     [ "/var/lib", "/var/apache", "../apache" ],
     [ "/var/", "/var/lib", "lib" ],
     [ "/", "/var/lib", "var/lib" ],
@@ -23,7 +23,7 @@ it( "relative", () => {
 
   } );
 
-  assert.strictEqual( pathname.relative( "", "" ), "" );
-  assert.strictEqual( pathname.relative( ".", "." ), "" );
+  assert.strictEqual( pathname.relative( "", "" ), "." );
+  assert.strictEqual( pathname.relative( ".", "." ), "." );
 
 } );

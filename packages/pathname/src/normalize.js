@@ -1,27 +1,37 @@
 import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
-import { isAbs } from "./is-absolute";
-import { split, assertPath } from "./vars";
+import { split, join, assertPath } from "./vars";
 
-export const normalizeArr = function( urlArr, urlNotAbs ) {
+export const normalizeArr = function( urlArr ) {
 
   const res = [];
+  const len = urlArr.length;
 
-  for ( let i = 0; i < urlArr.length; i++ ) {
+  if ( len ) {
 
-    const p = urlArr[ i ];
+    const isAbs = urlArr[ 0 ] === "";
 
-    if ( !p || p === "." ) {
-      continue;
+    for ( let i = 0; i < len; i++ ) {
+
+      const p = urlArr[ i ];
+
+      if ( !p || p === "." ) {
+        continue;
+      }
+
+      if ( p === ".." ) {
+        if ( res.length && res[ res.length - 1 ] !== ".." ) {
+          res.pop();
+        } else if ( !isAbs ) {
+          res.push( ".." );
+        }
+      } else {
+        res.push( p );
+      }
+
     }
 
-    if ( p === ".." ) {
-      if ( res.length && res[ res.length - 1 ] !== ".." ) {
-        res.pop();
-      } else if ( urlNotAbs ) {
-        res.push( ".." );
-      }
-    } else {
-      res.push( p );
+    if ( isAbs ) {
+      res.unshift( "" );
     }
 
   }
@@ -34,9 +44,7 @@ export const normalizePre = memoizeStringOnly( function( pathname ) {
   if ( !pathname ) {
     return ".";
   }
-  const urlIsAbs = isAbs( pathname ) ? "/" : "";
-  const urlArr = split( pathname );
-  return urlIsAbs + normalizeArr( urlArr, !urlIsAbs ).join( "/" );
+  return join( normalizeArr( split( pathname ) ) );
 } );
 
 export default function( pathname ) {
