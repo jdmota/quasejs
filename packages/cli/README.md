@@ -12,7 +12,7 @@ We also change the update message if Yarn is detected.
 #!/usr/bin/env node
 "use strict";
 
-require( "@quase/cli" )(
+require( "@quase/cli" ).default(
   ( { input, flags, pkg, help, showHelp } ) => {
 
   },
@@ -28,11 +28,9 @@ require( "@quase/cli" )(
 
 ```json
 {
-  ...
   "bin": {
     "my-name": "bin/my-name"
   },
-  ...
 }
 ```
 
