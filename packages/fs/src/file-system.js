@@ -4,7 +4,7 @@ import isFile from "./is-file";
 
 const LRU = require( "lru-cache" );
 const Buffer = typeof global !== "undefined" && global.Buffer;
-const TextDecoder = typeof window !== "undefined" && window.TextDecoder; // eslint-disable-line no-undef
+const TextDecoder = ( typeof window !== "undefined" && window.TextDecoder ) || require( "util" ).TextDecoder; // eslint-disable-line no-undef
 
 function bufferToString( buf ) {
   if ( Buffer && buf instanceof Buffer ) {
