@@ -33,7 +33,7 @@ const src = path.join( "packages", pkg, "src" );
 const dist = path.join( "packages", pkg, "dist" );
 
 const command = publish ?
-  `babel ${src} --out-dir ${dist} && cd ${pkgFolder} && npm publish && echo Success!` :
+  `babel ${src} --out-dir ${dist} && cd ${pkgFolder} && npm publish --access public && echo Success!` :
   `babel ${src} --out-dir ${dist} && echo Success!`;
 
 console.log( `Running '${command}' ...` );
