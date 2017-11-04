@@ -1,8 +1,6 @@
-import req from "../../_helper/require";
-
-const fs = req( "fs-extra" );
 const fetch = typeof window !== "undefined" && window.fetch; // eslint-disable-line no-undef
 const XMLHttpRequest = typeof window !== "undefined" && window.XMLHttpRequest; // eslint-disable-line no-undef
+const fs = !fetch && require( "fs-extra" );
 
 function xdr( url, useBuffer ) {
   return new Promise( ( resolve, reject ) => {

@@ -1,0 +1,15 @@
+{
+  "name": "@quase/memory-fs",
+  "version": "0.2.0-0",
+  "description": "In memory file system",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/fs/memory-fs",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@quase/get-file": "^0.1.0",
+    "@quase/is-file": "^0.1.0",
+    "fs-extra": "^4.0.2",
+    "lru-cache": "^4.1.1"
+  }
+}

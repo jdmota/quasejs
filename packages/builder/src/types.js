@@ -1,6 +1,6 @@
 // @flow
 
-import type FileSystem from "../../fs/src/file-system";
+import type FileSystem from "../../fs/memory-fs/src";
 import type { ID } from "./id";
 import type Builder from "./builder";
 

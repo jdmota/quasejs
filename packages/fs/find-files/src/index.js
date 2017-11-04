@@ -1,12 +1,8 @@
-import req from "../../_helper/require";
-
-// TODO test findFilesObservable
-
-const fs = req( "fs-extra" );
-const path = req( "path" );
-const mm = req( "micromatch" ); // FIXME don't depend on micromatch
-const slash = req( "slash" );
-const Observable = req( "zen-observable" );
+const fs = require( "fs-extra" );
+const path = require( "path" );
+const mm = require( "micromatch" ); // FIXME don't depend on micromatch
+const slash = require( "slash" );
+const Observable = require( "zen-observable" );
 
 const { stat: fsStatPromise, readdir: fsReadDirPromise } = fs;
 

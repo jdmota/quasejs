@@ -1,0 +1,12 @@
+{
+  "name": "@quase/get-file",
+  "version": "0.2.0-0",
+  "description": "Get file",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/fs/get-file",
+  "main": "dist/index.js",
+  "dependencies": {
+    "fs-extra": "^4.0.2"
+  }
+}

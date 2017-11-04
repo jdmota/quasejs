@@ -4,7 +4,20 @@
   "independent": true,
   "npmClient": "yarn",
   "packages": [
-    "packages/*"
+    "packages/builder",
+    "packages/cli",
+    "packages/error",
+    "packages/eslint-config-quase",
+    "packages/events",
+    "packages/fs/find-files",
+    "packages/fs/get-file",
+    "packages/fs/is-file",
+    "packages/fs/memory-fs",
+    "packages/package-manager",
+    "packages/pathname",
+    "packages/source-map",
+    "packages/unit",
+    "packages/view"
   ],
   "commands": {
     "publish": {

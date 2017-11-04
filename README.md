@@ -28,9 +28,21 @@ The Eslint configuration that I use.
 
 A copy of NodeJS's `events` module that also works on the browser.
 
-**[fs](packages/fs)** - *WIP*
+**[fs/find-files](packages/fs/find-files)** - *WIP*
 
-`fs-extra` + additional tools.
+Find all files that match some patterns. Outputs results with an observable.
+
+**[fs/get-file](packages/fs/get-file)** - **0.1.0**
+
+Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XMLHttpRequest` in the browser.
+
+**[fs/is-file](packages/fs/is-file)** - **0.1.0**
+
+Check if path is a file.
+
+**[fs/memory-fs](packages/fs/memory-fs)** - **0.1.0**
+
+Very simple in memory file system.
 
 **[package-manager](packages/package-manager)** - *WIP*
 

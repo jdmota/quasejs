@@ -1,6 +1,6 @@
 // @flow
 
-import FileSystem from "../../fs/src/file-system";
+import FileSystem from "../../fs/memory-fs/src";
 import hash from "./utils/hash";
 import processGraph from "./graph";
 import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options } from "./types";

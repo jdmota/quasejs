@@ -1,6 +1,12 @@
-import { makeAbsolutePath } from "../../pathname/src/path-url";
-import { getFileBuffer } from "./get-file";
-import isFile from "./is-file";
+// TODO import { makeAbsolutePath } from "../../pathname/src/path-url";
+
+const path = require( "path" );
+function makeAbsolutePath( file ) {
+  return path.resolve( file );
+}
+
+const getFileBuffer = require( "@quase/get-file" ).getFileBuffer;
+const isFile = require( "@quase/is-file" ).default;
 
 const LRU = require( "lru-cache" );
 const Buffer = typeof global !== "undefined" && global.Buffer;
