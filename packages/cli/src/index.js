@@ -3,27 +3,60 @@ const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
 const meow = require( "meow" );
 
-function notify( pkg, notifyOpts ) {
-  const notifier = updateNotifier( { pkg } );
-
-  if ( notifier.update ) {
-    const opts = Object.assign( { isGlobal: true }, notifyOpts );
-
-    if ( !( "message" in opts ) && hasYarn() ) {
-      opts.message =
-        `Update available ${chalk.dim( notifier.update.current )}${chalk.reset( " → " )}${chalk.green( notifier.update.latest )}` +
-        ` \nRun ${chalk.cyan( `yarn ${opts.isGlobal ? "global" : ""} add ` + notifier.packageName )} to update`;
-    }
-
-    notifier.notify( opts );
+function notifyFix( opts ) {
+  if ( !process.stdout.isTTY || !this.update ) {
+    return this;
   }
+
+  opts = Object.assign( { isGlobal: require( "is-installed-globally" ) }, opts );
+
+  const defaultMsg = hasYarn() ?
+    `Update available ${chalk.dim( this.update.current )}${chalk.reset( " → " )}${chalk.green( this.update.latest )}` +
+    ` \nRun ${chalk.cyan( `yarn ${opts.isGlobal ? "global " : ""}add ${this.packageName}` )} to update` :
+    `Update available ${chalk.dim( this.update.current )}${chalk.reset( " → " )}${chalk.green( this.update.latest )}` +
+    ` \nRun ${chalk.cyan( `npm i ${opts.isGlobal ? "-g " : ""}${this.packageName}` )} to update`;
+
+  opts.message = opts.message || defaultMsg;
+
+  opts.boxenOpts = opts.boxenOpts || {
+    padding: 1,
+    margin: 1,
+    align: "center",
+    borderColor: "yellow",
+    borderStyle: "round"
+  };
+
+  const message = "\n" + require( "boxen" )( opts.message, opts.boxenOpts );
+
+  /* eslint-disable */
+  if ( opts.defer === false ) {
+    console.error( message );
+  } else {
+    process.on( "exit", () => {
+      console.error( message );
+    } );
+
+    process.on( "SIGINT", () => {
+      console.error( "" );
+      process.exit();
+    } );
+  }
+  /* eslint-enable */
+
+  return this;
 }
 
-export default function( opts, minimistOpts, notifyOpts, callback ) {
-  const cli = meow( opts, minimistOpts );
+function notify( pkg, notifierOpts ) {
+  const notifier = updateNotifier( Object.assign( { pkg }, notifierOpts.options ) );
+  notifier.notify = notifyFix;
+  notifier.notify( notifierOpts.notify );
+}
 
-  if ( notifyOpts !== false ) {
-    notify( cli.pkg, notifyOpts );
+export default function( callback, opts, notifierOpts ) {
+  const cli = meow( opts );
+
+  if ( notifierOpts !== false ) {
+    notify( cli.pkg, notifierOpts || {} );
   }
 
   callback( cli );

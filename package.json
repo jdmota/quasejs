@@ -25,6 +25,7 @@
   "jest": {
     "roots": [
       "<rootDir>/packages/builder/test/",
+      "<rootDir>/packages/cli/test/",
       "<rootDir>/packages/events/test/",
       "<rootDir>/packages/package-manager/test/",
       "<rootDir>/packages/pathname/test/",

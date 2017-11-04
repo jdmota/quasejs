@@ -13,12 +13,14 @@ We also change the update message if Yarn is detected.
 "use strict";
 
 require( "@quase/cli" )(
-  {}, // Meow options
-  {}, // Minimist options
-  { isGlobal: false }, // .notify() options or false to disable notification
   ( { input, flags, pkg, help, showHelp } ) => {
 
-  }
+  },
+  {}, // Meow options
+  {
+    options: {}, // UpdateNotifier options
+    notify: {} // .notify() options
+  }, // false to disable notification
 );
 ```
 
@@ -34,8 +36,6 @@ require( "@quase/cli" )(
 }
 ```
 
-See https://github.com/sindresorhus/meow for details on the options.
+See https://github.com/sindresorhus/meow for details.
 
-> Keys passed to the minimist `default` option are decamelized, so you can for example pass in `fooBar: 'baz'` and have it be the default for the `--foo-bar` flag.
-
-See https://github.com/yeoman/update-notifier for details on the `.notify()` options.
+See https://github.com/yeoman/update-notifier for details.
