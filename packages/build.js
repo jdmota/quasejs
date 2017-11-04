@@ -32,9 +32,11 @@ const pkgFolder = path.join( "packages", pkg );
 const src = path.join( "packages", pkg, "src" );
 const dist = path.join( "packages", pkg, "dist" );
 
+const babel = `babel ${src} --out-dir ${dist} --copy-files`;
+
 const command = publish ?
-  `babel ${src} --out-dir ${dist} && cd ${pkgFolder} && npm publish --access public && echo Success!` :
-  `babel ${src} --out-dir ${dist} && echo Success!`;
+  `${babel} && cd ${pkgFolder} && npm publish --access public && echo Success!` :
+  `${babel} && echo Success!`;
 
 console.log( `Running '${command}' ...` );
 

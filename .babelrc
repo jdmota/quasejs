@@ -10,6 +10,9 @@
     "transform-flow-strip-types",
     [ "transform-class-properties", { "loose": true } ]
   ],
+  "ignore": [
+    "**/*.min.js"
+  ],
   "presets": [
     [ "env", {
       "targets": {
