@@ -13,6 +13,27 @@
     meow "https://github.com/sindresorhus/meow.git#master"
     update-notifier "^2.3.0"
 
+"@quase/get-file@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@quase/get-file/-/get-file-0.1.0.tgz#a0762cfd5f5e70836db70418ed00fec2b9c16cda"
+  dependencies:
+    fs-extra "^4.0.2"
+
+"@quase/is-file@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@quase/is-file/-/is-file-0.1.0.tgz#edd371eb9096eb8919563172ce6f2857eab3cbb0"
+  dependencies:
+    fs-extra "^4.0.2"
+
+"@quase/memory-fs@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@quase/memory-fs/-/memory-fs-0.1.0.tgz#533fd721a4e181218ed8b1f7274b94001889bf87"
+  dependencies:
+    "@quase/get-file" "^0.1.0"
+    "@quase/is-file" "^0.1.0"
+    fs-extra "^4.0.2"
+    lru-cache "^4.1.1"
+
 "@types/node@^6.0.46":
   version "6.0.90"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.90.tgz#0ed74833fa1b73dcdb9409dcb1c97ec0a8b13b02"
@@ -1473,7 +1494,7 @@ lowercase-keys@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/lowercase-keys/-/lowercase-keys-1.0.0.tgz#4e3366b39e7f5457e35f1324bdf6f88d0bfc7306"
 
-lru-cache@^4.0.1, lru-cache@^4.0.2:
+lru-cache@^4.0.1, lru-cache@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-4.1.1.tgz#622e32e82488b49279114a4f9ecf45e7cd6bba55"
   dependencies:
@@ -1494,9 +1515,9 @@ map-obj@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/map-obj/-/map-obj-2.0.0.tgz#a65cd29087a92598b8791257a523e021222ac1f9"
 
-"meow@git+https://github.com/sindresorhus/meow.git#master":
+"meow@https://github.com/sindresorhus/meow.git#master":
   version "3.6.0"
-  resolved "git+https://github.com/sindresorhus/meow.git#554119b0af09cb33aea4e709c0572043cd00586d"
+  resolved "https://github.com/sindresorhus/meow.git#554119b0af09cb33aea4e709c0572043cd00586d"
   dependencies:
     camelcase-keys "^4.0.0"
     decamelize-keys "^1.0.0"

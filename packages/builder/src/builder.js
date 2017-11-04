@@ -1,12 +1,12 @@
 // @flow
 
-import FileSystem from "../../fs/memory-fs/src";
 import hash from "./utils/hash";
 import processGraph from "./graph";
 import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options } from "./types";
 import { type ID, idToPath, pathToId, idToString, resolveId } from "./id";
 import Module from "./module";
 
+const FileSystem = require( "@quase/memory-fs" ).default;
 const fs = require( "fs-extra" );
 const prettyBytes = require( "pretty-bytes" );
 const path = require( "path" );

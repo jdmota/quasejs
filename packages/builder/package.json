@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@quase/cli": "^0.1.0",
+    "@quase/memory-fs": "^0.1.0",
     "babel-code-frame": "7.0.0-beta.3",
     "babel-core": "7.0.0-beta.3",
     "babel-generator": "7.0.0-beta.3",
@@ -21,7 +22,6 @@
     "babel-types": "7.0.0-beta.3",
     "babylon": "7.0.0-beta.29",
     "fs-extra": "^4.0.2",
-    "lru-cache": "^4.0.2",
     "parse5": "^3.0.2",
     "pretty-bytes": "^4.0.2",
     "resolve": "^1.4.0",
