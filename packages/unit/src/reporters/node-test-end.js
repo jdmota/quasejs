@@ -1,3 +1,4 @@
+import FileSystem from "../../../fs/memory-fs/src";
 import SourceMapExtractor from "../../../source-map/src/extractor";
 import { prettify } from "../../../pathname/src/path-url";
 import { beautify as beautifyStack } from "../../../error/src";
@@ -7,7 +8,7 @@ import concordanceOptions from "./concordance-options";
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 const concordance = require( "concordance" );
 
-const extractor = new SourceMapExtractor(); // TODO move to reporter
+const extractor = new SourceMapExtractor( new FileSystem() ); // TODO move to reporter
 
 async function enhanceError( original ) {
 

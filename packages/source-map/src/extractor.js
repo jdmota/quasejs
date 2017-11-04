@@ -1,4 +1,3 @@
-import FileSystem from "../../fs/memory-fs/src";
 import { makeAbsolute, resolveAsUrl } from "../../pathname/src/path-url";
 import encoding from "./encoding";
 
@@ -14,7 +13,7 @@ const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
 
 export default class SourceMapExtractor {
 
-  constructor( fs = new FileSystem() ) {
+  constructor( fs ) {
     this.fs = fs;
     this.cacheMapLocation = Object.create( null );
     this.mapRequest = Object.create( null );
