@@ -4,51 +4,51 @@
 
 The purpose of QuaseJS is to include various packages, smaller ones or bigger ones, that are useful for different tasks and that make the lives of JavaScript developers easier.
 
-## :construction: This is a work in progress. The modules listed here are not yet fully implemented and were not published. :construction:
+## :construction: This is a work in progress :construction:
 
 ## Features and available modules
 
-**builder**
+**[builder](packages/builder)** - *WIP*
 
-It's a bundler with easy configuration and good performance.
+It's a bundler with easy configuration, good performance and support for javascript + html + css.
 
-**cli**
+**[cli](packages/cli)** - **0.1.0**
 
 Allows you to create a command line interface very easily.
 
-**error**
+**[error](packages/error)** - *WIP*
 
 Some tools to work with Error objects and their stack.
 
-**eslint-config-quase**
+**[eslint-config-quase](packages/eslint-config-quase)** - **0.1.0**
 
 The Eslint configuration that I use.
 
-**events**
+**[events](packages/events)** - *WIP*
 
 A copy of NodeJS's `events` module that also works on the browser.
 
-**fs**
+**[fs](packages/fs)** - *WIP*
 
 `fs-extra` + additional tools.
 
-**package-manager**
+**[package-manager](packages/package-manager)** - *WIP*
 
 An experimental package manager that uses a global store and a combination of hard/soft links.
 
-**pathname**
+**[pathname](packages/pathname)** - *WIP*
 
 Allows you to resolve, normalize and match pathnames.
 
-**source-map**
+**[source-map](packages/source-map)** - *WIP*
 
 Tools to work with source maps.
 
-**unit**
+**[unit](packages/unit)** - *WIP*
 
 A unit testing library.
 
-**view**
+**[view](packages/view)** - *WIP*
 
 - Create user interfaces with declarative templates.
 - Makes use of the Custom Elements and Shadow Root specs.
@@ -60,8 +60,6 @@ A unit testing library.
 TODO
 
 ## Installation
-
-*Not published yet*
 
 ````
 npm install @quase/PACKAGE
