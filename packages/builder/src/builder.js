@@ -3,11 +3,12 @@
 import FileSystem from "../../fs/src/file-system";
 import hash from "./utils/hash";
 import processGraph from "./graph";
-import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, Options } from "./types";
-import { type ID, idToString, resolveId } from "./id";
+import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options } from "./types";
+import { type ID, idToPath, pathToId, idToString, resolveId } from "./id";
 import Module from "./module";
 
 const fs = require( "fs-extra" );
+const prettyBytes = require( "pretty-bytes" );
 const path = require( "path" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
@@ -21,7 +22,7 @@ export default class Builder {
   entries: string[];
   context: ID;
   dest: ID;
-  cwd: string;
+  cwd: ID;
   sourceMaps: boolean | "inline";
   hashing: boolean;
   warn: Function;
@@ -35,6 +36,7 @@ export default class Builder {
   resolvers: Resolver[];
   checkers: Checker[];
   renderers: Renderer[];
+  performance: PerformanceOpts;
   modules: Map<ID, Module>;
   uuid: number;
 
@@ -56,7 +58,7 @@ export default class Builder {
       throw new Error( "Missing dest option." );
     }
 
-    this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd(); // Default: process.cwd()
+    this.cwd = pathToId( typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd() ); // Default: process.cwd()
     this.context = this.resolveId( options.context );
     this.dest = this.resolveId( options.dest );
     this.idEntries = this.entries.map( e => resolveId( e, this.context ) );
@@ -74,6 +76,20 @@ export default class Builder {
     this.resolvers = options.resolvers || [];
     this.checkers = options.checkers || [];
     this.renderers = options.renderers || [];
+
+    this.performance = Object.assign( {
+      // $FlowFixMe
+      hints: "warning",
+      maxEntrypointSize: 250000,
+      maxAssetSize: 250000,
+      assetFilter( f ) {
+        return !( /\.map$/.test( f ) );
+      }
+    }, options.performance );
+
+    if ( this.performance.hints === true ) {
+      this.performance.hints = "warning";
+    }
 
     this.modules = new Map();
     this.uuid = options.uuid || 0;
@@ -95,11 +111,11 @@ export default class Builder {
     return builder;
   }
 
-  idToString( id: ID | string, cwd: ID | string = this.cwd ): string {
+  idToString( id: ID | string, cwd: ID = this.cwd ): string {
     return idToString( id, cwd );
   }
 
-  resolveId( id: ID | string, cwd: ID | string = this.cwd ): ID {
+  resolveId( id: ID | string, cwd: ID = this.cwd ): ID {
     return resolveId( id, cwd );
   }
 
@@ -132,11 +148,11 @@ export default class Builder {
 
   async write( { dest, code, map }: ToWrite ) {
 
-    dest = path.resolve( this.cwd, dest );
+    dest = idToPath( this.resolveId( dest ) );
 
     const fs = this.fs;
     const inlineMap = this.sourceMaps === "inline";
-    const directory = path.dirname( dest );
+    const directory = pathToId( path.dirname( dest ) );
 
     if ( this.hashing ) {
       const h = hash( code );
@@ -149,7 +165,7 @@ export default class Builder {
 
     if ( map ) {
       map.sources = map.sources.map(
-        source => path.relative( directory, path.resolve( this.cwd, source ) ).replace( /\\/g, "/" )
+        source => this.idToString( this.resolveId( source ), directory )
       );
     }
 
@@ -181,7 +197,32 @@ export default class Builder {
     await callCheckers( this.checkers, this );
 
     const finalModules = processGraph( this );
-    await callRenderers( this.renderers, this, finalModules );
+    const filesInfo = await callRenderers( this.renderers, this, finalModules );
+
+    const output = [ "\nAssets:\n" ];
+
+    if ( this.performance.hints ) {
+      for ( const { file, size } of filesInfo ) {
+        if ( this.performance.assetFilter( file ) ) {
+
+          const isEntry = this.isEntry(
+            this.resolveId( this.idToString( file, this.dest ), this.context )
+          );
+
+          let message = "";
+          if ( isEntry && size > this.performance.maxEntrypointSize ) {
+            message = ` > ${prettyBytes( this.performance.maxEntrypointSize )} [performance!]`;
+          } else if ( size > this.performance.maxAssetSize ) {
+            message = ` > ${prettyBytes( this.performance.maxAssetSize )} [performance!]`;
+          }
+
+          output.push( `${isEntry ? "[entry] " : ""}${this.idToString( file )} | ${prettyBytes( size )}${message}` );
+        }
+      }
+    }
+
+    output.push( "\n" );
+    return output.join( "\n" );
   }
 
 }
@@ -199,12 +240,19 @@ async function callRenderers(
   array: Renderer[],
   builder: Builder,
   finalModules: FinalModules
-): Promise<void> {
+): Promise<{file: string, size: number}[]> {
+  const filesInfo = [];
   const writes = [];
-  const write = builder.write.bind( builder );
   for ( const fn of array ) {
     const out = await fn( builder, finalModules );
-    writes.push( out.map( write ) );
+    for ( const o of out ) {
+      writes.push( builder.write( o ) );
+      filesInfo.push( {
+        file: o.dest,
+        size: o.code.length
+      } );
+    }
   }
   await Promise.all( writes );
+  return filesInfo;
 }

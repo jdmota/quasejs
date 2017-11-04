@@ -1,7 +1,7 @@
 // @flow
 
 import { reportText } from "./utils/error";
-import { pathToId } from "./id";
+import { type ID } from "./id";
 import type { Options } from "./types";
 import Builder from "./builder";
 
@@ -11,7 +11,7 @@ export default class Watcher {
 
   time: number;
   needsBuild: boolean;
-  filesThatTriggerBuild: Set<string>;
+  filesThatTriggerBuild: Set<ID>;
   _hideDates: boolean;
   codeFrameOpts: ?Object;
   job: Promise<any>;
@@ -49,12 +49,19 @@ export default class Watcher {
   queueBuild() {
     this.nextJob( () => {
       if ( this.needsBuild ) {
+        this.log( "\n--------\n" );
         this.needsBuild = false;
         this.time = Date.now();
-        return this.builder.build().then( () => this.finishBuild( true ), e => {
-          this.log( reportText( e, this.codeFrameOpts ) );
-          this.finishBuild( false );
-        } );
+        return this.builder.build().then(
+          output => {
+            this.log( output );
+            this.finishBuild( true );
+          },
+          e => {
+            this.log( reportText( e, this.codeFrameOpts ) );
+            this.finishBuild( false );
+          }
+        );
       }
       this.log( "Build not necessary.\n" );
       this.log( "\n--------\n\n" );
@@ -95,10 +102,10 @@ export default class Watcher {
     return this;
   }
 
-  onUpdate( id: string, type: string ) {
+  onUpdate( id: ID, type: string ) {
     this.nextJob( () => {
       this.needsBuild = this.needsBuild || this.filesThatTriggerBuild.has( id ) || !!this.builder.idEntries.find( e => e === id );
-      this.builder.modules.delete( pathToId( id ) );
+      this.builder.modules.delete( id );
       this.builder.fileSystem.purge( id );
       this.log( `File ${this.builder.idToString( id )} was ${type}.\n` );
     } );

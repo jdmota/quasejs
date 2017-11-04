@@ -21,3 +21,4 @@ declare module "watchpack" { declare var exports: any; }
 declare module "file-url" { declare var exports: any; }
 declare module "slash" { declare var exports: any; }
 declare module "is-url-superb" { declare var exports: any; }
+declare module "pretty-bytes" { declare var exports: any; }

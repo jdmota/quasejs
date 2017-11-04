@@ -36,6 +36,13 @@ type Result = {
 
 type Plugin = ( Result, ID, Builder ) => any | Promise<any>;
 
+type PerformanceOpts = {
+  hints: false | "warning" | "error",
+  maxEntrypointSize: number,
+  maxAssetSize: number,
+  assetFilter: string => boolean
+};
+
 type Options = {
   context: string,
   entries: string[],
@@ -56,8 +63,9 @@ type Options = {
   resolvers?: ?Resolver[],
   checkers?: ?Checker[],
   renderers?: ?Renderer[],
+  performance?: ?PerformanceOpts,
   uuid?: ?number,
   _hideDates?: ?boolean
 };
 
-export type { Result, Deps, Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, Options };
+export type { Result, Deps, Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options };
