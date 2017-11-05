@@ -1,7 +1,7 @@
-import { makeAbsolute, resolveAsUrl } from "../../path-url/src";
 import encoding from "./encoding";
 
 const { SourceMapConsumer } = require( "source-map" );
+const { makeAbsolute, resolveAsUrl } = require( "@quase/path-url" );
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
     // Matches /* ... */ comments

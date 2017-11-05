@@ -8,6 +8,7 @@
   "repository": "https://github.com/quase/quasejs/tree/master/packages/source-map",
   "main": "dist/index.js",
   "dependencies": {
+    "@quase/path-url": "^0.1.0",
     "source-map": "^0.5.7"
   }
 }
