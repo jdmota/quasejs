@@ -1,4 +1,4 @@
-import { prettify } from "../../pathname/src/path-url";
+import { prettify } from "../../path-url/src";
 
 const stackParser = require( "error-stack-parser" );
 

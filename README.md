@@ -48,6 +48,10 @@ Very simple in memory file system.
 
 An experimental package manager that uses a global store and a combination of hard/soft links.
 
+**[path-url](packages/path-url)** - **0.1.0**
+
+Utilities to handle paths and urls.
+
 **[pathname](packages/pathname)** - *WIP*
 
 Allows you to resolve, normalize and match pathnames.

@@ -1,0 +1,14 @@
+{
+  "name": "@quase/path-url",
+  "version": "0.2.0-0",
+  "description": "Utilities to handle paths and urls",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/path-url",
+  "main": "dist/index.js",
+  "dependencies": {
+    "file-url": "^2.0.2",
+    "is-url-superb": "^2.0.0",
+    "slash": "^1.0.0"
+  }
+}

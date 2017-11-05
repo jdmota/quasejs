@@ -14,6 +14,7 @@
     "packages/fs/is-file",
     "packages/fs/memory-fs",
     "packages/package-manager",
+    "packages/path-url",
     "packages/pathname",
     "packages/source-map",
     "packages/unit",

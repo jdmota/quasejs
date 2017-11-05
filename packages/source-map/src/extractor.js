@@ -1,4 +1,4 @@
-import { makeAbsolute, resolveAsUrl } from "../../pathname/src/path-url";
+import { makeAbsolute, resolveAsUrl } from "../../path-url/src";
 import encoding from "./encoding";
 
 const { SourceMapConsumer } = require( "source-map" );

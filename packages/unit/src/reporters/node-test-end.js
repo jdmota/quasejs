@@ -1,6 +1,6 @@
 import FileSystem from "../../../fs/memory-fs/src";
 import SourceMapExtractor from "../../../source-map/src/extractor";
-import { prettify } from "../../../pathname/src/path-url";
+import { prettify } from "../../../path-url/src";
 import { beautify as beautifyStack } from "../../../error/src";
 import colors from "./colors";
 import concordanceOptions from "./concordance-options";
