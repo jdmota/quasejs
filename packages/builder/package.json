@@ -8,11 +8,12 @@
   "repository": "https://github.com/quase/quasejs/tree/master/packages/builder",
   "main": "dist/index.js",
   "bin": {
-    "quase-builder": "bin/quase-builder"
+    "quase-builder": "bin/index.js"
   },
   "dependencies": {
     "@quase/cli": "^0.1.0",
     "@quase/memory-fs": "^0.1.0",
+    "@quase/source-map": "^0.1.0",
     "babel-code-frame": "7.0.0-beta.3",
     "babel-core": "7.0.0-beta.3",
     "babel-generator": "7.0.0-beta.3",

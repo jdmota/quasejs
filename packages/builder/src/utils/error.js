@@ -1,6 +1,5 @@
-import { getOriginalLocation } from "../../../source-map/src";
-
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
+const { getOriginalLocation } = require( "@quase/source-map" );
 
 export default ( originalMessage, { id, code, map } = {}, loc ) => {
   if ( loc && map ) {

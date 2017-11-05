@@ -44,11 +44,11 @@ export default class Builder {
 
     const options: Options = _opts || { entries: [] };
 
-    this.entries = ( options.entries || [] );
-
-    if ( this.entries.length === 0 ) {
+    if ( !options.entries || options.entries.length === 0 ) {
       throw new Error( "Missing entries." );
     }
+
+    this.entries = [].concat( options.entries || [] );
 
     if ( typeof options.context !== "string" ) {
       throw new Error( "Missing context option." );

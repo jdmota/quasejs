@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-"use strict";
-
 /* eslint-disable no-shebang */
 
 require( "@quase/cli" ).default( function( o ) {
-  require( "../dist" )( o.flags );
+  require( "../dist" ).default( o.flags );
 } );

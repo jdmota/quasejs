@@ -1,5 +1,4 @@
-import arrayConcat from "../../../_helper/arrayConcat";
-import { joinSourceMaps } from "../../../source-map/src";
+import arrayConcat from "../utils/array-concat";
 import blank from "../utils/blank";
 import error from "../utils/error";
 import isEmpty from "../utils/is-empty";
@@ -14,6 +13,7 @@ const babel = require( "babel-core" );
 const types = require( "babel-types" );
 const path = require( "path" );
 const nodeResolve = require( "resolve" );
+const { joinSourceMaps } = require( "@quase/source-map" );
 
 function push( array, obj ) {
   if ( !array.find( ( { name } ) => name === obj.name ) ) {

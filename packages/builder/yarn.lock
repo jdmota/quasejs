@@ -34,6 +34,21 @@
     fs-extra "^4.0.2"
     lru-cache "^4.1.1"
 
+"@quase/path-url@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@quase/path-url/-/path-url-0.1.0.tgz#42383ce0987748aee8291a3ddee2289a4734e036"
+  dependencies:
+    file-url "^2.0.2"
+    is-url-superb "^2.0.0"
+    slash "^1.0.0"
+
+"@quase/source-map@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@quase/source-map/-/source-map-0.1.0.tgz#c5412cac5a3d5048c06f39c50637ed58edec66ea"
+  dependencies:
+    "@quase/path-url" "^0.1.0"
+    source-map "^0.5.7"
+
 "@types/node@^6.0.46":
   version "6.0.90"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.90.tgz#0ed74833fa1b73dcdb9409dcb1c97ec0a8b13b02"
@@ -1009,6 +1024,10 @@ extsprintf@1.3.0, extsprintf@^1.2.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/extsprintf/-/extsprintf-1.3.0.tgz#96918440e3041a7a414f8c52e3c574eb3c3e1e05"
 
+file-url@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/file-url/-/file-url-2.0.2.tgz#e951784d79095127d3713029ab063f40818ca2ae"
+
 filename-regex@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/filename-regex/-/filename-regex-2.0.1.tgz#c1c4b9bee3e09725ddb106b75c1e301fe2f18b26"
@@ -1245,6 +1264,10 @@ invariant@^2.2.0:
   dependencies:
     loose-envify "^1.0.0"
 
+ip-regex@^1.0.1:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/ip-regex/-/ip-regex-1.0.3.tgz#dc589076f659f419c222039a33316f1c7387effd"
+
 is-arrayish@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/is-arrayish/-/is-arrayish-0.2.1.tgz#77c99840527aa8ecb1a8ba697b80645a7a926a9d"
@@ -1359,6 +1382,12 @@ is-stream@^1.0.0, is-stream@^1.1.0:
 is-typedarray@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/is-typedarray/-/is-typedarray-1.0.0.tgz#e479c80858df0c1b11ddda6940f96011fcda4a9a"
+
+is-url-superb@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/is-url-superb/-/is-url-superb-2.0.0.tgz#b728a18cf692e4d16da6b94c7408a811db0d0492"
+  dependencies:
+    url-regex "^3.0.0"
 
 isarray@1.0.0, isarray@~1.0.0:
   version "1.0.0"
@@ -2017,6 +2046,10 @@ signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
 
+slash@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/slash/-/slash-1.0.0.tgz#c41f2f6c39fc16d1cd17ad4b5d896114ae470d55"
+
 sntp@1.x.x:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/sntp/-/sntp-1.0.9.tgz#6541184cc90aeea6c6e7b35e2659082443c66198"
@@ -2233,6 +2266,12 @@ url-parse-lax@^1.0.0:
   resolved "https://registry.yarnpkg.com/url-parse-lax/-/url-parse-lax-1.0.0.tgz#7af8f303645e9bd79a272e7a14ac68bc0609da73"
   dependencies:
     prepend-http "^1.0.1"
+
+url-regex@^3.0.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/url-regex/-/url-regex-3.2.0.tgz#dbad1e0c9e29e105dd0b1f09f6862f7fdb482724"
+  dependencies:
+    ip-regex "^1.0.1"
 
 util-deprecate@~1.0.1:
   version "1.0.2"

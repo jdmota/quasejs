@@ -1,5 +1,6 @@
-import { joinSourceMaps } from "../../../source-map/src";
 import error from "../utils/error";
+
+const { joinSourceMaps } = require( "@quase/source-map" );
 
 export default class LanguageModule {
 
