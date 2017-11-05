@@ -56,7 +56,7 @@ Utilities to handle paths and urls.
 
 Allows you to resolve, normalize and match pathnames.
 
-**[source-map](packages/source-map)** - *WIP*
+**[source-map](packages/source-map)** - **0.1.0**
 
 Tools to work with source maps.
 
