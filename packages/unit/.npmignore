@@ -2,3 +2,4 @@
 __dev__
 test
 node_modules
+yarn.lock
