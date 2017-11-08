@@ -32,7 +32,7 @@ A copy of NodeJS's `events` module that also works on the browser.
 
 Find all files that match some patterns. Outputs results with an observable.
 
-**[fs/get-file](packages/fs/get-file)** - **0.1.0**
+**[fs/get-file](packages/fs/get-file)** - **0.1.1**
 
 Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XMLHttpRequest` in the browser.
 

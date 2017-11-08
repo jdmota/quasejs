@@ -5,7 +5,7 @@ const fs = !fetch && require( "fs-extra" );
 function xdr( url, useBuffer ) {
   return new Promise( ( resolve, reject ) => {
     const req = new XMLHttpRequest();
-    req.open( "get", url );
+    req.open( "GET", url );
     req.responseType = useBuffer ? "arraybuffer" : "text";
     req.onerror = reject;
     req.onreadystatechange = () => {
@@ -21,22 +21,16 @@ function xdr( url, useBuffer ) {
   } );
 }
 
-export function getFile( location ) {
-  if ( fetch ) {
-    return fetch( location ).then( response => response.text() );
-  }
-  if ( XMLHttpRequest ) {
-    return xdr( location );
-  }
-  return fs.readFile( location, "utf8" );
-}
+export const getFile =
+  fetch ?
+    location => fetch( location ).then( response => response.text() ) :
+    XMLHttpRequest ?
+      location => xdr( location ) :
+      location => fs.readFile( location, "utf8" );
 
-export function getFileBuffer( location ) {
-  if ( fetch ) {
-    return fetch( location ).then( response => response.arrayBuffer() );
-  }
-  if ( XMLHttpRequest ) {
-    return xdr( location, true );
-  }
-  return fs.readFile( location );
-}
+export const getFileBuffer =
+  fetch ?
+    location => fetch( location ).then( response => response.arrayBuffer() ) :
+    XMLHttpRequest ?
+      location => xdr( location, true ) :
+      location => fs.readFile( location );
