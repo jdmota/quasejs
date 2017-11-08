@@ -28,14 +28,18 @@ if ( typeof pkg !== "string" ) {
   process.exit( 1 );
 }
 
-const pkgFolder = path.join( "packages", pkg );
-const src = path.join( "packages", pkg, "src" );
-const dist = path.join( "packages", pkg, "dist" );
+const pkgFolder = path.join( "packages", pkg ).replace( /\\+/g, "/" );
+const src = path.join( "packages", pkg, "src" ).replace( /\\+/g, "/" );
+const dist = path.join( "packages", pkg, "dist" ).replace( /\\+/g, "/" );
 
 const babel = `babel ${src} --out-dir ${dist} --copy-files`;
 
+const canPublish = true;
+
+const publishCommand = canPublish ? "yarn publish --access public" : "echo Ignoring publishing!";
+
 const command = publish ?
-  `${babel} && cd ${pkgFolder} && npm publish --access public && echo Success!` :
+  `${babel} && cd ${pkgFolder} && yarn config set version-git-tag false && ${publishCommand} && echo Success!` :
   `${babel} && echo Success!`;
 
 console.log( `Running '${command}' ...` );
