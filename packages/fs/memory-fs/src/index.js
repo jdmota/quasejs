@@ -1,24 +1,6 @@
-const getFileBuffer = require( "@quase/get-file" ).getFileBuffer;
-const isFile = require( "@quase/is-file" ).default;
+import File from "./file";
+
 const { makeAbsolute } = require( "@quase/path-url" );
-
-const Buffer = typeof global !== "undefined" && global.Buffer;
-const TextDecoder = ( typeof window !== "undefined" && window.TextDecoder ) || require( "util" ).TextDecoder; // eslint-disable-line no-undef
-const TextEncoder = ( typeof window !== "undefined" && window.TextEncoder ) || require( "util" ).TextEncoder; // eslint-disable-line no-undef
-
-function bufferToString( buf ) {
-  if ( Buffer && buf instanceof Buffer ) {
-    return buf.toString();
-  }
-  return new TextDecoder( "utf-8" ).decode( new Uint8Array( buf ) );
-}
-
-function stringToBuffer( str ) {
-  if ( Buffer ) {
-    return Buffer.from( str );
-  }
-  return new TextEncoder().encode( str );
-}
 
 export default class FileSystem {
   constructor( opts ) {
@@ -34,66 +16,31 @@ export default class FileSystem {
     if ( !obj ) {
       this.files.add( file );
       this.filesUsed.add( file );
-      obj = this.data[ file ] = {
-        name: file,
-        isFile: null,
-        isFileP: null,
-        content: null,
-        contentP: null
-      };
+      obj = this.data[ file ] = new File( file );
     }
     return obj;
   }
 
   async isFile( file ) {
-    const obj = this._objFile( file );
-
-    if ( obj.isFile != null ) {
-      return obj.isFile;
-    }
-
-    obj.isFileP = obj.isFileP || isFile( obj.name ).then( b => {
-      obj.isFile = b;
-      obj.isFileP = null;
-      return b;
-    } );
-
-    return obj.isFileP;
+    return this._objFile( file ).isFile();
   }
 
   async getFileBuffer( file ) {
-    const obj = this._objFile( file );
-
-    if ( obj.content != null ) {
-      return obj.content;
-    }
-
-    obj.contentP = obj.contentP || getFileBuffer( obj.name ).then( c => {
-      obj.isFile = true;
-      obj.isFileP = null;
-      obj.content = c;
-      obj.contentP = null;
-      return c;
-    } );
-
-    return obj.contentP;
+    return this._objFile( file ).getBuffer();
   }
 
   async getFile( file ) {
-    return bufferToString( await this.getFileBuffer( file ) );
+    return this._objFile( file ).getString();
   }
 
-  putFileBuffer( file, content ) {
-    const obj = this._objFile( file );
-    obj.isFile = true;
-    obj.isFileP = null;
-    obj.content = content;
-    obj.contentP = null;
-    return obj.content;
-  }
-
-  putFile( file, str ) {
-    return this.putFileBuffer( file, stringToBuffer( str ) );
+  putFile( obj ) {
+    const overwrite = !!this.data[ obj.location ];
+    if ( !overwrite ) {
+      this.files.add( obj.location );
+      this.filesUsed.add( obj.location );
+    }
+    this.data[ obj.location ] = obj;
+    return overwrite;
   }
 
   purge( what ) {
