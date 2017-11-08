@@ -13,24 +13,10 @@
     meow "https://github.com/sindresorhus/meow.git#master"
     update-notifier "^2.3.0"
 
-"@quase/get-file@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@quase/get-file/-/get-file-0.1.1.tgz#4194f4bd7656ebb8274817b79c2fafa9fd0341f8"
+"@quase/memory-fs@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@quase/memory-fs/-/memory-fs-0.2.0.tgz#78f5be0fa35841a067e70c8c901e245a32742b14"
   dependencies:
-    fs-extra "^4.0.2"
-
-"@quase/is-file@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@quase/is-file/-/is-file-0.1.0.tgz#edd371eb9096eb8919563172ce6f2857eab3cbb0"
-  dependencies:
-    fs-extra "^4.0.2"
-
-"@quase/memory-fs@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@quase/memory-fs/-/memory-fs-0.1.1.tgz#a0026868c2ee2aac9b0fb267d391759fb52b46b1"
-  dependencies:
-    "@quase/get-file" "^0.1.1"
-    "@quase/is-file" "^0.1.0"
     "@quase/path-url" "^0.1.0"
 
 "@quase/path-url@^0.1.0":
