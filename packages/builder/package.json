@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@quase/cli": "^0.1.0",
-    "@quase/memory-fs": "^0.1.0",
+    "@quase/memory-fs": "^0.1.1",
     "@quase/source-map": "^0.1.0",
     "babel-code-frame": "7.0.0-beta.3",
     "babel-core": "7.0.0-beta.3",

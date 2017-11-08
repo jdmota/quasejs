@@ -13,9 +13,9 @@
     meow "https://github.com/sindresorhus/meow.git#master"
     update-notifier "^2.3.0"
 
-"@quase/get-file@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@quase/get-file/-/get-file-0.1.0.tgz#a0762cfd5f5e70836db70418ed00fec2b9c16cda"
+"@quase/get-file@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@quase/get-file/-/get-file-0.1.1.tgz#4194f4bd7656ebb8274817b79c2fafa9fd0341f8"
   dependencies:
     fs-extra "^4.0.2"
 
@@ -25,14 +25,13 @@
   dependencies:
     fs-extra "^4.0.2"
 
-"@quase/memory-fs@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@quase/memory-fs/-/memory-fs-0.1.0.tgz#533fd721a4e181218ed8b1f7274b94001889bf87"
+"@quase/memory-fs@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@quase/memory-fs/-/memory-fs-0.1.1.tgz#a0026868c2ee2aac9b0fb267d391759fb52b46b1"
   dependencies:
-    "@quase/get-file" "^0.1.0"
+    "@quase/get-file" "^0.1.1"
     "@quase/is-file" "^0.1.0"
-    fs-extra "^4.0.2"
-    lru-cache "^4.1.1"
+    "@quase/path-url" "^0.1.0"
 
 "@quase/path-url@^0.1.0":
   version "0.1.0"
@@ -1523,7 +1522,7 @@ lowercase-keys@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/lowercase-keys/-/lowercase-keys-1.0.0.tgz#4e3366b39e7f5457e35f1324bdf6f88d0bfc7306"
 
-lru-cache@^4.0.1, lru-cache@^4.1.1:
+lru-cache@^4.0.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-4.1.1.tgz#622e32e82488b49279114a4f9ecf45e7cd6bba55"
   dependencies:
