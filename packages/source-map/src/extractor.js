@@ -25,36 +25,46 @@ export default class SourceMapExtractor {
 
   async _getMap( file ) {
 
-    const code = await this.fs.getFile( file );
+    const objFile = this.fs.getObjFile( file );
 
-    const match = code.match( regex1 ) || code.match( regex2 );
+    const headers = objFile.fromWeb() ? ( await objFile.getInfo() ).headers : {};
 
-    if ( match ) {
-      const url = match[ 1 ];
-      const dataUrlMatch = url.match( regexDataUrl );
+    let url = headers.SourceMap || headers[ "X-SourceMap" ];
 
-      if ( dataUrlMatch ) {
-        return {
-          map: SourceMapExtractor.consumeSourceMap( encoding.decode( dataUrlMatch[ 1 ] ) ),
-          mapLocation: file
-        };
+    if ( !url ) {
+      const code = await objFile.getString();
+      const match = code.match( regex1 ) || code.match( regex2 );
+
+      if ( !match ) {
+        return;
       }
 
-      const mapLocation = this.cacheMapLocation[ file ] = resolveAsUrl( file, url );
+      url = match[ 1 ];
+    }
 
-      let sourcemap;
+    const dataUrlMatch = url.match( regexDataUrl );
 
-      try {
-        sourcemap = await this.fs.getFile( mapLocation );
-      } catch ( e ) {
-        // The sourcemap that was supposed to exist, was not found
-      }
-
+    if ( dataUrlMatch ) {
       return {
-        map: SourceMapExtractor.consumeSourceMap( sourcemap ),
-        mapLocation
+        map: SourceMapExtractor.consumeSourceMap( encoding.decode( dataUrlMatch[ 1 ] ) ),
+        mapLocation: file
       };
     }
+
+    const mapLocation = this.cacheMapLocation[ file ] = resolveAsUrl( file, url );
+
+    let sourcemap;
+
+    try {
+      sourcemap = await this.fs.getFile( mapLocation );
+    } catch ( e ) {
+      // The sourcemap that was supposed to exist, was not found
+    }
+
+    return {
+      map: SourceMapExtractor.consumeSourceMap( sourcemap ),
+      mapLocation
+    };
 
   }
 
@@ -64,19 +74,14 @@ export default class SourceMapExtractor {
   }
 
   purge( file ) {
-    if ( file ) {
-      file = makeAbsolute( file );
-      this.fs.purge( file );
-      this.mapRequest[ file ] = null;
-      this.cache[ this.cacheMapLocation[ file ] ] = null;
-      this.cacheMapLocation[ file ] = null;
-    }
+    file = makeAbsolute( file );
+    this.fs.purge( file );
+    this.mapRequest[ file ] = null;
+    this.cacheMapLocation[ file ] = null;
   }
 
   // file, generated: { line, column, bias? }
   async getOriginalLocation( file, generated ) {
-
-    file = makeAbsolute( file );
 
     const { map, mapLocation } = await this.getMap( file ) || {};
 
