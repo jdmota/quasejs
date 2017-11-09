@@ -1,4 +1,4 @@
-import escapeRegexp from "../../_helper/escapeRegExp";
+import escapeRegexp from "./escape-regexp";
 import { normalizePre } from "./normalize";
 
 const DEFAULT_GROUP = "[^\\/]+?";

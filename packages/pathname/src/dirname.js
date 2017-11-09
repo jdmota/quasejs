@@ -1,4 +1,4 @@
-import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
+import { memoizeStringOnly } from "./memoize-string";
 import { normalizeArr } from "./normalize";
 import { split, join, assertPath } from "./vars";
 

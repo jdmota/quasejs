@@ -1,5 +1,5 @@
-import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
-import escapeRegExp from "../../_helper/escapeRegExp";
+import { memoizeStringOnly } from "./memoize-string";
+import escapeRegExp from "./escape-regexp";
 import { normalizeArr } from "./normalize";
 import { split, assertPath } from "./vars";
 

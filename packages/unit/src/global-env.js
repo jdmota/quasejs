@@ -1,4 +1,6 @@
-import { root } from "../../_helper/consts";
+const freeGlobal = typeof global === "object" && global;
+const freeSelf = typeof self === "object" && self; // eslint-disable-line no-undef
+const root = freeGlobal || freeSelf || Function( "return this" )(); // eslint-disable-line no-new-func
 
 const has = Object.prototype.hasOwnProperty;
 

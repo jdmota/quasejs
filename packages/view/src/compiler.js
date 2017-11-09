@@ -1,10 +1,9 @@
-import req from "../../_helper/require";
 import compileTemplate from "./template-compiler";
 import { error, findIn, findAll } from "./utils";
 
-const parse5 = req( "parse5" );
-const babylon = req( "babylon" );
-const generate = req( "babel-generator" ).default;
+const parse5 = require( "parse5" );
+const babylon = require( "babylon" );
+const generate = require( "babel-generator" ).default;
 
 function findClassDeclarations( out, ast ) {
   if ( ast != null && typeof ast === "object" ) {

@@ -1,4 +1,4 @@
-import { memoizeStringOnly } from "../../_helper/memoizeStringOnly";
+import { memoizeStringOnly } from "./memoize-string";
 import { split, join, assertPath } from "./vars";
 
 export const normalizeArr = function( urlArr ) {
