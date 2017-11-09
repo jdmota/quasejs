@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 /* eslint no-console: 0 */
@@ -10,7 +10,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       noglobals: true
     } );
     let results = runner.listen();
@@ -49,7 +49,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       noglobals: true
     } );
     let results = runner.listen();
@@ -86,7 +86,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       noglobals: true
     } );
     let results = runner.listen();
@@ -143,7 +143,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       noglobals: true
     } );
     let results = runner.listen();

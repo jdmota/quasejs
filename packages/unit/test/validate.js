@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     it( type + " not allowed in strict mode", () => {
 
-      const runner = unit.Runner.init( {
+      const runner = Runner.init( {
         strict: true
       } );
 

@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 12 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let t = runner.test;
     let runCount = 0;
@@ -57,7 +57,7 @@ describe( "unit", () => {
 
     assert.expect( 24 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let t = runner.test;
     let runCount = 0;

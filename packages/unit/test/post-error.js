@@ -1,11 +1,11 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
 
   it( "post error", async() => {
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 

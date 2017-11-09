@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -14,7 +14,7 @@ describe( "unit", () => {
 
     let Observable = require( "zen-observable" );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let t = runner.test;
 

@@ -1,11 +1,11 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
 
   it( "failed test", () => {
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -45,7 +45,7 @@ describe( "unit", () => {
 
   it( "passed test", () => {
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -90,7 +90,7 @@ describe( "unit", () => {
 
   it( "skipped test", () => {
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -136,7 +136,7 @@ describe( "unit", () => {
 
   it( "failed test has always failed status", () => {
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 

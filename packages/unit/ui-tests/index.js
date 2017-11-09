@@ -1,4 +1,4 @@
-const unit = require( "../src" ).default;
+const unit = require( "../src" );
 const runner = unit.Runner.init();
 const test = runner.test;
 

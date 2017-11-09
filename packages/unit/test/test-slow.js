@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       slow: 5000
     } );
     let results = runner.listen();
@@ -31,7 +31,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -58,7 +58,7 @@ describe( "unit", () => {
 
     assert.expect( 3 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       slow: 1
     } );
     let results = runner.listen();
@@ -89,7 +89,7 @@ describe( "unit", () => {
 
     assert.expect( 3 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -118,7 +118,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       slow: 2
     } );
     let results = runner.listen();
@@ -147,7 +147,7 @@ describe( "unit", () => {
 
     assert.expect( 4 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -173,7 +173,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       slow: 5000
     } );
     let results = runner.listen();

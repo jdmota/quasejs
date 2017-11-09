@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -42,7 +42,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       bail: true
     } );
     let results = runner.listen();
@@ -111,7 +111,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       bail: true
     } );
     let results = runner.listen();
@@ -185,7 +185,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -224,7 +224,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init( {
+    let runner = Runner.init( {
       bail: true
     } );
     let results = runner.listen();
@@ -282,7 +282,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -327,7 +327,7 @@ describe( "unit", () => {
       } );
     }
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -369,7 +369,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = unit.Runner.init();
+    let runner = Runner.init();
     let results = runner.listen();
     let test = runner.test;
 
@@ -410,7 +410,7 @@ describe( "unit", () => {
 
     assert.expect( 3 );
 
-    const runner = unit.Runner.init( {
+    const runner = Runner.init( {
       bail: true
     } );
     const results = runner.listen();
@@ -454,7 +454,7 @@ describe( "unit", () => {
 
     assert.expect( 3 );
 
-    const runner = unit.Runner.init( {
+    const runner = Runner.init( {
       bail: true
     } );
     const results = runner.listen();

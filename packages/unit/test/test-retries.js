@@ -1,4 +1,4 @@
-import unit from "../src";
+import { Runner } from "../src";
 import assert from "../../assert";
 
 describe( "unit", () => {
@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 4 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -36,7 +36,7 @@ describe( "unit", () => {
 
     assert.expect( 5 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -63,7 +63,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -95,7 +95,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -139,7 +139,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -180,7 +180,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -221,7 +221,7 @@ describe( "unit", () => {
 
     assert.expect( 4 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -257,7 +257,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -307,7 +307,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -357,7 +357,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -384,7 +384,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const results = runner.listen();
     const test = runner.test;
 
@@ -409,7 +409,7 @@ describe( "unit", () => {
 
   it( "throw when retryDelay value is not number - group", () => {
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const test = runner.test;
 
     assert.throws( () => {
@@ -422,7 +422,7 @@ describe( "unit", () => {
 
   it( "throw when retryDelay value is too big - group", () => {
 
-    const runner = unit.Runner.init();
+    const runner = Runner.init();
     const test = runner.test;
 
     assert.throws( () => {
