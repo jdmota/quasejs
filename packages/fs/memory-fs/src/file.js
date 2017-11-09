@@ -1,15 +1,17 @@
-const fetch = typeof window !== "undefined" && window.fetch; // eslint-disable-line no-undef
-const fs = !fetch && require( "fs-extra" );
-const { makeAbsolute } = require( "@quase/path-url" );
+const windowFetch = typeof window !== "undefined" && window.fetch; // eslint-disable-line no-undef
+const fs = !windowFetch && require( "fs-extra" );
+const fetch = windowFetch || require( "node-fetch" );
+const { isUrl, makeAbsolutePath, makeAbsoluteUrl } = require( "@quase/path-url" );
 
 class FsFile {
 
   constructor( location ) {
-    this.location = makeAbsolute( location );
+    this.location = makeAbsolutePath( location );
     this._isFile = null;
     this._isDir = null;
     this._readP = null;
     this._statP = null;
+    this._buffer = null;
   }
 
   fromFS() {
@@ -23,6 +25,7 @@ class FsFile {
   _read() {
     return this._readP || ( this._readP = fs.readFile( this.location ).then( b => {
       this._isFile = true;
+      this._buffer = b;
       return b;
     } ) );
   }
@@ -75,12 +78,28 @@ class FsFile {
     return this._read();
   }
 
+  getBufferSync() {
+    if ( this._buffer == null ) {
+      this._buffer = fs.readFileSync( this.location );
+      this._readP = Promise.resolve( this._buffer );
+    }
+    return this._buffer;
+  }
+
+  getStringSync() {
+    return this.getBufferSync().toString();
+  }
+
+}
+
+function syncFetch() {
+  throw new Error( "Sync fetch is not supported." );
 }
 
 class WebFile {
 
   constructor( location ) {
-    this.location = makeAbsolute( location );
+    this.location = makeAbsoluteUrl( location );
     this._isFile = null;
     this._fetchP = null;
   }
@@ -125,10 +144,18 @@ class WebFile {
     return ( await this._fetch() ).arrayBuffer();
   }
 
+  getBufferSync() {
+    syncFetch();
+  }
+
+  getStringSync() {
+    syncFetch();
+  }
+
 }
 
-const File = fs ? FsFile : WebFile;
-
-export default File;
+export default function( location ) {
+  return isUrl( location ) ? new WebFile( location ) : new FsFile( location );
+}
 
 export { FsFile, WebFile };

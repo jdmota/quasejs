@@ -1,4 +1,4 @@
-import File from "./file";
+import createFile from "./file";
 
 const { makeAbsolute } = require( "@quase/path-url" );
 
@@ -16,7 +16,7 @@ export default class FileSystem {
     if ( !obj ) {
       this.files.add( file );
       this.filesUsed.add( file );
-      obj = this.data[ file ] = new File( file );
+      obj = this.data[ file ] = createFile( file );
     }
     return obj;
   }
@@ -31,6 +31,14 @@ export default class FileSystem {
 
   async getFile( file ) {
     return this.getObjFile( file ).getString();
+  }
+
+  getFileBufferSync( file ) {
+    return this.getObjFile( file ).getBufferSync();
+  }
+
+  getFileSync( file ) {
+    return this.getObjFile( file ).getStringSync();
   }
 
   putFile( obj ) {
