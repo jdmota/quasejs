@@ -53,10 +53,31 @@ function notify( pkg, notifierOpts ) {
 }
 
 export default function( callback, opts, notifierOpts ) {
+
+  const defaultConfigFile = opts.defaultConfigFile;
+
+  if ( defaultConfigFile ) {
+    opts = Object.assign( {}, opts );
+    opts.flags = Object.assign( {}, opts.flags );
+    opts.flags.config = {
+      type: "string",
+      alias: "c",
+      default: defaultConfigFile
+    };
+  }
+
   const cli = meow( opts );
 
   if ( notifierOpts !== false ) {
     notify( cli.pkg, notifierOpts || {} );
+  }
+
+  if ( defaultConfigFile ) {
+    if ( cli.flags.config === "none" ) {
+      cli.config = {};
+    } else {
+      cli.config = require( require( "path" ).resolve( cli.flags.config ) );
+    }
   }
 
   callback( cli );

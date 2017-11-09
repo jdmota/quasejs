@@ -1,5 +1,7 @@
 import cli from "../src";
 
+const path = require( "path" );
+
 describe( "cli", () => {
   it( "basic", () => {
 
@@ -9,7 +11,7 @@ describe( "cli", () => {
 
     console.error = jest.fn();
 
-    cli( ( { input, flags, pkg, help, showHelp } ) => {
+    cli( ( { input, flags, pkg, help, showHelp, config } ) => {
       expect( input[ 0 ] ).toBe( "foo" );
       expect( flags.fooBar ).toBe( true );
       expect( flags.number ).toBe( 10 );
@@ -20,6 +22,7 @@ describe( "cli", () => {
       expect( pkg.version ).toBe( "0.0.1" );
       expect( help ).toMatchSnapshot();
       expect( typeof showHelp ).toBe( "function" );
+      expect( config.iAmTheConfigFile ).toBe( "yes" );
     }, {
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -36,7 +39,8 @@ describe( "cli", () => {
         meow: { default: "dog" },
         "--": true
       },
-      inferType: true
+      inferType: true,
+      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
     }, {
       options: {
         updateCheckInterval: 0
@@ -49,4 +53,37 @@ describe( "cli", () => {
     expect( console.error.mock.calls ).toMatchSnapshot();
 
   } );
+
+  it( "config", () => {
+
+    cli( ( { config } ) => {
+      expect( config.iAmTheConfigFile ).toBe( "yes" );
+    }, {
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1"
+      },
+      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config.js" )}` ],
+      help: "",
+      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
+    }, false );
+
+  } );
+
+  it( "empty config", () => {
+
+    cli( ( { config } ) => {
+      expect( config.iAmTheConfigFile ).toBe( undefined );
+    }, {
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1"
+      },
+      argv: [ "--config=none" ],
+      help: "",
+      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
+    }, false );
+
+  } );
+
 } );
