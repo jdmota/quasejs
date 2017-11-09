@@ -1,11 +1,8 @@
-import { prettify } from "../../path-url/src";
-
 const stackParser = require( "error-stack-parser" );
-
-// TODO get original functionName
+const { prettify } = require( "@quase/path-url" );
 
 const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
-const ignoreFileRe = /^([^()\s]*\/node_modules\/quase\/[^()\s]+|[^()\s\\/]+\.js|internal\/[^()\s\\/]+\/[^()\s\\/]+\.js|native)$/;
+const ignoreFileRe = /^([^()\s]*\/node_modules\/quase[^()\s]+|[^()\s\\/]+\.js|internal\/[^()\s\\/]+\/[^()\s\\/]+\.js|native)$/;
 
 export async function beautify( originalStack, extractor ) {
 
