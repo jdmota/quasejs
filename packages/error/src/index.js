@@ -71,3 +71,47 @@ export function getStack( offset ) {
   arr.splice( 1, offset || 1 );
   return arr.join( "\n" );
 }
+
+let installed = false;
+let prevPrepareStack;
+let prevExtension;
+
+function stripBOM( content ) {
+  if ( content.charCodeAt( 0 ) === 0xFEFF ) {
+    content = content.slice( 1 );
+  }
+  return content;
+}
+
+export function install( extractor ) {
+  if ( !installed ) {
+    installed = true;
+
+    prevPrepareStack = Error.prepareStackTrace;
+    Error.prepareStackTrace = function( error ) {
+      return beautify( error.stack, extractor );
+    };
+
+    if ( typeof require === "function" ) {
+      const Module = require( "module" );
+      prevExtension = Module._extensions[ ".js" ];
+      Module._extensions[ ".js" ] = function( module, filename ) {
+        const content = extractor.fs.getFileSync( filename );
+        module._compile( stripBOM( content ), filename );
+      };
+    }
+  }
+}
+
+export function uninstall() {
+  if ( installed ) {
+    Error.prepareStackTrace = prevPrepareStack;
+    if ( prevExtension ) {
+      const Module = require( "module" );
+      Module._extensions[ ".js" ] = prevExtension;
+    }
+    prevPrepareStack = undefined;
+    prevExtension = undefined;
+    installed = false;
+  }
+}
