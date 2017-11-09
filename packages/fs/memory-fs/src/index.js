@@ -10,7 +10,7 @@ export default class FileSystem {
     this.filesUsed = new Set();
   }
 
-  _objFile( file ) {
+  getObjFile( file ) {
     file = makeAbsolute( file );
     let obj = this.data[ file ];
     if ( !obj ) {
@@ -22,15 +22,15 @@ export default class FileSystem {
   }
 
   async isFile( file ) {
-    return this._objFile( file ).isFile();
+    return this.getObjFile( file ).isFile();
   }
 
   async getFileBuffer( file ) {
-    return this._objFile( file ).getBuffer();
+    return this.getObjFile( file ).getBuffer();
   }
 
   async getFile( file ) {
-    return this._objFile( file ).getString();
+    return this.getObjFile( file ).getString();
   }
 
   putFile( obj ) {

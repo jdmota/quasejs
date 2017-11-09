@@ -21,7 +21,10 @@ class FsFile {
   }
 
   _read() {
-    return this._readP || ( this._readP = fs.readFile( this.location ) );
+    return this._readP || ( this._readP = fs.readFile( this.location ).then( b => {
+      this._isFile = true;
+      return b;
+    } ) );
   }
 
   _stat() {

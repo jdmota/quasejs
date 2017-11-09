@@ -40,7 +40,7 @@ Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XML
 
 Check if path is a file.
 
-**[fs/memory-fs](packages/fs/memory-fs)** - **0.2.0**
+**[fs/memory-fs](packages/fs/memory-fs)** - **0.2.1**
 
 Very simple in memory file system that also works on the browser.
 
