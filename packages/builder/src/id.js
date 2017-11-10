@@ -26,3 +26,6 @@ export function getType( id: ID ): string {
   const match = id.match( /\.(.+)$/ );
   return match ? match[ 1 ] : "";
 }
+
+export const depsSorter =
+  ( { resolved: a }: { resolved: ID }, { resolved: b }: { resolved: ID } ) => ( a === b ? 0 : ( a > b ? 1 : -1 ) );

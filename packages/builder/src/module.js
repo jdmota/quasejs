@@ -3,7 +3,7 @@
 import error from "./utils/error";
 import type Builder from "./builder";
 import type { Result, Deps, Plugin } from "./types";
-import { type ID, getType } from "./id";
+import { type ID, getType, depsSorter } from "./id";
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
@@ -38,8 +38,6 @@ async function callChain(
   }
   return outputs;
 }
-
-const depsSorter = ( { resolved: a }, { resolved: b } ) => ( a === b ? 0 : ( a > b ? 1 : -1 ) );
 
 // Note: don't save references for other modules in a module. That can break incremental builds.
 
@@ -91,7 +89,7 @@ export default class Module {
     throw new Error( `${message}. Module: ${this.normalizedId}` );
   }
 
-  error( message: string, loc: Object ) {
+  error( message: string, loc: ?Object ) {
     error( message, {
       id: this.normalizedId,
       code: this.code
@@ -150,7 +148,7 @@ export default class Module {
 
   async _runDepsExtracter(): Promise<Deps> {
     const output = ( await this.runLoader() ).find( o => Array.isArray( o.deps ) );
-    if ( !output ) {
+    if ( !output || !output.deps ) {
       throw this.moduleError( "No output with extracted dependencies found" );
     }
 
