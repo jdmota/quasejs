@@ -1,117 +1,98 @@
 const ansiStyles = require( "ansi-styles" );
 const chalk = require( "chalk" );
-const reactPlugin = require( "@concordance/react" );
 
-// Wrap Concordance's React plugin. Change the name to avoid collisions if in
-// the future users can register plugins themselves.
-const avaReactPlugin = Object.assign( {}, reactPlugin, { name: "ava-plugin-react" } );
-const plugins = [ avaReactPlugin ];
+const withColor = new chalk.constructor( { enabled: true } );
+const noColor = new chalk.constructor( { enabled: false } );
 
-const forceColor = new chalk.constructor( { enabled: true } );
+const fakeAnsiStyles = {};
+for ( const key in ansiStyles ) {
+  fakeAnsiStyles[ key ] = {
+    open: "",
+    close: ""
+  };
+}
 
-const theme = {
-  boolean: ansiStyles.yellow,
-  circular: forceColor.grey( "[Circular]" ),
-  date: {
-    invalid: forceColor.red( "invalid" ),
-    value: ansiStyles.blue
-  },
-  diffGutters: {
-    actual: forceColor.red( "-" ) + " ",
-    expected: forceColor.green( "+" ) + " ",
-    padding: "  "
-  },
-  error: {
-    ctor: { open: ansiStyles.grey.open + "(", close: ")" + ansiStyles.grey.close },
-    name: ansiStyles.magenta
-  },
-  function: {
-    name: ansiStyles.blue,
-    stringTag: ansiStyles.magenta
-  },
-  global: ansiStyles.magenta,
-  item: { after: forceColor.grey( "," ) },
-  list: { openBracket: forceColor.grey( "[" ), closeBracket: forceColor.grey( "]" ) },
-  mapEntry: { after: forceColor.grey( "," ) },
-  maxDepth: forceColor.grey( "…" ),
-  null: ansiStyles.yellow,
-  number: ansiStyles.yellow,
-  object: {
-    openBracket: forceColor.grey( "{" ),
-    closeBracket: forceColor.grey( "}" ),
-    ctor: ansiStyles.magenta,
-    stringTag: { open: ansiStyles.magenta.open + "@", close: ansiStyles.magenta.close },
-    secondaryStringTag: { open: ansiStyles.grey.open + "@", close: ansiStyles.grey.close }
-  },
-  property: {
-    after: forceColor.grey( "," ),
-    keyBracket: { open: forceColor.grey( "[" ), close: forceColor.grey( "]" ) },
-    valueFallback: forceColor.grey( "…" )
-  },
-  react: {
-    functionType: forceColor.grey( "\u235F" ),
-    openTag: {
-      start: forceColor.grey( "<" ),
-      end: forceColor.grey( ">" ),
-      selfClose: forceColor.grey( "/" ),
-      selfCloseVoid: " " + forceColor.grey( "/" )
+function createTheme( chalk, ansi ) {
+  return {
+    boolean: ansi.yellow,
+    circular: chalk.grey( "[Circular]" ),
+    date: {
+      invalid: chalk.red( "invalid" ),
+      value: ansi.blue
     },
-    closeTag: {
-      open: forceColor.grey( "</" ),
-      close: forceColor.grey( ">" )
+    diffGutters: {
+      actual: chalk.red( "-" ) + " ",
+      expected: chalk.green( "+" ) + " ",
+      padding: "  "
     },
-    tagName: ansiStyles.magenta,
-    attribute: {
-      separator: "=",
-      value: {
-        openBracket: forceColor.grey( "{" ),
-        closeBracket: forceColor.grey( "}" ),
-        string: {
-          line: { open: forceColor.blue( '"' ), close: forceColor.blue( '"' ), escapeQuote: '"' }
+    error: {
+      ctor: { open: ansi.grey.open + "(", close: ")" + ansi.grey.close },
+      name: ansi.magenta
+    },
+    function: {
+      name: ansi.blue,
+      stringTag: ansi.magenta
+    },
+    global: ansi.magenta,
+    item: { after: chalk.grey( "," ) },
+    list: { openBracket: chalk.grey( "[" ), closeBracket: chalk.grey( "]" ) },
+    mapEntry: { after: chalk.grey( "," ) },
+    maxDepth: chalk.grey( "…" ),
+    null: ansi.yellow,
+    number: ansi.yellow,
+    object: {
+      openBracket: chalk.grey( "{" ),
+      closeBracket: chalk.grey( "}" ),
+      ctor: ansi.magenta,
+      stringTag: { open: ansi.magenta.open + "@", close: ansi.magenta.close },
+      secondaryStringTag: { open: ansi.grey.open + "@", close: ansi.grey.close }
+    },
+    property: {
+      after: chalk.grey( "," ),
+      keyBracket: { open: chalk.grey( "[" ), close: chalk.grey( "]" ) },
+      valueFallback: chalk.grey( "…" )
+    },
+    regexp: {
+      source: { open: ansi.blue.open + "/", close: "/" + ansi.blue.close },
+      flags: ansi.yellow
+    },
+    stats: { separator: chalk.grey( "---" ) },
+    string: {
+      open: ansi.blue.open,
+      close: ansi.blue.close,
+      line: { open: chalk.blue( "'" ), close: chalk.blue( "'" ) },
+      multiline: { start: chalk.blue( "`" ), end: chalk.blue( "`" ) },
+      controlPicture: ansi.grey,
+      diff: {
+        insert: {
+          open: ansi.bgGreen.open + ansi.black.open,
+          close: ansi.black.close + ansi.bgGreen.close
+        },
+        delete: {
+          open: ansi.bgRed.open + ansi.black.open,
+          close: ansi.black.close + ansi.bgRed.close
+        },
+        equal: ansi.blue,
+        insertLine: {
+          open: ansi.green.open,
+          close: ansi.green.close
+        },
+        deleteLine: {
+          open: ansi.red.open,
+          close: ansi.red.close
         }
       }
     },
-    child: {
-      openBracket: forceColor.grey( "{" ),
-      closeBracket: forceColor.grey( "}" )
-    }
-  },
-  regexp: {
-    source: { open: ansiStyles.blue.open + "/", close: "/" + ansiStyles.blue.close },
-    flags: ansiStyles.yellow
-  },
-  stats: { separator: forceColor.grey( "---" ) },
-  string: {
-    open: ansiStyles.blue.open,
-    close: ansiStyles.blue.close,
-    line: { open: forceColor.blue( "'" ), close: forceColor.blue( "'" ) },
-    multiline: { start: forceColor.blue( "`" ), end: forceColor.blue( "`" ) },
-    controlPicture: ansiStyles.grey,
-    diff: {
-      insert: {
-        open: ansiStyles.bgGreen.open + ansiStyles.black.open,
-        close: ansiStyles.black.close + ansiStyles.bgGreen.close
-      },
-      delete: {
-        open: ansiStyles.bgRed.open + ansiStyles.black.open,
-        close: ansiStyles.black.close + ansiStyles.bgRed.close
-      },
-      equal: ansiStyles.blue,
-      insertLine: {
-        open: ansiStyles.green.open,
-        close: ansiStyles.green.close
-      },
-      deleteLine: {
-        open: ansiStyles.red.open,
-        close: ansiStyles.red.close
-      }
-    }
-  },
-  symbol: ansiStyles.yellow,
-  typedArray: {
-    bytes: ansiStyles.yellow
-  },
-  undefined: ansiStyles.yellow
-};
+    symbol: ansi.yellow,
+    typedArray: {
+      bytes: ansi.yellow
+    },
+    undefined: ansi.yellow
+  };
+}
 
-export default { maxDepth: 3, plugins, theme };
+export default {
+  maxDepth: 3,
+  theme: createTheme( withColor, ansiStyles ),
+  plainTheme: createTheme( noColor, fakeAnsiStyles )
+};

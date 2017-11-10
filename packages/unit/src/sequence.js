@@ -151,7 +151,7 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
 
 export class Sequence extends SequenceImpl<IRunnable, MinimalRunnable> implements IRunnable {
 
-  static proxy( t, seq ) {
+  static proxy( t: MinimalRunnable, seq: Sequence ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -196,7 +196,7 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
     this.middleRunnableProxy = new ClonableProxy( middleRunnable, this, InTestSequence.proxy );
   }
 
-  static proxy( t, seq ) {
+  static proxy( t: MinimalTest, seq: InTestSequence ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -260,7 +260,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnable, MinimalRun
     super( bail, false, level );
   }
 
-  static proxy( t, seq ) {
+  static proxy( t: MinimalRunnable, seq: BeforeTestsAfterSequence ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }

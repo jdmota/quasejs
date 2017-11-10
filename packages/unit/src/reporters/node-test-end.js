@@ -18,17 +18,16 @@ async function enhanceError( original ) {
     diff: null,
     stack: null,
     source: null,
-    actualType: typeof original.actual,
-    expectedType: typeof original.expected,
     message: original.message
   };
 
-  const actualDescribe = concordance.describe( original.actual, concordanceOptions );
-  const expectedDescribe = concordance.describe( original.expected, concordanceOptions );
-
-  err.actual = concordance.formatDescriptor( actualDescribe, concordanceOptions );
-  err.expected = concordance.formatDescriptor( expectedDescribe, concordanceOptions );
-  err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions );
+  if ( original.diff ) {
+    err.diff = original.diff;
+  } else if ( original.actual !== undefined || original.expected !== undefined ) {
+    const actualDescribe = concordance.describe( original.actual, concordanceOptions );
+    const expectedDescribe = concordance.describe( original.expected, concordanceOptions );
+    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions );
+  }
 
   // Prevent memory leaks
   original.actual = null;
@@ -78,10 +77,8 @@ export async function logError( e ) {
     log += showSource( error.source );
   }
 
-  if ( ( error.actualType === "object" || error.actualType === "string" ) && error.actualType === error.expectedType ) {
+  if ( error.diff ) {
     log += `${legend}\n\n${indentString( error.diff )}\n\n`;
-  } else if ( error.actualType !== "undefined" && error.expectedType !== "undefined" ) {
-    log += `Expected:\n\n${indentString( error.expected )}\n\nActual:\n\n${indentString( error.actual )}\n\n`;
   }
 
   if ( error.stack ) {
