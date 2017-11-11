@@ -23,3 +23,5 @@ declare module "slash" { declare var exports: any; }
 declare module "is-url-superb" { declare var exports: any; }
 declare module "pretty-bytes" { declare var exports: any; }
 declare module "@quase/memory-fs" { declare var exports: any; }
+declare module "concordance" { declare var exports: any; }
+declare module "write-file-atomic" { declare var exports: any; }
