@@ -13,8 +13,8 @@
   "dependencies": {
     "@quase/cli": "^0.1.0",
     "ansi-styles": "^3.2.0",
-    "babel-code-frame": "7.0.0-beta.2",
-    "chalk": "^2.1.0",
+    "babel-code-frame": "7.0.0-beta.3",
+    "chalk": "^2.3.0",
     "concordance": "^3.0.0",
     "error-stack-parser": "^2.0.0",
     "fs-extra": "^4.0.2",
