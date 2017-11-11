@@ -1,4 +1,4 @@
-function validate( name, callback, options, strict ) {
+function validate( name, callback, options ) {
 
   if ( options.fastBail && options.type !== "group" ) {
     return "fastBail modifier is only available for groups.";
@@ -44,7 +44,7 @@ function validate( name, callback, options, strict ) {
     }
   }
 
-  if ( strict ) {
+  if ( options.strict ) {
     if ( options.exclusive || options.failing || options.todo || options.skipped ) {
       return "`only`, `failing`, `todo`, `skipped` modifiers are not allowed in strict mode.";
     }
@@ -52,8 +52,8 @@ function validate( name, callback, options, strict ) {
 
 }
 
-export default function( name, callback, options, strict ) {
-  let msg = validate( name, callback, options, strict );
+export default function( name, callback, options ) {
+  let msg = validate( name, callback, options );
   if ( msg ) {
     throw new Error( msg );
   }

@@ -24,7 +24,11 @@ class Runner extends EventEmitter {
     this.root = new GroupPlaceholder(
       undefined,
       undefined,
-      { type: "group", fastBail: !!this.options.bail },
+      {
+        type: "group",
+        fastBail: !!this.options.bail || !!this.options.fastBail,
+        strict: !!this.options.strict
+      },
       {
         runner: this,
         level: 0,

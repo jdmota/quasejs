@@ -10,21 +10,6 @@ import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
 
-function inherit( p ) {
-  const { parent: { metadata: parentMetadata }, metadata } = p;
-  if ( parentMetadata ) {
-    if ( parentMetadata.failing ) {
-      metadata.failing = true;
-    }
-    if ( parentMetadata.todo ) {
-      metadata.todo = true;
-    }
-    if ( parentMetadata.skipped ) {
-      metadata.skipped = true;
-    }
-  }
-}
-
 // Public interface for suite
 class GroupApi {
   _current: GroupPlaceholder;
@@ -84,8 +69,6 @@ export class GroupPlaceholder {
     this.maxTimeout = parent.maxTimeout || 0;
     this.timeoutStack = parent.timeoutStack;
     this.minSlow = parent.minSlow || 0;
-
-    inherit( this );
 
     if ( typeof callback === "function" ) {
       const prev = this.runner._current;
@@ -157,7 +140,6 @@ export class TestPlaceholder {
     this.metadata = metadata;
     this.parent = parent;
     this.level = parent.level;
-    inherit( this );
   }
 
   build( runnable: Runnable | InTestSequence, parent: Suite ): Test {

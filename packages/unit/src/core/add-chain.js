@@ -10,7 +10,27 @@ function createTest( name, callback, metadata, parent ) {
     name = undefined;
   }
 
-  validate( name, callback, metadata, parent.runner.options.strict );
+  const { metadata: parentMetadata } = parent;
+
+  if ( parentMetadata ) {
+    if ( parentMetadata.strict ) {
+      metadata.strict = true;
+    }
+  }
+
+  validate( name, callback, metadata );
+
+  if ( parentMetadata ) {
+    if ( parentMetadata.failing ) {
+      metadata.failing = true;
+    }
+    if ( parentMetadata.todo ) {
+      metadata.todo = true;
+    }
+    if ( parentMetadata.skipped ) {
+      metadata.skipped = true;
+    }
+  }
 
   name = name || fnName( callback || ( () => {} ) );
 
@@ -23,6 +43,7 @@ const chain = {
     serial: false,
     exclusive: false,
     skipped: false,
+    strict: false,
     todo: false,
     failing: false,
     fastBail: false
@@ -34,9 +55,10 @@ const chain = {
     beforeEach: { type: "beforeEach" },
     afterEach: { type: "afterEach" },
     group: { type: "group" },
+    skip: { skipped: true },
+    strict: { strict: true },
     serial: { serial: true },
     only: { exclusive: true },
-    skip: { skipped: true },
     todo: { todo: true },
     failing: { failing: true },
     fastBail: { fastBail: true }
