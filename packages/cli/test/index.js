@@ -57,31 +57,31 @@ describe( "cli", () => {
   it( "config", () => {
 
     cli( ( { config } ) => {
-      expect( config.iAmTheConfigFile ).toBe( "yes" );
+      expect( config.iAmTheConfigFile2 ).toBe( "yes" );
     }, {
       pkg: {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config.js" )}` ],
+      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config-2.js" )}` ],
       help: "",
       defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
     }, false );
 
   } );
 
-  it( "empty config", () => {
+  it( "no config", () => {
 
     cli( ( { config } ) => {
-      expect( config.iAmTheConfigFile ).toBe( undefined );
+      expect( config ).toBe( undefined );
     }, {
       pkg: {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      argv: [ "--config=none" ],
+      argv: [],
       help: "",
-      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
+      defaultConfigFile: path.resolve( __dirname, "non-existent-file.js" )
     }, false );
 
   } );

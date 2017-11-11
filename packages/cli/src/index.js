@@ -73,10 +73,10 @@ export default function( callback, opts, notifierOpts ) {
   }
 
   if ( defaultConfigFile ) {
-    if ( cli.flags.config === "none" ) {
-      cli.config = {};
-    } else {
+    try {
       cli.config = require( require( "path" ).resolve( cli.flags.config ) );
+    } catch ( e ) {
+      // Ignore
     }
   }
 

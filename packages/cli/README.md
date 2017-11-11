@@ -5,7 +5,7 @@ A simple cli helper.
 Includes `meow` and `update-notifier` with some extensions:
 
 - We change the update message if Yarn is detected.
-- Passing a `defaultConfigFile` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js` or `--config=none` (if he just wants to send an empty object as config).
+- Passing a `defaultConfigFile` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 
 ## Usage example
 
@@ -50,8 +50,8 @@ See https://github.com/yeoman/update-notifier for details.
 #!/usr/bin/env node
 /* eslint-disable no-shebang */
 
-require( "@quase/cli" ).default( function( o ) {
-  require( "../dist" ).default( Object.assign( o.config, o.flags ) );
+require( "@quase/cli" ).default( function( { flags, pkg, config } ) {
+  require( "../dist" ).default( Object.assign( {}, config || pkg[ "my-name" ], flags ) );
 }, {
   defaultConfigFile: "my-name-config.js"
 } );
