@@ -5,6 +5,10 @@ function validate( name, callback, options, strict ) {
   }
 
   if ( options.type !== "test" && options.type !== "group" ) {
+    if ( options.serial ) {
+      return "The `serial` modifier cannot be used with hooks.";
+    }
+
     if ( options.exclusive ) {
       return "The `only` modifier cannot be used with hooks.";
     }
