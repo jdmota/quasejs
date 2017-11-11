@@ -14,7 +14,7 @@ describe( "unit", () => {
 
     let Observable = require( "zen-observable" );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 

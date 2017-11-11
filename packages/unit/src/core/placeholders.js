@@ -132,6 +132,7 @@ export class TestPlaceholder {
   metadata: Object;
   parent: GroupPlaceholder;
   level: number;
+  defaultStack: string;
 
   constructor( name: ?string, callback: Function, metadata: Object, parent: GroupPlaceholder ) {
     this.name = name;
@@ -140,6 +141,7 @@ export class TestPlaceholder {
     this.metadata = metadata;
     this.parent = parent;
     this.level = parent.level;
+    this.defaultStack = getStack( 2 );
   }
 
   build( runnable: Runnable | InTestSequence, parent: Suite ): Test {

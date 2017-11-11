@@ -5,7 +5,7 @@ describe( "unit", () => {
 
   it( "post error", async() => {
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 

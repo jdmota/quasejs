@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 12 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
     let runCount = 0;
@@ -57,7 +57,7 @@ describe( "unit", () => {
 
     assert.expect( 24 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
     let runCount = 0;

@@ -210,15 +210,22 @@ export class Runnable implements ITest {
   }
 
   checkPlanCount() {
-    if ( this.didPlan && this.planned !== this.assertionCount && !this.hasErrors() ) {
+    if ( this.hasErrors() ) {
+      return;
+    }
+    if ( this.didPlan && this.planned !== this.assertionCount ) {
       this.addError(
         new AssertionError( {
-          actual: this.assertionCount,
-          expected: this.planned,
-          message: "Planned " + this.planned + " but " + this.assertionCount + " assertions were run.",
-          operator: "plan"
+          message: "Planned " + this.planned + " but " + this.assertionCount + " assertions were run."
         } ),
         this.planStack
+      );
+    } else if ( !this.didPlan && this.assertionCount === 0 && !this.metadata.allowNoPlan && this.metadata.type === "test" ) {
+      this.addError(
+        new AssertionError( {
+          message: "No assertions were run."
+        } ),
+        this.placeholder.defaultStack
       );
     }
   }

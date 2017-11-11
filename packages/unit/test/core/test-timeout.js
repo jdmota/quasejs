@@ -8,7 +8,8 @@ describe( "unit", () => {
     assert.expect( 6 );
 
     let runner = Runner.init( {
-      timeout: 3000
+      timeout: 3000,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -36,7 +37,7 @@ describe( "unit", () => {
 
     assert.expect( 5 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
     let counts = 0;
@@ -68,7 +69,8 @@ describe( "unit", () => {
     assert.expect( 3 );
 
     let runner = Runner.init( {
-      timeout: 1
+      timeout: 1,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -98,7 +100,7 @@ describe( "unit", () => {
 
     assert.expect( 6 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
     let counts = 0;
@@ -134,7 +136,8 @@ describe( "unit", () => {
     assert.expect( 3 );
 
     let runner = Runner.init( {
-      timeout: 2
+      timeout: 2,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -162,7 +165,7 @@ describe( "unit", () => {
 
   it( "throw when timeout value is not number - group", () => {
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let test = runner.test;
 
     assert.throws( () => {
@@ -175,7 +178,7 @@ describe( "unit", () => {
 
   it( "throw when timeout value is too big - group", () => {
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let test = runner.test;
 
     assert.throws( () => {

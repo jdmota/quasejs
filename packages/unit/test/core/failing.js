@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 10 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
@@ -53,7 +53,7 @@ describe( "unit", () => {
 
     assert.expect( 9 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
@@ -101,7 +101,7 @@ describe( "unit", () => {
 
     assert.expect( 10 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
@@ -151,7 +151,7 @@ describe( "unit", () => {
 
     assert.expect( 10 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
@@ -205,7 +205,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
     let actual = [];
@@ -234,7 +234,7 @@ describe( "unit", () => {
 
     assert.expect( 1 );
 
-    const runner = Runner.init();
+    const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
     const t = runner.test;
 
@@ -257,7 +257,7 @@ describe( "unit", () => {
 
     assert.expect( 1 );
 
-    const runner = Runner.init();
+    const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
     const t = runner.test;
 

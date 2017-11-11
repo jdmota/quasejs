@@ -30,6 +30,9 @@ function createTest( name, callback, metadata, parent ) {
     if ( parentMetadata.skipped ) {
       metadata.skipped = true;
     }
+    if ( parentMetadata.allowNoPlan ) {
+      metadata.allowNoPlan = true;
+    }
   }
 
   name = name || fnName( callback || ( () => {} ) );
@@ -46,7 +49,8 @@ const chain = {
     strict: false,
     todo: false,
     failing: false,
-    fastBail: false
+    fastBail: false,
+    allowNoPlan: false
   },
   chainableMethods: {
     test: { type: "test" },
@@ -61,7 +65,8 @@ const chain = {
     only: { exclusive: true },
     todo: { todo: true },
     failing: { failing: true },
-    fastBail: { fastBail: true }
+    fastBail: { fastBail: true },
+    allowNoPlan: { allowNoPlan: true }
   }
 };
 

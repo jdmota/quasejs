@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -43,7 +43,8 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      bail: true
+      bail: true,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -112,7 +113,8 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      bail: true
+      bail: true,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -185,7 +187,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -225,7 +227,8 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      bail: true
+      bail: true,
+      allowNoPlan: true
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -282,7 +285,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -327,7 +330,7 @@ describe( "unit", () => {
       } );
     }
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -369,7 +372,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init();
+    let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -411,7 +414,8 @@ describe( "unit", () => {
     assert.expect( 3 );
 
     const runner = Runner.init( {
-      bail: true
+      bail: true,
+      allowNoPlan: true
     } );
     const results = runner.listen();
     const test = runner.test;
@@ -455,7 +459,8 @@ describe( "unit", () => {
     assert.expect( 3 );
 
     const runner = Runner.init( {
-      bail: true
+      bail: true,
+      allowNoPlan: true
     } );
     const results = runner.listen();
     const test = runner.test;

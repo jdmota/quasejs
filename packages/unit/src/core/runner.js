@@ -27,7 +27,8 @@ class Runner extends EventEmitter {
       {
         type: "group",
         fastBail: !!this.options.bail || !!this.options.fastBail,
-        strict: !!this.options.strict
+        strict: !!this.options.strict,
+        allowNoPlan: !!this.options.allowNoPlan
       },
       {
         runner: this,

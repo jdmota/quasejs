@@ -7,7 +7,7 @@ describe( "unit", () => {
 
     assert.expect( 1 );
 
-    const runner = Runner.init();
+    const runner = Runner.init( { allowNoPlan: true } );
     const test = runner.test;
 
     const expected = [ "before", "test", "after" ];
