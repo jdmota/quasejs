@@ -1,6 +1,6 @@
 /* @flow */
 
-import isPromise from "./util/is-promise";
+import isPromise from "../util/is-promise";
 import skipReasons from "./skip-reasons";
 import type { Status, IRunReturn, GenericRunnable, MinimalRunnable, MinimalTest, IRunnable, ITest } from "./interfaces";
 import type { Runnable } from "./test";

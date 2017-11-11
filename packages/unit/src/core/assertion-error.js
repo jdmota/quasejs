@@ -1,4 +1,4 @@
-import { getStack } from "../../error/src";
+import { getStack } from "../../../error/src";
 
 function AssertionError( details ) {
   this.name = "AssertionError";

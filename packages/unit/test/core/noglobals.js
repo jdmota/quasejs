@@ -1,5 +1,5 @@
-import { Runner } from "../src";
-import assert from "../../assert";
+import { Runner } from "../../src";
+import assert from "../../../assert";
 
 /* eslint no-console: 0 */
 /* global window */

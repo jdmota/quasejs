@@ -7,7 +7,7 @@ export type Metadata = Object;
 
 export type IRunReturn<+T> = T | Promise<T>;
 
-export type GenericRunnable<T> = $Subtype<{ // eslint-disable-line no-undef
+export type GenericRunnable<T> = $Subtype<{
   run(): IRunReturn<T>,
   runSkip( ?string ): T
 }>;

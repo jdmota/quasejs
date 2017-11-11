@@ -1,6 +1,5 @@
-import EventEmitter from "../../events/src";
-import { assertTimeout, assertNumber } from "./util/assert-args";
-import GlobalEnv from "./global-env";
+import EventEmitter from "../../../events/src";
+import { assertTimeout, assertNumber } from "../util/assert-args";
 import { GroupPlaceholder } from "./placeholders";
 import addChain from "./add-chain";
 
@@ -19,7 +18,6 @@ class Runner extends EventEmitter {
       assertNumber( this.options.slow );
     }
 
-    this.globalEnv = new GlobalEnv();
     this.onlyCount = 0;
     this.promises = [];
 
@@ -85,9 +83,9 @@ class Runner extends EventEmitter {
     return Promise.all( this.promises ).then( () => {
       this.suite = this.root.build();
       this.runStart();
-      return Promise.resolve( this.suite.run() ).then(
-        this.runEnd.bind( this, this.suite )
-      );
+      return Promise.resolve( this.suite.run() ).then( () => {
+        this.runEnd();
+      } );
     } );
   }
 

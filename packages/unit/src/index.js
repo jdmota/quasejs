@@ -1,8 +1,8 @@
-import GlobalEnv from "./global-env";
-import Runner from "./runner";
-import AssertionError from "./assertion-error";
+import GlobalEnv from "./core/global-env";
+import Runner from "./core/runner";
+import AssertionError from "./core/assertion-error";
+import _skipReasons from "./core/skip-reasons";
 import Node from "./reporters/node";
-import _skipReasons from "./skip-reasons";
 
 export const skipReasons = Object.assign( {}, _skipReasons );
 export const reporters = {

@@ -1,14 +1,14 @@
 // @flow
 
-import { getStack } from "../../error/src";
+import { getStack } from "../../../error/src";
+import isPromise from "../util/is-promise";
+import { assertTimeout, assertNumber, assertDelay } from "../util/assert-args";
 import type Runner from "./runner";
 import { type InTestSequence } from "./sequence";
 import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
-import isPromise from "./util/is-promise";
-import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 
 function inherit( p ) {
   const { parent: { metadata: parentMetadata }, metadata } = p;
