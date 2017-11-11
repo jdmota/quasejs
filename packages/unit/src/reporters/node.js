@@ -53,6 +53,8 @@ export default class NodeReporter {
 
       const { passed, skipped, todo, failed, total } = t.testCounts;
 
+      process.exitCode = failed || !total || this.postErrors.length ? 1 : 0;
+
       let lines;
 
       if ( total === 0 ) {
