@@ -18,6 +18,7 @@ export default class TestCollection {
     after: TestPlaceholder[],
     afterEach: TestPlaceholder[]
   };
+  _hasUnskippedTests: ?boolean;
 
   constructor( fastBail: boolean ) {
     this.hasExclusive = false;
@@ -32,6 +33,7 @@ export default class TestCollection {
       after: [],
       afterEach: []
     };
+    this._hasUnskippedTests = undefined;
   }
 
   addTest( test: Placeholder, suite: GroupPlaceholder ) {
@@ -145,6 +147,20 @@ export default class TestCollection {
 
   }
 
+  hasUnskippedTests() {
+    if ( this._hasUnskippedTests == null ) {
+      this._hasUnskippedTests = this.tests.serial.concat( this.tests.concurrent )
+        .some( test => {
+          const skipped = test.metadata && test.metadata.skipped === true;
+          if ( !skipped && test instanceof GroupPlaceholder ) {
+            return test.collection.hasUnskippedTests();
+          }
+          return !skipped;
+        } );
+    }
+    return this._hasUnskippedTests;
+  }
+
   // Use sequences to:
   // 1. Run the beforeEach hooks, the test and the afterEach hooks
   // 2. Run the before hooks, a collection of tests and the after hooks
@@ -158,8 +174,12 @@ export default class TestCollection {
     const after = this.hooks.after;
     const seq = new BeforeTestsAfterSequence( this.fastBail, suite.level );
 
-    for ( let i = 0; i < before.length; i++ ) {
-      seq.add( before[ i ].build( before[ i ].buildRunnable( null, suite ), suite ) );
+    const runBeforeAfter = this.hasUnskippedTests();
+
+    if ( runBeforeAfter ) {
+      for ( let i = 0; i < before.length; i++ ) {
+        seq.add( before[ i ].build( before[ i ].buildRunnable( null, suite ), suite ) );
+      }
     }
 
     if ( serial.length ) {
@@ -170,8 +190,10 @@ export default class TestCollection {
       seq.add( this.buildTestSeq( concurrent, true, suite ), true );
     }
 
-    for ( let i = 0; i < after.length; i++ ) {
-      seq.add( after[ i ].build( after[ i ].buildRunnable( null, suite ), suite ) );
+    if ( runBeforeAfter ) {
+      for ( let i = 0; i < after.length; i++ ) {
+        seq.add( after[ i ].build( after[ i ].buildRunnable( null, suite ), suite ) );
+      }
     }
 
     return seq;

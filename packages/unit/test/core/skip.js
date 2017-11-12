@@ -112,10 +112,7 @@ describe( "unit", () => {
 
     let actual = [];
     let expected = [
-      "group",
-      "before",
-      "after",
-      "after 2"
+      "group"
     ];
 
     t.before( function() {
@@ -175,10 +172,10 @@ describe( "unit", () => {
       assert.deepEqual( actual, expected );
       assert.deepEqual( results.pop().testCounts, {
         failed: 0,
-        passed: 3,
+        passed: 0,
         skipped: 4,
         todo: 0,
-        total: 7
+        total: 4
       } );
     } );
 
@@ -380,6 +377,162 @@ describe( "unit", () => {
         todo: 0,
         total: 3
       } );
+    } );
+
+  } );
+
+  it( "don't run before/after when tests are skipped", () => {
+
+    assert.expect( 1 );
+
+    let runner = Runner.init( { allowNoPlan: true } );
+    let t = runner.test;
+
+    let actual = [];
+    let expected = [];
+
+    t.before( function() {
+      actual.push( "before" );
+    } );
+
+    t.after( function() {
+      actual.push( "after" );
+    } );
+
+    t.after( function() {
+      actual.push( "after 2" );
+    } );
+
+    t.beforeEach( function() {
+      actual.push( "beforeEach" );
+    } );
+
+    t.skip( function() {
+      /* istanbul ignore next */
+      actual.push( "dont run" );
+    } );
+
+    t.skip( function() {
+      /* istanbul ignore next */
+      actual.push( "dont run" );
+    } );
+
+    t.group( function() {
+
+      t.skip( function() {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+      t.skip( function() {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+    } );
+
+    t.afterEach( function() {
+      actual.push( "afterEach" );
+    } );
+
+    t.afterEach( function() {
+      actual.push( "afterEach 2" );
+    } );
+
+    return runner.run().then( function() {
+      assert.deepEqual( actual, expected );
+    } );
+
+  } );
+
+  it( "don't run before/after when related tests are skipped", () => {
+
+    assert.expect( 1 );
+
+    let runner = Runner.init( { allowNoPlan: true } );
+    let t = runner.test;
+
+    let actual = [];
+    let expected = [
+      "before",
+      "test",
+      "after"
+    ];
+
+    t.before( function() {
+      actual.push( "before" );
+    } );
+
+    t.after( function() {
+      actual.push( "after" );
+    } );
+
+    t( function() {
+      actual.push( "test" );
+    } );
+
+    t.group( function() {
+
+      t.before( function() {
+        actual.push( "before 2" );
+      } );
+
+      t.skip( function() {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+    } );
+
+    return runner.run().then( function() {
+      assert.deepEqual( actual, expected );
+    } );
+
+  } );
+
+  it( "don't run before/after when related tests are skipped + delayed setup", () => {
+
+    assert.expect( 1 );
+
+    let runner = Runner.init( { allowNoPlan: true } );
+    let t = runner.test;
+
+    let actual = [];
+    let expected = [
+      "before",
+      "test",
+      "after"
+    ];
+
+    t.before( function() {
+      actual.push( "before" );
+    } );
+
+    t.after( function() {
+      actual.push( "after" );
+    } );
+
+    t( function() {
+      actual.push( "test" );
+    } );
+
+    t.group( function( g ) {
+
+      g.before( function() {
+        actual.push( "before 2" );
+      } );
+
+      return Promise.resolve().then( () => {
+        g.skip( function() {
+          /* istanbul ignore next */
+          actual.push( "dont run" );
+        } );
+      } );
+
+    } );
+
+    return runner.run().then( function() {
+      assert.deepEqual( actual, expected );
     } );
 
   } );

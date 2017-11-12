@@ -233,6 +233,7 @@ test( t => {
 
 ## Details about hooks
 
+- `before` and `after` hooks don't run if all the tests have the `skip` modifier.
 - `.skip()` from within a `before` or `beforeEach` hook, will skip all the associated tests.
   - This will not happen if you use a `skip` modifier on the hook. Tests will still run.
 - Failed `before` hook skips all tests in a suite and subsuites, but runs `after` hooks.
