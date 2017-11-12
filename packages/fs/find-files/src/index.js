@@ -1,45 +1,52 @@
 const fs = require( "fs-extra" );
 const path = require( "path" );
-const mm = require( "micromatch" ); // FIXME don't depend on micromatch
+const ignoredDirectories = require( "ignore-by-default" ).directories().map( dir => `!**/${dir}/**` );
+const mm = require( "micromatch" );
+const globParent = require( "glob-parent" );
 const slash = require( "slash" );
 const Observable = require( "zen-observable" );
 
-const { stat: fsStatPromise, readdir: fsReadDirPromise } = fs;
-
 class Pattern {
 
-  constructor( pattern, options ) {
-    const expand = mm.expand( pattern, options );
-    const regexp = new RegExp( expand.pattern );
-    this.matcher = regexp.test.bind( regexp );
-    this.fullBase = slash( path.normalize( expand.tokens.base || path.dirname( pattern ) ) );
-    this.negated = expand.negated;
-  }
+  constructor( pattern, _opts ) {
+    const options = this.negated ? Object.assign( {}, _opts, { dot: true } ) : _opts;
 
-  matchesBase( dir ) {
-    const fullBase = this.fullBase;
-    const len = Math.min( fullBase.length, dir.length );
-    for ( let i = 0; i < len; i++ ) {
-      if ( fullBase.charCodeAt( i ) !== dir.charCodeAt( i ) ) {
-        return false;
-      }
+    this.negated = /^![^(]/.test( pattern );
+    if ( this.negated ) {
+      pattern = pattern.slice( 1 );
     }
-    return true;
+
+    this.regexp = mm.makeRe( pattern, options );
+    this.endsWithGlobstar = pattern.slice( -3 ) === "/**";
+    this.parent = globParent( pattern ).replace( /^\.$/g, "" );
   }
 
 }
 
 class Reader {
 
-  constructor( patterns, cwd, observer, includeDirs ) {
+  constructor( patterns, cwd, observer, options ) {
     this.patterns = patterns;
     this.cwd = cwd;
     this.observer = observer;
     this.cancelled = false;
     this.pending = 0;
-    this.includeDirs = !!includeDirs;
+    this.includeDirs = !!options.includeDirs;
+    this.visitedDirs = options.visitedDirs;
     this.error = this.error.bind( this );
     this.cancel = this.cancel.bind( this );
+    this.fsStat = options.fs.stat;
+    this.fsReadDir = options.fs.readdir;
+  }
+
+  start() {
+    for ( const { negated, parent } of this.patterns ) {
+      if ( !negated ) {
+        this.check( path.resolve( this.cwd, parent ) );
+      }
+    }
+    this.checkPending();
+    return this.cancel;
   }
 
   checkPending() {
@@ -68,84 +75,102 @@ class Reader {
   // negated matches
   //    0      0     keep going
   //    0      1     return true
-  //    1      0     return false
-  //    1      1     keep going
+  //    1      0     keep going
+  //    1      1     return false
   matches( string ) {
-    let negated, matches, patterns = this.patterns, i = patterns.length;
+    const patterns = this.patterns;
+    let i = patterns.length;
     while ( i-- ) {
-      negated = patterns[ i ].negated;
-      matches = patterns[ i ].matcher( string );
-      if ( negated !== matches ) {
-        return matches;
-      }
-    }
-    return false;
-  }
-
-  matchesBase( dir ) {
-    let matches, patterns = this.patterns, i = patterns.length;
-    while ( i-- ) {
-      matches = patterns[ i ].matchesBase( dir );
+      const negated = patterns[ i ].negated;
+      const matches = patterns[ i ].regexp.test( string );
       if ( matches ) {
-        return true;
+        return !negated;
       }
     }
     return false;
   }
 
-  readDir( folder ) {
+  matchesDir( dir ) {
+    const patterns = this.patterns;
+    let i = patterns.length;
+    while ( i-- ) {
+      const p = patterns[ i ];
+      if ( p.negated ) {
+        if ( p.endsWithGlobstar ) {
+          const matches = p.regexp.test( dir + "/" );
+          if ( matches ) {
+            return false;
+          }
+        }
+      } else {
+        const parent = p.parent;
+        let matches = true;
+        const len = Math.min( parent.length, dir.length );
+        for ( let i = 0; i < len; i++ ) {
+          if ( parent.charCodeAt( i ) !== dir.charCodeAt( i ) ) {
+            matches = false;
+            break;
+          }
+        }
+        if ( matches ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
+  check( file ) {
     this.pending++;
 
-    fsReadDirPromise( folder ).then( files => {
+    this.fsStat( file ).then( stats => {
 
       if ( this.cancelled ) {
         return;
       }
 
-      this.pending += files.length - 1;
+      this.pending--;
 
-      files.forEach( file => {
+      const relativePath = slash( path.relative( this.cwd, file ) );
 
-        file = path.join( folder, file );
-
-        fsStatPromise( file ).then( stats => {
-
-          if ( this.cancelled ) {
-            return;
-          }
-
-          const relativePath = path.relative( this.cwd, file );
-          const relativePathNormalized = slash( relativePath );
-          const checkBoth = relativePath !== relativePathNormalized;
-
-          this.pending--;
-
-          if ( stats.isDirectory() ) {
-            if ( this.includeDirs && ( this.matches( relativePath ) || ( checkBoth && this.matches( relativePathNormalized ) ) ) ) {
-              this.next( relativePathNormalized );
-              this.readDir( file );
-            } else if ( this.matchesBase( relativePath ) || ( checkBoth && this.matchesBase( relativePathNormalized ) ) ) {
-              this.readDir( file );
-            }
-          } else if ( stats.isFile() ) {
-            if ( this.matches( relativePath ) || ( checkBoth && this.matches( relativePathNormalized ) ) ) {
-              this.next( relativePathNormalized );
-            }
-          }
-
-          this.checkPending();
-
-        }, this.error );
-
-      } );
+      if ( stats.isDirectory() ) {
+        if ( this.includeDirs && this.matches( relativePath ) ) {
+          this.next( relativePath );
+          this.readDir( file );
+        } else if ( this.matchesDir( relativePath ) ) {
+          this.readDir( file );
+        }
+      } else if ( stats.isFile() ) {
+        if ( this.matches( relativePath ) ) {
+          this.next( relativePath );
+        }
+      }
 
       this.checkPending();
 
     }, this.error );
+  }
 
-    return this;
+  readDir( folder ) {
+    if ( this.visitedDirs ) {
+      this.visitedDirs.push( slash( path.relative( this.cwd, folder ) ) );
+    }
 
+    this.pending++;
+
+    this.fsReadDir( folder ).then( files => {
+
+      if ( this.cancelled ) {
+        return;
+      }
+
+      this.pending--;
+
+      files.forEach( f => this.check( path.join( folder, f ) ) );
+
+      this.checkPending();
+
+    }, this.error );
   }
 
 }
@@ -158,20 +183,31 @@ function makeSureArray( obj ) {
 }
 
 /*
-src: [ "*.js" ], // Actual pattern(s) to match.
 {
-  cwd: "lib/",   // Src matches and files emitted are relative to this path.
-  micromatch: {} // Options to be passed to micromatch or `false`.
+  src: [], // Pattern(s) to match.
+  cwd: process.cwd(), // Files emitted are relative to this path.
+  append: [], // An array of patterns to append to the array. Used to override the default.
+  micromatch: {} // Options to be passed to micromatch.
+  includeDirs: false // Include directories in the output.
 }
 */
-function findFiles( src, options = {} ) {
+function findFiles( _opts ) {
+
+  const options = Object.assign( {}, _opts );
+
+  options.fs = options.fs || fs;
+  options.fs.stat = options.fs.stat || fs.stat;
+  options.fs.readdir = options.fs.readdir || fs.readdir;
+
+  options.append = makeSureArray( options.append || ignoredDirectories );
 
   const cwd = options.cwd ? path.resolve( options.cwd ) : process.cwd();
 
-  const patterns = makeSureArray( src ).map( pattern => new Pattern( pattern, options.micromatch ) );
+  const patterns = makeSureArray( options.src ).concat( options.append ).map(
+    pattern => new Pattern( pattern, options.micromatch )
+  );
 
-  return new Observable( observer => new Reader( patterns, cwd, observer, options.includeDirs ).readDir( cwd ).cancel );
-
+  return new Observable( observer => new Reader( patterns, cwd, observer, options ).start() );
 }
 
 export default findFiles;
