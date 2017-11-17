@@ -93,6 +93,10 @@ function createTheme( chalk, ansi ) {
 
 export default {
   maxDepth: 3,
-  theme: createTheme( withColor, ansiStyles ),
-  plainTheme: createTheme( noColor, fakeAnsiStyles )
+  theme: createTheme( withColor, ansiStyles )
+};
+
+export const plain = {
+  maxDepth: 3,
+  theme: createTheme( noColor, fakeAnsiStyles )
 };

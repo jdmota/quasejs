@@ -1,8 +1,6 @@
 import colors from "./colors";
-import concordanceOptions from "./concordance-options";
 
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
-const concordance = require( "concordance" );
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
 const FileSystem = require( "@quase/memory-fs" ).default;
 const { prettify } = require( "@quase/path-url" );
@@ -15,19 +13,11 @@ async function enhanceError( original ) {
   const err = {
     actual: null,
     expected: null,
-    diff: null,
+    diff: original.diff,
     stack: null,
     source: null,
     message: original.message
   };
-
-  if ( original.diff ) {
-    err.diff = original.diff;
-  } else if ( original.actual !== undefined || original.expected !== undefined ) {
-    const actualDescribe = concordance.describe( original.actual, concordanceOptions );
-    const expectedDescribe = concordance.describe( original.expected, concordanceOptions );
-    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions );
-  }
 
   // Prevent memory leaks
   original.actual = null;

@@ -1,4 +1,5 @@
 import { assertTimeout, assertNumber } from "../util/assert-args";
+import concordanceOptions from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
 import addChain from "./add-chain";
 
@@ -12,6 +13,8 @@ class Runner extends EventEmitter {
     this.options = Object.assign( {}, options );
 
     this.assertions = Object.assign( {}, ...( this.options.assertions || [] ) );
+
+    this.concordanceOptions = this.options.concordanceOptions || concordanceOptions;
 
     if ( this.options.timeout != null ) {
       assertTimeout( this.options.timeout );

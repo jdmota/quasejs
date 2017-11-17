@@ -158,4 +158,4 @@ export default function cli( opts, files ) {
   );
 }
 
-// cli( {}, [ "packages/unit/test.js" ] );
+// cli( {}, [ "packages/unit/ui-tests/index.js" ] );

@@ -1,6 +1,19 @@
 const importFresh = require( "import-fresh" );
 const CircularJSON = require( "circular-json" );
 
+function stringify( arg ) {
+  return CircularJSON.stringify( arg, ( _, value ) => {
+    if ( value instanceof Error ) {
+      const obj = { stack: value.stack };
+      for ( const key in value ) {
+        obj[ key ] = value[ key ];
+      }
+      return obj;
+    }
+    return value;
+  } );
+}
+
 const onMessage = msg => {
   if ( msg.type === "quase-unit-start" ) {
     global.quaseUnit = { options: msg.options };
@@ -12,16 +25,7 @@ const onMessage = msg => {
         process.send( {
           type: "quase-unit-emit",
           eventType,
-          arg: CircularJSON.stringify( arg, ( _, value ) => {
-            if ( value instanceof Error ) {
-              const obj = { stack: value.stack };
-              for ( const key in value ) {
-                obj[ key ] = value[ key ];
-              }
-              return obj;
-            }
-            return value;
-          } )
+          arg: stringify( arg )
         } );
 
         if ( eventType === "runEnd" ) {
@@ -30,16 +34,24 @@ const onMessage = msg => {
       } );
     } );
 
-    process.on( "uncaughtException", error => {
+    process.on( "uncaughtException", arg => {
       process.send( {
         type: "quase-unit-emit",
         eventType: "postError",
-        arg: error
+        arg: stringify( arg )
       } );
     } );
 
     for ( const file of msg.files ) {
-      importFresh( file );
+      try {
+        importFresh( file );
+      } catch ( arg ) {
+        process.send( {
+          type: "quase-unit-emit",
+          eventType: "postError",
+          arg: stringify( arg )
+        } );
+      }
     }
 
     runner.run();

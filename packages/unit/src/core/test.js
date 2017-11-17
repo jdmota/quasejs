@@ -15,6 +15,7 @@ import type { TestPlaceholder } from "./placeholders";
 import { InTestSequence } from "./sequence";
 
 const { getStack } = require( "@quase/error" );
+const concordance = require( "concordance" );
 
 export class Runnable implements ITest {
 
@@ -188,17 +189,19 @@ export class Runnable implements ITest {
     }
   }
 
-  hasErrors() {
-    return this.errors && this.errors.length;
+  processError( e: Object, stack: ?string ) {
+    const err = e == null || typeof e !== "object" ? new Error( e ) : e;
+    err.stack = stack || err.stack; // make "stack" an "own prop"
+    if ( err.actual !== undefined || err.expected !== undefined ) {
+      const actualDescribe = concordance.describe( err.actual, this.runner.concordanceOptions );
+      const expectedDescribe = concordance.describe( err.expected, this.runner.concordanceOptions );
+      err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, this.runner.concordanceOptions );
+    }
+    return err;
   }
 
-  addError( err: Object, stack: ?string ) {
-    if ( !err || typeof err !== "object" ) {
-      err = new Error( err );
-    }
-    if ( stack ) {
-      err.stack = stack;
-    }
+  addError( e: Object, stack: ?string ) {
+    const err = this.processError( e, stack );
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
         this.runner.postError( err );
@@ -214,7 +217,7 @@ export class Runnable implements ITest {
   }
 
   checkPlanCount() {
-    if ( this.hasErrors() ) {
+    if ( this.errors.length ) {
       return;
     }
     if ( this.didPlan && this.planned !== this.assertionCount ) {
