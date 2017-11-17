@@ -1,4 +1,4 @@
-import { getStack } from "../../../error/src";
+const { getStack } = require( "@quase/error" );
 
 export default class SkipError extends Error {
 

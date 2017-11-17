@@ -1,6 +1,5 @@
 /* @flow */
 
-import { getStack } from "../../../error/src";
 import defer from "../util/defer";
 import isObservable from "../util/is-observable";
 import isPromise from "../util/is-promise";
@@ -14,6 +13,8 @@ import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
 import { InTestSequence } from "./sequence";
+
+const { getStack } = require( "@quase/error" );
 
 export class Runnable implements ITest {
 

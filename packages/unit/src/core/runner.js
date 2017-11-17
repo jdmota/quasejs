@@ -1,7 +1,8 @@
-import EventEmitter from "../../../events/src";
 import { assertTimeout, assertNumber } from "../util/assert-args";
 import { GroupPlaceholder } from "./placeholders";
 import addChain from "./add-chain";
+
+const { EventEmitter } = require( "events" ); // TODO for browser
 
 class Runner extends EventEmitter {
 
@@ -50,19 +51,6 @@ class Runner extends EventEmitter {
 
   static init( options ) {
     return new Runner( options );
-  }
-
-  setup() {
-    if ( typeof process === "undefined" ) {
-      if ( document.readyState === "complete" ) { // eslint-disable-line no-undef
-        this.run();
-      } else {
-        window.addEventListener( "load", this.run ); // eslint-disable-line no-undef
-      }
-    } else {
-      process.on( "beforeExit", this.run );
-    }
-    return this;
   }
 
   postError( err ) {

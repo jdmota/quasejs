@@ -1,4 +1,4 @@
-import { getStack } from "../../../error/src";
+const { getStack } = require( "@quase/error" );
 
 function AssertionError( details ) {
   this.name = "AssertionError";

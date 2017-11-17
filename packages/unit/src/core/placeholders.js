@@ -1,6 +1,5 @@
 // @flow
 
-import { getStack } from "../../../error/src";
 import isPromise from "../util/is-promise";
 import { assertTimeout, assertNumber, assertDelay } from "../util/assert-args";
 import type Runner from "./runner";
@@ -9,6 +8,8 @@ import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
+
+const { getStack } = require( "@quase/error" );
 
 // Public interface for suite
 class GroupApi {
@@ -141,7 +142,7 @@ export class TestPlaceholder {
     this.metadata = metadata;
     this.parent = parent;
     this.level = parent.level;
-    this.defaultStack = getStack( 2 );
+    this.defaultStack = getStack( 5 );
   }
 
   build( runnable: Runnable | InTestSequence, parent: Suite ): Test {
