@@ -91,7 +91,7 @@ class NodeRunner extends EventEmitter {
           }
         }
       } else if ( eventType === "runEnd" ) {
-        // this.forks[ childIdx ].disconnect();
+        this.forks[ childIdx ].disconnect();
 
         this.runEndArg.testCounts.passed += arg.testCounts.passed;
         this.runEndArg.testCounts.failed += arg.testCounts.failed;
@@ -133,9 +133,6 @@ class NodeRunner extends EventEmitter {
     const division = divide( this.files, c );
 
     for ( let i = 0; i < c; i++ ) {
-      if ( division[ i ].length === 0 ) {
-        break;
-      }
       this.forks.push( childProcess.fork( path.resolve( __dirname, "fork.js" ) ) );
       this.forks[ i ].send( {
         type: "quase-unit-start",

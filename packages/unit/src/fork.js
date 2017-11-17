@@ -31,10 +31,6 @@ const onMessage = msg => {
           eventType,
           arg: stringify( arg )
         } );
-
-        if ( eventType === "runEnd" ) {
-          process.disconnect();
-        }
       } );
     } );
 
