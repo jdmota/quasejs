@@ -244,15 +244,15 @@ test( t => {
 ```js
 // They share the same context object.
 
-test.beforeEach( ( t, context ) => {
+test.beforeEach( ( { context } ) => {
 
 } );
 
-test( ( t, context ) => {
+test( ( { context } ) => {
 
 } );
 
-t.afterEach( ( t, context ) => {
+t.afterEach( ( { context } ) => {
 
 } );
 ```

@@ -329,7 +329,7 @@ export class Runnable implements ITest {
     }
 
     try {
-      ret = callback( this.publicApi(), this.context );
+      ret = callback( this.publicApi() );
     } catch ( e ) {
       error = e;
     }
@@ -368,7 +368,8 @@ export class Runnable implements ITest {
       retries: this.retries.bind( this ),
       retryDelay: this.retryDelay.bind( this ),
       timeout: this.timeout.bind( this ),
-      slow: this.defineSlow.bind( this )
+      slow: this.defineSlow.bind( this ),
+      context: this.context
     };
   }
 

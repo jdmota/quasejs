@@ -12,21 +12,21 @@ describe( "unit", () => {
     let t = runner.test;
     let runCount = 0;
 
-    t.before( function( a, context ) {
+    t.before( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       context.ran = true;
       runCount++;
     } );
 
-    t.after( function( a, context ) {
+    t.after( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       context.ran = true;
       runCount++;
     } );
 
-    t.beforeEach( function( a, context ) {
+    t.beforeEach( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       context.ran = true;
@@ -34,19 +34,19 @@ describe( "unit", () => {
       runCount++;
     } );
 
-    t.afterEach( function( a, context ) {
+    t.afterEach( ( { context } ) => {
       assert.ok( context.ran );
       assert.ok( context.shared );
       runCount++;
     } );
 
-    t( function( a, context ) {
+    t( ( { context } ) => {
       assert.ok( context.ran );
       assert.ok( context.shared );
       runCount++;
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
       assert.strictEqual( runCount, 5 );
       assert.strictEqual( results.pop().status, "passed" );
     } );
@@ -62,21 +62,21 @@ describe( "unit", () => {
     let t = runner.test;
     let runCount = 0;
 
-    t.before( function( a, context ) {
+    t.before( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       context.ran = true;
       runCount++;
     } );
 
-    t.after( function( a, context ) {
+    t.after( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       context.ran = true;
       runCount++;
     } );
 
-    t.beforeEach( function( a, context ) {
+    t.beforeEach( ( { context } ) => {
       assert.ok( !context.ran );
       assert.ok( !context.shared );
       assert.ok( !context.count );
@@ -86,11 +86,11 @@ describe( "unit", () => {
       runCount++;
     } );
 
-    t.group( function() {
+    t.group( () => {
 
-      t.group( function() {
+      t.group( () => {
 
-        t( function( a, context ) {
+        t( ( { context } ) => {
           assert.ok( context.ran );
           assert.ok( context.shared );
           assert.strictEqual( context.count, 1 );
@@ -100,7 +100,7 @@ describe( "unit", () => {
 
       } );
 
-      t( function( a, context ) {
+      t( ( { context } ) => {
         assert.ok( context.ran );
         assert.ok( context.shared );
         assert.strictEqual( context.count, 1 );
@@ -110,14 +110,14 @@ describe( "unit", () => {
 
     } );
 
-    t.afterEach( function( a, context ) {
+    t.afterEach( ( { context } ) => {
       assert.ok( context.ran );
       assert.ok( context.shared );
       assert.strictEqual( context.count, 2 );
       runCount++;
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
       assert.strictEqual( runCount, 8 );
       assert.strictEqual( results.pop().status, "passed" );
     } );
