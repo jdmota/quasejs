@@ -1,11 +1,11 @@
 /* @flow */
 
-import defer from "../util/defer";
-import isObservable from "../util/is-observable";
-import isPromise from "../util/is-promise";
-import observableToPromise from "../util/observable-to-promise";
-import SkipError from "../util/skip-error";
-import { assertTimeout, assertNumber, assertDelay } from "../util/assert-args";
+import defer from "./util/defer";
+import isObservable from "./util/is-observable";
+import isPromise from "./util/is-promise";
+import observableToPromise from "./util/observable-to-promise";
+import SkipError from "./util/skip-error";
+import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
 import type { Status, IRunnable, ITest, IDeferred, IRunReturn } from "./interfaces";

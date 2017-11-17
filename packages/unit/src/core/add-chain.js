@@ -1,4 +1,4 @@
-import fnName from "../util/fn-name";
+import fnName from "./util/fn-name";
 import optionChain from "./option-chain";
 import validate from "./validate";
 import { GroupPlaceholder, TestPlaceholder } from "./placeholders";

@@ -1,4 +1,4 @@
-import { assertTimeout, assertNumber } from "../util/assert-args";
+import { assertTimeout, assertNumber } from "./util/assert-args";
 import concordanceOptions from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
 import addChain from "./add-chain";

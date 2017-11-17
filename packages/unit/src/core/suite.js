@@ -1,6 +1,6 @@
 /* @flow */
 
-import isPromise from "../util/is-promise";
+import isPromise from "./util/is-promise";
 import type { Status, IRunnable } from "./interfaces";
 import type Runner from "./runner";
 import type Test from "./test";

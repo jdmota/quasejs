@@ -1,7 +1,7 @@
 // @flow
 
-import isPromise from "../util/is-promise";
-import { assertTimeout, assertNumber, assertDelay } from "../util/assert-args";
+import isPromise from "./util/is-promise";
+import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import type Runner from "./runner";
 import { type InTestSequence } from "./sequence";
 import Test, { Runnable } from "./test";
