@@ -1,4 +1,4 @@
-import { Runner } from "../../src";
+import Runner from "../../src/core/runner";
 import assert from "../../../assert";
 
 describe( "unit", () => {

@@ -1,9 +1,5 @@
 import Runner from "./core/runner";
 
-export {
-  Runner
-};
-
 /* global window, document, self */
 
 if ( typeof window !== "undefined" ) {
