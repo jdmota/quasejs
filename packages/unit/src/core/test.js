@@ -361,7 +361,7 @@ export class Runnable implements ITest {
   }
 
   publicApi() {
-    return {
+    return Object.assign( {
       plan: this.plan.bind( this ),
       incCount: this.incCount.bind( this ),
       skip: this.skip.bind( this ),
@@ -370,7 +370,7 @@ export class Runnable implements ITest {
       timeout: this.timeout.bind( this ),
       slow: this.defineSlow.bind( this ),
       context: this.context
-    };
+    }, this.runner.assertions );
   }
 
 }

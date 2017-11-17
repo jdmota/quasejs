@@ -1,6 +1,7 @@
 import "./basic-tests";
 import "./chain";
 import "./context";
+import "./custom-assert";
 import "./delayed-setup";
 import "./failing";
 import "./fast-bail";

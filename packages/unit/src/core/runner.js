@@ -11,6 +11,8 @@ class Runner extends EventEmitter {
 
     this.options = Object.assign( {}, options );
 
+    this.assertions = Object.assign( {}, ...( this.options.assertions || [] ) );
+
     if ( this.options.timeout != null ) {
       assertTimeout( this.options.timeout );
     }
