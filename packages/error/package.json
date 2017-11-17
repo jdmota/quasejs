@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@quase/error",
-  "version": "0.1.0",
+  "version": "0.1.0-0",
   "description": "Error tools",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
