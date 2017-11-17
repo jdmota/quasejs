@@ -1,8 +1,4 @@
-const unit = require( "../src" );
-const runner = unit.Runner.init();
-const test = runner.test;
-
-unit.reporters.Node.init( runner );
+const test = require( "../dist" );
 
 test( "Test 1", t => {
   t.plan( 1 );
@@ -36,6 +32,7 @@ test( "Test 6", () => {
 
 test( "Test 7", t => {
   t.slow( 1 );
+  t.incCount();
   return new Promise( resolve => {
     setTimeout( resolve, 1000 );
   } );
@@ -59,9 +56,8 @@ group.test( "Test in group", () => {
 } );
 
 test( "post error", t => {
+  t.incCount();
   setTimeout( () => {
     t.timeout( 30 );
   }, 1 );
 } );
-
-runner.run();
