@@ -189,9 +189,16 @@ export class Runnable implements ITest {
     }
   }
 
+  processStack( err: Error, stack: ?string ) {
+    if ( stack && err.message ) {
+      return stack.replace( /^Error\n/, `Error: ${err.message}\n` );
+    }
+    return stack || err.stack;
+  }
+
   processError( e: Object, stack: ?string ) {
     const err = e == null || typeof e !== "object" ? new AssertionError( e ) : e;
-    err.stack = stack || err.stack; // make "stack" an "own prop"
+    err.stack = this.processStack( err, stack );
     if ( err.actual !== undefined || err.expected !== undefined ) {
       const actualDescribe = concordance.describe( err.actual, this.runner.concordanceOptions );
       const expectedDescribe = concordance.describe( err.expected, this.runner.concordanceOptions );

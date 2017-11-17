@@ -4,7 +4,11 @@ const CircularJSON = require( "circular-json" );
 function stringify( arg ) {
   return CircularJSON.stringify( arg, ( _, value ) => {
     if ( value instanceof Error ) {
-      const obj = { stack: value.stack };
+      const obj = {
+        name: value.name,
+        message: value.message,
+        stack: value.stack
+      };
       for ( const key in value ) {
         obj[ key ] = value[ key ];
       }
