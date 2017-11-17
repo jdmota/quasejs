@@ -8,7 +8,7 @@
 const objectAssign = Object.assign;
 
 export default function( options, fn, target ) {
-  let chainables = options.chainableMethods;
+  const chainables = options.chainableMethods;
 
   function extend( target, getter, ctx ) {
     Object.keys( chainables ).forEach( key => {
@@ -19,6 +19,14 @@ export default function( options, fn, target ) {
           return wrap( getter, chainables[ key ], ctx || this );
         }
       } );
+    } );
+
+    Object.defineProperty( target, "runner", {
+      enumerable: true,
+      configurable: true,
+      get: function() {
+        return ctx || this;
+      }
     } );
   }
 

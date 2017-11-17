@@ -1,22 +1,27 @@
-import GlobalEnv from "./core/global-env";
 import Runner from "./core/runner";
-import AssertionError from "./core/assertion-error";
-import _skipReasons from "./core/skip-reasons";
-import Node from "./reporters/node";
-
-export const skipReasons = Object.assign( {}, _skipReasons );
-export const reporters = {
-  Node
-};
 
 export {
-  Runner,
-  AssertionError,
-  GlobalEnv
+  Runner
 };
 
-export default function( opts, files ) {
-  // TODO
-  const runner = Runner.init().setup();
-  return runner;
+/* global window, document, self */
+
+if ( typeof window !== "undefined" ) {
+
+  const runner = Runner.init( window.quaseUnit ? window.quaseUnit.options : {} );
+
+  window.quaseUnit = runner.test;
+
+} else if ( typeof process !== "undefined" && typeof module !== "undefined" ) {
+
+  const runner = Runner.init( global.quaseUnit ? global.quaseUnit.options : {} );
+
+  module.exports = module.exports.default = runner.test;
+
+} else if ( typeof self !== "undefined" ) {
+
+  const runner = Runner.init( self.quaseUnit ? self.quaseUnit.options : {} );
+
+  self.quaseUnit = runner.test;
+
 }
