@@ -110,7 +110,10 @@ export class Runnable implements ITest {
 
   assertCall( name: string ) {
     if ( this.finished ) {
-      this.addError( new Error( `You should not call .${name}() after the test has finished.` ) );
+      this.addError(
+        new Error( `You should not call .${name}() after the test has finished.` ),
+        getStack( 3 )
+      );
       return false;
     }
     return true;
@@ -190,6 +193,12 @@ export class Runnable implements ITest {
   }
 
   addError( err: Object, stack: ?string ) {
+    if ( !err || typeof err !== "object" ) {
+      err = new Error( err );
+    }
+    if ( stack ) {
+      err.stack = stack;
+    }
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
         this.runner.postError( err );
@@ -199,12 +208,6 @@ export class Runnable implements ITest {
     if ( err instanceof SkipError || err.name === "SkipError" ) {
       this.skipReason = err.message;
       return;
-    }
-    if ( !err || typeof err !== "object" ) {
-      err = new Error( err );
-    }
-    if ( stack ) {
-      err.stack = stack;
     }
     this.errors.push( err );
     this.assertions.push( err );
