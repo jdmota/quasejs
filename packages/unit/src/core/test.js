@@ -190,7 +190,7 @@ export class Runnable implements ITest {
   }
 
   processError( e: Object, stack: ?string ) {
-    const err = e == null || typeof e !== "object" ? new Error( e ) : e;
+    const err = e == null || typeof e !== "object" ? new AssertionError( e ) : e;
     err.stack = stack || err.stack; // make "stack" an "own prop"
     if ( err.actual !== undefined || err.expected !== undefined ) {
       const actualDescribe = concordance.describe( err.actual, this.runner.concordanceOptions );
@@ -222,16 +222,12 @@ export class Runnable implements ITest {
     }
     if ( this.didPlan && this.planned !== this.assertionCount ) {
       this.addError(
-        new AssertionError( {
-          message: "Planned " + this.planned + " but " + this.assertionCount + " assertions were run."
-        } ),
+        new AssertionError( "Planned " + this.planned + " but " + this.assertionCount + " assertions were run." ),
         this.planStack
       );
     } else if ( !this.didPlan && this.assertionCount === 0 && !this.metadata.allowNoPlan && this.metadata.type === "test" ) {
       this.addError(
-        new AssertionError( {
-          message: "No assertions were run."
-        } ),
+        new AssertionError( "No assertions were run." ),
         this.placeholder.defaultStack
       );
     }

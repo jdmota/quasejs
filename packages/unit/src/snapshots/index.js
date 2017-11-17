@@ -1,5 +1,6 @@
 // @flow
 
+import { plain as concordanceOptions } from "../core/concordance-options";
 import { encode, decode, type Snapshots } from "./encode-decode";
 
 const fs = require( "fs-extra" );
@@ -56,10 +57,9 @@ export default class SnapshotsManager {
   +reports: Map<string, Object>;
   +updating: boolean;
   +stats: Stats;
-  +concordanceOptions: Object;
   loaded: boolean;
 
-  constructor( filePath: string, concordanceOptions: Object, updating: ?boolean ) {
+  constructor( filePath: string, updating: ?boolean ) {
     this.testKey = "";
     this.filePath = filePath;
     this.snapPath = getSnapPath( filePath );
@@ -73,7 +73,6 @@ export default class SnapshotsManager {
       removed: 0,
       updated: 0
     };
-    this.concordanceOptions = concordanceOptions;
     this.loaded = false;
   }
 
@@ -94,7 +93,7 @@ export default class SnapshotsManager {
 
     if ( expectedBuffer === undefined || this.updating ) {
 
-      const actualDescribe = concordance.describe( actual, this.concordanceOptions );
+      const actualDescribe = concordance.describe( actual, concordanceOptions );
       const actualBuffer = concordance.serialize( actualDescribe );
 
       // Add new snapshot
@@ -111,8 +110,8 @@ export default class SnapshotsManager {
 
     } else {
 
-      const expectedDescribe = concordance.deserialize( expectedBuffer, this.concordanceOptions );
-      const actualDescribe = concordance.describe( actual, this.concordanceOptions );
+      const expectedDescribe = concordance.deserialize( expectedBuffer, concordanceOptions );
+      const actualDescribe = concordance.describe( actual, concordanceOptions );
 
       // Keep previous snapshot
       this.newSnapshots.set( this.testKey, expectedBuffer );
@@ -123,7 +122,7 @@ export default class SnapshotsManager {
       }
 
       throw new SnapshotMissmatch(
-        concordance.diffDescriptors( expectedDescribe, actualDescribe, this.concordanceOptions )
+        concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions )
       );
 
     }
@@ -157,7 +156,7 @@ export default class SnapshotsManager {
       lines.push( `## ${key}\n` );
       lines.push( "```" );
       lines.push(
-        concordance.formatDescriptor( value, this.concordanceOptions )
+        concordance.formatDescriptor( value, concordanceOptions )
       );
       lines.push( "```\n" );
     }
