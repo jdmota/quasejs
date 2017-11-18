@@ -34,7 +34,7 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/packages/package-manager/test/test-folders"
     ],
-    "testRegex": "/test/index\\.js$",
+    "testRegex": "/test/(index|.+\\.test)\\.js$",
     "testEnvironment": "node"
   },
   "nyc": {

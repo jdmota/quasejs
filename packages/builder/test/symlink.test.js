@@ -1,7 +1,3 @@
-import "./babel-plugin-transform-modules";
-import "./run-fixtures";
-import "./run-watch-fixtures";
-
 import builder from "../src";
 
 const RUN_SYMLINK = false;

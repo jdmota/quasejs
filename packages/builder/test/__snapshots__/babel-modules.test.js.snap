@@ -1,0 +1,1233 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: dynamic-import 1`] = `
+"$i(\\"./foo\\").then();
+
+function foo(n) {
+  $i(\`./foo-\${n}\`).then();
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default 1`] = `"$e.default = 42;"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-2 1`] = `"$e.default = {};"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-3 1`] = `"$e.default = [];"`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-4 1`] = `
+"$e.default = foo;
+foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-5 1`] = `
+"$e.default = {
+  default: function () {}
+}.default;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-6 1`] = `
+"$e.default = {
+  default: class {}
+}.default;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-7 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});
+
+function foo() {}
+
+foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-8 1`] = `
+"$g($e, \\"default\\", function () {
+  return Foo;
+});
+
+class Foo {}
+
+Foo = 20;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-9 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-10 1`] = `
+"$e.default = function () {
+  return \\"foo\\";
+}();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-11 1`] = `
+"$g($e, \\"Cachier\\", function () {
+  return Cachier;
+});
+$e.default = new Cachier();
+
+function Cachier(databaseName) {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-12 1`] = `
+"$g($e, \\"Cachier\\", function () {
+  return Cachier;
+});
+$e.default = new Cachier();
+
+function Cachier(databaseName) {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-13 1`] = `
+"class Foo {}
+
+$e.default = new Foo();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-extensions 1`] = `
+"var _abc = $r(\\"./abc\\");
+
+$g($e, \\"a\\", function () {
+  return _abc.default;
+});
+$e.b = _abc;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$a($e, _foo);
+$g($e, \\"foo\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-2 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-3 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"bar\\", function () {
+  return _foo.bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-4 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"bar\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-5 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"default\\", function () {
+  return _foo.foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-6 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"default\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"bar\\", function () {
+  return _foo.bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-7 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.default;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-8 1`] = `
+"var _foo = $r(\\"foo\\");
+
+$g($e, \\"foo\\", function () {
+  return _foo.foo;
+});
+$g($e, \\"foo1\\", function () {
+  return _foo.foo1;
+});
+$g($e, \\"foo2\\", function () {
+  return _foo.foo2;
+});
+$g($e, \\"foo3\\", function () {
+  return _foo.foo3;
+});
+$g($e, \\"foo4\\", function () {
+  return _foo.foo4;
+});
+$g($e, \\"foo5\\", function () {
+  return _foo.foo5;
+});
+$g($e, \\"foo6\\", function () {
+  return _foo.foo6;
+});
+$g($e, \\"foo7\\", function () {
+  return _foo.foo7;
+});
+$g($e, \\"foo8\\", function () {
+  return _foo.foo8;
+});
+$g($e, \\"foo9\\", function () {
+  return _foo.foo9;
+});
+$g($e, \\"foo10\\", function () {
+  return _foo.foo10;
+});
+$g($e, \\"foo11\\", function () {
+  return _foo.foo11;
+});
+$g($e, \\"foo12\\", function () {
+  return _foo.foo12;
+});
+$g($e, \\"foo13\\", function () {
+  return _foo.foo13;
+});
+$g($e, \\"foo14\\", function () {
+  return _foo.foo14;
+});
+$g($e, \\"foo15\\", function () {
+  return _foo.foo15;
+});
+$g($e, \\"foo16\\", function () {
+  return _foo.foo16;
+});
+$g($e, \\"foo17\\", function () {
+  return _foo.foo17;
+});
+$g($e, \\"foo18\\", function () {
+  return _foo.foo18;
+});
+$g($e, \\"foo19\\", function () {
+  return _foo.foo19;
+});
+$g($e, \\"foo20\\", function () {
+  return _foo.foo20;
+});
+$g($e, \\"foo21\\", function () {
+  return _foo.foo21;
+});
+$g($e, \\"foo22\\", function () {
+  return _foo.foo22;
+});
+$g($e, \\"foo23\\", function () {
+  return _foo.foo23;
+});
+$g($e, \\"foo24\\", function () {
+  return _foo.foo24;
+});
+$g($e, \\"foo25\\", function () {
+  return _foo.foo25;
+});
+$g($e, \\"foo26\\", function () {
+  return _foo.foo26;
+});
+$g($e, \\"foo27\\", function () {
+  return _foo.foo27;
+});
+$g($e, \\"foo28\\", function () {
+  return _foo.foo28;
+});
+$g($e, \\"foo29\\", function () {
+  return _foo.foo29;
+});
+$g($e, \\"foo30\\", function () {
+  return _foo.foo30;
+});
+$g($e, \\"foo31\\", function () {
+  return _foo.foo31;
+});
+$g($e, \\"foo32\\", function () {
+  return _foo.foo32;
+});
+$g($e, \\"foo33\\", function () {
+  return _foo.foo33;
+});
+$g($e, \\"foo34\\", function () {
+  return _foo.foo34;
+});
+$g($e, \\"foo35\\", function () {
+  return _foo.foo35;
+});
+$g($e, \\"foo36\\", function () {
+  return _foo.foo36;
+});
+$g($e, \\"foo37\\", function () {
+  return _foo.foo37;
+});
+$g($e, \\"foo38\\", function () {
+  return _foo.foo38;
+});
+$g($e, \\"foo39\\", function () {
+  return _foo.foo39;
+});
+$g($e, \\"foo40\\", function () {
+  return _foo.foo40;
+});
+$g($e, \\"foo41\\", function () {
+  return _foo.foo41;
+});
+$g($e, \\"foo42\\", function () {
+  return _foo.foo42;
+});
+$g($e, \\"foo43\\", function () {
+  return _foo.foo43;
+});
+$g($e, \\"foo44\\", function () {
+  return _foo.foo44;
+});
+$g($e, \\"foo45\\", function () {
+  return _foo.foo45;
+});
+$g($e, \\"foo46\\", function () {
+  return _foo.foo46;
+});
+$g($e, \\"foo47\\", function () {
+  return _foo.foo47;
+});
+$g($e, \\"foo48\\", function () {
+  return _foo.foo48;
+});
+$g($e, \\"foo49\\", function () {
+  return _foo.foo49;
+});
+$g($e, \\"foo50\\", function () {
+  return _foo.foo50;
+});
+$g($e, \\"foo51\\", function () {
+  return _foo.foo51;
+});
+$g($e, \\"foo52\\", function () {
+  return _foo.foo52;
+});
+$g($e, \\"foo53\\", function () {
+  return _foo.foo53;
+});
+$g($e, \\"foo54\\", function () {
+  return _foo.foo54;
+});
+$g($e, \\"foo55\\", function () {
+  return _foo.foo55;
+});
+$g($e, \\"foo56\\", function () {
+  return _foo.foo56;
+});
+$g($e, \\"foo57\\", function () {
+  return _foo.foo57;
+});
+$g($e, \\"foo58\\", function () {
+  return _foo.foo58;
+});
+$g($e, \\"foo59\\", function () {
+  return _foo.foo59;
+});
+$g($e, \\"foo60\\", function () {
+  return _foo.foo60;
+});
+$g($e, \\"foo61\\", function () {
+  return _foo.foo61;
+});
+$g($e, \\"foo62\\", function () {
+  return _foo.foo62;
+});
+$g($e, \\"foo63\\", function () {
+  return _foo.foo63;
+});
+$g($e, \\"foo64\\", function () {
+  return _foo.foo64;
+});
+$g($e, \\"foo65\\", function () {
+  return _foo.foo65;
+});
+$g($e, \\"foo66\\", function () {
+  return _foo.foo66;
+});
+$g($e, \\"foo67\\", function () {
+  return _foo.foo67;
+});
+$g($e, \\"foo68\\", function () {
+  return _foo.foo68;
+});
+$g($e, \\"foo69\\", function () {
+  return _foo.foo69;
+});
+$g($e, \\"foo70\\", function () {
+  return _foo.foo70;
+});
+$g($e, \\"foo71\\", function () {
+  return _foo.foo71;
+});
+$g($e, \\"foo72\\", function () {
+  return _foo.foo72;
+});
+$g($e, \\"foo73\\", function () {
+  return _foo.foo73;
+});
+$g($e, \\"foo74\\", function () {
+  return _foo.foo74;
+});
+$g($e, \\"foo75\\", function () {
+  return _foo.foo75;
+});
+$g($e, \\"foo76\\", function () {
+  return _foo.foo76;
+});
+$g($e, \\"foo77\\", function () {
+  return _foo.foo77;
+});
+$g($e, \\"foo78\\", function () {
+  return _foo.foo78;
+});
+$g($e, \\"foo79\\", function () {
+  return _foo.foo79;
+});
+$g($e, \\"foo80\\", function () {
+  return _foo.foo80;
+});
+$g($e, \\"foo81\\", function () {
+  return _foo.foo81;
+});
+$g($e, \\"foo82\\", function () {
+  return _foo.foo82;
+});
+$g($e, \\"foo83\\", function () {
+  return _foo.foo83;
+});
+$g($e, \\"foo84\\", function () {
+  return _foo.foo84;
+});
+$g($e, \\"foo85\\", function () {
+  return _foo.foo85;
+});
+$g($e, \\"foo86\\", function () {
+  return _foo.foo86;
+});
+$g($e, \\"foo87\\", function () {
+  return _foo.foo87;
+});
+$g($e, \\"foo88\\", function () {
+  return _foo.foo88;
+});
+$g($e, \\"foo89\\", function () {
+  return _foo.foo89;
+});
+$g($e, \\"foo90\\", function () {
+  return _foo.foo90;
+});
+$g($e, \\"foo91\\", function () {
+  return _foo.foo91;
+});
+$g($e, \\"foo92\\", function () {
+  return _foo.foo92;
+});
+$g($e, \\"foo93\\", function () {
+  return _foo.foo93;
+});
+$g($e, \\"foo94\\", function () {
+  return _foo.foo94;
+});
+$g($e, \\"foo95\\", function () {
+  return _foo.foo95;
+});
+$g($e, \\"foo96\\", function () {
+  return _foo.foo96;
+});
+$g($e, \\"foo97\\", function () {
+  return _foo.foo97;
+});
+$g($e, \\"foo98\\", function () {
+  return _foo.foo98;
+});
+$g($e, \\"foo99\\", function () {
+  return _foo.foo99;
+});
+$g($e, \\"foo100\\", function () {
+  return _foo.foo100;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-9 1`] = `
+"let foo = 10;
+foo1;
+
+function stuff() {
+  var _foo = $r(\\"foo\\");
+
+  $g($e, \\"foo\\", function () {
+    return _foo.foo;
+  });
+  $g($e, \\"foo1\\", function () {
+    return _foo.foo1;
+  });
+  $g($e, \\"foo2\\", function () {
+    return _foo.foo2;
+  });
+  $g($e, \\"foo3\\", function () {
+    return _foo.foo3;
+  });
+  $g($e, \\"foo4\\", function () {
+    return _foo.foo4;
+  });
+  $g($e, \\"foo5\\", function () {
+    return _foo.foo5;
+  });
+  $g($e, \\"foo6\\", function () {
+    return _foo.foo6;
+  });
+  $g($e, \\"foo7\\", function () {
+    return _foo.foo7;
+  });
+  $g($e, \\"foo8\\", function () {
+    return _foo.foo8;
+  });
+  $g($e, \\"foo9\\", function () {
+    return _foo.foo9;
+  });
+  $g($e, \\"foo10\\", function () {
+    return _foo.foo10;
+  });
+  $g($e, \\"foo11\\", function () {
+    return _foo.foo11;
+  });
+  $g($e, \\"foo12\\", function () {
+    return _foo.foo12;
+  });
+  $g($e, \\"foo13\\", function () {
+    return _foo.foo13;
+  });
+  $g($e, \\"foo14\\", function () {
+    return _foo.foo14;
+  });
+  $g($e, \\"foo15\\", function () {
+    return _foo.foo15;
+  });
+  $g($e, \\"foo16\\", function () {
+    return _foo.foo16;
+  });
+  $g($e, \\"foo17\\", function () {
+    return _foo.foo17;
+  });
+  $g($e, \\"foo18\\", function () {
+    return _foo.foo18;
+  });
+  $g($e, \\"foo19\\", function () {
+    return _foo.foo19;
+  });
+  $g($e, \\"foo20\\", function () {
+    return _foo.foo20;
+  });
+  $g($e, \\"foo21\\", function () {
+    return _foo.foo21;
+  });
+  $g($e, \\"foo22\\", function () {
+    return _foo.foo22;
+  });
+  $g($e, \\"foo23\\", function () {
+    return _foo.foo23;
+  });
+  $g($e, \\"foo24\\", function () {
+    return _foo.foo24;
+  });
+  $g($e, \\"foo25\\", function () {
+    return _foo.foo25;
+  });
+  $g($e, \\"foo26\\", function () {
+    return _foo.foo26;
+  });
+  $g($e, \\"foo27\\", function () {
+    return _foo.foo27;
+  });
+  $g($e, \\"foo28\\", function () {
+    return _foo.foo28;
+  });
+  $g($e, \\"foo29\\", function () {
+    return _foo.foo29;
+  });
+  $g($e, \\"foo30\\", function () {
+    return _foo.foo30;
+  });
+  $g($e, \\"foo31\\", function () {
+    return _foo.foo31;
+  });
+  $g($e, \\"foo32\\", function () {
+    return _foo.foo32;
+  });
+  $g($e, \\"foo33\\", function () {
+    return _foo.foo33;
+  });
+  $g($e, \\"foo34\\", function () {
+    return _foo.foo34;
+  });
+  $g($e, \\"foo35\\", function () {
+    return _foo.foo35;
+  });
+  $g($e, \\"foo36\\", function () {
+    return _foo.foo36;
+  });
+  $g($e, \\"foo37\\", function () {
+    return _foo.foo37;
+  });
+  $g($e, \\"foo38\\", function () {
+    return _foo.foo38;
+  });
+  $g($e, \\"foo39\\", function () {
+    return _foo.foo39;
+  });
+  $g($e, \\"foo40\\", function () {
+    return _foo.foo40;
+  });
+  $g($e, \\"foo41\\", function () {
+    return _foo.foo41;
+  });
+  $g($e, \\"foo42\\", function () {
+    return _foo.foo42;
+  });
+  $g($e, \\"foo43\\", function () {
+    return _foo.foo43;
+  });
+  $g($e, \\"foo44\\", function () {
+    return _foo.foo44;
+  });
+  $g($e, \\"foo45\\", function () {
+    return _foo.foo45;
+  });
+  $g($e, \\"foo46\\", function () {
+    return _foo.foo46;
+  });
+  $g($e, \\"foo47\\", function () {
+    return _foo.foo47;
+  });
+  $g($e, \\"foo48\\", function () {
+    return _foo.foo48;
+  });
+  $g($e, \\"foo49\\", function () {
+    return _foo.foo49;
+  });
+  $g($e, \\"foo50\\", function () {
+    return _foo.foo50;
+  });
+  $g($e, \\"foo51\\", function () {
+    return _foo.foo51;
+  });
+  $g($e, \\"foo52\\", function () {
+    return _foo.foo52;
+  });
+  $g($e, \\"foo53\\", function () {
+    return _foo.foo53;
+  });
+  $g($e, \\"foo54\\", function () {
+    return _foo.foo54;
+  });
+  $g($e, \\"foo55\\", function () {
+    return _foo.foo55;
+  });
+  $g($e, \\"foo56\\", function () {
+    return _foo.foo56;
+  });
+  $g($e, \\"foo57\\", function () {
+    return _foo.foo57;
+  });
+  $g($e, \\"foo58\\", function () {
+    return _foo.foo58;
+  });
+  $g($e, \\"foo59\\", function () {
+    return _foo.foo59;
+  });
+  $g($e, \\"foo60\\", function () {
+    return _foo.foo60;
+  });
+  $g($e, \\"foo61\\", function () {
+    return _foo.foo61;
+  });
+  $g($e, \\"foo62\\", function () {
+    return _foo.foo62;
+  });
+  $g($e, \\"foo63\\", function () {
+    return _foo.foo63;
+  });
+  $g($e, \\"foo64\\", function () {
+    return _foo.foo64;
+  });
+  $g($e, \\"foo65\\", function () {
+    return _foo.foo65;
+  });
+  $g($e, \\"foo66\\", function () {
+    return _foo.foo66;
+  });
+  $g($e, \\"foo67\\", function () {
+    return _foo.foo67;
+  });
+  $g($e, \\"foo68\\", function () {
+    return _foo.foo68;
+  });
+  $g($e, \\"foo69\\", function () {
+    return _foo.foo69;
+  });
+  $g($e, \\"foo70\\", function () {
+    return _foo.foo70;
+  });
+  $g($e, \\"foo71\\", function () {
+    return _foo.foo71;
+  });
+  $g($e, \\"foo72\\", function () {
+    return _foo.foo72;
+  });
+  $g($e, \\"foo73\\", function () {
+    return _foo.foo73;
+  });
+  $g($e, \\"foo74\\", function () {
+    return _foo.foo74;
+  });
+  $g($e, \\"foo75\\", function () {
+    return _foo.foo75;
+  });
+  $g($e, \\"foo76\\", function () {
+    return _foo.foo76;
+  });
+  $g($e, \\"foo77\\", function () {
+    return _foo.foo77;
+  });
+  $g($e, \\"foo78\\", function () {
+    return _foo.foo78;
+  });
+  $g($e, \\"foo79\\", function () {
+    return _foo.foo79;
+  });
+  $g($e, \\"foo80\\", function () {
+    return _foo.foo80;
+  });
+  $g($e, \\"foo81\\", function () {
+    return _foo.foo81;
+  });
+  $g($e, \\"foo82\\", function () {
+    return _foo.foo82;
+  });
+  $g($e, \\"foo83\\", function () {
+    return _foo.foo83;
+  });
+  $g($e, \\"foo84\\", function () {
+    return _foo.foo84;
+  });
+  $g($e, \\"foo85\\", function () {
+    return _foo.foo85;
+  });
+  $g($e, \\"foo86\\", function () {
+    return _foo.foo86;
+  });
+  $g($e, \\"foo87\\", function () {
+    return _foo.foo87;
+  });
+  $g($e, \\"foo88\\", function () {
+    return _foo.foo88;
+  });
+  $g($e, \\"foo89\\", function () {
+    return _foo.foo89;
+  });
+  $g($e, \\"foo90\\", function () {
+    return _foo.foo90;
+  });
+  $g($e, \\"foo91\\", function () {
+    return _foo.foo91;
+  });
+  $g($e, \\"foo92\\", function () {
+    return _foo.foo92;
+  });
+  $g($e, \\"foo93\\", function () {
+    return _foo.foo93;
+  });
+  $g($e, \\"foo94\\", function () {
+    return _foo.foo94;
+  });
+  $g($e, \\"foo95\\", function () {
+    return _foo.foo95;
+  });
+  $g($e, \\"foo96\\", function () {
+    return _foo.foo96;
+  });
+  $g($e, \\"foo97\\", function () {
+    return _foo.foo97;
+  });
+  $g($e, \\"foo98\\", function () {
+    return _foo.foo98;
+  });
+  $g($e, \\"foo99\\", function () {
+    return _foo.foo99;
+  });
+  $g($e, \\"foo100\\", function () {
+    return _foo.foo100;
+  });
+  bar();
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-2 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-3 1`] = `
+"$g($e, \\"bar\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-4 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-5 1`] = `
+"$g($e, \\"default\\", function () {
+  return foo;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable 1`] = `
+"$g($e, \\"foo\\", function () {
+  return foo;
+});
+$g($e, \\"foo2\\", function () {
+  return foo2;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});
+$g($e, \\"foo3\\", function () {
+  return foo3;
+});
+$g($e, \\"foo4\\", function () {
+  return foo4;
+});
+$g($e, \\"foo5\\", function () {
+  return foo5;
+});
+$g($e, \\"foo6\\", function () {
+  return foo6;
+});
+$g($e, \\"foo7\\", function () {
+  return foo7;
+});
+$g($e, \\"foo8\\", function () {
+  return foo8;
+});
+$g($e, \\"foo9\\", function () {
+  return foo9;
+});
+$g($e, \\"b\\", function () {
+  return b;
+});
+$g($e, \\"c\\", function () {
+  return c;
+});
+var foo = 1;
+var foo2 = 1,
+    bar = 2;
+
+var foo3 = function () {};
+
+var foo4;
+let foo5 = 2;
+let foo6;
+const foo7 = 3;
+
+function foo8() {}
+
+class foo9 {}
+
+const {
+  a: b,
+  c
+} = {};"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable-2 1`] = `
+"$g($e, \\"test\\", function () {
+  return test;
+});
+$g($e, \\"a\\", function () {
+  return a;
+});
+$g($e, \\"c\\", function () {
+  return b;
+});
+$g($e, \\"e\\", function () {
+  return d;
+});
+$g($e, \\"f\\", function () {
+  return d;
+});
+$g($e, \\"yy\\", function () {
+  return yy;
+});
+$g($e, \\"zz\\", function () {
+  return zz;
+});
+$g($e, \\"bar\\", function () {
+  return bar;
+});
+$g($e, \\"baz\\", function () {
+  return baz;
+});
+var test = 2;
+test = 5;
+test++;
+
+(function () {
+  var test = 2;
+  test = 3;
+  test++;
+})();
+
+var a = 2;
+a = 3;
+var b = 2;
+b = 3;
+var d = 3;
+d = 4;
+var yy = 0;
+var zz = yy++;
+const {
+  foo: bar,
+  baz
+} = {};
+bar++;
+baz++;
+bar = 10;
+baz = 10;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: hoist-function-exports 1`] = `
+"var _evens = $r(\\"./evens\\");
+
+$g($e, \\"nextOdd\\", function () {
+  return nextOdd;
+});
+$g($e, \\"isOdd\\", function () {
+  return isOdd;
+});
+
+function nextOdd(n) {
+  return (0, _evens.isEven)(n) ? n + 1 : n + 2;
+}
+
+var isOdd = function (isEven) {
+  return function (n) {
+    return !isEven(n);
+  };
+}(_evens.isEven);"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.default;
+_foo.default.bar;
+_foo.default.bar.baz;
+
+function a() {
+  let foo = 10;
+  foo;
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default-jsx 1`] = `
+"var _foo = $r(\\"foo\\");
+
+var _bar = $r(\\"bar\\");
+
+<_foo.default></_foo.default>;
+<_foo.default.bar></_foo.default.bar>;
+<_foo.default.bar.baz></_foo.default.bar.baz>;
+<_foo.default.bar.baz.foo></_foo.default.bar.baz.foo>;
+
+function func() {
+  let bar = {};
+  <bar></bar>;
+}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-glob 1`] = `
+"var _foo = $r(\\"foo\\");
+
+var foo = _foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-hoisting 1`] = `
+"var _foo = $r(\\"./foo\\");
+
+var bar = (0, _foo.default)();"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-mixing 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.default;
+_foo.baz;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-named 1`] = `
+"var _foo = $r(\\"foo\\");
+
+_foo.bar;
+_foo.bar2;
+_foo.baz;
+_foo.bar;
+_foo.bar;
+_foo.xyz;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: internals-shadow 1`] = `
+"$g($e, \\"$e\\", function () {
+  return _$e;
+});
+
+function _$e() {}"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports 1`] = `
+"if (true) {
+  var _abc = $r(\\"./abc\\");
+
+  var _other = $r(\\"./other\\");
+
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+
+  function outer() {
+    return [_abc.a, _abc.b, _abc.c];
+  }
+
+  if (false) {
+    _abc.default;
+  }
+}
+
+foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-2 1`] = `
+"switch (true) {
+  case 0:
+    var _abc = $r(\\"./abc\\");
+
+    break;
+
+  case true:
+    $g($e, \\"outer\\", function () {
+      return outer;
+    });
+
+    function outer() {
+      var _abc2 = $r(\\"./abc\\");
+
+      return [_abc2.a, _abc2.b, _abc2.c];
+    }
+
+    break;
+
+  case false:
+    var _abc3 = $r(\\"./abc\\");
+
+  default:
+    _abc.default;
+    $e.default = null;
+}
+
+foo;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-3 1`] = `
+"if (true) {
+  var _abc = $r(\\"./abc\\");
+}
+
+if (false) {
+  var _abc2 = $r(\\"./abc\\");
+}
+
+if (true) {
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+
+  function outer() {
+    var _abc3 = $r(\\"./abc\\");
+
+    return [_abc3.a, _abc3.b, _abc3.c];
+  }
+}
+
+if (false) {
+  var _foo = $r(\\"./foo\\");
+
+  $g($e, \\"x\\", function () {
+    return _foo.x;
+  });
+}
+
+x; // Stay as x
+
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-4 1`] = `
+"function a() {
+  var _abc = $r(\\"./abc\\");
+}
+
+function b() {
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+
+  function outer() {
+    var _abc2 = $r(\\"./abc\\");
+
+    return [_abc2.a, _abc2.b, _abc2.c];
+  }
+}
+
+x; // Stay as x
+
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-5 1`] = `
+"while (true) {
+  var _abc = $r(\\"./abc\\");
+}
+
+while (false) {
+  var _abc2 = $r(\\"./abc\\");
+}
+
+for (const a in obj) {
+  $g($e, \\"outer\\", function () {
+    return outer;
+  });
+
+  function outer() {
+    var _abc3 = $r(\\"./abc\\");
+
+    return [_abc3.a, _abc3.b, _abc3.c];
+  }
+}
+
+while (false) {
+  var _foo = $r(\\"./foo\\");
+
+  $g($e, \\"x\\", function () {
+    return _foo.x;
+  });
+}
+
+x; // Stay as x
+
+y; // Stay as y"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: overview 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");
+
+var _foo2 = $r(\\"foo2\\");
+
+var _foo3 = $r(\\"foo3\\");
+
+var _foo4 = $r(\\"foo4\\");
+
+var _foo5 = $r(\\"foo5\\");
+
+$r(\\"foo6\\");
+$r(\\"foo7\\");
+
+var _foo8 = $r(\\"foo8\\");
+
+var foo2 = _foo3;
+$g($e, \\"test\\", function () {
+  return test;
+});
+$g($e, \\"test2\\", function () {
+  return test2;
+});
+var test2 = 5;
+_foo4.bar;
+_foo5.foo;
+_foo2.default;
+_foo8.a;
+_foo8.a;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: this 1`] = `
+"$r(\\"foo\\");
+$r(\\"foo-bar\\");
+$r(\\"./directory/foo-bar\\");
+
+var _foo2 = $r(\\"foo2\\");
+
+var _foo3 = $r(\\"foo3\\");
+
+var _foo4 = $r(\\"foo4\\");
+
+var _foo5 = $r(\\"foo5\\");
+
+var foo2 = _foo3;
+let a = undefined;
+
+if (a) {
+  let b = undefined;
+}
+
+function c() {
+  return this;
+}
+
+let d = () => {
+  return undefined;
+};
+
+let e = () => undefined;"
+`;
