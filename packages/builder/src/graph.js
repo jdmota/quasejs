@@ -1,10 +1,8 @@
 // @flow
 
-import { type ID, idToPath } from "./id";
+import { type ID, idToPath, idToString, resolvePath } from "./id";
 import type Builder from "./builder";
 import { type Deps } from "./types";
-
-const path = require( "path" );
 
 // Adapted from https://github.com/samthor/srcgraph
 
@@ -116,7 +114,7 @@ export default function processGraph( builder: Builder ) {
         id,
         srcs,
         entrypoint,
-        dest: path.resolve( idToPath( builder.dest ), builder.idToString( id, builder.context ) ),
+        dest: resolvePath( idToString( id, builder.context ), builder.dest ),
         built: false
       } );
       for ( const src of srcs ) {
