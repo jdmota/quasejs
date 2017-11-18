@@ -18,6 +18,10 @@ export function idToString( id: ID | string, cwd: ID | string ): string {
   return path.relative( cwd, id ).replace( /\\/g, "/" );
 }
 
+export function relativeURL( id: ID | string, cwd: ID | string ): string {
+  return path.relative( path.dirname( cwd ), id ).replace( /\\/g, "/" );
+}
+
 export function resolveId( id: ID | string, cwd: ID | string ): ID {
   return path.resolve( cwd, id );
 }

@@ -1,6 +1,6 @@
 // @flow
 
-import { type ID, idToPath, idToString, resolvePath } from "./id";
+import { type ID, idToPath, pathToId, idToString, resolvePath } from "./id";
 import type Builder from "./builder";
 import { type Deps } from "./types";
 
@@ -38,6 +38,16 @@ class BiMap {
     } );
 
     this.incs.forEach( value => value.sort() );
+  }
+
+  directDeps( id: ID, set: Set<ID> = new Set() ) {
+    for ( const { resolved, splitPoint } of this.requires( id ) ) {
+      if ( !splitPoint && !set.has( resolved ) ) {
+        set.add( resolved );
+        this.directDeps( resolved, set );
+      }
+    }
+    return set;
   }
 
   requires( src ) {
@@ -105,6 +115,7 @@ export default function processGraph( builder: Builder ) {
 
   const modules = [];
   const moduleToFile = {};
+  const directFileDeps = {};
 
   hashes.forEach( ( hash, id ) => {
     const srcs = grow( id );
@@ -123,5 +134,18 @@ export default function processGraph( builder: Builder ) {
     }
   } );
 
-  return { modules, moduleToFile };
+  for ( const id in moduleToFile ) {
+    const set = directFileDeps[ id ] = new Set( [ moduleToFile[ id ] ] );
+
+    for ( const dep of map.directDeps( pathToId( id ) ) ) {
+      set.add( moduleToFile[ idToPath( dep ) ] );
+    }
+  }
+
+  const moduleToFiles = {};
+  for ( const id in directFileDeps ) {
+    moduleToFiles[ id ] = Array.from( directFileDeps[ id ] ).sort();
+  }
+
+  return { modules, moduleToFiles };
 }

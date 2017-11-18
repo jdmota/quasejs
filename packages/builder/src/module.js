@@ -188,20 +188,6 @@ export default class Module {
     return this.deps;
   }
 
-  followDirectDeps( set: Set<ID> = new Set() ): Set<ID> {
-    // $FlowFixMe
-    for ( const { resolved, splitPoint } of this.deps ) {
-      if ( !splitPoint && !set.has( resolved ) ) {
-        const m = this.builder.modules.get( resolved );
-        if ( m ) {
-          set.add( m.id );
-          m.followDirectDeps( set );
-        }
-      }
-    }
-    return set;
-  }
-
   async saveDeps() {
     const promises = [];
     const deps = await this.runDepsExtracter();

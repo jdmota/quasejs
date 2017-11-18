@@ -1,4 +1,4 @@
-import { idToString } from "../id";
+import { relativeURL } from "../id";
 import cloneAst from "./clone-ast";
 import LanguageModule from "./language";
 
@@ -96,7 +96,7 @@ class HtmlModule extends LanguageModule {
     this.treeAdapter.insertBefore( ref.parentNode, node, ref );
   }
 
-  async render( builder, { moduleToFile } ) {
+  async render( builder, { moduleToFiles } ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
@@ -117,11 +117,9 @@ class HtmlModule extends LanguageModule {
       }
 
       const deps = new Set();
-      const allDeps = new Set();
 
       for ( const { node, src } of this.treeAdapter.__deps ) {
         const module = this.getModuleBySource( src );
-        module.followDirectDeps( allDeps );
         deps.add( module.id );
 
         const prevOnloadAttr = node.attrs.find( ( { name } ) => name === "onload" ) || {};
@@ -139,10 +137,9 @@ class HtmlModule extends LanguageModule {
 
       const moreScripts = new Set();
 
-      for ( const depId of allDeps ) {
-        const file = moduleToFile[ depId ];
-        if ( !deps.has( file ) ) {
-          moreScripts.add( idToString( file, this.id ) );
+      for ( const file of moduleToFiles[ this.id ] ) {
+        if ( file !== this.id && !deps.has( file ) ) {
+          moreScripts.add( relativeURL( file, this.id ) );
         }
       }
 

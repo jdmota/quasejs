@@ -12,7 +12,7 @@ type ToWrite = { dest: string, code: Buffer | string, map: ?Object };
 
 type FinalModules = {
   modules: ( { id: ID, srcs: ID[], entrypoint: boolean, dest: string, built: boolean } )[],
-  moduleToFile: { [name: ID]: ID }
+  moduleToFiles: { [name: ID]: ID[] }
 };
 
 type Renderer = ( Builder, FinalModules ) => Promise<ToWrite[]>;

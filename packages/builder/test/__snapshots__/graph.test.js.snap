@@ -1,0 +1,131 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`graph cycle 1`] = `
+Object {
+  "moduleToFiles": Object {
+    "context/A.js": Array [
+      "context/entry.js",
+    ],
+    "context/B.js": Array [
+      "context/entry.js",
+    ],
+    "context/entry.js": Array [
+      "context/entry.js",
+    ],
+  },
+  "modules": Array [
+    Object {
+      "built": false,
+      "dest": "dest/entry.js",
+      "entrypoint": true,
+      "id": "context/entry.js",
+      "srcs": Array [
+        "context/entry.js",
+        "context/A.js",
+        "context/B.js",
+      ],
+    },
+  ],
+}
+`;
+
+exports[`graph cycle split 1`] = `
+Object {
+  "moduleToFiles": Object {
+    "context/A.js": Array [
+      "context/A.js",
+    ],
+    "context/B.js": Array [
+      "context/B.js",
+    ],
+    "context/entry.js": Array [
+      "context/A.js",
+      "context/B.js",
+      "context/entry.js",
+    ],
+  },
+  "modules": Array [
+    Object {
+      "built": false,
+      "dest": "dest/entry.js",
+      "entrypoint": true,
+      "id": "context/entry.js",
+      "srcs": Array [
+        "context/entry.js",
+      ],
+    },
+    Object {
+      "built": false,
+      "dest": "dest/A.js",
+      "entrypoint": true,
+      "id": "context/A.js",
+      "srcs": Array [
+        "context/A.js",
+      ],
+    },
+    Object {
+      "built": false,
+      "dest": "dest/B.js",
+      "entrypoint": true,
+      "id": "context/B.js",
+      "srcs": Array [
+        "context/B.js",
+      ],
+    },
+  ],
+}
+`;
+
+exports[`graph empty 1`] = `
+Object {
+  "moduleToFiles": Object {},
+  "modules": Array [],
+}
+`;
+
+exports[`graph split points 1`] = `
+Object {
+  "moduleToFiles": Object {
+    "context/A.js": Array [
+      "context/A.js",
+    ],
+    "context/B.js": Array [
+      "context/A.js",
+      "context/B.js",
+    ],
+    "context/entry.js": Array [
+      "context/A.js",
+      "context/entry.js",
+    ],
+  },
+  "modules": Array [
+    Object {
+      "built": false,
+      "dest": "dest/entry.js",
+      "entrypoint": true,
+      "id": "context/entry.js",
+      "srcs": Array [
+        "context/entry.js",
+      ],
+    },
+    Object {
+      "built": false,
+      "dest": "dest/A.js",
+      "entrypoint": false,
+      "id": "context/A.js",
+      "srcs": Array [
+        "context/A.js",
+      ],
+    },
+    Object {
+      "built": false,
+      "dest": "dest/B.js",
+      "entrypoint": true,
+      "id": "context/B.js",
+      "srcs": Array [
+        "context/B.js",
+      ],
+    },
+  ],
+}
+`;
