@@ -135,7 +135,7 @@ class JsModule extends LanguageModule {
 
     const program = this.ast.program;
 
-    const addDep = source => this.addDep( { src: source.value, loc: source.loc.start } );
+    const addDep = ( source, splitPoint ) => this.addDep( { src: source.value, loc: source.loc.start, splitPoint } );
 
     const mapper1 = s => {
       const loc = s.loc.start;
@@ -201,6 +201,7 @@ class JsModule extends LanguageModule {
         if ( node.callee.type === "Import" ) {
           const arg = node.arguments[ 0 ];
           if ( arg.type === "StringLiteral" ) {
+            addDep( arg, true );
             push( this.dynamicImports, { isGlob: false, name: arg.value, loc: arg.loc.start } );
           } else if ( arg.type === "TemplateLiteral" ) {
             let glob = "";
@@ -216,6 +217,8 @@ class JsModule extends LanguageModule {
             push( this.dynamicImports, { warn: true, loc: arg.loc.start } );
           }
         }
+
+        return true;
 
       } else {
 
@@ -447,8 +450,8 @@ function renderModule( jsModule, builder, babelOpts ) {
     [ babelPluginModules, {
       varsUsed,
       resolveModuleSource( source ) {
-        const m = jsModule.getInternalBySource( source );
-        return m ? m.uuid : source;
+        const m = jsModule.getModuleBySource( source );
+        return m ? m.normalizedId : source;
       }
     } ]
   ] );

@@ -387,8 +387,20 @@ export default ( { types: t }, options ) => {
         path.remove();
       },
 
-      Import( path ) {
-        path.replaceWith( t.identifier( getVar( "import" ) ) );
+      CallExpression( path ) {
+
+        const { node } = path;
+
+        if ( node.callee.type === "Import" ) {
+          node.callee = t.identifier( getVar( "import" ) );
+
+          const arg = node.arguments[ 0 ];
+
+          if ( arg && arg.type === "StringLiteral" ) {
+            arg.value = resolveModuleSource( arg.value );
+          }
+        }
+
       }
     }
   };
