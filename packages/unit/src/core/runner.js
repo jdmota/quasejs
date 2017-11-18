@@ -58,8 +58,8 @@ class Runner extends EventEmitter {
     return new Runner( options );
   }
 
-  postError( err ) {
-    this.emit( "postError", err );
+  otherError( err ) {
+    this.emit( "otherError", err );
   }
 
   delaySetup( promise ) {

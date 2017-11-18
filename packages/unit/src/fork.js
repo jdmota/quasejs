@@ -24,7 +24,7 @@ const onMessage = msg => {
 
     const runner = importFresh( "./index.js" ).runner;
 
-    [ "runStart", "testStart", "testEnd", "suiteStart", "suiteEnd", "runEnd", "postError" ].forEach( eventType => {
+    [ "runStart", "testStart", "testEnd", "suiteStart", "suiteEnd", "runEnd", "otherError" ].forEach( eventType => {
       runner.on( eventType, arg => {
         process.send( {
           type: "quase-unit-emit",
@@ -37,7 +37,7 @@ const onMessage = msg => {
     process.on( "uncaughtException", arg => {
       process.send( {
         type: "quase-unit-emit",
-        eventType: "postError",
+        eventType: "otherError",
         arg: stringify( arg )
       } );
     } );
@@ -48,7 +48,7 @@ const onMessage = msg => {
       } catch ( arg ) {
         process.send( {
           type: "quase-unit-emit",
-          eventType: "postError",
+          eventType: "otherError",
           arg: stringify( arg )
         } );
       }

@@ -260,7 +260,7 @@ export class Runnable implements ITest {
     const err = processError( e, stack, this.runner );
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
-        this.runner.postError( err );
+        this.runner.otherError( err );
       }
       return;
     }

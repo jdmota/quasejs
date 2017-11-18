@@ -8,18 +8,18 @@ export default class NodeReporter {
   constructor( runner ) {
     this.spinner = null;
     this.tests = [];
-    this.postErrors = [];
+    this.otherErrors = [];
     this.ended = false;
     this.didAfterRun = false;
     runner.on( "runStart", this.runStart.bind( this ) );
     runner.on( "testEnd", this.testEnd.bind( this ) );
     runner.on( "runEnd", this.runEnd.bind( this ) );
-    runner.on( "postError", err => {
+    runner.on( "otherError", err => {
       if ( this.ended ) {
         this.afterRun();
         logError( err );
       } else {
-        this.postErrors.push( err );
+        this.otherErrors.push( err );
       }
     } );
   }
@@ -27,7 +27,7 @@ export default class NodeReporter {
   afterRun() {
     if ( !this.didAfterRun ) {
       this.didAfterRun = true;
-      process.stdout.write( "\n  Errors after the test has finished:\n" );
+      process.stdout.write( "\n  More errors:\n" );
     }
   }
 
@@ -53,7 +53,7 @@ export default class NodeReporter {
 
       const { passed, skipped, todo, failed, total } = t.testCounts;
 
-      process.exitCode = failed || !total || this.postErrors.length ? 1 : 0;
+      process.exitCode = failed || !total || this.otherErrors.length ? 1 : 0;
 
       let lines;
 
@@ -76,12 +76,12 @@ export default class NodeReporter {
 
       process.stdout.write( lines.join( "" ) );
 
-      if ( this.postErrors.length > 0 ) {
+      if ( this.otherErrors.length > 0 ) {
         this.afterRun();
-        for ( let i = 0; i < this.postErrors.length; i++ ) {
-          await logError( this.postErrors[ i ] ); // eslint-disable-line no-await-in-loop
+        for ( let i = 0; i < this.otherErrors.length; i++ ) {
+          await logError( this.otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
         }
-        this.postErrors = null; // Prevent memory leaks
+        this.otherErrors = null; // Prevent memory leaks
       }
 
     } );

@@ -20,7 +20,7 @@ describe( "unit", () => {
     } );
 
     const p2 = new Promise( resolve => {
-      runner.on( "postError", err => {
+      runner.on( "otherError", err => {
         assert.strictEqual( err.message, "You should not call .timeout() after the test has finished." );
         resolve();
       } );
