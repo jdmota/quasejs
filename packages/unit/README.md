@@ -96,6 +96,34 @@ Value is inherit from the value especified on the group by default. If the test 
 
 Not available in hooks.
 
+### Reruns
+
+`.reruns( number )`
+
+How many times the test will rerun.
+
+Example:
+- If value is `0` it never reruns.
+- If value is `1`, it will run once, and if it fails, it will rerun once.
+
+Run `reruns()` without arguments to get the current value.
+
+Value is inherit from the value especified on the group by default. If the test belongs to the root, the default is `0`.
+
+Not available in hooks.
+
+### Rerun delay
+
+`.rerunDelay( number )`
+
+Specify a delay between each rerun.
+
+Run `rerunDelay()` without arguments to get the current value.
+
+Value is inherit from the value especified on the group by default. If the test belongs to the root, the default is `0`.
+
+Not available in hooks.
+
 ### Timeout
 
 `.timeout( number )`
@@ -179,6 +207,26 @@ Nested groups inherit the value from their parent groups.
 Define the retry delay value that tests will inherit.
 
 Run `retryDelay()` without arguments to get the current value.
+
+Nested groups inherit the value from their parent groups.
+
+### Reruns
+
+`.reruns( number )`
+
+Define the reruns value that tests will inherit.
+
+Run `reruns()` without arguments to get the current value.
+
+Nested groups inherit the value from their parent groups.
+
+### Rerun delay
+
+`.rerunDelay( number )`
+
+Define the rerun delay value that tests will inherit.
+
+Run `rerunDelay()` without arguments to get the current value.
 
 Nested groups inherit the value from their parent groups.
 

@@ -56,16 +56,21 @@ export class Runnable implements ITest {
   level: number;
   failedBecauseOfHook: ?{ level: number };
   skipReason: ?string;
-  timeStart: number;
-  timeoutId: any;
-  maxRetries: number;
-  retryDelayValue: number;
-  maxTimeout: number;
-  timeoutStack: ?string;
-  minSlow: number;
   globalsCheck: ?GlobalEnv;
   finished: boolean;
   deferred: ?IDeferred<Runnable>;
+  timeStart: number;
+  timeoutId: any;
+
+  maxTimeout: number;
+  timeoutStack: ?string;
+  minSlow: number;
+
+  maxRetries: number;
+  retryDelayValue: number;
+
+  reruns: number;
+  rerunDelayValue: number;
 
   constructor( placeholder: TestPlaceholder, context: ?Object, parent: Suite ) {
 
@@ -102,6 +107,9 @@ export class Runnable implements ITest {
 
     this.maxRetries = parentPlaceholder.maxRetries || 0;
     this.retryDelayValue = parentPlaceholder.retryDelayValue || 0;
+    this.reruns = parentPlaceholder.reruns || 0;
+    this.rerunDelayValue = parentPlaceholder.rerunDelayValue || 0;
+
     this.maxTimeout = parentPlaceholder.maxTimeout || 0;
     this.timeoutStack = parentPlaceholder.timeoutStack;
     this.minSlow = parentPlaceholder.minSlow || 0;
@@ -136,6 +144,21 @@ export class Runnable implements ITest {
       return false;
     }
     return true;
+  }
+
+  publicApi() {
+    return Object.assign( {
+      plan: this.plan.bind( this ),
+      incCount: this.incCount.bind( this ),
+      skip: this.skip.bind( this ),
+      retries: this.retries.bind( this ),
+      retryDelay: this.retryDelay.bind( this ),
+      reruns: this.defineReruns.bind( this ),
+      rerunDelay: this.rerunDelay.bind( this ),
+      timeout: this.timeout.bind( this ),
+      slow: this.defineSlow.bind( this ),
+      context: this.context
+    }, this.runner.assertions );
   }
 
   plan( n: number ) {
@@ -183,6 +206,32 @@ export class Runnable implements ITest {
       }
       assertDelay( n );
       this.retryDelayValue = n;
+    }
+  }
+
+  defineReruns( n: number ) {
+    if ( this.metadata.type !== "test" ) {
+      throw new Error( ".reruns() is not available for hooks" );
+    }
+    if ( this.assertCall( "reruns" ) ) {
+      if ( n === undefined ) {
+        return this.reruns;
+      }
+      assertNumber( n );
+      this.reruns = n;
+    }
+  }
+
+  rerunDelay( n: number ) {
+    if ( this.metadata.type !== "test" ) {
+      throw new Error( ".rerunDelay() is not available for hooks" );
+    }
+    if ( this.assertCall( "rerunDelay" ) ) {
+      if ( n === undefined ) {
+        return this.rerunDelayValue;
+      }
+      assertDelay( n );
+      this.rerunDelayValue = n;
     }
   }
 
@@ -366,19 +415,6 @@ export class Runnable implements ITest {
 
   }
 
-  publicApi() {
-    return Object.assign( {
-      plan: this.plan.bind( this ),
-      incCount: this.incCount.bind( this ),
-      skip: this.skip.bind( this ),
-      retries: this.retries.bind( this ),
-      retryDelay: this.retryDelay.bind( this ),
-      timeout: this.timeout.bind( this ),
-      slow: this.defineSlow.bind( this ),
-      context: this.context
-    }, this.runner.assertions );
-  }
-
 }
 
 export default class Test implements IRunnable {
@@ -398,9 +434,14 @@ export default class Test implements IRunnable {
   runnable: Runnable | InTestSequence;
   metadata: Metadata;
   runner: Runner;
+
   currentRetry: number;
   maxRetries: number;
   retryDelayValue: number;
+
+  currentRerun: number;
+  reruns: number;
+  rerunDelayValue: number;
 
   constructor( placeholder: TestPlaceholder, runnable: Runnable | InTestSequence, parent: Suite ) {
 
@@ -433,6 +474,10 @@ export default class Test implements IRunnable {
     this.currentRetry = 0;
     this.maxRetries = 0; // Gets defined after the first run
     this.retryDelayValue = 0; // Gets defined after the first run
+
+    this.currentRerun = 0;
+    this.reruns = 0; // Gets defined after the first run
+    this.rerunDelayValue = 0; // Gets defined after the first run
 
     const _this: any = this;
     _this.run = this.run.bind( this );
@@ -469,18 +514,34 @@ export default class Test implements IRunnable {
       }
     }
 
-    if ( this.status === "failed" && !this.failedBecauseOfHook ) {
-      if ( this.currentRetry === 0 ) { // Only set these after the first run
-        const runnable = this.runnable;
+    if ( this.currentRetry === 0 && this.currentRerun === 0 ) { // Only set these after the first run
+      const runnable = this.runnable;
 
-        if ( runnable instanceof InTestSequence ) {
-          this.maxRetries = runnable.middleRunnable.maxRetries;
-          this.retryDelayValue = runnable.middleRunnable.retryDelayValue;
-        } else {
-          this.maxRetries = runnable.maxRetries;
-          this.retryDelayValue = runnable.retryDelayValue;
-        }
+      if ( runnable instanceof InTestSequence ) {
+        this.maxRetries = runnable.middleRunnable.maxRetries;
+        this.retryDelayValue = runnable.middleRunnable.retryDelayValue;
+        this.reruns = runnable.middleRunnable.reruns;
+        this.rerunDelayValue = runnable.middleRunnable.rerunDelayValue;
+      } else {
+        this.maxRetries = runnable.maxRetries;
+        this.retryDelayValue = runnable.retryDelayValue;
+        this.reruns = runnable.reruns;
+        this.rerunDelayValue = runnable.rerunDelayValue;
       }
+    }
+
+    if ( this.status === "passed" ) {
+      if ( this.currentRerun < this.reruns ) {
+        this.currentRetry = 0;
+        this.currentRerun++;
+        this.runnable = this.runnable.clone( {} );
+        return new Promise( resolve => {
+          setTimeout( () => resolve( this.runTry() ), this.rerunDelayValue );
+        } );
+      }
+    }
+
+    if ( this.status === "failed" && !this.failedBecauseOfHook ) {
       if ( this.currentRetry < this.maxRetries ) {
         this.currentRetry++;
         this.runnable = this.runnable.clone( {} );

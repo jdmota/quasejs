@@ -15,6 +15,7 @@ import "./post-error";
 import "./serial-tests-async";
 import "./skip";
 import "./test-and-hooks";
+import "./test-reruns";
 import "./test-retries";
 import "./test-slow";
 import "./test-timeout";

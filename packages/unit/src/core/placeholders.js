@@ -28,6 +28,12 @@ class GroupApi {
   retryDelay( n ) {
     return this._current.retryDelay( n );
   }
+  reruns( n ) {
+    return this._current.defineReruns( n );
+  }
+  rerunDelay( n ) {
+    return this._current.rerunDelay( n );
+  }
   timeout( n ) {
     return this._current.timeout( n );
   }
@@ -51,11 +57,16 @@ export class GroupPlaceholder {
   level: number;
   collection: TestCollection;
   api: GroupApi;
-  maxRetries: number;
-  retryDelayValue: number;
+
   maxTimeout: number;
   timeoutStack: ?string;
   minSlow: number;
+
+  maxRetries: number;
+  retryDelayValue: number;
+
+  reruns: number;
+  rerunDelayValue: number;
 
   constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
     this.name = name;
@@ -66,11 +77,15 @@ export class GroupPlaceholder {
     this.level = parent.level + 1;
     this.collection = new TestCollection( metadata.fastBail );
     this.api = new GroupApi( this );
-    this.maxRetries = parent.maxRetries || 0;
-    this.retryDelayValue = parent.retryDelayValue || 0;
+
     this.maxTimeout = parent.maxTimeout || 0;
     this.timeoutStack = parent.timeoutStack;
     this.minSlow = parent.minSlow || 0;
+
+    this.maxRetries = parent.maxRetries || 0;
+    this.retryDelayValue = parent.retryDelayValue || 0;
+    this.reruns = parent.reruns || 0;
+    this.rerunDelayValue = parent.rerunDelayValue || 0;
 
     if ( typeof callback === "function" ) {
       const prev = this.runner._current;
@@ -97,6 +112,22 @@ export class GroupPlaceholder {
     }
     assertDelay( n );
     this.retryDelayValue = n;
+  }
+
+  defineReruns( n: NumOrVoid ) {
+    if ( n === undefined ) {
+      return this.reruns;
+    }
+    assertNumber( n );
+    this.reruns = n;
+  }
+
+  rerunDelay( n: NumOrVoid ) {
+    if ( n === undefined ) {
+      return this.rerunDelayValue;
+    }
+    assertDelay( n );
+    this.rerunDelayValue = n;
   }
 
   timeout( n: NumOrVoid ) {
