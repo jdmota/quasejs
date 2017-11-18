@@ -253,25 +253,24 @@ describe( "unit", () => {
 
   } );
 
-  it( "failing in group + todo test", () => {
+  it( "todo in group + failing test", () => {
 
-    assert.expect( 1 );
+    assert.expect( 2 );
 
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init();
     const results = runner.listen();
     const t = runner.test;
 
-    t.group.failing( () => {
+    t.group.todo( () => {
 
-      t.todo( () => {
-        /* istanbul ignore next */
+      t.failing( () => {
         assert.ok( false );
       } );
 
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "todo" );
+      assert.strictEqual( results.pop().status, "passed" );
     } );
 
   } );

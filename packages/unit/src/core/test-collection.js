@@ -38,10 +38,11 @@ export default class TestCollection {
 
   addTest( test: Placeholder, suite: GroupPlaceholder ) {
 
-    let metadata = test.metadata;
-    let type = metadata.type;
+    const metadata = test.metadata;
+    const type = metadata.type;
 
     if ( type !== "test" && type !== "group" ) {
+      // $FlowFixMe
       this.hooks[ type ].push( test );
       return;
     }
@@ -109,7 +110,7 @@ export default class TestCollection {
       return test.build( suite );
     }
 
-    if ( test.metadata.skipped || test.metadata.todo ) {
+    if ( test.metadata.status === "skipped" || test.metadata.status === "todo" ) {
       return test.build( test.buildRunnable( {}, suite ), suite );
     }
 
@@ -151,7 +152,7 @@ export default class TestCollection {
     if ( this._hasUnskippedTests == null ) {
       this._hasUnskippedTests = this.tests.serial.concat( this.tests.concurrent )
         .some( test => {
-          const skipped = test.metadata && test.metadata.skipped === true;
+          const skipped = test.metadata && test.metadata.status === "skipped";
           if ( !skipped && test instanceof GroupPlaceholder ) {
             return test.collection.hasUnskippedTests();
           }

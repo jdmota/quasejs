@@ -1,7 +1,7 @@
 /* @flow */
 
 import isPromise from "./util/is-promise";
-import type { Status, IRunnable } from "./interfaces";
+import type { Status, IRunnable, Metadata } from "./interfaces";
 import type Runner from "./runner";
 import type Test from "./test";
 import type TestCollection from "./test-collection";
@@ -28,7 +28,7 @@ export default class Suite implements IRunnable {
   skipReason: ?string;
   timeStart: number;
   finished: boolean;
-  metadata: Object;
+  metadata: Metadata;
   runner: Runner;
   placeholder: GroupPlaceholder;
   collection: TestCollection;
@@ -166,7 +166,7 @@ export default class Suite implements IRunnable {
 
     this.start();
 
-    if ( !this.metadata.skipped || !this.metadata.todo ) {
+    if ( this.metadata.status !== "skipped" && this.metadata.status !== "todo" ) {
       this.timeStart = Date.now();
     }
 

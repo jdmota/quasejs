@@ -2,7 +2,7 @@
 
 import isPromise from "./util/is-promise";
 import skipReasons from "./skip-reasons";
-import type { Status, IRunReturn, GenericRunnable, MinimalRunnable, MinimalTest, IRunnable, ITest } from "./interfaces";
+import type { Status, IRunReturn, GenericRunnable, MinimalRunnable, MinimalTest, IRunnable, ITest, Metadata } from "./interfaces";
 import type { Runnable } from "./test";
 
 class ProxyImpl<T: IRunnable, R: GenericRunnable<T>> {
@@ -177,14 +177,14 @@ export class Sequence extends SequenceImpl<IRunnable, MinimalRunnable> implement
 export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements ITest {
 
   slow: boolean;
-  metadata: Object;
+  metadata: Metadata;
   errors: Object[];
   assertions: Object[];
   runtime: number;
   middleRunnable: Runnable;
   middleRunnableProxy: ClonableProxy;
 
-  constructor( level: number, metadata: Object, middleRunnable: Runnable ) {
+  constructor( level: number, metadata: Metadata, middleRunnable: Runnable ) {
     super( false, false, level );
     this.errors = [];
     this.assertions = [];
@@ -233,7 +233,7 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
     if ( result.status === "failed" ) {
       this.failTest = true;
       this.updateFailedBecauseOfHook( result );
-    } else if ( result.status === "skipped" && !metadata.skipped && metadata.type !== "afterEach" ) {
+    } else if ( result.status === "skipped" && metadata.status !== "skipped" && metadata.type !== "afterEach" ) {
       this.skipTest = true;
       if ( !this.skipReason ) {
         this.skipReason = result.skipReason;
@@ -288,7 +288,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnable, MinimalRun
     if ( result.status === "failed" ) {
       this.failTest = true;
       this.updateFailedBecauseOfHook( result );
-    } else if ( result.status === "skipped" && !metadata.skipped && metadata.type !== "after" ) {
+    } else if ( result.status === "skipped" && metadata.status !== "skipped" && metadata.type !== "after" ) {
       this.skipTest = true;
       if ( !this.skipReason ) {
         this.skipReason = result.skipReason;

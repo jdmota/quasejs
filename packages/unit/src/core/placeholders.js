@@ -8,6 +8,7 @@ import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
+import { type Metadata } from "./interfaces";
 
 const { getStack } = require( "@quase/error" );
 
@@ -44,7 +45,7 @@ export class GroupPlaceholder {
   name: ?string;
   fullname: ( ?string )[];
   callback: Function;
-  metadata: Object & { type: "group" };
+  metadata: Metadata;
   parent: GroupPlaceholder;
   runner: Runner;
   level: number;
@@ -56,7 +57,7 @@ export class GroupPlaceholder {
   timeoutStack: ?string;
   minSlow: number;
 
-  constructor( name: ?string, callback: Function, metadata: Object, parent: GroupPlaceholder, root: ?boolean ) {
+  constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
     this.name = name;
     this.fullname = root ? [] : parent.fullname.concat( name );
     this.metadata = metadata;
@@ -130,12 +131,12 @@ export class TestPlaceholder {
   name: ?string;
   fullname: ( ?string )[];
   callback: Function;
-  metadata: Object;
+  metadata: Metadata;
   parent: GroupPlaceholder;
   level: number;
   defaultStack: string;
 
-  constructor( name: ?string, callback: Function, metadata: Object, parent: GroupPlaceholder ) {
+  constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder ) {
     this.name = name;
     this.fullname = parent.fullname.concat( name );
     this.callback = callback;

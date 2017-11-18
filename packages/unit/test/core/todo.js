@@ -82,17 +82,17 @@ describe( "unit", () => {
 
   } );
 
-  it( "todo in group + failing test", () => {
+  it( "failing in group + todo test", () => {
 
     assert.expect( 1 );
 
-    const runner = Runner.init();
+    const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
     const t = runner.test;
 
-    t.group.todo( () => {
+    t.group.failing( () => {
 
-      t.failing( () => {
+      t.todo( () => {
         /* istanbul ignore next */
         assert.ok( false );
       } );

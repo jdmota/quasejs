@@ -21,14 +21,8 @@ function createTest( name, callback, metadata, parent ) {
   validate( name, callback, metadata );
 
   if ( parentMetadata ) {
-    if ( parentMetadata.failing ) {
-      metadata.failing = true;
-    }
-    if ( parentMetadata.todo ) {
-      metadata.todo = true;
-    }
-    if ( parentMetadata.skipped ) {
-      metadata.skipped = true;
+    if ( metadata.type === "test" || metadata.type === "group" ) {
+      metadata.status = metadata.status || parentMetadata.status;
     }
     if ( parentMetadata.allowNoPlan ) {
       metadata.allowNoPlan = true;
@@ -45,10 +39,8 @@ const chain = {
     type: "test",
     serial: false,
     exclusive: false,
-    skipped: false,
     strict: false,
-    todo: false,
-    failing: false,
+    status: "",
     fastBail: false,
     allowNoPlan: false
   },
@@ -59,12 +51,12 @@ const chain = {
     beforeEach: { type: "beforeEach" },
     afterEach: { type: "afterEach" },
     group: { type: "group" },
-    skip: { skipped: true },
     strict: { strict: true },
     serial: { serial: true },
     only: { exclusive: true },
-    todo: { todo: true },
-    failing: { failing: true },
+    skip: { status: "skipped" },
+    todo: { status: "todo" },
+    failing: { status: "failing" },
     fastBail: { fastBail: true },
     allowNoPlan: { allowNoPlan: true }
   }

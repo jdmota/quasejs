@@ -3,7 +3,15 @@
 
 export type Status = ?( "passed" | "skipped" | "failed" | "todo" );
 
-export type Metadata = Object;
+export type Metadata = {
+  type: "test" | "group" | "before" | "after" | "beforeEach" | "afterEach",
+  serial: boolean,
+  exclusive: boolean,
+  strict: boolean,
+  status: "skipped" | "todo" | "failing",
+  fastBail: boolean,
+  allowNoPlan: boolean
+};
 
 export type IRunReturn<+T> = T | Promise<T>;
 

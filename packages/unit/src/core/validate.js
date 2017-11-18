@@ -13,11 +13,11 @@ function validate( name, callback, options ) {
       return "The `only` modifier cannot be used with hooks.";
     }
 
-    if ( options.failing ) {
+    if ( options.status === "failing" ) {
       return "The `failing` modifier cannot be used with hooks.";
     }
 
-    if ( options.todo ) {
+    if ( options.status === "todo" ) {
       return "The `todo` modifier is only for documentation of future tests and cannot be used with hooks.";
     }
 
@@ -26,9 +26,9 @@ function validate( name, callback, options ) {
     }
   }
 
-  if ( options.todo ) {
+  if ( options.status === "todo" ) {
 
-    if ( options.skipped || options.failing || options.exclusive ) {
+    if ( options.status === "skipped" || options.status === "failing" || options.exclusive ) {
       return "The `todo` modifier is only for documentation and cannot be used with skip, only, or failing.";
     }
 
@@ -38,18 +38,18 @@ function validate( name, callback, options ) {
 
   }
 
-  if ( options.skipped ) {
+  if ( options.status === "skipped" ) {
     if ( options.exclusive ) {
       return "`only` tests cannot be skipped.";
     }
 
-    if ( options.failing ) {
+    if ( options.status === "failing" ) {
       return "`failing` tests cannot be skipped.";
     }
   }
 
   if ( options.strict ) {
-    if ( options.exclusive || options.failing || options.todo || options.skipped ) {
+    if ( options.exclusive || options.status === "failing" || options.status === "todo" || options.status === "skipped" ) {
       return "`only`, `failing`, `todo`, `skipped` modifiers are not allowed in strict mode.";
     }
   }

@@ -8,7 +8,7 @@ import SkipError from "./util/skip-error";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
-import type { Status, IRunnable, ITest, IDeferred, IRunReturn } from "./interfaces";
+import type { Status, IRunnable, ITest, IDeferred, IRunReturn, Metadata } from "./interfaces";
 import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
@@ -16,6 +16,24 @@ import { InTestSequence } from "./sequence";
 
 const { getStack } = require( "@quase/error" );
 const concordance = require( "concordance" );
+
+function processStack( err: Error, stack: ?string ) {
+  if ( stack && err.message ) {
+    return stack.replace( /^Error\n/, `Error: ${err.message}\n` );
+  }
+  return stack || err.stack;
+}
+
+function processError( e: Object, stack: ?string, runner: Runner ) {
+  const err = e == null || typeof e !== "object" ? new AssertionError( e ) : e;
+  err.stack = processStack( err, stack );
+  if ( err.actual !== undefined || err.expected !== undefined ) {
+    const actualDescribe = concordance.describe( err.actual, runner.concordanceOptions );
+    const expectedDescribe = concordance.describe( err.expected, runner.concordanceOptions );
+    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, runner.concordanceOptions );
+  }
+  return err;
+}
 
 export class Runnable implements ITest {
 
@@ -29,7 +47,7 @@ export class Runnable implements ITest {
   slow: boolean;
   placeholder: TestPlaceholder;
   callback: Function;
-  metadata: Object;
+  metadata: Metadata;
   context: Object;
   didPlan: boolean;
   planned: number;
@@ -189,26 +207,8 @@ export class Runnable implements ITest {
     }
   }
 
-  processStack( err: Error, stack: ?string ) {
-    if ( stack && err.message ) {
-      return stack.replace( /^Error\n/, `Error: ${err.message}\n` );
-    }
-    return stack || err.stack;
-  }
-
-  processError( e: Object, stack: ?string ) {
-    const err = e == null || typeof e !== "object" ? new AssertionError( e ) : e;
-    err.stack = this.processStack( err, stack );
-    if ( err.actual !== undefined || err.expected !== undefined ) {
-      const actualDescribe = concordance.describe( err.actual, this.runner.concordanceOptions );
-      const expectedDescribe = concordance.describe( err.expected, this.runner.concordanceOptions );
-      err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, this.runner.concordanceOptions );
-    }
-    return err;
-  }
-
   addError( e: Object, stack: ?string ) {
-    const err = this.processError( e, stack );
+    const err = processError( e, stack, this.runner );
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
         this.runner.postError( err );
@@ -320,11 +320,11 @@ export class Runnable implements ITest {
     let error;
     let ret;
 
-    if ( this.metadata.skipped ) {
+    if ( this.metadata.status === "skipped" ) {
       return this.exitSkip();
     }
 
-    if ( this.metadata.todo ) {
+    if ( this.metadata.status === "todo" ) {
       return this.exitTodo();
     }
 
@@ -394,8 +394,9 @@ export default class Test implements IRunnable {
   level: number;
   failedBecauseOfHook: ?{ level: number };
   skipReason: ?string;
+  placeholder: TestPlaceholder;
   runnable: Runnable | InTestSequence;
-  metadata: Object;
+  metadata: Metadata;
   runner: Runner;
   currentRetry: number;
   maxRetries: number;
@@ -422,6 +423,8 @@ export default class Test implements IRunnable {
     this.skipReason = undefined;
 
     parent.tests.push( this );
+
+    this.placeholder = placeholder;
 
     this.runnable = runnable;
     this.metadata = placeholder.metadata;
@@ -450,14 +453,18 @@ export default class Test implements IRunnable {
     this.failedBecauseOfHook = this.runnable.failedBecauseOfHook;
     this.skipReason = this.runnable.skipReason;
 
-    if ( this.metadata.failing ) {
+    if ( this.metadata.status === "failing" ) {
       if ( this.status === "failed" ) {
         this.status = "passed";
         this.errors.length = 0;
       } else if ( this.status === "passed" ) {
         this.status = "failed";
         this.errors.push(
-          new Error( "Test was expected to fail, but succeeded, you should stop marking the test as failing." )
+          processError(
+            new AssertionError( "Test was expected to fail, but succeeded, you should stop marking the test as failing." ),
+            this.placeholder.defaultStack,
+            this.runner
+          )
         );
       }
     }
