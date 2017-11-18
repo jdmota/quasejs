@@ -1,6 +1,7 @@
 import { assertTimeout, assertNumber } from "./util/assert-args";
 import concordanceOptions from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
+import randomizer from "./random";
 import addChain from "./add-chain";
 
 const { EventEmitter } = require( "events" ); // TODO for browser
@@ -23,6 +24,8 @@ class Runner extends EventEmitter {
     if ( this.options.slow != null ) {
       assertNumber( this.options.slow );
     }
+
+    this.randomizer = randomizer( this.options.seed );
 
     this.onlyCount = 0;
     this.promises = [];

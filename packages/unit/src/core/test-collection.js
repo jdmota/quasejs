@@ -188,7 +188,11 @@ export default class TestCollection {
     }
 
     if ( concurrent.length ) {
-      seq.add( this.buildTestSeq( concurrent, true, suite ), true );
+      if ( suite.runner.randomizer ) {
+        seq.add( this.buildTestSeq( suite.runner.randomizer.shuffle( concurrent ), false, suite ), true );
+      } else {
+        seq.add( this.buildTestSeq( concurrent, true, suite ), true );
+      }
     }
 
     if ( runBeforeAfter ) {

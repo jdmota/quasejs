@@ -26,6 +26,7 @@
     "import-fresh": "^2.0.0",
     "is-ci": "^1.0.10",
     "ora": "^1.2.0",
+    "random-js": "^1.0.8",
     "require-uncached": "^1.0.3",
     "source-map": "^0.5.7",
     "write-file-atomic": "^2.3.0"
