@@ -50,7 +50,7 @@ See https://github.com/yeoman/update-notifier for details.
 #!/usr/bin/env node
 /* eslint-disable no-shebang */
 
-require( "@quase/cli" ).default( function( { flags, pkg, config } ) {
+require( "@quase/cli" ).default( ( { flags, pkg, config } ) => {
   require( "../dist" ).default( Object.assign( {}, config || pkg[ "my-name" ], flags ) );
 }, {
   defaultConfigFile: "my-name-config.js"
