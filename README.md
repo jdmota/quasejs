@@ -6,6 +6,8 @@ The purpose of QuaseJS is to include various packages, smaller ones or bigger on
 
 ## :construction: This is a work in progress :construction:
 
+*Some modules are intended to work on the browser too, but browser support is not ready.*
+
 ## Features and available modules
 
 **[builder](packages/builder)** - *WIP*
@@ -42,7 +44,7 @@ Check if path is a file.
 
 **[fs/memory-fs](packages/fs/memory-fs)** - **0.2.1**
 
-Very simple in memory file system that also works on the browser.
+Very simple in memory file system.
 
 **[package-manager](packages/package-manager)** - *WIP*
 
