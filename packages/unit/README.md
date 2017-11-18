@@ -288,6 +288,7 @@ test( t => {
 - Failed `beforeEach` hook skips remaining tests in a suite and subsuites, but runs `afterEach` hooks.
 - Failed `after` does nothing. Other `after` hooks run as well.
 - Failed `afterEach` hook skips remaining tests in a suite and subsuites, but executes other `afterEach` hooks for that test.
+- `after` and `afterEach` always run, even on fast bail mode.
 
 ```js
 // They share the same context object.
