@@ -1,5 +1,6 @@
 const childProcess = require( "child_process" );
 const path = require( "path" );
+const fs = require( "fs-extra" );
 
 /* eslint-disable no-console, no-process-exit */
 
@@ -44,4 +45,4 @@ const command = publish ?
 
 console.log( `Running '${command}' ...` );
 
-run( command );
+fs.emptyDir( dist ).then( () => run( command ) );
