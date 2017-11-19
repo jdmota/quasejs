@@ -10,15 +10,19 @@ type Checker = Builder => Promise<void>;
 
 type ToWrite = { dest: string, code: Buffer | string, map: ?Object };
 
+type FinalModule = {
+  id: ID,
+  normalized: string,
+  srcs: ID[],
+  entrypoint: boolean,
+  dest: string,
+  built: boolean,
+  fileMap: { [name: string]: string[] }
+};
+
 type FinalModules = {
-  modules: ( {
-    id: ID,
-    srcs: ID[],
-    entrypoint: boolean,
-    dest: string,
-    built: boolean,
-  } )[],
-  moduleToFiles: { [name: ID]: ID[] }
+  modules: FinalModule[],
+  moduleToFiles: { [name: string]: FinalModule[] }
 };
 
 type Renderer = ( Builder, FinalModules ) => Promise<ToWrite[]>;

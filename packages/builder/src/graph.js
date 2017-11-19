@@ -40,11 +40,11 @@ class BiMap {
     this.incs.forEach( value => value.sort() );
   }
 
-  directDeps( id: ID, set: Set<ID> = new Set() ) {
-    for ( const { resolved, splitPoint } of this.requires( id ) ) {
-      if ( !splitPoint && !set.has( resolved ) ) {
+  syncDeps( id: ID, set: Set<ID> = new Set() ) {
+    for ( const { resolved, async } of this.requires( id ) ) {
+      if ( !async && !set.has( resolved ) ) {
         set.add( resolved );
-        this.directDeps( resolved, set );
+        this.syncDeps( resolved, set );
       }
     }
     return set;
@@ -115,36 +115,48 @@ export default function processGraph( builder: Builder ) {
 
   const modules = [];
   const moduleToFile = {};
-  const directFileDeps = {};
 
   hashes.forEach( ( hash, id ) => {
     const srcs = grow( id );
     if ( srcs ) {
       const entrypoint = entrypoints.includes( id );
-      modules.push( {
+      const normalized = idToString( id, builder.context );
+      const m = {
         id,
+        normalized,
         srcs,
         entrypoint,
-        dest: resolvePath( idToString( id, builder.context ), builder.dest ),
-        built: false
-      } );
+        dest: resolvePath( normalized, builder.dest ),
+        built: false,
+        fileMap: {}
+      };
+      modules.push( m );
       for ( const src of srcs ) {
-        moduleToFile[ idToPath( src ) ] = id;
+        moduleToFile[ idToPath( src ) ] = m;
       }
     }
   } );
 
+  const moduleToFiles = {};
   for ( const id in moduleToFile ) {
-    const set = directFileDeps[ id ] = new Set( [ moduleToFile[ id ] ] );
 
-    for ( const dep of map.directDeps( pathToId( id ) ) ) {
+    const set = new Set( [ moduleToFile[ id ] ] );
+
+    for ( const dep of map.syncDeps( pathToId( id ) ) ) {
       set.add( moduleToFile[ idToPath( dep ) ] );
     }
+
+    moduleToFiles[ id ] = Array.from( set ).sort();
   }
 
-  const moduleToFiles = {};
-  for ( const id in directFileDeps ) {
-    moduleToFiles[ id ] = Array.from( directFileDeps[ id ] ).sort();
+  for ( const { srcs, fileMap } of modules ) {
+    for ( const src of srcs ) {
+      for ( const { resolved } of map.requires( src ) ) {
+        if ( srcs.indexOf( resolved ) === -1 ) {
+          fileMap[ idToString( resolved, builder.context ) ] = moduleToFiles[ idToPath( resolved ) ].map( m => m.normalized );
+        }
+      }
+    }
   }
 
   return { modules, moduleToFiles };

@@ -112,9 +112,18 @@ describe( "graph", () => {
     const modules = new Map();
 
     const builder = {
-      idEntries: [ "context/entry.js" ],
+      idEntries: [ "context/entry.html" ],
       modules
     };
+
+    modules.set( "context/entry.html", {
+      deps: [
+        {
+          resolved: "context/entry.js",
+          splitPoint: true
+        }
+      ]
+    } );
 
     modules.set( "context/entry.js", {
       deps: [
@@ -139,6 +148,50 @@ describe( "graph", () => {
           resolved: "context/A.js",
         }
       ]
+    } );
+
+    expect( processGraph( builder ) ).toMatchSnapshot();
+
+  } );
+
+  it( "bundle", () => {
+
+    const modules = new Map();
+
+    const builder = {
+      idEntries: [ "context/entry.js" ],
+      modules
+    };
+
+    modules.set( "context/entry.js", {
+      deps: [
+        {
+          resolved: "context/A.js"
+        }
+      ]
+    } );
+
+    modules.set( "context/A.js", {
+      deps: [
+        {
+          resolved: "context/B.js"
+        },
+        {
+          resolved: "context/C.js"
+        }
+      ]
+    } );
+
+    modules.set( "context/B.js", {
+      deps: [
+        {
+          resolved: "context/A.js"
+        }
+      ]
+    } );
+
+    modules.set( "context/C.js", {
+      deps: []
     } );
 
     expect( processGraph( builder ) ).toMatchSnapshot();

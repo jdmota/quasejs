@@ -20,20 +20,14 @@
   const fileImports = blank(); // Files that were imported already
   const fetches = blank(); // Fetches
 
-  const idToFile = {};
-
-  let count = 0;
+  const moduleToFiles = {};
 
   function require( id ) {
     if ( id ) {
       if ( isWorker ) {
         importScripts( id );
       } else if ( isNode ) {
-        const c = count;
-        const e = nodeRequire( id );
-        if ( e && c === count ) {
-          return e;
-        }
+        nodeRequire( id );
       }
     }
     return NULL;
@@ -46,13 +40,12 @@
         for ( const name in module ) {
           helpers[ name ] = module[ name ];
         }
-      } else if ( id === "__i__" ) {
+      } else if ( id === "__f__" ) {
         for ( const name in module ) {
-          idToFile[ name ] = module[ name ];
+          moduleToFiles[ name ] = module[ name ];
         }
       } else if ( fnModules[ id ] === UNDEFINED ) {
         fnModules[ id ] = module;
-        count++;
       }
     }
   }
@@ -72,7 +65,11 @@
     } );
   }
 
-  function load( id, fallback ) {
+  function exists( id ) {
+    return modules[ id ] || fnModules[ id ];
+  }
+
+  function load( id ) {
 
     if ( modules[ id ] ) {
       return modules[ id ];
@@ -96,20 +93,22 @@
       return moduleExports;
     }
 
-    if ( fallback ) { // In case we imported an external module
-      modules[ id ] = fallback;
-      return fallback;
-    }
+    // TODO deal with externals
 
     throw new Error( `Module ${id} not found` );
   }
 
   function requireSync( id ) {
-    return load( id, importFileSync( idToFile[ id ] ) );
+    if ( !exists( id ) ) {
+      moduleToFiles[ id ].forEach( importFileSync );
+    }
+    return load( id );
   }
 
   function requireAsync( id ) {
-    return importFileAsync( idToFile[ id ] ).then( fallback => load( id, fallback ) );
+    return Promise.all(
+      exists( id ) ? [] : moduleToFiles[ id ].map( importFileAsync )
+    ).then( () => load( id ) );
   }
 
   function importFileSync( id ) {

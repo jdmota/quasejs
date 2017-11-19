@@ -138,9 +138,9 @@ class HtmlModule extends LanguageModule {
 
       const moreScripts = new Set();
 
-      for ( const file of moduleToFiles[ this.id ] ) {
-        if ( file !== this.id && !deps.has( file ) ) {
-          moreScripts.add( relativeURL( file, this.id ) );
+      for ( const { id } of moduleToFiles[ this.id ] ) {
+        if ( id !== this.id && !deps.has( id ) ) {
+          moreScripts.add( relativeURL( id, this.id ) );
         }
       }
 
