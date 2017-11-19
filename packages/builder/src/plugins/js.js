@@ -135,7 +135,12 @@ class JsModule extends LanguageModule {
 
     const program = this.ast.program;
 
-    const addDep = ( source, splitPoint ) => this.addDep( { src: source.value, loc: source.loc.start, splitPoint } );
+    const addDep = ( source, async ) => this.addDep( {
+      src: source.value,
+      loc: source.loc.start,
+      splitPoint: async,
+      async
+    } );
 
     const mapper1 = s => {
       const loc = s.loc.start;
@@ -552,7 +557,7 @@ export function renderer( babelOpts ) {
         build.append( `,\n__b__:${babelHelpersBuilt}` );
       }
 
-      // build.append( ",\n__i__:{}" );
+      // build.append( ",\n__f__:{}" );
 
       build.append( "});" );
 

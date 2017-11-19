@@ -53,7 +53,7 @@ export default class Module {
   loadingDeps: ?Promise<Deps>;
   deps: ?Deps;
   uuid: number;
-  sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean }>;
+  sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean }>;
 
   constructor( id: ID, builder: Builder ) {
     this.id = id;
@@ -137,7 +137,7 @@ export default class Module {
     return key ? out[ key ] : out;
   }
 
-  async runResolvers( obj: { type: string, src: string, loc: ?Object, splitPoint: ?boolean } ): Promise<string | ?false> {
+  async runResolvers( obj: { type: string, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean } ): Promise<string | ?false> {
     for ( const fn of this.builder.resolvers ) {
       const r = await fn( obj, this.id, this.builder );
       if ( r != null ) {
@@ -152,12 +152,12 @@ export default class Module {
       throw this.moduleError( "No output with extracted dependencies found" );
     }
 
-    const deps = Promise.all( output.deps.map( async( { src, loc, splitPoint } ) => {
+    const deps = Promise.all( output.deps.map( async( { src, loc, splitPoint, async } ) => {
       if ( !src ) {
         throw this.error( "Empty import", loc );
       }
 
-      const r = await this.runResolvers( { type: output.type, src, loc, splitPoint } );
+      const r = await this.runResolvers( { type: output.type, src, loc, splitPoint, async } );
       if ( !r ) {
         throw this.error( `Could not resolve ${src}`, loc );
       }
@@ -172,7 +172,7 @@ export default class Module {
         throw this.error( "Don't import the destination file", loc );
       }
 
-      const obj = { resolved, src, loc, splitPoint };
+      const obj = { resolved, src, loc, splitPoint, async };
       this.sourceToResolved.set( src, obj );
       return obj;
     } ) );

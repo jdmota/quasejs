@@ -77,7 +77,8 @@ class HtmlModule extends LanguageModule {
           line: s.node.__location.line,
           column: s.node.__location.col - 1
         },
-        splitPoint: s.splitPoint
+        splitPoint: s.splitPoint,
+        async: s.async
       } );
     } );
   }

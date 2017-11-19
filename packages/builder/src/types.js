@@ -4,14 +4,20 @@ import type FileSystem from "../../fs/memory-fs/src";
 import type { ID } from "./id";
 import type Builder from "./builder";
 
-type Resolver = ( { src: string, loc: ?Object, splitPoint: ?boolean }, ID, Builder ) => Promise<string | ?false>;
+type Resolver = ( { src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean }, ID, Builder ) => Promise<string | ?false>;
 
 type Checker = Builder => Promise<void>;
 
 type ToWrite = { dest: string, code: Buffer | string, map: ?Object };
 
 type FinalModules = {
-  modules: ( { id: ID, srcs: ID[], entrypoint: boolean, dest: string, built: boolean } )[],
+  modules: ( {
+    id: ID,
+    srcs: ID[],
+    entrypoint: boolean,
+    dest: string,
+    built: boolean,
+  } )[],
   moduleToFiles: { [name: ID]: ID[] }
 };
 
@@ -21,7 +27,8 @@ type Deps = {
   resolved: ID,
   src: string,
   loc?: ?{ line: number, column?: ?number },
-  splitPoint?: ?boolean
+  splitPoint?: ?boolean,
+  async?: ?boolean
 }[];
 
 type Result = {

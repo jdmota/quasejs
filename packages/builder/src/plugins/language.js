@@ -11,7 +11,15 @@ export default class LanguageModule {
   }
 
   addDep( dep ) {
-    if ( !this.deps.find( ( { src } ) => src === dep.src ) ) {
+    const existing = this.deps.find( ( { src } ) => src === dep.src );
+    if ( existing ) {
+      if ( dep.splitPoint ) {
+        existing.splitPoint = true;
+      }
+      if ( !dep.async ) {
+        existing.async = false;
+      }
+    } else {
       this.deps.push( dep );
     }
     return dep.src;
