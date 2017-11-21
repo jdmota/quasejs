@@ -2,73 +2,7 @@
 
 exports[`graph bundle 1`] = `
 Object {
-  "moduleToFiles": Object {
-    "context/A.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-          "context/C.js",
-        ],
-      },
-    ],
-    "context/B.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-          "context/C.js",
-        ],
-      },
-    ],
-    "context/C.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-          "context/C.js",
-        ],
-      },
-    ],
-    "context/entry.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-          "context/C.js",
-        ],
-      },
-    ],
-  },
-  "modules": Array [
+  "files": Array [
     Object {
       "built": false,
       "dest": "dest/entry.js",
@@ -84,59 +18,78 @@ Object {
       ],
     },
   ],
+  "moduleToFileDeps": Map {
+    "context/entry.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
+          "context/B.js",
+          "context/C.js",
+        ],
+      },
+    ],
+    "context/A.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
+          "context/B.js",
+          "context/C.js",
+        ],
+      },
+    ],
+    "context/B.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
+          "context/B.js",
+          "context/C.js",
+        ],
+      },
+    ],
+    "context/C.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
+          "context/B.js",
+          "context/C.js",
+        ],
+      },
+    ],
+  },
 }
 `;
 
 exports[`graph cycle 1`] = `
 Object {
-  "moduleToFiles": Object {
-    "context/A.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-        ],
-      },
-    ],
-    "context/B.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-        ],
-      },
-    ],
-    "context/entry.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {},
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-          "context/A.js",
-          "context/B.js",
-        ],
-      },
-    ],
-  },
-  "modules": Array [
+  "files": Array [
     Object {
       "built": false,
       "dest": "dest/entry.js",
@@ -151,136 +104,59 @@ Object {
       ],
     },
   ],
-}
-`;
-
-exports[`graph cycle split 1`] = `
-Object {
-  "moduleToFiles": Object {
-    "context/A.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-    ],
-    "context/B.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-    ],
-    "context/entry.js": Array [
+  "moduleToFileDeps": Map {
+    "context/entry.js" => Array [
       Object {
         "built": false,
         "dest": "dest/entry.js",
         "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
+        "fileMap": Object {},
         "id": "context/entry.js",
         "normalized": "entry.js",
         "srcs": Array [
           "context/entry.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
           "context/A.js",
+          "context/B.js",
         ],
       },
+    ],
+    "context/A.js" => Array [
       Object {
         "built": false,
-        "dest": "dest/B.js",
+        "dest": "dest/entry.js",
         "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
         "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/B.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {},
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+          "context/A.js",
           "context/B.js",
         ],
       },
     ],
   },
-  "modules": Array [
+}
+`;
+
+exports[`graph cycle split 1`] = `
+Object {
+  "files": Array [
     Object {
       "built": false,
       "dest": "dest/entry.js",
@@ -308,7 +184,6 @@ Object {
       "fileMap": Object {
         "B.js": Array [
           "B.js",
-          "A.js",
         ],
       },
       "id": "context/A.js",
@@ -324,7 +199,6 @@ Object {
       "fileMap": Object {
         "A.js": Array [
           "A.js",
-          "B.js",
         ],
       },
       "id": "context/B.js",
@@ -334,206 +208,137 @@ Object {
       ],
     },
   ],
+  "moduleToFileDeps": Map {
+    "context/entry.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+            "B.js",
+          ],
+          "B.js": Array [
+            "B.js",
+            "A.js",
+          ],
+        },
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/A.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/B.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+    ],
+  },
 }
 `;
 
 exports[`graph empty 1`] = `
 Object {
-  "moduleToFiles": Object {},
-  "modules": Array [],
+  "files": Array [],
+  "moduleToFileDeps": Map {},
 }
 `;
 
 exports[`graph split points 1`] = `
 Object {
-  "moduleToFiles": Object {
-    "context/A.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": false,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-    ],
-    "context/B.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": false,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-    ],
-    "context/entry.html": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.html",
-        "entrypoint": true,
-        "fileMap": Object {
-          "entry.js": Array [
-            "entry.js",
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/entry.html",
-        "normalized": "entry.html",
-        "srcs": Array [
-          "context/entry.html",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": false,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-    ],
-    "context/entry.js": Array [
-      Object {
-        "built": false,
-        "dest": "dest/entry.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/entry.js",
-        "normalized": "entry.js",
-        "srcs": Array [
-          "context/entry.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/A.js",
-        "entrypoint": false,
-        "fileMap": Object {
-          "B.js": Array [
-            "B.js",
-            "A.js",
-          ],
-        },
-        "id": "context/A.js",
-        "normalized": "A.js",
-        "srcs": Array [
-          "context/A.js",
-        ],
-      },
-      Object {
-        "built": false,
-        "dest": "dest/B.js",
-        "entrypoint": true,
-        "fileMap": Object {
-          "A.js": Array [
-            "A.js",
-            "B.js",
-          ],
-        },
-        "id": "context/B.js",
-        "normalized": "B.js",
-        "srcs": Array [
-          "context/B.js",
-        ],
-      },
-    ],
-  },
-  "modules": Array [
+  "files": Array [
     Object {
       "built": false,
       "dest": "dest/entry.html",
@@ -574,7 +379,6 @@ Object {
       "fileMap": Object {
         "B.js": Array [
           "B.js",
-          "A.js",
         ],
       },
       "id": "context/A.js",
@@ -590,7 +394,6 @@ Object {
       "fileMap": Object {
         "A.js": Array [
           "A.js",
-          "B.js",
         ],
       },
       "id": "context/B.js",
@@ -600,5 +403,184 @@ Object {
       ],
     },
   ],
+  "moduleToFileDeps": Map {
+    "context/entry.html" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.html",
+        "entrypoint": true,
+        "fileMap": Object {
+          "entry.js": Array [
+            "entry.js",
+            "A.js",
+            "B.js",
+          ],
+        },
+        "id": "context/entry.html",
+        "normalized": "entry.html",
+        "srcs": Array [
+          "context/entry.html",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+            "B.js",
+          ],
+        },
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": false,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/entry.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/entry.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+            "B.js",
+          ],
+        },
+        "id": "context/entry.js",
+        "normalized": "entry.js",
+        "srcs": Array [
+          "context/entry.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": false,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/A.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": false,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+    ],
+    "context/B.js" => Array [
+      Object {
+        "built": false,
+        "dest": "dest/B.js",
+        "entrypoint": true,
+        "fileMap": Object {
+          "A.js": Array [
+            "A.js",
+          ],
+        },
+        "id": "context/B.js",
+        "normalized": "B.js",
+        "srcs": Array [
+          "context/B.js",
+        ],
+      },
+      Object {
+        "built": false,
+        "dest": "dest/A.js",
+        "entrypoint": false,
+        "fileMap": Object {
+          "B.js": Array [
+            "B.js",
+          ],
+        },
+        "id": "context/A.js",
+        "normalized": "A.js",
+        "srcs": Array [
+          "context/A.js",
+        ],
+      },
+    ],
+  },
 }
 `;

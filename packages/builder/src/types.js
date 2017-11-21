@@ -21,8 +21,8 @@ type FinalModule = {
 };
 
 type FinalModules = {
-  modules: FinalModule[],
-  moduleToFiles: { [name: string]: FinalModule[] }
+  files: FinalModule[],
+  moduleToFileDeps: Map<ID, FinalModule[]>
 };
 
 type Renderer = ( Builder, FinalModules ) => Promise<ToWrite[]>;
@@ -79,4 +79,4 @@ type Options = {
   _hideDates?: ?boolean
 };
 
-export type { Result, Deps, Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options };
+export type { Result, Deps, Plugin, Resolver, Checker, Renderer, FinalModule, FinalModules, ToWrite, PerformanceOpts, Options };

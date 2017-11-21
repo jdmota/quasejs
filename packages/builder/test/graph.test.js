@@ -6,7 +6,7 @@ function processGraph( builder ) {
   builder.dest = path.resolve( "dest" );
   builder.context = path.resolve( "context" );
   const obj = _processGraph( builder );
-  for ( const m of obj.modules ) {
+  for ( const m of obj.files ) {
     m.dest = path.relative( process.cwd(), m.dest ).replace( /\\+/g, "/" );
   }
   return obj;

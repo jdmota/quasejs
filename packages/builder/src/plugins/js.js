@@ -483,23 +483,23 @@ const chunkInit = babel.transform(
 ).code.replace( /;$/, "" );
 
 export function renderer( babelOpts ) {
-  return async( builder, finalModules ) => {
+  return async( builder, finalFiles ) => {
 
     const out = [];
 
-    for ( const finalModule of finalModules.modules ) {
-      if ( finalModule.built ) {
+    for ( const finalFile of finalFiles.files ) {
+      if ( finalFile.built ) {
         continue;
       }
 
-      const { id, srcs, dest } = finalModule;
+      const { id, srcs, dest } = finalFile;
       const jsEntryModule = builder.getModule( id ).getLastOutput( INTERNAL );
 
       if ( !jsEntryModule ) {
         continue;
       }
 
-      finalModule.built = true;
+      finalFile.built = true;
 
       const jsModules = [];
       const usedHelpers = {};

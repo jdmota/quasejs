@@ -97,7 +97,7 @@ class HtmlModule extends LanguageModule {
     this.treeAdapter.insertBefore( ref.parentNode, node, ref );
   }
 
-  async render( builder, { moduleToFiles } ) {
+  async render( builder, { moduleToFileDeps } ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
@@ -138,7 +138,7 @@ class HtmlModule extends LanguageModule {
 
       const moreScripts = new Set();
 
-      for ( const { id } of moduleToFiles[ this.id ] ) {
+      for ( const { id } of moduleToFileDeps.get( this.id ) ) {
         if ( id !== this.id && !deps.has( id ) ) {
           moreScripts.add( relativeURL( id, this.id ) );
         }
@@ -185,15 +185,15 @@ export function resolver() {
 }
 
 export function renderer() {
-  return async( builder, finalModules ) => {
+  return async( builder, finalFiles ) => {
     const out = [];
 
-    for ( const finalModule of finalModules.modules ) {
-      if ( finalModule.built ) {
+    for ( const finalFile of finalFiles.files ) {
+      if ( finalFile.built ) {
         continue;
       }
 
-      const { id, dest } = finalModule;
+      const { id, dest } = finalFile;
       const htmlModule = builder.getModule( id ).getLastOutput( INTERNAL );
 
       if ( !htmlModule ) {
@@ -201,11 +201,11 @@ export function renderer() {
       }
       htmlModule.builder = builder;
 
-      finalModule.built = true;
+      finalFile.built = true;
 
       out.push( {
         dest,
-        code: await htmlModule.render( builder, finalModules )
+        code: await htmlModule.render( builder, finalFiles )
       } );
     }
 

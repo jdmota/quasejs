@@ -1,8 +1,8 @@
 // @flow
 
-import { type ID, idToPath, pathToId, idToString, resolvePath } from "./id";
+import { type ID, idToString, resolvePath } from "./id";
 import type Builder from "./builder";
-import { type Deps } from "./types";
+import type { Deps, FinalModule } from "./types";
 
 // Adapted from https://github.com/samthor/srcgraph
 
@@ -113,8 +113,8 @@ export default function processGraph( builder: Builder ) {
     return include;
   };
 
-  const modules = [];
-  const moduleToFile = {};
+  const files = [];
+  const moduleToFile: Map<ID, FinalModule> = new Map();
 
   hashes.forEach( ( hash, id ) => {
     const srcs = grow( id );
@@ -130,34 +130,40 @@ export default function processGraph( builder: Builder ) {
         built: false,
         fileMap: {}
       };
-      modules.push( m );
+      files.push( m );
       for ( const src of srcs ) {
-        moduleToFile[ idToPath( src ) ] = m;
+        moduleToFile.set( src, m );
       }
     }
   } );
 
-  const moduleToFiles = {};
-  for ( const id in moduleToFile ) {
+  const moduleToFileDeps: Map<ID, FinalModule[]> = new Map();
+  for ( const [ id, file ] of moduleToFile ) {
 
-    const set = new Set( [ moduleToFile[ id ] ] );
+    const set: Set<FinalModule> = new Set( [ file ] );
 
-    for ( const dep of map.syncDeps( pathToId( id ) ) ) {
-      set.add( moduleToFile[ idToPath( dep ) ] );
+    for ( const dep of map.syncDeps( id ) ) {
+      set.add( get( moduleToFile, dep ) );
     }
 
-    moduleToFiles[ id ] = Array.from( set ).sort();
+    moduleToFileDeps.set( id, Array.from( set ).sort() );
   }
 
-  for ( const { srcs, fileMap } of modules ) {
-    for ( const src of srcs ) {
-      for ( const { resolved } of map.requires( src ) ) {
-        if ( srcs.indexOf( resolved ) === -1 ) {
-          fileMap[ idToString( resolved, builder.context ) ] = moduleToFiles[ idToPath( resolved ) ].map( m => m.normalized );
-        }
+  for ( const [ id ] of builder.modules ) {
+    for ( const { resolved } of map.requires( id ) ) {
+      const file = get( moduleToFile, id );
+      const arr = get( moduleToFileDeps, resolved ).filter( m => m.id !== file.id ).map( m => m.normalized );
+
+      if ( arr.length ) {
+        file.fileMap[ idToString( resolved, builder.context ) ] = arr;
       }
     }
   }
 
-  return { modules, moduleToFiles };
+  return { files, moduleToFileDeps };
+}
+
+function get<K, V>( map: Map<K, V>, key: K ): V {
+  // $FlowFixMe
+  return map.get( key );
 }
