@@ -11,7 +11,8 @@
     [ "transform-class-properties", { "loose": true } ]
   ],
   "ignore": [
-    "**/*.min.js"
+    "**/*.min.js",
+    "**/node_modules/**"
   ],
   "presets": [
     [ "env", {
