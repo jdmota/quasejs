@@ -29,7 +29,8 @@
       "<rootDir>/packages/events/test/",
       "<rootDir>/packages/package-manager/test/",
       "<rootDir>/packages/pathname/test/",
-      "<rootDir>/packages/unit/test/"
+      "<rootDir>/packages/unit/test/",
+      "<rootDir>/packages/view/test/"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/packages/package-manager/test/test-folders"

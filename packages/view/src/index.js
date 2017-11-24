@@ -1,3 +1,3 @@
-import compiler from "./compiler";
+import compile from "./compiler";
 
-export { compiler };
+export { compile };

@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`compile and runtime test 0 1`] = `
+"
+render = function render() {
+  return new QuaseView.TemplateResult(new QuaseView.Template([[\\"prop\\", 0, \\"someProp\\", [\\"\\", \\"\\"]], [\\"prop\\", 0, \\"a-nother\\", [\\"\\", \\"\\"]], [\\"prop\\", 0, \\"multiParts\\", [\\"\\", \\" \\", \\"\\"]], [\\"prop\\", 0, \\"\\\\uD83D\\\\uDC4D\\", [\\"\\", \\"\\"]], [\\"prop\\", 0, \\"(a)\\", [\\"\\", \\"\\"]], [\\"prop\\", 0, \\"[a]\\", [\\"\\", \\"\\"]], [\\"attr\\", 0, \\"a\\", [\\"\\", \\"\\"]], [\\"node\\", 2], [\\"prop\\", 3, \\"aThing\\", [\\"\\", \\"\\"]], [\\"node\\", 4]], \\"\\\\n    <div>\\\\n      <p><!--{{}}--></p>\\\\n      <div><!--{{}}--></div>\\\\n    </div>\\"), [
+
+  1,
+  2,
+  3, 4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10, [1, new QuaseView.TemplateResult(new QuaseView.Template([[\\"node\\", 1]], \\"<span><!--{{}}--></span>\\"), [2]), 3]]);
+
+};"
+`;
+
+exports[`compile and runtime test 0 2`] = `
+"
+    <div a=\\"8\\">
+      <p>9</p>
+      <div>1<span>2</span>3<!----></div>
+    </div>"
+`;
