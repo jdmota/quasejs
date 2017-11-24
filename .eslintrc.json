@@ -1,3 +1,8 @@
 {
-  "extends": "@quase/eslint-config-quase"
+  "extends": "@quase/eslint-config-quase",
+  "rules": {
+    "no-use-before-define": [ "error", { "functions": false, "classes": false } ],
+    "quotes": [ "error", "double", { "avoidEscape": true, "allowTemplateLiterals": true } ],
+    "no-loop-func": "off"
+  }
 }
