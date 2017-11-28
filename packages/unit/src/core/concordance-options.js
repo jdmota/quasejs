@@ -91,7 +91,7 @@ function createTheme( chalk, ansi ) {
   };
 }
 
-export default {
+export const color = {
   maxDepth: 3,
   theme: createTheme( withColor, ansiStyles )
 };

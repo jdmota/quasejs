@@ -22,6 +22,21 @@ export default class NodeReporter {
         this.otherErrors.push( err );
       }
     } );
+    runner.on( "exit", () => {
+      this.logOtherErrors();
+    } );
+  }
+
+  async logOtherErrors() {
+    const otherErrors = this.otherErrors;
+    this.otherErrors = [];
+
+    if ( otherErrors.length > 0 ) {
+      this.afterRun();
+      for ( let i = 0; i < otherErrors.length; i++ ) {
+        await logError( otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
+      }
+    }
   }
 
   afterRun() {
@@ -76,13 +91,7 @@ export default class NodeReporter {
 
       process.stdout.write( lines.join( "" ) );
 
-      if ( this.otherErrors.length > 0 ) {
-        this.afterRun();
-        for ( let i = 0; i < this.otherErrors.length; i++ ) {
-          await logError( this.otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
-        }
-        this.otherErrors = null; // Prevent memory leaks
-      }
+      await this.logOtherErrors();
 
     } );
   }

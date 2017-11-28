@@ -31,6 +31,10 @@ function processError( e: Object, stack: ?string, runner: Runner ) {
     const actualDescribe = concordance.describe( err.actual, runner.concordanceOptions );
     const expectedDescribe = concordance.describe( err.expected, runner.concordanceOptions );
     err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, runner.concordanceOptions );
+  } else if ( err.actualDescribe !== undefined && err.expectedDescribe !== undefined ) {
+    const actualDescribe = err.actualDescribe;
+    const expectedDescribe = err.expectedDescribe;
+    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, runner.concordanceOptions );
   }
   return err;
 }
@@ -114,7 +118,7 @@ export class Runnable implements ITest {
     this.timeoutStack = parentPlaceholder.timeoutStack;
     this.minSlow = parentPlaceholder.minSlow || 0;
 
-    this.globalsCheck = this.runner.options.noglobals ? new GlobalEnv() : null;
+    this.globalsCheck = this.runner.noglobals ? new GlobalEnv() : null;
 
     this.finished = false;
 

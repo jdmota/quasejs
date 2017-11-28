@@ -1,4 +1,5 @@
 import colors from "./colors";
+import { log as printLog, logEol, indentString } from "./log";
 
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
@@ -32,11 +33,6 @@ async function enhanceError( original ) {
   return err;
 }
 
-function indentString( str, indent ) {
-  indent = indent || 2;
-  return str.replace( /^(?!\s*$)/mg, typeof indent === "number" ? " ".repeat( indent ) : indent );
-}
-
 const legend = colors.removed ? `${colors.removed( "- Expected" )} ${colors.added( "+ Actual" )}` : "";
 
 function showSource( source ) {
@@ -50,8 +46,15 @@ function showSource( source ) {
   return colors.errorStack( prettify( file ) ) + "\n\n" + codeFrameColumns( code, { start: { line } } ) + "\n\n";
 }
 
-function logSkipReason( text ) {
-  process.stdout.write( indentString( `\nSkip reason: ${text}\n\n`, 4 ) );
+export async function logDefault( defaultStack ) {
+  const { source } = await beautifyStack( defaultStack, extractor );
+  let log = "\n";
+
+  if ( source ) {
+    log += showSource( source );
+  }
+
+  printLog( log, 4 );
 }
 
 export async function logError( e ) {
@@ -75,11 +78,10 @@ export async function logError( e ) {
     log += colors.errorStack( error.stack ) + "\n\n";
   }
 
-  process.stdout.write( indentString( log, 4 ) );
-
+  printLog( log, 4 );
 }
 
-export async function testEnd( { fullname, status, skipReason, errors, runtime, slow } ) {
+export async function testEnd( { fullname, status, skipReason, errors, runtime, slow, defaultStack } ) {
 
   if ( status === "passed" && !slow ) {
     return;
@@ -87,18 +89,19 @@ export async function testEnd( { fullname, status, skipReason, errors, runtime, 
 
   const statusText = status === "failed" ? colors.error( status ) : status === "passed" ? colors.pass( status ) : colors.skip( status );
 
-  process.stdout.write(
-    indentString( `\n${colors.title( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? colors.slow( "Slow!" ) : ""}\n` )
-  );
+  printLog( `\n${colors.title( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? colors.slow( "Slow!" ) : ""}\n` );
 
   if ( skipReason ) {
-    logSkipReason( skipReason );
+    printLog( `\nSkip reason: ${skipReason}`, 4 );
   }
 
-  for ( let i = 0; i < errors.length; i++ ) {
-    await logError( errors[ i ] ); // eslint-disable-line no-await-in-loop
+  if ( errors.length ) {
+    for ( let i = 0; i < errors.length; i++ ) {
+      await logError( errors[ i ] ); // eslint-disable-line no-await-in-loop
+    }
+  } else {
+    await logDefault( defaultStack );
   }
 
-  process.stdout.write( "\n" );
-
+  logEol();
 }

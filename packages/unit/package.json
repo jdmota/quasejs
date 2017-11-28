@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@quase/unit",
-  "version": "0.1.0",
+  "version": "0.1.0-0",
   "description": "Unit testing library.",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
@@ -11,7 +11,7 @@
     "quase-unit": "bin/index.js"
   },
   "dependencies": {
-    "@quase/cli": "^0.1.0",
+    "@quase/cli": "0.3.0-0",
     "@quase/error": "0.1.0-0",
     "@quase/memory-fs": "0.3.0-0",
     "@quase/path-url": "^0.1.0",
@@ -21,14 +21,12 @@
     "chalk": "^2.3.0",
     "circular-json": "^0.4.0",
     "concordance": "^3.0.0",
-    "error-stack-parser": "^2.0.0",
     "fs-extra": "^4.0.2",
     "import-fresh": "^2.0.0",
     "is-ci": "^1.0.10",
     "ora": "^1.2.0",
     "random-js": "^1.0.8",
-    "require-uncached": "^1.0.3",
-    "source-map": "^0.5.7",
+    "require-relative": "^0.8.7",
     "write-file-atomic": "^2.3.0"
   },
   "devDependencies": {

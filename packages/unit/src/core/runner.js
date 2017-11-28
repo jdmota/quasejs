@@ -1,31 +1,45 @@
 import { assertTimeout, assertNumber } from "./util/assert-args";
-import concordanceOptions from "./concordance-options";
+import { color as concordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
 import randomizer from "./random";
 import addChain from "./add-chain";
 
 const { EventEmitter } = require( "events" ); // TODO for browser
 
+let relative;
+function getPlugin( m ) {
+  relative = relative || require( "require-relative" );
+  return require( relative.resolve( m, process.cwd() ) );
+}
+
 class Runner extends EventEmitter {
 
   constructor( options ) {
     super();
+    options = options || {};
 
-    this.options = Object.assign( {}, options );
+    this.color = options.color === undefined ? true : !!options.color;
+    this.noglobals = !!options.noglobals;
 
-    this.assertions = Object.assign( {}, ...( this.options.assertions || [] ) );
+    const assertions = ( options.assertions || [] ).map( a =>
+      ( typeof a === "string" ? getPlugin( a ) : a )
+    );
+    this.assertions = Object.assign( {}, ...assertions );
 
-    this.concordanceOptions = this.options.concordanceOptions || concordanceOptions;
+    this.concordanceOptions =
+      options.concordanceOptions ?
+        options.concordanceOptions :
+        this.color ? concordanceOptions : plainConcordanceOptions;
 
-    if ( this.options.timeout != null ) {
-      assertTimeout( this.options.timeout );
+    if ( options.timeout != null ) {
+      assertTimeout( options.timeout );
     }
 
-    if ( this.options.slow != null ) {
-      assertNumber( this.options.slow );
+    if ( options.slow != null ) {
+      assertNumber( options.slow );
     }
 
-    this.randomizer = randomizer( this.options.seed );
+    this.randomizer = randomizer( options.seed );
 
     this.onlyCount = 0;
     this.promises = [];
@@ -35,18 +49,18 @@ class Runner extends EventEmitter {
       undefined,
       {
         type: "group",
-        fastBail: !!this.options.bail || !!this.options.fastBail,
-        strict: !!this.options.strict,
-        allowNoPlan: !!this.options.allowNoPlan
+        fastBail: !!( options.bail || options.fastBail ),
+        strict: !!options.strict,
+        allowNoPlan: !!options.allowNoPlan
       },
       {
         runner: this,
         level: 0,
         maxRetries: 0,
         retryDelayValue: 0,
-        maxTimeout: this.options.timeout,
+        maxTimeout: options.timeout || 0,
         timeoutStack: null,
-        minSlow: this.options.slow
+        minSlow: options.slow || 0
       },
       true
     );
@@ -167,7 +181,8 @@ class Runner extends EventEmitter {
       runtime: test.runtime,
       skipReason: test.skipReason,
       slow: test.slow,
-      assertions: test.assertions
+      assertions: test.assertions,
+      defaultStack: test.placeholder.defaultStack
     } );
   }
 

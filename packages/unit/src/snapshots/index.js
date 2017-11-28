@@ -32,11 +32,13 @@ function tryDecode( file: string ): Snapshots {
 }
 
 class SnapshotMissmatch extends Error {
-  +diff: string;
-  constructor( diff: string ) {
+  +expectedDescribe: Object;
+  +actualDescribe: Object;
+  constructor( expectedDescribe: Object, actualDescribe: Object ) {
     super( "Snapshot missmatch" );
     this.name = "SnapshotMissmatch";
-    this.diff = diff;
+    this.expectedDescribe = expectedDescribe;
+    this.actualDescribe = actualDescribe;
   }
 }
 
@@ -46,9 +48,12 @@ function getSnapPath( filePath: string ): string {
   return filePath + ".snap";
 }
 
+function getReportPath( filePath: string ): string {
+  return filePath + ".md";
+}
+
 export default class SnapshotsManager {
 
-  testKey: string;
   +filePath: string;
   +snapPath: string;
   +reportPath: string;
@@ -57,13 +62,11 @@ export default class SnapshotsManager {
   +reports: Map<string, Object>;
   +updating: boolean;
   +stats: Stats;
-  loaded: boolean;
 
   constructor( filePath: string, updating: ?boolean ) {
-    this.testKey = "";
     this.filePath = filePath;
     this.snapPath = getSnapPath( filePath );
-    this.reportPath = this.snapPath.replace( /\.snap$/, ".md" );
+    this.reportPath = getReportPath( filePath );
     this.prevSnapshots = tryDecode( this.snapPath );
     this.newSnapshots = new Map();
     this.reports = new Map();
@@ -73,23 +76,15 @@ export default class SnapshotsManager {
       removed: 0,
       updated: 0
     };
-    this.loaded = false;
   }
 
-  setTest( test: { fullname: string } ) {
-    this.testKey = test.fullname;
-  }
+  toMatchSnapshot( testKey: string, actual: mixed ) {
 
-  toMatchSnapshot( actual: any, key: any ) {
-    if ( typeof key === "string" ) {
-      this.testKey = key;
+    if ( this.newSnapshots && this.newSnapshots.has( testKey ) ) {
+      throw new Error( `Key ${testKey} was already used.` );
     }
 
-    if ( this.newSnapshots && this.newSnapshots.has( this.testKey ) ) {
-      throw new Error( `Key ${this.testKey} was already used.` );
-    }
-
-    const expectedBuffer = this.prevSnapshots.get( this.testKey );
+    const expectedBuffer = this.prevSnapshots.get( testKey );
 
     if ( expectedBuffer === undefined || this.updating ) {
 
@@ -97,15 +92,13 @@ export default class SnapshotsManager {
       const actualBuffer = concordance.serialize( actualDescribe );
 
       // Add new snapshot
-      this.newSnapshots.set( this.testKey, actualBuffer );
-      this.reports.set( this.testKey, actualDescribe );
+      this.newSnapshots.set( testKey, actualBuffer );
+      this.reports.set( testKey, actualDescribe );
 
       if ( expectedBuffer === undefined ) {
         this.stats.added++;
-      } else {
-        if ( !expectedBuffer.equals( actualBuffer ) ) {
-          this.stats.updated++;
-        }
+      } else if ( !expectedBuffer.equals( actualBuffer ) ) {
+        this.stats.updated++;
       }
 
     } else {
@@ -114,40 +107,49 @@ export default class SnapshotsManager {
       const actualDescribe = concordance.describe( actual, concordanceOptions );
 
       // Keep previous snapshot
-      this.newSnapshots.set( this.testKey, expectedBuffer );
-      this.reports.set( this.testKey, expectedDescribe );
+      this.newSnapshots.set( testKey, expectedBuffer );
+      this.reports.set( testKey, expectedDescribe );
 
       if ( concordance.compareDescriptors( expectedDescribe, actualDescribe ) ) {
         return;
       }
 
-      throw new SnapshotMissmatch(
-        concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions )
-      );
+      throw new SnapshotMissmatch( expectedDescribe, actualDescribe );
 
     }
 
   }
 
-  async saveSnap() {
+  async save(): Promise<Stats> {
     if ( this.newSnapshots.size === 0 ) {
       if ( this.prevSnapshots.size > 0 ) {
         this.stats.removed = this.prevSnapshots.size;
-        await fs.remove( this.snapPath );
+        await Promise.all( [
+          fs.remove( this.snapPath ),
+          fs.remove( this.reportPath )
+        ] );
       }
     } else {
-      const p = fs.ensureDir( path.dirname( this.snapPath ) );
-      const buffer = encode( this.newSnapshots );
-
       for ( const key of this.prevSnapshots.keys() ) {
         if ( !this.newSnapshots.has( key ) ) {
           this.stats.removed++;
         }
       }
 
-      await p;
-      await writeFileAtomic( this.snapPath, buffer );
+      if ( this.stats.added || this.stats.updated || this.stats.removed ) {
+        const p = fs.ensureDir( path.dirname( this.snapPath ) );
+        const buffer = encode( this.newSnapshots );
+        const report = this.makeReport();
+
+        await p;
+        await Promise.all( [
+          writeFileAtomic( this.snapPath, buffer ),
+          writeFileAtomic( this.reportPath, report )
+        ] );
+      }
     }
+
+    return this.stats;
   }
 
   makeReport(): string {
@@ -161,20 +163,6 @@ export default class SnapshotsManager {
       lines.push( "```\n" );
     }
     return lines.join( "\n" );
-  }
-
-  async saveReport() {
-    if ( this.reports.size === 0 ) {
-      return;
-    }
-    await writeFileAtomic( this.reportPath, this.makeReport() );
-  }
-
-  save(): Promise<Stats> {
-    return Promise.all( [
-      this.saveSnap(),
-      this.saveReport()
-    ] ).then( () => this.stats );
   }
 
 }

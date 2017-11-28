@@ -12,14 +12,12 @@ Options
 `;
 
 require( "@quase/cli" ).default( function( o ) {
-  require( "../dist/cli" ).default(
-    Object.assign( {}, o.config || o.pkg[ "quase-unit" ], o.flags ),
-    o.input
-  );
+  require( "../dist/cli" ).default( o );
 }, {
   help,
   inferType: true,
   defaultConfigFile: "quase-unit-config.js",
+  configKey: "quase-unit",
   flags: {
     concurrency: {
       type: "number",

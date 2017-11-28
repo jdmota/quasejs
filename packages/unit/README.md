@@ -315,6 +315,7 @@ t.afterEach( ( { context } ) => {
 ## Snapshots
 
 - Snapshot support.
+- Fails if new snapshots are created on CI.
 
 ## Config
 

@@ -17,7 +17,7 @@ class SnapshotError extends Error {
 
 class ChecksumError extends SnapshotError {
   constructor( snapPath: string ) {
-    super( "Checksum mismatch" );
+    super( `Checksum mismatch (${snapPath})` );
     this.name = "ChecksumError";
   }
 }
@@ -26,7 +26,7 @@ class HeaderMismatchError extends SnapshotError {
   +actual: string;
   +expected: string;
   constructor( header: string, snapPath: string ) {
-    super( "Unexpected snapshot header" );
+    super( `Unexpected snapshot header (${snapPath})` );
     this.name = "HeaderMismatchError";
     this.actual = header;
     this.expected = HEADER;

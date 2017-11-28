@@ -18,41 +18,47 @@ function stringify( arg ) {
   } );
 }
 
-const onMessage = msg => {
-  if ( msg.type === "quase-unit-start" ) {
-    global.quaseUnit = { options: msg.options };
+function send( eventType, arg ) {
+  process.send( {
+    type: "quase-unit-emit",
+    eventType,
+    arg: stringify( arg )
+  } );
+}
+
+const onMessage = ( { type, cli, files } ) => {
+  if ( type === "quase-unit-start" ) {
+
+    const { flags, config, configLocation } = cli;
+    let options;
+
+    if ( !configLocation || configLocation === "pkg" ) {
+      options = Object.assign( {}, config, flags );
+    } else {
+      options = Object.assign( {}, require( configLocation ), flags );
+    }
+
+    global.quaseUnit = { options };
 
     const runner = importFresh( "./index.js" ).runner;
 
     [ "runStart", "testStart", "testEnd", "suiteStart", "suiteEnd", "runEnd", "otherError" ].forEach( eventType => {
       runner.on( eventType, arg => {
-        process.send( {
-          type: "quase-unit-emit",
-          eventType,
-          arg: stringify( arg )
-        } );
+        send( eventType, arg );
       } );
     } );
 
-    process.on( "uncaughtException", arg => {
-      process.send( {
-        type: "quase-unit-emit",
-        eventType: "otherError",
-        arg: stringify( arg )
-      } );
-    } );
-
-    for ( const file of msg.files ) {
+    for ( const file of files ) {
       try {
         importFresh( file );
       } catch ( arg ) {
-        process.send( {
-          type: "quase-unit-emit",
-          eventType: "otherError",
-          arg: stringify( arg )
-        } );
+        send( "otherError", arg );
       }
     }
+
+    process.on( "uncaughtException", arg => {
+      send( "otherError", arg );
+    } );
 
     runner.run();
 

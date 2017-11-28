@@ -70,6 +70,7 @@ describe( "unit", () => {
       assert.strictEqual( typeof results[ 5 ].runtime, "number" );
 
       delete results[ 5 ].runtime;
+      delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
         name: "[anonymous]",
@@ -116,6 +117,7 @@ describe( "unit", () => {
       assert.strictEqual( typeof results[ 5 ].runtime, "number" );
 
       delete results[ 5 ].runtime;
+      delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
         name: "[anonymous]",

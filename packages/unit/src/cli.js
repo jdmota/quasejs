@@ -30,9 +30,8 @@ function divide( array, num ) {
 
 class NodeRunner extends EventEmitter {
 
-  constructor( options, files ) {
+  constructor( files ) {
     super();
-    this.options = options;
     this.files = files;
     this.forks = [];
     this.runStartArg = {
@@ -66,6 +65,10 @@ class NodeRunner extends EventEmitter {
     this.runEnds = 0;
     this.runStartEmmited = false;
     this.buffer = [];
+
+    process.on( "beforeExit", () => {
+      this.emit( "exit", {} );
+    } );
   }
 
   onChildEmit( childIdx, msg ) {
@@ -115,7 +118,7 @@ class NodeRunner extends EventEmitter {
           this.emit( eventType, this.runEndArg );
         }
       } else {
-        if ( this.runStartEmmited ) {
+        if ( this.runStartEmmited || eventType === "otherError" ) {
           this.emit( eventType, arg );
         } else {
           this.buffer.push( {
@@ -128,18 +131,36 @@ class NodeRunner extends EventEmitter {
     }
   }
 
-  start() {
-    const c = this.options.concurrency;
-    const division = divide( this.files, c );
+  start( options, cli ) {
+    const division = divide( this.files, options.concurrency );
+    const env = Object.assign( { NODE_ENV: "test" }, process.env );
+    const execArgv = [];
+    const args = [];
 
-    for ( let i = 0; i < c; i++ ) {
-      this.forks.push( childProcess.fork( path.resolve( __dirname, "fork.js" ) ) );
+    if ( !options.color ) {
+      args.push( "--no-color" );
+    }
+
+    for ( let i = 0; i < options.concurrency; i++ ) {
+      this.forks.push(
+        childProcess.fork(
+          path.resolve( __dirname, "fork.js" ),
+          args,
+          { env, execArgv, silent: true }
+        )
+      );
       this.forks[ i ].send( {
         type: "quase-unit-start",
-        options: this.options,
+        cli,
         files: division[ i ]
       } );
       this.forks[ i ].on( "message", this.onChildEmit.bind( this, i ) );
+      this.forks[ i ].on( "exit", ( code, signal ) => {
+        if ( code !== 0 ) {
+          const e = new Error( `Child process ${i} exited with code ${code} and signal ${signal}.` );
+          this.emit( "otherError", e );
+        }
+      } );
     }
 
     return this;
@@ -147,12 +168,16 @@ class NodeRunner extends EventEmitter {
 
 }
 
-export default function cli( opts, files ) {
-  opts.concurrency = opts.concurrency > 0 ? opts.concurrency : Math.min( os.cpus().length, isCi ? 2 : Infinity );
+export default function cli( { input, flags, config, configLocation } ) {
+  const options = Object.assign( {}, config, flags );
+  options.concurrency = options.concurrency > 0 ? options.concurrency : Math.min( os.cpus().length, isCi ? 2 : Infinity );
+  options.color = options.color === undefined ? true : !!options.color;
+
+  const files = input.map( f => path.resolve( f ) );
 
   new NodeReporter( // eslint-disable-line no-new
-    new NodeRunner( opts, files.map( f => path.resolve( f ) ) ).start()
+    new NodeRunner( files ).start( options, { flags, config, configLocation } )
   );
 }
 
-// cli( {}, [ "packages/unit/ui-tests/index.js" ] );
+cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: {} } );
