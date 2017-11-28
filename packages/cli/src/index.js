@@ -1,3 +1,4 @@
+const path = require( "path" );
 const chalk = require( "chalk" );
 const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
@@ -55,6 +56,7 @@ function notify( pkg, notifierOpts ) {
 export default function( callback, opts, notifierOpts ) {
 
   const defaultConfigFile = opts.defaultConfigFile;
+  const configKey = opts.configKey;
 
   if ( defaultConfigFile ) {
     opts = Object.assign( {}, opts );
@@ -72,11 +74,22 @@ export default function( callback, opts, notifierOpts ) {
     notify( cli.pkg, notifierOpts || {} );
   }
 
-  if ( defaultConfigFile ) {
+  if ( cli.flags.config ) {
+    const configLocation = path.resolve( cli.flags.config );
+
     try {
-      cli.config = require( require( "path" ).resolve( cli.flags.config ) );
+      cli.config = require( configLocation );
+      cli.configLocation = configLocation;
     } catch ( e ) {
       // Ignore
+    }
+  }
+
+  if ( !cli.config ) {
+    const pkgConfig = cli.pkg[ configKey ];
+    if ( pkgConfig ) {
+      cli.config = pkgConfig;
+      cli.configLocation = "pkg";
     }
   }
 

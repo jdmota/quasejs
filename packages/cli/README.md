@@ -6,6 +6,7 @@ Includes `meow` and `update-notifier` with some extensions:
 
 - We change the update message if Yarn is detected.
 - Passing a `defaultConfigFile` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
+- Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
 
 ## Usage example
 
@@ -15,12 +16,20 @@ Includes `meow` and `update-notifier` with some extensions:
 #!/usr/bin/env node
 
 require( "@quase/cli" ).default(
-  ( { input, flags, pkg, help, config /* the config object, if "defaultConfigFile" was used */ } ) => {
+  ( {
+    input,
+    flags,
+    pkg,
+    help,
+    config, /* the config object */
+    configLocation, /* the absolute path of the config file or "pkg" */
+  } ) => {
 
   },
   {
-    defaultConfigFile: "config.js"
-  }, // Meow options + optional defaultConfigFile
+    defaultConfigFile: "sample.config.js",
+    configKey: "sample"
+  }, // Meow options + optional configs
   {
     options: {}, // UpdateNotifier options
     notify: {} // .notify() options
@@ -33,7 +42,7 @@ require( "@quase/cli" ).default(
 ```json
 {
   "bin": {
-    "my-name": "bin/index.js"
+    "sample": "bin/index.js"
   },
 }
 ```
@@ -48,11 +57,11 @@ See https://github.com/yeoman/update-notifier for details.
 
 ```js
 #!/usr/bin/env node
-/* eslint-disable no-shebang */
 
-require( "@quase/cli" ).default( ( { flags, pkg, config } ) => {
-  require( "../dist" ).default( Object.assign( {}, config || pkg[ "my-name" ], flags ) );
+require( "@quase/cli" ).default( ( { input, flags, config } ) => {
+  require( "../dist" ).default( Object.assign( {}, config, flags ), input );
 }, {
-  defaultConfigFile: "my-name-config.js"
+  defaultConfigFile: "sample.config.js",
+  configKey: "sample"
 } );
 ```

@@ -56,8 +56,9 @@ describe( "cli", () => {
 
   it( "config", () => {
 
-    cli( ( { config } ) => {
+    cli( ( { config, configLocation } ) => {
       expect( config.iAmTheConfigFile2 ).toBe( "yes" );
+      expect( typeof configLocation ).toBe( "string" );
     }, {
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -72,8 +73,9 @@ describe( "cli", () => {
 
   it( "no config", () => {
 
-    cli( ( { config } ) => {
+    cli( ( { config, configLocation } ) => {
       expect( config ).toBe( undefined );
+      expect( configLocation ).toBe( undefined );
     }, {
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -82,6 +84,50 @@ describe( "cli", () => {
       argv: [],
       help: "",
       defaultConfigFile: path.resolve( __dirname, "non-existent-file.js" )
+    }, false );
+
+  } );
+
+  it( "config key", () => {
+
+    cli( ( { config, configLocation } ) => {
+      expect( config.configFromPkg ).toBe( "yes" );
+      expect( configLocation ).toBe( "pkg" );
+    }, {
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        "my-key": {
+          configFromPkg: "yes"
+        }
+      },
+      argv: [ "" ],
+      help: "",
+      defaultConfigFile: path.resolve( __dirname, "non-existent-file.js" ),
+      configKey: "my-key"
+    }, false );
+
+  } );
+
+  it( "config file has priority", () => {
+
+    cli( ( { config, configLocation } ) => {
+      expect( config.iAmTheConfigFile2 ).toBe( "yes" );
+      expect( config.configFromPkg ).toBe( undefined );
+      expect( typeof configLocation ).toBe( "string" );
+      expect( configLocation ).not.toBe( "pkg" );
+    }, {
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        "my-key": {
+          configFromPkg: "yes"
+        }
+      },
+      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config-2.js" )}` ],
+      help: "",
+      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" ),
+      configKey: "my-key"
     }, false );
 
   } );
