@@ -1,13 +1,15 @@
 const stackParser = require( "error-stack-parser" );
-const { prettify } = require( "@quase/path-url" );
+const { slash, prettify } = require( "@quase/path-url" );
 
-const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
-const ignoreFileRe = /^([^()\s]*\/node_modules\/quase[^()\s]+|[^()\s\\/]+\.js|internal\/[^()\s\\/]+\/[^()\s\\/]+\.js|native)$/;
+export const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
+export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/quase[^()\s]+|[^()\s/]+\.js|internal\/[^()\s/]+\/[^()\s/]+\.js|native)$/;
 
-export async function beautify( originalStack, extractor ) {
+export async function beautify( originalStack, extractor, options ) {
+
+  const ignore = ( options && options.ignore ) || ignoreFileRe;
 
   const frames = stackParser.parse( { stack: originalStack } ).filter( ( { fileName, functionName } ) => {
-    return !ignoreFileRe.test( fileName ) && !ignoreStackTraceRe.test( functionName || "" );
+    return !ignore.test( slash( fileName ) ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
   const promises = frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
