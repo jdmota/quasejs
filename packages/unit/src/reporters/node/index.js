@@ -44,7 +44,7 @@ export default class NodeReporter {
       return;
     }
     Promise.all( debuggersPromises ).then( debuggers => {
-      log( chalk.bold.yellow( "Debugger mode" ) );
+      log( chalk.bold.yellow( "Debugging" ) );
       logEol();
       for ( let i = 0; i < debuggers.length; i++ ) {
         log( chalk.bold( debuggers[ i ] ), 4 );
@@ -56,6 +56,13 @@ export default class NodeReporter {
       }
       logEol();
     } );
+  }
+
+  static async fatalError( error ) {
+    process.exitCode = 1;
+    logEol();
+    log( chalk.bold.red( error ) );
+    logEol();
   }
 
   async logOtherErrors() {

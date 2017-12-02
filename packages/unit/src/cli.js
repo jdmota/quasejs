@@ -166,6 +166,7 @@ class NodeRunner extends EventEmitter {
     const env = Object.assign( { NODE_ENV: "test" }, process.env );
     const execArgv = [];
     const args = [];
+    let debugging = false;
 
     if ( !options.color ) {
       args.push( "--no-color" );
@@ -173,6 +174,23 @@ class NodeRunner extends EventEmitter {
 
     if ( options.debug ) {
       execArgv.push( "--inspect-brk=0" );
+      debugging = true;
+    }
+
+    if ( options.inspect === true ) {
+      execArgv.push( "--inspect" );
+      debugging = true;
+    } else if ( options.inspect ) {
+      execArgv.push( "--inspect=" + options.inspect );
+      debugging = true;
+    }
+
+    if ( options.inspectBrk === true ) {
+      execArgv.push( "--inspect-brk" );
+      debugging = true;
+    } else if ( options.inspectBrk ) {
+      execArgv.push( "--inspect-brk=" + options.inspectBrk );
+      debugging = true;
     }
 
     for ( let i = 0; i < options.concurrency; i++ ) {
@@ -195,7 +213,7 @@ class NodeRunner extends EventEmitter {
           this.emit( "otherError", e );
         }
       } );
-      if ( options.debug ) {
+      if ( debugging ) {
         this.debuggersPromises.push( getDebugger( this.forks[ i ] ) );
       }
     }
@@ -207,8 +225,22 @@ class NodeRunner extends EventEmitter {
 
 export default function cli( { input, flags, config, configLocation } ) {
   const options = Object.assign( {}, config, flags );
+
+  if ( options.inspect || options.inspectBrk ) {
+    if ( options.debug ) {
+      return NodeReporter.fatalError( `You cannot use "debug" with --inspect or --inspect-brk` );
+    }
+    if ( options.concurrency != null && options.concurrency !== 1 ) {
+      return NodeReporter.fatalError( `You cannot use "concurrency" with --inspect or --inspect-brk` );
+    }
+  }
+
   options.concurrency = options.concurrency > 0 ? options.concurrency : Math.min( os.cpus().length, isCi ? 2 : Infinity );
   options.color = options.color === undefined ? true : !!options.color;
+
+  if ( options.inspect || options.inspectBrk ) {
+    options.concurrency = 1;
+  }
 
   const files = input.map( f => path.resolve( f ) );
 
