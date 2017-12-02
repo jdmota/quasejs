@@ -55,8 +55,9 @@ function divide( array, num ) {
 
 class NodeRunner extends EventEmitter {
 
-  constructor( files ) {
+  constructor( options, files ) {
     super();
+    this.options = options;
     this.division = null;
     this.files = files;
     this.forks = [];
@@ -158,7 +159,8 @@ class NodeRunner extends EventEmitter {
     }
   }
 
-  start( options, cli ) {
+  start( cli ) {
+    const options = this.options;
     this.division = divide( this.files, options.concurrency );
 
     const env = Object.assign( { NODE_ENV: "test" }, process.env );
@@ -211,7 +213,7 @@ export default function cli( { input, flags, config, configLocation } ) {
   const files = input.map( f => path.resolve( f ) );
 
   new NodeReporter( // eslint-disable-line no-new
-    new NodeRunner( files ).start( options, { flags, config, configLocation } )
+    new NodeRunner( options, files ).start( { flags, config, configLocation } )
   );
 }
 

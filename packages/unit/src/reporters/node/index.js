@@ -30,7 +30,13 @@ export default class NodeReporter {
     } );
 
     logEol();
+    this.showConcurrency( runner );
     this.showDebuggers( runner );
+  }
+
+  showConcurrency( runner ) {
+    log( chalk.bold.green( "Concurrency: " ) + runner.options.concurrency + "\n" );
+    logEol();
   }
 
   showDebuggers( { debuggersPromises, division } ) {
