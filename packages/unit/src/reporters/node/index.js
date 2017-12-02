@@ -9,6 +9,7 @@ const { prettify } = require( "@quase/path-url" );
 export default class NodeReporter {
 
   constructor( runner ) {
+    this.runner = runner;
     this.spinner = null;
     this.tests = [];
     this.otherErrors = [];
@@ -45,6 +46,8 @@ export default class NodeReporter {
     }
     Promise.all( debuggersPromises ).then( debuggers => {
       log( chalk.bold.yellow( "Debugging" ) );
+      logEol();
+      log( chalk.bold.yellow( "Got to chrome://inspect or check https://nodejs.org/en/docs/inspector" ) );
       logEol();
       for ( let i = 0; i < debuggers.length; i++ ) {
         log( chalk.bold( debuggers[ i ] ), 4 );
@@ -130,6 +133,15 @@ export default class NodeReporter {
       process.stdout.write( lines.join( "" ) );
 
       await this.logOtherErrors();
+
+      const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
+
+      if ( debuggersWaitingPromises.length ) {
+        Promise.race( debuggersWaitingPromises ).then( () => {
+          log( chalk.bold.yellow( "At least 1 of " + debuggersWaitingPromises.length + " processes are waiting for the debugger to disconnect..." ) );
+          logEol();
+        } );
+      }
 
     } );
   }

@@ -8,6 +8,7 @@ const CircularJSON = require( "circular-json" );
 const isCi = require( "is-ci" );
 
 const reDebugger = /Debugger listening on (ws:\/\/.+)\r?\n/;
+const reDebuggerWaiting = /Waiting for the debugger to disconnect/;
 
 function getDebugger( child ) {
   return new Promise( ( resolve, reject ) => {
@@ -28,6 +29,20 @@ function getDebugger( child ) {
       }
     }
 
+    child.stderr.on( "data", cb );
+  } );
+}
+
+function getDebuggerWaiting( child ) {
+  return new Promise( resolve => {
+    let str = "";
+    function cb( data ) {
+      str += data;
+      if ( reDebuggerWaiting.test( str ) ) {
+        child.stderr.removeListener( "data", cb );
+        resolve();
+      }
+    }
     child.stderr.on( "data", cb );
   } );
 }
@@ -62,6 +77,7 @@ class NodeRunner extends EventEmitter {
     this.files = files;
     this.forks = [];
     this.debuggersPromises = [];
+    this.debuggersWaitingPromises = [];
     this.runStartArg = {
       name: "",
       fullname: [],
@@ -194,27 +210,27 @@ class NodeRunner extends EventEmitter {
     }
 
     for ( let i = 0; i < options.concurrency; i++ ) {
-      this.forks.push(
-        childProcess.fork(
-          path.resolve( __dirname, "fork.js" ),
-          args,
-          { env, execArgv, silent: true }
-        )
+      const fork = childProcess.fork(
+        path.resolve( __dirname, "fork.js" ),
+        args,
+        { env, execArgv, silent: true }
       );
-      this.forks[ i ].send( {
+      this.forks.push( fork );
+      fork.send( {
         type: "quase-unit-start",
         cli,
         files: this.division[ i ]
       } );
-      this.forks[ i ].on( "message", this.onChildEmit.bind( this, i ) );
-      this.forks[ i ].on( "exit", ( code, signal ) => {
+      fork.on( "message", this.onChildEmit.bind( this, i ) );
+      fork.on( "exit", ( code, signal ) => {
         if ( code !== 0 ) {
           const e = new Error( `Child process ${i} exited with code ${code} and signal ${signal}.` );
           this.emit( "otherError", e );
         }
       } );
       if ( debugging ) {
-        this.debuggersPromises.push( getDebugger( this.forks[ i ] ) );
+        this.debuggersPromises.push( getDebugger( fork ) );
+        this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
       }
     }
 
@@ -249,4 +265,4 @@ export default function cli( { input, flags, config, configLocation } ) {
   );
 }
 
-cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: {} } );
+cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: { inspectBrk: true } } );
