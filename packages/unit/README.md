@@ -8,6 +8,7 @@
 - Simple test syntax.
 - No implicit globals.
 - Node and browser support.
+- `--debug` mode on Node.
 - Global variables detection.
 - Error stacks are cleaned and point to the original file and location (if a sourcemap is found).
 - Let's you know about errors that happened after tests have finished.

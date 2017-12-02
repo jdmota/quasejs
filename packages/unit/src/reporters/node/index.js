@@ -1,7 +1,10 @@
 import { testEnd, logError } from "./node-test-end";
 import colors from "./colors";
+import { log, logEol } from "./log";
 
+const chalk = require( "chalk" );
 const ora = require( "ora" );
+const { prettify } = require( "@quase/path-url" );
 
 export default class NodeReporter {
 
@@ -24,6 +27,28 @@ export default class NodeReporter {
     } );
     runner.on( "exit", () => {
       this.logOtherErrors();
+    } );
+
+    logEol();
+    this.showDebuggers( runner );
+  }
+
+  showDebuggers( { debuggersPromises, division } ) {
+    if ( !debuggersPromises.length ) {
+      return;
+    }
+    Promise.all( debuggersPromises ).then( debuggers => {
+      log( chalk.bold.yellow( "Debugger mode" ) );
+      logEol();
+      for ( let i = 0; i < debuggers.length; i++ ) {
+        log( chalk.bold( debuggers[ i ] ), 4 );
+        logEol();
+        for ( const file of division[ i ] ) {
+          log( prettify( file ), 6 );
+          logEol();
+        }
+      }
+      logEol();
     } );
   }
 

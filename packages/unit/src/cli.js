@@ -7,6 +7,31 @@ const os = require( "os" );
 const CircularJSON = require( "circular-json" );
 const isCi = require( "is-ci" );
 
+const reDebugger = /Debugger listening on (ws:\/\/.+)\r?\n/;
+
+function getDebugger( child ) {
+  return new Promise( ( resolve, reject ) => {
+    function error() {
+      reject( new Error( "Waited for debugger for too long" ) );
+    }
+
+    const timeoutId = setTimeout( error, 10000 );
+    let str = "";
+
+    function cb( data ) {
+      str += data;
+      const m = str.match( reDebugger );
+      if ( m ) {
+        child.stderr.removeListener( "data", cb );
+        clearTimeout( timeoutId );
+        resolve( m[ 1 ] );
+      }
+    }
+
+    child.stderr.on( "data", cb );
+  } );
+}
+
 function concat( original, array ) {
   for ( let i = 0; i < array.length; i++ ) {
     original.push( array[ i ] );
@@ -32,8 +57,10 @@ class NodeRunner extends EventEmitter {
 
   constructor( files ) {
     super();
+    this.division = null;
     this.files = files;
     this.forks = [];
+    this.debuggersPromises = [];
     this.runStartArg = {
       name: "",
       fullname: [],
@@ -132,13 +159,18 @@ class NodeRunner extends EventEmitter {
   }
 
   start( options, cli ) {
-    const division = divide( this.files, options.concurrency );
+    this.division = divide( this.files, options.concurrency );
+
     const env = Object.assign( { NODE_ENV: "test" }, process.env );
     const execArgv = [];
     const args = [];
 
     if ( !options.color ) {
       args.push( "--no-color" );
+    }
+
+    if ( options.debug ) {
+      execArgv.push( "--inspect-brk=0" );
     }
 
     for ( let i = 0; i < options.concurrency; i++ ) {
@@ -152,7 +184,7 @@ class NodeRunner extends EventEmitter {
       this.forks[ i ].send( {
         type: "quase-unit-start",
         cli,
-        files: division[ i ]
+        files: this.division[ i ]
       } );
       this.forks[ i ].on( "message", this.onChildEmit.bind( this, i ) );
       this.forks[ i ].on( "exit", ( code, signal ) => {
@@ -161,6 +193,9 @@ class NodeRunner extends EventEmitter {
           this.emit( "otherError", e );
         }
       } );
+      if ( options.debug ) {
+        this.debuggersPromises.push( getDebugger( this.forks[ i ] ) );
+      }
     }
 
     return this;
