@@ -1,15 +1,21 @@
-import { testEnd, logError } from "./node-test-end";
 import colors from "./colors";
-import { log, logEol } from "./log";
+import { log, log as printLog, logEol, indentString } from "./log";
 
 const chalk = require( "chalk" );
 const ora = require( "ora" );
+const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
+const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
+const FileSystem = require( "@quase/memory-fs" ).default;
+const { beautify: beautifyStack } = require( "@quase/error" );
 const { prettify } = require( "@quase/path-url" );
+
+const legend = colors.removed ? `${colors.removed( "- Expected" )} ${colors.added( "+ Actual" )}` : "";
 
 export default class NodeReporter {
 
   constructor( runner ) {
     this.runner = runner;
+    this.extractor = new SourceMapExtractor( new FileSystem() );
     this.spinner = null;
     this.tests = [];
     this.otherErrors = [];
@@ -21,7 +27,7 @@ export default class NodeReporter {
     runner.on( "otherError", err => {
       if ( this.ended ) {
         this.afterRun();
-        logError( err );
+        this.logError( err );
       } else {
         this.otherErrors.push( err );
       }
@@ -75,7 +81,7 @@ export default class NodeReporter {
     if ( otherErrors.length > 0 ) {
       this.afterRun();
       for ( let i = 0; i < otherErrors.length; i++ ) {
-        await logError( otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
+        await this.logError( otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
       }
     }
   }
@@ -101,7 +107,7 @@ export default class NodeReporter {
       this.spinner.stop();
 
       for ( let i = 0; i < this.tests.length; i++ ) {
-        await testEnd( this.tests[ i ] ); // eslint-disable-line no-await-in-loop
+        await this.logTestEnd( this.tests[ i ] ); // eslint-disable-line no-await-in-loop
       }
 
       this.tests = null; // Prevent memory leaks
@@ -148,6 +154,103 @@ export default class NodeReporter {
 
   testEnd( t ) {
     this.tests.push( t );
+  }
+
+  async enhanceError( original ) {
+
+    const err = {
+      actual: null,
+      expected: null,
+      diff: original.diff,
+      stack: null,
+      source: null,
+      message: original.message
+    };
+
+    // Prevent memory leaks
+    original.actual = null;
+    original.expected = null;
+
+    if ( original.stack ) {
+      const { stack, source } = await beautifyStack( original.stack, this.extractor );
+      err.stack = stack;
+      err.source = source;
+    }
+
+    return err;
+  }
+
+  showSource( source ) {
+
+    const { file, code, line, column } = source;
+
+    if ( !file || !code ) {
+      return "";
+    }
+
+    const codeFrameOptions = this.runner.options.codeFrame;
+    const frame = codeFrameOptions === false ? "" : codeFrameColumns( code, { start: { line } }, codeFrameOptions ) + "\n\n";
+
+    return `${colors.errorStack( `${prettify( file )}:${line}:${column}` )}\n\n${frame}`;
+  }
+
+  async logDefault( defaultStack ) {
+    const { source } = await beautifyStack( defaultStack, this.extractor );
+    let log = "\n";
+
+    if ( source ) {
+      log += this.showSource( source );
+    }
+
+    printLog( log, 4 );
+  }
+
+  async logError( e ) {
+
+    const error = await this.enhanceError( e );
+    let log = "\n";
+
+    if ( error.message ) {
+      log += colors.title( error.message ) + "\n";
+    }
+
+    if ( error.source ) {
+      log += this.showSource( error.source );
+    }
+
+    if ( error.diff ) {
+      log += `${legend}\n\n${indentString( error.diff )}\n\n`;
+    }
+
+    if ( error.stack ) {
+      log += colors.errorStack( error.stack ) + "\n\n";
+    }
+
+    printLog( log, 4 );
+  }
+
+  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, defaultStack } ) {
+
+    if ( status === "passed" && !slow ) {
+      return;
+    }
+
+    const statusText = status === "failed" ? colors.error( status ) : status === "passed" ? colors.pass( status ) : colors.skip( status );
+
+    printLog( `\n${colors.title( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? colors.slow( "Slow!" ) : ""}\n` );
+
+    if ( skipReason ) {
+      printLog( `\nSkip reason: ${skipReason}`, 4 );
+    }
+
+    if ( errors.length ) {
+      for ( let i = 0; i < errors.length; i++ ) {
+        await this.logError( errors[ i ] ); // eslint-disable-line no-await-in-loop
+      }
+    } else {
+      await this.logDefault( defaultStack );
+    }
+
   }
 
 }

@@ -265,4 +265,4 @@ export default function cli( { input, flags, config, configLocation } ) {
   );
 }
 
-cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: { inspectBrk: true } } );
+// cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: {} } );
