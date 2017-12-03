@@ -135,14 +135,14 @@ class Reader {
 
       if ( stats.isDirectory() ) {
         if ( this.includeDirs && this.matches( relativePath ) ) {
-          this.next( relativePath );
+          this.next( file );
           this.readDir( file );
         } else if ( this.matchesDir( relativePath ) ) {
           this.readDir( file );
         }
       } else if ( stats.isFile() ) {
         if ( this.matches( relativePath ) ) {
-          this.next( relativePath );
+          this.next( file );
         }
       }
 
