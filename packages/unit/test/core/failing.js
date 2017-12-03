@@ -23,7 +23,7 @@ describe( "unit", () => {
       assert.deepEqual( results[ 3 ], {
         name: "failing test",
         fullname: [ "failing test" ],
-        suiteName: undefined
+        suiteName: ""
       } );
 
       assert.deepEqual( results[ 4 ], "testEnd" );
@@ -33,7 +33,7 @@ describe( "unit", () => {
       assert.deepEqual( results[ 7 ], {
         name: "failing test 2",
         fullname: [ "failing test 2" ],
-        suiteName: undefined
+        suiteName: ""
       } );
 
       assert.strictEqual( results[ 8 ], "testEnd" );

@@ -423,11 +423,11 @@ export class Runnable implements ITest {
 
 export default class Test implements IRunnable {
 
-  name: ?string;
-  fullname: ( ?string )[];
+  name: string;
+  fullname: string[];
   status: Status;
   runtime: number;
-  suiteName: ?string;
+  suiteName: string;
   errors: Object[];
   assertions: Object[];
   slow: boolean;

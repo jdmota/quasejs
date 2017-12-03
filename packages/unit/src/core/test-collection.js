@@ -8,6 +8,8 @@ export default class TestCollection {
 
   hasExclusive: boolean;
   fastBail: boolean;
+  anonymousTestCount: number;
+  titles: Set<string>;
   tests: {
     concurrent: Placeholder[],
     serial: Placeholder[]
@@ -23,6 +25,8 @@ export default class TestCollection {
   constructor( fastBail: boolean ) {
     this.hasExclusive = false;
     this.fastBail = fastBail;
+    this.anonymousTestCount = 0;
+    this.titles = new Set();
     this.tests = {
       concurrent: [],
       serial: []
@@ -40,6 +44,16 @@ export default class TestCollection {
 
     const metadata = test.metadata;
     const type = metadata.type;
+
+    if ( !test.name ) {
+      test.name = `[anonymous ${++this.anonymousTestCount}]`;
+      test.fullname[ test.fullname.length - 1 ] = test.name;
+    }
+
+    if ( this.titles.has( test.name ) ) {
+      throw new Error( `Duplicate test name: ${JSON.stringify( test.name )}` );
+    }
+    this.titles.add( test.name );
 
     if ( type !== "test" && type !== "group" ) {
       // $FlowFixMe

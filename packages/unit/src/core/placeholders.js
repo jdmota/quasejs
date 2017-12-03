@@ -48,8 +48,8 @@ type NumOrVoid = number | void;
 
 export class GroupPlaceholder {
 
-  name: ?string;
-  fullname: ( ?string )[];
+  name: string;
+  fullname: string[];
   callback: Function;
   metadata: Metadata;
   parent: GroupPlaceholder;
@@ -69,8 +69,8 @@ export class GroupPlaceholder {
   rerunDelayValue: number;
 
   constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
-    this.name = name;
-    this.fullname = root ? [] : parent.fullname.concat( name );
+    this.name = name || "";
+    this.fullname = root ? [] : parent.fullname.concat( this.name );
     this.metadata = metadata;
     this.parent = parent;
     this.runner = parent.runner;
@@ -159,8 +159,8 @@ export class GroupPlaceholder {
 
 export class TestPlaceholder {
 
-  name: ?string;
-  fullname: ( ?string )[];
+  name: string;
+  fullname: string[];
   callback: Function;
   metadata: Metadata;
   parent: GroupPlaceholder;
@@ -168,8 +168,8 @@ export class TestPlaceholder {
   defaultStack: string;
 
   constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder ) {
-    this.name = name;
-    this.fullname = parent.fullname.concat( name );
+    this.name = name || "";
+    this.fullname = parent.fullname.concat( this.name );
     this.callback = callback;
     this.metadata = metadata;
     this.parent = parent;

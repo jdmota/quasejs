@@ -3,6 +3,7 @@ import "./chain";
 import "./context";
 import "./custom-assert";
 import "./delayed-setup";
+import "./duplicate-tests";
 import "./failing";
 import "./fast-bail";
 import "./hooks-order";

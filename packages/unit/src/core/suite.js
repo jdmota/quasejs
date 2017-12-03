@@ -10,8 +10,8 @@ import type { GroupPlaceholder } from "./placeholders";
 
 export default class Suite implements IRunnable {
 
-  name: ?string;
-  fullname: ( ?string )[];
+  name: string;
+  fullname: string[];
   status: Status;
   runtime: number;
   tests: Test[];

@@ -22,9 +22,9 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: ""
       } );
 
       assert.strictEqual( results[ 4 ], "testEnd" );
@@ -60,9 +60,9 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: ""
       } );
 
       assert.strictEqual( results[ 4 ], "testEnd" );
@@ -73,9 +73,9 @@ describe( "unit", () => {
       delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined,
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: "",
         status: "passed",
         errors: [],
         skipReason: undefined,
@@ -107,9 +107,9 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: ""
       } );
 
       assert.strictEqual( results[ 4 ], "testEnd" );
@@ -120,9 +120,9 @@ describe( "unit", () => {
       delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined,
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: "",
         status: "skipped",
         errors: [],
         skipReason: "skip reason",
@@ -162,9 +162,9 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous]",
-        fullname: [ "[anonymous]" ],
-        suiteName: undefined
+        name: "[anonymous 1]",
+        fullname: [ "[anonymous 1]" ],
+        suiteName: ""
       } );
 
       assert.strictEqual( results[ 4 ], "testEnd" );
