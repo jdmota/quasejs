@@ -25,15 +25,20 @@ export default class NodeReporter {
     runner.on( "testEnd", this.testEnd.bind( this ) );
     runner.on( "runEnd", this.runEnd.bind( this ) );
     runner.on( "otherError", err => {
+      this.otherErrors.push( err );
       if ( this.ended ) {
-        this.afterRun();
-        this.logError( err );
-      } else {
-        this.otherErrors.push( err );
+        this.logOtherErrors();
       }
     } );
-    runner.on( "exit", () => {
-      this.logOtherErrors();
+    runner.on( "exit", async() => {
+      await this.logOtherErrors();
+
+      if ( process.exitCode ) {
+        log( chalk.bold.red( "Exit code: " + process.exitCode ) );
+      } else {
+        log( chalk.bold.green( "Exit code: 0" ) );
+      }
+      logEol();
     } );
 
     logEol();
@@ -67,7 +72,7 @@ export default class NodeReporter {
     } );
   }
 
-  static async fatalError( error ) {
+  static fatalError( error ) {
     process.exitCode = 1;
     logEol();
     log( chalk.bold.red( error ) );
@@ -79,6 +84,8 @@ export default class NodeReporter {
     this.otherErrors = [];
 
     if ( otherErrors.length > 0 ) {
+      process.exitCode = 1;
+
       this.afterRun();
       for ( let i = 0; i < otherErrors.length; i++ ) {
         await this.logError( otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
@@ -144,7 +151,7 @@ export default class NodeReporter {
 
       if ( debuggersWaitingPromises.length ) {
         Promise.race( debuggersWaitingPromises ).then( () => {
-          log( chalk.bold.yellow( "At least 1 of " + debuggersWaitingPromises.length + " processes are waiting for the debugger to disconnect..." ) );
+          log( chalk.bold.yellow( "At least 1 of " + debuggersWaitingPromises.length + " processes are waiting for the debugger to disconnect...\n" ) );
           logEol();
         } );
       }

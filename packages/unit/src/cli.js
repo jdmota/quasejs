@@ -1,4 +1,5 @@
 import NodeReporter from "./reporters/node";
+import requirePlugin from "./core/util/require-plugin";
 
 const { EventEmitter } = require( "events" );
 const path = require( "path" );
@@ -76,6 +77,7 @@ class NodeRunner extends EventEmitter {
     this.division = null;
     this.files = files;
     this.forks = [];
+    this.forksStarted = [];
     this.debuggersPromises = [];
     this.debuggersWaitingPromises = [];
     this.runStartArg = {
@@ -110,7 +112,7 @@ class NodeRunner extends EventEmitter {
     this.runStartEmmited = false;
     this.buffer = [];
 
-    process.on( "beforeExit", () => {
+    process.once( "beforeExit", () => {
       this.emit( "exit", {} );
     } );
   }
@@ -122,6 +124,8 @@ class NodeRunner extends EventEmitter {
       const arg = CircularJSON.parse( msg.arg );
 
       if ( eventType === "runStart" ) {
+        this.forksStarted[ childIdx ] = true;
+
         concat( this.runStartArg.tests, arg.tests );
         concat( this.runStartArg.childSuites, arg.childSuites );
         this.runStartArg.testCounts.total += arg.testCounts.total;
@@ -161,8 +165,13 @@ class NodeRunner extends EventEmitter {
         if ( ++this.runEnds === this.forks.length ) {
           this.emit( eventType, this.runEndArg );
         }
+      } else if ( eventType === "otherError" ) {
+        this.emit( eventType, arg );
+        if ( !this.forksStarted[ childIdx ] ) {
+          this.forks[ childIdx ].disconnect();
+        }
       } else {
-        if ( this.runStartEmmited || eventType === "otherError" ) {
+        if ( this.runStartEmmited ) {
           this.emit( eventType, arg );
         } else {
           this.buffer.push( {
@@ -216,6 +225,7 @@ class NodeRunner extends EventEmitter {
         { env, execArgv, silent: true }
       );
       this.forks.push( fork );
+      this.forksStarted.push( false );
       fork.send( {
         type: "quase-unit-start",
         cli,
@@ -251,18 +261,23 @@ export default function cli( { input, flags, config, configLocation } ) {
     }
   }
 
-  options.concurrency = options.concurrency > 0 ? options.concurrency : Math.min( os.cpus().length, isCi ? 2 : Infinity );
+  options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
   options.color = options.color === undefined ? true : !!options.color;
 
   if ( options.inspect || options.inspectBrk ) {
     options.concurrency = 1;
   }
 
+  let Reporter;
+  try {
+    Reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
+  } catch ( err ) {
+    return NodeReporter.fatalError( err );
+  }
+
   const files = input.map( f => path.resolve( f ) );
 
-  new NodeReporter( // eslint-disable-line no-new
+  new Reporter( // eslint-disable-line no-new
     new NodeRunner( options, files ).start( { flags, config, configLocation } )
   );
 }
-
-// cli( { input: [ "packages/unit/ui-tests/index.js" ], flags: {} } );

@@ -1,16 +1,11 @@
 import { assertTimeout, assertNumber } from "./util/assert-args";
+import requirePlugin from "./util/require-plugin";
 import { color as concordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
 import randomizer from "./random";
 import addChain from "./add-chain";
 
 const { EventEmitter } = require( "events" ); // TODO for browser
-
-let relative;
-function getPlugin( m ) {
-  relative = relative || require( "require-relative" );
-  return require( relative.resolve( m, process.cwd() ) );
-}
 
 class Runner extends EventEmitter {
 
@@ -20,16 +15,17 @@ class Runner extends EventEmitter {
 
     this.color = options.color === undefined ? true : !!options.color;
     this.noglobals = !!options.noglobals;
+    this.updateSnapshots = !!options.updateSnapshots;
 
-    const assertions = ( options.assertions || [] ).map( a =>
-      ( typeof a === "string" ? getPlugin( a ) : a )
-    );
+    const assertions = ( options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
     this.assertions = Object.assign( {}, ...assertions );
 
-    this.concordanceOptions =
-      options.concordanceOptions ?
-        options.concordanceOptions :
-        this.color ? concordanceOptions : plainConcordanceOptions;
+    this.concordanceOptions = requirePlugin(
+      options.concordanceOptions,
+      this.color ? concordanceOptions : plainConcordanceOptions,
+      "object",
+      "concordance options"
+    );
 
     if ( options.timeout != null ) {
       assertTimeout( options.timeout );
@@ -49,7 +45,7 @@ class Runner extends EventEmitter {
       undefined,
       {
         type: "group",
-        fastBail: !!( options.bail || options.fastBail ),
+        fastBail: !!( options.bail || options.fastBail || options.failFast ),
         strict: !!options.strict,
         allowNoPlan: !!options.allowNoPlan
       },
