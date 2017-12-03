@@ -7,6 +7,8 @@ const childProcess = require( "child_process" );
 const os = require( "os" );
 const CircularJSON = require( "circular-json" );
 const isCi = require( "is-ci" );
+const findFiles = require( "@quase/find-files" ).default;
+const ora = require( "ora" );
 
 const reDebugger = /Debugger listening on (ws:\/\/.+)\r?\n/;
 const reDebuggerWaiting = /Waiting for the debugger to disconnect/;
@@ -275,9 +277,32 @@ export default function cli( { input, flags, config, configLocation } ) {
     return NodeReporter.fatalError( err );
   }
 
-  const files = input.map( f => path.resolve( f ) );
+  const spinner = ora( "Looking for files..." ).start();
 
-  new Reporter( // eslint-disable-line no-new
-    new NodeRunner( options, files ).start( { flags, config, configLocation } )
-  );
+  const files = [];
+  const observable = findFiles( { src: input } );
+
+  observable.subscribe( {
+    next( file ) {
+      files.push( file );
+    },
+    complete() {
+      spinner.stop();
+
+      if ( files.length === 0 ) {
+        return NodeReporter.fatalError( "Zero files found." );
+      }
+
+      NodeReporter.showFilesCount( files.length );
+
+      new Reporter( // eslint-disable-line no-new
+        new NodeRunner( options, files ).start( { flags, config, configLocation } )
+      );
+    },
+    error( err ) {
+      spinner.stop();
+      NodeReporter.fatalError( err );
+    }
+  } );
+
 }

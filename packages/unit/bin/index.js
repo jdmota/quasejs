@@ -2,7 +2,7 @@
 
 const help = `
 Usage
-  $ quase-unit <files> [options]
+  $ quase-unit <files|globs> [options]
 
 Options
   --match, -m             Only run tests with matching title (Can be repeated)

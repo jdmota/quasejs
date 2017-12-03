@@ -41,17 +41,22 @@ export default class NodeReporter {
       logEol();
     } );
 
-    logEol();
-    this.showConcurrency( runner );
-    this.showDebuggers( runner );
+    NodeReporter.showConcurrency( runner );
+    NodeReporter.showDebuggers( runner );
   }
 
-  showConcurrency( runner ) {
+  static showFilesCount( count ) {
+    logEol();
+    log( chalk.bold.green( "Files count: " ) + count + "\n" );
+    logEol();
+  }
+
+  static showConcurrency( runner ) {
     log( chalk.bold.green( "Concurrency: " ) + runner.options.concurrency + "\n" );
     logEol();
   }
 
-  showDebuggers( { debuggersPromises, division } ) {
+  static showDebuggers( { debuggersPromises, division } ) {
     if ( !debuggersPromises.length ) {
       return;
     }

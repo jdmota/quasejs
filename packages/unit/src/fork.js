@@ -39,6 +39,7 @@ const onMessage = ( type, cli, files ) => {
   global.quaseUnit = { options };
 
   const runner = importFresh( "./index.js" ).runner;
+  const firstErrors = [];
 
   [ "runStart", "testStart", "testEnd", "suiteStart", "suiteEnd", "runEnd", "otherError" ].forEach( eventType => {
     runner.on( eventType, arg => {
@@ -49,13 +50,19 @@ const onMessage = ( type, cli, files ) => {
   for ( const file of files ) {
     try {
       importFresh( file );
-    } catch ( arg ) {
-      send( "otherError", arg );
+    } catch ( err ) {
+      firstErrors.push( err );
     }
   }
 
   process.on( "uncaughtException", arg => {
     send( "otherError", arg );
+  } );
+
+  runner.once( "runStart", () => {
+    for ( const err of firstErrors ) {
+      send( "otherError", err );
+    }
   } );
 
   runner.run();
