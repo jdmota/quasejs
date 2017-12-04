@@ -56,7 +56,8 @@ class Runner extends EventEmitter {
         retryDelayValue: 0,
         maxTimeout: options.timeout || 0,
         timeoutStack: null,
-        minSlow: options.slow || 0
+        minSlow: options.slow || 0,
+        serialForced: !!options.forceSerial
       },
       true
     );

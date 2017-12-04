@@ -76,7 +76,7 @@ export default class TestCollection {
       this.hasExclusive = true;
     }
 
-    if ( metadata.serial ) {
+    if ( metadata.serial || suite.forceSerial ) {
       this.tests.serial.push( test );
     } else {
       this.tests.concurrent.push( test );

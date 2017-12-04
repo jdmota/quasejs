@@ -40,6 +40,9 @@ class GroupApi {
   slow( n ) {
     return this._current.slow( n );
   }
+  forceSerial( b ) {
+    return this._current.forceSerial( b );
+  }
 }
 
 addChain( GroupApi );
@@ -68,6 +71,8 @@ export class GroupPlaceholder {
   reruns: number;
   rerunDelayValue: number;
 
+  serialForced: boolean;
+
   constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
     this.name = name || "";
     this.fullname = root ? [] : parent.fullname.concat( this.name );
@@ -86,6 +91,8 @@ export class GroupPlaceholder {
     this.retryDelayValue = parent.retryDelayValue || 0;
     this.reruns = parent.reruns || 0;
     this.rerunDelayValue = parent.rerunDelayValue || 0;
+
+    this.serialForced = parent.serialForced;
 
     if ( typeof callback === "function" ) {
       const prev = this.runner._current;
@@ -145,6 +152,13 @@ export class GroupPlaceholder {
     }
     assertNumber( n );
     this.minSlow = n;
+  }
+
+  forceSerial( b: boolean ) {
+    if ( b === undefined ) {
+      return this.serialForced;
+    }
+    this.serialForced = b;
   }
 
   addTest( placeholder: Placeholder ) {

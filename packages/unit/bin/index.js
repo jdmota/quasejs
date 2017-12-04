@@ -8,6 +8,7 @@ Options
   --match, -m             Only run tests with matching title (Can be repeated)
   --watch, -w             Watch files for changes and re-run the related tests
   --fail-fast             Stop after first test failure
+  --force-serial          Run tests serially. It forces --concurrency=1
   --concurrency, -c       Max number of test files running at the same time (Default: CPU logical cores or 2 if running in CI)
   --update-snapshots, -u  Update snapshots
   --timeout, -t           Set global timeout
@@ -30,10 +31,16 @@ require( "@quase/cli" ).default( function( o ) {
     },
     watch: {
       type: "boolean",
-      alias: "w"
+      alias: "w",
+      default: false
     },
     failFast: {
-      type: "boolean"
+      type: "boolean",
+      default: false
+    },
+    forceSerial: {
+      type: "boolean",
+      default: false
     },
     concurrency: {
       type: "number",
@@ -41,7 +48,8 @@ require( "@quase/cli" ).default( function( o ) {
     },
     updateSnapshots: {
       type: "boolean",
-      alias: "u"
+      alias: "u",
+      default: false
     },
     timeout: {
       type: "number",

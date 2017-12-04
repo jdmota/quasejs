@@ -6,6 +6,7 @@ import "./delayed-setup";
 import "./duplicate-tests";
 import "./failing";
 import "./fast-bail";
+import "./force-serial";
 import "./hooks-order";
 import "./hooks-times";
 import "./nested-groups";

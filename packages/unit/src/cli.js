@@ -263,10 +263,16 @@ export default function cli( { input, flags, config, configLocation } ) {
     }
   }
 
+  if ( options.forceSerial ) {
+    if ( options.concurrency != null && options.concurrency !== 1 ) {
+      return NodeReporter.fatalError( `You cannot use "concurrency" with --force-serial` );
+    }
+  }
+
   options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
   options.color = options.color === undefined ? true : !!options.color;
 
-  if ( options.inspect || options.inspectBrk ) {
+  if ( options.inspect || options.inspectBrk || options.forceSerial ) {
     options.concurrency = 1;
   }
 

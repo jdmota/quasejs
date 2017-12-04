@@ -144,6 +144,8 @@ Value is inherit from the value especified on the group by default. If the test 
 
 Specify the "slow" test threshold. This is used to highlight test-cases that are taking too long.
 
+Set `0` to disable slowness checking.
+
 Run `slow()` without arguments to get the current value.
 
 Value is inherit from the value especified on the group by default. If the test belongs to the root, the default is `0`.
@@ -238,6 +240,8 @@ Nested groups inherit the value from their parent groups.
 
 Define the timeout value that tests will inherit.
 
+Set `0` to disable timeout checking.
+
 Run `timeout()` without arguments to get the current value.
 
 Nested groups inherit the value from their parent groups.
@@ -248,7 +252,19 @@ Nested groups inherit the value from their parent groups.
 
 Define the slow value that tests will inherit.
 
+Set `0` to disable slowness checking.
+
 Run `slow()` without arguments to get the current value.
+
+Nested groups inherit the value from their parent groups.
+
+### Force serial
+
+`.forceSerial( boolean )`
+
+Default is `false`. Set `true` to force tests in that group to run serially.
+
+Run `forceSerial()` without arguments to get the current value.
 
 Nested groups inherit the value from their parent groups.
 
