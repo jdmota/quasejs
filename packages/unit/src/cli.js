@@ -192,7 +192,7 @@ class NodeRunner extends EventEmitter {
     const options = this.options;
     this.division = divide( this.files, options.concurrency );
 
-    const env = Object.assign( { NODE_ENV: "test" }, process.env );
+    const env = Object.assign( { NODE_ENV: "test" }, process.env, options.env );
     const execArgv = [];
     const args = [];
     let debugging = false;
@@ -281,6 +281,7 @@ export default function cli( { input, flags, config, configLocation } ) {
 
     options.random = options.random && randomizer( options.random ).hex;
     options.reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
+    options.env = requirePlugin( options.env, null, "object", "environment" );
 
     if ( options.timeout != null ) {
       assertTimeout( options.timeout );

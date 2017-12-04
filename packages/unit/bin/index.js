@@ -13,6 +13,7 @@ Options
   --update-snapshots, -u  Update snapshots
   --timeout, -t           Set global timeout
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
+  --env=<environment>     The test environment used for all tests. This can point to any file or node module.
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
   --color                 Use color output. (Default: true)
 `;
