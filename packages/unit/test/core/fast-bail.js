@@ -197,7 +197,7 @@ describe( "unit", () => {
       "bail"
     ];
 
-    test.group.fastBail( function() {
+    test.group.bail( function() {
 
       test( function() {
         actual.push( "test" );
@@ -295,7 +295,7 @@ describe( "unit", () => {
       "bail"
     ];
 
-    test.group.fastBail( function() {
+    test.group.bail( function() {
 
       test( function() {
         actual.push( "test" );
@@ -340,7 +340,7 @@ describe( "unit", () => {
       "test 2"
     ];
 
-    test.group.fastBail( function() {
+    test.group.bail( function() {
 
       test.serial( function() {
         actual.push( "test 1" );
@@ -387,7 +387,7 @@ describe( "unit", () => {
       actual.push( "beforeEach" );
     } );
 
-    test.group.fastBail( () => {
+    test.group.bail( () => {
       test.serial( () => {
         actual.push( "serial" );
         throw new Error( "error" );

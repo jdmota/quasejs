@@ -84,7 +84,7 @@ export class GroupPlaceholder {
     this.parent = parent;
     this.runner = parent.runner;
     this.level = parent.level + 1;
-    this.collection = new TestCollection( metadata.fastBail );
+    this.collection = new TestCollection( metadata.bail );
     this.api = new GroupApi( this );
 
     this.maxTimeout = parent.maxTimeout || 0;

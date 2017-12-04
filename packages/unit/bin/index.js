@@ -7,7 +7,7 @@ Usage
 Options
   --match, -m             Only run tests with matching title (Can be repeated)
   --watch, -w             Watch files for changes and re-run the related tests
-  --fail-fast             Stop after first test failure
+  --bail                  Stop after first test failure
   --force-serial          Run tests serially. It forces --concurrency=1
   --concurrency, -c       Max number of test files running at the same time (Default: CPU logical cores or 2 if running in CI)
   --update-snapshots, -u  Update snapshots
@@ -34,7 +34,7 @@ require( "@quase/cli" ).default( function( o ) {
       alias: "w",
       default: false
     },
-    failFast: {
+    bail: {
       type: "boolean",
       default: false
     },

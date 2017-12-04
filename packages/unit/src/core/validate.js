@@ -1,7 +1,7 @@
 function validate( name, callback, options ) {
 
-  if ( options.fastBail && options.type !== "group" ) {
-    return "fastBail modifier is only available for groups.";
+  if ( options.bail && options.type !== "group" ) {
+    return "bail modifier is only available for groups.";
   }
 
   if ( options.type !== "test" && options.type !== "group" ) {

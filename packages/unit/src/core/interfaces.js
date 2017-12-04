@@ -9,7 +9,7 @@ export type Metadata = {
   exclusive: boolean,
   strict: boolean,
   status: "skipped" | "todo" | "failing",
-  fastBail: boolean,
+  bail: boolean,
   allowNoPlan: boolean
 };
 

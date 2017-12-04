@@ -38,7 +38,7 @@ const chain = {
     exclusive: false,
     strict: false,
     status: "",
-    fastBail: false,
+    bail: false,
     allowNoPlan: false
   },
   chainableMethods: {
@@ -54,7 +54,7 @@ const chain = {
     skip: { status: "skipped" },
     todo: { status: "todo" },
     failing: { status: "failing" },
-    fastBail: { fastBail: true },
+    bail: { bail: true },
     allowNoPlan: { allowNoPlan: true }
   }
 };

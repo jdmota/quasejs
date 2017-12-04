@@ -7,7 +7,7 @@ import { type Placeholder, TestPlaceholder, GroupPlaceholder } from "./placehold
 export default class TestCollection {
 
   hasExclusive: boolean;
-  fastBail: boolean;
+  bail: boolean;
   anonymousTestCount: number;
   titles: Set<string>;
   tests: {
@@ -22,9 +22,9 @@ export default class TestCollection {
   };
   _hasUnskippedTests: ?boolean;
 
-  constructor( fastBail: boolean ) {
+  constructor( bail: boolean ) {
     this.hasExclusive = false;
-    this.fastBail = fastBail;
+    this.bail = bail;
     this.anonymousTestCount = 0;
     this.titles = new Set();
     this.tests = {
@@ -152,7 +152,7 @@ export default class TestCollection {
       return this.buildTest( array[ 0 ], suite );
     }
 
-    let seq = new Sequence( this.fastBail, isConcurrent, suite.level );
+    let seq = new Sequence( this.bail, isConcurrent, suite.level );
 
     for ( let i = 0; i < array.length; i++ ) {
       seq.add( this.buildTest( array[ i ], suite ) );
@@ -187,7 +187,7 @@ export default class TestCollection {
     const concurrent = this.tests.concurrent;
     const before = this.hooks.before;
     const after = this.hooks.after;
-    const seq = new BeforeTestsAfterSequence( this.fastBail, suite.level );
+    const seq = new BeforeTestsAfterSequence( this.bail, suite.level );
 
     const runBeforeAfter = this.hasUnskippedTests();
 
