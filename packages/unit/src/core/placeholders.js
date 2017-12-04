@@ -99,6 +99,10 @@ export class GroupPlaceholder {
     this.randomizationAllowed = parent.randomizationAllowed;
     this.serialForced = parent.serialForced;
 
+    if ( !root ) {
+      parent.collection.addTest( this, parent );
+    }
+
     if ( typeof callback === "function" ) {
       const prev = this.runner._current;
       this.runner._current = this;
@@ -173,10 +177,6 @@ export class GroupPlaceholder {
     this.serialForced = b;
   }
 
-  addTest( placeholder: Placeholder ) {
-    this.collection.addTest( placeholder, this );
-  }
-
   build( parent: ?Suite ): Suite {
     return new Suite( this, parent );
   }
@@ -201,6 +201,8 @@ export class TestPlaceholder {
     this.parent = parent;
     this.level = parent.level;
     this.defaultStack = getStack( 5 );
+
+    parent.collection.addTest( this, parent );
   }
 
   build( runnable: Runnable | InTestSequence, parent: Suite ): Test {

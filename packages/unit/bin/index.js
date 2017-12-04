@@ -11,7 +11,10 @@ Options
   --force-serial          Run tests serially. It forces --concurrency=1
   --concurrency, -c       Max number of test files running at the same time (Default: CPU logical cores or 2 if running in CI)
   --update-snapshots, -u  Update snapshots
-  --timeout, -t           Set global timeout
+  --timeout, -t           Set test timeout
+  --slow                  Set "slow" test threshold
+  --allow-no-plan         Makes tests still succeed if no assertions are run and no planning was done
+  --strict                Disallows the usage of "only", "failing", "todo", "skipped" modifiers
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
   --env=<environment>     The test environment used for all tests. This can point to any file or node module.
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
@@ -55,6 +58,17 @@ require( "@quase/cli" ).default( function( o ) {
     timeout: {
       type: "number",
       alias: "t"
+    },
+    slow: {
+      type: "number"
+    },
+    allowNoPlan: {
+      type: "boolean",
+      default: false
+    },
+    strict: {
+      type: "boolean",
+      default: false
     },
     color: {
       type: "boolean",

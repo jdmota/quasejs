@@ -104,7 +104,7 @@ describe( "unit", () => {
         actual.push( "test 3" );
       } );
 
-      group2.group( "group 3", function() {
+      group2.group( function() {
 
         test( function( t ) {
           actual.push( "test 4" );
@@ -126,14 +126,14 @@ describe( "unit", () => {
       assert.strictEqual( results[ 3 ].childSuites.length, 1 );
       assert.strictEqual( results[ 3 ].testCounts.total, 5 );
       assert.deepEqual( results[ 21 ], {
-        fullname: [ "group 1", "group 2", "group 3", "[anonymous 1]" ],
+        fullname: [ "group 1", "group 2", "[anonymous 3]", "[anonymous 1]" ],
         name: "[anonymous 1]",
-        suiteName: "group 3"
+        suiteName: "[anonymous 3]"
       } );
       assert.deepEqual( results[ 25 ], {
-        fullname: [ "group 1", "group 2", "group 3", "[anonymous 2]" ],
+        fullname: [ "group 1", "group 2", "[anonymous 3]", "[anonymous 2]" ],
         name: "[anonymous 2]",
-        suiteName: "group 3"
+        suiteName: "[anonymous 3]"
       } );
       assert.deepEqual( results[ results.length - 1 ].testCounts, {
         passed: 3,

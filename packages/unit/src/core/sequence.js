@@ -1,15 +1,14 @@
 /* @flow */
 
-import isPromise from "./util/is-promise";
 import skipReasons from "./skip-reasons";
-import type { Status, IRunReturn, GenericRunnable, MinimalRunnable, MinimalTest, IRunnable, ITest, Metadata } from "./interfaces";
+import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, Metadata } from "./interfaces";
 import type { Runnable } from "./test";
 
-class ProxyImpl<T: IRunnable, R: GenericRunnable<T>> {
-  test: R;
-  seq: SequenceImpl<T, R>;
-  proxyFn: ( R, SequenceImpl<T, R> ) => IRunReturn<T>;
-  constructor( test: R, seq: SequenceImpl<T, R>, proxyFn: ( R, SequenceImpl<T, R> ) => IRunReturn<T> ) {
+class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRunnable<R> {
+  test: T;
+  seq: SequenceImpl<R, T>;
+  proxyFn: ( T, SequenceImpl<R, T> ) => IRunReturn<R>;
+  constructor( test: T, seq: SequenceImpl<R, T>, proxyFn: ( T, SequenceImpl<R, T> ) => IRunReturn<R> ) {
     this.test = test;
     this.seq = seq;
     this.proxyFn = proxyFn;
@@ -24,19 +23,22 @@ class ProxyImpl<T: IRunnable, R: GenericRunnable<T>> {
   runSkip( skipReason: ?string ) {
     return this.test.runSkip( skipReason );
   }
+  runTodo() {
+    return this.test.runTodo();
+  }
 }
 
-class Proxy extends ProxyImpl<IRunnable, MinimalRunnable> implements MinimalRunnable {}
+class Proxy extends ProxyImpl<IRunnableResult, IRunnable> implements IRunnable {}
 
-class ClonableProxy extends ProxyImpl<ITest, MinimalTest> implements MinimalTest {
+class ClonableProxy extends ProxyImpl<ITestResult, ITest> implements ITest {
   clone( context: Object ): ClonableProxy {
     return new ClonableProxy( this.test.clone( context ), this.seq, this.proxyFn );
   }
 }
 
-class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
+class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnableResult, GenericRunnable<R> {
 
-  tests: Array<R>;
+  tests: Array<T>;
   bail: boolean;
   isConcurrent: boolean;
   level: number;
@@ -66,7 +68,8 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
     _this.runSkip = this.runSkip.bind( this );
   }
 
-  getResult(): SequenceImpl<T, R> {
+  // $FlowFixMe
+  getResult(): SequenceImpl<R, T> {
     this.status = this.failTest ? "failed" : this.skipTest ? "skipped" : "passed";
     if ( this.failTest ) {
       this.skipReason = undefined;
@@ -83,6 +86,14 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
     return this.getResult();
   }
 
+  runTodo() {
+    const tests = this.tests;
+    for ( let i = 0; i < tests.length; i++ ) {
+      this.addResult( tests[ i ].runTodo() );
+    }
+    return this.getResult();
+  }
+
   run() {
 
     const tests = this.tests;
@@ -91,7 +102,7 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
 
       let result = tests[ i ].run();
 
-      if ( isPromise( result ) ) {
+      if ( result instanceof Promise ) {
 
         if ( this.isConcurrent ) {
 
@@ -101,7 +112,7 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
 
             result = tests[ j ].run();
 
-            if ( isPromise( result ) ) {
+            if ( result instanceof Promise ) {
               promises.push( result.then( this.addResult ) );
             } else {
               this.addResult( result );
@@ -129,7 +140,7 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
     return this.getResult();
   }
 
-  updateFailedBecauseOfHook( result: T ) {
+  updateFailedBecauseOfHook( result: R ) {
     if ( result.failedBecauseOfHook ) {
       if ( result.failedBecauseOfHook.level <= this.level ) {
         this.bailTestBecauseOfHook = true;
@@ -143,15 +154,15 @@ class SequenceImpl<T: IRunnable, R: GenericRunnable<T>> implements IRunnable {
     }
   }
 
-  addResult( result: T ) { // eslint-disable-line
+  addResult( result: R ) { // eslint-disable-line
     throw new Error( "Abstract" );
   }
 
 }
 
-export class Sequence extends SequenceImpl<IRunnable, MinimalRunnable> implements IRunnable {
+export class Sequence extends SequenceImpl<IRunnableResult, IRunnable> implements IRunnableResult, IRunnable {
 
-  static proxy( t: MinimalRunnable, seq: Sequence ) {
+  static proxy( t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -161,11 +172,11 @@ export class Sequence extends SequenceImpl<IRunnable, MinimalRunnable> implement
     return t.run();
   }
 
-  add( t: MinimalRunnable ) {
+  add( t: IRunnable ) {
     this.tests.push( new Proxy( t, this, Sequence.proxy ) );
   }
 
-  addResult( result: IRunnable ) {
+  addResult( result: IRunnableResult ) {
     if ( result.status === "failed" ) {
       this.failTest = true;
       this.updateFailedBecauseOfHook( result );
@@ -174,7 +185,7 @@ export class Sequence extends SequenceImpl<IRunnable, MinimalRunnable> implement
 
 }
 
-export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements ITest {
+export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements ITestResult, ITest {
 
   slow: boolean;
   metadata: Metadata;
@@ -196,7 +207,7 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
     this.middleRunnableProxy = new ClonableProxy( middleRunnable, this, InTestSequence.proxy );
   }
 
-  static proxy( t: MinimalTest, seq: InTestSequence ) {
+  static proxy( t: ITest, seq: SequenceImpl<ITestResult, ITest> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -218,7 +229,7 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
     return seq;
   }
 
-  add( t: MinimalTest ) {
+  add( t: ITest ) {
     this.tests.push( t );
   }
 
@@ -226,7 +237,7 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
     this.tests.push( this.middleRunnableProxy );
   }
 
-  addResult( result: ITest ) {
+  addResult( result: ITestResult ) {
 
     const metadata = result.metadata || {};
 
@@ -254,13 +265,13 @@ export class InTestSequence extends SequenceImpl<ITest, MinimalTest> implements 
 
 }
 
-export class BeforeTestsAfterSequence extends SequenceImpl<IRunnable, MinimalRunnable> implements IRunnable {
+export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRunnable> implements IRunnableResult, IRunnable {
 
   constructor( bail: boolean, level: number ) {
     super( bail, false, level );
   }
 
-  static proxy( t: MinimalRunnable, seq: BeforeTestsAfterSequence ) {
+  static proxy( t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -273,7 +284,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnable, MinimalRun
     return t.run();
   }
 
-  add( t: MinimalRunnable, inMiddle: ?boolean ) {
+  add( t: IRunnable, inMiddle: ?boolean ) {
     if ( inMiddle ) {
       this.tests.push( new Proxy( t, this, BeforeTestsAfterSequence.proxy ) );
     } else {
@@ -281,7 +292,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnable, MinimalRun
     }
   }
 
-  addResult( result: IRunnable ) {
+  addResult( result: IRunnableResult ) {
 
     const metadata = result.metadata || {};
 

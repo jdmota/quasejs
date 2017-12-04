@@ -21,7 +21,11 @@ function createTest( name, callback, metadata, parent ) {
 
   if ( parentMetadata ) {
     if ( metadata.type === "test" || metadata.type === "group" ) {
-      metadata.status = metadata.status || parentMetadata.status;
+      if ( parentMetadata.status === "failing" ) {
+        metadata.status = metadata.status || "failing";
+      } else {
+        metadata.status = parentMetadata.status || metadata.status;
+      }
     }
     if ( parentMetadata.allowNoPlan ) {
       metadata.allowNoPlan = true;
@@ -60,9 +64,7 @@ const chain = {
 };
 
 function addTest( options, title, callback ) {
-  const placeholder = createTest( title, callback, options, this._current );
-  this._current.addTest( placeholder );
-  return placeholder.api;
+  return createTest( title, callback, options, this._current ).api;
 }
 
 export default function( clazz ) {

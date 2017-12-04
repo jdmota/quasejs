@@ -8,7 +8,7 @@ import SkipError from "./util/skip-error";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
-import type { Status, IRunnable, ITest, IDeferred, IRunReturn, Metadata } from "./interfaces";
+import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, Metadata } from "./interfaces";
 import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
@@ -39,7 +39,7 @@ function processError( e: Object, stack: ?string, runner: Runner ) {
   return err;
 }
 
-export class Runnable implements ITest {
+export class Runnable implements ITestResult, ITest {
 
   name: ?string;
   parent: Suite;
@@ -367,12 +367,11 @@ export class Runnable implements ITest {
     return this.exitSkip( reason );
   }
 
+  runTodo() {
+    return this.exitTodo();
+  }
+
   run() {
-
-    let callback = this.callback;
-    let error;
-    let ret;
-
     if ( this.metadata.status === "skipped" ) {
       return this.exitSkip();
     }
@@ -380,6 +379,10 @@ export class Runnable implements ITest {
     if ( this.metadata.status === "todo" ) {
       return this.exitTodo();
     }
+
+    let callback = this.callback;
+    let error;
+    let ret;
 
     this.timeStart = Date.now();
 
@@ -416,12 +419,11 @@ export class Runnable implements ITest {
     }
 
     return this.exit();
-
   }
 
 }
 
-export default class Test implements IRunnable {
+export default class Test implements ITestResult, IRunnable {
 
   name: string;
   fullname: string[];
@@ -562,6 +564,12 @@ export default class Test implements IRunnable {
   runSkip( reason: ?string ) {
     this.start();
     this.runnable.runSkip( reason );
+    return this.end();
+  }
+
+  runTodo() {
+    this.start();
+    this.runnable.runTodo();
     return this.end();
   }
 

@@ -162,13 +162,24 @@ export default class Suite implements IRunnable {
     return this.exit();
   }
 
+  runTodo() {
+    this.start();
+    this.sequence.runTodo();
+    return this.exit();
+  }
+
   run() {
+    if ( this.metadata.status === "skipped" ) {
+      return this.runSkip();
+    }
+
+    if ( this.metadata.status === "todo" ) {
+      return this.runTodo();
+    }
 
     this.start();
 
-    if ( this.metadata.status !== "skipped" && this.metadata.status !== "todo" ) {
-      this.timeStart = Date.now();
-    }
+    this.timeStart = Date.now();
 
     const result = this.sequence.run();
 
@@ -177,7 +188,6 @@ export default class Suite implements IRunnable {
     }
 
     return this.exit();
-
   }
 
 }

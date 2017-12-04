@@ -166,7 +166,7 @@ export default class TestCollection {
     if ( this._hasUnskippedTests == null ) {
       this._hasUnskippedTests = this.tests.serial.concat( this.tests.concurrent )
         .some( test => {
-          const skipped = test.metadata && test.metadata.status === "skipped";
+          const skipped = test.metadata.status === "skipped" || test.metadata.status === "todo";
           if ( !skipped && test instanceof GroupPlaceholder ) {
             return test.collection.hasUnskippedTests();
           }

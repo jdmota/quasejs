@@ -33,13 +33,11 @@ Modifiers can be chained!
 - `only`: marks a test/group as only.
 - `todo`: marks a test/group as todo. Allows you to not include an implementation.
 - `failing`: marks a test/group as failing. For groups it means all their tests must fail.
-- `strict`: disallows the usage of `only`, `failing`, `todo`, `skipped` modifiers for any inner test or group. Can me applied globally.
+- `strict`: disallows the usage of `only`, `failing`, `todo`, `skipped` modifiers for any inner test or group. Can be applied globally.
 - `bail`: makes a group execution stop after the first test failure. Can me applied globally.
-- `allowNoPlan`: makes a test still succeed if no assertions are run and no planning was done. For hooks this is not needed. Can me applied globally.
+- `allowNoPlan`: makes a test or tests inside a group still succeed if no assertions are run and no planning was done. Can be applied globally.
 
 `serial`, `failing`, `todo`, `only`, `allowZeroPlanned` don't make sense for hooks.
-
-If `strict`, `failing`, `todo`, `skipped`, `allowZeroPlanned` modifiers are applied to a group, they will also be applied for their inner tests or groups.
 
 ## Test api
 

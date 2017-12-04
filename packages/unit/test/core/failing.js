@@ -255,7 +255,7 @@ describe( "unit", () => {
 
   it( "todo in group + failing test", () => {
 
-    assert.expect( 2 );
+    assert.expect( 1 );
 
     const runner = Runner.init();
     const results = runner.listen();
@@ -264,13 +264,14 @@ describe( "unit", () => {
     t.group.todo( () => {
 
       t.failing( () => {
+        /* istanbul ignore next */
         assert.ok( false );
       } );
 
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      assert.strictEqual( results.pop().status, "todo" );
     } );
 
   } );
