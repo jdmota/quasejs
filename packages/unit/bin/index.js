@@ -12,7 +12,7 @@ Options
   --concurrency, -c       Max number of test files running at the same time (Default: CPU logical cores or 2 if running in CI)
   --update-snapshots, -u  Update snapshots
   --timeout, -t           Set global timeout
-  --seed [value]          Specify a seed to order your tests; if option is specified without a value, one will be generated
+  --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
   --color                 Use color output. (Default: true)
 `;

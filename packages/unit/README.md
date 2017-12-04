@@ -258,6 +258,16 @@ Run `slow()` without arguments to get the current value.
 
 Nested groups inherit the value from their parent groups.
 
+### Random
+
+`.allowRandomization( boolean )`
+
+Default is `true`. Set `false` to disable randomization in that group.
+
+Run `allowRandomization()` without arguments to get the current value.
+
+Nested groups inherit the value from their parent groups.
+
 ### Force serial
 
 `.forceSerial( boolean )`

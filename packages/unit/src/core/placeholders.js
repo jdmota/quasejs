@@ -40,6 +40,9 @@ class GroupApi {
   slow( n ) {
     return this._current.slow( n );
   }
+  allowRandomization( b ) {
+    return this._current.allowRandomization( b );
+  }
   forceSerial( b ) {
     return this._current.forceSerial( b );
   }
@@ -71,6 +74,7 @@ export class GroupPlaceholder {
   reruns: number;
   rerunDelayValue: number;
 
+  randomizationAllowed: boolean;
   serialForced: boolean;
 
   constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
@@ -92,6 +96,7 @@ export class GroupPlaceholder {
     this.reruns = parent.reruns || 0;
     this.rerunDelayValue = parent.rerunDelayValue || 0;
 
+    this.randomizationAllowed = parent.randomizationAllowed;
     this.serialForced = parent.serialForced;
 
     if ( typeof callback === "function" ) {
@@ -152,6 +157,13 @@ export class GroupPlaceholder {
     }
     assertNumber( n );
     this.minSlow = n;
+  }
+
+  allowRandomization( b: boolean ) {
+    if ( b === undefined ) {
+      return this.randomizationAllowed;
+    }
+    this.randomizationAllowed = b;
   }
 
   forceSerial( b: boolean ) {

@@ -1,5 +1,7 @@
 import NodeReporter from "./reporters/node";
+import { assertTimeout, assertNumber } from "./core/util/assert-args";
 import requirePlugin from "./core/util/require-plugin";
+import randomizer from "./core/random";
 
 const { EventEmitter } = require( "events" );
 const path = require( "path" );
@@ -254,31 +256,39 @@ class NodeRunner extends EventEmitter {
 export default function cli( { input, flags, config, configLocation } ) {
   const options = Object.assign( {}, config, flags );
 
-  if ( options.inspect || options.inspectBrk ) {
-    if ( options.debug ) {
-      return NodeReporter.fatalError( `You cannot use "debug" with --inspect or --inspect-brk` );
-    }
-    if ( options.concurrency != null && options.concurrency !== 1 ) {
-      return NodeReporter.fatalError( `You cannot use "concurrency" with --inspect or --inspect-brk` );
-    }
-  }
-
-  if ( options.forceSerial ) {
-    if ( options.concurrency != null && options.concurrency !== 1 ) {
-      return NodeReporter.fatalError( `You cannot use "concurrency" with --force-serial` );
-    }
-  }
-
-  options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
-  options.color = options.color === undefined ? true : !!options.color;
-
-  if ( options.inspect || options.inspectBrk || options.forceSerial ) {
-    options.concurrency = 1;
-  }
-
-  let Reporter;
   try {
-    Reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
+    if ( options.inspect || options.inspectBrk ) {
+      if ( options.debug ) {
+        throw new Error( `You cannot use "debug" with --inspect or --inspect-brk` );
+      }
+      if ( options.concurrency != null && options.concurrency !== 1 ) {
+        throw new Error( `You cannot use "concurrency" with --inspect or --inspect-brk` );
+      }
+    }
+
+    if ( options.forceSerial ) {
+      if ( options.concurrency != null && options.concurrency !== 1 ) {
+        throw new Error( `You cannot use "concurrency" with --force-serial` );
+      }
+    }
+
+    options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
+    options.color = options.color === undefined ? true : !!options.color;
+
+    if ( options.inspect || options.inspectBrk || options.forceSerial ) {
+      options.concurrency = 1;
+    }
+
+    options.random = options.random && randomizer( options.random ).hex;
+    options.reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
+
+    if ( options.timeout != null ) {
+      assertTimeout( options.timeout );
+    }
+
+    if ( options.slow != null ) {
+      assertNumber( options.slow );
+    }
   } catch ( err ) {
     return NodeReporter.fatalError( err );
   }
@@ -301,6 +311,7 @@ export default function cli( { input, flags, config, configLocation } ) {
 
       NodeReporter.showFilesCount( files.length );
 
+      const Reporter = options.reporter;
       new Reporter( // eslint-disable-line no-new
         new NodeRunner( options, files ).start( { flags, config, configLocation } )
       );

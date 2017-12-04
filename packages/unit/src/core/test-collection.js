@@ -197,16 +197,16 @@ export default class TestCollection {
       }
     }
 
+    const randomizer = suite.placeholder.randomizationAllowed && suite.runner.randomizer;
+
     if ( serial.length ) {
-      seq.add( this.buildTestSeq( serial, false, suite ), true );
+      const tests = randomizer ? randomizer.shuffle( serial ) : serial;
+      seq.add( this.buildTestSeq( tests, false, suite ), true );
     }
 
     if ( concurrent.length ) {
-      if ( suite.runner.randomizer ) {
-        seq.add( this.buildTestSeq( suite.runner.randomizer.shuffle( concurrent ), false, suite ), true );
-      } else {
-        seq.add( this.buildTestSeq( concurrent, true, suite ), true );
-      }
+      const tests = randomizer ? randomizer.shuffle( concurrent ) : concurrent;
+      seq.add( this.buildTestSeq( tests, true, suite ), true );
     }
 
     if ( runBeforeAfter ) {

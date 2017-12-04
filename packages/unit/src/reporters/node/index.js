@@ -31,6 +31,8 @@ export default class NodeReporter {
       }
     } );
     runner.on( "exit", async() => {
+      NodeReporter.showSeed( runner );
+
       await this.logOtherErrors();
 
       if ( process.exitCode ) {
@@ -49,6 +51,13 @@ export default class NodeReporter {
     logEol();
     log( chalk.bold.green( "Files count: " ) + count + "\n" );
     logEol();
+  }
+
+  static showSeed( runner ) {
+    if ( runner.options.random ) {
+      log( chalk.bold.yellow( "Random seed: " ) + runner.options.random + "\n" );
+      logEol();
+    }
   }
 
   static showConcurrency( runner ) {

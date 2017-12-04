@@ -35,7 +35,7 @@ class Runner extends EventEmitter {
       assertNumber( options.slow );
     }
 
-    this.randomizer = randomizer( options.seed );
+    this.randomizer = randomizer( options.random );
 
     this.onlyCount = 0;
     this.promises = [];
@@ -57,6 +57,7 @@ class Runner extends EventEmitter {
         maxTimeout: options.timeout || 0,
         timeoutStack: null,
         minSlow: options.slow || 0,
+        randomizationAllowed: true,
         serialForced: !!options.forceSerial
       },
       true

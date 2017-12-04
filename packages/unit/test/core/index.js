@@ -14,6 +14,7 @@ import "./noglobals";
 import "./observable";
 import "./only";
 import "./post-error";
+import "./random";
 import "./serial-tests-async";
 import "./skip";
 import "./test-and-hooks";

@@ -1,7 +1,7 @@
 const Random = require( "random-js" );
 
 function toHex( int ) {
-  return "0x" + int.toString( 16 ).toUpperCase();
+  return int < 0 ? "-0x" + ( -int ).toString( 16 ).toUpperCase() : "0x" + int.toString( 16 ).toUpperCase();
 }
 
 const MIN_INTEGER = -2147483648;
