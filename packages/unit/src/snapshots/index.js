@@ -1,26 +1,33 @@
 // @flow
-
-import { plain as concordanceOptions } from "../core/concordance-options";
 import { encode, decode, type Snapshots } from "./encode-decode";
 
-const fs = require( "fs-extra" );
+const originalFs = require( "fs-extra" );
 const path = require( "path" );
 const concordance = require( "concordance" );
 const _writeFileAtomic = require( "write-file-atomic" );
+const { prettify } = require( "@quase/path-url" );
+const isCi = require( "is-ci" );
+
+type FS = {
+  writeFileAtomic( string, any, ?Object ): Promise<void>,
+  readFileSync( string ): Buffer,
+  remove( string ): Promise<void>,
+  ensureDir( string ): Promise<void>
+};
 
 function writeFileAtomic( filename, data, options ) {
   return new Promise( ( resolve, reject ) => {
-    _writeFileAtomic( filename, data, options, ( err, value ) => {
+    _writeFileAtomic( filename, data, options, err => {
       if ( err ) {
         reject( err );
       } else {
-        resolve( value );
+        resolve();
       }
     } );
   } );
 }
 
-function tryDecode( file: string ): Snapshots {
+function tryDecode( fs: FS, file: string ): Snapshots {
   try {
     return decode( fs.readFileSync( file ), file );
   } catch ( err ) {
@@ -42,14 +49,25 @@ class SnapshotMissmatch extends Error {
   }
 }
 
-type Stats = { added: number, removed: number, updated: number };
-
-function getSnapPath( filePath: string ): string {
-  return filePath + ".snap";
+class SnapshotMissing extends Error {
+  +expectedDescribe: Object;
+  +actualDescribe: Object;
+  constructor( actualDescribe: Object ) {
+    super( "Snapshot missing. Note that snapshots are not created automatically when in a CI environment." );
+    this.name = "SnapshotMissing";
+    this.expectedDescribe = concordance.describe( undefined );
+    this.actualDescribe = actualDescribe;
+  }
 }
 
-function getReportPath( filePath: string ): string {
-  return filePath + ".md";
+type Stats = { added: number, removed: number, updated: number };
+
+function getFile( projectDir: string, filePath: string, fixedLocation: ?string ) {
+  if ( fixedLocation ) {
+    const relative = path.relative( projectDir, filePath );
+    return path.resolve( projectDir, fixedLocation, relative );
+  }
+  return path.resolve( filePath, "..", "__snapshots__", path.basename( filePath ) );
 }
 
 export default class SnapshotsManager {
@@ -59,16 +77,34 @@ export default class SnapshotsManager {
   +reportPath: string;
   +prevSnapshots: Snapshots;
   +newSnapshots: Snapshots;
+  +testKeys: Map<string, number>;
   +reports: Map<string, Object>;
   +updating: boolean;
   +stats: Stats;
+  +concordanceOptions: Object;
+  +fs: FS;
 
-  constructor( filePath: string, updating: ?boolean ) {
+  constructor(
+    projectDir: string,
+    filePath: string,
+    fixedLocation: ?string,
+    updating: ?boolean,
+    concordanceOptions: Object,
+    fs: ?FS
+  ) {
+    const file = getFile( projectDir, filePath, fixedLocation );
     this.filePath = filePath;
-    this.snapPath = getSnapPath( filePath );
-    this.reportPath = getReportPath( filePath );
-    this.prevSnapshots = tryDecode( this.snapPath );
+    this.snapPath = file + ".snap";
+    this.reportPath = file + ".md";
+    this.fs = fs || {
+      writeFileAtomic,
+      readFileSync: originalFs.readFileSync,
+      remove: originalFs.remove,
+      ensureDir: originalFs.ensureDir
+    };
+    this.prevSnapshots = tryDecode( this.fs, this.snapPath );
     this.newSnapshots = new Map();
+    this.testKeys = new Map();
     this.reports = new Map();
     this.updating = !!updating;
     this.stats = {
@@ -76,24 +112,29 @@ export default class SnapshotsManager {
       removed: 0,
       updated: 0
     };
+    this.concordanceOptions = { plugins: concordanceOptions.plugins };
   }
 
-  toMatchSnapshot( testKey: string, actual: mixed ) {
+  matchesSnapshot( _key: string, title: string, actualBuffer: Buffer ) {
 
-    if ( this.newSnapshots && this.newSnapshots.has( testKey ) ) {
-      throw new Error( `Key ${testKey} was already used.` );
-    }
+    const index = this.testKeys.get( _key ) || 1;
+    this.testKeys.set( _key, index + 1 );
+
+    const testKey = _key + " " + index;
+
+    const actualDescribe = concordance.deserialize( actualBuffer );
 
     const expectedBuffer = this.prevSnapshots.get( testKey );
 
-    if ( expectedBuffer === undefined || this.updating ) {
+    if ( expectedBuffer === undefined && isCi && !this.updating ) {
 
-      const actualDescribe = concordance.describe( actual, concordanceOptions );
-      const actualBuffer = concordance.serialize( actualDescribe );
+      throw new SnapshotMissing( actualDescribe );
+
+    } else if ( expectedBuffer === undefined || this.updating ) {
 
       // Add new snapshot
       this.newSnapshots.set( testKey, actualBuffer );
-      this.reports.set( testKey, actualDescribe );
+      this.reports.set( title, actualDescribe );
 
       if ( expectedBuffer === undefined ) {
         this.stats.added++;
@@ -103,12 +144,11 @@ export default class SnapshotsManager {
 
     } else {
 
-      const expectedDescribe = concordance.deserialize( expectedBuffer, concordanceOptions );
-      const actualDescribe = concordance.describe( actual, concordanceOptions );
+      const expectedDescribe = concordance.deserialize( expectedBuffer, this.concordanceOptions );
 
       // Keep previous snapshot
       this.newSnapshots.set( testKey, expectedBuffer );
-      this.reports.set( testKey, expectedDescribe );
+      this.reports.set( title, expectedDescribe );
 
       if ( concordance.compareDescriptors( expectedDescribe, actualDescribe ) ) {
         return;
@@ -125,8 +165,8 @@ export default class SnapshotsManager {
       if ( this.prevSnapshots.size > 0 ) {
         this.stats.removed = this.prevSnapshots.size;
         await Promise.all( [
-          fs.remove( this.snapPath ),
-          fs.remove( this.reportPath )
+          this.fs.remove( this.snapPath ),
+          this.fs.remove( this.reportPath )
         ] );
       }
     } else {
@@ -137,14 +177,14 @@ export default class SnapshotsManager {
       }
 
       if ( this.stats.added || this.stats.updated || this.stats.removed ) {
-        const p = fs.ensureDir( path.dirname( this.snapPath ) );
+        const p = this.fs.ensureDir( path.dirname( this.snapPath ) );
         const buffer = encode( this.newSnapshots );
         const report = this.makeReport();
 
         await p;
         await Promise.all( [
-          writeFileAtomic( this.snapPath, buffer ),
-          writeFileAtomic( this.reportPath, report )
+          this.fs.writeFileAtomic( this.snapPath, buffer ),
+          this.fs.writeFileAtomic( this.reportPath, report )
         ] );
       }
     }
@@ -153,12 +193,12 @@ export default class SnapshotsManager {
   }
 
   makeReport(): string {
-    const lines = [ `# Quase-unit Snapshot Report for \`${this.filePath}\`\n` ];
-    for ( const [ key, value ] of this.reports ) {
-      lines.push( `## ${key}\n` );
+    const lines = [ `# Quase-unit Snapshot Report for \`${prettify( this.filePath )}\`\n` ];
+    for ( const [ title, value ] of this.reports ) {
+      lines.push( `## ${title}\n` );
       lines.push( "```" );
       lines.push(
-        concordance.formatDescriptor( value, concordanceOptions )
+        concordance.formatDescriptor( value, this.concordanceOptions )
       );
       lines.push( "```\n" );
     }

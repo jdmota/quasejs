@@ -351,6 +351,10 @@ t.afterEach( ( { context } ) => {
 - Snapshot support.
 - Fails if new snapshots are created on CI.
 
+The snapshot files will be saved in a directory structure that mirrors that of your test files.
+
+If you are running against precompiled test files, we will try and use source maps to determine the location of the original files. Snapshots will be stored next to these files, following the same rules.
+
 ## Config
 
 - Matches

@@ -1,15 +1,21 @@
-import NodeReporter from "./reporters/node";
+import { color as concordanceOptions, plain as plainConcordanceOptions } from "./core/concordance-options";
 import { assertTimeout, assertNumber } from "./core/util/assert-args";
 import requirePlugin from "./core/util/require-plugin";
 import randomizer from "./core/random";
+import { processError } from "./core/process-error";
+import NodeReporter from "./reporters/node";
+import SnapshotsManager from "./snapshots";
 
+const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
+const findFiles = require( "@quase/find-files" ).default;
+const FileSystem = require( "@quase/memory-fs" ).default;
+const { beautify: beautifyStack } = require( "@quase/error" );
 const { EventEmitter } = require( "events" );
 const path = require( "path" );
 const childProcess = require( "child_process" );
 const os = require( "os" );
 const CircularJSON = require( "circular-json" );
 const isCi = require( "is-ci" );
-const findFiles = require( "@quase/find-files" ).default;
 const ora = require( "ora" );
 
 const reDebugger = /Debugger listening on (ws:\/\/.+)\r?\n/;
@@ -116,7 +122,10 @@ class NodeRunner extends EventEmitter {
     this.runStartEmmited = false;
     this.buffer = [];
 
-    process.once( "beforeExit", () => {
+    this.extractor = new SourceMapExtractor( new FileSystem() );
+    this.snapshotManagers = new Map(); // Map<fullpath, SnapshotManager>
+
+    process.once( "beforeExit", async() => {
       this.emit( "exit", {} );
     } );
   }
@@ -167,13 +176,18 @@ class NodeRunner extends EventEmitter {
         }
 
         if ( ++this.runEnds === this.forks.length ) {
-          this.emit( eventType, this.runEndArg );
+          this.saveSnapshots().then( snapshotStats => {
+            this.runEndArg.snapshotStats = snapshotStats;
+            this.emit( eventType, this.runEndArg );
+          } );
         }
       } else if ( eventType === "otherError" ) {
         this.emit( eventType, arg );
         if ( !this.forksStarted[ childIdx ] ) {
           this.forks[ childIdx ].disconnect();
         }
+      } else if ( eventType === "matchesSnapshot" ) {
+        this.handleSnapshot( arg, childIdx );
       } else {
         if ( this.runStartEmmited ) {
           this.emit( eventType, arg );
@@ -186,6 +200,70 @@ class NodeRunner extends EventEmitter {
       }
 
     }
+  }
+
+  async handleSnapshot( { byteArray, stack, fullname, id }, childIdx ) {
+
+    const { source } = await beautifyStack( stack, this.extractor );
+    const { file, line, column } = source;
+
+    let manager = this.snapshotManagers.get( file );
+    if ( !manager ) {
+      manager = new SnapshotsManager(
+        process.cwd(),
+        file,
+        this.options.snapshotDir,
+        this.options.updateSnapshots,
+        this.options.concordanceOptions
+      );
+      this.snapshotManagers.set( file, manager );
+    }
+
+    let error;
+
+    try {
+      manager.matchesSnapshot(
+        fullname.join( " " ),
+        `${fullname.join( " " )} (${line}:${column})`,
+        Buffer.from( byteArray )
+      );
+    } catch ( e ) {
+      error = processError( e, stack, this.options.concordanceOptions );
+    }
+
+    this.forks[ childIdx ].send( {
+      type: "quase-unit-snap-result",
+      id,
+      error: error && {
+        message: error.message,
+        stack: error.stack,
+        diff: error.diff
+      }
+    } );
+
+  }
+
+  async saveSnapshots() {
+    const promises = [];
+
+    for ( const manager of this.snapshotManagers.values() ) {
+      promises.push( manager.save() );
+    }
+
+    const stats = await Promise.all( promises );
+    const finalStat = {
+      added: 0,
+      removed: 0,
+      updated: 0
+    };
+
+    for ( const stat of stats ) {
+      finalStat.added += stat.added;
+      finalStat.removed += stat.removed;
+      finalStat.updated += stat.updated;
+    }
+
+    return finalStat;
   }
 
   start( cli ) {
@@ -226,7 +304,7 @@ class NodeRunner extends EventEmitter {
       const fork = childProcess.fork(
         path.resolve( __dirname, "fork.js" ),
         args,
-        { env, execArgv, silent: true }
+        { cwd: process.cwd(), env, execArgv, silent: true }
       );
       this.forks.push( fork );
       this.forksStarted.push( false );
@@ -282,6 +360,12 @@ export default function cli( { input, flags, config, configLocation } ) {
     options.random = options.random && randomizer( options.random ).hex;
     options.reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
     options.env = requirePlugin( options.env, null, "object", "environment" );
+    options.concordanceOptions = requirePlugin(
+      options.concordanceOptions,
+      options.color ? concordanceOptions : plainConcordanceOptions,
+      "object",
+      "concordance options"
+    );
 
     if ( options.timeout != null ) {
       assertTimeout( options.timeout );

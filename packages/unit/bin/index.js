@@ -16,6 +16,7 @@ Options
   --allow-no-plan         Makes tests still succeed if no assertions are run and no planning was done
   --strict                Disallows the usage of "only", "failing", "todo", "skipped" modifiers
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
+  --snapshot-dir          Specify a fixed location for storing the snapshot files
   --env <environment>     The test environment used for all tests. This can point to any file or node module
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
   --no-color              Disallows color output
@@ -72,6 +73,9 @@ require( "@quase/cli" ).default( function( o ) {
     strict: {
       type: "boolean",
       default: false
+    },
+    snapshotDir: {
+      type: "string"
     },
     reporter: {
       type: "string"

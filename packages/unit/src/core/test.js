@@ -13,35 +13,14 @@ import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
 import { InTestSequence } from "./sequence";
+import { processError } from "./process-error";
 
 const { getStack } = require( "@quase/error" );
-const concordance = require( "concordance" );
-
-function processStack( err: Error, stack: ?string ) {
-  if ( stack && err.message ) {
-    return stack.replace( /^Error\n/, `Error: ${err.message}\n` );
-  }
-  return stack || err.stack;
-}
-
-function processError( e: Object, stack: ?string, runner: Runner ) {
-  const err = e == null || typeof e !== "object" ? new AssertionError( e ) : e;
-  err.stack = processStack( err, stack );
-  if ( err.actual !== undefined || err.expected !== undefined ) {
-    const actualDescribe = concordance.describe( err.actual, runner.concordanceOptions );
-    const expectedDescribe = concordance.describe( err.expected, runner.concordanceOptions );
-    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, runner.concordanceOptions );
-  } else if ( err.actualDescribe !== undefined && err.expectedDescribe !== undefined ) {
-    const actualDescribe = err.actualDescribe;
-    const expectedDescribe = err.expectedDescribe;
-    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, runner.concordanceOptions );
-  }
-  return err;
-}
 
 export class Runnable implements ITestResult, ITest {
 
-  name: ?string;
+  name: string;
+  fullname: string[];
   parent: Suite;
   runner: Runner;
   status: Status;
@@ -63,7 +42,7 @@ export class Runnable implements ITestResult, ITest {
   skipReason: ?string;
   globalsCheck: ?GlobalEnv;
   finished: boolean;
-  deferred: ?IDeferred<Runnable>;
+  deferred: ?IDeferred<void>;
   timeStart: number;
   timeoutId: any;
 
@@ -77,9 +56,12 @@ export class Runnable implements ITestResult, ITest {
   reruns: number;
   rerunDelayValue: number;
 
+  snapshotsWaiting: IDeferred<?Object>[];
+
   constructor( placeholder: TestPlaceholder, context: ?Object, parent: Suite ) {
 
     this.name = placeholder.name;
+    this.fullname = placeholder.fullname;
     this.parent = parent;
     this.runner = parent.runner;
 
@@ -121,6 +103,8 @@ export class Runnable implements ITestResult, ITest {
     this.timeoutStack = parentPlaceholder.timeoutStack;
     this.minSlow = parentPlaceholder.minSlow || 0;
 
+    this.snapshotsWaiting = [];
+
     this.globalsCheck = this.runner.noglobals ? new GlobalEnv() : null;
 
     this.finished = false;
@@ -130,9 +114,9 @@ export class Runnable implements ITestResult, ITest {
     const _this: any = this;
     _this.run = this.run.bind( this );
     _this.runSkip = this.runSkip.bind( this );
+    _this.runTodo = this.runTodo.bind( this );
     _this.exit = this.exit.bind( this );
     _this.exitError = this.exitError.bind( this );
-    _this.exitTimeout = this.exitTimeout.bind( this );
   }
 
   clone( context: Object ) {
@@ -165,12 +149,20 @@ export class Runnable implements ITestResult, ITest {
       timeout: this.timeout.bind( this ),
       slow: this.defineSlow.bind( this ),
       log: this.log.bind( this ),
+      matchesSnapshot: this.matchesSnapshot.bind( this ),
       context: this.context
     }, this.runner.assertions );
   }
 
   log( text: string ) {
     this.logs.push( text );
+  }
+
+  matchesSnapshot( something: any ) {
+    const deferred = defer();
+    this.snapshotsWaiting.push( deferred );
+    this.incCount();
+    this.runner.matchesSnapshot( something, getStack( 2 ), this.fullname, deferred );
   }
 
   plan( n: number ) {
@@ -269,7 +261,7 @@ export class Runnable implements ITestResult, ITest {
   }
 
   addError( e: Object, stack: ?string ) {
-    const err = processError( e, stack, this.runner );
+    const err = processError( e, stack, this.runner.concordanceOptions );
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
         this.runner.otherError( err );
@@ -312,41 +304,27 @@ export class Runnable implements ITestResult, ITest {
     return this.exit();
   }
 
-  exitTimeout() {
-    this.addError( new Error( "Timeout exceeded." ), this.timeoutStack );
-    return this.exit();
-  }
-
   exitError( error: Object ) {
     this.addError( error );
     return this.exit();
+  }
+
+  checkFailure() {
+    if ( this.errors.length ) {
+      this.status = "failed";
+    } else {
+      this.status = this.status || "passed";
+    }
+
+    if ( this.status === "failed" && this.metadata.type !== "test" ) {
+      this.failedBecauseOfHook = { level: this.level };
+    }
   }
 
   exit() {
     if ( this.finished ) {
       return this;
     }
-
-    if ( !this.status && this.globalsCheck ) {
-      const e = this.globalsCheck.check();
-      if ( e ) {
-        this.addError( e );
-      }
-    }
-
-    if ( this.errors.length ) {
-      this.status = "failed";
-    } else if ( !this.status ) {
-      this.checkPlanCount();
-
-      if ( this.errors.length ) {
-        this.status = "failed";
-      } else {
-        this.status = "passed";
-      }
-    }
-
-    this.finished = true;
 
     if ( this.timeStart ) {
       this.runtime = Date.now() - this.timeStart;
@@ -358,14 +336,32 @@ export class Runnable implements ITestResult, ITest {
 
     this.slow = this.minSlow ? this.runtime >= this.minSlow : false;
 
-    if ( this.status === "failed" && this.metadata.type !== "test" ) {
-      this.failedBecauseOfHook = { level: this.level };
+    if ( !this.status ) {
+      if ( this.globalsCheck ) {
+        const e = this.globalsCheck.check();
+        if ( e ) {
+          this.addError( e );
+        }
+      }
+
+      if ( !this.errors.length ) {
+        this.checkPlanCount();
+      }
     }
 
-    if ( this.deferred ) {
-      this.deferred.resolve( this );
-      this.deferred = null;
-      return this;
+    this.finished = true;
+    this.checkFailure();
+
+    if ( this.snapshotsWaiting.length ) {
+      return Promise.all( this.snapshotsWaiting.map( d => d.promise ) ).then( errors => {
+        for ( const error of errors ) {
+          if ( error ) {
+            this.errors.push( error );
+          }
+        }
+        this.checkFailure();
+        return this;
+      } );
     }
 
     return this;
@@ -409,7 +405,15 @@ export class Runnable implements ITestResult, ITest {
     }
 
     if ( this.maxTimeout ) {
-      this.timeoutId = setTimeout( this.exitTimeout, this.maxTimeout );
+      this.timeoutId = setTimeout( () => {
+        this.addError( new Error( "Timeout exceeded." ), this.timeoutStack );
+
+        const d = this.deferred;
+        if ( d ) {
+          this.deferred = null;
+          d.resolve();
+        }
+      }, this.maxTimeout );
     }
 
     let promise;
@@ -422,8 +426,7 @@ export class Runnable implements ITestResult, ITest {
 
     if ( promise ) {
       const d = this.deferred = defer();
-      promise.then( this.exit, this.exitError );
-      return d.promise;
+      return Promise.race( [ promise, d.promise ] ).then( this.exit, this.exitError );
     }
 
     return this.exit();
@@ -526,7 +529,7 @@ export default class Test implements ITestResult, IRunnable {
           processError(
             new AssertionError( "Test was expected to fail, but succeeded, you should stop marking the test as failing." ),
             this.placeholder.defaultStack,
-            this.runner
+            this.runner.concordanceOptions
           )
         );
       }

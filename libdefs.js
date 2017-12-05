@@ -2,6 +2,8 @@
 
 declare module "@quase/memory-fs" { declare var exports: any; }
 declare module "@quase/error" { declare var exports: any; }
+declare module "@quase/path-url" { declare var exports: any; }
+declare module "is-ci" { declare var exports: boolean; }
 declare module "fs-extra" { declare var exports: any; }
 declare module "pacote" { declare var exports: any; }
 declare module "read-pkg" { declare var exports: any; }

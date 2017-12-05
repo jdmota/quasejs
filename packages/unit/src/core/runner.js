@@ -165,7 +165,7 @@ class Runner extends EventEmitter {
     this.emit( "testStart", {
       name: test.name,
       suiteName: test.suiteName,
-      fullname: test.fullname,
+      fullname: test.fullname
     } );
   }
 
@@ -182,6 +182,15 @@ class Runner extends EventEmitter {
       slow: test.slow,
       assertions: test.assertions,
       defaultStack: test.placeholder.defaultStack
+    } );
+  }
+
+  matchesSnapshot( something, stack, fullname, deferred ) {
+    this.emit( "matchesSnapshot", {
+      something,
+      stack,
+      fullname,
+      deferred
     } );
   }
 

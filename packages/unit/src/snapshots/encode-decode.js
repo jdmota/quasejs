@@ -33,20 +33,12 @@ class HeaderMismatchError extends SnapshotError {
   }
 }
 
-function withoutLineEndings( buffer: Buffer ): Buffer {
-  let newLength = buffer.length - 1;
-  while ( buffer[ newLength ] === 10 || buffer[ newLength ] === 13 ) {
-    newLength--;
-  }
-  return buffer.slice( 0, newLength );
-}
-
 class ReadableBuffer {
   +buffer: Buffer;
   byteOffset: number;
 
   constructor( buffer: Buffer ) {
-    this.buffer = withoutLineEndings( buffer );
+    this.buffer = buffer;
     this.byteOffset = 0;
   }
 
@@ -107,7 +99,9 @@ export function encode( snapshots: Snapshots ): Buffer {
 
   const buffer = new WritableBuffer();
 
-  for ( const [ key, value ] of snapshots ) {
+  for ( const key of Array.from( snapshots.keys() ).sort() ) {
+    // $FlowFixMe
+    const value: Buffer = snapshots.get( key );
     buffer.writeLineString( key );
     buffer.writeLineString( value.length + "" );
     buffer.write( value );

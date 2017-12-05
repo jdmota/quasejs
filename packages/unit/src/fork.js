@@ -1,5 +1,6 @@
 const importFresh = require( "import-fresh" );
 const CircularJSON = require( "circular-json" );
+const concordance = require( "concordance" );
 
 function stringify( arg ) {
   return CircularJSON.stringify( arg, ( _, value ) => {
@@ -14,6 +15,9 @@ function stringify( arg ) {
       }
       return obj;
     }
+    if ( value instanceof Buffer ) {
+      return Array.from( Buffer );
+    }
     return value;
   } );
 }
@@ -26,7 +30,10 @@ function send( eventType, arg ) {
   } );
 }
 
-const onMessage = ( type, cli, files ) => {
+function start( cli, files ) {
+  const testsWaitingAnswer = new Map();
+  let uuid = 1;
+
   const { flags, config, configLocation } = cli;
   let options;
 
@@ -45,6 +52,28 @@ const onMessage = ( type, cli, files ) => {
     runner.on( eventType, arg => {
       send( eventType, arg );
     } );
+  } );
+
+  runner.on( "matchesSnapshot", ( { something, stack, fullname, deferred } ) => {
+    const id = uuid++;
+    testsWaitingAnswer.set( id, deferred );
+
+    send( "matchesSnapshot", {
+      byteArray: concordance.serialize(
+        concordance.describe( something, runner.concordanceOptions )
+      ),
+      stack,
+      fullname,
+      id
+    } );
+  } );
+
+  process.on( "message", ( { type, id, error } ) => {
+    if ( type === "quase-unit-snap-result" ) {
+      const deferred = testsWaitingAnswer.get( id );
+      testsWaitingAnswer.delete( id );
+      deferred.resolve( error );
+    }
   } );
 
   for ( const file of files ) {
@@ -66,12 +95,12 @@ const onMessage = ( type, cli, files ) => {
   } );
 
   runner.run();
-};
+}
 
 process.on( "message", ( { type, cli, files } ) => {
   if ( type === "quase-unit-start" ) {
     try {
-      onMessage( type, cli, files );
+      start( cli, files );
     } catch ( err ) {
       send( "otherError", err );
     }

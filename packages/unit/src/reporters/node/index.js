@@ -5,8 +5,6 @@ const chalk = require( "chalk" );
 const logSymbols = require( "log-symbols" );
 const ora = require( "ora" );
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
-const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
-const FileSystem = require( "@quase/memory-fs" ).default;
 const { beautify: beautifyStack } = require( "@quase/error" );
 const { prettify } = require( "@quase/path-url" );
 
@@ -16,7 +14,7 @@ export default class NodeReporter {
 
   constructor( runner ) {
     this.runner = runner;
-    this.extractor = new SourceMapExtractor( new FileSystem() );
+    this.extractor = runner.extractor;
     this.spinner = null;
     this.tests = [];
     this.otherErrors = [];
@@ -156,6 +154,10 @@ export default class NodeReporter {
         ].filter( Boolean );
       }
 
+      if ( t.snapshotStats ) {
+        this.showSnapshotStats( lines, t.snapshotStats );
+      }
+
       lines.push( `\n\n  ${colors.duration( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
 
       process.stdout.write( lines.join( "" ) );
@@ -172,6 +174,15 @@ export default class NodeReporter {
       }
 
     } );
+  }
+
+  showSnapshotStats( lines, { added, removed, updated } ) {
+    if ( added + removed + updated > 0 ) {
+      lines.push( chalk.blue( "\n\n  Snapshots" ) );
+      lines.push( chalk.green( `\n    Added: ${added}` ) );
+      lines.push( chalk.green( `\n    Updated: ${updated}` ) );
+      lines.push( chalk.red( `\n    Removed: ${removed}` ) );
+    }
   }
 
   testEnd( t ) {
