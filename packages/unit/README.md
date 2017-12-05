@@ -62,6 +62,12 @@ test( t => {
 
 `.incCount()`
 
+### Logging
+
+`.log( string )`
+
+Print a log message contextually alongside the test result instead of immediately printing it to `stdout` like `console.log`.
+
 ### Skip
 
 `.skip( ?string )`

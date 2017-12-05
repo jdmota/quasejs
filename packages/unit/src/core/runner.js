@@ -176,6 +176,7 @@ class Runner extends EventEmitter {
       suiteName: test.suiteName,
       status: test.status,
       errors: test.errors,
+      logs: test.logs,
       runtime: test.runtime,
       skipReason: test.skipReason,
       slow: test.slow,

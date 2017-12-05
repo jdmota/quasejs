@@ -191,6 +191,7 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
   metadata: Metadata;
   errors: Object[];
   assertions: Object[];
+  logs: string[];
   runtime: number;
   middleRunnable: Runnable;
   middleRunnableProxy: ClonableProxy;
@@ -199,6 +200,7 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
     super( false, false, level );
     this.errors = [];
     this.assertions = [];
+    this.logs = [];
     this.status = undefined;
     this.runtime = 0;
     this.metadata = metadata;
@@ -251,13 +253,12 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
       }
     }
 
-    if ( result.errors ) {
-      result.errors.forEach( x => this.errors.push( x ) );
-      result.assertions.forEach( x => this.assertions.push( x ) );
-      this.runtime += result.runtime;
-    }
+    result.errors.forEach( x => this.errors.push( x ) );
+    result.assertions.forEach( x => this.assertions.push( x ) );
+    result.logs.forEach( x => this.logs.push( x ) );
+    this.runtime += result.runtime;
 
-    if ( result.slow === true ) {
+    if ( result.slow ) {
       this.slow = true;
     }
 

@@ -2,6 +2,7 @@ import colors from "./colors";
 import { log, log as printLog, logEol, indentString } from "./log";
 
 const chalk = require( "chalk" );
+const logSymbols = require( "log-symbols" );
 const ora = require( "ora" );
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
@@ -253,9 +254,9 @@ export default class NodeReporter {
     printLog( log, 4 );
   }
 
-  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, defaultStack } ) {
+  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, defaultStack } ) {
 
-    if ( status === "passed" && !slow ) {
+    if ( status === "passed" && !slow && !logs.length ) {
       return;
     }
 
@@ -273,6 +274,17 @@ export default class NodeReporter {
       }
     } else {
       await this.logDefault( defaultStack );
+
+      logs.forEach( log => {
+        const logLines = indentString( colors.log( log ), 6 );
+        const logLinesWithFigure = logLines.replace(
+          /^ {6}/,
+          `    ${logSymbols.info} `
+        );
+
+        printLog( logLinesWithFigure, 0 );
+        logEol();
+      } );
     }
 
   }

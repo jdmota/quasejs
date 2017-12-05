@@ -78,6 +78,7 @@ describe( "unit", () => {
         suiteName: "",
         status: "passed",
         errors: [],
+        logs: [],
         skipReason: undefined,
         slow: false,
         assertions: []
@@ -125,6 +126,7 @@ describe( "unit", () => {
         suiteName: "",
         status: "skipped",
         errors: [],
+        logs: [],
         skipReason: "skip reason",
         slow: false,
         assertions: []

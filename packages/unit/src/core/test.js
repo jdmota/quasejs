@@ -49,6 +49,7 @@ export class Runnable implements ITestResult, ITest {
   errors: Object[];
   assertions: Object[];
   slow: boolean;
+  logs: string[];
   placeholder: TestPlaceholder;
   callback: Function;
   metadata: Metadata;
@@ -87,6 +88,8 @@ export class Runnable implements ITestResult, ITest {
     this.errors = [];
     this.assertions = [];
     this.slow = false;
+
+    this.logs = [];
 
     this.placeholder = placeholder;
 
@@ -161,8 +164,13 @@ export class Runnable implements ITestResult, ITest {
       rerunDelay: this.rerunDelay.bind( this ),
       timeout: this.timeout.bind( this ),
       slow: this.defineSlow.bind( this ),
+      log: this.log.bind( this ),
       context: this.context
     }, this.runner.assertions );
+  }
+
+  log( text: string ) {
+    this.logs.push( text );
   }
 
   plan( n: number ) {
@@ -433,6 +441,7 @@ export default class Test implements ITestResult, IRunnable {
   errors: Object[];
   assertions: Object[];
   slow: boolean;
+  logs: string[];
   level: number;
   failedBecauseOfHook: ?{ level: number };
   skipReason: ?string;
@@ -464,6 +473,8 @@ export default class Test implements ITestResult, IRunnable {
     this.assertions = [];
 
     this.slow = false;
+
+    this.logs = [];
 
     this.level = placeholder.level;
     this.failedBecauseOfHook = null;
@@ -501,6 +512,7 @@ export default class Test implements ITestResult, IRunnable {
     this.status = this.runnable.status;
     this.runtime = this.runnable.runtime;
     this.slow = this.runnable.slow;
+    this.logs = this.runnable.logs;
     this.failedBecauseOfHook = this.runnable.failedBecauseOfHook;
     this.skipReason = this.runnable.skipReason;
 

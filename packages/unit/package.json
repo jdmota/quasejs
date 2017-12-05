@@ -25,6 +25,7 @@
     "fs-extra": "^4.0.2",
     "import-fresh": "^2.0.0",
     "is-ci": "^1.0.10",
+    "log-symbols": "^2.1.0",
     "ora": "^1.2.0",
     "random-js": "^1.0.8",
     "require-relative": "^0.8.7",

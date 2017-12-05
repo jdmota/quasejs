@@ -35,6 +35,7 @@ export interface ITestResult extends IRunnableResult {
   metadata: Metadata,
   errors: Object[],
   assertions: Object[],
+  logs: string[],
   runtime: number
 }
 

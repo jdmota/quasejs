@@ -2,6 +2,7 @@ const chalk = require( "chalk" );
 
 export default {
   _reset: chalk.reset,
+  log: chalk.gray,
   title: chalk.bold && chalk.bold.white,
   error: chalk.red,
   skip: chalk.yellow,
