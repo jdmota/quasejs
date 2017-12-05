@@ -77,8 +77,8 @@ export class GroupPlaceholder {
   randomizationAllowed: boolean;
   serialForced: boolean;
 
-  constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
-    this.name = name || "";
+  constructor( name: string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
+    this.name = name;
     this.fullname = root ? [] : parent.fullname.concat( this.name );
     this.metadata = metadata;
     this.parent = parent;
@@ -193,8 +193,8 @@ export class TestPlaceholder {
   level: number;
   defaultStack: string;
 
-  constructor( name: ?string, callback: Function, metadata: Metadata, parent: GroupPlaceholder ) {
-    this.name = name || "";
+  constructor( name: string, callback: Function, metadata: Metadata, parent: GroupPlaceholder ) {
+    this.name = name;
     this.fullname = parent.fullname.concat( this.name );
     this.callback = callback;
     this.metadata = metadata;

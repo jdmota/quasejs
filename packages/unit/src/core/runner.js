@@ -41,7 +41,7 @@ class Runner extends EventEmitter {
     this.promises = [];
 
     this.root = new GroupPlaceholder(
-      undefined,
+      "",
       undefined,
       {
         type: "group",

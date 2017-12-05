@@ -22,8 +22,8 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
@@ -60,8 +60,8 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
@@ -73,8 +73,8 @@ describe( "unit", () => {
       delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: "",
         status: "passed",
         errors: [],
@@ -108,8 +108,8 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
@@ -121,8 +121,8 @@ describe( "unit", () => {
       delete results[ 5 ].defaultStack;
 
       assert.deepEqual( results[ 5 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: "",
         status: "skipped",
         errors: [],
@@ -164,8 +164,8 @@ describe( "unit", () => {
 
       assert.strictEqual( results[ 2 ], "testStart" );
       assert.deepEqual( results[ 3 ], {
-        name: "[anonymous 1]",
-        fullname: [ "[anonymous 1]" ],
+        name: "anonymous",
+        fullname: [ "anonymous" ],
         suiteName: ""
       } );
 

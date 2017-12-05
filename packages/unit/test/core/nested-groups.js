@@ -126,14 +126,14 @@ describe( "unit", () => {
       assert.strictEqual( results[ 3 ].childSuites.length, 1 );
       assert.strictEqual( results[ 3 ].testCounts.total, 5 );
       assert.deepEqual( results[ 21 ], {
-        fullname: [ "group 1", "group 2", "[anonymous 3]", "[anonymous 1]" ],
-        name: "[anonymous 1]",
-        suiteName: "[anonymous 3]"
+        fullname: [ "group 1", "group 2", "anonymous", "anonymous" ],
+        name: "anonymous",
+        suiteName: "anonymous"
       } );
       assert.deepEqual( results[ 25 ], {
-        fullname: [ "group 1", "group 2", "[anonymous 3]", "[anonymous 2]" ],
-        name: "[anonymous 2]",
-        suiteName: "[anonymous 3]"
+        fullname: [ "group 1", "group 2", "anonymous", "anonymous" ],
+        name: "anonymous",
+        suiteName: "anonymous"
       } );
       assert.deepEqual( results[ results.length - 1 ].testCounts, {
         passed: 3,
