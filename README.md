@@ -22,7 +22,7 @@ Allows you to create a command line interface very easily.
 
 Some tools to work with Error objects and their stack.
 
-**[eslint-config-quase](packages/eslint-config-quase)** - **0.1.0**
+**[eslint-config-quase](packages/eslint-config-quase)** - **0.2.0**
 
 The Eslint configuration that I use.
 

@@ -308,7 +308,7 @@ module.exports = {
       }
     ],
     "no-lone-blocks": "error",
-    "no-loop-func": "error",
+    "no-loop-func": "off",
     "no-magic-numbers": [
       "off",
       {
@@ -420,7 +420,10 @@ module.exports = {
     ],
     "no-use-before-define": [
       "error",
-      "nofunc"
+      {
+        classes: false,
+        functions: false
+      }
     ],
     "no-useless-call": "error",
     "no-useless-computed-key": "error",
@@ -496,9 +499,12 @@ module.exports = {
       }
     ],
     quotes: [
-      2,
+      "error",
       "double",
-      "avoid-escape"
+      {
+        allowTemplateLiterals: true,
+        avoidEscape: true
+      }
     ],
     radix: "error",
     "rest-spread-spacing": [

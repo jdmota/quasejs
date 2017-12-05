@@ -7,7 +7,6 @@
     "packages/builder",
     "packages/cli",
     "packages/error",
-    "packages/eslint-config-quase",
     "packages/events",
     "packages/fs/find-files",
     "packages/fs/get-file",
