@@ -16,9 +16,12 @@ Options
   --allow-no-plan         Makes tests still succeed if no assertions are run and no planning was done
   --strict                Disallows the usage of "only", "failing", "todo", "skipped" modifiers
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
-  --env=<environment>     The test environment used for all tests. This can point to any file or node module.
+  --env <environment>     The test environment used for all tests. This can point to any file or node module
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
-  --color                 Use color output. (Default: true)
+  --no-color              Disallows color output
+  --no-diff               Disallows the showing of a diff on failure
+  --no-stack              Disallows the showing of a strack trace on failure
+  --no-code-frame         Disallows the showing of a code frame
 `;
 
 require( "@quase/cli" ).default( function( o ) {
@@ -70,12 +73,24 @@ require( "@quase/cli" ).default( function( o ) {
       type: "boolean",
       default: false
     },
+    reporter: {
+      type: "string"
+    },
     color: {
       type: "boolean",
       default: true
     },
-    reporter: {
-      type: "string"
+    diff: {
+      type: "boolean",
+      default: true
+    },
+    stack: {
+      type: "boolean",
+      default: true
+    },
+    codeFrame: {
+      type: "boolean",
+      default: true
     }
   }
 } );

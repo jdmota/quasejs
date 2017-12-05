@@ -228,6 +228,9 @@ export default class NodeReporter {
 
   async logError( e ) {
 
+    const diff = this.runner.options.diff;
+    const stack = this.runner.options.stack;
+
     const error = await this.enhanceError( e );
     let log = "\n";
 
@@ -239,11 +242,11 @@ export default class NodeReporter {
       log += this.showSource( error.source );
     }
 
-    if ( error.diff ) {
+    if ( diff && error.diff ) {
       log += `${legend}\n\n${indentString( error.diff )}\n\n`;
     }
 
-    if ( error.stack ) {
+    if ( stack && error.stack ) {
       log += colors.errorStack( error.stack ) + "\n\n";
     }
 
