@@ -8,7 +8,7 @@ import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
-import { type Metadata } from "./interfaces";
+import { type Metadata } from "./types";
 
 const { getStack } = require( "@quase/error" );
 

@@ -1,7 +1,7 @@
 /* @flow */
 
 import skipReasons from "./skip-reasons";
-import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, Metadata } from "./interfaces";
+import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, Metadata } from "./types";
 import type { Runnable } from "./test";
 
 class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRunnable<R> {
@@ -15,7 +15,6 @@ class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRun
 
     const _this: any = this;
     _this.run = this.run.bind( this );
-    _this.runSkip = this.runSkip.bind( this );
   }
   run() {
     return this.proxyFn( this.test, this.seq );
@@ -65,7 +64,6 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
     _this.addResult = this.addResult.bind( this );
     _this.getResult = this.getResult.bind( this );
     _this.run = this.run.bind( this );
-    _this.runSkip = this.runSkip.bind( this );
   }
 
   // $FlowFixMe

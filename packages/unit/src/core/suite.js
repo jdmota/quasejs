@@ -1,7 +1,7 @@
 /* @flow */
 
 import isPromise from "./util/is-promise";
-import type { Status, IRunnable, Metadata } from "./interfaces";
+import type { Status, IRunnable, Metadata } from "./types";
 import type Runner from "./runner";
 import type Test from "./test";
 import type TestCollection from "./test-collection";
@@ -77,7 +77,6 @@ export default class Suite implements IRunnable {
 
     const _this: any = this;
     _this.run = this.run.bind( this );
-    _this.runSkip = this.runSkip.bind( this );
     _this.exit = this.exit.bind( this );
   }
 

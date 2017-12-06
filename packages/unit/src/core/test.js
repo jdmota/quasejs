@@ -8,7 +8,7 @@ import SkipError from "./util/skip-error";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
-import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, Metadata } from "./interfaces";
+import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, Metadata } from "./types";
 import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
@@ -113,8 +113,6 @@ export class Runnable implements ITestResult, ITest {
 
     const _this: any = this;
     _this.run = this.run.bind( this );
-    _this.runSkip = this.runSkip.bind( this );
-    _this.runTodo = this.runTodo.bind( this );
     _this.exit = this.exit.bind( this );
     _this.exitError = this.exitError.bind( this );
   }
@@ -501,7 +499,6 @@ export default class Test implements ITestResult, IRunnable {
 
     const _this: any = this;
     _this.run = this.run.bind( this );
-    _this.runSkip = this.runSkip.bind( this );
     _this.end = this.end.bind( this );
   }
 
