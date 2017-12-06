@@ -1,7 +1,5 @@
 import cli from "../src";
 
-const path = require( "path" );
-
 describe( "cli", () => {
   it( "basic", () => {
 
@@ -24,6 +22,7 @@ describe( "cli", () => {
       expect( typeof showHelp ).toBe( "function" );
       expect( config.iAmTheConfigFile ).toBe( "yes" );
     }, {
+      cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
@@ -40,7 +39,7 @@ describe( "cli", () => {
         "--": true
       },
       inferType: true,
-      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
+      defaultConfigFile: "quase-cli-config.js"
     }, {
       options: {
         updateCheckInterval: 0
@@ -60,13 +59,14 @@ describe( "cli", () => {
       expect( config.iAmTheConfigFile2 ).toBe( "yes" );
       expect( typeof configLocation ).toBe( "string" );
     }, {
+      cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config-2.js" )}` ],
+      argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
-      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" )
+      defaultConfigFile: "quase-cli-config.js"
     }, false );
 
   } );
@@ -77,13 +77,14 @@ describe( "cli", () => {
       expect( config ).toBe( undefined );
       expect( configLocation ).toBe( undefined );
     }, {
+      cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
       argv: [],
       help: "",
-      defaultConfigFile: path.resolve( __dirname, "non-existent-file.js" )
+      defaultConfigFile: "non-existent-file.js"
     }, false );
 
   } );
@@ -94,16 +95,14 @@ describe( "cli", () => {
       expect( config.configFromPkg ).toBe( "yes" );
       expect( configLocation ).toBe( "pkg" );
     }, {
+      cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
-        version: "0.0.1",
-        "my-key": {
-          configFromPkg: "yes"
-        }
+        version: "0.0.1"
       },
       argv: [ "" ],
       help: "",
-      defaultConfigFile: path.resolve( __dirname, "non-existent-file.js" ),
+      defaultConfigFile: "non-existent-file.js",
       configKey: "my-key"
     }, false );
 
@@ -117,16 +116,14 @@ describe( "cli", () => {
       expect( typeof configLocation ).toBe( "string" );
       expect( configLocation ).not.toBe( "pkg" );
     }, {
+      cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
-        version: "0.0.1",
-        "my-key": {
-          configFromPkg: "yes"
-        }
+        version: "0.0.1"
       },
-      argv: [ `--config=${path.resolve( __dirname, "quase-cli-config-2.js" )}` ],
+      argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
-      defaultConfigFile: path.resolve( __dirname, "quase-cli-config.js" ),
+      defaultConfigFile: "quase-cli-config.js",
       configKey: "my-key"
     }, false );
 

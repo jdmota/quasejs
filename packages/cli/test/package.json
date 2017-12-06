@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "my-key": {
+    "configFromPkg": "yes"
+  }
+}

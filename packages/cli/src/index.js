@@ -2,6 +2,8 @@ const path = require( "path" );
 const chalk = require( "chalk" );
 const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
+const readPkgUp = require( "read-pkg-up" );
+const pkgConf = require( "pkg-conf" );
 const meow = require( "meow" );
 
 function notifyFix( opts ) {
@@ -53,19 +55,32 @@ function notify( pkg, notifierOpts ) {
   notifier.notify( notifierOpts.notify );
 }
 
+// Prevent caching of this module so module.parent is always accurate
+delete require.cache[ __filename ];
+const parentDir = path.dirname( module.parent.filename );
+
 export default function( callback, opts, notifierOpts ) {
+
+  opts = Object.assign( {}, opts );
+  opts.cwd = opts.cwd || process.cwd();
 
   const defaultConfigFile = opts.defaultConfigFile;
   const configKey = opts.configKey;
 
   if ( defaultConfigFile ) {
-    opts = Object.assign( {}, opts );
     opts.flags = Object.assign( {}, opts.flags );
     opts.flags.config = {
       type: "string",
       alias: "c",
       default: defaultConfigFile
     };
+  }
+
+  if ( !opts.pkg ) {
+    opts.pkg = readPkgUp.sync( {
+      cwd: parentDir,
+      normalize: false
+    } ).pkg;
   }
 
   const cli = meow( opts );
@@ -75,7 +90,7 @@ export default function( callback, opts, notifierOpts ) {
   }
 
   if ( cli.flags.config ) {
-    const configLocation = path.resolve( cli.flags.config );
+    const configLocation = path.resolve( opts.cwd, cli.flags.config );
 
     try {
       cli.config = require( configLocation );
@@ -86,10 +101,13 @@ export default function( callback, opts, notifierOpts ) {
   }
 
   if ( !cli.config ) {
-    const pkgConfig = cli.pkg[ configKey ];
-    if ( pkgConfig ) {
-      cli.config = pkgConfig;
-      cli.configLocation = "pkg";
+    if ( configKey ) {
+      try {
+        cli.config = pkgConf.sync( configKey, { cwd: opts.cwd, skipOnFalse: true } );
+        cli.configLocation = "pkg";
+      } catch ( e ) {
+        // Ignore
+      }
     }
   }
 
