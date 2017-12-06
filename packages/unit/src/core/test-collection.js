@@ -4,6 +4,8 @@ import type Suite from "./suite";
 import { Sequence, InTestSequence, BeforeTestsAfterSequence } from "./sequence";
 import { type Placeholder, TestPlaceholder, GroupPlaceholder } from "./placeholders";
 
+const matcher = require( "matcher" );
+
 export default class TestCollection {
 
   hasExclusive: boolean;
@@ -47,8 +49,15 @@ export default class TestCollection {
       return;
     }
 
+    const match = suite.runner.match;
+    let willRun = true;
+
     if ( metadata.exclusive ) {
       suite.runner.onlyCount++;
+    }
+
+    if ( type === "test" && match.length > 0 ) {
+      willRun = metadata.exclusive || ( matcher( test.fullname, match ).length > 0 );
     }
 
     // If .only() was used previously, only add .only() tests
@@ -62,10 +71,12 @@ export default class TestCollection {
       this.hasExclusive = true;
     }
 
-    if ( metadata.serial || suite.forceSerial ) {
-      this.tests.serial.push( test );
-    } else {
-      this.tests.concurrent.push( test );
+    if ( willRun ) {
+      if ( metadata.serial || suite.forceSerial ) {
+        this.tests.serial.push( test );
+      } else {
+        this.tests.concurrent.push( test );
+      }
     }
 
   }

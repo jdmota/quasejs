@@ -15,6 +15,7 @@ class Runner extends EventEmitter {
     this.updateSnapshots = this.options.updateSnapshots;
     this.concordanceOptions = this.options.concordanceOptions;
     this.randomizer = this.options.randomizer;
+    this.match = this.options.match;
 
     const assertions = ( this.options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
     this.assertions = Object.assign( {}, ...assertions );

@@ -8,6 +8,7 @@ import "./fast-bail";
 import "./force-serial";
 import "./hooks-order";
 import "./hooks-times";
+import "./match";
 import "./nested-groups";
 import "./noglobals";
 import "./observable";

@@ -2,7 +2,9 @@
 
 const help = `
 Usage
-  $ quase-unit <files|globs> [options]
+  $ quase-unit [<files|globs>...] [options]
+
+  If you provide files or globs, you override the "files" configuration.
 
 Options
   --match, -m             Only run tests with matching title (Can be repeated)

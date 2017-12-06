@@ -329,6 +329,10 @@ class NodeRunner extends EventEmitter {
 export default function cli( { input, flags, config, configLocation } ) {
   const options = Object.assign( {}, config, flags );
 
+  if ( input.length > 0 ) {
+    options.files = input;
+  }
+
   try {
     validateOptions( options );
   } catch ( err ) {
@@ -338,7 +342,7 @@ export default function cli( { input, flags, config, configLocation } ) {
   const spinner = ora( "Looking for files..." ).start();
 
   const files = [];
-  const observable = findFiles( { src: input } );
+  const observable = findFiles( { src: options.files } );
 
   observable.subscribe( {
     next( file ) {

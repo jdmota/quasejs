@@ -7,6 +7,13 @@ import randomizer from "./random";
 const os = require( "os" );
 const isCi = require( "is-ci" );
 
+function arrify( val ) {
+  if ( val == null ) {
+    return [];
+  }
+  return Array.isArray( val ) ? val : [ val ];
+}
+
 export default function( options ) {
   if ( options.inspect || options.inspectBrk ) {
     if ( options.debug ) {
@@ -53,6 +60,8 @@ export default function( options ) {
     assertNumber( options.slow );
   }
 
+  options.files = arrify( options.files );
+  options.match = arrify( options.match );
   options.globals = !!options.globals;
   options.updateSnapshots = !!options.updateSnapshots;
   options.bail = !!options.bail;
