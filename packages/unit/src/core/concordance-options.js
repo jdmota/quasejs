@@ -1,7 +1,7 @@
 const ansiStyles = require( "ansi-styles" );
 const chalk = require( "chalk" );
 
-const withColor = new chalk.constructor( { enabled: true } );
+const withColor = new chalk.constructor( { enabled: true, level: 1 } );
 const noColor = new chalk.constructor( { enabled: false } );
 
 const fakeAnsiStyles = {};
@@ -21,8 +21,8 @@ function createTheme( chalk, ansi ) {
       value: ansi.blue
     },
     diffGutters: {
-      actual: chalk.red( "-" ) + " ",
-      expected: chalk.green( "+" ) + " ",
+      actual: chalk.red( "+" ) + " ",
+      expected: chalk.green( "-" ) + " ",
       padding: "  "
     },
     error: {

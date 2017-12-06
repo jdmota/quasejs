@@ -8,8 +8,6 @@ const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
 const { beautify: beautifyStack } = require( "@quase/error" );
 const { prettify } = require( "@quase/path-url" );
 
-const legend = colors.removed ? `${colors.removed( "- Expected" )} ${colors.added( "+ Actual" )}` : "";
-
 export default class NodeReporter {
 
   constructor( runner ) {
@@ -238,6 +236,11 @@ export default class NodeReporter {
     printLog( log, 4 );
   }
 
+  makeLegend() {
+    const { diffGutters } = this.runner.options.concordanceOptions.theme;
+    return `${diffGutters.actual}Actual ${diffGutters.expected}Expected`;
+  }
+
   async logError( e ) {
 
     const diff = this.runner.options.diff;
@@ -255,7 +258,7 @@ export default class NodeReporter {
     }
 
     if ( diff && error.diff ) {
-      log += `${legend}\n\n${indentString( error.diff )}\n\n`;
+      log += `${this.makeLegend()}\n\n${indentString( error.diff )}\n\n`;
     }
 
     if ( stack && error.stack ) {

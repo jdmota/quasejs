@@ -14,13 +14,9 @@ export function processError( e: string | Object, stack: ?string, concordanceOpt
   const err = e == null || typeof e === "string" ? new AssertionError( e + "" ) : e;
   err.stack = processStack( err, stack );
   if ( err.actual !== undefined || err.expected !== undefined ) {
-    const actualDescribe = concordance.describe( err.actual, concordanceOptions );
-    const expectedDescribe = concordance.describe( err.expected, concordanceOptions );
-    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions );
+    err.diff = concordance.diff( err.actual, err.expected, concordanceOptions );
   } else if ( err.actualDescribe !== undefined && err.expectedDescribe !== undefined ) {
-    const actualDescribe = err.actualDescribe;
-    const expectedDescribe = err.expectedDescribe;
-    err.diff = concordance.diffDescriptors( expectedDescribe, actualDescribe, concordanceOptions );
+    err.diff = concordance.diffDescriptors( err.actualDescribe, err.expectedDescribe, concordanceOptions );
   }
   return err;
 }

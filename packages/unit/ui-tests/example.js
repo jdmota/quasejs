@@ -12,3 +12,10 @@ test( () => {
   e.actual = { b: 20 };
   throw e;
 } );
+
+test( () => {
+  const e = new Error( "Error message" );
+  e.expected = "a10";
+  e.actual = "b20";
+  throw e;
+} );
