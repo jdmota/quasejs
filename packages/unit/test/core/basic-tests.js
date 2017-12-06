@@ -21,6 +21,9 @@ describe( "unit", () => {
       assert.strictEqual( results[ 6 ], "runEnd" );
 
       assert.strictEqual( results[ 2 ], "testStart" );
+
+      delete results[ 3 ].defaultStack;
+
       assert.deepEqual( results[ 3 ], {
         name: "anonymous",
         fullname: [ "anonymous" ],
@@ -59,6 +62,9 @@ describe( "unit", () => {
       assert.strictEqual( results[ 6 ], "runEnd" );
 
       assert.strictEqual( results[ 2 ], "testStart" );
+
+      delete results[ 3 ].defaultStack;
+
       assert.deepEqual( results[ 3 ], {
         name: "anonymous",
         fullname: [ "anonymous" ],
@@ -107,6 +113,9 @@ describe( "unit", () => {
       assert.strictEqual( results[ 6 ], "runEnd" );
 
       assert.strictEqual( results[ 2 ], "testStart" );
+
+      delete results[ 3 ].defaultStack;
+
       assert.deepEqual( results[ 3 ], {
         name: "anonymous",
         fullname: [ "anonymous" ],
@@ -163,6 +172,9 @@ describe( "unit", () => {
       assert.strictEqual( results[ 6 ], "runEnd" );
 
       assert.strictEqual( results[ 2 ], "testStart" );
+
+      delete results[ 3 ].defaultStack;
+
       assert.deepEqual( results[ 3 ], {
         name: "anonymous",
         fullname: [ "anonymous" ],

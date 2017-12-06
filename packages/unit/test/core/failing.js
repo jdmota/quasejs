@@ -20,6 +20,9 @@ describe( "unit", () => {
     return runner.run().then( function() {
 
       assert.strictEqual( results[ 2 ], "testStart" );
+
+      delete results[ 3 ].defaultStack;
+
       assert.deepEqual( results[ 3 ], {
         name: "failing test",
         fullname: [ "failing test" ],
@@ -30,6 +33,9 @@ describe( "unit", () => {
       assert.deepEqual( results[ 5 ].status, "passed" );
 
       assert.strictEqual( results[ 6 ], "testStart" );
+
+      delete results[ 7 ].defaultStack;
+
       assert.deepEqual( results[ 7 ], {
         name: "failing test 2",
         fullname: [ "failing test 2" ],
@@ -72,6 +78,9 @@ describe( "unit", () => {
     return runner.run().then( function() {
 
       assert.strictEqual( results[ 4 ], "testStart" );
+
+      delete results[ 5 ].defaultStack;
+
       assert.deepEqual( results[ 5 ], {
         name: "failing test",
         fullname: [ "group", "failing test" ],
@@ -82,6 +91,9 @@ describe( "unit", () => {
       assert.deepEqual( results[ 7 ].status, "passed" );
 
       assert.strictEqual( results[ 8 ], "testStart" );
+
+      delete results[ 9 ].defaultStack;
+
       assert.deepEqual( results[ 9 ], {
         name: "failing test 2",
         fullname: [ "group", "failing test 2" ],
@@ -118,6 +130,9 @@ describe( "unit", () => {
     return runner.run().then( function() {
 
       assert.strictEqual( results[ 4 ], "testStart" );
+
+      delete results[ 5 ].defaultStack;
+
       assert.deepEqual( results[ 5 ], {
         name: "failing test",
         fullname: [ "group", "failing test" ],
@@ -128,6 +143,9 @@ describe( "unit", () => {
       assert.deepEqual( results[ 7 ].status, "passed" );
 
       assert.strictEqual( results[ 8 ], "testStart" );
+
+      delete results[ 9 ].defaultStack;
+
       assert.deepEqual( results[ 9 ], {
         name: "failing test 2",
         fullname: [ "group", "failing test 2" ],
@@ -172,6 +190,9 @@ describe( "unit", () => {
     return runner.run().then( function() {
 
       assert.strictEqual( results[ 6 ], "testStart" );
+
+      delete results[ 7 ].defaultStack;
+
       assert.deepEqual( results[ 7 ], {
         name: "failing test",
         fullname: [ "root", "group", "failing test" ],
@@ -182,6 +203,9 @@ describe( "unit", () => {
       assert.deepEqual( results[ 9 ].status, "passed" );
 
       assert.strictEqual( results[ 10 ], "testStart" );
+
+      delete results[ 11 ].defaultStack;
+
       assert.deepEqual( results[ 11 ], {
         name: "failing test 2",
         fullname: [ "root", "group", "failing test 2" ],

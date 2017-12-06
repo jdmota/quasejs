@@ -125,6 +125,10 @@ describe( "unit", () => {
       assert.deepEqual( results[ 3 ].tests.length, 1 );
       assert.strictEqual( results[ 3 ].childSuites.length, 1 );
       assert.strictEqual( results[ 3 ].testCounts.total, 5 );
+
+      delete results[ 21 ].defaultStack;
+      delete results[ 25 ].defaultStack;
+
       assert.deepEqual( results[ 21 ], {
         fullname: [ "group 1", "group 2", "anonymous", "anonymous" ],
         name: "anonymous",

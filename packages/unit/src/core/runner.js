@@ -148,7 +148,8 @@ class Runner extends EventEmitter {
     this.emit( "testStart", {
       name: test.name,
       suiteName: test.suiteName,
-      fullname: test.fullname
+      fullname: test.fullname,
+      defaultStack: test.placeholder.defaultStack
     } );
   }
 
