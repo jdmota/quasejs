@@ -1,41 +1,23 @@
-import { assertTimeout, assertNumber } from "./util/assert-args";
 import requirePlugin from "./util/require-plugin";
-import { color as concordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
 import { GroupPlaceholder } from "./placeholders";
-import randomizer from "./random";
 import addChain from "./add-chain";
+import validateOptions from "./validate-options";
 
 const { EventEmitter } = require( "events" ); // TODO for browser
 
 class Runner extends EventEmitter {
 
-  constructor( options ) {
+  constructor( _opts ) {
     super();
-    options = options || {};
 
-    this.color = options.color === undefined ? true : !!options.color;
-    this.noglobals = !!options.noglobals;
-    this.updateSnapshots = !!options.updateSnapshots;
+    this.options = validateOptions( Object.assign( {}, _opts ) );
+    this.globals = this.options.globals;
+    this.updateSnapshots = this.options.updateSnapshots;
+    this.concordanceOptions = this.options.concordanceOptions;
+    this.randomizer = this.options.randomizer;
 
-    const assertions = ( options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
+    const assertions = ( this.options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
     this.assertions = Object.assign( {}, ...assertions );
-
-    this.concordanceOptions = requirePlugin(
-      options.concordanceOptions,
-      this.color ? concordanceOptions : plainConcordanceOptions,
-      "object",
-      "concordance options"
-    );
-
-    if ( options.timeout != null ) {
-      assertTimeout( options.timeout );
-    }
-
-    if ( options.slow != null ) {
-      assertNumber( options.slow );
-    }
-
-    this.randomizer = randomizer( options.random );
 
     this.onlyCount = 0;
     this.promises = [];
@@ -45,20 +27,20 @@ class Runner extends EventEmitter {
       undefined,
       {
         type: "group",
-        bail: !!options.bail,
-        strict: !!options.strict,
-        allowNoPlan: !!options.allowNoPlan
+        bail: this.options.bail,
+        strict: this.options.strict,
+        allowNoPlan: this.options.allowNoPlan
       },
       {
         runner: this,
         level: 0,
         maxRetries: 0,
         retryDelayValue: 0,
-        maxTimeout: options.timeout || 0,
+        maxTimeout: this.options.timeout,
         timeoutStack: null,
-        minSlow: options.slow || 0,
+        minSlow: this.options.slow,
         randomizationAllowed: true,
-        serialForced: !!options.forceSerial
+        serialForced: this.options.forceSerial
       },
       true
     );

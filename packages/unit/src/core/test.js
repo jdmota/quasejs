@@ -105,7 +105,7 @@ export class Runnable implements ITestResult, ITest {
 
     this.snapshotsWaiting = [];
 
-    this.globalsCheck = this.runner.noglobals ? new GlobalEnv() : null;
+    this.globalsCheck = this.runner.globals ? null : new GlobalEnv();
 
     this.finished = false;
 

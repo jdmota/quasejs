@@ -15,6 +15,7 @@ Options
   --slow                  Set "slow" test threshold
   --allow-no-plan         Makes tests still succeed if no assertions are run and no planning was done
   --strict                Disallows the usage of "only", "failing", "todo", "skipped" modifiers
+  --globals               Allow for tests to create global variables
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
   --snapshot-dir          Specify a fixed location for storing the snapshot files
   --env <environment>     The test environment used for all tests. This can point to any file or node module
@@ -71,6 +72,10 @@ require( "@quase/cli" ).default( function( o ) {
       default: false
     },
     strict: {
+      type: "boolean",
+      default: false
+    },
+    globals: {
       type: "boolean",
       default: false
     },

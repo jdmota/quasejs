@@ -11,7 +11,7 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      noglobals: true
+      globals: false
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -50,7 +50,7 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      noglobals: true
+      globals: false
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -87,7 +87,7 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      noglobals: true
+      globals: false
     } );
     let results = runner.listen();
     let test = runner.test;
@@ -144,7 +144,7 @@ describe( "unit", () => {
     assert.expect( 2 );
 
     let runner = Runner.init( {
-      noglobals: true
+      globals: false
     } );
     let results = runner.listen();
     let test = runner.test;
