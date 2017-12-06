@@ -340,26 +340,38 @@ t.afterEach( ( { context } ) => {
 } );
 ```
 
-<!-- TODO
-
 ## Stack trace
 
-// Beautiful stack trace which is aware of the real source location if a sourcemap is available.
+The stack trace that is shown only contains what is important and maps to the original files.
 
-## Snapshots
-
-- Snapshot support.
-- Fails if new snapshots are created on CI.
-
-The snapshot files will be saved in a directory structure that mirrors that of your test files.
-
-If you are running against precompiled test files, we will try and use source maps to determine the location of the original files. Snapshots will be stored next to these files, following the same rules.
+You can disable the showing of stack traces with `--no-stack`.
 
 ## Config
 
-- Matches
-- Reruns.
-- Watch mode - only test what has changed.
-- Options that correspond to modifiers, will be applied to the root group.
+Configuration can be defined in the `package.json` file of your project, or through a `quase-unit.config.js` file or through the `--config <path/to/js|json>` option.
 
--->
+If you'd like to use your `package.json` to store configuration, use the `"quase-unit"` key.
+
+You can also pass configuration via the arguments used in the command line interface. These will override the ones used in the config.
+
+Note that in the command line you should use `--snapshot-dir` notation but in the config you should use camelCase like: `snapshotDir`.
+
+> We look first for the configuration file, and then the config in `package.json`. See `@quase/cli` for more info.
+
+## Snapshots
+
+#### CI
+
+Tests fail if snapshots are missing on CI, instead of creating them.
+
+#### Custom directory
+
+You can specify a fixed location for storing the snapshot files using the `snapshotDir` config.
+
+The snapshot files will be saved in a directory structure that mirrors that of your test files.
+
+#### Precompiled files
+
+If you are running against precompiled test files, Unit will try and use source maps to determine the location of the original files.
+
+Snapshots will be stored following the same rules as if Unit had executed the original files directly.
