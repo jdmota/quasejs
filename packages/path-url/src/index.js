@@ -34,7 +34,7 @@ export function prettifyPath( file: Path ) {
 /* eslint-env browser */
 
 const URL = ( typeof window !== "undefined" && window.URL ) || require( "url" ).URL;
-const LOCATION: Url = ( typeof window !== "undefined" && window.location ) || "http://localhost/";
+const LOCATION = ( typeof window !== "undefined" && window.location ) || new URL( "http://localhost/" );
 
 const reAbsUrl = /^[a-z][a-z0-9+.-]*:/;
 
@@ -51,9 +51,10 @@ export function resolveUrl( from: Url, to: Url ) {
 }
 
 export function prettifyUrl( url: Url, opts: ?{ lastSlash: boolean } ) {
-  return opts && opts.lastSlash === false ?
-    new URL( url, LOCATION ).pathname :
-    removeLastSlash( new URL( url, LOCATION ).pathname );
+  let { hash, origin, pathname, search } = new URL( url, LOCATION );
+  pathname = opts && opts.lastSlash ? pathname : removeLastSlash( pathname );
+  origin = origin === LOCATION.origin ? "" : origin;
+  return origin + pathname + search + hash;
 }
 
 export function removeLastSlash( url: Url ) {
