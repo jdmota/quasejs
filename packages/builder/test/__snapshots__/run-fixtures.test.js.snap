@@ -2,12 +2,12 @@
 
 exports[`builder Fixture: babel-helpers 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-new _func.default().a();
+new _b203b.default().a();
 },
-\\"func.js\\":function($e,$r,$i,$b,$g){$g($e, \\"default\\", function () {
+b203b:function($e,$r,$i,$b,$g){$g($e, \\"default\\", function () {
   return A;
 });
 
@@ -26,41 +26,40 @@ function () {
   }]);
   return A;
 }(); // Comment at the end
-},
-__b__:function(){var $b={};$b.classCallCheck=function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError(\\"Cannot call a class as a function\\")}};function _defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if(\\"value\\"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor)}}$b.createClass=function _createClass(Constructor,protoProps,staticProps){if(protoProps)_defineProperties(Constructor.prototype,protoProps);if(staticProps)_defineProperties(Constructor,staticProps);return Constructor};return $b}()});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";function _instanceof(a,b){return null!=b&&\\"undefined\\"!=typeof Symbol&&b[Symbol.hasInstance]?b[Symbol.hasInstance](a):a instanceof b}(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),w[a]=c,b(c,k,l,A,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(y[f]!==o)return q.resolve(y[f]);if(z[f])return z[f];var e=[o,o],g=new q(function(a,b){e[0]=function(b){z[f]=o,a(y[f]=b)},e[1]=function(a){z[f]=o,b(a)}});if(z[f]=g,!v)return q.resolve(f).then(d).then(e[0],e[1]),g;var h=s.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,s.head.appendChild(h),g}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=function(){function a(a,b){for(var c,d=0;d<b.length;d++)c=b[d],c.enumerable=c.enumerable||!1,c.configurable=!0,\\"value\\"in c&&(c.writable=!0),Object.defineProperty(a,c.key,c)}return{classCallCheck:function(a,b){if(!_instanceof(a,b))throw new TypeError(\\"Cannot call a class as a function\\")},createClass:function(b,c,d){return c&&a(b.prototype,c),d&&a(b,d),b}}}(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"a\\",\\"A\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";2BAAc;;AAEd,IAFO,aAEP,GAAQA,CAAR;;mCCFA;AAAA,SAAqBC,CAArB;AAAA;;IAAqBA,C;;;;;;;;;sBAChBD,E,EAAI;AACLE,cAAQC,GAAR,CAAa,KAAb;AACD;;;KAEH\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import A from \\\\\\"./func\\\\\\";\\\\n\\\\nnew A().a();\\\\n\\",\\"export default class A {\\\\n  a( a ) {\\\\n    console.log( \\\\\\"foo\\\\\\" );\\\\n  }\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"a\\",\\"A\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";wBAAc;;AAEd,IAFO,cAEP,GAAQA,CAAR;;+BCFA;AAAA,SAAqBC,CAArB;AAAA;;IAAqBA,C;;;;;;;;;sBAChBD,E,EAAI;AACLE,cAAQC,GAAR,CAAa,KAAb;AACD;;;KAEH\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import A from \\\\\\"./func\\\\\\";\\\\n\\\\nnew A().a();\\\\n\\",\\"export default class A {\\\\n  a( a ) {\\\\n    console.log( \\\\\\"foo\\\\\\" );\\\\n  }\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: basic 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-(0, _func.default)(); // Comment at the end
+(0, _b203b.default)(); // Comment at the end
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
   }
 }.default;
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";2BAAiB;;AAEjB,IAFO,aAEP,I,CAAQ;;uBCFR;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc(); // Comment at the end\\\\n\\",\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";wBAAiB;;AAEjB,IAFO,cAEP,I,CAAQ;;mBCFR;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc(); // Comment at the end\\\\n\\",\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: cycles 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _createObject = $r(\\"createObject.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b = $r(\\"b4075\\");
 
-console.log((0, _createObject.default)(13).children.length);
+console.log((0, _b.default)(13).children.length);
 /* eslint no-console: 0 */
 },
-\\"createObject.js\\":function($e,$r,$i,$b,$g){var _createChildren = $r(\\"createChildren.js\\");
+b4075:function($e,$r,$i,$b,$g){var _d = $r(\\"084d5\\");
 
 $g($e, \\"default\\", function () {
   return createObject;
@@ -68,11 +67,11 @@ $g($e, \\"default\\", function () {
 
 function createObject(numChildren) {
   return {
-    children: (0, _createChildren.default)(numChildren)
+    children: (0, _d.default)(numChildren)
   };
 }
 },
-\\"createChildren.js\\":function($e,$r,$i,$b,$g){var _createObject = $r(\\"createObject.js\\");
+\\"084d5\\":function($e,$r,$i,$b,$g){var _b = $r(\\"b4075\\");
 
 $g($e, \\"default\\", function () {
   return createChildren;
@@ -82,55 +81,55 @@ function createChildren(i) {
   let children = [];
 
   while (i--) {
-    children[i] = (0, _createObject.default)(0);
+    children[i] = (0, _b.default)(0);
   }
 
   return children;
 }
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b4075:[0],\\"084d5\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/createObject.js\\",\\"../files/createChildren.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"children\\",\\"length\\",\\"createObject\\",\\"numChildren\\",\\"createChildren\\",\\"i\\"],\\"mappings\\":\\";2BAAyB;;AAEzBA,QAAQC,GAAR,CAAa,IAFN,qBAEM,EAAc,EAAd,EAAmBC,QAAnB,CAA4BC,MAAzC;AAAmD;;2CCFxB;;AAE3B;AAAA,SAAwBC,YAAxB;AAAA;;AAAe,SAASA,YAAT,CAAuBC,WAAvB,EAAqC;AAClD,SAAO;AACLH,cAAU,IAJP,uBAIO,EAAgBG,WAAhB;AADL,GAAP;AAGD;;6CCNwB;;AAEzB;AAAA,SAAwBC,cAAxB;AAAA;;AAAe,SAASA,cAAT,CAAyBC,CAAzB,EAA6B;AAC1C,MAAIL,WAAW,EAAf;;AAEA,SAAQK,GAAR,EAAc;AACZL,aAAUK,CAAV,IAAgB,IANb,qBAMa,EAAc,CAAd,CAAhB;AACD;;AAED,SAAOL,QAAP;AACD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nconsole.log( createObject( 13 ).children.length ); /* eslint no-console: 0 */\\\\n\\",\\"import createChildren from \\\\\\"./createChildren\\\\\\";\\\\n\\\\nexport default function createObject( numChildren ) {\\\\n  return {\\\\n    children: createChildren( numChildren )\\\\n  };\\\\n}\\\\n\\",\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nexport default function createChildren( i ) {\\\\n  let children = [];\\\\n\\\\n  while ( i-- ) {\\\\n    children[ i ] = createObject( 0 );\\\\n  }\\\\n\\\\n  return children;\\\\n}\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/createObject.js\\",\\"../files/createChildren.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"children\\",\\"length\\",\\"createObject\\",\\"numChildren\\",\\"createChildren\\",\\"i\\"],\\"mappings\\":\\";wBAAyB;;AAEzBA,QAAQC,GAAR,CAAa,IAFN,UAEM,EAAc,EAAd,EAAmBC,QAAnB,CAA4BC,MAAzC;AAAmD;;+BCFxB;;AAE3B;AAAA,SAAwBC,YAAxB;AAAA;;AAAe,SAASA,YAAT,CAAuBC,WAAvB,EAAqC;AAClD,SAAO;AACLH,cAAU,IAJP,UAIO,EAAgBG,WAAhB;AADL,GAAP;AAGD;;iCCNwB;;AAEzB;AAAA,SAAwBC,cAAxB;AAAA;;AAAe,SAASA,cAAT,CAAyBC,CAAzB,EAA6B;AAC1C,MAAIL,WAAW,EAAf;;AAEA,SAAQK,GAAR,EAAc;AACZL,aAAUK,CAAV,IAAgB,IANb,UAMa,EAAc,CAAd,CAAhB;AACD;;AAED,SAAOL,QAAP;AACD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nconsole.log( createObject( 13 ).children.length ); /* eslint no-console: 0 */\\\\n\\",\\"import createChildren from \\\\\\"./createChildren\\\\\\";\\\\n\\\\nexport default function createObject( numChildren ) {\\\\n  return {\\\\n    children: createChildren( numChildren )\\\\n  };\\\\n}\\\\n\\",\\"import createObject from \\\\\\"./createObject\\\\\\";\\\\n\\\\nexport default function createChildren( i ) {\\\\n  let children = [];\\\\n\\\\n  while ( i-- ) {\\\\n    children[ i ] = createObject( 0 );\\\\n  }\\\\n\\\\n  return children;\\\\n}\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: dynamic-import 1`] = `
 Object {
   "atual/func.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
   }
 }.default;
 }});",
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r,$i){$i(\\"func.js\\").then(module => module.default());
-}});__quase_builder__.r(\\"index.js\\");",
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r,$i){$i(\\"b203b\\").then(module => module.default());
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"func.js\\",\\"index.js\\"],C={16872:[1],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");",
 }
 `;
 
 exports[`builder Fixture: hash-entry 1`] = `
 Object {
-  "atual/index.037c5acc74.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-(0, _func.default)();
+(0, _b203b.default)();
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     return \\"foo\\";
   }
 }.default;
-}});__quase_builder__.r(\\"index.js\\");
-//# sourceMappingURL=index.037c5acc74.js.map",
-  "atual/index.037c5acc74.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[],\\"mappings\\":\\";2BAAiB;;AAEjB,IAFO,aAEP;;uBCFA;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD\\",\\"file\\":\\"index.037c5acc74.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc();\\\\n\\",\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\"]}",
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
+//# sourceMappingURL=index.js.map",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[],\\"mappings\\":\\";wBAAiB;;AAEjB,IAFO,cAEP;;mBCFA;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc();\\\\n\\",\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: html-and-dynamic-imports 1`] = `
 Object {
   "atual/func.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
@@ -138,33 +137,33 @@ Object {
 }.default;
 }});
 //# sourceMappingURL=func.js.map",
-  "atual/func.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";uBAAA;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"func.js\\",\\"sourcesContent\\":[\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
+  "atual/func.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";mBAAA;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"func.js\\",\\"sourcesContent\\":[\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
   "atual/index.html": "<!DOCTYPE ><html><head></head><body>
-    <script>\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);</script><script src=\\"index.js\\" onload=\\"__quase_builder__.r('index.js');\\"></script>
+    <script>\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\",\\"func.js\\",\\"index.html\\"],C={16872:[0],eacf3:[2,0],b203b:[1]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);</script><script src=\\"index.js\\"></script><script>__quase_builder__.r('16872');</script><script></script>
   
 
 </body></html>",
   "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r,$i){$i(\\"func.js\\");
+\\"16872\\":function($e,$r,$i){$i(\\"b203b\\");
 }});
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\"],\\"names\\":[],\\"mappings\\":\\";8BAAA,GAAQ,SAAR\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import( \\\\\\"./func\\\\\\" );\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\"],\\"names\\":[],\\"mappings\\":\\";2BAAA,GAAQ,OAAR\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import( \\\\\\"./func\\\\\\" );\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: html-basic 1`] = `
 Object {
   "atual/index.html": "<!DOCTYPE ><html><head></head><body>
-    <script>\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);</script><script src=\\"index.js\\" onload=\\"__quase_builder__.r('index.js');\\"></script>
+    <script>\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\",\\"index.html\\"],C={16872:[0],eacf3:[1,0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);</script><script src=\\"index.js\\"></script><script>__quase_builder__.r('16872');</script><script></script>
   
 
 </body></html>",
   "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-(0, _func.default)(); // Comment at the end
+(0, _b203b.default)(); // Comment at the end
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
@@ -172,32 +171,32 @@ Object {
 }.default;
 }});
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";2BAAiB;;AAEjB,IAFO,aAEP,I,CAAQ;;uBCFR;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc(); // Comment at the end\\\\n\\",\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";wBAAiB;;AAEjB,IAFO,cAEP,I,CAAQ;;mBCFR;AAAA,WAAe,oBAAW;AACxBA,YAAQC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nfunc(); // Comment at the end\\\\n\\",\\"export default function() {\\\\n  console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: imports-exports 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _importAndExport = $r(\\"import-and-export.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _ce52c = $r(\\"ce52c\\");
 
-console.log(_importAndExport.a, _importAndExport.b, _importAndExport.c, _importAndExport.d, _importAndExport.e, _importAndExport.f, _importAndExport.g, _importAndExport.h, _importAndExport.i, _importAndExport.j, _importAndExport.k.value);
+console.log(_ce52c.a, _ce52c.b, _ce52c.c, _ce52c.d, _ce52c.e, _ce52c.f, _ce52c.g, _ce52c.h, _ce52c.i, _ce52c.j, _ce52c.k.value);
 /* eslint no-console: 0 */
 },
-\\"import-and-export.js\\":function($e,$r,$i,$b,$g,$a){var _export = $r(\\"export1.js\\");
+ce52c:function($e,$r,$i,$b,$g,$a){var _bcf = $r(\\"bcf23\\");
 
-var _export2 = $r(\\"export2.js\\");
+var _fcd2f = $r(\\"fcd2f\\");
 
-var _export3 = $r(\\"export3.js\\");
+var _df = $r(\\"2df11\\");
 
-var _export4 = $r(\\"export4.js\\");
+var _ce44a = $r(\\"ce44a\\");
 
-var _export5 = $r(\\"export5.js\\");
+var _a1b = $r(\\"3a1b1\\");
 
-var _export6 = $r(\\"export6.js\\");
+var _a7a = $r(\\"74a7a\\");
 
-$a($e, _export3);
-var _namespace = _export;
+$a($e, _df);
+var _namespace = _bcf;
 $g($e, \\"a\\", function () {
   return a;
 });
@@ -217,28 +216,28 @@ $g($e, \\"e\\", function () {
   return e;
 });
 $g($e, \\"f\\", function () {
-  return _export2.f;
+  return _fcd2f.f;
 });
 $g($e, \\"i\\", function () {
-  return _export4.default;
+  return _ce44a.default;
 });
 $g($e, \\"j\\", function () {
-  return _export5.default;
+  return _a1b.default;
 });
-var _k = _export6;
+var _k = _a7a;
 $g($e, \\"k\\", function () {
   return _k;
 });
 
 /* eslint import/no-named-default: 0 */
-const a = _export.default;
+const a = _bcf.default;
 const _ref = [_namespace.a, _namespace.b],
       b = _ref[0],
       c = _ref[1];
-const value = _export2.default;
-const e = _export2.foo;
+const value = _fcd2f.default;
+const e = _fcd2f.foo;
 },
-\\"export1.js\\":function($e,$r,$i,$b,$g){$g($e, \\"a\\", function () {
+bcf23:function($e,$r,$i,$b,$g){$g($e, \\"a\\", function () {
   return a;
 });
 $g($e, \\"b\\", function () {
@@ -248,7 +247,7 @@ $e.default = 1;
 const a = 2,
       b = 3;
 },
-\\"export2.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+fcd2f:function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 $g($e, \\"f\\", function () {
@@ -258,7 +257,7 @@ $e.default = 4;
 const foo = 5;
 const f = 6;
 },
-\\"export3.js\\":function($e,$r,$i,$b,$g){$g($e, \\"g\\", function () {
+\\"2df11\\":function($e,$r,$i,$b,$g){$g($e, \\"g\\", function () {
   return g;
 });
 $g($e, \\"h\\", function () {
@@ -271,187 +270,187 @@ const _a$h = {
       g = _a$h.a,
       h = _a$h.h;
 },
-\\"export4.js\\":function($e){$e.default = 9;
+ce44a:function($e){$e.default = 9;
 },
-\\"export5.js\\":function($e){$e.default = 10;
+\\"3a1b1\\":function($e){$e.default = 10;
 },
-\\"export6.js\\":function($e,$r,$i,$b,$g){$g($e, \\"value\\", function () {
+\\"74a7a\\":function($e,$r,$i,$b,$g){$g($e, \\"value\\", function () {
   return value;
 });
 const value = 11;
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],ce52c:[0],bcf23:[0],fcd2f:[0],\\"2df11\\":[0],ce44a:[0],\\"3a1b1\\":[0],\\"74a7a\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/import-and-export.js\\",\\"../files/export1.js\\",\\"../files/export2.js\\",\\"../files/export3.js\\",\\"../files/export4.js\\",\\"../files/export5.js\\",\\"../files/export6.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"value\\",\\"_namespace\\",\\"a\\",\\"b\\",\\"c\\",\\"e\\",\\"foo\\",\\"f\\",\\"h\\",\\"g\\"],\\"mappings\\":\\";2BAAgD;;AAEhDA,QAAQC,GAAR,CAFS,kBAET,EAFY,kBAEZ,EAFe,kBAEf,EAFkB,kBAElB,EAFqB,kBAErB,EAFwB,kBAExB,EAF2B,kBAE3B,EAF8B,kBAE9B,EAFiC,kBAEjC,EAFoC,kBAEpC,EAFuC,kBAEI,CAAEC,KAA7C;AAAsD;;mDCFhB;;AACgB;;AAWxC;;AACe;;AACf;;AACK;;AAHnB;AAZiB,IAAKC,UAAL;;;;;;;;;;AASjB;AAAA,WAAe,oBAAW,CAAE;AAA5B;AACS;AAAA;AAAA;AAAY;AAAA;AAAA;AACZ;AAAA;AAAA;AAEA;AAAA;AAAA;;;;;;;;;AAZ0D;AAE5D,MAAMC,IAHN,eAGA;aACiB,CAAED,WAAWC,CAAb,EAAgBD,WAAWE,CAA3B,C;MAATA,C;MAAGC,C;AAElB,MAAMJ,QALG,gBAKT;AACA,MAAMK,IANyB,YAM/B;;;;;;;;aCPe,C;MAEAH,C,GAAW,C;MAARC,C,GAAW,C;;;;;;;;aCFd,C;AAER,MAAMG,MAAM,CAAZ;AAEA,MAAMC,IAAI,CAAV;;;;;;;;aCJoB;AAAEL,KAAG,CAAL;AAAQM,KAAG;AAAX,C;MAATC,C,QAAHP,C;MAAMM,C,QAAAA,C;;uCCAN,C;;uCCAA,E;;sCCEN;AAAA;AAAA;AAFT,MAAMR,QAAQ,EAAd\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { a, b, c, d, e, f, g, h, i, j, k } from \\\\\\"./import-and-export\\\\\\";\\\\n\\\\nconsole.log( a, b, c, d, e, f, g, h, i, j, k.value ); /* eslint no-console: 0 */\\\\n\\",\\"import _default, * as _namespace from \\\\\\"./export1\\\\\\";\\\\nimport { default as _default2, foo as fooAlias } from \\\\\\"./export2\\\\\\"; /* eslint import/no-named-default: 0 */\\\\n\\\\nexport const a = _default;\\\\nexport const [ b, c ] = [ _namespace.a, _namespace.b ];\\\\n\\\\nconst value = _default2;\\\\nconst e = fooAlias;\\\\n\\\\nexport default function() {}\\\\nexport { value as d, e };\\\\nexport { f } from \\\\\\"./export2\\\\\\";\\\\nexport * from \\\\\\"./export3\\\\\\";\\\\nexport { default as i } from \\\\\\"./export4\\\\\\";\\\\nexport j from \\\\\\"./export5\\\\\\";\\\\nexport * as k from \\\\\\"./export6\\\\\\";\\\\n\\",\\"export default 1;\\\\n\\\\nexport const [ a, b ] = [ 2, 3 ];\\\\n\\",\\"export default 4;\\\\n\\\\nexport const foo = 5;\\\\n\\\\nexport const f = 6;\\\\n\\",\\"export const { a: g, h } = { a: 7, h: 8 };\\\\n\\",\\"export default 9;\\\\n\\",\\"export default 10;\\\\n\\",\\"const value = 11;\\\\n\\\\nexport { value };\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/import-and-export.js\\",\\"../files/export1.js\\",\\"../files/export2.js\\",\\"../files/export3.js\\",\\"../files/export4.js\\",\\"../files/export5.js\\",\\"../files/export6.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"value\\",\\"_namespace\\",\\"a\\",\\"b\\",\\"c\\",\\"e\\",\\"foo\\",\\"f\\",\\"h\\",\\"g\\"],\\"mappings\\":\\";wBAAgD;;AAEhDA,QAAQC,GAAR,CAFS,QAET,EAFY,QAEZ,EAFe,QAEf,EAFkB,QAElB,EAFqB,QAErB,EAFwB,QAExB,EAF2B,QAE3B,EAF8B,QAE9B,EAFiC,QAEjC,EAFoC,QAEpC,EAFuC,QAEI,CAAEC,KAA7C;AAAsD;;kCCFhB;;AACgB;;AAWxC;;AACe;;AACf;;AACK;;AAHnB;AAZiB,IAAKC,UAAL;;;;;;;;;;AASjB;AAAA,WAAe,oBAAW,CAAE;AAA5B;AACS;AAAA;AAAA;AAAY;AAAA;AAAA;AACZ;AAAA;AAAA;AAEA;AAAA;AAAA;;;;;;;;;AAZ0D;AAE5D,MAAMC,IAHN,YAGA;aACiB,CAAED,WAAWC,CAAb,EAAgBD,WAAWE,CAA3B,C;MAATA,C;MAAGC,C;AAElB,MAAMJ,QALG,cAKT;AACA,MAAMK,IANyB,UAM/B;;;;;;;;aCPe,C;MAEAH,C,GAAW,C;MAARC,C,GAAW,C;;;;;;;;aCFd,C;AAER,MAAMG,MAAM,CAAZ;AAEA,MAAMC,IAAI,CAAV;;;;;;;;aCJoB;AAAEL,KAAG,CAAL;AAAQM,KAAG;AAAX,C;MAATC,C,QAAHP,C;MAAMM,C,QAAAA,C;;gCCAN,C;;kCCAA,E;;iCCEN;AAAA;AAAA;AAFT,MAAMR,QAAQ,EAAd\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { a, b, c, d, e, f, g, h, i, j, k } from \\\\\\"./import-and-export\\\\\\";\\\\n\\\\nconsole.log( a, b, c, d, e, f, g, h, i, j, k.value ); /* eslint no-console: 0 */\\\\n\\",\\"import _default, * as _namespace from \\\\\\"./export1\\\\\\";\\\\nimport { default as _default2, foo as fooAlias } from \\\\\\"./export2\\\\\\"; /* eslint import/no-named-default: 0 */\\\\n\\\\nexport const a = _default;\\\\nexport const [ b, c ] = [ _namespace.a, _namespace.b ];\\\\n\\\\nconst value = _default2;\\\\nconst e = fooAlias;\\\\n\\\\nexport default function() {}\\\\nexport { value as d, e };\\\\nexport { f } from \\\\\\"./export2\\\\\\";\\\\nexport * from \\\\\\"./export3\\\\\\";\\\\nexport { default as i } from \\\\\\"./export4\\\\\\";\\\\nexport j from \\\\\\"./export5\\\\\\";\\\\nexport * as k from \\\\\\"./export6\\\\\\";\\\\n\\",\\"export default 1;\\\\n\\\\nexport const [ a, b ] = [ 2, 3 ];\\\\n\\",\\"export default 4;\\\\n\\\\nexport const foo = 5;\\\\n\\\\nexport const f = 6;\\\\n\\",\\"export const { a: g, h } = { a: 7, h: 8 };\\\\n\\",\\"export default 9;\\\\n\\",\\"export default 10;\\\\n\\",\\"const value = 11;\\\\n\\\\nexport { value };\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: inline-sourcemap 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-(0, _func.default)(); // Comment at the end
+(0, _b203b.default)(); // Comment at the end
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
   }
 }.default;
-}});__quase_builder__.r(\\"index.js\\");
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2ZpbGVzL2luZGV4LmpzIiwiLi4vZmlsZXMvZnVuYy5qcyJdLCJuYW1lcyI6WyJjb25zb2xlIiwibG9nIl0sIm1hcHBpbmdzIjoiOzJCQUFpQjs7QUFFakIsSUFGTyxhQUVQLEksQ0FBUTs7dUJDRlI7QUFBQSxXQUFlLG9CQUFXO0FBQ3hCQSxZQUFRQyxHQUFSLENBQWEsS0FBYjtBQUFzQjtBQUN2QjtBQUZEIiwiZmlsZSI6ImluZGV4LmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IGZ1bmMgZnJvbSBcIi4vZnVuY1wiO1xuXG5mdW5jKCk7IC8vIENvbW1lbnQgYXQgdGhlIGVuZFxuIiwiZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oKSB7XG4gIGNvbnNvbGUubG9nKCBcImZvb1wiICk7IC8qIGVzbGludCBuby1jb25zb2xlOiAwICovXG59XG4vLyBDb21tZW50IGF0IHRoZSBlbmRcbiJdfQ==",
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2ZpbGVzL2luZGV4LmpzIiwiLi4vZmlsZXMvZnVuYy5qcyJdLCJuYW1lcyI6WyJjb25zb2xlIiwibG9nIl0sIm1hcHBpbmdzIjoiO3dCQUFpQjs7QUFFakIsSUFGTyxjQUVQLEksQ0FBUTs7bUJDRlI7QUFBQSxXQUFlLG9CQUFXO0FBQ3hCQSxZQUFRQyxHQUFSLENBQWEsS0FBYjtBQUFzQjtBQUN2QjtBQUZEIiwiZmlsZSI6ImluZGV4LmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IGZ1bmMgZnJvbSBcIi4vZnVuY1wiO1xuXG5mdW5jKCk7IC8vIENvbW1lbnQgYXQgdGhlIGVuZFxuIiwiZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oKSB7XG4gIGNvbnNvbGUubG9nKCBcImZvb1wiICk7IC8qIGVzbGludCBuby1jb25zb2xlOiAwICovXG59XG4vLyBDb21tZW50IGF0IHRoZSBlbmRcbiJdfQ==",
 }
 `;
 
 exports[`builder Fixture: keep-module-for-side-effects 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){$r(\\"bar.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){$r(\\"32b3a\\");
 },
-\\"bar.js\\":function($e,$r){$r(\\"foo.js\\");
+\\"32b3a\\":function($e,$r){$r(\\"c3010\\");
 },
-\\"foo.js\\":function(){console.log(\\"foo\\");
+c3010:function(){console.log(\\"foo\\");
 /* eslint no-console: 0 */
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],\\"32b3a\\":[0],c3010:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/bar.js\\",\\"../files/foo.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";2BAAO;;yBCAQ;;oBCAfA,QAAQC,GAAR,CAAa,KAAb;AAAsB\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import \\\\\\"./bar\\\\\\";\\\\n\\",\\"export {} from \\\\\\"./foo\\\\\\";\\\\n\\",\\"console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/bar.js\\",\\"../files/foo.js\\"],\\"names\\":[\\"console\\",\\"log\\"],\\"mappings\\":\\";wBAAO;;wBCAQ;;iBCAfA,QAAQC,GAAR,CAAa,KAAb;AAAsB\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import \\\\\\"./bar\\\\\\";\\\\n\\",\\"export {} from \\\\\\"./foo\\\\\\";\\\\n\\",\\"console.log( \\\\\\"foo\\\\\\" ); /* eslint no-console: 0 */\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: no-sourcemap 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
-(0, _func.default)();
+(0, _b203b.default)();
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     console.log(\\"foo\\");
     /* eslint no-console: 0 */
   }
 }.default;
-}});__quase_builder__.r(\\"index.js\\");",
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");",
 }
 `;
 
 exports[`builder Fixture: override-export-namespace 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _export = $r(\\"export.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _f1a = $r(\\"f1a41\\");
 
-console.log(_export.foo);
+console.log(_f1a.foo);
 },
-\\"export.js\\":function($e,$r,$i,$b,$g,$a){var _a = $r(\\"a.js\\");
+f1a41:function($e,$r,$i,$b,$g,$a){var _f0a = $r(\\"95f0a\\");
 
-var _b = $r(\\"b.js\\");
+var _ad = $r(\\"656ad\\");
 
-$a($e, _a);
-$a($e, _b);
+$a($e, _f0a);
+$a($e, _ad);
 },
-\\"a.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"95f0a\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = \\"a\\";
 },
-\\"b.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"656ad\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = \\"b\\";
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],f1a41:[0],\\"95f0a\\":[0],\\"656ad\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/export.js\\",\\"../files/a.js\\",\\"../files/b.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"foo\\"],\\"mappings\\":\\";2BAAoB;;AAEpBA,QAAQC,GAAR,CAFS,WAET;;wCCFc;;AACA;;AADd;AACA;;;;;ACDO,MAAMC,MAAM,GAAZ;;;;;ACAA,MAAMA,MAAM,GAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\",\\"export * from \\\\\\"./a\\\\\\";\\\\nexport * from \\\\\\"./b\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/export.js\\",\\"../files/a.js\\",\\"../files/b.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"foo\\"],\\"mappings\\":\\";wBAAoB;;AAEpBA,QAAQC,GAAR,CAFS,QAET;;kCCFc;;AACA;;AADd;AACA;;;;;ACDO,MAAMC,MAAM,GAAZ;;;;;ACAA,MAAMA,MAAM,GAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\",\\"export * from \\\\\\"./a\\\\\\";\\\\nexport * from \\\\\\"./b\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: override-export-namespace-named 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _export = $r(\\"export.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _f1a = $r(\\"f1a41\\");
 
-console.log(_export.foo);
+console.log(_f1a.foo);
 },
-\\"export.js\\":function($e,$r,$i,$b,$g,$a){var _a = $r(\\"a.js\\");
+f1a41:function($e,$r,$i,$b,$g,$a){var _f0a = $r(\\"95f0a\\");
 
-$a($e, _a);
+$a($e, _f0a);
 $g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = \\"b\\";
 },
-\\"a.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"95f0a\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = \\"a\\";
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],f1a41:[0],\\"95f0a\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/export.js\\",\\"../files/a.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"foo\\"],\\"mappings\\":\\";2BAAoB;;AAEpBA,QAAQC,GAAR,CAFS,WAET;;wCCAc;;AAAd;;;;AAFO,MAAMC,MAAM,GAAZ;;;;;ACAA,MAAMA,MAAM,GAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\\\nexport * from \\\\\\"./a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/export.js\\",\\"../files/a.js\\"],\\"names\\":[\\"console\\",\\"log\\",\\"foo\\"],\\"mappings\\":\\";wBAAoB;;AAEpBA,QAAQC,GAAR,CAFS,QAET;;kCCAc;;AAAd;;;;AAFO,MAAMC,MAAM,GAAZ;;;;;ACAA,MAAMA,MAAM,GAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import { foo } from \\\\\\"./export\\\\\\";\\\\n\\\\nconsole.log( foo );\\\\n\\",\\"export const foo = \\\\\\"b\\\\\\";\\\\n\\\\nexport * from \\\\\\"./a\\\\\\";\\\\n\\",\\"export const foo = \\\\\\"a\\\\\\";\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: variable-conflict-exports-require 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r){var _func = $r(\\"func.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r){var _b203b = $r(\\"b203b\\");
 
 let exports = 10; // eslint-disable-line
 
 let require = 20; // eslint-disable-line
 },
-\\"func.js\\":function($e){$e.default = {
+b203b:function($e){$e.default = {
   default: function _default() {
     return \\"foo\\";
   }
 }.default;
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],b203b:[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"exports\\",\\"require\\"],\\"mappings\\":\\";2BAAiB;;AAEjB,IAAIA,UAAU,EAAd,C,CAAkB;;AAClB,IAAIC,UAAU,EAAd,C,CAAkB;;uBCHlB;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nlet exports = 10; // eslint-disable-line\\\\nlet require = 20; // eslint-disable-line\\\\n\\",\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"exports\\",\\"require\\"],\\"mappings\\":\\";wBAAiB;;AAEjB,IAAIA,UAAU,EAAd,C,CAAkB;;AAClB,IAAIC,UAAU,EAAd,C,CAAkB;;mBCHlB;AAAA,WAAe,oBAAW;AACxB,WAAO,KAAP;AACD;AAFD\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import func from \\\\\\"./func\\\\\\";\\\\n\\\\nlet exports = 10; // eslint-disable-line\\\\nlet require = 20; // eslint-disable-line\\\\n\\",\\"export default function() {\\\\n  return \\\\\\"foo\\\\\\";\\\\n}\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: warn-duplicate-export-namespace 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r,$i,$b,$g,$a){var _a = $r(\\"a.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r,$i,$b,$g,$a){var _f0a = $r(\\"95f0a\\");
 
-var _b = $r(\\"b.js\\");
+var _ad = $r(\\"656ad\\");
 
-$a($e, _a);
-$a($e, _b);
+$a($e, _f0a);
+$a($e, _ad);
 },
-\\"a.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"95f0a\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = 10;
 },
-\\"b.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"656ad\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = 20;
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],\\"95f0a\\":[0],\\"656ad\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/a.js\\",\\"../files/b.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";uCAAc;;AACA;;AADd;AACA;;;;;ACDO,MAAMA,MAAM,EAAZ;;;;;ACAA,MAAMA,MAAM,EAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\nexport * from \\\\\\"./b\\\\\\"; // eslint-disable-line\\\\n\\",\\"export const foo = 10;\\\\n\\",\\"export const foo = 20;\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/a.js\\",\\"../files/b.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";oCAAc;;AACA;;AADd;AACA;;;;;ACDO,MAAMA,MAAM,EAAZ;;;;;ACAA,MAAMA,MAAM,EAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\nexport * from \\\\\\"./b\\\\\\"; // eslint-disable-line\\\\n\\",\\"export const foo = 10;\\\\n\\",\\"export const foo = 20;\\\\n\\"]}",
 }
 `;
 
 exports[`builder Fixture: warn-duplicate-export-namespace-and-named 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(v?r(a):u&&b(a)),p}function e(a){for(var b in a){var c=a[b];if(\\"__b__\\"==b)for(var d in c)t[d]=c[d];else if(\\"__f__\\"==b)for(var e in c)B[e]=c[e];else y[b]===o&&(y[b]=c)}}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,t,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||B[a].forEach(m),j(a)}function l(a){return q.all(h(a)?[]:B[a].map(n)).then(function(){return j(a)})}function m(a){return z[a]===o&&(z[a]=d(a)),z[a]}function n(a){function b(a){clearTimeout(h),g.onerror=g.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(a,\\" failed\\")))}if(z[a]!==o)return q.resolve(z[a]);if(A[a])return A[a];var e=[o,o],f=new q(function(b,c){e[0]=function(c){A[a]=o,b(z[a]=c)},e[1]=function(b){A[a]=o,c(b)}});if(A[a]=f,!w)return q.resolve(a).then(d).then(e[0],e[1]),f;var g=s.createElement(\\"script\\");g.type=\\"text/javascript\\",g.charset=\\"utf-8\\",g.async=!0,g.timeout=1.2e5,g.src=a;var h=setTimeout(c,1.2e5);return g.onload=b,g.onerror=c,s.head.appendChild(g),f}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t={},u=b!==o,v=r!==o,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B={},C=a.__quase_builder__;if(C){if(Array.isArray(C.q)){for(var D=0;D<C.q.length;D++)e(C.q[D]);C.r=k,C.i=l,C.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.js\\":function($e,$r,$i,$b,$g,$a){var _a = $r(\\"a.js\\");
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+\\"16872\\":function($e,$r,$i,$b,$g,$a){var _f0a = $r(\\"95f0a\\");
 
-$a($e, _a);
+$a($e, _f0a);
 $g($e, \\"foo\\", function () {
   return foo;
 });
 // eslint-disable-line
 let foo = 20;
 },
-\\"a.js\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
+\\"95f0a\\":function($e,$r,$i,$b,$g){$g($e, \\"foo\\", function () {
   return foo;
 });
 const foo = 10;
-}});__quase_builder__.r(\\"index.js\\");
+}});\\"use strict\\";(function(a,b){function c(){return Object.create(q)}function d(a){return a&&(v?s(a):u&&b(a)),q}function e(a){for(var b in a)y[b]===o&&(y[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return x[a]||y[a]}function j(a){if(x[a])return x[a];var b=y[a];if(y[a]=q,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{value:!0}),x[a]=c,b(c,k,l,p,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||C[a].forEach(m),j(a)}function l(a){return r.all(h(a)?[]:C[a].map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return z[b]===o&&(z[b]=d(b)),z[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||q)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(z[f]!==o)return r.resolve(z[f]);if(A[f])return A[f];var e=[o,o],g=new r(function(a,b){e[0]=function(b){A[f]=o,a(z[f]=b)},e[1]=function(a){A[f]=o,b(a)}});if(A[f]=g,!w)return r.resolve(f).then(d).then(e[0],e[1]),g;var h=t.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=1.2e5,h.src=f;var i=setTimeout(c,1.2e5);return h.onload=function(){b()},h.onerror=c,t.head.appendChild(h),g}var o,p,q=null,r=a.Promise,s=a.importScripts,t=a.document,u=!!b,v=!!s,w=a.window===a,x=c(),y=c(),z=c(),A=c(),B=[\\"index.js\\"],C={16872:[0],\\"95f0a\\":[0]},D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"16872\\");
 //# sourceMappingURL=index.js.map",
-  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/a.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";uCAAc;;AAAd;;;;AAAqB;AAEd,IAAIA,MAAM,EAAV;;;;;ACFA,MAAMA,MAAM,EAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\n\\\\nexport let foo = 20;\\\\n\\",\\"export const foo = 10;\\\\n\\"]}",
+  "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/a.js\\"],\\"names\\":[\\"foo\\"],\\"mappings\\":\\";oCAAc;;AAAd;;;;AAAqB;AAEd,IAAIA,MAAM,EAAV;;;;;ACFA,MAAMA,MAAM,EAAZ\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"export * from \\\\\\"./a\\\\\\"; // eslint-disable-line\\\\n\\\\nexport let foo = 20;\\\\n\\",\\"export const foo = 10;\\\\n\\"]}",
 }
 `;

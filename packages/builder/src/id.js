@@ -1,6 +1,7 @@
 // @flow
 
 const path = require( "path" );
+const slash = require( "slash" );
 
 opaque type ID = string;
 
@@ -15,11 +16,11 @@ export function idToPath( id: ID ): string {
 }
 
 export function idToString( id: ID | string, cwd: ID | string ): string {
-  return path.relative( cwd, id ).replace( /\\/g, "/" );
+  return slash( path.relative( cwd, id ) );
 }
 
 export function relativeURL( id: ID | string, cwd: ID | string ): string {
-  return path.relative( path.dirname( cwd ), id ).replace( /\\/g, "/" );
+  return slash( path.relative( path.dirname( cwd ), id ) );
 }
 
 export function resolveId( id: ID | string, cwd: ID | string ): ID {
@@ -36,4 +37,7 @@ export function getType( id: ID ): string {
 }
 
 export const depsSorter =
-  ( { resolved: a }: { resolved: ID }, { resolved: b }: { resolved: ID } ) => ( a === b ? 0 : ( a > b ? 1 : -1 ) );
+  ( { resolved: a }: { +resolved: ID }, { resolved: b }: { +resolved: ID } ) => a.localeCompare( b );
+
+export const modulesSorter =
+  ( { id: a }: { +id: ID }, { id: b }: { +id: ID } ) => a.localeCompare( b );

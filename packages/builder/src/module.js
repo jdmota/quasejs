@@ -1,9 +1,12 @@
 // @flow
 
 import error from "./utils/error";
+import { hashName } from "./utils/hash";
 import type Builder from "./builder";
-import type { Result, Deps, Plugin } from "./types";
-import { type ID, getType, depsSorter } from "./id";
+import type { Result, Loc, Deps, Transformer } from "./types";
+import { type ID, getType, resolvePath, depsSorter } from "./id";
+
+const { joinSourceMaps } = require( "@quase/source-map" );
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
@@ -20,7 +23,7 @@ function handleLoaderOutput( obj: any, module: Module ): ?Result { // eslint-dis
 }
 
 async function callChain(
-  array: Plugin[],
+  array: Transformer[],
   module: Module, // eslint-disable-line no-use-before-define
   init: Result
 ): Promise<Result[]> {
@@ -33,9 +36,6 @@ async function callChain(
       prev = Object.assign( {}, out );
     }
   }
-  if ( outputs.length === 0 ) {
-    module.moduleError( "Zero valid outputs for the provided plugins" );
-  }
   return outputs;
 }
 
@@ -43,23 +43,29 @@ async function callChain(
 
 export default class Module {
 
-  id: ID;
-  normalizedId: string;
-  builder: Builder;
+  +id: ID;
+  +normalizedId: string;
+  +hashId: string;
+  +dest: string;
+  +isEntry: boolean;
+  +builder: Builder;
+  +sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean }>;
   loadingCode: ?Promise<string>;
   code: ?string;
   loadingOutputs: ?Promise<Result[]>;
   outputs: ?( Result[] );
   loadingDeps: ?Promise<Deps>;
   deps: ?Deps;
-  uuid: number;
-  sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean }>;
+  initialLoad: boolean;
 
-  constructor( id: ID, builder: Builder ) {
+  constructor( id: ID, isEntry: boolean, builder: Builder ) {
     this.id = id;
     this.normalizedId = builder.idToString( id, builder.context );
+    this.hashId = hashName( this.normalizedId, builder.idHashes );
+    this.dest = resolvePath( this.normalizedId, builder.dest );
+    this.isEntry = isEntry;
     this.builder = builder;
-    this.uuid = builder.uuid;
+    this.sourceToResolved = new Map();
 
     this.loadingCode = null;
     this.code = null;
@@ -70,14 +76,11 @@ export default class Module {
     this.loadingDeps = null;
     this.deps = null;
 
-    this.sourceToResolved = new Map();
+    this.initialLoad = false;
   }
 
   clone( builder: Builder ): Module {
-    if ( !builder ) {
-      throw new Error( "module needs builder" );
-    }
-    const m = new Module( this.id, builder );
+    const m = new Module( this.id, this.isEntry, builder );
     m.loadingCode = this.loadingCode;
     m.code = this.code;
     m.loadingOutputs = this.loadingOutputs;
@@ -89,10 +92,16 @@ export default class Module {
     throw new Error( `${message}. Module: ${this.normalizedId}` );
   }
 
-  error( message: string, loc: ?Object ) {
+  getMaps(): Object {
+    // $FlowFixMe
+    return this.outputs.map( o => o.map ).filter( Boolean );
+  }
+
+  error( message: string, loc: ?Loc ) {
     error( message, {
-      id: this.normalizedId,
-      code: this.code
+      id: this.builder.idToString( this.id, this.builder.context ),
+      code: this.code,
+      map: joinSourceMaps( this.getMaps() )
     }, loc );
   }
 
@@ -118,7 +127,7 @@ export default class Module {
 
   async _runLoader(): Promise<Result[]> {
     const code = await this.getCode();
-    return callChain( this.builder.plugins, this, { code, type: getType( this.id ) } );
+    return callChain( this.builder.transformers, this, { code, type: getType( this.id ) } );
   }
 
   async runLoader(): Promise<Result[]> {
@@ -131,10 +140,10 @@ export default class Module {
 
   getLastOutput( key: string ) {
     if ( !this.outputs ) {
-      throw this.moduleError( "Zero valid outputs for the provided plugins" );
+      return;
     }
     const out = this.outputs[ this.outputs.length - 1 ];
-    return key ? out[ key ] : out;
+    return out && key ? out[ key ] : out;
   }
 
   async runResolvers( obj: { type: string, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean } ): Promise<string | ?false> {
@@ -149,7 +158,7 @@ export default class Module {
   async _runDepsExtracter(): Promise<Deps> {
     const output = ( await this.runLoader() ).find( o => Array.isArray( o.deps ) );
     if ( !output || !output.deps ) {
-      throw this.moduleError( "No output with extracted dependencies found" );
+      return [];
     }
 
     const deps = Promise.all( output.deps.map( async( { src, loc, splitPoint, async } ) => {
@@ -189,12 +198,24 @@ export default class Module {
   }
 
   async saveDeps() {
-    const promises = [];
+    if ( this.initialLoad ) {
+      return;
+    }
+    this.initialLoad = true;
+
     const deps = await this.runDepsExtracter();
     for ( const { resolved } of deps ) {
-      promises.push( this.builder.addModule( resolved ) );
+      this.builder.addModule( resolved );
     }
-    return Promise.all( promises );
+  }
+
+  getDeps() {
+    return ( this.deps || [] ).map( ( { resolved, src, splitPoint, async } ) => ( {
+      src,
+      splitPoint,
+      async,
+      required: this.builder.getModule( resolved )
+    } ) );
   }
 
 }

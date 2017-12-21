@@ -105,8 +105,7 @@ export default class Watcher {
   onUpdate( id: ID, type: string ) {
     this.nextJob( () => {
       this.needsBuild = this.needsBuild || this.filesThatTriggerBuild.has( id ) || !!this.builder.idEntries.find( e => e === id );
-      this.builder.modules.delete( id );
-      this.builder.fileSystem.purge( id );
+      this.builder.removeModule( id );
       this.log( `File ${this.builder.idToString( id )} was ${type}.\n` );
     } );
   }

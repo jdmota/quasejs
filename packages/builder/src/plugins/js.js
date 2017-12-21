@@ -3,14 +3,13 @@ import blank from "../utils/blank";
 import error from "../utils/error";
 import isEmpty from "../utils/is-empty";
 import StringBuilder from "../string-builder";
-import babelBuildHelpers from "./babel-helpers";
 import babelPluginModules from "./babel-plugin-transform-modules";
 import extractNames from "./ast-extract-names";
 import LanguageModule from "./language";
 
 const { parse } = require( "babylon" );
-const babel = require( "babel-core" );
-const types = require( "babel-types" );
+const babel = require( "@babel/core" );
+const types = require( "@babel/types" );
 const path = require( "path" );
 const nodeResolve = require( "resolve" );
 const { joinSourceMaps } = require( "@quase/source-map" );
@@ -358,6 +357,8 @@ const defaultParserOpts = {
     "doExpressions",
     "dynamicImport",
     "exportExtensions",
+    "exportDefaultFrom",
+    "exportNamespaceFrom",
     "flow",
     "functionBind",
     "functionSent",
@@ -373,7 +374,7 @@ const defaultParserOpts = {
   ]
 };
 
-export function plugin( parserOpts ) {
+function transform( parserOpts ) {
   return async( { code, ast, type }, id ) => {
     if ( type !== "js" ) {
       return;
@@ -394,7 +395,7 @@ export function plugin( parserOpts ) {
   };
 }
 
-export function resolver( opts ) {
+function resolver( opts ) {
   return ( { type, src }, id, builder ) => {
     if ( type !== "js" ) {
       return;
@@ -403,7 +404,7 @@ export function resolver( opts ) {
   };
 }
 
-export function checker() {
+function checker() {
   return builder => {
     for ( const [ , module ] of builder.modules ) {
       const js = module.getLastOutput( INTERNAL );
@@ -443,7 +444,6 @@ function renderModule( jsModule, builder, babelOpts ) {
 
   const opts = Object.assign( {}, babelOpts, {
     filename: jsModule.id,
-    sourceRoot: path.dirname( jsModule.id ),
     sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
   } );
 
@@ -456,7 +456,7 @@ function renderModule( jsModule, builder, babelOpts ) {
       varsUsed,
       resolveModuleSource( source ) {
         const m = jsModule.getModuleBySource( source );
-        return m ? m.normalizedId : source;
+        return m ? m.hashId : source;
       }
     } ]
   ] );
@@ -470,7 +470,7 @@ function renderModule( jsModule, builder, babelOpts ) {
 const moduleArgs = "$e,$r,$i,$b,$g,$a".split( "," );
 
 const chunkInit = babel.transform(
-  `( {
+  `"use strict";( {
     g: typeof self !== "undefined" ? self : Function( "return this" )(),
     p: function( m ) {
       ( this.g.__quase_builder__ = this.g.__quase_builder__ || { q: [] } ).q.push( m );
@@ -482,97 +482,84 @@ const chunkInit = babel.transform(
   }
 ).code.replace( /;$/, "" );
 
-export function renderer( babelOpts ) {
-  return async( builder, finalFiles ) => {
+function renderer( babelOpts ) {
+  return async( builder, asset, finalAssets, otherUsedHelpers ) => {
 
-    const out = [];
+    const { id, srcs, dest } = asset;
+    const module = builder.getModule( id );
+    const jsEntryModule = module.getLastOutput( INTERNAL );
 
-    for ( const finalFile of finalFiles.files ) {
-      if ( finalFile.built ) {
-        continue;
-      }
-
-      const { id, srcs, dest } = finalFile;
-      const jsEntryModule = builder.getModule( id ).getLastOutput( INTERNAL );
-
-      if ( !jsEntryModule ) {
-        continue;
-      }
-
-      finalFile.built = true;
-
-      const jsModules = [];
-      const usedHelpers = {};
-
-      const build = new StringBuilder( {
-        sourceMap: builder.sourceMaps,
-        cwd: builder.cwd,
-        file: path.basename( dest )
-      } );
-
-      for ( const src of srcs ) {
-        const module = builder.getModule( src );
-        const jsModule = module.getLastOutput( INTERNAL );
-        jsModule.uuid = module.normalizedId;
-        jsModules.push( jsModule );
-      }
-
-      if ( builder.isEntry( id ) ) {
-        build.append( await builder.getRuntime() );
-      } else {
-        build.append( "\"use strict\";" );
-      }
-
-      build.append( `${chunkInit}.p({` );
-
-      let first = true;
-
-      for ( const jsModule of jsModules ) {
-
-        let { code, map, helpers } = renderModule( jsModule, builder, babelOpts );
-
-        for ( const name in helpers ) {
-          usedHelpers[ name ] = true;
-        }
-
-        if ( map ) {
-          map = joinSourceMaps( jsModule.getMaps().concat( map ) );
-        }
-
-        const args = moduleArgs.slice();
-        while ( args.length > 0 && !jsModule.lastRender.varsUsed[ args[ args.length - 1 ] ] ) {
-          args.pop();
-        }
-
-        build.append( `${first ? "" : ","}\n${JSON.stringify( jsModule.uuid )}:function(${args}){` );
-        build.append( code, map );
-        build.append( "\n}" );
-
-        first = false;
-      }
-
-      const babelHelpersBuilt = babelBuildHelpers( usedHelpers );
-
-      if ( babelHelpersBuilt ) {
-        build.append( `,\n__b__:${babelHelpersBuilt}` );
-      }
-
-      // build.append( ",\n__f__:{}" );
-
-      build.append( "});" );
-
-      if ( builder.isEntry( id ) ) {
-        build.append( `__quase_builder__.r(${JSON.stringify( jsEntryModule.uuid )});` );
-      }
-
-      out.push( {
-        dest,
-        code: build.toString(),
-        map: build.sourceMap()
-      } );
-
+    if ( !jsEntryModule ) {
+      return;
     }
 
-    return out;
+    const jsModules = [];
+    const usedHelpers = new Set( otherUsedHelpers );
+
+    const build = new StringBuilder( {
+      sourceMap: builder.sourceMaps,
+      cwd: builder.cwd,
+      file: path.basename( dest )
+    } );
+
+    for ( const src of srcs ) {
+      const module = builder.getModule( src );
+      const jsModule = module.getLastOutput( INTERNAL );
+      jsModule.uuid = module.hashId;
+      jsModules.push( jsModule );
+    }
+
+    build.append( `${chunkInit}.p({` );
+
+    let first = true;
+
+    for ( const jsModule of jsModules ) {
+
+      let { code, map, helpers } = renderModule( jsModule, builder, babelOpts );
+
+      for ( const name in helpers ) {
+        usedHelpers.add( name );
+      }
+
+      if ( map ) {
+        map = joinSourceMaps( jsModule.getMaps().concat( map ) );
+      }
+
+      const args = moduleArgs.slice();
+      while ( args.length > 0 && !jsModule.lastRender.varsUsed[ args[ args.length - 1 ] ] ) {
+        args.pop();
+      }
+
+      const key = /^\d/.test( jsModule.uuid ) ? `"${jsModule.uuid}"` : jsModule.uuid;
+
+      build.append( `${first ? "" : ","}\n${key}:function(${args}){` );
+      build.append( code, map );
+      build.append( "\n}" );
+
+      first = false;
+    }
+
+    build.append( "});" );
+
+    if ( asset.isEntry ) {
+      build.append( await builder.createRuntime( { finalAssets, usedHelpers } ) );
+      build.append( `__quase_builder__.r("${jsEntryModule.uuid}");` );
+    }
+
+    return {
+      code: build.toString(),
+      map: build.sourceMap(),
+      usedHelpers
+    };
+  };
+}
+
+export default function( opts ) {
+  const { resolve, babelOpts } = opts || {};
+  return {
+    transform: transform( babelOpts && babelOpts.parserOpts ),
+    resolve: resolver( resolve ),
+    check: checker(),
+    render: renderer( babelOpts )
   };
 }

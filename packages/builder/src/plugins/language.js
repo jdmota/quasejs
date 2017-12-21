@@ -1,16 +1,33 @@
-import error from "../utils/error";
-
-const { joinSourceMaps } = require( "@quase/source-map" );
+// @flow
+import type { Loc, NotResolvedDep } from "../types";
+import type { ID } from "../id";
+import type Builder from "../builder";
+import type Module from "../module";
 
 export default class LanguageModule {
 
-  constructor( id ) {
+  +id: ID;
+  +deps: NotResolvedDep[];
+  builder: Builder;
+
+  constructor( id: ID ) {
     this.id = id;
     this.deps = [];
+
+    // $FlowFixMe
     this.builder = null; // Fill!
   }
 
-  addDep( dep ) {
+  getModule(): Module {
+    // $FlowFixMe
+    return this.builder.getModule( this.id );
+  }
+
+  isEntry(): boolean {
+    return this.getModule().isEntry;
+  }
+
+  addDep( dep: NotResolvedDep ): string {
     const existing = this.deps.find( ( { src } ) => src === dep.src );
     if ( existing ) {
       if ( dep.splitPoint ) {
@@ -25,36 +42,34 @@ export default class LanguageModule {
     return dep.src;
   }
 
-  getMaps() {
-    const m = this.builder.getModule( this.id );
-    return m.outputs.map( o => o.map ).filter( Boolean );
+  getMaps(): Object[] {
+    // $FlowFixMe
+    return this.getModule().getMaps();
   }
 
-  getCode() {
-    return this.builder.getModule( this.id ).code;
+  getCode(): string {
+    // $FlowFixMe
+    return this.getModule().code;
   }
 
-  error( message, loc ) {
-    error( message, {
-      id: this.builder.idToString( this.id, this.builder.context ),
-      code: this.getCode(),
-      map: joinSourceMaps( this.getMaps() )
-    }, loc );
+  error( message: string, loc: ?Loc ) {
+    // $FlowFixMe
+    return this.getModule().error( message, loc );
   }
 
-  getModuleBySource( source ) {
-    const dep = this.builder.getModule( this.id ).sourceToResolved.get( source );
+  getModuleBySource( source: string ): ?Module {
+    const dep = this.getModule().sourceToResolved.get( source );
     return dep && this.builder.getModule( dep.resolved );
   }
 
-  getInternalBySource( source, internalKey ) {
-    const dep = this.builder.getModule( this.id ).sourceToResolved.get( source );
+  getInternalBySource( source: string, internalKey: string ): Object {
+    const dep = this.getModule().sourceToResolved.get( source );
     const module = dep && this.builder.getModule( dep.resolved );
     const internal = module && module.getLastOutput( internalKey );
     if ( internal ) {
       return internal;
     }
-    this.error(
+    throw this.error(
       `No information about '${source}' was found. It might be a file from a different type.`,
       dep && dep.loc
     );

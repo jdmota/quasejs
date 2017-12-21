@@ -1,61 +1,65 @@
 // @flow
 
-import { type ID, idToString, resolvePath } from "./id";
+import { modulesSorter } from "./id";
 import type Builder from "./builder";
-import type { Deps, FinalModule } from "./types";
+import type Module from "./module";
+import type { Dep, FinalAsset } from "./types";
 
 // Adapted from https://github.com/samthor/srcgraph
 
 class BiMap {
 
-  deps: Map<ID, Deps>;
-  incs: Map<ID, ID[]>;
-  entrypoints: Set<ID>;
+  deps: Map<Module, ( Dep & { required: Module } )[]>;
+  incs: Map<Module, Module[]>;
+  entrypoints: Set<Module>;
 
   constructor( builder: Builder ) {
     this.deps = new Map();
     this.incs = new Map();
-    this.entrypoints = new Set( builder.idEntries );
+    this.entrypoints = new Set(
+      // $FlowFixMe
+      builder.idEntries.map( id => builder.getModule( id ) )
+    );
 
-    for ( const [ id, module ] of builder.modules ) {
-      this.deps.set( id, module.deps || [] );
+    for ( const module of builder.modules.values() ) {
+      this.deps.set( module, module.getDeps() );
     }
 
-    for ( const src of this.deps.keys() ) {
-      this.incs.set( src, [ src ] );
+    for ( const module of this.deps.keys() ) {
+      this.incs.set( module, [ module ] );
     }
 
-    this.deps.forEach( ( required, src ) => {
-      required.forEach( ( { resolved, splitPoint } ) => {
+    this.deps.forEach( ( requiredList, module ) => {
+      requiredList.forEach( ( { required, splitPoint } ) => {
         if ( splitPoint ) {
-          this.entrypoints.add( resolved );
+          this.entrypoints.add( required );
         }
-        const l = this.incs.get( resolved );
-        if ( l && l.indexOf( src ) === -1 ) {
-          l.push( src );
+        const l = this.incs.get( required );
+        if ( l && l.indexOf( module ) === -1 ) {
+          l.push( module );
         }
       } );
     } );
 
-    this.incs.forEach( value => value.sort() );
+    this.incs.forEach( value => value.sort( modulesSorter ) );
   }
 
-  syncDeps( id: ID, set: Set<ID> = new Set() ) {
-    for ( const { resolved, async } of this.requires( id ) ) {
-      if ( !async && !set.has( resolved ) ) {
-        set.add( resolved );
-        this.syncDeps( resolved, set );
+  syncDeps( module: Module, set: Set<Module> = new Set() ) {
+    for ( const { required, async } of this.requires( module ) ) {
+      if ( !async && !set.has( required ) ) {
+        set.add( required );
+        this.syncDeps( required, set );
       }
     }
     return set;
   }
 
-  requires( src ) {
-    return this.deps.get( src ) || [];
+  requires( module: Module ) {
+    return this.deps.get( module ) || [];
   }
 
-  requiredBy( src ) {
-    return this.incs.get( src ) || [];
+  requiredBy( module: Module ) {
+    return this.incs.get( module ) || [];
   }
 }
 
@@ -64,17 +68,17 @@ export default function processGraph( builder: Builder ) {
   const entrypoints = Array.from( map.entrypoints );
 
   // walk over graph and set (1<<n) for all demands
-  const hashes = new Map();
+  const hashes: Map<Module, number> = new Map();
   entrypoints.forEach( ( entrypoint, n ) => {
     const pending = new Set( [ entrypoint ] );
     pending.forEach( next => {
       hashes.set( next, ( hashes.get( next ) || 0 ) | ( 1 << n ) );
-      map.requires( next ).forEach( ( { resolved } ) => pending.add( resolved ) );
+      map.requires( next ).forEach( ( { required } ) => pending.add( required ) );
     } );
   } );
 
   // find all files in the same module
-  const grow = from => {
+  const grow = ( from: Module ): ?Module[] => {
     const hash = hashes.get( from );
     const wouldSplitSrc = src => {
       // entrypoints are always their own starting point
@@ -100,12 +104,12 @@ export default function processGraph( builder: Builder ) {
     for ( let i = 0, curr; curr = include[ i ]; ++i ) {
       const pending = map.requires( curr );
       for ( let j = 0, cand; cand = pending[ j ]; ++j ) {
-        if ( seen.has( cand.resolved ) ) {
+        if ( seen.has( cand.required ) ) {
           continue;
         }
-        seen.add( cand.resolved );
-        if ( !wouldSplitSrc( cand.resolved ) ) {
-          include.push( cand.resolved );
+        seen.add( cand.required );
+        if ( !wouldSplitSrc( cand.required ) ) {
+          include.push( cand.required );
         }
       }
     }
@@ -114,53 +118,47 @@ export default function processGraph( builder: Builder ) {
   };
 
   const files = [];
-  const moduleToFile: Map<ID, FinalModule> = new Map();
+  const moduleToFile: Map<Module, FinalAsset> = new Map();
 
-  hashes.forEach( ( hash, id ) => {
-    const srcs = grow( id );
+  hashes.forEach( ( hash, module ) => {
+    const srcs = grow( module );
     if ( srcs ) {
-      const entrypoint = entrypoints.includes( id );
-      const normalized = idToString( id, builder.context );
-      const m = {
-        id,
-        normalized,
-        srcs,
-        entrypoint,
-        dest: resolvePath( normalized, builder.dest ),
-        built: false,
-        fileMap: {}
+      const f = {
+        id: module.id,
+        normalizedId: module.normalizedId,
+        dest: module.dest,
+        relativeDest: module.normalizedId,
+        isEntry: module.isEntry,
+        srcs: srcs.map( ( { id } ) => id )
       };
-      files.push( m );
+      files.push( f );
       for ( const src of srcs ) {
-        moduleToFile.set( src, m );
+        moduleToFile.set( src, f );
       }
     }
   } );
 
-  const moduleToFileDeps: Map<ID, FinalModule[]> = new Map();
-  for ( const [ id, file ] of moduleToFile ) {
+  const moduleToAssets: Map<string, FinalAsset[]> = new Map();
+  for ( const [ module, file ] of moduleToFile ) {
 
-    const set: Set<FinalModule> = new Set( [ file ] );
+    const set: Set<FinalAsset> = new Set( [ file ] );
 
-    for ( const dep of map.syncDeps( id ) ) {
+    for ( const dep of map.syncDeps( module ) ) {
       set.add( get( moduleToFile, dep ) );
     }
 
-    moduleToFileDeps.set( id, Array.from( set ).sort() );
+    moduleToAssets.set( module.hashId, Array.from( set ).sort() );
   }
 
-  for ( const [ id ] of builder.modules ) {
-    for ( const { resolved } of map.requires( id ) ) {
-      const file = get( moduleToFile, id );
-      const arr = get( moduleToFileDeps, resolved ).filter( m => m.id !== file.id ).map( m => m.normalized );
+  return {
+    files: sortFilesByEntry( files ),
+    moduleToAssets
+  };
+}
 
-      if ( arr.length ) {
-        file.fileMap[ idToString( resolved, builder.context ) ] = arr;
-      }
-    }
-  }
-
-  return { files, moduleToFileDeps };
+function sortFilesByEntry( files ) {
+  // $FlowFixMe
+  return files.sort( ( a, b ) => a.isEntry - b.isEntry );
 }
 
 function get<K, V>( map: Map<K, V>, key: K ): V {

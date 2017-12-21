@@ -1,5 +1,5 @@
-import { plugin as jsPlugin, resolver as jsResolver, checker as jsChecker, renderer as jsRenderer } from "../src/plugins/js";
-import { plugin as htmlPlugin, resolver as htmlResolver, renderer as htmlRenderer } from "../src/plugins/html";
+import jsPlugin from "../src/plugins/js";
+import htmlPlugin from "../src/plugins/html";
 import Builder from "../src/builder";
 import { testLog } from "../../assert";
 
@@ -43,13 +43,13 @@ describe( "builder", () => {
       expect( config ).not.toBe( null );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = ( config.plugins || [] ).concat( [ jsPlugin(), htmlPlugin() ] );
-      config.resolvers = [ jsResolver( config.resolve ), htmlResolver() ];
-      config.checkers = [ jsChecker() ];
-      config.renderers = [
-        jsRenderer( config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS ),
-        htmlRenderer()
-      ];
+      config.plugins = ( config.plugins || [] ).concat( [
+        jsPlugin( {
+          resolve: config.resolve,
+          babelOpts: config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS
+        } ),
+        htmlPlugin()
+      ] );
       config.cwd = fixturePath;
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "files";

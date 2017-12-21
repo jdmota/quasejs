@@ -4,7 +4,7 @@ describe( "babel transform modules", () => {
 
   const fs = require( "fs-extra" );
   const path = require( "path" );
-  const babel = require( "babel-core" );
+  const babel = require( "@babel/core" );
 
   const FIXTURES = path.resolve( "packages/builder/test/babel-plugin-transform-modules/fixtures" );
   const folders = fs.readdirSync( FIXTURES );
@@ -33,7 +33,7 @@ describe( "babel transform modules", () => {
         babelrc: false,
         sourceType: "module",
         allowImportExportEverywhere: true,
-        plugins: [ "dynamicImport", "exportExtensions", "jsx" ]
+        plugins: [ "dynamicImport", "exportExtensions", "exportDefaultFrom", "exportNamespaceFrom", "jsx" ]
       }, config.parserOpts );
 
       config.plugins = ( config.plugins || [] ).concat( [ require( "babel-plugin-external-helpers" ), plugin ] );

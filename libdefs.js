@@ -1,8 +1,12 @@
 /* eslint-disable */
 
+declare module "@quase/source-map" { declare var exports: any; }
 declare module "@quase/memory-fs" { declare var exports: any; }
 declare module "@quase/error" { declare var exports: any; }
 declare module "@quase/path-url" { declare var exports: any; }
+declare module "@babel/core" { declare var exports: any; }
+declare module "@babel/preset-es2015" { declare var exports: any; }
+declare module "babel-preset-minify" { declare var exports: any; }
 declare module "is-ci" { declare var exports: boolean; }
 declare module "matcher" { declare var exports: any; }
 declare module "fs-extra" { declare var exports: any; }

@@ -1,200 +1,182 @@
-import _processGraph from "../src/graph";
+import { hashName } from "../src/utils/hash";
+import createRuntime from "../src/runtime/create-runtime";
+import processGraph from "../src/graph";
 
-const path = require( "path" );
+async function createGraphAndRuntime( builder ) {
+  const finalAssets = processGraph( builder );
+  finalAssets.runtime = await createRuntime( { finalAssets, usedHelpers: new Set(), minify: false } );
+  return finalAssets;
+}
 
-function processGraph( builder ) {
-  builder.dest = path.resolve( "dest" );
-  builder.context = path.resolve( "context" );
-  const obj = _processGraph( builder );
-  for ( const m of obj.files ) {
-    m.dest = path.relative( process.cwd(), m.dest ).replace( /\\+/g, "/" );
-  }
-  return obj;
+function createDummyModule( builder, id, deps ) {
+  const normalizedId = id.replace( "context/", "" );
+  const m = {
+    builder,
+    id,
+    normalizedId,
+    isEntry: builder.idEntries.includes( id ),
+    dest: id.replace( "context/", "dest/" ),
+    hashId: hashName( normalizedId, builder.idHashes ),
+    deps,
+    getDeps() {
+      return ( this.deps || [] ).map( ( { resolved, src, splitPoint, async } ) => ( {
+        src,
+        splitPoint,
+        async,
+        required: this.builder.getModule( resolved )
+      } ) );
+    }
+  };
+  builder.modules.set( id, m );
+  return m;
+}
+
+function createDummyBuilder( idEntries ) {
+  return {
+    idEntries,
+    modules: new Map(),
+    idHashes: new Set(),
+    getModule( id ) {
+      return this.modules.get( id );
+    },
+    createModule( id, deps ) {
+      return createDummyModule( this, id, deps );
+    }
+  };
 }
 
 describe( "graph", () => {
 
-  it( "empty", () => {
+  it( "empty", async() => {
 
-    const builder = {
-      idEntries: [],
-      modules: new Map()
-    };
+    const builder = createDummyBuilder( [] );
 
-    expect( processGraph( builder ) ).toMatchSnapshot();
+    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
 
   } );
 
-  it( "cycle", () => {
+  it( "cycle", async() => {
 
-    const modules = new Map();
+    const builder = createDummyBuilder( [ "context/entry.js" ] );
 
-    const builder = {
-      idEntries: [ "context/entry.js" ],
-      modules
-    };
+    builder.createModule( "context/entry.js", [
+      {
+        resolved: "context/A.js"
+      },
+      {
+        resolved: "context/B.js"
+      }
+    ] );
 
-    modules.set( "context/entry.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        },
-        {
-          resolved: "context/B.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/A.js", [
+      {
+        resolved: "context/B.js"
+      }
+    ] );
 
-    modules.set( "context/A.js", {
-      deps: [
-        {
-          resolved: "context/B.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/B.js", [
+      {
+        resolved: "context/A.js"
+      }
+    ] );
 
-    modules.set( "context/B.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        }
-      ]
-    } );
-
-    expect( processGraph( builder ) ).toMatchSnapshot();
+    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
 
   } );
 
-  it( "cycle split", () => {
+  it( "cycle split", async() => {
 
-    const modules = new Map();
+    const builder = createDummyBuilder( [ "context/entry.js" ] );
 
-    const builder = {
-      idEntries: [ "context/entry.js" ],
-      modules
-    };
+    builder.createModule( "context/entry.js", [
+      {
+        resolved: "context/A.js"
+      },
+      {
+        resolved: "context/B.js"
+      }
+    ] );
 
-    modules.set( "context/entry.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        },
-        {
-          resolved: "context/B.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/A.js", [
+      {
+        resolved: "context/B.js",
+        splitPoint: true
+      }
+    ] );
 
-    modules.set( "context/A.js", {
-      deps: [
-        {
-          resolved: "context/B.js",
-          splitPoint: true
-        }
-      ]
-    } );
+    builder.createModule( "context/B.js", [
+      {
+        resolved: "context/A.js",
+        splitPoint: true
+      }
+    ] );
 
-    modules.set( "context/B.js", {
-      deps: [
-        {
-          resolved: "context/A.js",
-          splitPoint: true
-        }
-      ]
-    } );
-
-    expect( processGraph( builder ) ).toMatchSnapshot();
+    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
 
   } );
 
-  it( "split points", () => {
+  it( "split points", async() => {
 
-    const modules = new Map();
+    const builder = createDummyBuilder( [ "context/entry.html" ] );
 
-    const builder = {
-      idEntries: [ "context/entry.html" ],
-      modules
-    };
+    builder.createModule( "context/entry.html", [
+      {
+        resolved: "context/entry.js",
+        splitPoint: true
+      }
+    ] );
 
-    modules.set( "context/entry.html", {
-      deps: [
-        {
-          resolved: "context/entry.js",
-          splitPoint: true
-        }
-      ]
-    } );
+    builder.createModule( "context/entry.js", [
+      {
+        resolved: "context/A.js"
+      }
+    ] );
 
-    modules.set( "context/entry.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/A.js", [
+      {
+        resolved: "context/B.js",
+        splitPoint: true
+      }
+    ] );
 
-    modules.set( "context/A.js", {
-      deps: [
-        {
-          resolved: "context/B.js",
-          splitPoint: true
-        }
-      ]
-    } );
+    builder.createModule( "context/B.js", [
+      {
+        resolved: "context/A.js",
+      }
+    ] );
 
-    modules.set( "context/B.js", {
-      deps: [
-        {
-          resolved: "context/A.js",
-        }
-      ]
-    } );
-
-    expect( processGraph( builder ) ).toMatchSnapshot();
+    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
 
   } );
 
-  it( "bundle", () => {
+  it( "bundle", async() => {
 
-    const modules = new Map();
+    const builder = createDummyBuilder( [ "context/entry.js" ] );
 
-    const builder = {
-      idEntries: [ "context/entry.js" ],
-      modules
-    };
+    builder.createModule( "context/entry.js", [
+      {
+        resolved: "context/A.js"
+      }
+    ] );
 
-    modules.set( "context/entry.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/A.js", [
+      {
+        resolved: "context/B.js"
+      },
+      {
+        resolved: "context/C.js"
+      }
+    ] );
 
-    modules.set( "context/A.js", {
-      deps: [
-        {
-          resolved: "context/B.js"
-        },
-        {
-          resolved: "context/C.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/B.js", [
+      {
+        resolved: "context/A.js"
+      }
+    ] );
 
-    modules.set( "context/B.js", {
-      deps: [
-        {
-          resolved: "context/A.js"
-        }
-      ]
-    } );
+    builder.createModule( "context/C.js", [] );
 
-    modules.set( "context/C.js", {
-      deps: []
-    } );
-
-    expect( processGraph( builder ) ).toMatchSnapshot();
+    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
 
   } );
 

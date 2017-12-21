@@ -2,7 +2,7 @@ module.exports = {
   plugins: [
     function( obj ) {
       if ( obj.type === "js" ) {
-        const { code, map } = require( "babel-core" ).transform( obj.code, {
+        const { code, map } = require( "@babel/core" ).transform( obj.code, {
           sourceMaps: true,
           comments: false
         } );

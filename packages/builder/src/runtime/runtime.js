@@ -7,10 +7,8 @@
   const importScripts = global.importScripts;
   const doc = global.document;
 
-  const helpers = {};
-
-  const isNode = nodeRequire !== UNDEFINED;
-  const isWorker = importScripts !== UNDEFINED;
+  const isNode = !!nodeRequire;
+  const isWorker = !!importScripts;
   const isBrowser = global.window === global;
 
   function blank() { return Object.create( NULL ); }
@@ -20,7 +18,11 @@
   const fileImports = blank(); // Files that were imported already
   const fetches = blank(); // Fetches
 
-  const moduleToFiles = {};
+  /* eslint-disable no-undef, no-unused-vars */
+  const helpers = $_BABEL_HELPERS;
+  const files = $_FILES;
+  const moduleToFiles = $_MODULE_TO_FILES;
+  /* eslint-enable no-undef, no-unused-vars */
 
   function require( id ) {
     if ( id ) {
@@ -35,17 +37,8 @@
 
   function push( moreModules ) {
     for ( const id in moreModules ) {
-      const module = moreModules[ id ];
-      if ( id === "__b__" ) {
-        for ( const name in module ) {
-          helpers[ name ] = module[ name ];
-        }
-      } else if ( id === "__f__" ) {
-        for ( const name in module ) {
-          moduleToFiles[ name ] = module[ name ];
-        }
-      } else if ( fnModules[ id ] === UNDEFINED ) {
-        fnModules[ id ] = module;
+      if ( fnModules[ id ] === UNDEFINED ) {
+        fnModules[ id ] = moreModules[ id ];
       }
     }
   }
@@ -111,14 +104,16 @@
     ).then( () => load( id ) );
   }
 
-  function importFileSync( id ) {
+  function importFileSync( idx ) {
+    const id = files[ idx ];
     if ( fileImports[ id ] === UNDEFINED ) {
       fileImports[ id ] = require( id );
     }
     return fileImports[ id ];
   }
 
-  function importFileAsync( src ) {
+  function importFileAsync( idx ) {
+    const src = files[ idx ];
 
     if ( fileImports[ src ] !== UNDEFINED ) {
       return Promise.resolve( fileImports[ src ] );
@@ -167,7 +162,7 @@
       done( new Error( `Fetching ${src} failed` ) );
     }
 
-    script.onload = done;
+    script.onload = function() { done(); };
     script.onerror = onError;
 
     doc.head.appendChild( script );

@@ -2,7 +2,7 @@ import blank from "../utils/blank";
 import astExtractNames from "./ast-extract-names";
 
 const { basename, extname } = require( "path" );
-const template = require( "babel-template" ).default;
+const template = require( "@babel/template" ).default;
 
 const vars = {
   exports: "$e",
@@ -54,7 +54,7 @@ export default ( { types: t }, options ) => {
         break;
       default:
     }
-    return arg2 == null ? templates[ name ]( arg1 ) : templates[ name ]( arg1, arg2 );
+    return arg2 == null ? templates[ name ]( [ arg1 ] ) : templates[ name ]( [ arg1, arg2 ] );
   }
 
   function remapImport( path, newNode ) {

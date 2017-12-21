@@ -1,8 +1,11 @@
 // @flow
 
 import hash from "./utils/hash";
+import jsPlugin from "./plugins/js";
+import htmlPlugin from "./plugins/html";
+import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
-import type { Plugin, Resolver, Checker, Renderer, FinalModules, ToWrite, PerformanceOpts, Options } from "./types";
+import type { Plugin, Transformer, Resolver, Checker, Renderer, FinalAsset, FinalAssets, ToWrite, PerformanceOpts, MinimalFS, Options } from "./types";
 import { type ID, idToPath, pathToId, idToString, resolveId } from "./id";
 import Module from "./module";
 
@@ -14,31 +17,42 @@ const path = require( "path" );
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
 
-const runtimeCode = fs.readFile( path.resolve( __dirname, "runtime/runtime.min.js" ), "utf8" );
+type Info = { file: string, size: number, isEntry: boolean };
+
+async function defaultResolver( { src }, id, builder ) {
+  const resolved = path.resolve( path.dirname( idToPath( id ) ), src );
+  const isFile = await builder.fileSystem.isFile( resolved );
+  return isFile && resolved;
+}
+
+async function defaultRenderer( builder, asset ) {
+  const module = builder.getModule( asset.id );
+  return module && { code: await module.getCode() };
+}
 
 export default class Builder {
 
-  idEntries: ID[];
-  entries: string[];
-  context: ID;
-  dest: ID;
-  cwd: ID;
-  sourceMaps: boolean | "inline";
-  hashing: boolean;
-  warn: Function;
-  fileSystem: FileSystem;
-  fs: {
-    writeFile: Function,
-    mkdirp: Function
-  };
-  cli: Object;
-  plugins: Plugin[];
-  resolvers: Resolver[];
-  checkers: Checker[];
-  renderers: Renderer[];
-  performance: PerformanceOpts;
-  modules: Map<ID, Module>;
-  uuid: number;
+  +idEntries: ID[];
+  +entries: string[];
+  +context: ID;
+  +dest: ID;
+  +cwd: ID;
+  +sourceMaps: boolean | "inline";
+  +hashing: boolean;
+  +warn: Function;
+  +fileSystem: FileSystem;
+  +fs: MinimalFS;
+  +cli: Object;
+  +plugins: Plugin[];
+  +defaultPlugins: boolean;
+  +transformers: Transformer[];
+  +resolvers: Resolver[];
+  +checkers: Checker[];
+  +renderers: Renderer[];
+  +performance: PerformanceOpts;
+  +modules: Map<ID, Module>;
+  +modulePromises: Promise<void>[];
+  +idHashes: Set<string>;
 
   constructor( _opts: Options ) {
 
@@ -58,12 +72,12 @@ export default class Builder {
       throw new Error( "Missing dest option." );
     }
 
-    this.cwd = pathToId( typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd() ); // Default: process.cwd()
+    this.cwd = pathToId( typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd() );
     this.context = this.resolveId( options.context );
     this.dest = this.resolveId( options.dest );
     this.idEntries = this.entries.map( e => resolveId( e, this.context ) );
 
-    this.fileSystem = options.fileSystem || new FileSystem();
+    this.fileSystem = options.fileSystem ? options.fileSystem.clone() : new FileSystem();
     this.fs = options.fs || fs;
 
     this.sourceMaps = options.sourceMaps === "inline" ? options.sourceMaps : !!options.sourceMaps;
@@ -72,10 +86,20 @@ export default class Builder {
 
     this.cli = options.cli || {};
 
-    this.plugins = options.plugins || [];
-    this.resolvers = options.resolvers || [];
-    this.checkers = options.checkers || [];
-    this.renderers = options.renderers || [];
+    this.plugins = ( options.plugins || [] ).filter( Boolean );
+    this.defaultPlugins = !!options.defaultPlugins;
+
+    if ( this.defaultPlugins ) {
+      this.plugins.push( jsPlugin() );
+      this.plugins.push( htmlPlugin() );
+    }
+
+    this.transformers = this.plugins.map( ( { transform } ) => transform ).filter( Boolean );
+    this.resolvers = this.plugins.map( ( { resolve } ) => resolve ).filter( Boolean );
+    this.resolvers.push( defaultResolver );
+    this.checkers = this.plugins.map( ( { check } ) => check ).filter( Boolean );
+    this.renderers = this.plugins.map( ( { render } ) => render ).filter( Boolean );
+    this.renderers.push( defaultRenderer );
 
     this.performance = Object.assign( {
       // $FlowFixMe
@@ -92,12 +116,9 @@ export default class Builder {
     }
 
     this.modules = new Map();
-    this.uuid = options.uuid || 0;
+    this.modulePromises = [];
+    this.idHashes = new Set();
 
-  }
-
-  async getRuntime(): Promise<string> {
-    return runtimeCode;
   }
 
   // The watcher should use this to keep builds atomic
@@ -107,7 +128,6 @@ export default class Builder {
     this.modules.forEach( ( m, id ) => {
       builder.modules.set( id, m.clone( builder ) );
     } );
-    builder.fileSystem = this.fileSystem.clone();
     return builder;
   }
 
@@ -132,36 +152,48 @@ export default class Builder {
     return this.modules.get( id );
   }
 
-  async addModule( id: ID ): Promise<Module> {
+  addModule( id: ID, isEntry: ?boolean ) {
     const curr = this.modules.get( id );
     if ( curr ) {
-      if ( curr.uuid !== this.uuid ) {
-        await curr.saveDeps();
+      if ( !curr.initialLoad ) {
+        this.modulePromises.push( curr.saveDeps() );
       }
-      return curr;
+      return;
     }
-    const module = new Module( id, this );
+    const module = new Module( id, !!isEntry, this );
     this.modules.set( id, module );
-    await module.saveDeps();
-    return module;
+    this.modulePromises.push( module.saveDeps() );
   }
 
-  async write( { dest, code, map }: ToWrite ) {
+  removeModule( id: ID ) {
+    const m = this.modules.get( id );
+    if ( m ) {
+      this.idHashes.delete( m.hashId );
+      this.modules.delete( id );
+    }
+    this.fileSystem.purge( id );
+  }
 
-    dest = idToPath( this.resolveId( dest ) );
+  createRuntime( obj: RuntimeArg ) {
+    return createRuntime( obj );
+  }
+
+  async write( asset: FinalAsset, { code, map }: ToWrite ): Promise<Info> {
+
+    let h;
+    if ( this.hashing && !asset.isEntry ) {
+      h = hash( code );
+      asset.dest = addHash( asset.dest, h );
+      asset.relativeDest = addHash( asset.normalizedId, h );
+      if ( map ) {
+        map.file = addHash( map.file, h );
+      }
+    }
 
     const fs = this.fs;
     const inlineMap = this.sourceMaps === "inline";
-    const directory = pathToId( path.dirname( dest ) );
-
-    if ( this.hashing ) {
-      const h = hash( code );
-      const fn = m => ( m ? `.${h}` + m : `-${h}` );
-      dest = dest.replace( rehash, fn );
-      if ( map ) {
-        map.file = map.file.replace( rehash, fn );
-      }
-    }
+    const destPath = idToPath( this.resolveId( asset.dest ) );
+    const directory = pathToId( path.dirname( destPath ) );
 
     if ( map ) {
       map.sources = map.sources.map(
@@ -169,45 +201,48 @@ export default class Builder {
       );
     }
 
-    await fs.mkdirp( path.dirname( dest ) );
+    await fs.mkdirp( path.dirname( destPath ) );
 
     if ( map && typeof code === "string" ) {
       if ( inlineMap ) {
-        await fs.writeFile( dest, code + `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}` );
+        await fs.writeFile( destPath, code + `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}` );
       } else {
-        const p1 = fs.writeFile( dest, code + `\n//# ${SOURCE_MAP_URL}=${path.basename( dest )}.map` );
-        const p2 = fs.writeFile( dest + ".map", map.toString() );
+        const p1 = fs.writeFile( destPath, code + `\n//# ${SOURCE_MAP_URL}=${path.basename( destPath )}.map` );
+        const p2 = fs.writeFile( destPath + ".map", map.toString() );
         await p1;
         await p2;
       }
     } else {
-      await fs.writeFile( dest, code );
+      await fs.writeFile( destPath, code );
     }
+
+    return {
+      file: asset.dest,
+      size: code.length,
+      isEntry: asset.isEntry
+    };
   }
 
   async build() {
-    this.uuid++;
-
-    const promises = [];
     for ( const entry of this.idEntries ) {
-      promises.push( this.addModule( entry ) );
+      this.addModule( entry, true );
     }
-    await Promise.all( promises );
+
+    let promise;
+    while ( promise = this.modulePromises.pop() ) {
+      await promise;
+    }
 
     await callCheckers( this.checkers, this );
 
-    const finalModules = processGraph( this );
-    const filesInfo = await callRenderers( this.renderers, this, finalModules );
+    const finalAssets = processGraph( this );
+    const filesInfo = await callRenderers( this.renderers, this, finalAssets );
 
     const output = [ "\nAssets:\n" ];
 
     if ( this.performance.hints ) {
-      for ( const { file, size } of filesInfo ) {
+      for ( const { file, size, isEntry } of filesInfo ) {
         if ( this.performance.assetFilter( file ) ) {
-
-          const isEntry = this.isEntry(
-            this.resolveId( this.idToString( file, this.dest ), this.context )
-          );
 
           let message = "";
           if ( isEntry && size > this.performance.maxEntrypointSize ) {
@@ -227,32 +262,40 @@ export default class Builder {
 
 }
 
+function addHash( file: string, h: string ): string {
+  const fn = m => ( m ? `.${h}` + m : `-${h}` );
+  return file.replace( rehash, fn );
+}
+
 async function callCheckers(
-  array: Checker[],
+  checkers: Checker[],
   builder: Builder
 ): Promise<void> {
-  for ( const fn of array ) {
+  for ( const fn of checkers ) {
     await fn( builder );
   }
 }
 
 async function callRenderers(
-  array: Renderer[],
+  renderers: Renderer[],
   builder: Builder,
-  finalModules: FinalModules
-): Promise<{file: string, size: number}[]> {
-  const filesInfo = [];
+  finalAssets: FinalAssets
+): Promise<Info[]> {
+  const usedHelpers = new Set();
   const writes = [];
-  for ( const fn of array ) {
-    const out = await fn( builder, finalModules );
-    for ( const o of out ) {
-      writes.push( builder.write( o ) );
-      filesInfo.push( {
-        file: o.dest,
-        size: o.code.length
-      } );
+  for ( const asset of finalAssets.files ) {
+    for ( const fn of renderers ) {
+      const out = await fn( builder, asset, finalAssets, usedHelpers );
+      if ( out ) {
+        if ( !asset.isEntry && out.usedHelpers ) {
+          for ( const key of out.usedHelpers ) {
+            usedHelpers.add( key );
+          }
+        }
+        writes.push( builder.write( asset, out ) );
+        break;
+      }
     }
   }
-  await Promise.all( writes );
-  return filesInfo;
+  return Promise.all( writes );
 }

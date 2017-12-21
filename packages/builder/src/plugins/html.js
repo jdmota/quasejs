@@ -1,9 +1,15 @@
-import { relativeURL } from "../id";
 import cloneAst from "./clone-ast";
 import LanguageModule from "./language";
 
-const path = require( "path" );
 const parse5 = require( "parse5" );
+
+function attrsToObj( attrs ) {
+  const attrsObj = {};
+  for ( const { name, value } of attrs ) {
+    attrsObj[ name ] = value;
+  }
+  return attrsObj;
+}
 
 function TreeAdapter() {
   this.__deps = [];
@@ -19,19 +25,30 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
   const node = defaultTreeAdapter.createElement( tagName, namespaceURI, attrs );
 
   if ( tagName === "script" ) {
-    const attrsObj = {};
-    for ( const { name, value } of attrs ) {
-      attrsObj[ name ] = value;
-    }
+    const attrsObj = attrsToObj( attrs );
 
     if ( attrsObj.type === "module" && "src" in attrsObj ) {
       this.__deps.push( {
         node,
         async: "async" in attrsObj && attrsObj.async !== "false",
         src: attrsObj.src,
-        splitPoint: true
+        splitPoint: true,
+        importType: "js"
       } );
-      node.__import = true;
+      node.__importType = "js";
+    }
+  } else if ( tagName === "link" ) {
+    const attrsObj = attrsToObj( attrs );
+
+    if ( "href" in attrsObj && attrsObj.rel.split( /\s+/ ).includes( "stylesheet" ) ) {
+      this.__deps.push( {
+        node,
+        async: false,
+        src: attrsObj.href,
+        splitPoint: true,
+        importType: "css"
+      } );
+      node.__importType = "css";
     }
   }
 
@@ -39,7 +56,7 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
 };
 
 TreeAdapter.prototype.getAttrList = function( element ) {
-  if ( element.__import ) {
+  if ( element.__importType === "js" ) {
     return element.attrs.filter( a => a.name !== "type" );
   }
   return element.attrs;
@@ -93,59 +110,79 @@ class HtmlModule extends LanguageModule {
     return this.treeAdapter.createElement( "script", NAMESPACE, [ { name: "src", value: src } ] );
   }
 
+  createHrefCss( href ) {
+    return this.treeAdapter.createElement( "link", NAMESPACE, [ { name: "href", value: href }, { name: "rel", value: "stylesheet" } ] );
+  }
+
   insertBefore( node, ref ) {
     this.treeAdapter.insertBefore( ref.parentNode, node, ref );
   }
 
-  async render( builder, { moduleToFileDeps } ) {
+  remove( node ) {
+    this.treeAdapter.detachNode( node );
+  }
+
+  async render( builder, asset, finalAssets, usedHelpers ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
       const cloneStack = new Map();
       const document = cloneAst( this.document, cloneStack );
 
-      for ( const dep of this.treeAdapter.__deps ) {
-        dep.node = cloneStack.get( dep.node );
-      }
+      const deps = this.treeAdapter.__deps.map( d => {
+        return Object.assign( {}, d, { node: cloneStack.get( d.node ) } );
+      } );
 
-      const firstScript = this.treeAdapter.__deps[ 0 ].node;
+      const firstScriptDep = deps.find( d => d.importType === "js" );
 
-      if ( builder.isEntry( this.id ) ) {
+      if ( asset.isEntry && firstScriptDep ) {
         this.insertBefore(
-          this.createTextScript( await builder.getRuntime() ),
-          firstScript
+          this.createTextScript( await builder.createRuntime( { finalAssets, usedHelpers } ) ),
+          firstScriptDep.node
         );
       }
 
-      const deps = new Set();
+      const syncDeps = new Set();
 
-      for ( const { node, src } of this.treeAdapter.__deps ) {
+      for ( const { node, src, async, importType } of deps ) {
         const module = this.getModuleBySource( src );
-        deps.add( module.id );
 
-        const prevOnloadAttr = node.attrs.find( ( { name } ) => name === "onload" ) || {};
-        const prevOnload = prevOnloadAttr.value ? prevOnloadAttr.value.replace( /;?$/, ";" ) : "";
+        if ( importType === "css" ) {
 
-        if ( prevOnload ) {
-          prevOnloadAttr.value = `${prevOnload}__quase_builder__.r('${module.normalizedId}');`;
+          for ( const { id, relativeDest } of finalAssets.moduleToAssets.get( module.hashId ) ) {
+            if ( id !== this.id && !syncDeps.has( id ) ) {
+              syncDeps.add( relativeDest );
+              this.insertBefore( this.createHrefCss( relativeDest ), node );
+            }
+          }
+
+          const hrefIdx = node.attrs.findIndex( ( { name } ) => name === "href" );
+          node.attrs.splice( hrefIdx, 1 );
+
         } else {
-          node.attrs.push( {
-            name: "onload",
-            value: `__quase_builder__.r('${module.normalizedId}');`
-          } );
+
+          if ( !async ) {
+            for ( const { id, relativeDest } of finalAssets.moduleToAssets.get( module.hashId ) ) {
+              if ( id !== this.id && !syncDeps.has( id ) ) {
+                syncDeps.add( relativeDest );
+                this.insertBefore( this.createSrcScript( relativeDest ), node );
+              }
+            }
+          }
+
+          this.insertBefore(
+            this.createTextScript( `__quase_builder__.${async ? "i" : "r"}('${module.hashId}');` ),
+            node
+          );
+
+          const srcIdx = node.attrs.findIndex( ( { name } ) => name === "src" );
+          node.attrs.splice( srcIdx, 1 );
+          if ( node.children ) {
+            node.children.length = 0;
+          }
+
         }
-      }
 
-      const moreScripts = new Set();
-
-      for ( const { id } of moduleToFileDeps.get( this.id ) ) {
-        if ( id !== this.id && !deps.has( id ) ) {
-          moreScripts.add( relativeURL( id, this.id ) );
-        }
-      }
-
-      for ( const src of moreScripts ) {
-        this.insertBefore( this.createSrcScript( src ), firstScript );
       }
 
       return parse5.serialize( document, {
@@ -158,57 +195,33 @@ class HtmlModule extends LanguageModule {
 
 }
 
-export function plugin() {
-  return async( { code, type }, id ) => {
-    if ( type !== "html" ) {
-      return;
-    }
-    const htmlModule = new HtmlModule( id, code );
-    return {
-      type: "html",
-      code,
-      deps: htmlModule.deps,
-      [ INTERNAL ]: htmlModule
-    };
-  };
-}
-
-export function resolver() {
-  return async( { type, src }, id, builder ) => {
-    if ( type !== "html" ) {
-      return;
-    }
-    const resolved = path.resolve( path.dirname( id ), src );
-    const isFile = await builder.fileSystem.isFile( resolved );
-    return isFile && resolved;
-  };
-}
-
-export function renderer() {
-  return async( builder, finalFiles ) => {
-    const out = [];
-
-    for ( const finalFile of finalFiles.files ) {
-      if ( finalFile.built ) {
-        continue;
+export default function() {
+  return {
+    async transform( { type, code }, id ) {
+      if ( type !== "html" ) {
+        return;
       }
+      const htmlModule = new HtmlModule( id, code );
+      return {
+        type: "html",
+        code,
+        deps: htmlModule.deps,
+        [ INTERNAL ]: htmlModule
+      };
+    },
 
-      const { id, dest } = finalFile;
-      const htmlModule = builder.getModule( id ).getLastOutput( INTERNAL );
+    async render( builder, asset, finalAssets, usedHelpers ) {
+
+      const htmlModule = builder.getModule( asset.id ).getLastOutput( INTERNAL );
 
       if ( !htmlModule ) {
-        continue;
+        return;
       }
       htmlModule.builder = builder;
 
-      finalFile.built = true;
-
-      out.push( {
-        dest,
-        code: await htmlModule.render( builder, finalFiles )
-      } );
+      return {
+        code: await htmlModule.render( builder, asset, finalAssets, usedHelpers )
+      };
     }
-
-    return out;
   };
 }

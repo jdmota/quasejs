@@ -1,9 +1,9 @@
-const helpers = require( "babel-helpers" );
-const generator = require( "babel-generator" ).default;
-const t = require( "babel-types" );
+const helpers = require( "@babel/helpers" );
+const generator = require( "@babel/generator" ).default;
+const t = require( "@babel/types" );
 
 export default function( whitelist ) {
-  if ( Object.keys( whitelist ).length === 0 ) {
+  if ( whitelist.size === 0 ) {
     return;
   }
 
@@ -12,7 +12,7 @@ export default function( whitelist ) {
   ];
 
   helpers.list.forEach( name => {
-    if ( !whitelist[ name ] ) {
+    if ( !whitelist.has( name ) ) {
       return;
     }
     const helper = helpers.get( name ); // { nodes: [], globals: [] }
