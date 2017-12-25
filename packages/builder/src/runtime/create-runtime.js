@@ -1,5 +1,5 @@
 // @flow
-import babelBuildHelpers from "../plugins/babel-helpers";
+import babelBuildHelpers from "../languages/babel-helpers";
 import type { FinalAssets } from "../types";
 
 const fs = require( "fs-extra" );

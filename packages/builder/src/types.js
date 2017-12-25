@@ -1,113 +1,102 @@
 // @flow
 
-import type FileSystem from "../../fs/memory-fs/src";
-import type { ID } from "./id";
-import type Builder from "./builder";
+export type Data = Buffer | string;
 
-type Loc = { line: number, column?: ?number };
+export type DataType = "buffer" | "string";
 
-type NotResolvedDep = {
-  src: string,
+export type Loc = {
+  +line: number,
+  +column?: ?number
+};
+
+export type ImportedName = {
+  +request: string,
+  +imported: string,
+  +name: string,
+  +loc?: ?Loc
+};
+
+export type ExportedName = {
+  +request?: ?string,
+  +imported?: ?string,
+  +name: string,
+  +loc?: ?Loc
+};
+
+export type ProvidedPluginsArr = $ReadOnlyArray<void | string | Function | [string | Function, Object]>;
+
+// $FlowFixMe
+export type QueryArr = $ReadOnlyArray<string | [string, Object]>;
+
+export type Query = {
+  +str: string,
+  +arr: QueryArr,
+  +default?: ?boolean,
+};
+
+export type NotResolvedDep = {
+  request: string,
   loc?: ?Loc,
   splitPoint?: ?boolean,
   async?: ?boolean
 };
 
-type Resolver = ( NotResolvedDep, ID, Builder ) => Promise<string | ?false>;
-
-type Checker = Builder => Promise<void>;
-
-type ToWrite = {
-  code: Buffer | string,
-  map?: ?Object,
-  usedHelpers?: ?Set<string>
+export type Dep = {
+  path: string,
+  query: Query,
+  request: string,
+  loc?: ?Loc,
+  splitPoint?: ?boolean,
+  async?: ?boolean
 };
 
-type FinalAsset = {
-  id: ID,
-  normalizedId: string,
+export type FinalAsset = {
+  id: string,
+  normalized: string,
   dest: string,
   relativeDest: string,
   isEntry: boolean,
-  srcs: ID[]
+  srcs: string[]
 };
 
-type FinalAssets = {
+export type FinalAssets = {
   files: FinalAsset[],
   moduleToAssets: Map<string, FinalAsset[]>
 };
 
-type Renderer = ( Builder, FinalAsset, FinalAssets, Set<string> ) => Promise<?ToWrite>;
-
-type Dep = { resolved: ID } & NotResolvedDep;
-
-type Deps = Dep[];
-
-type Result = {
-  buffer?: ?Buffer,
-  code?: ?string,
+export type ToWrite = {
+  data: Data,
   map?: ?Object,
-  ast?: ?Object,
-  deps?: ?Deps,
-  type: string,
-  [key: string]: any
+  usedHelpers?: ?Set<string>
 };
 
-type Transformer = ( Result, ID, Builder ) => Result | Promise<Result>;
-
-type Plugin = {
-  transform?: ?Transformer,
-  resolve?: ?Resolver,
-  check?: ?Checker,
-  render?: ?Renderer
-};
-
-type PerformanceOpts = {
+export type PerformanceOpts = {
   hints: boolean | "warning" | "error",
   maxEntrypointSize: number,
   maxAssetSize: number,
   assetFilter: string => boolean
 };
 
-type MinimalFS = {
-  writeFile( string, string | Buffer ): Promise<void>,
+export type MinimalFS = {
+  writeFile( string, Data ): Promise<void>,
   mkdirp( string ): Promise<void>
 };
 
-type Options = {
+export type Options = {
   context: string,
   entries: string[],
   dest: string,
   cwd?: ?string,
   sourceMaps?: ?boolean | "inline",
   hashing?: ?boolean,
-  defaultPlugins?: ?boolean,
+  buildDefaultQuery?: ?( string ) => ?QueryArr;
   warn?: ?Function,
-  fileSystem?: ?FileSystem,
   fs?: ?MinimalFS,
   cli?: ?Object,
   watch?: ?boolean,
   watchOptions?: ?Object,
-  plugins?: ?Plugin[],
+  languages?: ?ProvidedPluginsArr,
+  loaderAlias?: ?{ [key: string]: Function },
   performance?: ?PerformanceOpts,
   _hideDates?: ?boolean
-};
-
-export type {
-  Result,
-  Loc,
-  NotResolvedDep,
-  Dep,
-  Deps,
-  Plugin,
-  Transformer,
-  Resolver,
-  Checker,
-  Renderer,
-  FinalAsset,
-  FinalAssets,
-  ToWrite,
-  PerformanceOpts,
-  MinimalFS,
-  Options
 };

@@ -1,5 +1,8 @@
+// @flow
+import type { Data, NotResolvedDep, FinalAsset, FinalAssets } from "../types";
+import type Builder from "../builder";
+import Language from "../language";
 import cloneAst from "./clone-ast";
-import LanguageModule from "./language";
 
 const parse5 = require( "parse5" );
 
@@ -31,7 +34,7 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
       this.__deps.push( {
         node,
         async: "async" in attrsObj && attrsObj.async !== "false",
-        src: attrsObj.src,
+        request: attrsObj.src,
         splitPoint: true,
         importType: "js"
       } );
@@ -44,7 +47,7 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
       this.__deps.push( {
         node,
         async: false,
-        src: attrsObj.href,
+        request: attrsObj.href,
         splitPoint: true,
         importType: "css"
       } );
@@ -62,34 +65,38 @@ TreeAdapter.prototype.getAttrList = function( element ) {
   return element.attrs;
 };
 
-const INTERNAL = "__builderHtmlLoader";
 const NAMESPACE = "http://www.w3.org/1999/xhtml";
 
-class HtmlModule extends LanguageModule {
+export default class HtmlLanguage extends Language {
 
-  constructor( id, code ) {
-    super( id );
+  static TYPE = "html";
+
+  +deps: NotResolvedDep[];
+  +treeAdapter: TreeAdapter;
+  +originalCode: string;
+  +document: Object;
+
+  constructor( id: string, data: Data, options: Object ) {
+    super( id, data, options );
+
+    this.deps = [];
 
     this.treeAdapter = new TreeAdapter();
 
-    this.originalCode = code;
+    this.originalCode = data.toString();
 
-    this.document = parse5.parse( code, {
+    this.document = parse5.parse( this.originalCode, {
       treeAdapter: this.treeAdapter,
       locationInfo: true
     } );
 
-    this.getDeps();
+    this.processDeps();
   }
 
-  getInternalBySource( source ) {
-    return super.getInternalBySource( source, INTERNAL );
-  }
-
-  getDeps() {
+  processDeps() {
     this.treeAdapter.__deps.forEach( s => {
-      this.addDep( {
-        src: s.src,
+      this.deps.push( {
+        request: s.request,
         loc: {
           line: s.node.__location.line,
           column: s.node.__location.col - 1
@@ -100,31 +107,38 @@ class HtmlModule extends LanguageModule {
     } );
   }
 
-  createTextScript( text ) {
+  async dependencies() {
+    return this.deps;
+  }
+
+  createTextScript( text: string ) {
     const script = this.treeAdapter.createElement( "script", NAMESPACE, [] );
     this.treeAdapter.insertText( script, text );
     return script;
   }
 
-  createSrcScript( src ) {
+  createSrcScript( src: string ) {
     return this.treeAdapter.createElement( "script", NAMESPACE, [ { name: "src", value: src } ] );
   }
 
-  createHrefCss( href ) {
+  createHrefCss( href: string ) {
     return this.treeAdapter.createElement( "link", NAMESPACE, [ { name: "href", value: href }, { name: "rel", value: "stylesheet" } ] );
   }
 
-  insertBefore( node, ref ) {
+  insertBefore( node: Object, ref: Object ) {
     this.treeAdapter.insertBefore( ref.parentNode, node, ref );
   }
 
-  remove( node ) {
+  remove( node: Object ) {
     this.treeAdapter.detachNode( node );
   }
 
-  async render( builder, asset, finalAssets, usedHelpers ) {
+  async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, usedHelpers: Set<string> ) {
 
     if ( this.treeAdapter.__deps.length ) {
+
+      // TODO publicPath
+      // TODO leave the script tags but somehow handle onload event
 
       const cloneStack = new Map();
       const document = cloneAst( this.document, cloneStack );
@@ -144,12 +158,18 @@ class HtmlModule extends LanguageModule {
 
       const syncDeps = new Set();
 
-      for ( const { node, src, async, importType } of deps ) {
-        const module = this.getModuleBySource( src );
+      for ( const { node, request, async, importType } of deps ) {
+        const module = builder.getModuleForSure( this.id ).getModuleByRequest( builder, request );
+
+        if ( !module ) {
+          throw new Error( "Assertion error on HtmlLanguage: missing module" );
+        }
+
+        const assets = finalAssets.moduleToAssets.get( module.hashId ) || [];
 
         if ( importType === "css" ) {
 
-          for ( const { id, relativeDest } of finalAssets.moduleToAssets.get( module.hashId ) ) {
+          for ( const { id, relativeDest } of assets ) {
             if ( id !== this.id && !syncDeps.has( id ) ) {
               syncDeps.add( relativeDest );
               this.insertBefore( this.createHrefCss( relativeDest ), node );
@@ -162,7 +182,7 @@ class HtmlModule extends LanguageModule {
         } else {
 
           if ( !async ) {
-            for ( const { id, relativeDest } of finalAssets.moduleToAssets.get( module.hashId ) ) {
+            for ( const { id, relativeDest } of assets ) {
               if ( id !== this.id && !syncDeps.has( id ) ) {
                 syncDeps.add( relativeDest );
                 this.insertBefore( this.createSrcScript( relativeDest ), node );
@@ -185,43 +205,16 @@ class HtmlModule extends LanguageModule {
 
       }
 
-      return parse5.serialize( document, {
-        treeAdapter: this.treeAdapter
-      } );
+      return {
+        data: parse5.serialize( document, {
+          treeAdapter: this.treeAdapter
+        } )
+      };
     }
 
-    return this.originalCode;
+    return {
+      data: this.originalCode
+    };
   }
 
-}
-
-export default function() {
-  return {
-    async transform( { type, code }, id ) {
-      if ( type !== "html" ) {
-        return;
-      }
-      const htmlModule = new HtmlModule( id, code );
-      return {
-        type: "html",
-        code,
-        deps: htmlModule.deps,
-        [ INTERNAL ]: htmlModule
-      };
-    },
-
-    async render( builder, asset, finalAssets, usedHelpers ) {
-
-      const htmlModule = builder.getModule( asset.id ).getLastOutput( INTERNAL );
-
-      if ( !htmlModule ) {
-        return;
-      }
-      htmlModule.builder = builder;
-
-      return {
-        code: await htmlModule.render( builder, asset, finalAssets, usedHelpers )
-      };
-    }
-  };
 }

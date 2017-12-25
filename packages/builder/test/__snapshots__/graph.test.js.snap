@@ -7,7 +7,7 @@ Object {
       "dest": "dest/entry.js",
       "id": "context/entry.js",
       "isEntry": true,
-      "normalizedId": "entry.js",
+      "normalized": "entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -23,7 +23,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -38,7 +38,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -53,7 +53,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -68,7 +68,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -288,7 +288,7 @@ Object {
       "dest": "dest/entry.js",
       "id": "context/entry.js",
       "isEntry": true,
-      "normalizedId": "entry.js",
+      "normalized": "entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -303,7 +303,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -317,7 +317,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -331,7 +331,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -549,7 +549,7 @@ Object {
       "dest": "dest/A.js",
       "id": "context/A.js",
       "isEntry": false,
-      "normalizedId": "A.js",
+      "normalized": "A.js",
       "relativeDest": "A.js",
       "srcs": Array [
         "context/A.js",
@@ -559,7 +559,7 @@ Object {
       "dest": "dest/B.js",
       "id": "context/B.js",
       "isEntry": false,
-      "normalizedId": "B.js",
+      "normalized": "B.js",
       "relativeDest": "B.js",
       "srcs": Array [
         "context/B.js",
@@ -569,7 +569,7 @@ Object {
       "dest": "dest/entry.js",
       "id": "context/entry.js",
       "isEntry": true,
-      "normalizedId": "entry.js",
+      "normalized": "entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -582,7 +582,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": true,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -592,7 +592,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -602,7 +602,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -614,7 +614,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -624,7 +624,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -636,7 +636,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -646,7 +646,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1063,7 +1063,7 @@ Object {
       "dest": "dest/entry.js",
       "id": "context/entry.js",
       "isEntry": false,
-      "normalizedId": "entry.js",
+      "normalized": "entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -1073,7 +1073,7 @@ Object {
       "dest": "dest/A.js",
       "id": "context/A.js",
       "isEntry": false,
-      "normalizedId": "A.js",
+      "normalized": "A.js",
       "relativeDest": "A.js",
       "srcs": Array [
         "context/A.js",
@@ -1083,7 +1083,7 @@ Object {
       "dest": "dest/B.js",
       "id": "context/B.js",
       "isEntry": false,
-      "normalizedId": "B.js",
+      "normalized": "B.js",
       "relativeDest": "B.js",
       "srcs": Array [
         "context/B.js",
@@ -1093,7 +1093,7 @@ Object {
       "dest": "dest/entry.html",
       "id": "context/entry.html",
       "isEntry": true,
-      "normalizedId": "entry.html",
+      "normalized": "entry.html",
       "relativeDest": "entry.html",
       "srcs": Array [
         "context/entry.html",
@@ -1106,7 +1106,7 @@ Object {
         "dest": "dest/entry.html",
         "id": "context/entry.html",
         "isEntry": true,
-        "normalizedId": "entry.html",
+        "normalized": "entry.html",
         "relativeDest": "entry.html",
         "srcs": Array [
           "context/entry.html",
@@ -1116,7 +1116,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": false,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -1126,7 +1126,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1136,7 +1136,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1148,7 +1148,7 @@ Object {
         "dest": "dest/entry.js",
         "id": "context/entry.js",
         "isEntry": false,
-        "normalizedId": "entry.js",
+        "normalized": "entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -1158,7 +1158,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1168,7 +1168,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1180,7 +1180,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1190,7 +1190,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1202,7 +1202,7 @@ Object {
         "dest": "dest/B.js",
         "id": "context/B.js",
         "isEntry": false,
-        "normalizedId": "B.js",
+        "normalized": "B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1212,7 +1212,7 @@ Object {
         "dest": "dest/A.js",
         "id": "context/A.js",
         "isEntry": false,
-        "normalizedId": "A.js",
+        "normalized": "A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",

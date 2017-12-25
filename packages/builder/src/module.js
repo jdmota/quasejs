@@ -3,219 +3,262 @@
 import error from "./utils/error";
 import { hashName } from "./utils/hash";
 import type Builder from "./builder";
-import type { Result, Loc, Deps, Transformer } from "./types";
-import { type ID, getType, resolvePath, depsSorter } from "./id";
+import { getPlugins } from "./builder";
+import Language, { type ILanguage } from "./language";
+import type {
+  Data, Loc, ImportedName, ExportedName,
+  Dep, NotResolvedDep, QueryArr, Query
+} from "./types";
+import { getType, relative, resolvePath } from "./id";
+import { Checker } from "./checker";
 
 const { joinSourceMaps } = require( "@quase/source-map" );
+const JSON5 = require( "json5" );
+const nodeRequire = require;
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
 }
 
-function handleLoaderOutput( obj: any, module: Module ): ?Result { // eslint-disable-line no-use-before-define
-  if ( obj == null ) {
-    return;
-  }
-  if ( isObject( obj ) ) {
-    return obj;
-  }
-  throw module.moduleError( "Plugin should return an object." );
-}
-
-async function callChain(
-  array: Transformer[],
-  module: Module, // eslint-disable-line no-use-before-define
-  init: Result
-): Promise<Result[]> {
-  const outputs: Result[] = [];
-  let prev = init;
-  for ( const fn of array ) {
-    const out = handleLoaderOutput( await fn( prev, module.id, module.builder ), module ); // eslint-disable-line no-await-in-loop
-    if ( out ) {
-      outputs.push( out );
-      prev = Object.assign( {}, out );
-    }
-  }
-  return outputs;
-}
+export type ModuleArg = {
+  request: { path: string, query: Query },
+  isEntry?: ?boolean,
+  initialData?: ?Data,
+  builder: Builder
+};
 
 // Note: don't save references for other modules in a module. That can break incremental builds.
 
 export default class Module {
 
-  +id: ID;
-  +normalizedId: string;
-  +hashId: string;
+  +path: string;
+  +query: Query;
+  +normalized: string;
   +dest: string;
+  +id: string;
+  +hashId: string;
   +isEntry: boolean;
-  +builder: Builder;
-  +sourceToResolved: Map<string, { resolved: ID, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean }>;
-  loadingCode: ?Promise<string>;
-  code: ?string;
-  loadingOutputs: ?Promise<Result[]>;
-  outputs: ?( Result[] );
-  loadingDeps: ?Promise<Deps>;
-  deps: ?Deps;
-  initialLoad: boolean;
+  +initialData: ?Data;
+  +checker: Checker;
+  lang: ?ILanguage;
+  data: Data;
+  maps: Object[];
+  deps: Dep[];
+  moduleDeps: ( Dep & { requiredId: string } )[];
+  importedNames: ImportedName[];
+  exportedNames: ExportedName[];
+  transforming: ?Promise<Language>;
+  resolving: ?Promise<void>;
 
-  constructor( id: ID, isEntry: boolean, builder: Builder ) {
-    this.id = id;
-    this.normalizedId = builder.idToString( id, builder.context );
-    this.hashId = hashName( this.normalizedId, builder.idHashes );
-    this.dest = resolvePath( this.normalizedId, builder.dest );
-    this.isEntry = isEntry;
-    this.builder = builder;
-    this.sourceToResolved = new Map();
+  constructor( { request: { path, query }, isEntry, initialData, builder }: ModuleArg ) {
+    this.path = path;
+    this.query = query;
+    this.normalized = relative( path, builder.context );
+    this.dest = resolvePath( this.normalized, builder.dest );
 
-    this.loadingCode = null;
-    this.code = null;
+    this.id = `${this.normalized}${query.default ? "" : `!!${query.str}`}`;
+    this.hashId = hashName( this.id, builder.usedIds, 5 );
 
-    this.loadingOutputs = null;
-    this.outputs = null;
+    this.isEntry = !!isEntry;
+    this.initialData = initialData;
 
-    this.loadingDeps = null;
-    this.deps = null;
+    this.checker = new Checker( this, builder );
+    this.lang = null;
 
-    this.initialLoad = false;
+    this.data = "";
+    this.maps = [];
+    this.deps = [];
+    this.moduleDeps = [];
+    this.importedNames = [];
+    this.exportedNames = [];
+
+    this.transforming = null;
+    this.resolving = null;
   }
 
-  clone( builder: Builder ): Module {
-    const m = new Module( this.id, this.isEntry, builder );
-    m.loadingCode = this.loadingCode;
-    m.code = this.code;
-    m.loadingOutputs = this.loadingOutputs;
-    m.outputs = this.outputs;
-    return m;
+  static parseRequest( request: string ): [string, string] {
+    const idx = request.indexOf( "!!" );
+    const path = idx < 0 ? request : request.slice( 0, idx );
+    const query = idx < 0 ? "" : request.slice( idx + 1 );
+    return [ path, query ];
+  }
+
+  static parseQuery( str: string ): Query {
+    let parsed;
+
+    try {
+      parsed = JSON5.parse( str || "[]" );
+    } catch ( e ) {
+      // Ignore
+    }
+
+    if ( !Array.isArray( parsed ) ) {
+      throw new Error( `Invalid query ${str}` );
+    }
+
+    const arr = parsed.filter( Boolean );
+    return {
+      arr,
+      str: Module.queryArrToString( arr )
+    };
+  }
+
+  static queryArrToString( arr: QueryArr ) {
+    return arr.length === 0 ? "" : JSON5.stringify( arr );
   }
 
   moduleError( message: string ) {
-    throw new Error( `${message}. Module: ${this.normalizedId}` );
-  }
-
-  getMaps(): Object {
-    // $FlowFixMe
-    return this.outputs.map( o => o.map ).filter( Boolean );
+    throw new Error( `${message}. Module: ${this.normalized}` );
   }
 
   error( message: string, loc: ?Loc ) {
     error( message, {
-      id: this.builder.idToString( this.id, this.builder.context ),
-      code: this.code,
-      map: joinSourceMaps( this.getMaps() )
+      id: this.normalized,
+      code: loc && this.data.toString(),
+      map: loc && joinSourceMaps( this.maps )
     }, loc );
   }
 
-  async _getFile() {
-    try {
-      return await this.builder.fileSystem.getFile( this.id );
-    } catch ( err ) {
-      if ( err.code === "ENOENT" ) {
-        throw new Error( `Could not find ${this.normalizedId}` );
-      }
-      throw err;
-    }
-  }
+  async _handleDeps( builder: Builder, lang: Language, deps: NotResolvedDep[] ): Promise<Dep[]> {
+    const p = deps.map( async obj => {
 
-  // TODO use buffer
-  async getCode(): Promise<string> {
-    if ( this.code == null ) {
-      this.code = await ( this.loadingCode || ( this.loadingCode = this._getFile() ) );
-      this.loadingCode = null;
-    }
-    return this.code;
-  }
+      const { request, loc, splitPoint, async } = obj;
+      let [ path, queryStr ] = Module.parseRequest( request );
 
-  async _runLoader(): Promise<Result[]> {
-    const code = await this.getCode();
-    return callChain( this.builder.transformers, this, { code, type: getType( this.id ) } );
-  }
-
-  async runLoader(): Promise<Result[]> {
-    if ( this.outputs == null ) {
-      this.outputs = await ( this.loadingOutputs || ( this.loadingOutputs = this._runLoader() ) );
-      this.loadingOutputs = null;
-    }
-    return this.outputs;
-  }
-
-  getLastOutput( key: string ) {
-    if ( !this.outputs ) {
-      return;
-    }
-    const out = this.outputs[ this.outputs.length - 1 ];
-    return out && key ? out[ key ] : out;
-  }
-
-  async runResolvers( obj: { type: string, src: string, loc: ?Object, splitPoint: ?boolean, async: ?boolean } ): Promise<string | ?false> {
-    for ( const fn of this.builder.resolvers ) {
-      const r = await fn( obj, this.id, this.builder );
-      if ( r != null ) {
-        return r;
-      }
-    }
-  }
-
-  async _runDepsExtracter(): Promise<Deps> {
-    const output = ( await this.runLoader() ).find( o => Array.isArray( o.deps ) );
-    if ( !output || !output.deps ) {
-      return [];
-    }
-
-    const deps = Promise.all( output.deps.map( async( { src, loc, splitPoint, async } ) => {
-      if ( !src ) {
+      if ( !request ) {
         throw this.error( "Empty import", loc );
       }
 
-      const r = await this.runResolvers( { type: output.type, src, loc, splitPoint, async } );
-      if ( !r ) {
-        throw this.error( `Could not resolve ${src}`, loc );
+      path = await lang.resolve( path, this.path, builder );
+
+      if ( !path ) {
+        throw this.error( `Could not resolve ${request}`, loc );
       }
 
-      const resolved = this.builder.resolveId( r );
+      path = resolvePath( path, builder.cwd );
 
-      if ( resolved === this.id ) {
+      if ( path === this.path ) {
         throw this.error( "A module cannot import itself", loc );
       }
 
-      if ( this.builder.isDest( resolved ) ) {
+      if ( builder.isDest( path ) ) {
         throw this.error( "Don't import the destination file", loc );
       }
 
-      const obj = { resolved, src, loc, splitPoint, async };
-      this.sourceToResolved.set( src, obj );
-      return obj;
-    } ) );
+      const query = Module.parseQuery( queryStr );
 
-    return ( await deps ).sort( depsSorter );
+      return {
+        path,
+        query: query.arr.length ? query : builder.getDefaultQuery( path ),
+        request,
+        loc,
+        splitPoint,
+        async
+      };
+    } );
+
+    return Promise.all( p );
   }
 
-  async runDepsExtracter(): Promise<Deps> {
-    if ( this.deps == null ) {
-      this.deps = await ( this.loadingDeps || ( this.loadingDeps = this._runDepsExtracter() ) );
-      this.loadingDeps = null;
+  async _transform( builder: Builder ): Promise<Language> {
+
+    let data = this.initialData;
+
+    if ( data == null ) {
+      try {
+        data = await builder.fileSystem.getFileBuffer( this.path );
+      } catch ( err ) {
+        if ( err.code === "ENOENT" ) {
+          throw error( `Could not find ${this.normalized}` );
+        }
+        throw err;
+      }
     }
-    return this.deps;
+
+    let result = {
+      type: getType( this.path ),
+      data
+    };
+
+    const maps = [];
+
+    const loaders = getPlugins( this.query.arr, name => {
+      return builder.loaderAlias[ name ] || nodeRequire( name );
+    } );
+
+    // TODO allow passing of ast between loaders, and to the final renderers
+
+    for ( const [ fn, opts ] of loaders ) {
+      const out = await fn(
+        Object.assign( {}, result ),
+        opts,
+        module,
+        builder
+      );
+      if ( isObject( out ) ) {
+        result.type = out.type;
+        result.data = out.data;
+        if ( out.map ) {
+          maps.push( out.map );
+        }
+      }
+    }
+
+    this.data = result.data;
+    this.maps = maps;
+
+    const [ C, opts ] = builder.languages[ result.type ] || [ Language, {} ];
+
+    const lang = new C( this.id, this.data, opts );
+    this.lang = lang;
+    return lang;
   }
 
-  async saveDeps() {
-    if ( this.initialLoad ) {
-      return;
-    }
-    this.initialLoad = true;
+  async _resolveDeps( builder: Builder, lang: Language ) {
 
-    const deps = await this.runDepsExtracter();
-    for ( const { resolved } of deps ) {
-      this.builder.addModule( resolved );
-    }
+    this.deps = await this._handleDeps(
+      builder,
+      lang,
+      await lang.dependenciesImpl()
+    );
+
+    this.moduleDeps = this.deps.map( dep => {
+      const { path, query } = dep;
+      const requiredId = builder.addModule( {
+        request: { path, query },
+        isEntry: false,
+        builder
+      } ).id;
+      return Object.assign( {}, dep, { requiredId } );
+    } );
+
+    this.importedNames = await lang.importedNamesImpl();
+    this.exportedNames = await lang.exportedNamesImpl();
+
+    // TODO
+    /* const moreLangs = await lang.moreLanguagesImpl();
+    for ( const { type, data } of moreLangs ) {
+      builder.addModule( type, lang.path, data );
+    }*/
   }
 
-  getDeps() {
-    return ( this.deps || [] ).map( ( { resolved, src, splitPoint, async } ) => ( {
-      src,
-      splitPoint,
-      async,
-      required: this.builder.getModule( resolved )
-    } ) );
+  transform( builder: Builder ) {
+    return this.transforming || ( this.transforming = this._transform( builder ) );
+  }
+
+  resolveDeps( builder: Builder, lang: Language ) {
+    return this.resolving || ( this.resolving = this._resolveDeps( builder, lang ) );
+  }
+
+  async load( builder: Builder ) {
+    await this.resolveDeps( builder, await this.transform( builder ) );
+  }
+
+  getModuleByRequest( builder: Builder, request: string ): ?Module {
+    const dep = this.moduleDeps.find( dep => dep.request === request );
+    if ( dep ) {
+      return builder.getModule( dep.requiredId );
+    }
   }
 
 }

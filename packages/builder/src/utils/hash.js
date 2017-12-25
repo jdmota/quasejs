@@ -9,13 +9,10 @@ export default function( input: string | Buffer ) {
   return h( input ).slice( 0, 10 );
 }
 
-export function hashName( name: string, idHashes: Set<string> ): string {
-  const origHash = h( name ).slice( 0, 5 );
-  let hash = origHash;
-  let i = 1;
-  while ( idHashes.has( hash ) ) {
-    hash = origHash + i++;
+export function hashName( input: Buffer | string, usedIds: Set<string>, len: number ): string {
+  const id = h( input );
+  while ( usedIds.has( id.substr( 0, len ) ) ) {
+    len++;
   }
-  idHashes.add( hash );
-  return hash;
+  return id.substr( 0, len );
 }

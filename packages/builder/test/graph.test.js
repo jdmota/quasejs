@@ -3,39 +3,42 @@ import createRuntime from "../src/runtime/create-runtime";
 import processGraph from "../src/graph";
 
 async function createGraphAndRuntime( builder ) {
+  builder.moduleEntries = new Set( builder.entries.map( e => builder.getModule( e ) ) );
   const finalAssets = processGraph( builder );
   finalAssets.runtime = await createRuntime( { finalAssets, usedHelpers: new Set(), minify: false } );
   return finalAssets;
 }
 
 function createDummyModule( builder, id, deps ) {
-  const normalizedId = id.replace( "context/", "" );
+  const normalized = id.replace( "context/", "" );
   const m = {
     builder,
     id,
-    normalizedId,
-    isEntry: builder.idEntries.includes( id ),
+    normalized,
+    isEntry: builder.entries.includes( id ),
     dest: id.replace( "context/", "dest/" ),
-    hashId: hashName( normalizedId, builder.idHashes ),
+    hashId: hashName( normalized, builder.usedIds, 5 ),
     deps,
-    getDeps() {
-      return ( this.deps || [] ).map( ( { resolved, src, splitPoint, async } ) => ( {
-        src,
-        splitPoint,
-        async,
-        required: this.builder.getModule( resolved )
-      } ) );
-    }
+    moduleDeps: ( deps || [] ).map( ( { path, splitPoint, async } ) => ( {
+      path,
+      splitPoint,
+      async,
+      requiredId: path
+    } ) )
   };
   builder.modules.set( id, m );
   return m;
 }
 
-function createDummyBuilder( idEntries ) {
+function createDummyBuilder( entries ) {
   return {
-    idEntries,
+    entries,
     modules: new Map(),
-    idHashes: new Set(),
+    moduleEntries: null,
+    usedIds: new Set(),
+    getModuleForSure( id ) {
+      return this.modules.get( id );
+    },
     getModule( id ) {
       return this.modules.get( id );
     },
@@ -61,22 +64,22 @@ describe( "graph", () => {
 
     builder.createModule( "context/entry.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       },
       {
-        resolved: "context/B.js"
+        path: "context/B.js"
       }
     ] );
 
     builder.createModule( "context/A.js", [
       {
-        resolved: "context/B.js"
+        path: "context/B.js"
       }
     ] );
 
     builder.createModule( "context/B.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       }
     ] );
 
@@ -90,23 +93,23 @@ describe( "graph", () => {
 
     builder.createModule( "context/entry.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       },
       {
-        resolved: "context/B.js"
+        path: "context/B.js"
       }
     ] );
 
     builder.createModule( "context/A.js", [
       {
-        resolved: "context/B.js",
+        path: "context/B.js",
         splitPoint: true
       }
     ] );
 
     builder.createModule( "context/B.js", [
       {
-        resolved: "context/A.js",
+        path: "context/A.js",
         splitPoint: true
       }
     ] );
@@ -121,27 +124,27 @@ describe( "graph", () => {
 
     builder.createModule( "context/entry.html", [
       {
-        resolved: "context/entry.js",
+        path: "context/entry.js",
         splitPoint: true
       }
     ] );
 
     builder.createModule( "context/entry.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       }
     ] );
 
     builder.createModule( "context/A.js", [
       {
-        resolved: "context/B.js",
+        path: "context/B.js",
         splitPoint: true
       }
     ] );
 
     builder.createModule( "context/B.js", [
       {
-        resolved: "context/A.js",
+        path: "context/A.js",
       }
     ] );
 
@@ -155,22 +158,22 @@ describe( "graph", () => {
 
     builder.createModule( "context/entry.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       }
     ] );
 
     builder.createModule( "context/A.js", [
       {
-        resolved: "context/B.js"
+        path: "context/B.js"
       },
       {
-        resolved: "context/C.js"
+        path: "context/C.js"
       }
     ] );
 
     builder.createModule( "context/B.js", [
       {
-        resolved: "context/A.js"
+        path: "context/A.js"
       }
     ] );
 

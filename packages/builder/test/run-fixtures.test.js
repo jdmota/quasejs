@@ -1,6 +1,7 @@
-import jsPlugin from "../src/plugins/js";
-import htmlPlugin from "../src/plugins/html";
+import JsLanguage from "../src/languages/js";
+import HtmlLanguage from "../src/languages/html";
 import Builder from "../src/builder";
+import { relative } from "../src/id";
 import { testLog } from "../../assert";
 
 function isRegExp( obj ) {
@@ -43,13 +44,13 @@ describe( "builder", () => {
       expect( config ).not.toBe( null );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = ( config.plugins || [] ).concat( [
-        jsPlugin( {
+      config.languages = [
+        [ JsLanguage, {
           resolve: config.resolve,
           babelOpts: config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS
-        } ),
-        htmlPlugin()
-      ] );
+        } ],
+        HtmlLanguage
+      ];
       config.cwd = fixturePath;
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "files";
@@ -62,7 +63,7 @@ describe( "builder", () => {
         writeFile: ( file, content ) => {
           expect( path.isAbsolute( file ) ).toBe( true );
 
-          const f = builder.idToString( file );
+          const f = relative( file, builder.cwd );
           if ( assets[ f ] ) {
             throw new Error( `Overriding ${f}` );
           }
@@ -79,8 +80,8 @@ describe( "builder", () => {
           expect( assets ).toMatchSnapshot();
 
           if ( config._out ) {
-            builder.entries.forEach( ( entry, i ) => {
-              const dest = builder.idToString( path.resolve( builder.dest, entry ) );
+            config.entries.forEach( ( entry, i ) => {
+              const dest = relative( path.resolve( builder.dest, entry ), builder.cwd );
               testLog( () => {
                 expect( typeof assets[ dest ] ).toBe( "string" );
                 global.__quase_builder__ = undefined;

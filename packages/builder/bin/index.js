@@ -12,7 +12,7 @@ Options
 require( "@quase/cli" ).default( ( { flags, config } ) => {
   const p = require( "../dist" ).default( Object.assign( {}, config, flags ) );
   if ( p.then ) {
-    p.then( o => console.log( o ) );
+    p.then( o => console.log( o.output ) );
   }
 }, {
   help,

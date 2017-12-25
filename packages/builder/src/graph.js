@@ -1,9 +1,12 @@
 // @flow
 
-import { modulesSorter } from "./id";
 import type Builder from "./builder";
 import type Module from "./module";
 import type { Dep, FinalAsset } from "./types";
+
+const depsSorter = ( a, b ) => a.required.id.localeCompare( b.required.id );
+
+const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 // Adapted from https://github.com/samthor/srcgraph
 
@@ -16,13 +19,17 @@ class BiMap {
   constructor( builder: Builder ) {
     this.deps = new Map();
     this.incs = new Map();
-    this.entrypoints = new Set(
-      // $FlowFixMe
-      builder.idEntries.map( id => builder.getModule( id ) )
-    );
+    this.entrypoints = new Set( builder.moduleEntries );
 
     for ( const module of builder.modules.values() ) {
-      this.deps.set( module, module.getDeps() );
+      this.deps.set(
+        module,
+        module.moduleDeps.map( dep => {
+          const required = builder.getModuleForSure( dep.requiredId );
+          // $FlowFixMe
+          return Object.assign( {}, dep, { required } );
+        } ).sort( depsSorter )
+      );
     }
 
     for ( const module of this.deps.keys() ) {
@@ -125,9 +132,9 @@ export default function processGraph( builder: Builder ) {
     if ( srcs ) {
       const f = {
         id: module.id,
-        normalizedId: module.normalizedId,
+        normalized: module.normalized,
         dest: module.dest,
-        relativeDest: module.normalizedId,
+        relativeDest: module.normalized,
         isEntry: module.isEntry,
         srcs: srcs.map( ( { id } ) => id )
       };

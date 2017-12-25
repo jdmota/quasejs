@@ -1,5 +1,5 @@
-import jsPlugin from "../src/plugins/js";
-import htmlPlugin from "../src/plugins/html";
+import JsLanguage from "../src/languages/js";
+import HtmlLanguage from "../src/languages/html";
 import { Watcher } from "../src";
 
 const DEFAULT_BABEL_OPTS = {
@@ -37,13 +37,13 @@ describe( "watcher", () => {
       const config = require( path.resolve( fixturePath, "config.js" ) );
 
       config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.plugins = ( config.plugins || [] ).concat( [
-        jsPlugin( {
+      config.languages = [
+        [ JsLanguage, {
           resolve: config.resolve,
           babelOpts: config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS
-        } ),
-        htmlPlugin()
-      ] );
+        } ],
+        HtmlLanguage
+      ];
       config.cwd = fixturePath;
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "working";

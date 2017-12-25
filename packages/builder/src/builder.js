@@ -1,68 +1,103 @@
 // @flow
-
 import hash from "./utils/hash";
-import jsPlugin from "./plugins/js";
-import htmlPlugin from "./plugins/html";
+import JsLanguage from "./languages/js";
+import HtmlLanguage from "./languages/html";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
-import type { Plugin, Transformer, Resolver, Checker, Renderer, FinalAsset, FinalAssets, ToWrite, PerformanceOpts, MinimalFS, Options } from "./types";
-import { type ID, idToPath, pathToId, idToString, resolveId } from "./id";
-import Module from "./module";
+import type {
+  FinalAsset, FinalAssets, ToWrite,
+  ProvidedPluginsArr, Query, QueryArr,
+  PerformanceOpts, MinimalFS, Options
+} from "./types";
+import { resolvePath, relative } from "./id";
+import Language from "./language";
+import FileSystem from "./filesystem";
+import Module, { type ModuleArg } from "./module";
+import { check } from "./checker";
 
-const FileSystem = require( "@quase/memory-fs" ).default;
 const fs = require( "fs-extra" );
 const prettyBytes = require( "pretty-bytes" );
 const path = require( "path" );
 
+const nodeRequire = require;
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
 
 type Info = { file: string, size: number, isEntry: boolean };
 
-async function defaultResolver( { src }, id, builder ) {
-  const resolved = path.resolve( path.dirname( idToPath( id ) ), src );
-  const isFile = await builder.fileSystem.isFile( resolved );
-  return isFile && resolved;
-}
+export function getPlugins( provided: ProvidedPluginsArr, requireFn: Function ): [Function, Object][] {
+  const plugins = [];
 
-async function defaultRenderer( builder, asset ) {
-  const module = builder.getModule( asset.id );
-  return module && { code: await module.getCode() };
+  for ( const l of provided ) {
+    let plugin, name, opts;
+
+    if ( !l ) {
+      continue;
+    }
+
+    if ( Array.isArray( l ) ) {
+      plugin = l[ 0 ];
+      opts = l[ 1 ];
+    } else {
+      plugin = l;
+    }
+
+    if ( typeof plugin === "string" ) {
+      name = plugin;
+      plugin = requireFn( name );
+
+      if ( plugin.default ) {
+        plugin = plugin.default;
+      }
+    }
+
+    if ( typeof plugin !== "function" ) {
+      if ( name ) {
+        throw new Error( `${name} should export a function` );
+      } else {
+        throw new Error( `${plugin} should be a function` );
+      }
+    }
+
+    plugins.push( [
+      plugin,
+      Object.assign( {}, opts )
+    ] );
+  }
+
+  return plugins;
 }
 
 export default class Builder {
 
-  +idEntries: ID[];
   +entries: string[];
-  +context: ID;
-  +dest: ID;
-  +cwd: ID;
+  +context: string;
+  +dest: string;
+  +requests: { path: string, query: Query }[];
+  +cwd: string;
   +sourceMaps: boolean | "inline";
   +hashing: boolean;
   +warn: Function;
   +fileSystem: FileSystem;
   +fs: MinimalFS;
   +cli: Object;
-  +plugins: Plugin[];
-  +defaultPlugins: boolean;
-  +transformers: Transformer[];
-  +resolvers: Resolver[];
-  +checkers: Checker[];
-  +renderers: Renderer[];
+  +buildDefaultQuery: ( string ) => ?QueryArr;
+  +loaderAlias: { [key: string]: Function };
+  +languages: { [key: string]: [ Class<Language>, Object ] };
   +performance: PerformanceOpts;
-  +modules: Map<ID, Module>;
-  +modulePromises: Promise<void>[];
-  +idHashes: Set<string>;
+  +modules: Map<string, Module>;
+  +modulesPerFile: Map<string, Module[]>;
+  +moduleEntries: Set<Module>;
+  +usedIds: Set<string>;
+  +promises: Promise<void>[];
 
   constructor( _opts: Options ) {
 
     const options: Options = _opts || { entries: [] };
 
-    if ( !options.entries || options.entries.length === 0 ) {
+    if ( !Array.isArray( options.entries ) || options.entries.length === 0 ) {
       throw new Error( "Missing entries." );
     }
-
-    this.entries = [].concat( options.entries || [] );
 
     if ( typeof options.context !== "string" ) {
       throw new Error( "Missing context option." );
@@ -72,12 +107,29 @@ export default class Builder {
       throw new Error( "Missing dest option." );
     }
 
-    this.cwd = pathToId( typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd() );
-    this.context = this.resolveId( options.context );
-    this.dest = this.resolveId( options.dest );
-    this.idEntries = this.entries.map( e => resolveId( e, this.context ) );
+    this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd();
+    this.context = resolvePath( options.context, this.cwd );
+    this.dest = resolvePath( options.dest, this.cwd );
 
-    this.fileSystem = options.fileSystem ? options.fileSystem.clone() : new FileSystem();
+    this.loaderAlias = options.loaderAlias || {};
+    this.buildDefaultQuery = options.buildDefaultQuery || ( () => {} );
+    this.languages = {
+      js: [ JsLanguage, {} ],
+      html: [ HtmlLanguage, {} ]
+    };
+
+    this.requests = options.entries.map( e => {
+      const [ path, queryStr ] = Module.parseRequest( e );
+      const query = Module.parseQuery( queryStr );
+      return {
+        path: resolvePath( path, this.context ),
+        query: query.arr.length ? query : this.getDefaultQuery( path )
+      };
+    } );
+
+    this.entries = this.requests.map( r => r.path );
+
+    this.fileSystem = new FileSystem();
     this.fs = options.fs || fs;
 
     this.sourceMaps = options.sourceMaps === "inline" ? options.sourceMaps : !!options.sourceMaps;
@@ -86,20 +138,9 @@ export default class Builder {
 
     this.cli = options.cli || {};
 
-    this.plugins = ( options.plugins || [] ).filter( Boolean );
-    this.defaultPlugins = !!options.defaultPlugins;
-
-    if ( this.defaultPlugins ) {
-      this.plugins.push( jsPlugin() );
-      this.plugins.push( htmlPlugin() );
-    }
-
-    this.transformers = this.plugins.map( ( { transform } ) => transform ).filter( Boolean );
-    this.resolvers = this.plugins.map( ( { resolve } ) => resolve ).filter( Boolean );
-    this.resolvers.push( defaultResolver );
-    this.checkers = this.plugins.map( ( { check } ) => check ).filter( Boolean );
-    this.renderers = this.plugins.map( ( { render } ) => render ).filter( Boolean );
-    this.renderers.push( defaultRenderer );
+    getPlugins( options.languages || [], nodeRequire ).forEach( p => {
+      this.languages[ p[ 0 ].TYPE ] = p;
+    } );
 
     this.performance = Object.assign( {
       // $FlowFixMe
@@ -116,75 +157,84 @@ export default class Builder {
     }
 
     this.modules = new Map();
-    this.modulePromises = [];
-    this.idHashes = new Set();
+    this.modulesPerFile = new Map();
+    this.moduleEntries = new Set();
+    this.usedIds = new Set();
+
+    this.promises = [];
 
   }
 
-  // The watcher should use this to keep builds atomic
-  clone() {
-    // $FlowFixMe
-    const builder = new Builder( Object.assign( {}, this ) );
-    this.modules.forEach( ( m, id ) => {
-      builder.modules.set( id, m.clone( builder ) );
-    } );
-    return builder;
+  getDefaultQuery( path: string ): Query {
+    const arr = this.buildDefaultQuery( path ) || [];
+    return {
+      arr,
+      str: Module.queryArrToString( arr ),
+      default: true
+    };
   }
 
-  idToString( id: ID | string, cwd: ID = this.cwd ): string {
-    return idToString( id, cwd );
+  isEntry( id: string ): boolean {
+    return this.entries.findIndex( e => e === id ) > -1;
   }
 
-  resolveId( id: ID | string, cwd: ID = this.cwd ): ID {
-    return resolveId( id, cwd );
-  }
-
-  isEntry( id: ID ): boolean {
-    return this.idEntries.findIndex( e => e === id ) > -1;
-  }
-
-  isDest( id: ID ): boolean {
-    // $FlowFixMe
+  isDest( id: string ): boolean {
     return id.indexOf( this.dest ) === 0;
   }
 
-  getModule( id: ID ): ?Module {
+  getModule( id: string ): ?Module {
     return this.modules.get( id );
   }
 
-  addModule( id: ID, isEntry: ?boolean ) {
-    const curr = this.modules.get( id );
-    if ( curr ) {
-      if ( !curr.initialLoad ) {
-        this.modulePromises.push( curr.saveDeps() );
-      }
-      return;
-    }
-    const module = new Module( id, !!isEntry, this );
-    this.modules.set( id, module );
-    this.modulePromises.push( module.saveDeps() );
+  getModuleForSure( id: string ): Module {
+    // $FlowFixMe
+    return this.modules.get( id );
   }
 
-  removeModule( id: ID ) {
-    const m = this.modules.get( id );
-    if ( m ) {
-      this.idHashes.delete( m.hashId );
-      this.modules.delete( id );
+  addModule( obj: ModuleArg ): Module {
+    const m = new Module( obj );
+    const curr = this.modules.get( m.id );
+    if ( !curr ) {
+      this.modules.set( m.id, m );
+      const arr = this.modulesPerFile.get( m.path ) || [];
+      arr.push( m );
+      this.modulesPerFile.set( m.path, arr );
+      this.promises.push( m.load( this ) );
+      if ( m.isEntry ) {
+        this.moduleEntries.add( m );
+      }
+      return m;
     }
-    this.fileSystem.purge( id );
+    this.promises.push( curr.load( this ) );
+    return curr;
+  }
+
+  removeFile( path: string ) {
+    const modules = this.modulesPerFile.get( path );
+    if ( modules ) {
+      this.modulesPerFile.delete( path );
+      modules.forEach( m => {
+        this.modules.delete( m.id );
+        this.usedIds.delete( m.hashId );
+        if ( m.isEntry ) {
+          this.moduleEntries.delete( m );
+        }
+      } );
+    }
+    this.fileSystem.purge( path );
   }
 
   createRuntime( obj: RuntimeArg ) {
     return createRuntime( obj );
   }
 
-  async write( asset: FinalAsset, { code, map }: ToWrite ): Promise<Info> {
+  async write( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
 
     let h;
     if ( this.hashing && !asset.isEntry ) {
-      h = hash( code );
+      h = hash( data );
       asset.dest = addHash( asset.dest, h );
-      asset.relativeDest = addHash( asset.normalizedId, h );
+      asset.relativeDest = addHash( asset.normalized, h );
       if ( map ) {
         map.file = addHash( map.file, h );
       }
@@ -192,51 +242,64 @@ export default class Builder {
 
     const fs = this.fs;
     const inlineMap = this.sourceMaps === "inline";
-    const destPath = idToPath( this.resolveId( asset.dest ) );
-    const directory = pathToId( path.dirname( destPath ) );
+    const destPath = resolvePath( asset.dest, this.cwd );
+    const directory = path.dirname( destPath );
 
     if ( map ) {
       map.sources = map.sources.map(
-        source => this.idToString( this.resolveId( source ), directory )
+        source => relative( resolvePath( source, this.cwd ), directory )
       );
     }
 
     await fs.mkdirp( path.dirname( destPath ) );
 
-    if ( map && typeof code === "string" ) {
+    if ( map && typeof data === "string" ) {
       if ( inlineMap ) {
-        await fs.writeFile( destPath, code + `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}` );
+        await fs.writeFile( destPath, data + `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}` );
       } else {
-        const p1 = fs.writeFile( destPath, code + `\n//# ${SOURCE_MAP_URL}=${path.basename( destPath )}.map` );
+        const p1 = fs.writeFile( destPath, data + `\n//# ${SOURCE_MAP_URL}=${path.basename( destPath )}.map` );
         const p2 = fs.writeFile( destPath + ".map", map.toString() );
         await p1;
         await p2;
       }
     } else {
-      await fs.writeFile( destPath, code );
+      await fs.writeFile( destPath, data );
     }
 
     return {
       file: asset.dest,
-      size: code.length,
+      size: data.length,
       isEntry: asset.isEntry
     };
   }
 
   async build() {
-    for ( const entry of this.idEntries ) {
-      this.addModule( entry, true );
+    // TODO optimize
+    this.fileSystem.filesUsed = new Set();
+    for ( const [ , module ] of this.modules ) {
+      module.deps.length = 0;
+      module.moduleDeps.length = 0;
+      module.resolving = null;
+    }
+
+    for ( const request of this.requests ) {
+      this.addModule( {
+        request,
+        isEntry: true,
+        builder: this
+      } );
     }
 
     let promise;
-    while ( promise = this.modulePromises.pop() ) {
+    while ( promise = this.promises.pop() ) {
       await promise;
     }
 
-    await callCheckers( this.checkers, this );
+    // TODO custom checkers
+    await check( this );
 
     const finalAssets = processGraph( this );
-    const filesInfo = await callRenderers( this.renderers, this, finalAssets );
+    const filesInfo = await callRenderers( this, finalAssets );
 
     const output = [ "\nAssets:\n" ];
 
@@ -251,13 +314,17 @@ export default class Builder {
             message = ` > ${prettyBytes( this.performance.maxAssetSize )} [performance!]`;
           }
 
-          output.push( `${isEntry ? "[entry] " : ""}${this.idToString( file )} | ${prettyBytes( size )}${message}` );
+          output.push( `${isEntry ? "[entry] " : ""}${relative( file, this.cwd )} | ${prettyBytes( size )}${message}` );
         }
       }
     }
 
     output.push( "\n" );
-    return output.join( "\n" );
+
+    return {
+      filesInfo,
+      output: output.join( "\n" )
+    };
   }
 
 }
@@ -267,25 +334,18 @@ function addHash( file: string, h: string ): string {
   return file.replace( rehash, fn );
 }
 
-async function callCheckers(
-  checkers: Checker[],
-  builder: Builder
-): Promise<void> {
-  for ( const fn of checkers ) {
-    await fn( builder );
-  }
-}
-
 async function callRenderers(
-  renderers: Renderer[],
   builder: Builder,
   finalAssets: FinalAssets
 ): Promise<Info[]> {
   const usedHelpers = new Set();
   const writes = [];
   for ( const asset of finalAssets.files ) {
-    for ( const fn of renderers ) {
-      const out = await fn( builder, asset, finalAssets, usedHelpers );
+    const module = builder.getModuleForSure( asset.id );
+    const lang = module.lang;
+
+    if ( lang ) {
+      const out = await lang.render( builder, asset, finalAssets, usedHelpers );
       if ( out ) {
         if ( !asset.isEntry && out.usedHelpers ) {
           for ( const key of out.usedHelpers ) {
@@ -293,9 +353,10 @@ async function callRenderers(
           }
         }
         writes.push( builder.write( asset, out ) );
-        break;
+        continue;
       }
     }
+    throw new Error( `Could not build asset ${asset.id}` );
   }
   return Promise.all( writes );
 }

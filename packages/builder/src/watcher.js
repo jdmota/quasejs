@@ -1,7 +1,7 @@
 // @flow
 
 import { reportText } from "./utils/error";
-import { type ID } from "./id";
+import { relative } from "./id";
 import type { Options } from "./types";
 import Builder from "./builder";
 
@@ -11,7 +11,7 @@ export default class Watcher {
 
   time: number;
   needsBuild: boolean;
-  filesThatTriggerBuild: Set<ID>;
+  filesThatTriggerBuild: Set<string>;
   _hideDates: boolean;
   codeFrameOpts: ?Object;
   job: Promise<any>;
@@ -53,7 +53,7 @@ export default class Watcher {
         this.needsBuild = false;
         this.time = Date.now();
         return this.builder.build().then(
-          output => {
+          ( { output } ) => {
             this.log( output );
             this.finishBuild( true );
           },
@@ -88,7 +88,6 @@ export default class Watcher {
     this.log( "\n--------\n\n" );
 
     this.filesThatTriggerBuild = this.builder.fileSystem.filesUsed;
-    this.builder = this.builder.clone();
   }
 
   nextJob( cb: Function ) {
@@ -102,11 +101,11 @@ export default class Watcher {
     return this;
   }
 
-  onUpdate( id: ID, type: string ) {
+  onUpdate( id: string, type: string ) {
     this.nextJob( () => {
-      this.needsBuild = this.needsBuild || this.filesThatTriggerBuild.has( id ) || !!this.builder.idEntries.find( e => e === id );
-      this.builder.removeModule( id );
-      this.log( `File ${this.builder.idToString( id )} was ${type}.\n` );
+      this.needsBuild = this.needsBuild || this.filesThatTriggerBuild.has( id ) || !!this.builder.entries.find( e => e === id );
+      this.builder.removeFile( id );
+      this.log( `File ${relative( id, this.builder.cwd )} was ${type}.\n` );
     } );
   }
 

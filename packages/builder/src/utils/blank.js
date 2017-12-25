@@ -1,3 +1,5 @@
-export default function() {
+// @flow
+
+export default function(): Object {
   return Object.create( null );
 }
