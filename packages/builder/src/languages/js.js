@@ -440,7 +440,13 @@ export default class JsLanguage extends Language {
     build.append( "});" );
 
     if ( asset.isEntry ) {
-      build.append( await builder.createRuntime( { finalAssets, usedHelpers } ) );
+      build.append( await builder.createRuntime( {
+        context: builder.context,
+        fullPath: asset.path,
+        publicPath: builder.publicPath,
+        finalAssets,
+        usedHelpers
+      } ) );
       build.append( `__quase_builder__.r("${entryModule.hashId}");` );
     }
 

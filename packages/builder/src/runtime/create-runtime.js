@@ -2,17 +2,23 @@
 import babelBuildHelpers from "../languages/babel-helpers";
 import type { FinalAssets } from "../types";
 
+const path = require( "path" );
 const fs = require( "fs-extra" );
 const babel = require( "@babel/core" );
 const runtimePath = require.resolve( "./runtime" );
 
 export type RuntimeArg = {
+  context: string,
+  fullPath: string,
+  publicPath: string,
   finalAssets: FinalAssets,
   usedHelpers: Set<string>,
   minify?: ?boolean
 };
 
-export default async function( { finalAssets: { files, moduleToAssets }, usedHelpers, minify }: RuntimeArg ): Promise<string> {
+export default async function( { context, fullPath, publicPath, finalAssets: { files, moduleToAssets }, usedHelpers, minify }: RuntimeArg ): Promise<string> {
+
+  const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
 
   const p = await fs.readFile( runtimePath, "utf8" );
 
@@ -31,8 +37,9 @@ export default async function( { finalAssets: { files, moduleToAssets }, usedHel
 
   let input = await p;
   input = input.replace( "$_BABEL_HELPERS", $buildHelpers );
-  input = input.replace( "$_FILES", JSON.stringify( $files ) );
+  input = input.replace( "$_FILES", `${JSON.stringify( $files )}.map( p => publicPath + p )` );
   input = input.replace( "$_MODULE_TO_FILES", JSON.stringify( $idToFiles ) );
+  input = input.replace( "$_PUBLIC_PATH", `isNode ? ${JSON.stringify( relative )} : ${JSON.stringify( publicPath )}` );
 
   const minified = minify === undefined ? true : !!minify;
 

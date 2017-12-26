@@ -77,6 +77,7 @@ export default class Builder {
   +cwd: string;
   +sourceMaps: boolean | "inline";
   +hashing: boolean;
+  +publicPath: string;
   +warn: Function;
   +fileSystem: FileSystem;
   +fs: MinimalFS;
@@ -110,6 +111,8 @@ export default class Builder {
     this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd();
     this.context = resolvePath( options.context, this.cwd );
     this.dest = resolvePath( options.dest, this.cwd );
+
+    this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
 
     this.loaderAlias = options.loaderAlias || {};
     this.buildDefaultQuery = options.buildDefaultQuery || ( () => {} );

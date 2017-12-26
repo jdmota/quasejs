@@ -8,6 +8,7 @@ Object {
       "id": "context/entry.js",
       "isEntry": true,
       "normalized": "entry.js",
+      "path": "context/entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -24,6 +25,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -39,6 +41,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -54,6 +57,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -69,6 +73,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -97,8 +102,11 @@ Object {
   var fnModules = blank();
   var fileImports = blank();
   var fetches = blank();
+  var publicPath = isNode ? \\"./\\" : \\"/\\";
   var helpers = undefined;
-  var files = [\\"entry.js\\"];
+  var files = [\\"entry.js\\"].map(function (p) {
+    return publicPath + p;
+  });
   var moduleToFiles = {
     \\"28431\\": [0],
     \\"f7b05\\": [0],
@@ -289,6 +297,7 @@ Object {
       "id": "context/entry.js",
       "isEntry": true,
       "normalized": "entry.js",
+      "path": "context/entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -304,6 +313,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -318,6 +328,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -332,6 +343,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -359,8 +371,11 @@ Object {
   var fnModules = blank();
   var fileImports = blank();
   var fetches = blank();
+  var publicPath = isNode ? \\"./\\" : \\"/\\";
   var helpers = undefined;
-  var files = [\\"entry.js\\"];
+  var files = [\\"entry.js\\"].map(function (p) {
+    return publicPath + p;
+  });
   var moduleToFiles = {
     \\"28431\\": [0],
     \\"f7b05\\": [0],
@@ -550,6 +565,7 @@ Object {
       "id": "context/A.js",
       "isEntry": false,
       "normalized": "A.js",
+      "path": "context/A.js",
       "relativeDest": "A.js",
       "srcs": Array [
         "context/A.js",
@@ -560,6 +576,7 @@ Object {
       "id": "context/B.js",
       "isEntry": false,
       "normalized": "B.js",
+      "path": "context/B.js",
       "relativeDest": "B.js",
       "srcs": Array [
         "context/B.js",
@@ -570,6 +587,7 @@ Object {
       "id": "context/entry.js",
       "isEntry": true,
       "normalized": "entry.js",
+      "path": "context/entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -583,6 +601,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": true,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -593,6 +612,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -603,6 +623,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -615,6 +636,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -625,6 +647,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -637,6 +660,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -647,6 +671,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -672,214 +697,16 @@ Object {
   var fnModules = blank();
   var fileImports = blank();
   var fetches = blank();
+  var publicPath = isNode ? \\"./\\" : \\"/\\";
   var helpers = undefined;
-  var files = [\\"A.js\\", \\"B.js\\", \\"entry.js\\"];
+  var files = [\\"A.js\\", \\"B.js\\", \\"entry.js\\"].map(function (p) {
+    return publicPath + p;
+  });
   var moduleToFiles = {
     \\"28431\\": [0, 1],
     \\"f7b05\\": [2, 0, 1],
     \\"64a10\\": [1, 0]
   };
-
-  function require(id) {
-    if (id) {
-      if (isWorker) {
-        importScripts(id);
-      } else if (isNode) {
-        nodeRequire(id);
-      }
-    }
-
-    return NULL;
-  }
-
-  function push(moreModules) {
-    for (var id in moreModules) {
-      if (fnModules[id] === UNDEFINED) {
-        fnModules[id] = moreModules[id];
-      }
-    }
-  }
-
-  function exportHelper(e, name, get) {
-    Object.defineProperty(e, name, {
-      enumerable: true,
-      get: get
-    });
-  }
-
-  function exportAllHelper(e, o) {
-    Object.keys(o).forEach(function (k) {
-      if (k === \\"default\\" || k === \\"__esModule\\") return;
-      Object.defineProperty(e, k, {
-        configurable: true,
-        enumerable: true,
-        get: function get() {
-          return o[k];
-        }
-      });
-    });
-  }
-
-  function exists(id) {
-    return modules[id] || fnModules[id];
-  }
-
-  function load(id) {
-    if (modules[id]) {
-      return modules[id];
-    }
-
-    var fn = fnModules[id];
-    fnModules[id] = NULL;
-
-    if (fn) {
-      var moduleExports = {};
-      Object.defineProperty(moduleExports, \\"__esModule\\", {
-        value: true
-      });
-      modules[id] = moduleExports;
-      fn(moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper);
-      return moduleExports;
-    }
-
-    throw new Error(\\"Module \\".concat(id, \\" not found\\"));
-  }
-
-  function requireSync(id) {
-    if (!exists(id)) {
-      moduleToFiles[id].forEach(importFileSync);
-    }
-
-    return load(id);
-  }
-
-  function requireAsync(id) {
-    return Promise.all(exists(id) ? [] : moduleToFiles[id].map(importFileAsync)).then(function () {
-      return load(id);
-    });
-  }
-
-  function importFileSync(idx) {
-    var id = files[idx];
-
-    if (fileImports[id] === UNDEFINED) {
-      fileImports[id] = require(id);
-    }
-
-    return fileImports[id];
-  }
-
-  function importFileAsync(idx) {
-    var src = files[idx];
-
-    if (fileImports[src] !== UNDEFINED) {
-      return Promise.resolve(fileImports[src]);
-    }
-
-    if (fetches[src]) {
-      return fetches[src];
-    }
-
-    var resolution = [UNDEFINED, UNDEFINED];
-    var promise = new Promise(function (resolve, reject) {
-      resolution[0] = function (e) {
-        fetches[src] = UNDEFINED;
-        resolve(fileImports[src] = e);
-      };
-
-      resolution[1] = function (err) {
-        fetches[src] = UNDEFINED;
-        reject(err);
-      };
-    });
-    fetches[src] = promise;
-
-    if (!isBrowser) {
-      Promise.resolve(src).then(require).then(resolution[0], resolution[1]);
-      return promise;
-    }
-
-    var script = doc.createElement(\\"script\\");
-    script.type = \\"text/javascript\\";
-    script.charset = \\"utf-8\\";
-    script.async = true;
-    script.timeout = 120000;
-    script.src = src;
-    var timeout = setTimeout(onError, 120000);
-
-    function done(err) {
-      clearTimeout(timeout);
-      script.onerror = script.onload = UNDEFINED;
-      resolution[err ? 1 : 0](err || NULL);
-    }
-
-    function onError() {
-      done(new Error(\\"Fetching \\".concat(src, \\" failed\\")));
-    }
-
-    script.onload = function () {
-      done();
-    };
-
-    script.onerror = onError;
-    doc.head.appendChild(script);
-    return promise;
-  }
-
-  var me = global.__quase_builder__;
-
-  if (me) {
-    if (Array.isArray(me.q)) {
-      for (var i = 0; i < me.q.length; i++) {
-        push(me.q[i]);
-      }
-
-      me.r = requireSync;
-      me.i = requireAsync;
-      me.q = {
-        push: push
-      };
-    }
-
-    return;
-  }
-
-  global.__quase_builder__ = {
-    r: requireSync,
-    i: requireAsync,
-    q: {
-      push: push
-    }
-  };
-})(typeof self !== \\"undefined\\" ? self : Function(\\"return this\\")(), typeof require !== \\"undefined\\" && require);",
-}
-`;
-
-exports[`graph empty 1`] = `
-Object {
-  "files": Array [],
-  "moduleToAssets": Map {},
-  "runtime": "\\"use strict\\";(function (global, nodeRequire) {
-  var UNDEFINED = undefined;
-  var NULL = null;
-  var Promise = global.Promise;
-  var importScripts = global.importScripts;
-  var doc = global.document;
-  var isNode = !!nodeRequire;
-  var isWorker = !!importScripts;
-  var isBrowser = global.window === global;
-
-  function blank() {
-    return Object.create(NULL);
-  }
-
-  var modules = blank();
-  var fnModules = blank();
-  var fileImports = blank();
-  var fetches = blank();
-  var helpers = undefined;
-  var files = [];
-  var moduleToFiles = {};
 
   function require(id) {
     if (id) {
@@ -1064,6 +891,7 @@ Object {
       "id": "context/entry.js",
       "isEntry": false,
       "normalized": "entry.js",
+      "path": "context/entry.js",
       "relativeDest": "entry.js",
       "srcs": Array [
         "context/entry.js",
@@ -1074,6 +902,7 @@ Object {
       "id": "context/A.js",
       "isEntry": false,
       "normalized": "A.js",
+      "path": "context/A.js",
       "relativeDest": "A.js",
       "srcs": Array [
         "context/A.js",
@@ -1084,6 +913,7 @@ Object {
       "id": "context/B.js",
       "isEntry": false,
       "normalized": "B.js",
+      "path": "context/B.js",
       "relativeDest": "B.js",
       "srcs": Array [
         "context/B.js",
@@ -1094,6 +924,7 @@ Object {
       "id": "context/entry.html",
       "isEntry": true,
       "normalized": "entry.html",
+      "path": "context/entry.html",
       "relativeDest": "entry.html",
       "srcs": Array [
         "context/entry.html",
@@ -1107,6 +938,7 @@ Object {
         "id": "context/entry.html",
         "isEntry": true,
         "normalized": "entry.html",
+        "path": "context/entry.html",
         "relativeDest": "entry.html",
         "srcs": Array [
           "context/entry.html",
@@ -1117,6 +949,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": false,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -1127,6 +960,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1137,6 +971,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1149,6 +984,7 @@ Object {
         "id": "context/entry.js",
         "isEntry": false,
         "normalized": "entry.js",
+        "path": "context/entry.js",
         "relativeDest": "entry.js",
         "srcs": Array [
           "context/entry.js",
@@ -1159,6 +995,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1169,6 +1006,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1181,6 +1019,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1191,6 +1030,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1203,6 +1043,7 @@ Object {
         "id": "context/B.js",
         "isEntry": false,
         "normalized": "B.js",
+        "path": "context/B.js",
         "relativeDest": "B.js",
         "srcs": Array [
           "context/B.js",
@@ -1213,6 +1054,7 @@ Object {
         "id": "context/A.js",
         "isEntry": false,
         "normalized": "A.js",
+        "path": "context/A.js",
         "relativeDest": "A.js",
         "srcs": Array [
           "context/A.js",
@@ -1238,8 +1080,11 @@ Object {
   var fnModules = blank();
   var fileImports = blank();
   var fetches = blank();
+  var publicPath = isNode ? \\"./\\" : \\"/\\";
   var helpers = undefined;
-  var files = [\\"entry.js\\", \\"A.js\\", \\"B.js\\", \\"entry.html\\"];
+  var files = [\\"entry.js\\", \\"A.js\\", \\"B.js\\", \\"entry.html\\"].map(function (p) {
+    return publicPath + p;
+  });
   var moduleToFiles = {
     \\"28431\\": [1, 2],
     \\"a850a\\": [3, 0, 1, 2],

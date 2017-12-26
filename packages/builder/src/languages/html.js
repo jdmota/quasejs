@@ -151,7 +151,13 @@ export default class HtmlLanguage extends Language {
 
       if ( asset.isEntry && firstScriptDep ) {
         this.insertBefore(
-          this.createTextScript( await builder.createRuntime( { finalAssets, usedHelpers } ) ),
+          this.createTextScript( await builder.createRuntime( {
+            context: builder.context,
+            fullPath: asset.path,
+            publicPath: builder.publicPath,
+            finalAssets,
+            usedHelpers
+          } ) ),
           firstScriptDep.node
         );
       }
@@ -172,7 +178,7 @@ export default class HtmlLanguage extends Language {
           for ( const { id, relativeDest } of assets ) {
             if ( id !== this.id && !syncDeps.has( id ) ) {
               syncDeps.add( relativeDest );
-              this.insertBefore( this.createHrefCss( relativeDest ), node );
+              this.insertBefore( this.createHrefCss( builder.publicPath + relativeDest ), node );
             }
           }
 
@@ -185,7 +191,7 @@ export default class HtmlLanguage extends Language {
             for ( const { id, relativeDest } of assets ) {
               if ( id !== this.id && !syncDeps.has( id ) ) {
                 syncDeps.add( relativeDest );
-                this.insertBefore( this.createSrcScript( relativeDest ), node );
+                this.insertBefore( this.createSrcScript( builder.publicPath + relativeDest ), node );
               }
             }
           }

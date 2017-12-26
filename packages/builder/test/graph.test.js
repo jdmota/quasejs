@@ -5,7 +5,14 @@ import processGraph from "../src/graph";
 async function createGraphAndRuntime( builder ) {
   builder.moduleEntries = new Set( builder.entries.map( e => builder.getModule( e ) ) );
   const finalAssets = processGraph( builder );
-  finalAssets.runtime = await createRuntime( { finalAssets, usedHelpers: new Set(), minify: false } );
+  finalAssets.runtime = await createRuntime( {
+    context: "context",
+    fullPath: builder.entries[ 0 ],
+    publicPath: "/",
+    finalAssets,
+    usedHelpers: new Set(),
+    minify: false
+  } );
   return finalAssets;
 }
 
@@ -14,6 +21,7 @@ function createDummyModule( builder, id, deps ) {
   const m = {
     builder,
     id,
+    path: id,
     normalized,
     isEntry: builder.entries.includes( id ),
     dest: id.replace( "context/", "dest/" ),
@@ -49,14 +57,6 @@ function createDummyBuilder( entries ) {
 }
 
 describe( "graph", () => {
-
-  it( "empty", async() => {
-
-    const builder = createDummyBuilder( [] );
-
-    expect( await createGraphAndRuntime( builder ) ).toMatchSnapshot();
-
-  } );
 
   it( "cycle", async() => {
 

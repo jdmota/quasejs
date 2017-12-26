@@ -132,6 +132,7 @@ export default function processGraph( builder: Builder ) {
     if ( srcs ) {
       const f = {
         id: module.id,
+        path: module.path,
         normalized: module.normalized,
         dest: module.dest,
         relativeDest: module.normalized,

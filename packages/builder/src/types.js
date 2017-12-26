@@ -52,6 +52,7 @@ export type Dep = {
 
 export type FinalAsset = {
   id: string,
+  path: string,
   normalized: string,
   dest: string,
   relativeDest: string,
@@ -89,6 +90,7 @@ export type Options = {
   cwd?: ?string,
   sourceMaps?: ?boolean | "inline",
   hashing?: ?boolean,
+  publicPath?: ?string,
   buildDefaultQuery?: ?( string ) => ?QueryArr;
   warn?: ?Function,
   fs?: ?MinimalFS,

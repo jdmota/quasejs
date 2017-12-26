@@ -19,6 +19,7 @@
   const fetches = blank(); // Fetches
 
   /* eslint-disable no-undef, no-unused-vars */
+  const publicPath = $_PUBLIC_PATH;
   const helpers = $_BABEL_HELPERS;
   const files = $_FILES;
   const moduleToFiles = $_MODULE_TO_FILES;
