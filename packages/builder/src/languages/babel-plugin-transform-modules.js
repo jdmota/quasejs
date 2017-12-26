@@ -18,6 +18,7 @@ const templates = {
   exportsGetter: template( `${vars.export}(${vars.exports}, $0, function() { return $1; } );` ),
   exportsAssignment: template( `${vars.exports}.$0 = $1;` ),
   exportsDefaultsAssignment: template( `${vars.exports}.default = { default: $0 }.default;` ),
+  exportsDefaultsMember: template( `${vars.exports}.default` ),
   exportAll: template( `${vars.exportAll}(${vars.exports}, $0)` )
 };
 
@@ -46,6 +47,7 @@ export default ( { types: t }, options ) => {
         break;
       case "exportsAssignment":
       case "exportsDefaultsAssignment":
+      case "exportsDefaultsMember":
         varsUsed[ vars.exports ] = true;
         break;
       case "exportAll":
@@ -54,7 +56,7 @@ export default ( { types: t }, options ) => {
         break;
       default:
     }
-    return arg2 == null ? templates[ name ]( [ arg1 ] ) : templates[ name ]( [ arg1, arg2 ] );
+    return templates[ name ]( [ arg1, arg2 ].filter( Boolean ) );
   }
 
   function remapImport( path, newNode ) {
@@ -206,6 +208,12 @@ export default ( { types: t }, options ) => {
 
       Program: {
         exit( path ) {
+          if ( this.commonjs ) {
+            path.unshiftContainer( "body", [
+              runTemplate( "exportsDefaultsAssignment", t.objectExpression( [] ) )
+            ] );
+          }
+
           // Remove "use strict" that other plugins added. We can insert it later on top of the final file.
           const { node } = path;
           node.directives = node.directives.filter( ( { value } ) => ( value.value !== "use strict" ) );
@@ -401,6 +409,42 @@ export default ( { types: t }, options ) => {
           }
         }
 
+      },
+
+      MemberExpression( path ) {
+        const { node } = path;
+        const { object, property } = node;
+
+        if (
+          path.get( "object" ).isIdentifier() &&
+          path.get( "property" ).isIdentifier() &&
+          object.name === "module" &&
+          property.name === "exports" &&
+          !path.scope.hasBinding( "module" )
+        ) {
+          this.commonjs = true;
+          path.replaceWith( runTemplate( "exportsDefaultsMember" ) );
+        }
+      },
+
+      Identifier( path ) {
+        const { node } = path;
+
+        function check( name ) {
+          return node.name === name &&
+            path.parentPath.isExpression() &&
+            !( path.parentKey === "property" && path.parentPath.isMemberExpression() ) &&
+            !path.scope.hasBinding( name );
+        }
+
+        if ( check( "exports" ) ) {
+          this.commonjs = true;
+          path.replaceWith( runTemplate( "exportsDefaultsMember" ) );
+        }
+
+        /* else if ( check( "require" ) ) {
+          path.replaceWith( t.identifier( getVar( "require" ) ) );
+        }*/
       }
     }
   };

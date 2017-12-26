@@ -1,5 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: commonjs-exports 1`] = `
+"$e.default = {
+  default: {}
+}.default;
+$e.default.thing();
+$e.default.thing();
+$e.default.foo = {};
+$e.default.bar = {};
+
+const abc = $e.default.abc = function () {
+  const module = {
+    exports: {}
+  };
+  module.exports.foo = {};
+};"
+`;
+
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: dynamic-import 1`] = `
 "$i(\\"./foo\\").then();
 
