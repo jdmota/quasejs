@@ -27,6 +27,8 @@ describe( "watcher", () => {
 
     it( `Fixture: watch-fixtures/${folder}`, async() => {
 
+      jest.setTimeout( 10000 );
+
       const fixturePath = path.resolve( FIXTURES, folder );
       const filesPath = path.resolve( fixturePath, "files" );
       const workingPath = path.resolve( fixturePath, "working" );
