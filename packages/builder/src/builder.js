@@ -86,6 +86,7 @@ export default class Builder {
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
   +performance: PerformanceOpts;
+  +serviceWorker: Object;
   +modules: Map<string, Module>;
   +modulesPerFile: Map<string, Module[]>;
   +moduleEntries: Set<Module>;
@@ -158,6 +159,15 @@ export default class Builder {
     if ( this.performance.hints === true ) {
       this.performance.hints = "warning";
     }
+
+    this.serviceWorker = Object.assign( {
+      staticFileGlobs: [],
+      stripPrefixMulti: {}
+    }, options.serviceWorker );
+
+    this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
+    this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
+    this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
 
     this.modules = new Map();
     this.modulesPerFile = new Map();
@@ -303,6 +313,19 @@ export default class Builder {
 
     const finalAssets = processGraph( this );
     const filesInfo = await callRenderers( this, finalAssets );
+
+    if ( this.serviceWorker.filename ) {
+      const swPrecache = require( "sw-precache" );
+      const serviceWorkerCode = await swPrecache.generate( this.serviceWorker );
+
+      await fs.writeFile( this.serviceWorker.filename, serviceWorkerCode );
+
+      filesInfo.push( {
+        file: this.serviceWorker.filename,
+        size: serviceWorkerCode.length,
+        isEntry: false
+      } );
+    }
 
     const output = [ "\nAssets:\n" ];
 

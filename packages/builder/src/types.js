@@ -100,5 +100,6 @@ export type Options = {
   languages?: ?ProvidedPluginsArr,
   loaderAlias?: ?{ [key: string]: Function },
   performance?: ?PerformanceOpts,
+  serviceWorker?: ?Object,
   _hideDates?: ?boolean
 };

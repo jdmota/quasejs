@@ -13,6 +13,7 @@ declare module "babylon" { declare var exports: any; }
 declare module "resolve" { declare var exports: any; }
 declare module "parse5" { declare var exports: any; }
 declare module "json5" { declare var exports: any; }
+declare module "sw-precache" { declare var exports: any; }
 declare module "is-ci" { declare var exports: boolean; }
 declare module "matcher" { declare var exports: any; }
 declare module "fs-extra" { declare var exports: any; }
