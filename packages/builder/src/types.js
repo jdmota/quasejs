@@ -101,5 +101,6 @@ export type Options = {
   loaderAlias?: ?{ [key: string]: Function },
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
+  cleanBeforeBuild?: ?boolean,
   _hideDates?: ?boolean
 };

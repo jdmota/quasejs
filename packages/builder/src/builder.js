@@ -87,6 +87,7 @@ export default class Builder {
   +languages: { [key: string]: [ Class<Language>, Object ] };
   +performance: PerformanceOpts;
   +serviceWorker: Object;
+  +cleanBeforeBuild: boolean;
   +modules: Map<string, Module>;
   +modulesPerFile: Map<string, Module[]>;
   +moduleEntries: Set<Module>;
@@ -168,6 +169,8 @@ export default class Builder {
     this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
     this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
     this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
+
+    this.cleanBeforeBuild = !!options.cleanBeforeBuild;
 
     this.modules = new Map();
     this.modulesPerFile = new Map();
@@ -287,6 +290,8 @@ export default class Builder {
   }
 
   async build() {
+    const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
+
     // TODO optimize
     this.fileSystem.filesUsed = new Set();
     for ( const [ , module ] of this.modules ) {
@@ -312,6 +317,9 @@ export default class Builder {
     await check( this );
 
     const finalAssets = processGraph( this );
+
+    await emptyDirPromise;
+
     const filesInfo = await callRenderers( this, finalAssets );
 
     if ( this.serviceWorker.filename ) {
