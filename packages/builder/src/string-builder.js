@@ -1,6 +1,8 @@
 const { relative } = require( "path" );
-const { SourceMapGenerator, SourceMapConsumer } = require( "source-map" );
-const { sourceMapToString, sourceMapToUrl } = require( "@quase/source-map" );
+const {
+  SourceMapGenerator, SourceMapConsumer,
+  sourceMapToString, sourceMapToUrl
+} = require( "@quase/source-map" );
 
 function countNewLines( string ) {
   let c = 0;

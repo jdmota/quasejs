@@ -337,14 +337,14 @@ export default class JsLanguage extends Language {
       extensions,
       async readFile( file, cb ) {
         try {
-          cb( null, await fileSystem.getFileBuffer( file ) );
+          cb( null, await fileSystem.getFileBuffer( file, importer ) );
         } catch ( err ) {
           cb( err );
         }
       },
       async isFile( file, cb ) {
         try {
-          cb( null, await fileSystem.isFile( file ) );
+          cb( null, await fileSystem.isFile( file, importer ) );
         } catch ( err ) {
           cb( err );
         }

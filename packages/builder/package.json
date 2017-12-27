@@ -18,9 +18,9 @@
     "@babel/preset-es2015": "7.0.0-beta.35",
     "@babel/template": "7.0.0-beta.35",
     "@babel/types": "7.0.0-beta.35",
-    "@quase/cli": "^0.2.0",
-    "@quase/memory-fs": "^0.2.1",
-    "@quase/source-map": "^0.1.0",
+    "@quase/cli": "0.3.0-0",
+    "@quase/memory-fs": "0.3.0-0",
+    "@quase/source-map": "0.2.0-0",
     "babylon": "7.0.0-beta.35",
     "babel-preset-minify": "^0.2.0",
     "fs-extra": "^5.0.0",
@@ -29,7 +29,6 @@
     "pretty-bytes": "^4.0.2",
     "resolve": "^1.5.0",
     "slash": "^1.0.0",
-    "source-map": "^0.5.7",
     "watchpack": "^1.3.1"
   },
   "devDependencies": {

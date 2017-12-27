@@ -77,7 +77,7 @@ export default class Language implements ILanguage {
 
   async resolve( imported: string, importer: string, builder: Builder ) {
     const resolved = path.resolve( path.dirname( importer ), imported );
-    const isFile = await builder.fileSystem.isFile( resolved );
+    const isFile = await builder.fileSystem.isFile( resolved, importer );
     return isFile && resolved;
   }
 

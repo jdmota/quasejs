@@ -225,6 +225,13 @@ export default class Builder {
     return curr;
   }
 
+  resetDeps( path: string ) {
+    const modules = this.modulesPerFile.get( path );
+    if ( modules ) {
+      modules.forEach( m => m.resetDeps() );
+    }
+  }
+
   removeFile( path: string ) {
     const modules = this.modulesPerFile.get( path );
     if ( modules ) {
@@ -237,6 +244,12 @@ export default class Builder {
         }
       } );
     }
+
+    const set = this.fileSystem.fileUsedBy.get( path );
+    if ( set ) {
+      set.forEach( f => this.resetDeps( f ) );
+    }
+
     this.fileSystem.purge( path );
   }
 
@@ -292,13 +305,7 @@ export default class Builder {
   async build() {
     const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
 
-    // TODO optimize
-    this.fileSystem.filesUsed = new Set();
-    for ( const [ , module ] of this.modules ) {
-      module.deps.length = 0;
-      module.moduleDeps.length = 0;
-      module.resolving = null;
-    }
+    this.fileSystem.fileUsedBy.clear();
 
     for ( const request of this.requests ) {
       this.addModule( {

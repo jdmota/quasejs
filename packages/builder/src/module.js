@@ -166,7 +166,7 @@ export default class Module {
 
     if ( data == null ) {
       try {
-        data = await builder.fileSystem.getFileBuffer( this.path );
+        data = await builder.fileSystem.getFileBuffer( this.path, this.path );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );
@@ -259,6 +259,12 @@ export default class Module {
     if ( dep ) {
       return builder.getModule( dep.requiredId );
     }
+  }
+
+  resetDeps() {
+    this.deps.length = 0;
+    this.moduleDeps.length = 0;
+    this.resolving = null;
   }
 
 }

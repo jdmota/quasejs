@@ -87,7 +87,7 @@ export default class Watcher {
     }
     this.log( "\n--------\n\n" );
 
-    this.filesThatTriggerBuild = this.builder.fileSystem.filesUsed;
+    this.filesThatTriggerBuild = new Set( this.builder.fileSystem.fileUsedBy.keys() );
   }
 
   nextJob( cb: Function ) {
