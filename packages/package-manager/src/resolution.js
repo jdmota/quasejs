@@ -9,7 +9,7 @@ function hash( input ) {
   return crypto.createHash( "md5" ).update( input ).digest( "hex" ).slice( 0, 10 );
 }
 
-const STRING_VERSION = "1\n";
+const VERSION = 1;
 
 export type Data = {
   name: Name,
@@ -54,7 +54,7 @@ class Resolution implements ImmutableResolution {
 
   hashCode() {
     if ( this._hashCode == null ) {
-      this._hashCode = hash( this.toString() );
+      this._hashCode = `${VERSION}-${hash( this.toString() )}`;
     }
     return this._hashCode;
   }
@@ -63,7 +63,7 @@ class Resolution implements ImmutableResolution {
     if ( this._string == null ) {
       const arr = [];
       this.buildFlat( arr );
-      this._string = STRING_VERSION + arr.map( ( [ , , resolved, , deps ] ) => `${resolved},${deps.join( "," )}` ).join( "\n" );
+      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, , deps ] ) => `${resolved},${deps.join( "," )}` ).join( "\n" );
     }
     return this._string;
   }

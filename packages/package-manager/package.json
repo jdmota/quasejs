@@ -1,19 +1,17 @@
 {
   "private": true,
   "name": "@quase/package-manager",
-  "version": "0.1.0",
+  "version": "0.1.0-0",
   "description": "Package manager",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/package-manager",
   "main": "dist/index.js",
-  "module": "src/index.js",
-  "files": [
-    "dist/index.js",
-    "dist/index.js.map",
-    "src"
-  ],
+  "bin": {
+    "qpm": "bin/index.js"
+  },
   "dependencies": {
+    "@quase/cli": "0.3.0-0",
     "filenamify": "^2.0.0",
     "fs-extra": "^5.0.0",
     "klaw": "^2.1.1",

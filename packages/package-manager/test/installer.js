@@ -1,6 +1,7 @@
 // @flow
 
 import installer from "../src/installer";
+import check from "../src/check";
 
 const childProcess = require( "child_process" );
 const fs = require( "fs-extra" );
@@ -72,6 +73,8 @@ describe( "installer", () => {
     await fs.remove( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ) );
 
     await install(); // Install with cache and without lockfile
+
+    await check( path.resolve( __dirname, "test-folders/package" ) );
 
     await fs.remove( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ) );
 

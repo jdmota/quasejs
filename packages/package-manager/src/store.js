@@ -19,12 +19,13 @@ const STORE_VERSION = "1";
 /*
 File system layout:
 
-Files folder: STORE/modules/<id>/files
-A resolution set folder: STORE/modules/<id>/res/<hash of resolution set>-<index collision>
+Files folder: STORE/VERSION/<id>/files
+
+A resolution set folder: STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>
 Resolution set converted to string: STORE/modules/<id>/res/<hash of resolution set>-<index collision>.qpm-res
 
-STORE/modules/<id>/res/<hash of resolution set>-<index collision>/<...> === STORE/modules/<id>/files/<...> [hard link]
-STORE/modules/<id>/res/<hash of resolution set>-<index collision>/node_modules
+STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/<...> === STORE/VERSION/<id>/files/<...> [hard link]
+STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/node_modules has symlinks
 
 .qpm-integrity and .qpm-res files also serve too tell that the job was done
 
@@ -48,7 +49,7 @@ export default class Store {
   static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
 
   map: Map<Resolved, Promise<string>>;
-  store: string;
+  store: string; // The path includes the version of the store
 
   constructor( store: string ) {
     this.map = new Map();
@@ -62,6 +63,7 @@ export default class Store {
     const currentIntegrity = await read( integrityFile );
 
     if ( !currentIntegrity || currentIntegrity !== integrity ) {
+      // Clean up folder just in case
       await fs.emptyDir( folder );
       await pacote.extract( resolved, folder, pacoteOptions( opts, integrity ) );
       await fs.writeFile( integrityFile, integrity );
@@ -139,7 +141,7 @@ export default class Store {
     const id = buildId( resolution.data.resolved, resolution.data.integrity );
     const filesFolder = path.join( this.store, id, "files" );
     const resFolders = path.join( this.store, id, "res" );
-    const hash = resolution.hashCode();
+    const hash = resolution.hashCode(); // The hash includes the Resolution version
     let i = 0;
 
     while ( true ) {
@@ -152,6 +154,7 @@ export default class Store {
 
       if ( currentStr === "" ) {
 
+        // Clean up folder just in case
         await fs.emptyDir( res );
 
         const linking = this.linkNodeModules( res, resolution.set );
