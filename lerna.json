@@ -18,6 +18,7 @@
     "packages/pathname",
     "packages/source-map",
     "packages/unit",
+    "packages/util/get-plugins",
     "packages/view"
   ],
   "commands": {
