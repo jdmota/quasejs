@@ -11,10 +11,7 @@
     "lint": "eslint \"**/*.js\"",
     "coverage": "nyc jest && nyc report --reporter=html",
     "bootstrap": "lerna bootstrap",
-    "outdated": "npm-check --ignore eslint-config-* --ignore fast-async --ignore flow-typed"
-  },
-  "engines": {
-    "node": ">=6.0.0"
+    "outdated": "npm-check --ignore eslint-config-* --ignore fast-async --ignore flow-typed --ignore @babel/*"
   },
   "repository": {
     "type": "git",
@@ -52,15 +49,15 @@
     ]
   },
   "devDependencies": {
+    "@babel/cli": "7.0.0-beta.36",
+    "@babel/core": "^7.0.0-beta.36",
+    "@babel/node": "7.0.0-beta.36",
+    "@babel/plugin-proposal-class-properties": "7.0.0-beta.36",
+    "@babel/plugin-transform-flow-strip-types": "7.0.0-beta.36",
+    "@babel/preset-env": "7.0.0-beta.36",
     "@quase/eslint-config-quase": "^0.2.0",
-    "babel-cli": "7.0.0-beta.3",
-    "babel-core": "7.0.0-beta.3",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^22.0.4",
-    "babel-minify": "^0.2.0",
-    "babel-node": "^7.0.0-beta.2",
-    "babel-plugin-transform-class-properties": "7.0.0-beta.3",
-    "babel-plugin-transform-flow-strip-types": "7.0.0-beta.3",
-    "babel-preset-env": "^7.0.0-beta.3",
     "eslint": "^4.10.0",
     "flow-bin": "^0.61.0",
     "flow-typed": "^2.1.5",
