@@ -2,9 +2,9 @@
 
 const relative = require( "require-relative" );
 
-export function requireRelative( m: string ) {
+export function requireRelative( m: string, cwd: ?string ) {
   // $FlowFixMe
-  return require( relative.resolve( m, process.cwd() ) );
+  return require( relative.resolve( m, cwd || process.cwd() ) );
 }
 
 type Plugin = {
