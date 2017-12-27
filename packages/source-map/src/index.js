@@ -9,6 +9,8 @@ function getConsumer( map ) {
   return new SourceMapConsumer( map );
 }
 
+export { SourceMapConsumer, SourceMapGenerator };
+
 export function joinSourceMaps( maps ) {
 
   maps = maps.filter( Boolean );
