@@ -18,6 +18,10 @@ It's a bundler with easy configuration, good performance and support for javascr
 
 Allows you to create a command line interface very easily.
 
+**[config-validate](packages/config-validate)** - *WIP*
+
+Tools to help validate configuration and show useful errors.
+
 **[error](packages/error)** - *WIP*
 
 Some tools to work with Error objects and their stack.
@@ -65,6 +69,10 @@ Tools to work with source maps.
 **[unit](packages/unit)** - *WIP*
 
 A unit testing library.
+
+**[util/get-plugins](packages/util/get-plugins)** - *WIP*
+
+Utility to help you get all the requested plugins.
 
 **[view](packages/view)** - *WIP*
 
