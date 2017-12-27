@@ -10,6 +10,8 @@ declare module "@babel/code-frame" { declare var exports: any; }
 declare module "@babel/preset-es2015" { declare var exports: any; }
 declare module "babel-preset-minify" { declare var exports: any; }
 declare module "babylon" { declare var exports: any; }
+declare module "chalk" { declare var exports: any; }
+declare module "leven" { declare var exports: any; }
 declare module "resolve" { declare var exports: any; }
 declare module "parse5" { declare var exports: any; }
 declare module "json5" { declare var exports: any; }

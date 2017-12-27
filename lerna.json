@@ -6,6 +6,7 @@
   "packages": [
     "packages/builder",
     "packages/cli",
+    "packages/config-validate",
     "packages/error",
     "packages/events",
     "packages/fs/find-files",

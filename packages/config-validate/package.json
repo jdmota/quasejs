@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "@quase/config-validate",
+  "version": "0.1.0-0",
+  "description": "Configuration validation",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/config-validate",
+  "main": "dist/index.js",
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "concordance": "^3.0.0",
+    "leven": "^2.1.0"
+  }
+}
