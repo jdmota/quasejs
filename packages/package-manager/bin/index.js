@@ -10,6 +10,8 @@ Commands
 
   upgrade        Upgrades all the dependencies in the package.json.
 
+  init           Fills the folder with some predefined files.
+
   normalize-pkg  Normalize package.json file.
 
   check          Verifies that versions of the dependencies in the package.json file match the lockfile.
@@ -21,5 +23,9 @@ require( "@quase/cli" ).default( ( { input, flags } ) => {
 }, {
   help,
   inferType: true,
-  flags: {}
+  flags: {
+    folder: {
+      type: "string"
+    }
+  }
 } );

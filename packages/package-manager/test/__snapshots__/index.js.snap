@@ -1,5 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`init basic 1`] = `
+".npmignore was created.
+.eslintignore was created.
+.gitignore was created.
+.gitattributes was created.
+.editorconfig was created.
+.eslintrc.json was created.
+package.json was created.
+"
+`;
+
+exports[`init basic 2`] = `
+".npmignore already exists!
+.eslintignore already exists!
+.gitignore already exists!
+.gitattributes already exists!
+.editorconfig already exists!
+.eslintrc.json already exists!
+package.json already exists!
+"
+`;
+
 exports[`installer basic 1`] = `
 "{ [Function] sync: [Function] }
 { [Function] sync: [Function] }

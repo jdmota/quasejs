@@ -3,7 +3,10 @@
 
 import installer from "../src/installer";
 import check from "../src/check";
+import init from "../src/init";
 import { read as readPkg, write as writePkg } from "../src/pkg";
+
+const path = require( "path" );
 
 function showDone() {
   console.log( `\nDone!\n` );
@@ -17,7 +20,7 @@ function showError( e: Error ) {
 export function run( input: string[], flags: Object ) {
 
   const command = input[ 0 ] || "install";
-  const folder = process.cwd();
+  const folder = flags.folder ? path.resolve( flags.folder ) : process.cwd();
 
   switch ( command ) {
 
@@ -37,6 +40,10 @@ export function run( input: string[], flags: Object ) {
 
     case "check":
       check( folder ).then( showDone, showError );
+      break;
+
+    case "init":
+      init( folder, input[ 1 ] ).then( showDone, showError );
       break;
 
     default:
