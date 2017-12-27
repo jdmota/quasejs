@@ -13,40 +13,42 @@ type Plugin = {
   options: Object
 };
 
-type ProvidedPlugins = $ReadOnlyArray<?string | Function | [string | Function, ?Object]>;
+type ProvidedPlugin = string | Function | [string | Function, ?Object];
+
+type ProvidedPlugins = $ReadOnlyArray<?ProvidedPlugin>;
+
+export function getOnePlugin( p: ProvidedPlugin, requireFn: ?Function ): Plugin {
+  let plugin, name, opts;
+
+  if ( Array.isArray( p ) ) {
+    plugin = p[ 0 ];
+    opts = p[ 1 ];
+  } else {
+    plugin = p;
+  }
+
+  if ( typeof plugin === "string" ) {
+    name = plugin;
+    plugin = ( requireFn && requireFn( name ) ) || requireRelative( name );
+
+    if ( plugin.default ) {
+      plugin = plugin.default;
+    }
+  }
+
+  return {
+    plugin,
+    name,
+    options: Object.assign( {}, opts )
+  };
+}
 
 export function getPlugins( provided: ProvidedPlugins, requireFn: ?Function ): Plugin[] {
   const plugins = [];
-
-  for ( const l of provided ) {
-    let plugin, name, opts;
-
-    if ( !l ) {
-      continue;
+  for ( const p of provided ) {
+    if ( p ) {
+      plugins.push( getOnePlugin( p, requireFn ) );
     }
-
-    if ( Array.isArray( l ) ) {
-      plugin = l[ 0 ];
-      opts = l[ 1 ];
-    } else {
-      plugin = l;
-    }
-
-    if ( typeof plugin === "string" ) {
-      name = plugin;
-      plugin = ( requireFn && requireFn( name ) ) || requireRelative( name );
-
-      if ( plugin.default ) {
-        plugin = plugin.default;
-      }
-    }
-
-    plugins.push( {
-      plugin,
-      name,
-      options: Object.assign( {}, opts )
-    } );
   }
-
   return plugins;
 }
