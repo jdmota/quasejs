@@ -7,7 +7,6 @@ export default class FileSystem {
     const { files, data } = opts || {};
     this.files = files || new Set();
     this.data = data || Object.create( null );
-    this.filesUsed = new Set();
   }
 
   getObjFile( file ) {
@@ -15,7 +14,6 @@ export default class FileSystem {
     let obj = this.data[ file ];
     if ( !obj ) {
       this.files.add( file );
-      this.filesUsed.add( file );
       obj = this.data[ file ] = createFile( file );
     }
     return obj;
@@ -45,7 +43,6 @@ export default class FileSystem {
     const overwrite = !!this.data[ obj.location ];
     if ( !overwrite ) {
       this.files.add( obj.location );
-      this.filesUsed.add( obj.location );
     }
     this.data[ obj.location ] = obj;
     return overwrite;
