@@ -6,8 +6,7 @@ import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
   FinalAsset, FinalAssets, ToWrite,
-  ProvidedPluginsArr, Query, QueryArr,
-  PerformanceOpts, MinimalFS, Options
+  Query, QueryArr, PerformanceOpts, MinimalFS, Options
 } from "./types";
 import { resolvePath, relative } from "./id";
 import Language from "./language";
@@ -15,58 +14,15 @@ import FileSystem from "./filesystem";
 import Module, { type ModuleArg } from "./module";
 import { check } from "./checker";
 
+const getPlugins = require( "@quase/get-plugins" ).getPlugins;
 const fs = require( "fs-extra" );
 const prettyBytes = require( "pretty-bytes" );
 const path = require( "path" );
 
-const nodeRequire = require;
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
 
 type Info = { file: string, size: number, isEntry: boolean };
-
-export function getPlugins( provided: ProvidedPluginsArr, requireFn: Function ): [Function, Object][] {
-  const plugins = [];
-
-  for ( const l of provided ) {
-    let plugin, name, opts;
-
-    if ( !l ) {
-      continue;
-    }
-
-    if ( Array.isArray( l ) ) {
-      plugin = l[ 0 ];
-      opts = l[ 1 ];
-    } else {
-      plugin = l;
-    }
-
-    if ( typeof plugin === "string" ) {
-      name = plugin;
-      plugin = requireFn( name );
-
-      if ( plugin.default ) {
-        plugin = plugin.default;
-      }
-    }
-
-    if ( typeof plugin !== "function" ) {
-      if ( name ) {
-        throw new Error( `${name} should export a function` );
-      } else {
-        throw new Error( `${plugin} should be a function` );
-      }
-    }
-
-    plugins.push( [
-      plugin,
-      Object.assign( {}, opts )
-    ] );
-  }
-
-  return plugins;
-}
 
 export default class Builder {
 
@@ -143,8 +99,11 @@ export default class Builder {
 
     this.cli = options.cli || {};
 
-    getPlugins( options.languages || [], nodeRequire ).forEach( p => {
-      this.languages[ p[ 0 ].TYPE ] = p;
+    getPlugins( options.languages || [] ).forEach( ( { plugin, name, options } ) => {
+      if ( typeof plugin !== "function" ) {
+        throw new Error( `Expected language ${name + " " || ""}to be a function` );
+      }
+      this.languages[ plugin.TYPE ] = [ plugin, options ];
     } );
 
     this.performance = Object.assign( {

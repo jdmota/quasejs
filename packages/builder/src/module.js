@@ -3,7 +3,6 @@
 import error from "./utils/error";
 import { hashName } from "./utils/hash";
 import type Builder from "./builder";
-import { getPlugins } from "./builder";
 import Language, { type ILanguage } from "./language";
 import type {
   Data, Loc, ImportedName, ExportedName,
@@ -12,9 +11,9 @@ import type {
 import { getType, relative, resolvePath } from "./id";
 import { Checker } from "./checker";
 
+const getPlugins = require( "@quase/get-plugins" ).getPlugins;
 const { joinSourceMaps } = require( "@quase/source-map" );
 const JSON5 = require( "json5" );
-const nodeRequire = require;
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
@@ -182,16 +181,14 @@ export default class Module {
 
     const maps = [];
 
-    const loaders = getPlugins( this.query.arr, name => {
-      return builder.loaderAlias[ name ] || nodeRequire( name );
-    } );
+    const loaders = getPlugins( this.query.arr, name => builder.loaderAlias[ name ] );
 
     // TODO allow passing of ast between loaders, and to the final renderers
 
-    for ( const [ fn, opts ] of loaders ) {
-      const out = await fn(
+    for ( const { plugin, options } of loaders ) {
+      const out = await plugin(
         Object.assign( {}, result ),
-        opts,
+        options,
         module,
         builder
       );

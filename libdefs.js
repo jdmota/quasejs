@@ -1,5 +1,6 @@
 /* eslint-disable */
 
+declare module "@quase/get-plugins" { declare var exports: any; }
 declare module "@quase/source-map" { declare var exports: any; }
 declare module "@quase/memory-fs" { declare var exports: any; }
 declare module "@quase/error" { declare var exports: any; }
