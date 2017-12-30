@@ -402,7 +402,7 @@ export class Runnable implements ITestResult, ITest {
       return this.exitError( error );
     }
 
-    if ( this.maxTimeout ) {
+    if ( this.maxTimeout && this.runner.options.timeouts ) {
       this.timeoutId = setTimeout( () => {
         this.addError( new Error( "Timeout exceeded." ), this.timeoutStack );
 

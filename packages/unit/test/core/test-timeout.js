@@ -163,6 +163,70 @@ describe( "unit", () => {
 
   } );
 
+  it( "timeouts: false", () => {
+
+    assert.expect( 3 );
+
+    const runner = Runner.init( {
+      timeouts: false,
+      allowNoPlan: true
+    } );
+    const results = runner.listen();
+    const test = runner.test;
+    let counts = 0;
+
+    test.group( t => {
+
+      t.timeout( 1 );
+
+      test( "test", () => {
+        return new Promise( resolve => {
+          setTimeout( resolve, 100 );
+        } ).then( () => counts++ );
+      } );
+
+    } );
+
+    return runner.run().then( () => {
+      assert.strictEqual( counts, 1 );
+      assert.strictEqual( results[ 7 ].status, "passed" );
+      assert.strictEqual( results.pop().status, "passed" );
+    } );
+
+  } );
+
+  it( "timeouts: false with debug: true", () => {
+
+    assert.expect( 3 );
+
+    const runner = Runner.init( {
+      debug: true,
+      allowNoPlan: true
+    } );
+    const results = runner.listen();
+    const test = runner.test;
+    let counts = 0;
+
+    test.group( t => {
+
+      t.timeout( 1 );
+
+      test( "test", () => {
+        return new Promise( resolve => {
+          setTimeout( resolve, 100 );
+        } ).then( () => counts++ );
+      } );
+
+    } );
+
+    return runner.run().then( () => {
+      assert.strictEqual( counts, 1 );
+      assert.strictEqual( results[ 7 ].status, "passed" );
+      assert.strictEqual( results.pop().status, "passed" );
+    } );
+
+  } );
+
   it( "throw when timeout value is not number - group", () => {
 
     let runner = Runner.init( { allowNoPlan: true } );

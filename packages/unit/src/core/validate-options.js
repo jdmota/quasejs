@@ -31,7 +31,7 @@ export default function( options ) {
   }
 
   options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
-  options.color = options.color === undefined ? true : !!options.color;
+  options.color = !!( options.color === undefined || options.color );
 
   if ( options.inspect || options.inspectBrk || options.forceSerial ) {
     options.concurrency = 1;
@@ -47,6 +47,12 @@ export default function( options ) {
     "object",
     "concordance options"
   );
+
+  options.timeouts = !!( options.timeouts === undefined || options.timeouts );
+
+  if ( options.debug ) {
+    options.timeouts = false;
+  }
 
   if ( options.timeout == null ) {
     options.timeout = 0;

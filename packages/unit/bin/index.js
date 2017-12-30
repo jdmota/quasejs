@@ -15,17 +15,21 @@ Options
   --update-snapshots, -u  Update snapshots
   --timeout, -t           Set test timeout
   --slow                  Set "slow" test threshold
-  --allow-no-plan         Makes tests still succeed if no assertions are run and no planning was done
-  --strict                Disallows the usage of "only", "failing", "todo", "skipped" modifiers
+  --allow-no-plan         Make tests still succeed if no assertions are run and no planning was done
+  --strict                Disallow the usage of "only", "failing", "todo", "skipped" modifiers
   --globals               Allow for tests to create global variables
   --random [seed]         Randomize your tests. Optionally specify a seed or one will be generated
   --snapshot-dir          Specify a fixed location for storing the snapshot files
   --env <environment>     The test environment used for all tests. This can point to any file or node module
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
-  --no-color              Disallows color output
-  --no-diff               Disallows the showing of a diff on failure
-  --no-stack              Disallows the showing of a strack trace on failure
-  --no-code-frame         Disallows the showing of a code frame
+  --no-timeouts           Disable timeouts. Given implicitly with --debug
+  --no-color              Disable color output
+  --no-diff               Disable the showing of a diff on failure
+  --no-stack              Disable the showing of a strack trace on failure
+  --no-code-frame         Disable the showing of a code frame
+  --inspect               Same as --inspect on nodejs. Forces concurrency 1
+  --inspect-brk           Same as --inspect-brk on nodejs. Forces concurrency 1
+  --debug                 Same as --inspect-brk=0 on nodejs. Can be used with any concurrency value
 `;
 
 require( "@quase/cli" ).default( function( o ) {
@@ -100,6 +104,10 @@ require( "@quase/cli" ).default( function( o ) {
       default: true
     },
     codeFrame: {
+      type: "boolean",
+      default: true
+    },
+    timeouts: {
       type: "boolean",
       default: true
     }
