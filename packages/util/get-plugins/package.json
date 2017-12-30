@@ -8,6 +8,6 @@
   "repository": "https://github.com/quase/quasejs/tree/master/packages/util/get-plugins",
   "main": "dist/index.js",
   "dependencies": {
-    "require-relative": "^0.8.7"
+    "resolve-from": "^4.0.0"
   }
 }

@@ -1,10 +1,10 @@
 // @flow
 
-const relative = require( "require-relative" );
+const _resolveFrom = require( "resolve-from" );
 
 export function requireRelative( m: string, cwd: ?string ) {
   // $FlowFixMe
-  return require( relative.resolve( m, cwd || process.cwd() ) );
+  return require( _resolveFrom( cwd || process.cwd(), m ) );
 }
 
 type Plugin = {
