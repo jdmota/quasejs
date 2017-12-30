@@ -80,7 +80,6 @@ export const defaultConfig = {
     main: "dist/index.js",
     dependencies: {},
     devDependencies: {
-      "@babel/cli": "7.0.0-beta.36",
       "@quase/eslint-config-quase": "^0.2.0",
       eslint: "^4.14.0"
     }
@@ -101,7 +100,7 @@ export default async function( folder: string, plugin: ?string ) {
         return `${key} already exists!`;
       }
 
-      await fs.writeFile( fullPath, config[ key ] );
+      await fs.outputFile( fullPath, config[ key ] );
       return `${key} was created.`;
     } )() );
   }
