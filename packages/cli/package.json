@@ -10,6 +10,7 @@
     "boxen": "^1.2.2",
     "chalk": "^2.3.0",
     "has-yarn": "^1.0.0",
+    "import-local": "^1.0.0",
     "is-installed-globally": "^0.1.0",
     "meow": "^4.0.0",
     "pkg-conf": "^2.0.0",

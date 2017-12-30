@@ -5,6 +5,7 @@ const updateNotifier = require( "update-notifier" );
 const readPkgUp = require( "read-pkg-up" );
 const pkgConf = require( "pkg-conf" );
 const meow = require( "meow" );
+const importLocal = require( "import-local" );
 
 function notifyFix( opts ) {
   if ( !process.stdout.isTTY || !this.update ) {
@@ -57,9 +58,14 @@ function notify( pkg, notifierOpts ) {
 
 // Prevent caching of this module so module.parent is always accurate
 delete require.cache[ __filename ];
-const parentDir = path.dirname( module.parent.filename );
+const filename = module.parent.filename;
+const parentDir = path.dirname( filename );
 
 export default function( callback, opts, notifierOpts ) {
+
+  if ( importLocal( filename ) ) {
+    return;
+  }
 
   opts = Object.assign( {}, opts );
   opts.cwd = opts.cwd || process.cwd();
