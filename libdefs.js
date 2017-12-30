@@ -60,6 +60,7 @@ declare module "read-pkg" { declare var exports: any; }
 declare module "read-pkg-up" { declare var exports: any; }
 declare module "require-relative" { declare var exports: any; }
 declare module "resolve" { declare var exports: any; }
+declare module "resolve-from" { declare var exports: any; }
 declare module "slash" { declare var exports: any; }
 declare module "source-map" { declare var exports: any; }
 declare module "strip-url-auth" { declare var exports: any; }
