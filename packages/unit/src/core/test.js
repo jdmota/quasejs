@@ -40,7 +40,7 @@ export class Runnable implements ITestResult, ITest {
   level: number;
   failedBecauseOfHook: ?{ level: number };
   skipReason: ?string;
-  globalsCheck: ?GlobalEnv;
+  globalsCheck: GlobalEnv;
   finished: boolean;
   deferred: ?IDeferred<void>;
   timeStart: number;
@@ -105,7 +105,7 @@ export class Runnable implements ITestResult, ITest {
 
     this.snapshotsWaiting = [];
 
-    this.globalsCheck = this.runner.globals ? null : new GlobalEnv();
+    this.globalsCheck = new GlobalEnv( this.runner.globals );
 
     this.finished = false;
 
@@ -335,11 +335,9 @@ export class Runnable implements ITestResult, ITest {
     this.slow = this.minSlow ? this.runtime >= this.minSlow : false;
 
     if ( !this.status ) {
-      if ( this.globalsCheck ) {
-        const e = this.globalsCheck.check();
-        if ( e ) {
-          this.addError( e );
-        }
+      const e = this.globalsCheck.check();
+      if ( e ) {
+        this.addError( e );
       }
 
       if ( !this.errors.length ) {

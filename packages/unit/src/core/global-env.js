@@ -26,7 +26,8 @@ function diff( a, b ) {
 
 class GlobalEnv {
 
-  constructor() {
+  constructor( allowedVars ) {
+    this.allowedVars = allowedVars;
     this.initialVars = null;
     this.root = root;
   }
@@ -34,7 +35,7 @@ class GlobalEnv {
   getVars() {
     const vars = [];
     for ( const key in this.root ) {
-      if ( has.call( this.root, key ) ) {
+      if ( has.call( this.root, key ) && this.checkNotAllowed( key ) ) {
         vars.push( key );
       }
     }
@@ -44,6 +45,19 @@ class GlobalEnv {
   start() {
     this.initialVars = this.getVars();
     return this;
+  }
+
+  checkNotAllowed( name ) {
+    let i = this.allowedVars.length;
+    while ( i-- ) {
+      if ( this.allowedVars[ i ] === false ) {
+        return true;
+      }
+      if ( this.allowedVars[ i ] === true || this.allowedVars[ i ] === name ) {
+        return false;
+      }
+    }
+    return true;
   }
 
   check() {

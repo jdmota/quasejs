@@ -68,7 +68,7 @@ export default function( options ) {
 
   options.files = arrify( options.files );
   options.match = arrify( options.match );
-  options.globals = !!options.globals;
+  options.globals = arrify( options.globals );
   options.updateSnapshots = !!options.updateSnapshots;
   options.bail = !!options.bail;
   options.strict = !!options.strict;

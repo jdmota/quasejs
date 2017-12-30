@@ -180,4 +180,114 @@ describe( "unit", () => {
 
   } );
 
+  it( "allow some globals", () => {
+
+    assert.expect( 2 );
+
+    const runner = Runner.init( {
+      globals: [ "abc" ]
+    } );
+    const results = runner.listen();
+    const test = runner.test;
+
+    test( () => {
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        window.abc = 10;
+      } else {
+        global.abc = 10;
+      }
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        window.cba = 10;
+      } else {
+        global.cba = 10;
+      }
+
+    } );
+
+    test.after( () => {} );
+
+    return runner.run().then( () => {
+
+      assert.strictEqual(
+        results[ 5 ].errors[ 0 ].message,
+        "Introduced global variable(s): cba"
+      );
+
+      assert.strictEqual( results.pop().status, "failed" );
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        delete window.abc;
+      } else {
+        delete global.abc;
+      }
+
+      if ( typeof global === "undefined" ) {
+        delete window.cba;
+      } else {
+        /* istanbul ignore next */
+        delete global.cba;
+      }
+
+    } );
+
+  } );
+
+  it( "allow any globals", () => {
+
+    assert.expect( 1 );
+
+    const runner = Runner.init( {
+      globals: true,
+      allowNoPlan: true
+    } );
+    const results = runner.listen();
+    const test = runner.test;
+
+    test( () => {
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        window.abc = 10;
+      } else {
+        global.abc = 10;
+      }
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        window.cba = 10;
+      } else {
+        global.cba = 10;
+      }
+
+    } );
+
+    test.after( () => {} );
+
+    return runner.run().then( () => {
+
+      assert.strictEqual( results.pop().status, "passed" );
+
+      if ( typeof global === "undefined" ) {
+        /* istanbul ignore next */
+        delete window.abc;
+      } else {
+        delete global.abc;
+      }
+
+      if ( typeof global === "undefined" ) {
+        delete window.cba;
+      } else {
+        /* istanbul ignore next */
+        delete global.cba;
+      }
+
+    } );
+
+  } );
+
 } );
