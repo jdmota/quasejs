@@ -22,8 +22,9 @@ Options
   --snapshot-dir          Specify a fixed location for storing the snapshot files
   --env <environment>     The test environment used for all tests. This can point to any file or node module
   --reporter <name>       Specify the reporter to use; if no match is found a list of available reporters will be displayed
-  --no-timeouts           Disable timeouts. Given implicitly with --debug
+  --color                 Force color output
   --no-color              Disable color output
+  --no-timeouts           Disable timeouts. Given implicitly with --debug
   --no-diff               Disable the showing of a diff on failure
   --no-stack              Disable the showing of a strack trace on failure
   --no-code-frame         Disable the showing of a code frame
@@ -86,10 +87,6 @@ require( "@quase/cli" ).default( function( o ) {
     },
     reporter: {
       type: "string"
-    },
-    color: {
-      type: "boolean",
-      default: true
     },
     diff: {
       type: "boolean",

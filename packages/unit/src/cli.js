@@ -270,7 +270,9 @@ class NodeRunner extends EventEmitter {
     const args = [];
     let debugging = false;
 
-    if ( !options.color ) {
+    if ( options.color ) {
+      args.push( "--color" );
+    } else {
       args.push( "--no-color" );
     }
 

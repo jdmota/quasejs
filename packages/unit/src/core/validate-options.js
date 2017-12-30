@@ -6,6 +6,7 @@ import randomizer from "./random";
 
 const os = require( "os" );
 const isCi = require( "is-ci" );
+const { supportsColor } = require( "chalk" );
 
 function arrify( val ) {
   if ( val == null ) {
@@ -31,7 +32,7 @@ export default function( options ) {
   }
 
   options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
-  options.color = !!( options.color === undefined || options.color );
+  options.color = options.color === undefined ? supportsColor : !!options.color;
 
   if ( options.inspect || options.inspectBrk || options.forceSerial ) {
     options.concurrency = 1;
