@@ -31,6 +31,7 @@ Options
   --inspect               Same as --inspect on nodejs. Forces concurrency 1
   --inspect-brk           Same as --inspect-brk on nodejs. Forces concurrency 1
   --debug                 Same as --inspect-brk=0 on nodejs. Can be used with any concurrency value
+  --log-heap-usage        Logs the heap usage after every test. Useful to debug memory leaks.
 `;
 
 require( "@quase/cli" ).default( function( o ) {

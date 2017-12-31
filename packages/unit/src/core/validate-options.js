@@ -75,6 +75,7 @@ export default function( options ) {
   options.strict = !!options.strict;
   options.allowNoPlan = !!options.allowNoPlan;
   options.forceSerial = !!options.forceSerial;
+  options.logHeapUsage = !!options.logHeapUsage;
 
   return options;
 }

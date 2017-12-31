@@ -277,7 +277,7 @@ export default class NodeReporter {
     printLog( log, 4 );
   }
 
-  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, defaultStack } ) {
+  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, defaultStack, memoryUsage } ) {
 
     if ( status === "passed" && !slow && !logs.length ) {
       return;
@@ -308,6 +308,11 @@ export default class NodeReporter {
         printLog( logLinesWithFigure, 0 );
         logEol();
       } );
+    }
+
+    if ( memoryUsage ) {
+      printLog( chalk.yellow( `Memory usage: ${memoryUsage}\n` ), 4 );
+      logEol();
     }
 
   }

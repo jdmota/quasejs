@@ -448,6 +448,7 @@ export default class Test implements ITestResult, IRunnable {
   runnable: Runnable | InTestSequence;
   metadata: Metadata;
   runner: Runner;
+  memoryUsage: number;
 
   currentRetry: number;
   maxRetries: number;
@@ -487,6 +488,8 @@ export default class Test implements ITestResult, IRunnable {
     this.metadata = placeholder.metadata;
     this.runner = parent.runner;
 
+    this.memoryUsage = 0;
+
     this.currentRetry = 0;
     this.maxRetries = 0; // Gets defined after the first run
     this.retryDelayValue = 0; // Gets defined after the first run
@@ -513,6 +516,13 @@ export default class Test implements ITestResult, IRunnable {
     this.logs = this.runnable.logs;
     this.failedBecauseOfHook = this.runnable.failedBecauseOfHook;
     this.skipReason = this.runnable.skipReason;
+
+    if ( this.runner.options.logHeapUsage ) {
+      if ( global.gc ) {
+        global.gc();
+      }
+      this.memoryUsage = process.memoryUsage().heapUsed;
+    }
 
     if ( this.metadata.status === "failing" ) {
       if ( this.status === "failed" ) {

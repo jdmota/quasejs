@@ -165,7 +165,8 @@ class Runner extends EventEmitter {
       skipReason: test.skipReason,
       slow: test.slow,
       assertions: test.assertions,
-      defaultStack: test.placeholder.defaultStack
+      defaultStack: test.placeholder.defaultStack,
+      memoryUsage: test.memoryUsage
     } );
   }
 

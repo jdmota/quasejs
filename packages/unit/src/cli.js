@@ -270,6 +270,10 @@ class NodeRunner extends EventEmitter {
     const args = [];
     let debugging = false;
 
+    if ( options.logHeapUsage ) {
+      args.push( "--expose-gc" );
+    }
+
     if ( options.color ) {
       args.push( "--color" );
     } else {
