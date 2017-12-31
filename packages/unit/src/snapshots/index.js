@@ -27,14 +27,14 @@ function writeFileAtomic( filename, data, options ) {
   } );
 }
 
-function tryDecode( fs: FS, file: string ): Snapshots {
+function tryDecode( fs: FS, file: string ): [ Snapshots, ?Error ] {
   try {
-    return decode( fs.readFileSync( file ), file );
+    return [ decode( fs.readFileSync( file ), file ), null ];
   } catch ( err ) {
     if ( err.code === "ENOENT" ) {
-      return new Map();
+      return [ new Map(), null ];
     }
-    throw err;
+    return [ new Map(), err ];
   }
 }
 
@@ -75,6 +75,7 @@ export default class SnapshotsManager {
   +filePath: string;
   +snapPath: string;
   +reportPath: string;
+  +decodingError: ?Error;
   +prevSnapshots: Snapshots;
   +newSnapshots: Snapshots;
   +testKeys: Map<string, number>;
@@ -102,7 +103,9 @@ export default class SnapshotsManager {
       remove: originalFs.remove,
       ensureDir: originalFs.ensureDir
     };
-    this.prevSnapshots = tryDecode( this.fs, this.snapPath );
+    const decoded = tryDecode( this.fs, this.snapPath );
+    this.decodingError = decoded[ 1 ];
+    this.prevSnapshots = decoded[ 0 ];
     this.newSnapshots = new Map();
     this.testKeys = new Map();
     this.reports = new Map();
@@ -117,6 +120,10 @@ export default class SnapshotsManager {
   }
 
   matchesSnapshot( _key: string, title: string, actualBuffer: Buffer ) {
+
+    if ( this.decodingError ) {
+      throw this.decodingError;
+    }
 
     const index = this.testKeys.get( _key ) || 1;
     this.testKeys.set( _key, index + 1 );

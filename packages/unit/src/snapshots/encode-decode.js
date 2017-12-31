@@ -1,5 +1,6 @@
 // @flow
 
+const { prettifyPath } = require( "@quase/path-url" );
 const crypto = require( "crypto" );
 const zlib = require( "zlib" );
 
@@ -16,18 +17,22 @@ class SnapshotError extends Error {
 }
 
 class ChecksumError extends SnapshotError {
+  +snapPath: string;
   constructor( snapPath: string ) {
-    super( `Checksum mismatch (${snapPath})` );
+    super( `Checksum mismatch (${prettifyPath( snapPath )})` );
     this.name = "ChecksumError";
+    this.snapPath = snapPath;
   }
 }
 
 class HeaderMismatchError extends SnapshotError {
+  +snapPath: string;
   +actual: string;
   +expected: string;
   constructor( header: string, snapPath: string ) {
-    super( `Unexpected snapshot header (${snapPath})` );
+    super( `Unexpected snapshot header (${prettifyPath( snapPath )})` );
     this.name = "HeaderMismatchError";
+    this.snapPath = snapPath;
     this.actual = header;
     this.expected = HEADER;
   }
