@@ -60,7 +60,7 @@ class SnapshotMissing extends Error {
   }
 }
 
-type Stats = { added: number, removed: number, updated: number };
+type Stats = { added: number, updated: number, removed: number, obsolete: number };
 
 function getFile( projectDir: string, filePath: string, fixedLocation: ?string ) {
   if ( fixedLocation ) {
@@ -109,8 +109,9 @@ export default class SnapshotsManager {
     this.updating = !!updating;
     this.stats = {
       added: 0,
+      updated: 0,
       removed: 0,
-      updated: 0
+      obsolete: 0
     };
     this.concordanceOptions = { plugins: concordanceOptions.plugins };
   }
@@ -122,7 +123,7 @@ export default class SnapshotsManager {
 
     const testKey = _key + " " + index;
 
-    const actualDescribe = concordance.deserialize( actualBuffer );
+    const actualDescribe = concordance.deserialize( actualBuffer, this.concordanceOptions );
 
     const expectedBuffer = this.prevSnapshots.get( testKey );
 
@@ -163,16 +164,24 @@ export default class SnapshotsManager {
   async save(): Promise<Stats> {
     if ( this.newSnapshots.size === 0 ) {
       if ( this.prevSnapshots.size > 0 ) {
-        this.stats.removed = this.prevSnapshots.size;
-        await Promise.all( [
-          this.fs.remove( this.snapPath ),
-          this.fs.remove( this.reportPath )
-        ] );
+        if ( this.updating ) {
+          this.stats.removed = this.prevSnapshots.size;
+          await Promise.all( [
+            this.fs.remove( this.snapPath ),
+            this.fs.remove( this.reportPath )
+          ] );
+        } else {
+          this.stats.obsolete = this.prevSnapshots.size;
+        }
       }
     } else {
       for ( const key of this.prevSnapshots.keys() ) {
         if ( !this.newSnapshots.has( key ) ) {
-          this.stats.removed++;
+          if ( this.updating ) {
+            this.stats.removed++;
+          } else {
+            this.stats.obsolete++;
+          }
         }
       }
 

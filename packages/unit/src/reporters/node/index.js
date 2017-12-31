@@ -174,12 +174,21 @@ export default class NodeReporter {
     } );
   }
 
-  showSnapshotStats( lines, { added, removed, updated } ) {
-    if ( added + removed + updated > 0 ) {
+  showSnapshotStats( lines, { added, updated, removed, obsolete } ) {
+    if ( added || updated || removed || obsolete ) {
       lines.push( chalk.blue( "\n\n  Snapshots" ) );
+    }
+    if ( added ) {
       lines.push( chalk.green( `\n    Added: ${added}` ) );
+    }
+    if ( updated ) {
       lines.push( chalk.green( `\n    Updated: ${updated}` ) );
+    }
+    if ( removed ) {
       lines.push( chalk.red( `\n    Removed: ${removed}` ) );
+    }
+    if ( obsolete ) {
+      lines.push( chalk.red( `\n    Obsolete: ${obsolete}` ) );
     }
   }
 
