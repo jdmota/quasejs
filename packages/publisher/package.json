@@ -1,0 +1,30 @@
+{
+  "private": true,
+  "name": "@quase/publisher",
+  "version": "0.1.0-0",
+  "description": "Publisher",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/publisher",
+  "main": "dist/index.js",
+  "bin": {
+    "quase-publisher": "bin/index.js"
+  },
+  "dependencies": {
+    "@quase/cli": "0.3.0-0",
+    "any-observable": "^0.2.0",
+    "ban-sensitive-files": "^1.9.2",
+    "del": "^3.0.0",
+    "execa": "^0.8.0",
+    "has-yarn": "^1.0.0",
+    "np": "2.18.3",
+    "nsp": "2.8.0",
+    "listr": "^0.12.0",
+    "log-symbols": "^2.1.0",
+    "read-pkg-up": "^3.0.0",
+    "rxjs": "5.4.3",
+    "slash": "^1.0.0",
+    "split": "^1.0.0",
+    "stream-to-observable": "^0.2.0"
+  }
+}

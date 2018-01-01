@@ -16,6 +16,7 @@
     "packages/package-manager",
     "packages/path-url",
     "packages/pathname",
+    "packages/publisher",
     "packages/source-map",
     "packages/unit",
     "packages/util/get-plugins",
