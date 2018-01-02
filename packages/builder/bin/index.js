@@ -9,8 +9,8 @@ Options
   --watch, -w    Watch files for changes and re-build
 `;
 
-require( "@quase/cli" ).default( ( { flags, config } ) => {
-  const p = require( "../dist" ).default( Object.assign( {}, config, flags ) );
+require( "@quase/cli" ).default( ( { options } ) => {
+  const p = require( "../dist" ).default( options );
   if ( p.then ) {
     p.then( o => console.log( o.output ) );
   }
