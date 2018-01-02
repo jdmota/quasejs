@@ -30,6 +30,10 @@ export function prettifyPath( file: Path ) {
   return slash( path.relative( process.cwd(), file ) );
 }
 
+export function lowerPath( file: Path ) {
+  return path.sep === "\\" ? file.toLowerCase() : file;
+}
+
 // Urls
 /* eslint-env browser */
 
