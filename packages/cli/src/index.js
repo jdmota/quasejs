@@ -2,6 +2,7 @@ const path = require( "path" );
 const chalk = require( "chalk" );
 const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
+const findUp = require( "find-up" );
 const readPkgUp = require( "read-pkg-up" );
 const pkgConf = require( "pkg-conf" );
 const meow = require( "meow" );
@@ -61,6 +62,41 @@ delete require.cache[ __filename ];
 const filename = module.parent.filename;
 const parentDir = path.dirname( filename );
 
+export function getConfig( opts ) {
+
+  const { cwd, configFiles, configKey } = opts || {};
+  const result = {
+    config: undefined,
+    location: undefined
+  };
+
+  if ( configFiles ) {
+    const location = findUp.sync( configFiles, { cwd } );
+
+    if ( location ) {
+      try {
+        result.config = require( location );
+        result.location = location;
+      } catch ( e ) {
+        // Ignore
+      }
+    }
+  }
+
+  if ( !result.config ) {
+    if ( configKey ) {
+      try {
+        result.config = pkgConf.sync( configKey, { cwd, skipOnFalse: true } );
+        result.location = "pkg";
+      } catch ( e ) {
+        // Ignore
+      }
+    }
+  }
+
+  return result;
+}
+
 export default function( callback, opts, notifierOpts ) {
 
   if ( importLocal( filename ) ) {
@@ -68,7 +104,7 @@ export default function( callback, opts, notifierOpts ) {
   }
 
   opts = Object.assign( {}, opts );
-  opts.cwd = opts.cwd || process.cwd();
+  opts.cwd = opts.cwd ? path.resolve( opts.cwd ) : process.cwd();
 
   const defaultConfigFile = opts.defaultConfigFile;
   const configKey = opts.configKey;
@@ -95,27 +131,18 @@ export default function( callback, opts, notifierOpts ) {
     notify( cli.pkg, notifierOpts || {} );
   }
 
-  if ( cli.flags.config ) {
-    const configLocation = path.resolve( opts.cwd, cli.flags.config );
+  const { config, location: configLocation } = getConfig( {
+    cwd: opts.cwd,
+    configFiles: cli.flags.config,
+    configKey
+  } );
 
-    try {
-      cli.config = require( configLocation );
-      cli.configLocation = configLocation;
-    } catch ( e ) {
-      // Ignore
-    }
-  }
+  cli.config = config;
+  cli.configLocation = configLocation;
 
-  if ( !cli.config ) {
-    if ( configKey ) {
-      try {
-        cli.config = pkgConf.sync( configKey, { cwd: opts.cwd, skipOnFalse: true } );
-        cli.configLocation = "pkg";
-      } catch ( e ) {
-        // Ignore
-      }
-    }
-  }
+  cli.options = Object.assign( {}, cli.config, cli.flags );
+  delete cli.options.config;
+  delete cli.options.c;
 
   callback( cli );
 }

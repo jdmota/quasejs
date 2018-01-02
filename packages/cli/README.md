@@ -58,8 +58,8 @@ See https://github.com/yeoman/update-notifier for details.
 ```js
 #!/usr/bin/env node
 
-require( "@quase/cli" ).default( ( { input, flags, config } ) => {
-  require( "../dist" ).default( Object.assign( {}, config, flags ), input );
+require( "@quase/cli" ).default( ( { options, input } ) => {
+  require( "../dist" ).default( options, input );
 }, {
   defaultConfigFile: "sample.config.js",
   configKey: "sample"
