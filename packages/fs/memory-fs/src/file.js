@@ -1,7 +1,8 @@
+import { isUrl, makeAbsolutePath, makeAbsoluteUrl } from "./util";
+
 const windowFetch = typeof window !== "undefined" && window.fetch; // eslint-disable-line no-undef
 const fs = !windowFetch && require( "fs-extra" );
 const fetch = windowFetch || require( "node-fetch" );
-const { isUrl, makeAbsolutePath, makeAbsoluteUrl } = require( "@quase/path-url" );
 
 class FsFile {
 

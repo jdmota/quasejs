@@ -1,7 +1,5 @@
+import { dirname, makeAbsolute } from "./util";
 import createFile from "./file";
-
-const { makeAbsolute } = require( "@quase/path-url" );
-const path = require( "path" );
 
 export default class FileSystem {
   constructor( opts ) {
@@ -62,7 +60,7 @@ export default class FileSystem {
     const obj = this.data[ file ];
     if ( obj ) {
       if ( obj.fromFS() ) {
-        const parent = path.dirname( obj.location );
+        const parent = dirname( obj.location );
         if ( this.files.delete( parent ) ) {
           this.data[ parent ] = null;
         }
