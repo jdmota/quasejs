@@ -9,10 +9,11 @@ Options
   --no-cleanup
 `;
 
-require( "@quase/cli" ).default( ( { input, flags, config } ) => {
-  const opts = Object.assign( {}, config, flags );
-  opts.version = input[ 0 ];
-  require( "../dist" ).default( opts );
+// TODO
+
+require( "@quase/cli" ).default( ( { input, options } ) => {
+  options.version = input[ 0 ];
+  require( "../dist" ).default( options );
 }, {
   help,
   inferType: true,
