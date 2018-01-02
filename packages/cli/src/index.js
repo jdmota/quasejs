@@ -5,15 +5,24 @@ const updateNotifier = require( "update-notifier" );
 const findUp = require( "find-up" );
 const readPkgUp = require( "read-pkg-up" );
 const pkgConf = require( "pkg-conf" );
-const meow = require( "meow" );
 const importLocal = require( "import-local" );
+const loudRejection = require( "loud-rejection" );
+const normalizePkg = require( "normalize-package-data" );
+const minimist = require( "minimist" );
+const camelcaseKeys = require( "camelcase-keys" );
+const decamelize = require( "decamelize" );
+const trimNewlines = require( "trim-newlines" );
+const redent = require( "redent" );
+const defaultsDeep = require( "lodash.defaultsdeep" );
 
 function notifyFix( opts ) {
   if ( !process.stdout.isTTY || !this.update ) {
     return this;
   }
 
-  opts = Object.assign( { isGlobal: require( "is-installed-globally" ) }, opts );
+  opts = Object.assign( {}, opts );
+
+  opts.isGlobal = opts.isGlobal === undefined ? opts.isGlobal : require( "is-installed-globally" );
 
   const defaultMsg = hasYarn() ?
     `Update available ${chalk.dim( this.update.current )}${chalk.reset( " → " )}${chalk.green( this.update.latest )}` +
@@ -97,52 +106,131 @@ export function getConfig( opts ) {
   return result;
 }
 
-export default function( callback, opts, notifierOpts ) {
+const DEFAULT = {};
+
+const defaultOptions = {
+  cwd: process.cwd(),
+  argv: process.argv.slice( 2 ),
+  inferType: true,
+  autoHelp: true,
+  autoVersion: true,
+  schema: {}
+};
+
+export default function( callback, opts ) {
+  /* eslint-disable no-process-exit, no-console */
 
   if ( importLocal( filename ) ) {
     return;
   }
 
-  opts = Object.assign( {}, opts );
-  opts.cwd = opts.cwd ? path.resolve( opts.cwd ) : process.cwd();
+  loudRejection();
 
-  const defaultConfigFile = opts.defaultConfigFile;
-  const configKey = opts.configKey;
+  opts = defaultsDeep( {}, opts, defaultOptions );
+  opts.cwd = path.resolve( opts.cwd );
 
-  if ( defaultConfigFile ) {
-    opts.flags = Object.assign( {}, opts.flags );
-    opts.flags.config = {
-      type: "string",
-      alias: "c",
-      default: defaultConfigFile
-    };
+  const minimistOpts = {
+    string: [],
+    boolean: [],
+    alias: {},
+    default: {},
+    stopEarly: false,
+    unknown: () => true,
+    "--": true
+  };
+
+  if ( opts.configFiles ) {
+    minimistOpts.string.push( "config" );
+    minimistOpts.alias.c = "config";
   }
 
-  if ( !opts.pkg ) {
-    opts.pkg = readPkgUp.sync( {
-      cwd: parentDir,
-      normalize: false
-    } ).pkg;
+  if ( !opts.inferType ) {
+    minimistOpts.string.push( "_" );
   }
 
-  const cli = meow( opts );
+  const defaults = {};
 
-  if ( notifierOpts !== false ) {
-    notify( cli.pkg, notifierOpts || {} );
+  for ( const k in opts.schema ) {
+    const { type, alias, default: d } = opts.schema[ k ];
+    defaults[ k ] = d;
+
+    const key = decamelize( k, "-" );
+    if ( type === "string" ) {
+      minimistOpts.string.push( key );
+      minimistOpts.default[ key ] = DEFAULT;
+    } else if ( type === "boolean" ) {
+      minimistOpts.boolean.push( key );
+      minimistOpts.default[ key ] = DEFAULT;
+    }
+    minimistOpts.alias[ alias ] = key;
+  }
+
+  const argv = minimist( opts.argv, minimistOpts );
+
+  for ( const key in argv ) {
+    if ( argv[ key ] === DEFAULT ) {
+      delete argv[ key ];
+    }
+  }
+
+  const pkg = opts.pkg ? opts.pkg : readPkgUp.sync( {
+    cwd: parentDir,
+    normalize: false
+  } ).pkg;
+
+  normalizePkg( pkg );
+
+  let description;
+  let help = redent( trimNewlines( ( opts.help || "" ).replace( /\t+\n*$/, "" ) ), 2 );
+
+  process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
+  description = !opts.description && opts.description !== false ? pkg.description : opts.description;
+  help = ( description ? `\n  ${description}\n` : "" ) + ( help ? `\n${help}\n` : "\n" );
+
+  const showHelp = code => {
+    console.log( help );
+    process.exit( typeof code === "number" ? code : 2 );
+  };
+
+  const showVersion = () => {
+    console.log( typeof opts.version === "string" ? opts.version : pkg.version );
+    process.exit();
+  };
+
+  if ( argv.version && opts.autoVersion ) {
+    showVersion();
+  }
+
+  if ( argv.help && opts.autoHelp ) {
+    showHelp( 0 );
+  }
+
+  if ( opts.notifier !== false ) {
+    notify( pkg, opts.notifier || {} );
   }
 
   const { config, location: configLocation } = getConfig( {
     cwd: opts.cwd,
-    configFiles: cli.flags.config,
-    configKey
+    configFiles: argv.config || opts.configFiles,
+    configKey: opts.configKey
   } );
 
-  cli.config = config;
-  cli.configLocation = configLocation;
+  const input = argv._;
+  delete argv._;
 
-  cli.options = Object.assign( {}, cli.config, cli.flags );
-  delete cli.options.config;
-  delete cli.options.c;
+  const flags = camelcaseKeys( argv, { exclude: [ "--", /^\w$/ ] } );
 
-  callback( cli );
+  const options = defaultsDeep( {}, flags, config, defaults );
+
+  callback( {
+    input,
+    options,
+    flags,
+    config,
+    configLocation,
+    pkg,
+    help,
+    showHelp,
+    showVersion
+  } );
 }

@@ -9,13 +9,15 @@ describe( "cli", () => {
 
     console.error = jest.fn();
 
-    cli( ( { input, flags, pkg, help, showHelp, config } ) => {
+    cli( ( { input, options, pkg, help, showHelp, config } ) => {
       expect( input[ 0 ] ).toBe( "foo" );
-      expect( flags.fooBar ).toBe( true );
-      expect( flags.number ).toBe( 10 );
-      expect( flags.meow ).toBe( "dog" );
-      expect( flags.unicorn ).toBe( "cat" );
-      expect( flags[ "--" ] ).toEqual( [ "unicorn", "10" ] );
+      expect( options.fooBar ).toBe( true );
+      expect( options.boolean ).toBe( true );
+      expect( options.boolean2 ).toBe( true );
+      expect( options.number ).toBe( 10 );
+      expect( options.meow ).toBe( "dog" );
+      expect( options.unicorn ).toBe( "cat" );
+      expect( options[ "--" ] ).toEqual( [ "unicorn", "10" ] );
       expect( pkg.name ).toBe( "@quase/eslint-config-quase" );
       expect( pkg.version ).toBe( "0.0.1" );
       expect( help ).toMatchSnapshot();
@@ -32,20 +34,22 @@ describe( "cli", () => {
         Usage
           foo <input>
       `,
-      flags: {
+      schema: {
         number: { default: 0 },
         unicorn: { alias: "u" },
         meow: { default: "dog" },
-        "--": true
+        boolean: { default: true },
+        boolean2: { type: "boolean", default: true }
       },
       inferType: true,
-      defaultConfigFile: "quase-cli-config.js"
-    }, {
-      options: {
-        updateCheckInterval: 0
-      },
-      notify: {
-        defer: false
+      configFiles: "quase-cli-config.js",
+      notifier: {
+        options: {
+          updateCheckInterval: 0
+        },
+        notify: {
+          defer: false
+        }
       }
     } );
 
@@ -66,8 +70,9 @@ describe( "cli", () => {
       },
       argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
-      defaultConfigFile: "quase-cli-config.js"
-    }, false );
+      configFiles: "quase-cli-config.js",
+      notifier: false
+    } );
 
   } );
 
@@ -84,8 +89,9 @@ describe( "cli", () => {
       },
       argv: [],
       help: "",
-      defaultConfigFile: "non-existent-file.js"
-    }, false );
+      configFiles: "non-existent-file.js",
+      notifier: false
+    } );
 
   } );
 
@@ -102,17 +108,18 @@ describe( "cli", () => {
       },
       argv: [ "" ],
       help: "",
-      defaultConfigFile: "non-existent-file.js",
-      configKey: "my-key"
-    }, false );
+      configFiles: "non-existent-file.js",
+      configKey: "my-key",
+      notifier: false
+    } );
 
   } );
 
   it( "config file has priority", () => {
 
-    cli( ( { config, configLocation } ) => {
-      expect( config.iAmTheConfigFile2 ).toBe( "yes" );
-      expect( config.configFromPkg ).toBe( undefined );
+    cli( ( { options, configLocation } ) => {
+      expect( options.iAmTheConfigFile2 ).toBe( "yes" );
+      expect( options.configFromPkg ).toBe( undefined );
       expect( typeof configLocation ).toBe( "string" );
       expect( configLocation ).not.toBe( "pkg" );
     }, {
@@ -121,11 +128,18 @@ describe( "cli", () => {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
+      schema: {
+        iAmTheConfigFile2: {
+          type: "string",
+          default: "no"
+        }
+      },
       argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
-      defaultConfigFile: "quase-cli-config.js",
-      configKey: "my-key"
-    }, false );
+      configFiles: "quase-cli-config.js",
+      configKey: "my-key",
+      notifier: false
+    } );
 
   } );
 
