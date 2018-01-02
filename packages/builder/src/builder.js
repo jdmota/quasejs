@@ -8,7 +8,7 @@ import type {
   FinalAsset, FinalAssets, ToWrite,
   Query, QueryArr, PerformanceOpts, MinimalFS, Options
 } from "./types";
-import { resolvePath, relative } from "./id";
+import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
 import FileSystem from "./filesystem";
 import Module, { type ModuleArg } from "./module";
@@ -192,6 +192,8 @@ export default class Builder {
   }
 
   removeFile( path: string ) {
+    path = lowerPath( path );
+
     const modules = this.modulesPerFile.get( path );
     if ( modules ) {
       this.modulesPerFile.delete( path );

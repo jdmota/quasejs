@@ -10,7 +10,7 @@ function isRegExp( obj ) {
 
 const DEFAULT_BABEL_OPTS = {
   presets: [
-    [ "env", {
+    [ "@babel/env", {
       targets: { chrome: 50 },
       loose: true
     } ]

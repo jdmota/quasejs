@@ -4,7 +4,7 @@ import { Watcher } from "../src";
 
 const DEFAULT_BABEL_OPTS = {
   presets: [
-    [ "env", {
+    [ "@babel/env", {
       targets: { chrome: 50 },
       loose: true
     } ]
@@ -84,6 +84,7 @@ describe( "watcher", () => {
       };
 
       function update( file, type ) {
+        file = path.sep === "\\" ? file.toLowerCase() : file;
         if ( b.watcher._files && b.watcher._files.indexOf( file ) > -1 ) {
           b.onUpdate( file, type );
           return true;
