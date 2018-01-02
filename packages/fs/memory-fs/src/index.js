@@ -1,6 +1,7 @@
 import createFile from "./file";
 
 const { makeAbsolute } = require( "@quase/path-url" );
+const path = require( "path" );
 
 export default class FileSystem {
   constructor( opts ) {
@@ -31,12 +32,20 @@ export default class FileSystem {
     return this.getObjFile( file ).getString();
   }
 
+  async readdir( dir ) {
+    return this.getObjFile( dir ).readdir();
+  }
+
   getFileBufferSync( file ) {
     return this.getObjFile( file ).getBufferSync();
   }
 
   getFileSync( file ) {
     return this.getObjFile( file ).getStringSync();
+  }
+
+  readdirSync( dir ) {
+    return this.getObjFile( dir ).readdirSync();
   }
 
   putFile( obj ) {
@@ -50,8 +59,17 @@ export default class FileSystem {
 
   purge( what ) {
     const file = makeAbsolute( what );
-    this.data[ file ] = null;
-    this.files.delete( file );
+    const obj = this.data[ file ];
+    if ( obj ) {
+      if ( obj.fromFS() ) {
+        const parent = path.dirname( obj.location );
+        if ( this.files.delete( parent ) ) {
+          this.data[ parent ] = null;
+        }
+      }
+      this.data[ file ] = null;
+      this.files.delete( file );
+    }
   }
 
   clone() {

@@ -10,8 +10,10 @@ class FsFile {
     this._isFile = null;
     this._isDir = null;
     this._readP = null;
+    this._readdirP = null;
     this._statP = null;
     this._buffer = null;
+    this._files = null;
   }
 
   fromFS() {
@@ -27,6 +29,14 @@ class FsFile {
       this._isFile = true;
       this._buffer = b;
       return b;
+    } ) );
+  }
+
+  _readdir() {
+    return this._readdirP || ( this._readdirP = fs.readdir( this.location ).then( f => {
+      this._isDir = true;
+      this._files = f;
+      return f;
     } ) );
   }
 
@@ -88,6 +98,18 @@ class FsFile {
 
   getStringSync() {
     return this.getBufferSync().toString();
+  }
+
+  async readdir() {
+    return this._readdir();
+  }
+
+  async readdirSync() {
+    if ( this._files == null ) {
+      this._files = fs.readdirSync( this.location );
+      this._readdirP = Promise.resolve( this._files );
+    }
+    return this._files;
   }
 
 }
