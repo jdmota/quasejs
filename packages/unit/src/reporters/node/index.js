@@ -14,11 +14,13 @@ export default class NodeReporter {
     this.runner = runner;
     this.extractor = runner.extractor;
     this.spinner = null;
+    this.pendingTests = new Set();
     this.tests = [];
     this.otherErrors = [];
     this.ended = false;
     this.didAfterRun = false;
     runner.on( "runStart", this.runStart.bind( this ) );
+    runner.on( "testStart", this.testStart.bind( this ) );
     runner.on( "testEnd", this.testEnd.bind( this ) );
     runner.on( "runEnd", this.runEnd.bind( this ) );
     runner.on( "otherError", err => {
@@ -192,8 +194,24 @@ export default class NodeReporter {
     }
   }
 
+  updateSpinner() {
+    for ( const text of this.pendingTests ) {
+      this.spinner.text = text;
+      break;
+    }
+  }
+
+  testStart( t ) {
+    this.pendingTests.add( t.fullname.join( " > " ) );
+    if ( this.pendingTests.size === 1 ) {
+      this.updateSpinner();
+    }
+  }
+
   testEnd( t ) {
     this.tests.push( t );
+    this.pendingTests.delete( t.fullname.join( " > " ) );
+    this.updateSpinner();
   }
 
   async enhanceError( original ) {
