@@ -18,12 +18,13 @@ Commands
 
 `;
 
-require( "@quase/cli" ).default( ( { input, flags } ) => {
-  require( "../dist/cli" ).run( input, flags );
+// TODO
+
+require( "@quase/cli" ).default( ( { input, options } ) => {
+  require( "../dist/cli" ).run( input, options );
 }, {
   help,
-  inferType: true,
-  flags: {
+  schema: {
     folder: {
       type: "string"
     }
