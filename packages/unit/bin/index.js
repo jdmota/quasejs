@@ -38,10 +38,9 @@ require( "@quase/cli" ).default( function( o ) {
   require( "../dist/cli" ).default( o );
 }, {
   help,
-  inferType: true,
-  defaultConfigFile: "quase-unit-config.js",
+  configFiles: "quase-unit-config.js",
   configKey: "quase-unit",
-  flags: {
+  schema: {
     match: {
       type: "string",
       alias: "m"

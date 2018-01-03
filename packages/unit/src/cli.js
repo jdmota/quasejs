@@ -332,8 +332,7 @@ class NodeRunner extends EventEmitter {
 
 }
 
-export default function cli( { input, flags, config, configLocation } ) {
-  const options = Object.assign( {}, config, flags );
+export default function cli( { input, options, configLocation } ) {
 
   if ( input.length > 0 ) {
     options.files = input;
@@ -365,7 +364,7 @@ export default function cli( { input, flags, config, configLocation } ) {
 
       const Reporter = options.reporter;
       new Reporter( // eslint-disable-line no-new
-        new NodeRunner( options, files ).start( { flags, config, configLocation } )
+        new NodeRunner( options, files ).start( { options, configLocation } )
       );
     },
     error( err ) {

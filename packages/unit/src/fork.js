@@ -34,13 +34,10 @@ function start( cli, files ) {
   const testsWaitingAnswer = new Map();
   let uuid = 1;
 
-  const { flags, config, configLocation } = cli;
-  let options;
+  let { options, configLocation } = cli;
 
-  if ( !configLocation || configLocation === "pkg" ) {
-    options = Object.assign( {}, config, flags );
-  } else {
-    options = Object.assign( {}, require( configLocation ), flags );
+  if ( configLocation && configLocation !== "pkg" ) {
+    options = Object.assign( {}, require( configLocation ), options );
   }
 
   global.quaseUnit = { options };
