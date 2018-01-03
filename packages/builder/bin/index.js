@@ -16,13 +16,13 @@ require( "@quase/cli" ).default( ( { options } ) => {
   }
 }, {
   help,
-  inferType: true,
-  defaultConfigFile: "quase-builder-config.js",
+  configFiles: "quase-builder-config.js",
   configKey: "quase-builder",
-  flags: {
+  schema: {
     watch: {
       type: "boolean",
-      alias: "w"
+      alias: "w",
+      default: false
     }
   }
 } );
