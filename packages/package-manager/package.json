@@ -7,6 +7,7 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/package-manager",
   "main": "dist/index.js",
+  "module": "src/index.js",
   "bin": {
     "qpm": "bin/index.js"
   },

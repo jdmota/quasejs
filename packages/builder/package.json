@@ -6,6 +6,7 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/builder",
+  "module": "src/index.js",
   "main": "dist/index.js",
   "bin": {
     "quase-builder": "bin/index.js"

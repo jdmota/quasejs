@@ -6,6 +6,7 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/config-validate",
+  "module": "src/index.js",
   "main": "dist/index.js",
   "dependencies": {
     "chalk": "^2.3.0",

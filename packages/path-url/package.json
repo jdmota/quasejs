@@ -6,6 +6,7 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/path-url",
   "main": "dist/index.js",
+  "module": "src/index.js",
   "dependencies": {
     "file-url": "^2.0.2",
     "is-url-superb": "^2.0.0",

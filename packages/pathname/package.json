@@ -1,10 +1,11 @@
 {
   "private": true,
   "name": "@quase/pathname",
-  "version": "0.1.0",
+  "version": "0.1.0-0",
   "description": "Pathname",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/pathname",
-  "main": "dist/index.js"
+  "main": "dist/index.js",
+  "module": "src/index.js"
 }

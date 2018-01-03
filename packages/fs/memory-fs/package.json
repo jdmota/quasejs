@@ -6,6 +6,7 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/fs/memory-fs",
   "main": "dist/index.js",
+  "module": "src/index.js",
   "dependencies": {
     "@quase/path-url": "^0.1.0",
     "fs-extra": "^4.0.2",
