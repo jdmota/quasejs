@@ -16,10 +16,9 @@ require( "@quase/cli" ).default( ( { input, options } ) => {
   require( "../dist" ).default( options );
 }, {
   help,
-  inferType: true,
-  defaultConfigFile: "quase-publisher-config.js",
+  configFiles: "quase-publisher-config.js",
   configKey: "quase-publisher",
-  flags: {
+  schema: {
     cleanup: {
       type: "boolean",
       default: true
