@@ -1,0 +1,14 @@
+{
+  "name": "@quase/cacheable-fs",
+  "version": "0.1.0-0",
+  "description": "Cacheable file system",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/fs/cacheable-fs",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "dependencies": {
+    "@quase/path-url": "0.2.0-0",
+    "fs-extra": "^5.0.0"
+  }
+}

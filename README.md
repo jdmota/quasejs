@@ -34,6 +34,10 @@ The Eslint configuration that I use.
 
 A copy of NodeJS's `events` module that also works on the browser.
 
+**[fs/cacheable-fs](packages/fs/cacheable-fs)** - *WIP*
+
+A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
+
 **[fs/find-files](packages/fs/find-files)** - *WIP*
 
 Find all files that match some patterns. Outputs results with an observable.
