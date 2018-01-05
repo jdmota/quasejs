@@ -50,10 +50,6 @@ Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XML
 
 Check if path is a file.
 
-**[fs/memory-fs](packages/fs/memory-fs)** - **0.2.1**
-
-Very simple in memory file system.
-
 **[package-manager](packages/package-manager)** - *WIP*
 
 An experimental package manager that uses a global store and a combination of hard/soft links.
