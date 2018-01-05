@@ -337,7 +337,7 @@ export default class JsLanguage extends Language {
       extensions,
       async readFile( file, cb ) {
         try {
-          cb( null, await fileSystem.getFileBuffer( file, importer ) );
+          cb( null, await fileSystem.readFile( file, importer ) );
         } catch ( err ) {
           cb( err );
         }

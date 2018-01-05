@@ -80,7 +80,7 @@ export default class Watcher {
       this.log( "Build failed.\n" );
     }
 
-    const files = Array.from( this.builder.fileSystem.files );
+    const files = Array.from( this.builder.fileSystem.data.keys() );
     if ( this.watcher ) {
       this.watcher.watch( files, [] ); // Override the files and directories
       this.log( `Watching ${files.length} files...\n` );

@@ -165,7 +165,7 @@ export default class Module {
 
     if ( data == null ) {
       try {
-        data = await builder.fileSystem.getFileBuffer( this.path, this.path );
+        data = await builder.fileSystem.readFile( this.path, this.path );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );

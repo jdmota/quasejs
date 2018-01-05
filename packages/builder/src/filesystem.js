@@ -1,13 +1,13 @@
 // @flow
 
-const FileSystem = require( "@quase/memory-fs" ).default;
+const FileSystem = require( "@quase/cacheable-fs" ).default;
 
 export default class TrackableFileSystem extends FileSystem {
 
   +fileUsedBy: Map<string, Set<string>>;
 
-  constructor( opts: ?Object ) {
-    super( opts );
+  constructor() {
+    super();
     this.fileUsedBy = new Map();
   }
 
@@ -21,36 +21,52 @@ export default class TrackableFileSystem extends FileSystem {
     return obj;
   }
 
-  async getInfo( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).getInfo();
+  async stat( file: string, _from: string ) {
+    return this.getObjFile( file, _from ).stat();
+  }
+
+  async readFile( file: string, _from: string, enconding: ?string ) {
+    return this.getObjFile( file, _from ).readFile( enconding );
+  }
+
+  async readdir( file: string, _from: string ) {
+    return this.getObjFile( file, _from ).readdir();
+  }
+
+  statSync( file: string, _from: string ) {
+    return this.getObjFile( file, _from ).statSync();
+  }
+
+  readFileSync( file: string, _from: string, encoding: ?string ) {
+    return this.getObjFile( file, _from ).readFileSync( encoding );
+  }
+
+  readdirSync( file: string, _from: string ) {
+    return this.getObjFile( file, _from ).readdirSync();
   }
 
   async isFile( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).isFile();
+    try {
+      const s = await this.stat( file, _from );
+      return s.isFile() || s.isFIFO();
+    } catch ( err ) {
+      if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
+        return false;
+      }
+      throw err;
+    }
   }
 
-  async isDir( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).isDir();
-  }
-
-  async getFileBuffer( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).getBuffer();
-  }
-
-  async getFile( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).getString();
-  }
-
-  getFileBufferSync( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).getBufferSync();
-  }
-
-  getFileSync( file: string, _from: string ) {
-    return this.getObjFile( file, _from ).getStringSync();
-  }
-
-  clone() {
-    return new TrackableFileSystem( this );
+  isFileSync( file: string, _from: string ) {
+    try {
+      const s = this.statSync( file, _from );
+      return s.isFile() || s.isFIFO();
+    } catch ( err ) {
+      if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
+        return false;
+      }
+      throw err;
+    }
   }
 
 }
