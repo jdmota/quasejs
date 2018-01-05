@@ -1,7 +1,7 @@
 import encoding from "./encoding";
 
 const { SourceMapConsumer } = require( "source-map" );
-const { makeAbsolute, resolveAsUrl } = require( "@quase/path-url" );
+const { makeAbsolute, resolveAsUrl, isUrl } = require( "@quase/path-url" );
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
     // Matches /* ... */ comments
@@ -13,8 +13,9 @@ const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
 
 export default class SourceMapExtractor {
 
-  constructor( fs ) {
+  constructor( fs, requester ) {
     this.fs = fs;
+    this.requester = requester;
     this.cacheMapLocation = Object.create( null );
     this.mapRequest = Object.create( null );
   }
@@ -23,16 +24,18 @@ export default class SourceMapExtractor {
     return data == null ? null : new SourceMapConsumer( JSON.parse( data ) );
   }
 
+  async _read( file ) {
+    return isUrl( file ) ? ( await this.requester.fetch( file ) ).text() : this.fs.readFile( file, "utf8" );
+  }
+
   async _getMap( file ) {
 
-    const objFile = this.fs.getObjFile( file );
-
-    const headers = objFile.fromWeb() ? ( await objFile.getInfo() ).headers : {};
+    const headers = isUrl( file ) ? ( await this.requester.fetch( file ) ).headers : {};
 
     let url = headers.SourceMap || headers[ "X-SourceMap" ];
 
     if ( !url ) {
-      const code = await objFile.getString();
+      const code = await this._read( file );
       const match = code.match( regex1 ) || code.match( regex2 );
 
       if ( !match ) {
@@ -56,7 +59,7 @@ export default class SourceMapExtractor {
     let sourcemap;
 
     try {
-      sourcemap = await this.fs.getFile( mapLocation );
+      sourcemap = await this._read( mapLocation );
     } catch ( e ) {
       // The sourcemap that was supposed to exist, was not found
     }
@@ -75,7 +78,11 @@ export default class SourceMapExtractor {
 
   purge( file ) {
     file = makeAbsolute( file );
-    this.fs.purge( file );
+    if ( isUrl( file ) ) {
+      this.requester.purge( file );
+    } else {
+      this.fs.purge( file );
+    }
     this.mapRequest[ file ] = null;
     this.cacheMapLocation[ file ] = null;
   }
@@ -90,7 +97,7 @@ export default class SourceMapExtractor {
 
       if ( pos.line != null ) {
         const originalFile = resolveAsUrl( mapLocation, pos.source );
-        const originalCode = map.sourceContentFor( pos.source, true ) || await this.fs.getFile( originalFile );
+        const originalCode = map.sourceContentFor( pos.source, true ) || await this._read( originalFile );
 
         pos.originalFile = originalFile;
         pos.originalCode = originalCode;
@@ -99,7 +106,7 @@ export default class SourceMapExtractor {
       }
     }
 
-    return { code: await this.fs.getFile( file ) };
+    return { code: await this._read( file ) };
   }
 
 }
