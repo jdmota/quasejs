@@ -98,7 +98,7 @@ export function install( extractor ) {
       const Module = require( "module" );
       prevExtension = Module._extensions[ ".js" ];
       Module._extensions[ ".js" ] = function( module, filename ) {
-        const content = extractor.fs.getFileSync( filename );
+        const content = extractor._read( filename );
         module._compile( stripBOM( content ), filename );
       };
     }
