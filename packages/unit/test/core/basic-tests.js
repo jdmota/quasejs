@@ -85,6 +85,7 @@ describe( "unit", () => {
         status: "passed",
         errors: [],
         logs: [],
+        memoryUsage: 0,
         skipReason: undefined,
         slow: false,
         assertions: []
@@ -136,6 +137,7 @@ describe( "unit", () => {
         status: "skipped",
         errors: [],
         logs: [],
+        memoryUsage: 0,
         skipReason: "skip reason",
         slow: false,
         assertions: []
