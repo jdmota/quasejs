@@ -160,17 +160,18 @@ class NodeRunner extends EventEmitter {
         this.runEndArg.onlyCount += arg.onlyCount;
         this.runEndArg.runtime += arg.runtime;
 
-        if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
-          this.runEndArg.status = "skipped";
-        } else if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo ) {
-          this.runEndArg.status = "todo";
-        } else if ( this.runEndArg.testCounts.failed ) {
-          this.runEndArg.status = "failed";
-        } else {
-          this.runEndArg.status = "passed";
-        }
-
         if ( ++this.runEnds === this.forks.length ) {
+
+          if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
+            this.runEndArg.status = "skipped";
+          } else if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo ) {
+            this.runEndArg.status = "todo";
+          } else if ( this.runEndArg.testCounts.failed ) {
+            this.runEndArg.status = "failed";
+          } else {
+            this.runEndArg.status = "passed";
+          }
+
           this.saveSnapshots().then( snapshotStats => {
             this.runEndArg.snapshotStats = snapshotStats;
             this.emit( eventType, this.runEndArg );
@@ -248,14 +249,16 @@ class NodeRunner extends EventEmitter {
     const stats = await Promise.all( promises );
     const finalStat = {
       added: 0,
+      updated: 0,
       removed: 0,
-      updated: 0
+      obsolete: 0
     };
 
     for ( const stat of stats ) {
       finalStat.added += stat.added;
-      finalStat.removed += stat.removed;
       finalStat.updated += stat.updated;
+      finalStat.removed += stat.removed;
+      finalStat.obsolete += stat.obsolete;
     }
 
     return finalStat;
