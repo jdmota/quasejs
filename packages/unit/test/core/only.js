@@ -151,4 +151,114 @@ describe( "unit", () => {
 
   } );
 
+  it( "only & --only", () => {
+
+    assert.expect( 3 );
+
+    const runner = Runner.init( { allowNoPlan: true, only: true } );
+    const results = runner.listen();
+    const t = runner.test;
+
+    const actual = [];
+    const expected = [
+      "group test"
+    ];
+
+    t.serial( () => {
+      /* istanbul ignore next */
+      actual.push( "dont run" );
+    } );
+
+    t( () => {
+      /* istanbul ignore next */
+      actual.push( "dont run" );
+    } );
+
+    t.group( () => {
+
+      t.only( () => {
+        actual.push( "group test" );
+      } );
+
+      t.failing.serial( () => {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+      t.skip( () => {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+    } );
+
+    return runner.run().then( () => {
+      assert.deepEqual( actual, expected );
+      assert.strictEqual( results[ results.length - 1 ].onlyCount, 1 );
+      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+        failed: 0,
+        passed: 1,
+        skipped: 0,
+        todo: 0,
+        total: 1
+      } );
+    } );
+
+  } );
+
+  it( "only & --only=false", () => {
+
+    assert.expect( 3 );
+
+    const runner = Runner.init( { allowNoPlan: true, only: false } );
+    const results = runner.listen();
+    const t = runner.test;
+
+    const actual = [];
+    const expected = [
+      "test 1",
+      "test 2",
+      "group test"
+    ];
+
+    t.serial( () => {
+      actual.push( "test 1" );
+    } );
+
+    t( () => {
+      actual.push( "test 2" );
+    } );
+
+    t.group( () => {
+
+      t.only( () => {
+        actual.push( "group test" );
+      } );
+
+      t.failing.serial( () => {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+      t.skip( () => {
+        /* istanbul ignore next */
+        actual.push( "dont run" );
+      } );
+
+    } );
+
+    return runner.run().then( () => {
+      assert.deepEqual( actual, expected );
+      assert.strictEqual( results[ results.length - 1 ].onlyCount, 1 );
+      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+        failed: 0,
+        passed: 3,
+        skipped: 0,
+        todo: 0,
+        total: 3
+      } );
+    } );
+
+  } );
+
 } );

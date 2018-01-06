@@ -15,6 +15,7 @@ Options
   --update-snapshots, -u  Update snapshots
   --timeout, -t           Set test timeout
   --slow                  Set "slow" test threshold
+  --only                  Only run tests marked with ".only" modifier
   --allow-no-plan         Make tests still succeed if no assertions are run and no planning was done
   --strict                Disallow the usage of "only", "failing", "todo", "skipped" modifiers
   --globals [name]        Specify which global variables can be created by the tests. 'true' for any. Default is 'false'.
@@ -75,6 +76,10 @@ require( "@quase/cli" ).default( function( o ) {
       type: "number"
     },
     allowNoPlan: {
+      type: "boolean",
+      default: false
+    },
+    only: {
       type: "boolean",
       default: false
     },

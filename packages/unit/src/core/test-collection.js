@@ -56,8 +56,13 @@ export default class TestCollection {
       suite.runner.onlyCount++;
     }
 
-    if ( type === "test" && match.length > 0 ) {
-      willRun = metadata.exclusive || ( matcher( test.fullname, match ).length > 0 );
+    if ( type === "test" ) {
+      if ( !metadata.exclusive && suite.runner.options.only ) {
+        return;
+      }
+      if ( match.length > 0 ) {
+        willRun = metadata.exclusive || ( matcher( test.fullname, match ).length > 0 );
+      }
     }
 
     // If .only() was used previously, only add .only() tests
