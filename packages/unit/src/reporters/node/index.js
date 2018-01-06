@@ -44,6 +44,8 @@ export default class NodeReporter {
 
     NodeReporter.showConcurrency( runner );
     NodeReporter.showDebuggers( runner );
+
+    this.spinner = ora( `Waiting for "runStart"...` ).start();
   }
 
   static showFilesCount( count ) {
@@ -118,7 +120,7 @@ export default class NodeReporter {
   }
 
   runStart() {
-    this.spinner = ora( "Running tests..." ).start();
+    this.spinner.text = "Running tests...";
   }
 
   runEnd( t ) {
@@ -133,34 +135,57 @@ export default class NodeReporter {
       this.tests = null; // Prevent memory leaks
       this.ended = true;
 
-      const { passed, skipped, todo, failed, total } = t.testCounts;
+      const hasPending = t.pendingTests && t.pendingTests.size > 0;
 
-      process.exitCode = failed || !total || this.otherErrors.length ? 1 : 0;
+      // If we had pending tests, don't trust the stats
+      if ( t.runStartNotEmitted || hasPending ) {
 
-      let lines;
+        process.exitCode = 1;
 
-      if ( total === 0 ) {
-        lines = [
-          colors.error( "\n  The total number of tests was 0." )
-        ];
+        if ( t.runStartNotEmitted ) {
+          log( `\n${chalk.bold.red( `${t.runStartNotEmitted} forks did not emit "runStart" event.` )}\n` );
+        }
+
+        if ( hasPending ) {
+          log( `\n${chalk.bold.red( `${t.pendingTests.size} Pending tests:` )}\n` );
+
+          for ( const stack of t.pendingTests ) {
+            await this.logDefault( stack );
+          }
+        }
+
       } else {
-        lines = [
-          passed > 0 ? "\n  " + colors.pass( passed, "passed" ) : "",
-          skipped > 0 ? "\n  " + colors.skip( skipped, "skipped" ) : "",
-          todo > 0 ? "\n  " + colors.todo( todo, "todo" ) : "",
-          failed > 0 ? "\n  " + colors.error( failed, "failed" ) : "",
-          "\n\n  " + colors.duration( t.runtime, "ms" ),
-          t.onlyCount ? `\n\n  The '.only' modifier was used ${t.onlyCount} time${t.onlyCount === 1 ? "" : "s"}.` : ""
-        ].filter( Boolean );
+
+        const { passed, skipped, todo, failed, total } = t.testCounts;
+
+        process.exitCode = failed || !total || this.otherErrors.length ? 1 : 0;
+
+        let lines;
+
+        if ( total === 0 ) {
+          lines = [
+            colors.error( "\n  The total number of tests was 0." )
+          ];
+        } else {
+          lines = [
+            passed > 0 ? "\n  " + colors.pass( passed, "passed" ) : "",
+            skipped > 0 ? "\n  " + colors.skip( skipped, "skipped" ) : "",
+            todo > 0 ? "\n  " + colors.todo( todo, "todo" ) : "",
+            failed > 0 ? "\n  " + colors.error( failed, "failed" ) : "",
+            "\n\n  " + colors.duration( t.runtime, "ms" ),
+            t.onlyCount ? `\n\n  The '.only' modifier was used ${t.onlyCount} time${t.onlyCount === 1 ? "" : "s"}.` : ""
+          ].filter( Boolean );
+        }
+
+        if ( t.snapshotStats ) {
+          this.showSnapshotStats( lines, t.snapshotStats );
+        }
+
+        process.stdout.write( lines.join( "" ) );
+
       }
 
-      if ( t.snapshotStats ) {
-        this.showSnapshotStats( lines, t.snapshotStats );
-      }
-
-      lines.push( `\n\n  ${colors.duration( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
-
-      process.stdout.write( lines.join( "" ) );
+      log( `\n\n${colors.duration( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
 
       await this.logOtherErrors();
 
@@ -197,8 +222,9 @@ export default class NodeReporter {
   updateSpinner() {
     for ( const text of this.pendingTests ) {
       this.spinner.text = text;
-      break;
+      return;
     }
+    this.spinner.text = "Waiting...";
   }
 
   testStart( t ) {

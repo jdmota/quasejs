@@ -74,6 +74,65 @@ function divide( array, num ) {
   return final;
 }
 
+class RunnerProcess {
+
+  constructor( runner, files, cli, args, env, execArgv ) {
+    this.started = false;
+
+    this.process = childProcess.fork(
+      path.resolve( __dirname, "fork.js" ),
+      args,
+      { cwd: process.cwd(), env, execArgv, silent: true }
+    );
+
+    this.process.send( {
+      type: "quase-unit-start",
+      files,
+      cli
+    } );
+
+    this.onMessage = msg => {
+      runner.onChildEmit( this, msg );
+    };
+
+    this.onExit = ( code, signal ) => {
+      if ( code !== 0 ) {
+        const e = new Error( `Child process exited with code ${code} and signal ${signal}.` );
+        runner.emit( "otherError", e );
+      }
+    };
+
+    this.process.on( "message", this.onMessage );
+    this.process.on( "exit", this.onExit );
+  }
+
+  removeAllListeners() {
+    this.process.removeAllListeners();
+  }
+
+  send( msg ) {
+    this.process.send( msg );
+  }
+
+  disconnect() {
+    this.process.disconnect();
+  }
+
+  get stdout() {
+    return this.process.stdout;
+  }
+
+  get stderr() {
+    return this.process.stderr;
+  }
+
+  kill( signal ) {
+    this.removeAllListeners();
+    this.process.kill( signal );
+  }
+
+}
+
 class NodeRunner extends EventEmitter {
 
   constructor( options, files ) {
@@ -82,7 +141,6 @@ class NodeRunner extends EventEmitter {
     this.division = null;
     this.files = files;
     this.forks = [];
-    this.forksStarted = [];
     this.debuggersPromises = [];
     this.debuggersWaitingPromises = [];
     this.runStartArg = {
@@ -115,7 +173,9 @@ class NodeRunner extends EventEmitter {
     this.runStarts = 0;
     this.runEnds = 0;
     this.runStartEmmited = false;
+    this.runEndEmmited = false;
     this.buffer = [];
+    this.pendingTests = new Set();
 
     this.extractor = new SourceMapExtractor( new FileSystem() );
     this.snapshotManagers = new Map(); // Map<fullpath, SnapshotManager>
@@ -125,14 +185,54 @@ class NodeRunner extends EventEmitter {
     } );
   }
 
-  onChildEmit( childIdx, msg ) {
+  runEnd( signal ) {
+    if ( this.runEndEmmited ) {
+      return;
+    }
+    this.runEndEmmited = true;
+
+    let runStartNotEmitted = 0;
+
+    for ( const fork of this.forks ) {
+      if ( signal ) {
+        fork.kill( signal );
+      } else {
+        fork.send( {
+          type: "quase-unit-exit"
+        } );
+      }
+      if ( !fork.started ) {
+        runStartNotEmitted++;
+      }
+    }
+
+    this.runEndArg.pendingTests = this.pendingTests;
+    this.runEndArg.runStartNotEmitted = runStartNotEmitted;
+
+    if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
+      this.runEndArg.status = "skipped";
+    } else if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo ) {
+      this.runEndArg.status = "todo";
+    } else if ( this.runEndArg.testCounts.failed ) {
+      this.runEndArg.status = "failed";
+    } else {
+      this.runEndArg.status = "passed";
+    }
+
+    this.saveSnapshots().then( snapshotStats => {
+      this.runEndArg.snapshotStats = snapshotStats;
+      this.emit( "runEnd", this.runEndArg );
+    } );
+  }
+
+  onChildEmit( forkProcess, msg ) {
     if ( msg.type === "quase-unit-emit" ) {
 
       const eventType = msg.eventType;
       const arg = CircularJSON.parse( msg.arg );
 
       if ( eventType === "runStart" ) {
-        this.forksStarted[ childIdx ] = true;
+        forkProcess.started = true;
 
         concat( this.runStartArg.tests, arg.tests );
         concat( this.runStartArg.childSuites, arg.childSuites );
@@ -150,8 +250,6 @@ class NodeRunner extends EventEmitter {
           }
         }
       } else if ( eventType === "runEnd" ) {
-        this.forks[ childIdx ].disconnect();
-
         this.runEndArg.testCounts.passed += arg.testCounts.passed;
         this.runEndArg.testCounts.failed += arg.testCounts.failed;
         this.runEndArg.testCounts.skipped += arg.testCounts.skipped;
@@ -161,30 +259,23 @@ class NodeRunner extends EventEmitter {
         this.runEndArg.runtime += arg.runtime;
 
         if ( ++this.runEnds === this.forks.length ) {
-
-          if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
-            this.runEndArg.status = "skipped";
-          } else if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo ) {
-            this.runEndArg.status = "todo";
-          } else if ( this.runEndArg.testCounts.failed ) {
-            this.runEndArg.status = "failed";
-          } else {
-            this.runEndArg.status = "passed";
-          }
-
-          this.saveSnapshots().then( snapshotStats => {
-            this.runEndArg.snapshotStats = snapshotStats;
-            this.emit( eventType, this.runEndArg );
-          } );
+          this.runEnd();
         }
       } else if ( eventType === "otherError" ) {
         this.emit( eventType, arg );
-        if ( !this.forksStarted[ childIdx ] ) {
-          this.forks[ childIdx ].disconnect();
+        if ( !forkProcess.started ) {
+          forkProcess.disconnect();
         }
       } else if ( eventType === "matchesSnapshot" ) {
-        this.handleSnapshot( arg, childIdx );
+        this.handleSnapshot( arg, forkProcess );
       } else {
+
+        if ( eventType === "testStart" ) {
+          this.pendingTests.add( arg.defaultStack );
+        } else if ( eventType === "testEnd" ) {
+          this.pendingTests.delete( arg.defaultStack );
+        }
+
         if ( this.runStartEmmited ) {
           this.emit( eventType, arg );
         } else {
@@ -198,7 +289,7 @@ class NodeRunner extends EventEmitter {
     }
   }
 
-  async handleSnapshot( { byteArray, stack, fullname, id }, childIdx ) {
+  async handleSnapshot( { byteArray, stack, fullname, id }, forkProcess ) {
 
     const { source } = await beautifyStack( stack, this.extractor );
     const { file, line, column } = source;
@@ -227,7 +318,7 @@ class NodeRunner extends EventEmitter {
       error = processError( e, stack, this.options.concordanceOptions );
     }
 
-    this.forks[ childIdx ].send( {
+    forkProcess.send( {
       type: "quase-unit-snap-result",
       id,
       error: error && {
@@ -305,30 +396,17 @@ class NodeRunner extends EventEmitter {
     }
 
     for ( let i = 0; i < options.concurrency; i++ ) {
-      const fork = childProcess.fork(
-        path.resolve( __dirname, "fork.js" ),
-        args,
-        { cwd: process.cwd(), env, execArgv, silent: true }
-      );
+      const fork = new RunnerProcess( this, this.division[ i ], cli, args, env, execArgv );
       this.forks.push( fork );
-      this.forksStarted.push( false );
-      fork.send( {
-        type: "quase-unit-start",
-        cli,
-        files: this.division[ i ]
-      } );
-      fork.on( "message", this.onChildEmit.bind( this, i ) );
-      fork.on( "exit", ( code, signal ) => {
-        if ( code !== 0 ) {
-          const e = new Error( `Child process ${i} exited with code ${code} and signal ${signal}.` );
-          this.emit( "otherError", e );
-        }
-      } );
       if ( debugging ) {
         this.debuggersPromises.push( getDebugger( fork ) );
         this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
       }
     }
+
+    process.once( "SIGINT", () => {
+      this.runEnd( "SIGINT" );
+    } );
 
     return this;
   }

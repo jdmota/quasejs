@@ -119,6 +119,7 @@ class Runner extends EventEmitter {
         fullname: suite.fullname,
         tests: suite.tests,
         childSuites: suite.childSuites,
+        defaultStack: suite.placeholder.defaultStack,
         testCounts: {
           passed: undefined,
           failed: undefined,
@@ -139,6 +140,7 @@ class Runner extends EventEmitter {
         childSuites: suite.childSuites,
         status: suite.status,
         runtime: suite.runtime,
+        defaultStack: suite.placeholder.defaultStack,
         testCounts: Object.assign( {}, suite.testCounts )
       } );
     }

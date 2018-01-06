@@ -101,5 +101,7 @@ process.on( "message", ( { type, cli, files } ) => {
     } catch ( err ) {
       send( "otherError", err );
     }
+  } else if ( type === "quase-unit-exit" ) {
+    process.channel.unref();
   }
 } );

@@ -61,6 +61,7 @@ export class GroupPlaceholder {
   parent: GroupPlaceholder;
   runner: Runner;
   level: number;
+  defaultStack: string;
   collection: TestCollection;
   api: GroupApi;
 
@@ -84,6 +85,7 @@ export class GroupPlaceholder {
     this.parent = parent;
     this.runner = parent.runner;
     this.level = parent.level + 1;
+    this.defaultStack = getStack( 5 );
     this.collection = new TestCollection( metadata.bail );
     this.api = new GroupApi( this );
 
