@@ -176,6 +176,7 @@ class NodeRunner extends EventEmitter {
     this.runEndEmmited = false;
     this.buffer = [];
     this.pendingTests = new Set();
+    this.failedOnce = false;
 
     this.extractor = new SourceMapExtractor( new FileSystem() );
     this.snapshotManagers = new Map(); // Map<fullpath, SnapshotManager>
@@ -223,6 +224,21 @@ class NodeRunner extends EventEmitter {
       this.runEndArg.snapshotStats = snapshotStats;
       this.emit( "runEnd", this.runEndArg );
     } );
+  }
+
+  testFailure() {
+    if ( this.failedOnce ) {
+      return;
+    }
+    this.failedOnce = true;
+
+    if ( this.options.bail ) {
+      for ( const fork of this.forks ) {
+        fork.send( {
+          type: "quase-unit-bail"
+        } );
+      }
+    }
   }
 
   onChildEmit( forkProcess, msg ) {
@@ -274,6 +290,10 @@ class NodeRunner extends EventEmitter {
           this.pendingTests.add( arg.defaultStack );
         } else if ( eventType === "testEnd" ) {
           this.pendingTests.delete( arg.defaultStack );
+
+          if ( arg.status === "failed" ) {
+            this.testFailure();
+          }
         }
 
         if ( this.runStartEmmited ) {

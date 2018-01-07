@@ -70,6 +70,8 @@ function start( cli, files ) {
       const deferred = testsWaitingAnswer.get( id );
       testsWaitingAnswer.delete( id );
       deferred.resolve( error );
+    } else if ( type === "quase-unit-bail" ) {
+      runner.failedOnce = true;
     }
   } );
 
