@@ -199,6 +199,10 @@ export default class NodeReporter {
           lines.push( "\n  --only option was used." );
         }
 
+        if ( this.runner.options.bail ) {
+          lines.push( "\n  --bail option was used." );
+        }
+
         if ( t.snapshotStats ) {
           this.showSnapshotStats( lines, t.snapshotStats );
         }
