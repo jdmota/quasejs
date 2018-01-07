@@ -183,45 +183,6 @@ describe( "unit", () => {
 
   } );
 
-  it( "fast bail in group", () => {
-
-    assert.expect( 2 );
-
-    let runner = Runner.init( { allowNoPlan: true } );
-    let results = runner.listen();
-    let test = runner.test;
-
-    let actual = [];
-    let expected = [
-      "test",
-      "bail"
-    ];
-
-    test.group.bail( function() {
-
-      test( function() {
-        actual.push( "test" );
-      } );
-
-      test( function() {
-        actual.push( "bail" );
-        throw new Error( "Error" );
-      } );
-
-      test( function() {
-        /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
-
-    } );
-
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
-    } );
-
-  } );
-
   it( "fast bail - error in beforeEach", () => {
 
     assert.expect( 2 );
@@ -281,45 +242,6 @@ describe( "unit", () => {
 
   } );
 
-  it( "fast bail in group", () => {
-
-    assert.expect( 2 );
-
-    let runner = Runner.init( { allowNoPlan: true } );
-    let results = runner.listen();
-    let test = runner.test;
-
-    let actual = [];
-    let expected = [
-      "test",
-      "bail"
-    ];
-
-    test.group.bail( function() {
-
-      test( function() {
-        actual.push( "test" );
-      } );
-
-      test( function() {
-        actual.push( "bail" );
-        throw new Error( "Error" );
-      } );
-
-      test( function() {
-        /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
-
-    } );
-
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
-    } );
-
-  } );
-
   it( "fast bail in group with async code", () => {
 
     assert.expect( 2 );
@@ -330,7 +252,7 @@ describe( "unit", () => {
       } );
     }
 
-    let runner = Runner.init( { allowNoPlan: true } );
+    let runner = Runner.init( { allowNoPlan: true, bail: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -340,7 +262,7 @@ describe( "unit", () => {
       "test 2"
     ];
 
-    test.group.bail( function() {
+    test.group( function() {
 
       test.serial( function() {
         actual.push( "test 1" );
@@ -372,7 +294,7 @@ describe( "unit", () => {
 
     assert.expect( 2 );
 
-    let runner = Runner.init( { allowNoPlan: true } );
+    let runner = Runner.init( { allowNoPlan: true, bail: true } );
     let results = runner.listen();
     let test = runner.test;
 
@@ -387,7 +309,7 @@ describe( "unit", () => {
       actual.push( "beforeEach" );
     } );
 
-    test.group.bail( () => {
+    test.group( () => {
       test.serial( () => {
         actual.push( "serial" );
         throw new Error( "error" );

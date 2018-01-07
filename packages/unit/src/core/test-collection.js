@@ -1,5 +1,5 @@
 // @flow
-
+import type Runner from "./runner";
 import type Suite from "./suite";
 import { Sequence, InTestSequence, BeforeTestsAfterSequence } from "./sequence";
 import { type Placeholder, TestPlaceholder, GroupPlaceholder } from "./placeholders";
@@ -9,7 +9,7 @@ const matcher = require( "matcher" );
 export default class TestCollection {
 
   hasExclusive: boolean;
-  bail: boolean;
+  runner: Runner;
   tests: {
     concurrent: Placeholder[],
     serial: Placeholder[]
@@ -22,9 +22,9 @@ export default class TestCollection {
   };
   _hasUnskippedTests: ?boolean;
 
-  constructor( bail: boolean ) {
+  constructor( runner: Runner ) {
     this.hasExclusive = false;
-    this.bail = bail;
+    this.runner = runner;
     this.tests = {
       concurrent: [],
       serial: []
@@ -154,14 +154,13 @@ export default class TestCollection {
       return this.buildTest( array[ 0 ], suite );
     }
 
-    let seq = new Sequence( this.bail, isConcurrent, suite.level );
+    let seq = new Sequence( this.runner, isConcurrent, suite.level );
 
     for ( let i = 0; i < array.length; i++ ) {
       seq.add( this.buildTest( array[ i ], suite ) );
     }
 
     return seq;
-
   }
 
   hasUnskippedTests() {
@@ -189,7 +188,7 @@ export default class TestCollection {
     const concurrent = this.tests.concurrent;
     const before = this.hooks.before;
     const after = this.hooks.after;
-    const seq = new BeforeTestsAfterSequence( this.bail, suite.level );
+    const seq = new BeforeTestsAfterSequence( this.runner, suite.level );
 
     const runBeforeAfter = this.hasUnskippedTests();
 

@@ -86,7 +86,7 @@ export class GroupPlaceholder {
     this.runner = parent.runner;
     this.level = parent.level + 1;
     this.defaultStack = getStack( 5 );
-    this.collection = new TestCollection( metadata.bail );
+    this.collection = new TestCollection( this.runner );
     this.api = new GroupApi( this );
 
     this.maxTimeout = parent.maxTimeout || 0;

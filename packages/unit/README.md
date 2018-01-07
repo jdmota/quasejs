@@ -34,7 +34,6 @@ Modifiers can be chained!
 - `todo`: marks a test/group as todo. Allows you to not include an implementation.
 - `failing`: marks a test/group as failing. For groups it means all their tests must fail.
 - `strict`: disallows the usage of `only`, `failing`, `todo`, `skipped` modifiers for any inner test or group. Can be applied globally.
-- `bail`: makes a group execution stop after the first test failure. Can me applied globally.
 - `allowNoPlan`: makes a test or tests inside a group still succeed if no assertions are run and no planning was done. Can be applied globally.
 
 `serial`, `failing`, `todo`, `only`, `allowZeroPlanned` don't make sense for hooks.

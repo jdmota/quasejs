@@ -20,6 +20,7 @@ class Runner extends EventEmitter {
     const assertions = ( this.options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
     this.assertions = Object.assign( {}, ...assertions );
 
+    this.failedOnce = false;
     this.onlyCount = 0;
     this.promises = [];
 
@@ -28,7 +29,6 @@ class Runner extends EventEmitter {
       undefined,
       {
         type: "group",
-        bail: this.options.bail,
         strict: this.options.strict,
         allowNoPlan: this.options.allowNoPlan
       },
@@ -83,6 +83,10 @@ class Runner extends EventEmitter {
         this.runEnd();
       } );
     } );
+  }
+
+  shouldBail() {
+    return this.failedOnce && this.options.bail;
   }
 
   runStart() {
@@ -170,6 +174,10 @@ class Runner extends EventEmitter {
       defaultStack: test.placeholder.defaultStack,
       memoryUsage: test.memoryUsage
     } );
+
+    if ( test.status === "failed" ) {
+      this.failedOnce = true;
+    }
   }
 
   matchesSnapshot( something, stack, fullname, deferred ) {

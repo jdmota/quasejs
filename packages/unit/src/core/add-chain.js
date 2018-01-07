@@ -61,7 +61,6 @@ const chain = {
     skip: { status: "skipped" },
     todo: { status: "todo" },
     failing: { status: "failing" },
-    bail: { bail: true },
     allowNoPlan: { allowNoPlan: true }
   }
 };

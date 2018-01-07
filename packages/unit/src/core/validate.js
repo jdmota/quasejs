@@ -1,9 +1,5 @@
 function validate( name, callback, options ) {
 
-  if ( options.bail && options.type !== "group" ) {
-    return "bail modifier is only available for groups.";
-  }
-
   if ( options.type !== "test" && options.type !== "group" ) {
     if ( options.serial ) {
       return "The `serial` modifier cannot be used with hooks.";

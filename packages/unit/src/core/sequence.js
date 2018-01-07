@@ -1,5 +1,5 @@
-/* @flow */
-
+// @flow
+import type Runner from "./runner";
 import skipReasons from "./skip-reasons";
 import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, Metadata } from "./types";
 import type { Runnable } from "./test";
@@ -38,7 +38,7 @@ class ClonableProxy extends ProxyImpl<ITestResult, ITest> implements ITest {
 class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnableResult, GenericRunnable<R> {
 
   tests: Array<T>;
-  bail: boolean;
+  runner: Runner;
   isConcurrent: boolean;
   level: number;
   failedBecauseOfHook: ?{ level: number };
@@ -48,9 +48,9 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
   skipTest: boolean;
   bailTestBecauseOfHook: boolean;
 
-  constructor( bail: boolean, isConcurrent: boolean, level: number ) {
+  constructor( runner: Runner, isConcurrent: boolean, level: number ) {
     this.tests = [];
-    this.bail = bail;
+    this.runner = runner;
     this.isConcurrent = isConcurrent;
     this.level = level;
     this.failedBecauseOfHook = null;
@@ -64,6 +64,10 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
     _this.addResult = this.addResult.bind( this );
     _this.getResult = this.getResult.bind( this );
     _this.run = this.run.bind( this );
+  }
+
+  shouldBail(): boolean {
+    return this.runner.shouldBail();
   }
 
   // $FlowFixMe
@@ -164,7 +168,7 @@ export class Sequence extends SequenceImpl<IRunnableResult, IRunnable> implement
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
-    if ( seq.failTest && seq.bail ) {
+    if ( seq.shouldBail() ) {
       return t.runSkip( skipReasons.bailed );
     }
     return t.run();
@@ -266,15 +270,15 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
 
 export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRunnable> implements IRunnableResult, IRunnable {
 
-  constructor( bail: boolean, level: number ) {
-    super( bail, false, level );
+  constructor( runner: Runner, level: number ) {
+    super( runner, false, level );
   }
 
   static proxy( t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
-    if ( seq.failTest && seq.bail ) {
+    if ( seq.shouldBail() ) {
       return t.runSkip( skipReasons.bailed );
     }
     if ( seq.skipTest ) {
