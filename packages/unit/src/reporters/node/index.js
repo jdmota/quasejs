@@ -341,6 +341,11 @@ export default class NodeReporter {
       }
     } else {
       await this.logDefault( defaultStack );
+    }
+
+    if ( logs.length ) {
+
+      printLog( "Logs:\n\n", 4 );
 
       logs.forEach( log => {
         const logLines = indentString( colors.log( log ), 6 );
