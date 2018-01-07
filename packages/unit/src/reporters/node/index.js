@@ -128,12 +128,30 @@ export default class NodeReporter {
 
       this.spinner.stop();
 
-      for ( let i = 0; i < this.tests.length; i++ ) {
-        await this.logTestEnd( this.tests[ i ] ); // eslint-disable-line no-await-in-loop
-      }
-
+      const tests = await Promise.all( this.tests );
       this.tests = null; // Prevent memory leaks
-      this.ended = true;
+
+      const sortedTests = tests.sort( ( a, b ) => {
+        if ( !a.source || !a.source.file ) {
+          return 1;
+        }
+        if ( !b.source || !b.source.file ) {
+          return -1;
+        }
+        const fileCompare = a.source.file.localeCompare( b.source.file );
+        if ( fileCompare === 0 ) {
+          const lineCompare = a.source.line - b.source.line;
+          if ( lineCompare === 0 ) {
+            return a.source.column - b.source.column;
+          }
+          return lineCompare;
+        }
+        return fileCompare;
+      } );
+
+      for ( let i = 0; i < sortedTests.length; i++ ) {
+        await this.logTestEnd( sortedTests[ i ] ); // eslint-disable-line no-await-in-loop
+      }
 
       const hasPending = t.pendingTests && t.pendingTests.size > 0;
 
@@ -150,7 +168,7 @@ export default class NodeReporter {
           log( `\n${chalk.bold.red( `${t.pendingTests.size} Pending tests:` )}\n` );
 
           for ( const stack of t.pendingTests ) {
-            await this.logDefault( stack );
+            await this.logDefaultByStack( stack );
           }
         }
 
@@ -188,6 +206,8 @@ export default class NodeReporter {
       log( `\n\n${colors.duration( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
 
       await this.logOtherErrors();
+
+      this.ended = true;
 
       const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
 
@@ -235,9 +255,14 @@ export default class NodeReporter {
   }
 
   testEnd( t ) {
-    this.tests.push( t );
     this.pendingTests.delete( t.fullname.join( " > " ) );
     this.updateSpinner();
+
+    this.tests.push( ( async() => {
+      const { source } = await beautifyStack( t.defaultStack, this.extractor );
+      t.source = source;
+      return t;
+    } )() );
   }
 
   async enhanceError( original ) {
@@ -278,8 +303,12 @@ export default class NodeReporter {
     return `${colors.errorStack( `${prettify( file )}:${line}:${column}` )}\n\n${frame}`;
   }
 
-  async logDefault( defaultStack ) {
+  async logDefaultByStack( defaultStack ) {
     const { source } = await beautifyStack( defaultStack, this.extractor );
+    this.logDefault( source );
+  }
+
+  logDefault( source ) {
     let log = "\n";
 
     if ( source ) {
@@ -321,7 +350,7 @@ export default class NodeReporter {
     printLog( log, 4 );
   }
 
-  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, defaultStack, memoryUsage } ) {
+  async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, source, memoryUsage } ) {
 
     if ( status === "passed" && !slow && !logs.length ) {
       return;
@@ -340,7 +369,7 @@ export default class NodeReporter {
         await this.logError( errors[ i ] ); // eslint-disable-line no-await-in-loop
       }
     } else {
-      await this.logDefault( defaultStack );
+      this.logDefault( source );
     }
 
     if ( logs.length ) {
