@@ -1,3 +1,4 @@
+import skipReasons from "../../core/skip-reasons";
 import colors from "./colors";
 import { log, log as printLog, logEol, indentString } from "./log";
 
@@ -361,6 +362,10 @@ export default class NodeReporter {
   async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, source, memoryUsage } ) {
 
     if ( status === "passed" && !slow && !logs.length ) {
+      return;
+    }
+
+    if ( skipReason === skipReasons.bailed && !slow && !logs.length ) {
       return;
     }
 
