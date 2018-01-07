@@ -195,6 +195,10 @@ export default class NodeReporter {
           ].filter( Boolean );
         }
 
+        if ( this.runner.options.only ) {
+          lines.push( "\n  --only option was used." );
+        }
+
         if ( t.snapshotStats ) {
           this.showSnapshotStats( lines, t.snapshotStats );
         }
