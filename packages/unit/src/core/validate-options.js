@@ -67,6 +67,10 @@ export default function( options ) {
     assertNumber( options.slow );
   }
 
+  if ( options.stackIgnore && typeof options.stackIgnore.test !== "function" ) {
+    throw new Error( `"stackIgnore" option should be a regular expression.` );
+  }
+
   options.files = arrify( options.files );
   options.match = arrify( options.match );
   options.globals = arrify( options.globals );

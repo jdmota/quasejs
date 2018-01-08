@@ -6,14 +6,12 @@ const chalk = require( "chalk" );
 const logSymbols = require( "log-symbols" );
 const ora = require( "ora" );
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
-const { beautify: beautifyStack } = require( "@quase/error" );
 const { prettify } = require( "@quase/path-url" );
 
 export default class NodeReporter {
 
   constructor( runner ) {
     this.runner = runner;
-    this.extractor = runner.extractor;
     this.spinner = null;
     this.pendingTests = new Set();
     this.tests = [];
@@ -268,7 +266,7 @@ export default class NodeReporter {
     this.updateSpinner();
 
     this.tests.push( ( async() => {
-      const { source } = await beautifyStack( t.defaultStack, this.extractor );
+      const { source } = await this.runner.beautifyStack( t.defaultStack );
       t.source = source;
       return t;
     } )() );
@@ -290,7 +288,7 @@ export default class NodeReporter {
     original.expected = null;
 
     if ( original.stack ) {
-      const { stack, source } = await beautifyStack( original.stack, this.extractor );
+      const { stack, source } = await this.runner.beautifyStack( original.stack );
       err.stack = stack;
       err.source = source;
     }
@@ -313,7 +311,7 @@ export default class NodeReporter {
   }
 
   async logDefaultByStack( defaultStack ) {
-    const { source } = await beautifyStack( defaultStack, this.extractor );
+    const { source } = await this.runner.beautifyStack( defaultStack );
     this.logDefault( source );
   }
 

@@ -309,9 +309,15 @@ class NodeRunner extends EventEmitter {
     }
   }
 
+  async beautifyStack( stack ) {
+    return beautifyStack( stack, this.extractor, {
+      ignore: this.options.stackIgnore
+    } );
+  }
+
   async handleSnapshot( { byteArray, stack, fullname, id }, forkProcess ) {
 
-    const { source } = await beautifyStack( stack, this.extractor );
+    const { source } = await this.beautifyStack( stack );
     const { file, line, column } = source;
 
     let manager = this.snapshotManagers.get( file );
