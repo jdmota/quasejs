@@ -6,10 +6,14 @@ export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^(
 
 export async function beautify( originalStack, extractor, options ) {
 
-  const ignore = ( options && options.ignore ) || ignoreFileRe;
+  const ignore = options && options.ignore;
 
   const frames = stackParser.parse( { stack: originalStack } ).filter( ( { fileName, functionName } ) => {
-    return !ignore.test( slash( fileName ) ) && !ignoreStackTraceRe.test( functionName || "" );
+    const file = slash( fileName );
+    if ( ignore && ignore.test( file ) ) {
+      return false;
+    }
+    return !ignoreFileRe.test( file ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
   const promises = frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
