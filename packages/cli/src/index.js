@@ -34,10 +34,15 @@ function notifyFix( opts ) {
 
   opts.boxenOpts = opts.boxenOpts || {
     padding: 1,
-    margin: 1,
     align: "center",
-    borderColor: "yellow",
-    borderStyle: "round"
+    borderStyle: {
+      topLeft: " ",
+      topRight: " ",
+      bottomLeft: " ",
+      bottomRight: " ",
+      horizontal: " ",
+      vertical: " "
+    }
   };
 
   const message = "\n" + require( "boxen" )( opts.message, opts.boxenOpts );
