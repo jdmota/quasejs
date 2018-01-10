@@ -161,6 +161,9 @@ export default function( callback, opts ) {
     } else if ( type === "boolean" ) {
       minimistOpts.boolean.push( key );
       minimistOpts.default[ key ] = DEFAULT;
+      if ( d === undefined ) {
+        defaults[ k ] = false;
+      }
     }
     minimistOpts.alias[ alias ] = key;
   }

@@ -14,6 +14,7 @@ describe( "cli", () => {
       expect( options.fooBar ).toBe( true );
       expect( options.boolean ).toBe( true );
       expect( options.boolean2 ).toBe( true );
+      expect( options.boolean3 ).toBe( false );
       expect( options.number ).toBe( 10 );
       expect( options.meow ).toBe( "dog" );
       expect( options.unicorn ).toBe( "cat" );
@@ -39,7 +40,8 @@ describe( "cli", () => {
         unicorn: { alias: "u" },
         meow: { default: "dog" },
         boolean: { default: true },
-        boolean2: { type: "boolean", default: true }
+        boolean2: { type: "boolean", default: true },
+        boolean3: { type: "boolean" }
       },
       inferType: true,
       configFiles: "quase-cli-config.js",
