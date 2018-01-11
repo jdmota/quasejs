@@ -42,10 +42,6 @@ A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
 
 Find all files that match some patterns. Outputs results with an observable.
 
-**[fs/get-file](packages/fs/get-file)** - **0.1.1**
-
-Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XMLHttpRequest` in the browser.
-
 **[package-manager](packages/package-manager)** - *WIP*
 
 An experimental package manager that uses a global store and a combination of hard/soft links.

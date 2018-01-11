@@ -11,7 +11,6 @@
     "packages/events",
     "packages/fs/cacheable-fs",
     "packages/fs/find-files",
-    "packages/fs/get-file",
     "packages/package-manager",
     "packages/path-url",
     "packages/pathname",
