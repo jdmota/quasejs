@@ -7,7 +7,7 @@
     "publish": "node packages/build.js publish",
     "node": "babel-node",
     "flowtype": "flow-typed install",
-    "check": "flow",
+    "flow": "flow",
     "lint": "eslint \"**/*.js\"",
     "coverage": "nyc jest && nyc report --reporter=html",
     "bootstrap": "lerna bootstrap",
