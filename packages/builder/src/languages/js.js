@@ -120,7 +120,7 @@ export default class JsLanguage extends Language {
   +_importNames: ImportedName[];
   +_exportNames: ExportedName[];
 
-  constructor( id: string, data: Data, options: Object ) {
+  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) {
     super( id, data, options );
 
     const babelOpts = this.options.babelOpts || {};
@@ -143,159 +143,168 @@ export default class JsLanguage extends Language {
     this._importNames = [];
     this._exportNames = [];
 
+    this.extractDep = this.extractDep.bind( this );
+
     this.processDeps();
+    this.render( module, builder );
+  }
+
+  addDep( source, async ) {
+    this.deps.push( {
+      request: source.value,
+      loc: source.loc.start,
+      splitPoint: async,
+      async
+    } );
+  }
+
+  extractDep( node, opts = {} ) {
+
+    if ( opts.require ) {
+      this.addDep( node.arguments[ 0 ] );
+      return;
+    }
+
+    if ( opts.commonjs ) {
+      this._exportNames.push( { name: "default", loc: node.loc.start } );
+      return;
+    }
+
+    const { type } = node;
+
+    if ( type === "ImportDeclaration" ) {
+
+      const request = node.source.value;
+      this.addDep( node.source );
+
+      node.specifiers.forEach( s => {
+        const loc = s.loc.start;
+        if ( s.type === "ImportDefaultSpecifier" ) {
+          this._importNames.push( {
+            imported: "default",
+            name: s.local.name,
+            request,
+            loc
+          } );
+        } else if ( s.type === "ImportNamespaceSpecifier" ) {
+          this._importNames.push( {
+            imported: "*",
+            name: s.local.name,
+            request,
+            loc
+          } );
+        } else {
+          this._importNames.push( {
+            imported: s.imported.name,
+            name: s.local.name,
+            request,
+            loc
+          } );
+        }
+      } );
+
+    } else if ( type === "ExportNamedDeclaration" ) {
+
+      if ( node.declaration ) {
+        arrayConcat(
+          this._exportNames,
+          extractNames( node.declaration ).map(
+            name => ( { name, loc: node.declaration.loc.start } )
+          )
+        );
+      } else {
+        const request = node.source && node.source.value;
+        if ( node.source ) {
+          this.addDep( node.source );
+        }
+        node.specifiers.forEach( s => {
+          const loc = s.loc.start;
+          if ( s.type === "ExportDefaultSpecifier" ) { // https://github.com/leebyron/ecmascript-export-default-from
+            this._exportNames.push( {
+              name: s.exported.name,
+              imported: "default",
+              request,
+              loc
+            } );
+          } else if ( s.type === "ExportNamespaceSpecifier" ) { // https://github.com/leebyron/ecmascript-export-ns-from
+            this._exportNames.push( {
+              name: s.exported.name,
+              imported: "*",
+              request,
+              loc
+            } );
+          } else {
+            this._exportNames.push( {
+              name: s.exported.name,
+              imported: s.local.name,
+              request,
+              loc
+            } );
+          }
+        } );
+      }
+
+    } else if ( type === "ExportDefaultDeclaration" ) {
+
+      this._exportNames.push( { name: "default", loc: node.loc.start } );
+
+    } else if ( type === "ExportAllDeclaration" ) {
+
+      this.addDep( node.source );
+
+      this._exportNames.push( {
+        name: "*",
+        imported: "*",
+        request: node.source.value,
+        loc: node.loc.start
+      } );
+
+    } else if ( type === "CallExpression" ) {
+
+      if ( node.callee.type === "Import" ) {
+        const arg = node.arguments[ 0 ];
+        if ( arg.type === "StringLiteral" ) {
+          this.addDep( arg, true );
+          this._dynamicImports.push( {
+            isGlob: false,
+            name: arg.value,
+            loc: arg.loc.start
+          } );
+        } else if ( arg.type === "TemplateLiteral" ) {
+          let glob = "";
+          for ( const quasi of arg.quasis ) {
+            glob += quasi.value.cooked + "*";
+          }
+          glob = glob.slice( 0, -1 ).replace( /\/\*\//g, "/?*/" );
+          this._dynamicImports.push( {
+            isGlob: arg.quasis.length > 1,
+            name: glob,
+            loc: arg.loc.start
+          } );
+          // TODO test this
+        } else {
+          // TODO warn that we cannot detect what you are trying to import on Module
+          // TODO if it's an identifier, try to get it if it is constant?
+          this._dynamicImports.push( {
+            warn: true,
+            loc: arg.loc.start
+          } );
+        }
+      }
+
+      return true;
+
+    } else {
+
+      return true;
+
+    }
+
   }
 
   processDeps() {
-
-    const program = this.ast.program;
-
-    const addDep = ( source, async ) => {
-      this.deps.push( {
-        request: source.value,
-        loc: source.loc.start,
-        splitPoint: async,
-        async
-      } );
-    };
-
-    const t =
-      this.parserOpts.allowImportExportEverywhere ||
-      this.parserOpts.plugins.indexOf( "dynamicImport" ) > -1 ? traverse : traverseTopLevel;
-
-    t( program, node => {
-
-      const type = node.type;
-
-      if ( type === "ImportDeclaration" ) {
-
-        const request = node.source.value;
-        addDep( node.source );
-
-        node.specifiers.forEach( s => {
-          const loc = s.loc.start;
-          if ( s.type === "ImportDefaultSpecifier" ) {
-            this._importNames.push( {
-              imported: "default",
-              name: s.local.name,
-              request,
-              loc
-            } );
-          } else if ( s.type === "ImportNamespaceSpecifier" ) {
-            this._importNames.push( {
-              imported: "*",
-              name: s.local.name,
-              request,
-              loc
-            } );
-          } else {
-            this._importNames.push( {
-              imported: s.imported.name,
-              name: s.local.name,
-              request,
-              loc
-            } );
-          }
-        } );
-
-      } else if ( type === "ExportNamedDeclaration" ) {
-
-        if ( node.declaration ) {
-          arrayConcat(
-            this._exportNames,
-            extractNames( node.declaration ).map(
-              name => ( { name, loc: node.declaration.loc.start } )
-            )
-          );
-        } else {
-          const request = node.source && node.source.value;
-          if ( node.source ) {
-            addDep( node.source );
-          }
-          node.specifiers.forEach( s => {
-            const loc = s.loc.start;
-            if ( s.type === "ExportDefaultSpecifier" ) { // https://github.com/leebyron/ecmascript-export-default-from
-              this._exportNames.push( {
-                name: s.exported.name,
-                imported: "default",
-                request,
-                loc
-              } );
-            } else if ( s.type === "ExportNamespaceSpecifier" ) { // https://github.com/leebyron/ecmascript-export-ns-from
-              this._exportNames.push( {
-                name: s.exported.name,
-                imported: "*",
-                request,
-                loc
-              } );
-            } else {
-              this._exportNames.push( {
-                name: s.exported.name,
-                imported: s.local.name,
-                request,
-                loc
-              } );
-            }
-          } );
-        }
-
-      } else if ( type === "ExportDefaultDeclaration" ) {
-
-        this._exportNames.push( { name: "default", loc: node.loc.start } );
-
-      } else if ( type === "ExportAllDeclaration" ) {
-
-        addDep( node.source );
-
-        this._exportNames.push( {
-          name: "*",
-          imported: "*",
-          request: node.source.value,
-          loc: node.loc.start
-        } );
-
-      } else if ( type === "CallExpression" ) {
-
-        if ( node.callee.type === "Import" ) {
-          const arg = node.arguments[ 0 ];
-          if ( arg.type === "StringLiteral" ) {
-            addDep( arg, true );
-            this._dynamicImports.push( {
-              isGlob: false,
-              name: arg.value,
-              loc: arg.loc.start
-            } );
-          } else if ( arg.type === "TemplateLiteral" ) {
-            let glob = "";
-            for ( const quasi of arg.quasis ) {
-              glob += quasi.value.cooked + "*";
-            }
-            glob = glob.slice( 0, -1 ).replace( /\/\*\//g, "/?*/" );
-            this._dynamicImports.push( {
-              isGlob: arg.quasis.length > 1,
-              name: glob,
-              loc: arg.loc.start
-            } );
-            // TODO test this
-          } else {
-            // TODO warn that we cannot detect what you are trying to import on Module
-            // TODO if it's an identifier, try to get it if it is constant?
-            this._dynamicImports.push( {
-              warn: true,
-              loc: arg.loc.start
-            } );
-          }
-        }
-
-        return true;
-
-      } else {
-
-        return true;
-
-      }
-
-    } );
+    const t = this.parserOpts.allowImportExportEverywhere || this.parserOpts.plugins.indexOf( "dynamicImport" ) > -1 ? traverse : traverseTopLevel;
+    t( this.ast.program, this.extractDep );
   }
 
   resolve( importee: string, importer: string, builder: Builder ): Promise<?string | boolean> {
@@ -366,7 +375,8 @@ export default class JsLanguage extends Language {
     }
 
     const opts = Object.assign( {}, this.options.babelOpts, {
-      filename: module.path,
+      filename: module.normalized,
+      filenameRelative: module.path,
       sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
     } );
 
@@ -378,6 +388,7 @@ export default class JsLanguage extends Language {
       [ helpersPlugin, { helpers } ],
       [ babelPluginModules, {
         varsUsed,
+        extractor: this.extractDep,
         resolveModuleSource( source ) {
           const key = `__quase_builder_import_${source}__`;
           imports.push( { source, key } );

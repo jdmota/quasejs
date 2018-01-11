@@ -14,6 +14,7 @@ const vars = {
 };
 
 const templates = {
+  commonjs: template( `${vars.exports}.__esModule = false;` ),
   require: template( `${vars.require}($0);` ),
   exportsGetter: template( `${vars.export}(${vars.exports}, $0, function() { return $1; } );` ),
   exportsAssignment: template( `${vars.exports}.$0 = $1;` ),
@@ -28,6 +29,7 @@ export default ( { types: t }, options ) => {
 
   const REQUIRES = Symbol();
   const TOP_NODES = Symbol();
+  const extractor = options.extractor || ( () => {} );
   const resolveModuleSource = options.resolveModuleSource || ( x => x );
   const varsUsed = options.varsUsed || {};
 
@@ -45,6 +47,7 @@ export default ( { types: t }, options ) => {
         varsUsed[ vars.export ] = true;
         varsUsed[ vars.exports ] = true;
         break;
+      case "commonjs":
       case "exportsAssignment":
       case "exportsDefaultsAssignment":
       case "exportsDefaultsMember":
@@ -210,6 +213,7 @@ export default ( { types: t }, options ) => {
         exit( path ) {
           if ( this.commonjs ) {
             path.unshiftContainer( "body", [
+              runTemplate( "commonjs" ),
               runTemplate( "exportsDefaultsAssignment", t.objectExpression( [] ) )
             ] );
           }
@@ -423,7 +427,10 @@ export default ( { types: t }, options ) => {
           !path.scope.hasBinding( "module" )
         ) {
           this.commonjs = true;
-          path.replaceWith( runTemplate( "exportsDefaultsMember" ) );
+          const newNode = runTemplate( "exportsDefaultsMember" );
+          newNode.loc = node.loc;
+          extractor( node, { commonjs: true } );
+          path.replaceWith( newNode );
         }
       },
 
@@ -439,9 +446,28 @@ export default ( { types: t }, options ) => {
 
         if ( check( "exports" ) ) {
           this.commonjs = true;
-          path.replaceWith( runTemplate( "exportsDefaultsMember" ) );
+          const newNode = runTemplate( "exportsDefaultsMember" );
+          newNode.loc = node.loc;
+          extractor( node, { commonjs: true } );
+          path.replaceWith( newNode );
         } else if ( check( "require" ) ) {
-          path.replaceWith( t.identifier( getVar( "require" ) ) );
+
+          const parent = path.parent;
+
+          if (
+            path.parentKey === "callee" &&
+            parent.type === "CallExpression" &&
+            parent.arguments.length > 0 &&
+            parent.arguments[ 0 ].type === "StringLiteral"
+          ) {
+            extractor( parent, { require: true } );
+            parent.arguments[ 0 ].value = resolveModuleSource( parent.arguments[ 0 ].value );
+          }
+
+          path.replaceWith( t.memberExpression(
+            t.identifier( getVar( "require" ) ),
+            t.identifier( "r" )
+          ) );
         }
       }
     }

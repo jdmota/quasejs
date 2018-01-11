@@ -76,6 +76,7 @@
       const moduleExports = {};
 
       Object.defineProperty( moduleExports, "__esModule", {
+        writable: true,
         value: true
       } );
 
@@ -94,14 +95,19 @@
 
   function requireSync( id ) {
     if ( !exists( id ) ) {
-      moduleToFiles[ id ].forEach( importFileSync );
+      ( moduleToFiles[ id ] || [] ).forEach( importFileSync );
     }
     return load( id );
   }
 
+  requireSync.r = function( id ) {
+    const e = requireSync( id );
+    return e.__esModule === false ? e.default : e;
+  };
+
   function requireAsync( id ) {
     return Promise.all(
-      exists( id ) ? [] : moduleToFiles[ id ].map( importFileAsync )
+      exists( id ) ? [] : ( moduleToFiles[ id ] || [] ).map( importFileAsync )
     ).then( () => load( id ) );
   }
 

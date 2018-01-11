@@ -12,3 +12,7 @@ const abc = module.exports.abc = function() {
   const module = { exports: {} };
   module.exports.foo = {};
 };
+
+module.exports = function() {
+
+};

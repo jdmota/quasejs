@@ -1,3 +1,3 @@
 module.exports = {
-  _error: "Duplicate import a. See index.js:2:9"
+  _error: /index\.js: Duplicate declaration "a"/
 };

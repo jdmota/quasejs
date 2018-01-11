@@ -206,7 +206,7 @@ export default class Module {
 
     const [ C, opts ] = builder.languages[ result.type ] || [ Language, {} ];
 
-    const lang = new C( this.id, this.data, opts );
+    const lang = new C( this.id, this.data, opts, this, builder );
     this.lang = lang;
     return lang;
   }
