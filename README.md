@@ -46,10 +46,6 @@ Find all files that match some patterns. Outputs results with an observable.
 
 Get the contents of a file. Uses `fs.readFile()` in nodejs and `fetch()` or `XMLHttpRequest` in the browser.
 
-**[fs/is-file](packages/fs/is-file)** - **0.1.0**
-
-Check if path is a file.
-
 **[package-manager](packages/package-manager)** - *WIP*
 
 An experimental package manager that uses a global store and a combination of hard/soft links.

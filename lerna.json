@@ -12,8 +12,6 @@
     "packages/fs/cacheable-fs",
     "packages/fs/find-files",
     "packages/fs/get-file",
-    "packages/fs/is-file",
-    "packages/fs/memory-fs",
     "packages/package-manager",
     "packages/path-url",
     "packages/pathname",
