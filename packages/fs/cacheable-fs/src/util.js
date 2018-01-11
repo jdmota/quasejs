@@ -3,11 +3,11 @@
 const pathUrl = require( "@quase/path-url" );
 const path = require( "path" );
 
-export function dirname( p: string ) {
+export function dirname( p: string ): string {
   return pathUrl.lowerPath( path.dirname( p ) );
 }
 
-export function makeAbsolutePath( p: string ) {
+export function makeAbsolutePath( p: string ): string {
   return pathUrl.lowerPath( pathUrl.makeAbsolutePath( p ) );
 }
 
@@ -16,7 +16,7 @@ export function cacheableJob<T>( jobAsync: () => Promise<T>, jobSync: () => T ) 
     value: undefined,
     promise: undefined,
     error: undefined,
-    async async( ...args ): Promise<T> {
+    async async( ...args: any[] ): Promise<T> {
       if ( this.error ) {
         throw this.error;
       }
@@ -36,7 +36,7 @@ export function cacheableJob<T>( jobAsync: () => Promise<T>, jobSync: () => T ) 
       }
       return this.value;
     },
-    sync( ...args ): T {
+    sync( ...args: any[] ): T {
       if ( this.error ) {
         throw this.error;
       }
