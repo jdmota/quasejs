@@ -3,6 +3,7 @@ import arrayConcat from "../utils/array-concat";
 import type {
   Data, NotResolvedDep, ImportedName, ExportedName, FinalAsset, FinalAssets
 } from "../types";
+import type Module from "../module";
 import Builder from "../builder";
 import Language from "../language";
 import StringBuilder from "../string-builder";
@@ -102,37 +103,6 @@ function helpersPlugin( ref, options ) {
       };
     }
   };
-}
-
-function renderModule( module, lang, builder ) {
-
-  if ( lang.lastRender ) {
-    return lang.lastRender;
-  }
-
-  const opts = Object.assign( {}, lang.options.babelOpts, {
-    filename: module.path,
-    sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
-  } );
-
-  const helpers = {};
-  const varsUsed = {};
-
-  opts.plugins = ( opts.plugins || [] ).concat( [
-    [ helpersPlugin, { helpers } ],
-    [ babelPluginModules, {
-      varsUsed,
-      resolveModuleSource( source ) {
-        const m = module.getModuleByRequest( builder, source );
-        return m ? m.hashId : source;
-      }
-    } ]
-  ] );
-
-  lang.lastRender = babel.transformFromAst( lang.ast, lang.dataToString, opts );
-  lang.lastRender.helpers = helpers;
-  lang.lastRender.varsUsed = varsUsed;
-  return lang.lastRender;
 }
 
 export default class JsLanguage extends Language {
@@ -389,7 +359,37 @@ export default class JsLanguage extends Language {
     return this.deps;
   }
 
-  async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, otherUsedHelpers: Set<string> ) {
+  render( module: Module, builder: Builder ) {
+    if ( this.lastRender ) {
+      return this.lastRender;
+    }
+
+    const opts = Object.assign( {}, this.options.babelOpts, {
+      filename: module.path,
+      sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
+    } );
+
+    const helpers = {};
+    const varsUsed = {};
+
+    opts.plugins = ( opts.plugins || [] ).concat( [
+      [ helpersPlugin, { helpers } ],
+      [ babelPluginModules, {
+        varsUsed,
+        resolveModuleSource( source ) {
+          const m = module.getModuleByRequest( builder, source );
+          return m ? m.hashId : source;
+        }
+      } ]
+    ] );
+
+    this.lastRender = babel.transformFromAst( this.ast, this.dataToString, opts );
+    this.lastRender.helpers = helpers;
+    this.lastRender.varsUsed = varsUsed;
+    return this.lastRender;
+  }
+
+  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, otherUsedHelpers: Set<string> ) {
     const { id, srcs, dest } = asset;
     const entryModule = builder.getModuleForSure( id );
     const usedHelpers = new Set( otherUsedHelpers );
@@ -413,7 +413,7 @@ export default class JsLanguage extends Language {
         throw new Error( `Module ${module.id} is not of type 'js'` );
       }
 
-      let { code, map, helpers, varsUsed } = renderModule( module, lang, builder );
+      let { code, map, helpers, varsUsed } = lang.render( module, builder );
 
       for ( const name in helpers ) {
         usedHelpers.add( name );

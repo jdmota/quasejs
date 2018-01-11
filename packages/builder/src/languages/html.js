@@ -133,11 +133,17 @@ export default class HtmlLanguage extends Language {
     this.treeAdapter.detachNode( node );
   }
 
+  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, usedHelpers: Set<string> ) {
+    if ( asset.srcs.length !== 1 ) {
+      throw new Error( `Asset "${asset.normalized}" to be generated can only have 1 source.` );
+    }
+    return this.render( builder, asset, finalAssets, usedHelpers );
+  }
+
   async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, usedHelpers: Set<string> ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
-      // TODO publicPath
       // TODO leave the script tags but somehow handle onload event
 
       const cloneStack = new Map();

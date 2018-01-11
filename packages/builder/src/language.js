@@ -24,7 +24,7 @@ export interface ILanguage {
   importedNames( Builder ): Promise<ImportedName[]>,
   exportedNames( Builder ): Promise<ExportedName[]>,
   dependencies( Builder ): Promise<NotResolvedDep[]>,
-  render( Builder, FinalAsset, FinalAssets, Set<string> ): Promise<ToWrite>
+  renderAsset( Builder, FinalAsset, FinalAssets, Set<string> ): Promise<ToWrite>
 }
 
 export default class Language implements ILanguage {
@@ -97,7 +97,10 @@ export default class Language implements ILanguage {
     return [];
   }
 
-  async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, otherUsedHelpers: Set<string> ) { // eslint-disable-line
+  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, otherUsedHelpers: Set<string> ) { // eslint-disable-line
+    if ( asset.srcs.length !== 1 ) {
+      throw new Error( `Asset "${asset.normalized}" has more than 1 source. Probably there is some language plugin missing.` );
+    }
     return {
       data: this.data
     };

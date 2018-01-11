@@ -347,7 +347,7 @@ async function callRenderers(
     const lang = module.lang;
 
     if ( lang ) {
-      const out = await lang.render( builder, asset, finalAssets, usedHelpers );
+      const out = await lang.renderAsset( builder, asset, finalAssets, usedHelpers );
       if ( out ) {
         if ( !asset.isEntry && out.usedHelpers ) {
           for ( const key of out.usedHelpers ) {
