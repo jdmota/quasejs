@@ -440,11 +440,9 @@ export default ( { types: t }, options ) => {
         if ( check( "exports" ) ) {
           this.commonjs = true;
           path.replaceWith( runTemplate( "exportsDefaultsMember" ) );
-        }
-
-        /* else if ( check( "require" ) ) {
+        } else if ( check( "require" ) ) {
           path.replaceWith( t.identifier( getVar( "require" ) ) );
-        }*/
+        }
       }
     }
   };

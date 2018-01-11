@@ -8,6 +8,7 @@ $e.default.thing();
 $e.default.thing();
 $e.default.foo = {};
 $e.default.bar = {};
+$r(\\"package\\");
 
 const abc = $e.default.abc = function () {
   const module = {
