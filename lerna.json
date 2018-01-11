@@ -8,7 +8,6 @@
     "packages/cli",
     "packages/config-validate",
     "packages/error",
-    "packages/events",
     "packages/fs/cacheable-fs",
     "packages/fs/find-files",
     "packages/package-manager",

@@ -30,10 +30,6 @@ Some tools to work with Error objects and their stack.
 
 The Eslint configuration that I use.
 
-**[events](packages/events)** - *WIP*
-
-A copy of NodeJS's `events` module that also works on the browser.
-
 **[fs/cacheable-fs](packages/fs/cacheable-fs)** - *WIP*
 
 A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
