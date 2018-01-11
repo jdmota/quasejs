@@ -16,6 +16,7 @@ const { parse } = require( "babylon" );
 const babel = require( "@babel/core" );
 const types = require( "@babel/types" );
 const { joinSourceMaps } = require( "@quase/source-map" );
+const MagicString = require( "magic-string" );
 
 function traverseTopLevel( { body }, enter ) {
   for ( let i = 0; i < body.length; i++ ) {
@@ -371,14 +372,16 @@ export default class JsLanguage extends Language {
 
     const helpers = {};
     const varsUsed = {};
+    const imports = [];
 
     opts.plugins = ( opts.plugins || [] ).concat( [
       [ helpersPlugin, { helpers } ],
       [ babelPluginModules, {
         varsUsed,
         resolveModuleSource( source ) {
-          const m = module.getModuleByRequest( builder, source );
-          return m ? m.hashId : source;
+          const key = `__quase_builder_import_${source}__`;
+          imports.push( { source, key } );
+          return key;
         }
       } ]
     ] );
@@ -386,6 +389,7 @@ export default class JsLanguage extends Language {
     this.lastRender = babel.transformFromAst( this.ast, this.dataToString, opts );
     this.lastRender.helpers = helpers;
     this.lastRender.varsUsed = varsUsed;
+    this.lastRender.imports = imports;
     return this.lastRender;
   }
 
@@ -413,14 +417,47 @@ export default class JsLanguage extends Language {
         throw new Error( `Module ${module.id} is not of type 'js'` );
       }
 
-      let { code, map, helpers, varsUsed } = lang.render( module, builder );
+      const { code, map, helpers, varsUsed, imports } = lang.render( module, builder );
 
       for ( const name in helpers ) {
         usedHelpers.add( name );
       }
 
+      let finds = [];
+      for ( const { source, key } of imports ) {
+        let index;
+        while ( ( index = code.indexOf( key, index + 1 ) ) > -1 ) {
+          finds.push( {
+            source,
+            key,
+            index
+          } );
+        }
+      }
+      finds = finds.sort( ( a, b ) => a.index - b.index );
+
+      const sourceObj = new MagicString( code );
+      let i = finds.length;
+
+      while ( i-- ) {
+        const { source, key, index } = finds[ i ];
+        const m = module.getModuleByRequest( builder, source );
+        const replacement = m ? m.hashId : source;
+        sourceObj.overwrite( index, index + key.length, replacement, { storeName: false } );
+      }
+
+      let finalMap;
+
       if ( map ) {
-        map = joinSourceMaps( module.maps.concat( map ) );
+        const map2 = sourceObj.generateMap( {
+          hires: true
+        } );
+        map2.sources[ 0 ] = module.path;
+
+        finalMap = joinSourceMaps( module.maps.concat( [
+          map,
+          map2
+        ] ) );
       }
 
       const args = moduleArgs.slice();
@@ -431,7 +468,7 @@ export default class JsLanguage extends Language {
       const key = /^\d/.test( module.hashId ) ? `"${module.hashId}"` : module.hashId;
 
       build.append( `${first ? "" : ","}\n${key}:function(${args.join( "," )}){` );
-      build.append( code, map );
+      build.append( sourceObj.toString(), finalMap );
       build.append( "\n}" );
 
       first = false;
