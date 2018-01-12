@@ -40,6 +40,7 @@ declare module "klaw" { declare var exports: any; }
 declare module "leven" { declare var exports: any; }
 declare module "load-json-file" { declare var exports: any; }
 declare module "log-symbols" { declare var exports: any; }
+declare module "magic-string" { declare var exports: any; }
 declare module "matcher" { declare var exports: any; }
 declare module "meow" { declare var exports: any; }
 declare module "micromatch" { declare var exports: any; }

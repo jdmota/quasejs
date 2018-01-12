@@ -1,7 +1,7 @@
 // @flow
 import arrayConcat from "../utils/array-concat";
 import type {
-  Data, NotResolvedDep, ImportedName, ExportedName, FinalAsset, FinalAssets
+  Loc, Data, NotResolvedDep, ImportedName, ExportedName, FinalAsset, FinalAssets
 } from "../types";
 import type Module from "../module";
 import Builder from "../builder";
@@ -121,7 +121,7 @@ export default class JsLanguage extends Language {
   +_exportNames: ExportedName[];
 
   constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) {
-    super( id, data, options );
+    super( id, data, options, module, builder );
 
     const babelOpts = this.options.babelOpts || {};
 
@@ -143,13 +143,14 @@ export default class JsLanguage extends Language {
     this._importNames = [];
     this._exportNames = [];
 
-    this.extractDep = this.extractDep.bind( this );
+    const self: any = this;
+    self.extractDep = self.extractDep.bind( this );
 
     this.processDeps();
     this.render( module, builder );
   }
 
-  addDep( source, async ) {
+  addDep( source: { value: string, loc: { start: Loc } }, async: ?boolean ) {
     this.deps.push( {
       request: source.value,
       loc: source.loc.start,
@@ -158,7 +159,7 @@ export default class JsLanguage extends Language {
     } );
   }
 
-  extractDep( node, opts = {} ) {
+  extractDep( node: Object, opts: Object = {} ) {
 
     if ( opts.require ) {
       this.addDep( node.arguments[ 0 ] );

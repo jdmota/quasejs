@@ -1,5 +1,6 @@
 // @flow
 import Builder from "./builder";
+import type Module from "./module";
 import type {
   Data, DataType, ToWrite,
   ImportedName, ExportedName, NotResolvedDep,
@@ -40,7 +41,7 @@ export default class Language implements ILanguage {
   cachedExportedNames: ?Promise<ExportedName[]>;
   cachedDependencies: ?Promise<NotResolvedDep[]>;
 
-  constructor( id: string, data: Data, options: Object ) {
+  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) { // eslint-disable-line no-unused-vars
     this.id = id;
     this.data = data;
     this.dataType = getDataType( data );

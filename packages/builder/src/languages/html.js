@@ -1,6 +1,7 @@
 // @flow
 import type { Data, NotResolvedDep, FinalAsset, FinalAssets } from "../types";
 import type Builder from "../builder";
+import type Module from "../module";
 import Language from "../language";
 import cloneAst from "./clone-ast";
 
@@ -76,8 +77,8 @@ export default class HtmlLanguage extends Language {
   +originalCode: string;
   +document: Object;
 
-  constructor( id: string, data: Data, options: Object ) {
-    super( id, data, options );
+  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) {
+    super( id, data, options, module, builder );
 
     this.deps = [];
 
