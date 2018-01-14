@@ -16,3 +16,5 @@ const abc = module.exports.abc = function() {
 module.exports = function() {
 
 };
+
+const req = require;

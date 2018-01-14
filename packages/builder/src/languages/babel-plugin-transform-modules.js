@@ -402,15 +402,29 @@ export default ( { types: t }, options ) => {
       CallExpression( path ) {
 
         const { node } = path;
+        const callee = path.get( "callee" );
 
         if ( node.callee.type === "Import" ) {
-          node.callee = t.identifier( getVar( "import" ) );
+          callee.replaceWith( t.identifier( getVar( "import" ) ) );
 
           const arg = node.arguments[ 0 ];
 
           if ( arg && arg.type === "StringLiteral" ) {
             arg.value = resolveModuleSource( arg.value );
           }
+        } else if ( node.callee.type === "Identifier" ) {
+
+          if ( checkGlobal( callee, "require" ) && node.arguments[ 0 ].type === "StringLiteral" ) {
+
+            extractor( node, { require: true } );
+            node.arguments[ 0 ].value = resolveModuleSource( node.arguments[ 0 ].value );
+
+            callee.replaceWith( t.memberExpression(
+              t.identifier( getVar( "require" ) ),
+              t.identifier( "r" )
+            ) );
+          }
+
         }
 
       },
@@ -437,39 +451,21 @@ export default ( { types: t }, options ) => {
       Identifier( path ) {
         const { node } = path;
 
-        function check( name ) {
-          return node.name === name &&
-            path.parentPath.isExpression() &&
-            !( path.parentKey === "property" && path.parentPath.isMemberExpression() ) &&
-            !path.scope.hasBinding( name );
-        }
-
-        if ( check( "exports" ) ) {
+        if ( checkGlobal( path, "exports" ) ) {
           this.commonjs = true;
           const newNode = runTemplate( "exportsDefaultsMember" );
           newNode.loc = node.loc;
           extractor( node, { commonjs: true } );
           path.replaceWith( newNode );
-        } else if ( check( "require" ) ) {
-
-          const parent = path.parent;
-
-          if (
-            path.parentKey === "callee" &&
-            parent.type === "CallExpression" &&
-            parent.arguments.length > 0 &&
-            parent.arguments[ 0 ].type === "StringLiteral"
-          ) {
-            extractor( parent, { require: true } );
-            parent.arguments[ 0 ].value = resolveModuleSource( parent.arguments[ 0 ].value );
-          }
-
-          path.replaceWith( t.memberExpression(
-            t.identifier( getVar( "require" ) ),
-            t.identifier( "r" )
-          ) );
         }
       }
     }
   };
 };
+
+function checkGlobal( path, name ) {
+  return path.node.name === name &&
+    path.parentPath.isExpression() &&
+    !( path.parentKey === "property" && path.parentPath.isMemberExpression() ) &&
+    !path.scope.hasBinding( name );
+}

@@ -18,7 +18,9 @@ const abc = $e.default.abc = function () {
   module.exports.foo = {};
 };
 
-$e.default = function () {};"
+$e.default = function () {};
+
+const req = require;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: dynamic-import 1`] = `
