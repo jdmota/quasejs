@@ -109,4 +109,15 @@ export default class SourceMapExtractor {
     return { code: await this._read( file ) };
   }
 
+  async getOriginalSources( file ) {
+
+    const { map, mapLocation } = await this.getMap( file ) || {};
+
+    if ( map ) {
+      return map.sources.map( s => resolveAsUrl( mapLocation, s ) );
+    }
+
+    return [];
+  }
+
 }
