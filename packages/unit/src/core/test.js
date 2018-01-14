@@ -156,11 +156,12 @@ export class Runnable implements ITestResult, ITest {
     this.logs.push( text );
   }
 
-  matchesSnapshot( something: any ) {
+  matchesSnapshot( something: mixed ) {
     const deferred = defer();
     this.snapshotsWaiting.push( deferred );
     this.incCount();
     this.runner.matchesSnapshot( something, getStack( 2 ), this.fullname, deferred );
+    return deferred.promise;
   }
 
   plan( n: number ) {

@@ -1,6 +1,9 @@
+import defer from "./core/util/defer";
+import { processError } from "./core/process-error";
+import SnapshotsManager from "./snapshots";
+
 const importFresh = require( "import-fresh" );
 const CircularJSON = require( "circular-json" );
-const concordance = require( "concordance" );
 
 function stringify( arg ) {
   return CircularJSON.stringify( arg, ( _, value ) => {
@@ -30,7 +33,33 @@ function send( eventType, arg ) {
   } );
 }
 
+async function saveSnapshots( snapshotManagers ) {
+  const promises = [];
+
+  for ( const manager of snapshotManagers.values() ) {
+    promises.push( manager.save() );
+  }
+
+  const stats = await Promise.all( promises );
+  const finalStat = {
+    added: 0,
+    updated: 0,
+    removed: 0,
+    obsolete: 0
+  };
+
+  for ( const stat of stats ) {
+    finalStat.added += stat.added;
+    finalStat.updated += stat.updated;
+    finalStat.removed += stat.removed;
+    finalStat.obsolete += stat.obsolete;
+  }
+
+  return finalStat;
+}
+
 function start( cli, files ) {
+  const snapshotManagers = new Map();
   const testsWaitingAnswer = new Map();
   let uuid = 1;
 
@@ -47,29 +76,64 @@ function start( cli, files ) {
 
   [ "runStart", "testStart", "testEnd", "suiteStart", "suiteEnd", "runEnd", "otherError" ].forEach( eventType => {
     runner.on( eventType, arg => {
-      send( eventType, arg );
+      if ( eventType === "runEnd" ) {
+        saveSnapshots( snapshotManagers ).then( stats => {
+          arg.snapshotStats = stats;
+          send( eventType, arg );
+        } );
+      } else {
+        send( eventType, arg );
+      }
     } );
   } );
 
-  runner.on( "matchesSnapshot", ( { something, stack, fullname, deferred } ) => {
-    const id = uuid++;
-    testsWaitingAnswer.set( id, deferred );
+  options = runner.options;
 
-    send( "matchesSnapshot", {
-      byteArray: concordance.serialize(
-        concordance.describe( something, runner.concordanceOptions )
-      ),
+  runner.on( "matchesSnapshot", async( { something, stack, fullname, deferred } ) => {
+    const id = uuid++;
+    const answerDefer = defer();
+    testsWaitingAnswer.set( id, answerDefer );
+
+    process.send( {
+      type: "quase-unit-source",
       stack,
-      fullname,
       id
     } );
+
+    const { file, line, column } = await answerDefer.promise;
+
+    let manager = snapshotManagers.get( file );
+    if ( !manager ) {
+      manager = new SnapshotsManager(
+        process.cwd(),
+        file,
+        options.snapshotDir,
+        options.updateSnapshots,
+        options.concordanceOptions
+      );
+      snapshotManagers.set( file, manager );
+    }
+
+    let error;
+
+    try {
+      manager.matchesSnapshot(
+        fullname.join( " " ),
+        `${fullname.join( " " )} (${line}:${column})`,
+        something
+      );
+    } catch ( e ) {
+      error = processError( e, stack, options.concordanceOptions );
+    }
+
+    deferred.resolve( error );
   } );
 
-  process.on( "message", ( { type, id, error } ) => {
-    if ( type === "quase-unit-snap-result" ) {
+  process.on( "message", ( { type, id, source } ) => {
+    if ( type === "quase-unit-source" ) {
       const deferred = testsWaitingAnswer.get( id );
       testsWaitingAnswer.delete( id );
-      deferred.resolve( error );
+      deferred.resolve( source );
     } else if ( type === "quase-unit-bail" ) {
       runner.failedOnce = true;
     }

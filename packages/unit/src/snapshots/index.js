@@ -119,7 +119,7 @@ export default class SnapshotsManager {
     this.concordanceOptions = { plugins: concordanceOptions.plugins };
   }
 
-  matchesSnapshot( _key: string, title: string, actualBuffer: Buffer ) {
+  matchesSnapshot( _key: string, title: string, something: mixed ) {
 
     if ( this.decodingError ) {
       throw this.decodingError;
@@ -130,7 +130,8 @@ export default class SnapshotsManager {
 
     const testKey = _key + " " + index;
 
-    const actualDescribe = concordance.deserialize( actualBuffer, this.concordanceOptions );
+    const actualDescribe = concordance.describe( something, this.concordanceOptions );
+    const actualBuffer = concordance.serialize( actualDescribe );
 
     const expectedBuffer = this.prevSnapshots.get( testKey );
 

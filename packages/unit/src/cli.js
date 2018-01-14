@@ -1,7 +1,5 @@
-import { processError } from "./core/process-error";
 import validateOptions from "./core/validate-options";
 import NodeReporter from "./reporters/node";
-import SnapshotsManager from "./snapshots";
 
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
 const findFiles = require( "@quase/find-files" ).default;
@@ -58,20 +56,6 @@ function concat( original, array ) {
     original.push( array[ i ] );
   }
   return original;
-}
-
-function divide( array, num ) {
-  const final = [];
-
-  for ( let i = 0; i < num; i++ ) {
-    final.push( [] );
-  }
-
-  for ( let i = 0, j = 0; i < array.length; i++, j++ ) {
-    final[ j % num ].push( array[ i ] );
-  }
-
-  return final;
 }
 
 class RunnerProcess {
@@ -138,7 +122,6 @@ class NodeRunner extends EventEmitter {
   constructor( options, files ) {
     super();
     this.options = options;
-    this.division = null;
     this.files = files;
     this.forks = [];
     this.debuggersPromises = [];
@@ -168,6 +151,12 @@ class NodeRunner extends EventEmitter {
         todo: 0, // Increment
         total: 0 // Increment
       },
+      snapshotStats: {
+        added: 0, // Increment
+        updated: 0, // Increment
+        removed: 0, // Increment
+        obsolete: 0 // Increment
+      },
       onlyCount: 0 // Increment
     };
     this.runStarts = 0;
@@ -179,7 +168,6 @@ class NodeRunner extends EventEmitter {
     this.failedOnce = false;
 
     this.extractor = new SourceMapExtractor( new FileSystem() );
-    this.snapshotManagers = new Map(); // Map<fullpath, SnapshotManager>
 
     process.once( "beforeExit", async() => {
       this.emit( "exit", {} );
@@ -220,10 +208,7 @@ class NodeRunner extends EventEmitter {
       this.runEndArg.status = "passed";
     }
 
-    this.saveSnapshots().then( snapshotStats => {
-      this.runEndArg.snapshotStats = snapshotStats;
-      this.emit( "runEnd", this.runEndArg );
-    } );
+    this.emit( "runEnd", this.runEndArg );
   }
 
   testFailure() {
@@ -271,6 +256,12 @@ class NodeRunner extends EventEmitter {
         this.runEndArg.testCounts.skipped += arg.testCounts.skipped;
         this.runEndArg.testCounts.todo += arg.testCounts.todo;
         this.runEndArg.testCounts.total += arg.testCounts.total;
+
+        this.runEndArg.snapshotStats.added += arg.snapshotStats.added;
+        this.runEndArg.snapshotStats.updated += arg.snapshotStats.updated;
+        this.runEndArg.snapshotStats.removed += arg.snapshotStats.removed;
+        this.runEndArg.snapshotStats.obsolete += arg.snapshotStats.obsolete;
+
         this.runEndArg.onlyCount += arg.onlyCount;
         this.runEndArg.runtime += arg.runtime;
 
@@ -282,8 +273,6 @@ class NodeRunner extends EventEmitter {
         if ( !forkProcess.started ) {
           forkProcess.disconnect();
         }
-      } else if ( eventType === "matchesSnapshot" ) {
-        this.handleSnapshot( arg, forkProcess );
       } else {
 
         if ( eventType === "testStart" ) {
@@ -306,6 +295,14 @@ class NodeRunner extends EventEmitter {
         }
       }
 
+    } else if ( msg.type === "quase-unit-source" ) {
+      this.beautifyStack( msg.stack ).then( ( { source } ) => {
+        forkProcess.send( {
+          type: "quase-unit-source",
+          id: msg.id,
+          source
+        } );
+      } );
     }
   }
 
@@ -315,75 +312,62 @@ class NodeRunner extends EventEmitter {
     } );
   }
 
-  async handleSnapshot( { byteArray, stack, fullname, id }, forkProcess ) {
+  async divide() {
+    const num = this.options.concurrency;
+    const final = [];
+    const map = new Map(); // Map<original, Set<generated>>
+    // The snapshot managers are in the fork process
+    // and we try to point to the original sources.
+    // If a original is used more than once, we have to join
+    // the respective generated files in the same fork.
+    // Since this is very rare, we just put all these
+    // in the same fork (even if some share nothing).
+    const weirdFiles = new Set();
 
-    const { source } = await this.beautifyStack( stack );
-    const { file, line, column } = source;
+    await Promise.all(
+      this.files.map( async file => {
+        for ( const src of await this.extractor.getOriginalSources( file ) ) {
+          const set = map.get( src ) || new Set();
+          set.add( file );
+          map.set( src, set );
+        }
+      } )
+    );
 
-    let manager = this.snapshotManagers.get( file );
-    if ( !manager ) {
-      manager = new SnapshotsManager(
-        process.cwd(),
-        file,
-        this.options.snapshotDir,
-        this.options.updateSnapshots,
-        this.options.concordanceOptions
-      );
-      this.snapshotManagers.set( file, manager );
+    for ( let i = 0; i < num; i++ ) {
+      final.push( [] );
     }
 
-    let error;
-
-    try {
-      manager.matchesSnapshot(
-        fullname.join( " " ),
-        `${fullname.join( " " )} (${line}:${column})`,
-        Buffer.from( byteArray )
-      );
-    } catch ( e ) {
-      error = processError( e, stack, this.options.concordanceOptions );
-    }
-
-    forkProcess.send( {
-      type: "quase-unit-snap-result",
-      id,
-      error: error && {
-        message: error.message,
-        stack: error.stack,
-        diff: error.diff
+    for ( const set of map.values() ) {
+      if ( set.size > 1 ) {
+        for ( const f of set ) {
+          weirdFiles.add( f );
+        }
       }
-    } );
-
-  }
-
-  async saveSnapshots() {
-    const promises = [];
-
-    for ( const manager of this.snapshotManagers.values() ) {
-      promises.push( manager.save() );
     }
 
-    const stats = await Promise.all( promises );
-    const finalStat = {
-      added: 0,
-      updated: 0,
-      removed: 0,
-      obsolete: 0
-    };
-
-    for ( const stat of stats ) {
-      finalStat.added += stat.added;
-      finalStat.updated += stat.updated;
-      finalStat.removed += stat.removed;
-      finalStat.obsolete += stat.obsolete;
+    if ( weirdFiles.size ) {
+      for ( let i = 0; i < this.files.length; i++ ) {
+        const file = this.files[ i ];
+        if ( weirdFiles.has( file ) ) {
+          final[ 0 ].push( file );
+        } else {
+          final[ i % ( num - 1 ) + 1 ].push( file );
+        }
+      }
+    } else {
+      for ( let i = 0; i < this.files.length; i++ ) {
+        const file = this.files[ i ];
+        final[ i % num ].push( file );
+      }
     }
 
-    return finalStat;
+    return final;
   }
 
-  start( cli ) {
+  async start( cli ) {
     const options = this.options;
-    this.division = divide( this.files, options.concurrency );
+    const division = await this.divide();
 
     const env = Object.assign( { NODE_ENV: "test" }, process.env, options.env );
     const execArgv = [];
@@ -421,14 +405,18 @@ class NodeRunner extends EventEmitter {
       debugging = true;
     }
 
-    for ( let i = 0; i < options.concurrency; i++ ) {
-      const fork = new RunnerProcess( this, this.division[ i ], cli, args, env, execArgv );
-      this.forks.push( fork );
-      if ( debugging ) {
-        this.debuggersPromises.push( getDebugger( fork ) );
-        this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
+    for ( let i = 0; i < division.length; i++ ) {
+      if ( division[ i ].length ) {
+        const fork = new RunnerProcess( this, division[ i ], cli, args, env, execArgv );
+        this.forks.push( fork );
+        if ( debugging ) {
+          this.debuggersPromises.push( getDebugger( fork ) );
+          this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
+        }
       }
     }
+
+    this.emit( "start" );
 
     process.once( "SIGINT", () => {
       this.runEnd( "SIGINT" );
@@ -453,26 +441,29 @@ export default function cli( { input, options, configLocation } ) {
 
   const spinner = ora( "Looking for files..." ).start();
 
-  const files = [];
+  const files = new Set();
   const observable = findFiles( { src: options.files } );
 
   observable.subscribe( {
     next( file ) {
-      files.push( file );
+      files.add( file );
     },
     complete() {
       spinner.stop();
 
-      if ( files.length === 0 ) {
+      if ( files.size === 0 ) {
         return NodeReporter.fatalError( "Zero files found." );
       }
 
-      NodeReporter.showFilesCount( files.length );
+      NodeReporter.showFilesCount( files.size );
 
       const Reporter = options.reporter;
-      new Reporter( // eslint-disable-line no-new
-        new NodeRunner( options, files ).start( { options, configLocation } )
-      );
+      const runner = new NodeRunner( options, Array.from( files ) );
+
+      new Reporter( runner ); // eslint-disable-line no-new
+
+      runner.start( { options, configLocation } );
+
     },
     error( err ) {
       spinner.stop();

@@ -41,10 +41,12 @@ export default class NodeReporter {
       logEol();
     } );
 
-    NodeReporter.showConcurrency( runner );
-    NodeReporter.showDebuggers( runner );
+    runner.on( "start", () => {
+      NodeReporter.showConcurrency( runner );
+      NodeReporter.showDebuggers( runner );
 
-    this.spinner = ora( `Waiting for "runStart"...` ).start();
+      this.spinner = ora( `Waiting for "runStart"...` ).start();
+    } );
   }
 
   static showFilesCount( count ) {
@@ -61,7 +63,7 @@ export default class NodeReporter {
   }
 
   static showConcurrency( runner ) {
-    log( chalk.bold.green( "Concurrency: " ) + runner.options.concurrency + "\n" );
+    log( chalk.bold.green( "Child processes: " ) + runner.forks.length + "\n" );
     logEol();
   }
 
