@@ -4,8 +4,6 @@ import type Builder from "./builder";
 import type Module from "./module";
 import type { Dep, FinalAsset } from "./types";
 
-const depsSorter = ( a, b ) => a.required.id.localeCompare( b.required.id );
-
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 // Adapted from https://github.com/samthor/srcgraph
@@ -28,7 +26,7 @@ class BiMap {
           const required = builder.getModuleForSure( dep.requiredId );
           // $FlowFixMe
           return Object.assign( {}, dep, { required } );
-        } ).sort( depsSorter )
+        } )
       );
     }
 
