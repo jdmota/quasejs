@@ -59,11 +59,28 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
   return node;
 };
 
-TreeAdapter.prototype.getAttrList = function( element ) {
-  if ( element.__importType === "js" ) {
-    return element.attrs.filter( a => a.name !== "type" );
+TreeAdapter.prototype.getAttr = function( element, attrName ) {
+  const a = element.attrs.find( ( { name } ) => name === attrName ) || {};
+  return a.value;
+};
+
+TreeAdapter.prototype.setAttr = function( element, attrName, value ) {
+  const a = element.attrs.find( ( { name } ) => name === attrName );
+  if ( a ) {
+    a.value = value;
+  } else {
+    element.attrs.push( {
+      name: attrName,
+      value
+    } );
   }
-  return element.attrs;
+};
+
+TreeAdapter.prototype.removeAttr = function( element, attrName ) {
+  const index = element.attrs.findIndex( ( { name } ) => name === attrName );
+  if ( index > -1 ) {
+    element.attrs.splice( index, 1 );
+  }
 };
 
 const NAMESPACE = "http://www.w3.org/1999/xhtml";
@@ -119,11 +136,18 @@ export default class HtmlLanguage extends Language {
   }
 
   createSrcScript( src: string ) {
-    return this.treeAdapter.createElement( "script", NAMESPACE, [ { name: "src", value: src } ] );
+    return this.treeAdapter.createElement( "script", NAMESPACE, [
+      { name: "type", value: "text/javascript" },
+      { name: "defer", value: "" },
+      { name: "src", value: src }
+    ] );
   }
 
   createHrefCss( href: string ) {
-    return this.treeAdapter.createElement( "link", NAMESPACE, [ { name: "href", value: href }, { name: "rel", value: "stylesheet" } ] );
+    return this.treeAdapter.createElement( "link", NAMESPACE, [
+      { name: "href", value: href },
+      { name: "rel", value: "stylesheet" }
+    ] );
   }
 
   insertBefore( node: Object, ref: Object ) {
@@ -145,7 +169,7 @@ export default class HtmlLanguage extends Language {
 
     if ( this.treeAdapter.__deps.length ) {
 
-      // TODO leave the script tags but somehow handle onload event
+      // TODO preload
 
       const cloneStack = new Map();
       const document = cloneAst( this.document, cloneStack );
@@ -169,8 +193,6 @@ export default class HtmlLanguage extends Language {
         );
       }
 
-      const syncDeps = new Set();
-
       for ( const { node, request, async, importType } of deps ) {
         const module = builder.getModuleForSure( this.id ).getModuleByRequest( builder, request );
 
@@ -182,36 +204,43 @@ export default class HtmlLanguage extends Language {
 
         if ( importType === "css" ) {
 
-          for ( const { id, relativeDest } of assets ) {
-            if ( id !== this.id && !syncDeps.has( id ) ) {
-              syncDeps.add( relativeDest );
+          for ( let i = 0; i < assets.length; i++ ) {
+            const { relativeDest } = assets[ i ];
+            if ( i === assets.length - 1 ) {
+              this.treeAdapter.setAttr( node, "href", builder.publicPath + relativeDest );
+            } else {
               this.insertBefore( this.createHrefCss( builder.publicPath + relativeDest ), node );
             }
           }
 
-          const hrefIdx = node.attrs.findIndex( ( { name } ) => name === "href" );
-          node.attrs.splice( hrefIdx, 1 );
-
         } else {
 
-          if ( !async ) {
-            for ( const { id, relativeDest } of assets ) {
-              if ( id !== this.id && !syncDeps.has( id ) ) {
-                syncDeps.add( relativeDest );
-                this.insertBefore( this.createSrcScript( builder.publicPath + relativeDest ), node );
-              }
+          this.treeAdapter.removeAttr( node, "defer" );
+          this.treeAdapter.removeAttr( node, "async" );
+          this.treeAdapter.removeAttr( node, "src" );
+          this.treeAdapter.removeAttr( node, "type" );
+          node.children = [];
+
+          if ( async ) {
+
+            this.treeAdapter.insertText( node, `
+              var s=document.currentScript;
+              __quase_builder__.i('${module.hashId}').then(function(){
+                s.dispatchEvent(new Event('load'));
+              },function(){
+                s.dispatchEvent(new Event('error'));
+              });
+            `.replace( /(\n|\s\s)/g, "" ) );
+
+          } else {
+
+            this.treeAdapter.setAttr( node, "defer", "" );
+            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r('${module.hashId}');` );
+
+            for ( const { relativeDest } of assets ) {
+              this.insertBefore( this.createSrcScript( builder.publicPath + relativeDest ), node );
             }
-          }
 
-          this.insertBefore(
-            this.createTextScript( `__quase_builder__.${async ? "i" : "r"}('${module.hashId}');` ),
-            node
-          );
-
-          const srcIdx = node.attrs.findIndex( ( { name } ) => name === "src" );
-          node.attrs.splice( srcIdx, 1 );
-          if ( node.children ) {
-            node.children.length = 0;
           }
 
         }
