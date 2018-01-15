@@ -1,6 +1,6 @@
 import JsLanguage from "../src/languages/js";
 import HtmlLanguage from "../src/languages/html";
-import { Watcher } from "../src";
+import index from "../src";
 
 const DEFAULT_BABEL_OPTS = {
   presets: [
@@ -69,7 +69,13 @@ describe( "watcher", () => {
 
       let output = "";
 
-      const b = new Watcher( config );
+      const reporter = index( config );
+
+      reporter.log = str => {
+        output += str;
+      };
+
+      const b = reporter.emitter;
       b.watcher = {
         _files: null,
         _dirs: null,
@@ -78,9 +84,6 @@ describe( "watcher", () => {
           this._dirs = dirs;
         },
         close() {}
-      };
-      b.log = str => {
-        output += str;
       };
 
       function update( file, type ) {
@@ -151,7 +154,6 @@ describe( "watcher", () => {
 
       }
 
-      b.start();
       b.nextJob( () => {
         setTimeout( next, 100 );
       } );

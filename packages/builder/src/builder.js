@@ -13,10 +13,10 @@ import Language from "./language";
 import FileSystem from "./filesystem";
 import Module, { type ModuleArg } from "./module";
 import { check } from "./checker";
+import Reporter from "./reporter";
 
-const getPlugins = require( "@quase/get-plugins" ).getPlugins;
+const { getPlugins, getOnePlugin } = require( "@quase/get-plugins" );
 const fs = require( "fs-extra" );
-const prettyBytes = require( "pretty-bytes" );
 const path = require( "path" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
@@ -26,6 +26,7 @@ type Info = { file: string, size: number, isEntry: boolean };
 
 export default class Builder {
 
+  +options: Object;
   +entries: string[];
   +context: string;
   +dest: string;
@@ -38,6 +39,9 @@ export default class Builder {
   +fileSystem: FileSystem;
   +fs: MinimalFS;
   +cli: Object;
+  +reporter: Function;
+  +watch: boolean;
+  +watchOptions: ?Object;
   +buildDefaultQuery: ( string ) => ?QueryArr;
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
@@ -65,6 +69,8 @@ export default class Builder {
     if ( typeof options.dest !== "string" ) {
       throw new Error( "Missing dest option." );
     }
+
+    this.options = options;
 
     this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd();
     this.context = resolvePath( options.context, this.cwd );
@@ -105,6 +111,11 @@ export default class Builder {
       }
       this.languages[ plugin.TYPE ] = [ plugin, options ];
     } );
+
+    this.reporter = options.reporter ? getOnePlugin( options.reporter ) : Reporter;
+
+    this.watch = !!options.watch;
+    this.watchOptions = options.watchOptions;
 
     this.performance = Object.assign( {
       // $FlowFixMe
@@ -303,29 +314,8 @@ export default class Builder {
       } );
     }
 
-    const output = [ "\nAssets:\n" ];
-
-    if ( this.performance.hints ) {
-      for ( const { file, size, isEntry } of filesInfo ) {
-        if ( this.performance.assetFilter( file ) ) {
-
-          let message = "";
-          if ( isEntry && size > this.performance.maxEntrypointSize ) {
-            message = ` > ${prettyBytes( this.performance.maxEntrypointSize )} [performance!]`;
-          } else if ( size > this.performance.maxAssetSize ) {
-            message = ` > ${prettyBytes( this.performance.maxAssetSize )} [performance!]`;
-          }
-
-          output.push( `${isEntry ? "[entry] " : ""}${relative( file, this.cwd )} | ${prettyBytes( size )}${message}` );
-        }
-      }
-    }
-
-    output.push( "\n" );
-
     return {
-      filesInfo,
-      output: output.join( "\n" )
+      filesInfo
     };
   }
 

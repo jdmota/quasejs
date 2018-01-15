@@ -10,10 +10,7 @@ Options
 `;
 
 require( "@quase/cli" ).default( ( { options } ) => {
-  const p = require( "../dist" ).default( options );
-  if ( p.then ) {
-    p.then( o => console.log( o.output ) );
-  }
+  require( "../dist" ).default( options );
 }, {
   help,
   configFiles: "quase-builder-config.js",

@@ -95,6 +95,7 @@ export type Options = {
   warn?: ?Function,
   fs?: ?MinimalFS,
   cli?: ?Object,
+  reporter?: ?string | Function,
   watch?: ?boolean,
   watchOptions?: ?Object,
   languages?: ?ProvidedPluginsArr,
