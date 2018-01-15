@@ -361,12 +361,13 @@ export default class NodeReporter {
 
   async logTestEnd( { fullname, status, skipReason, errors, runtime, slow, logs, source, memoryUsage } ) {
 
-    if ( status === "passed" && !slow && !logs.length ) {
-      return;
-    }
-
-    if ( skipReason === skipReasons.bailed && !slow && !logs.length ) {
-      return;
+    if ( !this.runner.options.verbose || !logs.length ) {
+      if ( status === "passed" && !slow ) {
+        return;
+      }
+      if ( skipReason === skipReasons.bailed && !slow ) {
+        return;
+      }
     }
 
     const statusText = status === "failed" ? colors.error( status ) : status === "passed" ? colors.pass( status ) : colors.skip( status );
