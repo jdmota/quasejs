@@ -126,6 +126,7 @@ class NodeRunner extends EventEmitter {
     this.forks = [];
     this.debuggersPromises = [];
     this.debuggersWaitingPromises = [];
+    this.timeStart = undefined;
     this.runStartArg = {
       name: "",
       fullname: [],
@@ -143,7 +144,7 @@ class NodeRunner extends EventEmitter {
       name: "",
       fullname: [],
       status: "passed", // Fill
-      runtime: 0, // Increment
+      runtime: 0, // Fill
       testCounts: {
         passed: 0, // Increment
         failed: 0, // Increment
@@ -240,6 +241,8 @@ class NodeRunner extends EventEmitter {
         this.runStartArg.testCounts.total += arg.testCounts.total;
 
         if ( ++this.runStarts === this.forks.length ) {
+          this.timeStart = Date.now();
+
           this.emit( eventType, this.runStartArg );
           this.runStartEmmited = true;
 
@@ -263,9 +266,11 @@ class NodeRunner extends EventEmitter {
         this.runEndArg.snapshotStats.obsolete += arg.snapshotStats.obsolete;
 
         this.runEndArg.onlyCount += arg.onlyCount;
-        this.runEndArg.runtime += arg.runtime;
 
         if ( ++this.runEnds === this.forks.length ) {
+          if ( this.timeStart ) {
+            this.runEndArg.runtime = Date.now() - this.timeStart;
+          }
           this.runEnd();
         }
       } else if ( eventType === "otherError" ) {
