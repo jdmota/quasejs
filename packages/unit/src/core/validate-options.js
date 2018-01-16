@@ -53,11 +53,7 @@ export default function( options ) {
     options.timeout = 0;
   } else {
     checkType( "timeout", getType( options.timeout ), "number" );
-    try {
-      assertTimeout( options.timeout );
-    } catch ( e ) {
-      throw new ValidationError( e.message );
-    }
+    assertTimeout( options.timeout );
   }
 
   if ( options.slow == null ) {
@@ -67,7 +63,11 @@ export default function( options ) {
   }
 
   if ( options.stackIgnore ) {
-    checkType( "stackIgnore", getType( options.stackIgnore ), "regexp" );
+    if ( typeof options.stackIgnore === "string" ) {
+      options.stackIgnore = new RegExp( options.stackIgnore );
+    } else {
+      checkType( "stackIgnore", getType( options.stackIgnore ), "regexp" );
+    }
   }
 
   options.reporter = options.reporter ? getOnePlugin( options.reporter ).plugin : NodeReporter;
