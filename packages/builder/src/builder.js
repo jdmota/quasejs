@@ -5,8 +5,9 @@ import HtmlLanguage from "./languages/html";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
-  FinalAsset, FinalAssets, ToWrite, Query, QueryArr,
-  PerformanceOpts, MinimalFS, Checker, GraphTransformer, Options
+  FinalAsset, FinalAssets, Query, QueryArr,
+  PerformanceOpts, MinimalFS, ToWrite,
+  Checker, GraphTransformer, AfterBuild, Output, Options
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
@@ -48,6 +49,7 @@ export default class Builder {
   +languages: { [key: string]: [ Class<Language>, Object ] };
   +checkers: { plugin: Checker, options: Object, name: ?string }[];
   +graphTransformers: { plugin: GraphTransformer, options: Object, name: ?string }[];
+  +afterBuild: { plugin: AfterBuild, options: Object, name: ?string }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -129,6 +131,13 @@ export default class Builder {
     this.graphTransformers.forEach( ( { plugin, name } ) => {
       if ( typeof plugin !== "function" ) {
         throw new Error( `Expected graph transformer ${name ? name + " " : ""}to be a function` );
+      }
+    } );
+
+    this.afterBuild = getPlugins( options.afterBuild || [] );
+    this.afterBuild.forEach( ( { plugin, name } ) => {
+      if ( typeof plugin !== "function" ) {
+        throw new Error( `Expected after build plugin ${name ? name + " " : ""}to be a function` );
       }
     } );
 
@@ -333,9 +342,13 @@ export default class Builder {
       } );
     }
 
-    return {
+    const out = {
       filesInfo
     };
+
+    await callAfterBuild( out, this );
+
+    return out;
   }
 
 }
@@ -383,4 +396,10 @@ async function callGraphTransformers( finalAssets: FinalAssets, builder: Builder
     finalAssets = await plugin( finalAssets, builder, options ) || finalAssets;
   }
   return finalAssets;
+}
+
+async function callAfterBuild( out: Output, builder: Builder ) {
+  for ( const { plugin, options } of builder.afterBuild ) {
+    await plugin( out, options );
+  }
 }

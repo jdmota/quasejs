@@ -83,9 +83,19 @@ export type MinimalFS = {
   mkdirp( string ): Promise<void>
 };
 
+export type Output = {
+  filesInfo: {
+    file: string,
+    size: number,
+    isEntry: boolean
+  }[]
+};
+
 export type Checker = ( Builder, Object ) => ?Promise<void>;
 
 export type GraphTransformer = ( FinalAssets, Builder, Object ) => ?Promise<?FinalAssets>;
+
+export type AfterBuild = ( Output, Object ) => ?Promise<void>;
 
 export type Options = {
   context: string,
@@ -107,6 +117,7 @@ export type Options = {
   loaderAlias?: ?{ [key: string]: Function },
   checkers?: ( Checker | [ Checker, Object ] )[];
   graphTransformers?: ( GraphTransformer | [ GraphTransformer, Object ] )[];
+  afterBuild?: ( AfterBuild | [ AfterBuild, Object ] )[];
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,
