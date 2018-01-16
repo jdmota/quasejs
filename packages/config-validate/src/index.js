@@ -30,108 +30,85 @@ export function createDidYouMeanMessage( unrecognized: string, allowedOptions: A
   return suggestion ? `Did you mean ${formatOption( suggestion )}?` : "";
 }
 
-export class Checker {
-
-  +config: Object;
-  +schema: ?Object;
-
-  constructor( config: ?Object, schema: ?Object ) {
-    this.config = config || {};
-    this.schema = schema;
-  }
-
-  validationError( message: string ) {
-    throw new ValidationError( message );
-  }
-
-  getType( value: mixed ) {
-    return getType( value );
-  }
-
-  checkUnrecognized( allowedOptions: Array<string>, type: ?string ) {
-
-    const options = Object.keys( this.config );
-    const unrecognizedOptions = options.filter( arg => !allowedOptions.includes( arg ) );
-
-    if ( unrecognizedOptions.length === 0 ) {
-      return;
-    }
-
-    type = type || "option";
-    let message;
-
-    if ( unrecognizedOptions.length === 1 ) {
-      const unrecognized = unrecognizedOptions[ 0 ];
-      const didYouMeanMessage = createDidYouMeanMessage( unrecognized, allowedOptions );
-      message = `  Unrecognized ${type} ${formatOption( unrecognized )}. ${didYouMeanMessage}`.trimRight();
-    } else {
-      message = `  Following ${type}s were not recognized:\n  ${unrecognizedOptions.map( formatOption ).join( ", " )}`;
-    }
-
-    this.validationError( message );
-  }
-
-  checkType( option: string, actualType: string, expectedType: string, defaultValue: any ) {
-
-    if ( actualType === expectedType ) {
-      return;
-    }
-
-    const messageLines = [
-      `  Option ${formatOption( option )} must be of type:`,
-      `    ${chalk.bold.green( expectedType )}`,
-      `  but instead received:`,
-      `    ${chalk.bold.red( actualType )}`
-    ];
-
-    if ( defaultValue !== undefined ) {
-      messageLines.push( `  Example:` );
-      messageLines.push( `  {` );
-      messageLines.push( `    ${formatOption( option )}: ${chalk.bold( format( defaultValue ) )}` );
-      messageLines.push( `  }` );
-    }
-
-    this.validationError( messageLines.join( "\n" ) );
-  }
-
-  checkDeprecated( option: string, message: ?string ) {
-    if ( this.config[ option ] ) {
-      message = message || `Option ${formatOption( option )} is deprecated.`;
-      printWarning( `${chalk.bold( "Deprecation Warning" )}: ${message}` );
-    }
-  }
-
+export function printDeprecated( option: string, message: ?string ) {
+  message = message || `Option ${formatOption( option )} is deprecated.`;
+  printWarning( `${chalk.bold( "Deprecation Warning" )}: ${message}` );
 }
 
-export function validate( config: ?Object, schema: ?Object, fn: ?( Checker ) => {} ) {
-  const c = new Checker( config, schema );
+export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<string>, type: ?string ) {
 
-  try {
-    if ( schema ) {
-      const deprecatedKeys = [];
+  const unrecognizedOptions = keys.filter( arg => !allowedOptions.includes( arg ) );
 
-      c.checkUnrecognized( Object.keys( schema ) );
+  if ( unrecognizedOptions.length === 0 ) {
+    return;
+  }
 
-      for ( const key in schema ) {
-        const { type, default: _default, deprecated, example } = schema[ key ];
-        if ( deprecated ) {
-          deprecatedKeys.push( key );
-        }
-        if ( type ) {
-          c.checkType( key, getType( c.config[ key ] ), type, example === undefined ? _default : example );
-        }
-      }
+  type = type || "option";
+  let message;
 
-      for ( const key of deprecatedKeys ) {
-        c.checkDeprecated( key );
-      }
+  if ( unrecognizedOptions.length === 1 ) {
+    const unrecognized = unrecognizedOptions[ 0 ];
+    const didYouMeanMessage = createDidYouMeanMessage( unrecognized, allowedOptions );
+    message = `Unrecognized ${type} ${formatOption( unrecognized )}. ${didYouMeanMessage}`.trimRight();
+  } else {
+    message = `Following ${type}s were not recognized:\n  ${unrecognizedOptions.map( formatOption ).join( ", " )}`;
+  }
+
+  throw new ValidationError( message );
+}
+
+export function checkType( option: string, actualType: string, expectedType: string, defaultValue: any ) {
+
+  if ( actualType === expectedType ) {
+    return;
+  }
+
+  const messageLines = [
+    `Option ${formatOption( option )} must be of type:`,
+    `  ${chalk.bold.green( expectedType )}`,
+    `but instead received:`,
+    `  ${chalk.bold.red( actualType )}`
+  ];
+
+  if ( defaultValue !== undefined ) {
+    messageLines.push( `Example:` );
+    messageLines.push( `{` );
+    messageLines.push( `  ${formatOption( option )}: ${chalk.bold( format( defaultValue ) )}` );
+    messageLines.push( `}` );
+  }
+
+  throw new ValidationError( messageLines.join( "\n" ) );
+}
+
+type Schema = {
+  [key: string]: {
+    type?: ?string,
+    default?: mixed,
+    deprecated?: ?boolean,
+    example?: ?mixed
+  }
+};
+
+export function validate( config: ?Object, schema: Schema ) {
+  config = config || {};
+  const deprecatedKeys = [];
+
+  checkUnrecognized( Object.keys( config ), Object.keys( schema ) );
+
+  for ( const key in schema ) {
+    const { type, default: _default, deprecated, example } = schema[ key ];
+    if ( deprecated ) {
+      deprecatedKeys.push( key );
     }
-
-    if ( fn ) {
-      fn( c );
+    if ( type ) {
+      checkType( key, getType( config[ key ] ), type, example === undefined ? _default : example );
     }
-  } catch ( e ) {
-    printError( e );
+  }
+
+  for ( const key of deprecatedKeys ) {
+    if ( config[ key ] !== undefined ) {
+      printDeprecated( key );
+    }
   }
 }
 
@@ -142,7 +119,7 @@ export function printWarning( str: string ) {
 export function printError( error: Error ) {
   let message;
   if ( error instanceof ValidationError ) {
-    message = `${chalk.bold( "Validation Error" )}:\n\n${error.message}`;
+    message = `${chalk.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
   } else {
     message = error.stack;
   }

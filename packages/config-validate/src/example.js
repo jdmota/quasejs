@@ -1,4 +1,4 @@
-import { validate } from ".";
+import { getType, checkType, validate, printError } from ".";
 
 const options = {
   deprecated: true,
@@ -18,9 +18,11 @@ const schema = {
   similar: {}
 };
 
-validate( options, schema, checker => {
-  // More checks...
-  checker.checkType( "similar", checker.getType( checker.config.similar ), "array", [] );
-} );
+try {
+  validate( options, schema );
+  checkType( "similar", getType( options.similar ), "array", [] );
+} catch ( e ) {
+  printError( e );
+}
 
 // yarn node packages/config-validate/src/example
