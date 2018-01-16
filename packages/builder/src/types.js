@@ -83,12 +83,10 @@ export type MinimalFS = {
   mkdirp( string ): Promise<void>
 };
 
+export type Info = { file: string, size: number, isEntry: boolean };
+
 export type Output = {
-  filesInfo: {
-    file: string,
-    size: number,
-    isEntry: boolean
-  }[]
+  filesInfo: Info[]
 };
 
 export type Checker = ( Builder, Object ) => ?Promise<void>;

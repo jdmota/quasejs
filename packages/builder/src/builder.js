@@ -1,29 +1,24 @@
 // @flow
 import hash from "./utils/hash";
-import JsLanguage from "./languages/js";
-import HtmlLanguage from "./languages/html";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
   FinalAsset, FinalAssets, Query, QueryArr,
   PerformanceOpts, MinimalFS, ToWrite,
-  Checker, GraphTransformer, AfterBuild, Output, Options
+  Checker, GraphTransformer, AfterBuild,
+  Info, Output, Options
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
 import FileSystem from "./filesystem";
 import Module, { type ModuleArg } from "./module";
-import { check } from "./checker";
-import Reporter from "./reporter";
+import validateOptions from "./options";
 
-const { getPlugins, getOnePlugin } = require( "@quase/get-plugins" );
 const fs = require( "fs-extra" );
 const path = require( "path" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
-
-type Info = { file: string, size: number, isEntry: boolean };
 
 export default class Builder {
 
@@ -61,36 +56,30 @@ export default class Builder {
 
   constructor( _opts: Options ) {
 
-    const options: Options = _opts || { entries: [] };
+    const options = this.options = validateOptions( _opts );
 
-    if ( !Array.isArray( options.entries ) || options.entries.length === 0 ) {
-      throw new Error( "Missing entries." );
-    }
+    this.cwd = options.cwd;
+    this.context = options.context;
+    this.dest = options.dest;
+    this.publicPath = options.publicPath;
+    this.isSplitPoint = options.isSplitPoint;
+    this.loaderAlias = options.loaderAlias;
+    this.buildDefaultQuery = options.buildDefaultQuery;
+    this.fs = options.fs;
+    this.sourceMaps = options.sourceMaps;
+    this.hashing = options.hashing;
+    this.warn = options.warn;
+    this.cli = options.cli;
+    this.watch = options.watch;
+    this.watchOptions = options.watchOptions;
+    this.checkers = options.checkers;
+    this.graphTransformers = options.graphTransformers;
+    this.afterBuild = options.afterBuild;
+    this.reporter = options.reporter;
+    this.cleanBeforeBuild = options.cleanBeforeBuild;
+    this.performance = options.performance;
 
-    if ( typeof options.context !== "string" ) {
-      throw new Error( "Missing context option." );
-    }
-
-    if ( typeof options.dest !== "string" ) {
-      throw new Error( "Missing dest option." );
-    }
-
-    this.options = options;
-
-    this.cwd = typeof options.cwd === "string" ? path.resolve( options.cwd ) : process.cwd();
-    this.context = resolvePath( options.context, this.cwd );
-    this.dest = resolvePath( options.dest, this.cwd );
-
-    this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
-
-    this.isSplitPoint = options.isSplitPoint || ( () => {} );
-
-    this.loaderAlias = options.loaderAlias || {};
-    this.buildDefaultQuery = options.buildDefaultQuery || ( () => {} );
-    this.languages = {
-      js: [ JsLanguage, {} ],
-      html: [ HtmlLanguage, {} ]
-    };
+    this.fileSystem = new FileSystem();
 
     this.requests = options.entries.map( e => {
       const [ path, queryStr ] = Module.parseRequest( e );
@@ -103,73 +92,17 @@ export default class Builder {
 
     this.entries = this.requests.map( r => r.path );
 
-    this.fileSystem = new FileSystem();
-    this.fs = options.fs || fs;
+    this.languages = {};
 
-    this.sourceMaps = options.sourceMaps === "inline" ? options.sourceMaps : !!options.sourceMaps;
-    this.hashing = !!options.hashing;
-    this.warn = options.warn || ( () => {} );
-
-    this.cli = options.cli || {};
-
-    getPlugins( options.languages || [] ).forEach( ( { plugin, name, options } ) => {
-      if ( typeof plugin !== "function" ) {
-        throw new Error( `Expected language ${name ? name + " " : ""}to be a function` );
-      }
+    options.languages.forEach( ( { plugin, options } ) => {
       this.languages[ plugin.TYPE ] = [ plugin, options ];
     } );
 
-    this.checkers = getPlugins( options.checkers || [] );
-    this.checkers.unshift( { plugin: check, options: {} } );
-    this.checkers.forEach( ( { plugin, name } ) => {
-      if ( typeof plugin !== "function" ) {
-        throw new Error( `Expected checker ${name ? name + " " : ""}to be a function` );
-      }
-    } );
-
-    this.graphTransformers = getPlugins( options.graphTransformers || [] );
-    this.graphTransformers.forEach( ( { plugin, name } ) => {
-      if ( typeof plugin !== "function" ) {
-        throw new Error( `Expected graph transformer ${name ? name + " " : ""}to be a function` );
-      }
-    } );
-
-    this.afterBuild = getPlugins( options.afterBuild || [] );
-    this.afterBuild.forEach( ( { plugin, name } ) => {
-      if ( typeof plugin !== "function" ) {
-        throw new Error( `Expected after build plugin ${name ? name + " " : ""}to be a function` );
-      }
-    } );
-
-    this.reporter = options.reporter ? getOnePlugin( options.reporter ) : Reporter;
-
-    this.watch = !!options.watch;
-    this.watchOptions = options.watchOptions;
-
-    this.performance = Object.assign( {
-      // $FlowFixMe
-      hints: "warning",
-      maxEntrypointSize: 250000,
-      maxAssetSize: 250000,
-      assetFilter( f ) {
-        return !( /\.map$/.test( f ) );
-      }
-    }, options.performance );
-
-    if ( this.performance.hints === true ) {
-      this.performance.hints = "warning";
-    }
-
-    this.serviceWorker = Object.assign( {
-      staticFileGlobs: [],
-      stripPrefixMulti: {}
-    }, options.serviceWorker );
+    this.serviceWorker = options.serviceWorker;
 
     this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
     this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
     this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
-
-    this.cleanBeforeBuild = !!options.cleanBeforeBuild;
 
     this.modules = new Map();
     this.modulesPerFile = new Map();

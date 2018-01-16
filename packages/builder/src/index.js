@@ -1,9 +1,10 @@
 import Builder from "./builder";
 import Watcher from "./watcher";
 
+const { printError } = require( "@quase/config-validate" );
 const EventEmitter = require( "events" );
 
-export default function( options ) {
+function run( options ) {
   let reporter, emitter;
   options = options || {};
   options.warn = options.warn || ( w => emitter.emit( "warning", w ) );
@@ -25,6 +26,14 @@ export default function( options ) {
     );
   }
   return reporter;
+}
+
+export default function( options ) {
+  try {
+    return run( options );
+  } catch ( e ) {
+    printError( e );
+  }
 }
 
 export { Builder, Watcher };
