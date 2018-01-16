@@ -6,7 +6,7 @@ import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
   FinalAsset, FinalAssets, ToWrite, Query, QueryArr,
-  PerformanceOpts, MinimalFS, Checker, Options
+  PerformanceOpts, MinimalFS, Checker, GraphTransformer, Options
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
@@ -47,6 +47,7 @@ export default class Builder {
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
   +checkers: { plugin: Checker, options: Object, name: ?string }[];
+  +graphTransformers: { plugin: GraphTransformer, options: Object, name: ?string }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -121,6 +122,13 @@ export default class Builder {
     this.checkers.forEach( ( { plugin, name } ) => {
       if ( typeof plugin !== "function" ) {
         throw new Error( `Expected checker ${name ? name + " " : ""}to be a function` );
+      }
+    } );
+
+    this.graphTransformers = getPlugins( options.graphTransformers || [] );
+    this.graphTransformers.forEach( ( { plugin, name } ) => {
+      if ( typeof plugin !== "function" ) {
+        throw new Error( `Expected graph transformer ${name ? name + " " : ""}to be a function` );
       }
     } );
 
@@ -306,7 +314,7 @@ export default class Builder {
 
     await callCheckers( this );
 
-    const finalAssets = processGraph( this );
+    const finalAssets = await callGraphTransformers( processGraph( this ), this );
 
     await emptyDirPromise;
 
@@ -368,4 +376,11 @@ async function callCheckers( builder: Builder ) {
   for ( const { plugin, options } of builder.checkers ) {
     await plugin( builder, options );
   }
+}
+
+async function callGraphTransformers( finalAssets: FinalAssets, builder: Builder ) {
+  for ( const { plugin, options } of builder.graphTransformers ) {
+    finalAssets = await plugin( finalAssets, builder, options ) || finalAssets;
+  }
+  return finalAssets;
 }

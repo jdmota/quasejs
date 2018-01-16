@@ -85,6 +85,8 @@ export type MinimalFS = {
 
 export type Checker = ( Builder, Object ) => ?Promise<void>;
 
+export type GraphTransformer = ( FinalAssets, Builder, Object ) => ?Promise<?FinalAssets>;
+
 export type Options = {
   context: string,
   entries: string[],
@@ -104,6 +106,7 @@ export type Options = {
   isSplitPoint?: ?( Module, Module ) => ?boolean,
   loaderAlias?: ?{ [key: string]: Function },
   checkers?: ( Checker | [ Checker, Object ] )[];
+  graphTransformers?: ( GraphTransformer | [ GraphTransformer, Object ] )[];
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,
