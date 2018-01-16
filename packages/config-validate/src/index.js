@@ -8,7 +8,13 @@ const leven = require( "leven" );
 
 export { getType };
 
-export class ValidationError extends Error {}
+export class ValidationError extends Error {
+  +__validation: boolean;
+  constructor( message: string ) {
+    super( message );
+    this.__validation = true;
+  }
+}
 
 export function formatOption( str: string ): string {
   return chalk.bold( concordance.format( str ) );
@@ -118,7 +124,7 @@ export function printWarning( str: string ) {
 
 export function printError( error: Error ) {
   let message;
-  if ( error instanceof ValidationError ) {
+  if ( error.__validation ) {
     message = `${chalk.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
   } else {
     message = error.stack;
