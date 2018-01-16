@@ -6,6 +6,8 @@ const concordance = require( "concordance" );
 const chalk = require( "chalk" );
 const leven = require( "leven" );
 
+export { getType };
+
 export class ValidationError extends Error {}
 
 export function formatOption( str: string ): string {
@@ -31,9 +33,19 @@ export function createDidYouMeanMessage( unrecognized: string, allowedOptions: A
 export class Checker {
 
   +config: Object;
+  +schema: ?Object;
 
-  constructor( config: ?Object ) {
+  constructor( config: ?Object, schema: ?Object ) {
     this.config = config || {};
+    this.schema = schema;
+  }
+
+  validationError( message: string ) {
+    throw new ValidationError( message );
+  }
+
+  getType( value: mixed ) {
+    return getType( value );
   }
 
   checkUnrecognized( allowedOptions: Array<string>, type: ?string ) {
@@ -56,21 +68,14 @@ export class Checker {
       message = `  Following ${type}s were not recognized:\n  ${unrecognizedOptions.map( formatOption ).join( ", " )}`;
     }
 
-    throw new ValidationError( message );
+    this.validationError( message );
   }
 
-  checkType( option: string, defaultValue: any ) {
-    const actualType = getType( this.config[ option ] );
-    const expectedType = getType( defaultValue );
+  checkType( option: string, actualType: string, expectedType: string, defaultValue: any ) {
 
     if ( actualType === expectedType ) {
       return;
     }
-
-    this.throwWrongType( option, actualType, expectedType, defaultValue );
-  }
-
-  throwWrongType( option: string, actualType: string, expectedType: string, defaultValue: any ) {
 
     const messageLines = [
       `  Option ${formatOption( option )} must be of type:`,
@@ -86,7 +91,7 @@ export class Checker {
       messageLines.push( `  }` );
     }
 
-    throw new ValidationError( messageLines.join( "\n" ) );
+    this.validationError( messageLines.join( "\n" ) );
   }
 
   checkDeprecated( option: string, message: ?string ) {
@@ -98,15 +103,36 @@ export class Checker {
 
 }
 
-export function createValidator( fn: ( Object, Checker ) => {} ) {
-  return function( config: ?Object ) {
-    const checker = new Checker( config );
-    try {
-      fn( checker.config, checker );
-    } catch ( e ) {
-      printError( e );
+export function validate( config: ?Object, schema: ?Object, fn: ?( Checker ) => {} ) {
+  const c = new Checker( config, schema );
+
+  try {
+    if ( schema ) {
+      const deprecatedKeys = [];
+
+      c.checkUnrecognized( Object.keys( schema ) );
+
+      for ( const key in schema ) {
+        const { type, default: _default, deprecated, example } = schema[ key ];
+        if ( deprecated ) {
+          deprecatedKeys.push( key );
+        }
+        if ( type ) {
+          c.checkType( key, getType( c.config[ key ] ), type, example === undefined ? _default : example );
+        }
+      }
+
+      for ( const key of deprecatedKeys ) {
+        c.checkDeprecated( key );
+      }
     }
-  };
+
+    if ( fn ) {
+      fn( c );
+    }
+  } catch ( e ) {
+    printError( e );
+  }
 }
 
 export function printWarning( str: string ) {

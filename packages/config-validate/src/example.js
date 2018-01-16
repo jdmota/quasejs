@@ -1,19 +1,26 @@
-import { createValidator } from ".";
+import { validate } from ".";
 
-const validator = createValidator( ( config, c ) => {
-
-  c.checkDeprecated( "deprecated" );
-
-  c.checkUnrecognized( [ "config", "deprecated", "similar" ] );
-
-  c.checkType( "config", "config.js" );
-
-} );
-
-validator( {
+const options = {
   deprecated: true,
-  config: 10,
-  // simil: 10,
+  config: 20,
+  simil: 10,
+};
+
+const schema = {
+  config: {
+    type: "string",
+    alias: "c",
+    default: "config.js"
+  },
+  deprecated: {
+    deprecated: true
+  },
+  similar: {}
+};
+
+validate( options, schema, checker => {
+  // More checks...
+  checker.checkType( "similar", checker.getType( checker.config.similar ), "array", [] );
 } );
 
 // yarn node packages/config-validate/src/example
