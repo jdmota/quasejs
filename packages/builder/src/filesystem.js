@@ -1,6 +1,10 @@
 // @flow
-
+const pathUrl = require( "@quase/path-url" );
 const FileSystem = require( "@quase/cacheable-fs" ).default;
+
+function makeAbsolutePath( p: string ): string {
+  return pathUrl.lowerPath( pathUrl.makeAbsolutePath( p ) );
+}
 
 export default class TrackableFileSystem extends FileSystem {
 
@@ -12,11 +16,15 @@ export default class TrackableFileSystem extends FileSystem {
   }
 
   getObjFile( file: string, _from: string ) {
+    _from = makeAbsolutePath( _from );
+
     const obj = super.getObjFile( file );
     const set = this.fileUsedBy.get( obj.location ) || new Set();
-    if ( file !== _from ) {
+
+    if ( obj.location !== _from ) {
       set.add( _from );
     }
+
     this.fileUsedBy.set( obj.location, set );
     return obj;
   }

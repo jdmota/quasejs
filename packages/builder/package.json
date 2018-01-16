@@ -22,6 +22,7 @@
     "@quase/cli": "0.3.0-0",
     "@quase/get-plugins": "0.1.0-0",
     "@quase/cacheable-fs": "0.1.0-0",
+    "@quase/path-url": "0.2.0-0",
     "@quase/source-map": "0.2.0-0",
     "babylon": "7.0.0-beta.35",
     "babel-preset-minify": "^0.2.0",
