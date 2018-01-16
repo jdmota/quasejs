@@ -5,8 +5,8 @@ import HtmlLanguage from "./languages/html";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
-  FinalAsset, FinalAssets, ToWrite,
-  Query, QueryArr, PerformanceOpts, MinimalFS, Options
+  FinalAsset, FinalAssets, ToWrite, Query, QueryArr,
+  PerformanceOpts, MinimalFS, Checker, Options
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
@@ -46,6 +46,7 @@ export default class Builder {
   +buildDefaultQuery: ( string ) => ?QueryArr;
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
+  +checkers: { plugin: Checker, options: Object, name: ?string }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -110,9 +111,17 @@ export default class Builder {
 
     getPlugins( options.languages || [] ).forEach( ( { plugin, name, options } ) => {
       if ( typeof plugin !== "function" ) {
-        throw new Error( `Expected language ${name + " " || ""}to be a function` );
+        throw new Error( `Expected language ${name ? name + " " : ""}to be a function` );
       }
       this.languages[ plugin.TYPE ] = [ plugin, options ];
+    } );
+
+    this.checkers = getPlugins( options.checkers || [] );
+    this.checkers.unshift( { plugin: check, options: {} } );
+    this.checkers.forEach( ( { plugin, name } ) => {
+      if ( typeof plugin !== "function" ) {
+        throw new Error( `Expected checker ${name ? name + " " : ""}to be a function` );
+      }
     } );
 
     this.reporter = options.reporter ? getOnePlugin( options.reporter ) : Reporter;
@@ -295,8 +304,7 @@ export default class Builder {
       await promise;
     }
 
-    // TODO custom checkers
-    await check( this );
+    await callCheckers( this );
 
     const finalAssets = processGraph( this );
 
@@ -354,4 +362,10 @@ async function callRenderers(
     throw new Error( `Could not build asset ${asset.id}` );
   }
   return Promise.all( writes );
+}
+
+async function callCheckers( builder: Builder ) {
+  for ( const { plugin, options } of builder.checkers ) {
+    await plugin( builder, options );
+  }
 }

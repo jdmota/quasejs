@@ -1,4 +1,5 @@
 // @flow
+import type Builder from "./builder";
 import type Module from "./module";
 
 export type Data = Buffer | string;
@@ -82,6 +83,8 @@ export type MinimalFS = {
   mkdirp( string ): Promise<void>
 };
 
+export type Checker = ( Builder, Object ) => ?Promise<void>;
+
 export type Options = {
   context: string,
   entries: string[],
@@ -100,6 +103,7 @@ export type Options = {
   languages?: ?ProvidedPluginsArr,
   isSplitPoint?: ?( Module, Module ) => ?boolean,
   loaderAlias?: ?{ [key: string]: Function },
+  checkers?: ( Checker | [ Checker, Object ] )[];
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,
