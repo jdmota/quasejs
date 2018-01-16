@@ -78,7 +78,7 @@ const parentDir = path.dirname( filename );
 
 export function getConfig( opts ) {
 
-  const { cwd, configFiles, configKey } = opts || {};
+  const { cwd, configFiles, configKey, failIfNotFound } = opts || {};
   const result = {
     config: undefined,
     location: undefined
@@ -94,6 +94,8 @@ export function getConfig( opts ) {
       } catch ( e ) {
         // Ignore
       }
+    } else if ( failIfNotFound ) {
+      throw new Error( `Config file was not found: ${configFiles.toString()}` );
     }
   }
 
@@ -220,7 +222,8 @@ export default function( callback, opts ) {
   const { config, location: configLocation } = getConfig( {
     cwd: opts.cwd,
     configFiles: argv.config || opts.configFiles,
-    configKey: opts.configKey
+    configKey: opts.configKey,
+    failIfNotFound: !!argv.config
   } );
 
   const input = argv._;

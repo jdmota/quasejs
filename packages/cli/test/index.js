@@ -145,4 +145,22 @@ describe( "cli", () => {
 
   } );
 
+  it( "asked for config that does not exist", () => {
+
+    expect( () => {
+      cli( () => {}, {
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1"
+        },
+        argv: [ "--config=non-existante-file.js" ],
+        help: "",
+        configFiles: [ "quase-cli-config.js" ],
+        notifier: false
+      } );
+    } ).toThrow( /^Config file was not found/ );
+
+  } );
+
 } );
