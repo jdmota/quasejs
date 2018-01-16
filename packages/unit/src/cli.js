@@ -4,6 +4,7 @@ import NodeReporter from "./reporters/node";
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
 const findFiles = require( "@quase/find-files" ).default;
 const FileSystem = require( "@quase/cacheable-fs" ).default;
+const { printError } = require( "@quase/config-validate" );
 const { beautify: beautifyStack } = require( "@quase/error" );
 const { EventEmitter } = require( "events" );
 const path = require( "path" );
@@ -441,7 +442,7 @@ export default function cli( { input, options, configLocation } ) {
   try {
     validateOptions( options );
   } catch ( err ) {
-    return NodeReporter.fatalError( err );
+    return printError( err );
   }
 
   const spinner = ora( "Looking for files..." ).start();

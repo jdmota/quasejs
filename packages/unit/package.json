@@ -15,7 +15,9 @@
     "@quase/cli": "0.3.0-0",
     "@quase/error": "0.1.0-0",
     "@quase/cacheable-fs": "0.1.0-0",
+    "@quase/config-validate": "0.1.0-0",
     "@quase/find-files": "0.1.0-0",
+    "@quase/get-plugins": "0.1.0-0",
     "@quase/path-url": "^0.1.0",
     "@quase/source-map": "0.2.0-0",
     "ansi-styles": "^3.2.0",
@@ -30,7 +32,6 @@
     "log-symbols": "^2.1.0",
     "ora": "^1.2.0",
     "random-js": "^1.0.8",
-    "require-relative": "^0.8.7",
     "write-file-atomic": "^2.3.0"
   },
   "devDependencies": {

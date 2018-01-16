@@ -1,9 +1,8 @@
-import requirePlugin from "./util/require-plugin";
 import { GroupPlaceholder } from "./placeholders";
 import addChain from "./add-chain";
 import validateOptions from "./validate-options";
 
-const { EventEmitter } = require( "events" ); // TODO for browser
+const { EventEmitter } = require( "events" );
 
 class Runner extends EventEmitter {
 
@@ -16,9 +15,7 @@ class Runner extends EventEmitter {
     this.concordanceOptions = this.options.concordanceOptions;
     this.randomizer = this.options.randomizer;
     this.match = this.options.match;
-
-    const assertions = ( this.options.assertions || [] ).map( a => requirePlugin( a, null, "object", "assertion" ) );
-    this.assertions = Object.assign( {}, ...assertions );
+    this.assertions = Object.assign( {}, ...this.options.assertions );
 
     this.failedOnce = false;
     this.onlyCount = 0;

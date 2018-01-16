@@ -1,12 +1,13 @@
 import NodeReporter from "../reporters/node";
-import { assertTimeout, assertNumber } from "./util/assert-args";
+import { assertTimeout } from "./util/assert-args";
 import { color as concordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
-import requirePlugin from "./util/require-plugin";
 import randomizer from "./random";
 
-const os = require( "os" );
-const isCi = require( "is-ci" );
+const { ValidationError, getType, checkType } = require( "@quase/config-validate" );
+const { getOnePlugin } = require( "@quase/get-plugins" );
 const { supportsColor } = require( "chalk" );
+const isCi = require( "is-ci" );
+const os = require( "os" );
 
 function arrify( val ) {
   if ( val == null ) {
@@ -18,16 +19,16 @@ function arrify( val ) {
 export default function( options ) {
   if ( options.inspect || options.inspectBrk ) {
     if ( options.debug ) {
-      throw new Error( `You cannot use "debug" with --inspect or --inspect-brk` );
+      throw new ValidationError( `You cannot use "debug" with --inspect or --inspect-brk` );
     }
     if ( options.concurrency != null && options.concurrency !== 1 ) {
-      throw new Error( `You cannot use "concurrency" with --inspect or --inspect-brk` );
+      throw new ValidationError( `You cannot use "concurrency" with --inspect or --inspect-brk` );
     }
   }
 
   if ( options.forceSerial ) {
     if ( options.concurrency != null && options.concurrency !== 1 ) {
-      throw new Error( `You cannot use "concurrency" with --force-serial` );
+      throw new ValidationError( `You cannot use "concurrency" with --force-serial` );
     }
   }
 
@@ -38,17 +39,10 @@ export default function( options ) {
     options.concurrency = 1;
   }
 
+  checkType( "concurrency", getType( options.concurrency ), "number" );
+
   options.randomizer = options.random && randomizer( options.random );
   options.random = options.randomizer && options.randomizer.hex;
-  options.reporter = requirePlugin( options.reporter, NodeReporter, "function", "reporter" );
-  options.env = requirePlugin( options.env, null, "object", "environment" );
-  options.concordanceOptions = requirePlugin(
-    options.concordanceOptions,
-    options.color ? concordanceOptions : plainConcordanceOptions,
-    "object",
-    "concordance options"
-  );
-
   options.timeouts = !!( options.timeouts === undefined || options.timeouts );
 
   if ( options.debug ) {
@@ -58,18 +52,35 @@ export default function( options ) {
   if ( options.timeout == null ) {
     options.timeout = 0;
   } else {
-    assertTimeout( options.timeout );
+    checkType( "timeout", getType( options.timeout ), "number" );
+    try {
+      assertTimeout( options.timeout );
+    } catch ( e ) {
+      throw new ValidationError( e.message );
+    }
   }
 
   if ( options.slow == null ) {
     options.slow = 0;
   } else {
-    assertNumber( options.slow );
+    checkType( "slow", getType( options.slow ), "number" );
   }
 
-  if ( options.stackIgnore && typeof options.stackIgnore.test !== "function" ) {
-    throw new Error( `"stackIgnore" option should be a regular expression.` );
+  if ( options.stackIgnore ) {
+    checkType( "stackIgnore", getType( options.stackIgnore ), "regexp" );
   }
+
+  options.reporter = options.reporter ? getOnePlugin( options.reporter ).plugin : NodeReporter;
+  checkType( "reporter", getType( options.reporter ), "function" );
+
+  options.env = options.env ? getOnePlugin( options.env ).plugin : {};
+  checkType( "env", getType( options.env ), "object" );
+
+  options.concordanceOptions =
+    options.concordanceOptions ? getOnePlugin( options.concordanceOptions ).plugin : ( options.color ? concordanceOptions : plainConcordanceOptions );
+  checkType( "concordanceOptions", getType( options.concordanceOptions ), "object" );
+
+  options.assertions = ( options.assertions || [] ).map( a => getOnePlugin( a ).plugin );
 
   options.files = arrify( options.files );
   options.match = arrify( options.match );
