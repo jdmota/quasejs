@@ -1,4 +1,5 @@
 // @flow
+import type Module from "./module";
 
 export type Data = Buffer | string;
 
@@ -37,7 +38,6 @@ export type Query = {
 export type NotResolvedDep = {
   request: string,
   loc?: ?Loc,
-  splitPoint?: ?boolean,
   async?: ?boolean
 };
 
@@ -46,7 +46,6 @@ export type Dep = {
   query: Query,
   request: string,
   loc?: ?Loc,
-  splitPoint?: ?boolean,
   async?: ?boolean
 };
 
@@ -99,6 +98,7 @@ export type Options = {
   watch?: ?boolean,
   watchOptions?: ?Object,
   languages?: ?ProvidedPluginsArr,
+  isSplitPoint?: ?( Module, Module ) => ?boolean,
   loaderAlias?: ?{ [key: string]: Function },
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,

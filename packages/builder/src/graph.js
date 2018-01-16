@@ -10,7 +10,7 @@ const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 class BiMap {
 
-  deps: Map<Module, ( Dep & { required: Module } )[]>;
+  deps: Map<Module, ( Dep & { required: Module, splitPoint: boolean } )[]>;
   incs: Map<Module, Module[]>;
   entrypoints: Set<Module>;
 
@@ -24,8 +24,16 @@ class BiMap {
         module,
         module.moduleDeps.map( dep => {
           const required = builder.getModuleForSure( dep.requiredId );
+
+          let splitPoint = dep.async ? true : builder.isSplitPoint( required, module );
+
+          if ( splitPoint == null ) {
+            // $FlowFixMe
+            splitPoint = required.lang.constructor.TYPE !== module.lang.constructor.TYPE;
+          }
+
           // $FlowFixMe
-          return Object.assign( {}, dep, { required } );
+          return Object.assign( {}, dep, { required, splitPoint } );
         } )
       );
     }

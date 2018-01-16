@@ -121,7 +121,7 @@ export default class Module {
   async _handleDeps( builder: Builder, lang: Language, deps: NotResolvedDep[] ): Promise<Dep[]> {
     const p = deps.map( async obj => {
 
-      const { request, loc, splitPoint, async } = obj;
+      const { request, loc, async } = obj;
       let [ path, queryStr ] = Module.parseRequest( request );
 
       if ( !request ) {
@@ -151,7 +151,6 @@ export default class Module {
         query: query.arr.length ? query : builder.getDefaultQuery( path ),
         request,
         loc,
-        splitPoint,
         async
       };
     } );

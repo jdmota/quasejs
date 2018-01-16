@@ -42,6 +42,7 @@ export default class Builder {
   +reporter: Function;
   +watch: boolean;
   +watchOptions: ?Object;
+  +isSplitPoint: ( Module, Module ) => ?boolean;
   +buildDefaultQuery: ( string ) => ?QueryArr;
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
@@ -77,6 +78,8 @@ export default class Builder {
     this.dest = resolvePath( options.dest, this.cwd );
 
     this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
+
+    this.isSplitPoint = options.isSplitPoint || ( () => {} );
 
     this.loaderAlias = options.loaderAlias || {};
     this.buildDefaultQuery = options.buildDefaultQuery || ( () => {} );

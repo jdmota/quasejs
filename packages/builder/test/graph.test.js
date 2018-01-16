@@ -27,9 +27,8 @@ function createDummyModule( builder, id, deps ) {
     dest: id.replace( "context/", "dest/" ),
     hashId: hashName( normalized, builder.usedIds, 5 ),
     deps,
-    moduleDeps: ( deps || [] ).map( ( { path, splitPoint, async } ) => ( {
+    moduleDeps: ( deps || [] ).map( ( { path, async } ) => ( {
       path,
-      splitPoint,
       async,
       requiredId: path
     } ) )
@@ -38,12 +37,13 @@ function createDummyModule( builder, id, deps ) {
   return m;
 }
 
-function createDummyBuilder( entries ) {
+function createDummyBuilder( entries, isSplitPoint ) {
   return {
     entries,
     modules: new Map(),
     moduleEntries: null,
     usedIds: new Set(),
+    isSplitPoint: isSplitPoint || ( () => false ),
     getModuleForSure( id ) {
       return this.modules.get( id );
     },
@@ -89,7 +89,13 @@ describe( "graph", () => {
 
   it( "cycle split", async() => {
 
-    const builder = createDummyBuilder( [ "context/entry.js" ] );
+    const builder = createDummyBuilder( [ "context/entry.js" ], ( a, b ) => {
+      return (
+        a.path === "context/A.js" && b.path === "context/B.js"
+      ) || (
+        a.path === "context/B.js" && b.path === "context/A.js"
+      );
+    } );
 
     builder.createModule( "context/entry.js", [
       {
@@ -102,15 +108,13 @@ describe( "graph", () => {
 
     builder.createModule( "context/A.js", [
       {
-        path: "context/B.js",
-        splitPoint: true
+        path: "context/B.js"
       }
     ] );
 
     builder.createModule( "context/B.js", [
       {
-        path: "context/A.js",
-        splitPoint: true
+        path: "context/A.js"
       }
     ] );
 
@@ -120,12 +124,17 @@ describe( "graph", () => {
 
   it( "split points", async() => {
 
-    const builder = createDummyBuilder( [ "context/entry.html" ] );
+    const builder = createDummyBuilder( [ "context/entry.html" ], ( a, b ) => {
+      return (
+        a.path === "context/entry.js" && b.path === "context/entry.html"
+      ) || (
+        a.path === "context/B.js" && b.path === "context/A.js"
+      );
+    } );
 
     builder.createModule( "context/entry.html", [
       {
-        path: "context/entry.js",
-        splitPoint: true
+        path: "context/entry.js"
       }
     ] );
 
@@ -137,8 +146,7 @@ describe( "graph", () => {
 
     builder.createModule( "context/A.js", [
       {
-        path: "context/B.js",
-        splitPoint: true
+        path: "context/B.js"
       }
     ] );
 
