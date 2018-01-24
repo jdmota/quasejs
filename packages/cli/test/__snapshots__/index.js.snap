@@ -34,5 +34,8 @@ exports[`cli generate help 1`] = `
     --number, -n, -n2 number description
     --unicorn, -u     unicorn description
     --boolean         boolean description [boolean]
+    --tuple           tuple [array]
+    --array           array of strings [array]
+    --union           union [string | number]
 "
 `;

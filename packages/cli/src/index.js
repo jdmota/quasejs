@@ -101,13 +101,16 @@ function pad( str, length ) {
 function typeToString( type ) {
   if ( type ) {
     if ( typeof type === "string" ) {
-      return `[${type}]`;
+      return type;
     }
-    if ( type.items || type instanceof types.Array ) {
-      return "[array]";
+    if ( type instanceof types.Tuple || type instanceof types.Array ) {
+      return "array";
     }
-    if ( type.properties ) {
-      return "[object]";
+    if ( type instanceof types.Object ) {
+      return "object";
+    }
+    if ( type instanceof types.Union ) {
+      return type.types.map( t => typeToString( t.type ) ).join( " | " );
     }
   }
   return "";
@@ -122,10 +125,11 @@ function generateHelp( options ) {
     const flag = options.schema[ key ];
 
     if ( flag.description ) {
+      const typeStr = typeToString( flag.type );
       const line = [
         `  --${key}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
         flag.description,
-        typeToString( flag.type )
+        typeStr ? `[${typeStr}]` : ""
       ];
 
       lines.push( line );

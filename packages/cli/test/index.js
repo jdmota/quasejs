@@ -143,10 +143,23 @@ describe( "cli", () => {
           } )
         },
         tuple: {
-          type: t.tuple( [] )
+          type: t.tuple( [] ),
+          description: "tuple"
         },
         array: {
-          type: t.array( "string" )
+          type: t.array( "string" ),
+          description: "array of strings"
+        },
+        union: {
+          type: t.union( [
+            {
+              type: "string"
+            },
+            {
+              type: "number"
+            }
+          ] ),
+          description: "union"
         }
       },
       notifier: false
