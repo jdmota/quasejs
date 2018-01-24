@@ -1,6 +1,6 @@
 // @flow
 import { t, types, type Schema } from "./types";
-import { validateType } from "./validation";
+import { validateType, ValidationError, checkType } from "./validation";
 import getType from "./get-type";
 
 export function validate( schema: Schema, config: ?Object ) {
@@ -11,4 +11,4 @@ export { applyDefaults } from "./defaults";
 export { getConfig } from "./get-config";
 export { printWarning, printError } from "./print";
 
-export { t, types, getType };
+export { t, types, getType, ValidationError, checkType };
