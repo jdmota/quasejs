@@ -63,6 +63,8 @@ require( "@quase/cli" ).default(
     inferType: false,
     // The help text used with --help. Default: generated automatically from schema
     help: "",
+    // Usage example. Used when generating the help text
+    usage: "",
     // Description to show above the help text. Default: The package.json "description" property
     description: undefined,
     // Set a custom version output. Default: The package.json "version" property
@@ -97,6 +99,7 @@ require( "@quase/cli" ).default(
 require( "@quase/cli" ).default( ( { options, input } ) => {
   require( "../dist" ).default( options, input );
 }, {
+  usage: "$ sample",
   schema: {},
   configFiles: "sample.config.js",
   configKey: "sample"
