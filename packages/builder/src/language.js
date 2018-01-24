@@ -41,10 +41,10 @@ export default class Language implements ILanguage {
   cachedExportedNames: ?Promise<ExportedName[]>;
   cachedDependencies: ?Promise<NotResolvedDep[]>;
 
-  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) { // eslint-disable-line no-unused-vars
-    this.id = id;
-    this.data = data;
-    this.dataType = getDataType( data );
+  constructor( result: { data: Data }, options: Object, module: Module, builder: Builder ) { // eslint-disable-line no-unused-vars
+    this.id = module.id;
+    this.data = result.data;
+    this.dataType = getDataType( result.data );
     this.options = Object.assign( {}, options );
     this.cachedMoreLanguages = null;
     this.cachedImportedNames = null;

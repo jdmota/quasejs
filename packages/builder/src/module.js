@@ -175,14 +175,13 @@ export default class Module {
 
     let result = {
       type: getType( this.path ),
+      ast: null,
       data
     };
 
     const maps = [];
 
     const loaders = getPlugins( this.query.arr, name => builder.loaderAlias[ name ] );
-
-    // TODO allow passing of ast between loaders, and to the final renderers
 
     for ( const { plugin, options } of loaders ) {
       const out = await plugin(
@@ -194,6 +193,7 @@ export default class Module {
       if ( isObject( out ) ) {
         result.type = out.type;
         result.data = out.data;
+        result.ast = out.ast;
         if ( out.map ) {
           maps.push( out.map );
         }
@@ -205,7 +205,7 @@ export default class Module {
 
     const [ C, opts ] = builder.languages[ result.type ] || [ Language, {} ];
 
-    const lang = new C( this.id, this.data, opts, this, builder );
+    const lang = new C( result, opts, this, builder );
     this.lang = lang;
     return lang;
   }

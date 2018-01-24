@@ -94,14 +94,14 @@ export default class HtmlLanguage extends Language {
   +originalCode: string;
   +document: Object;
 
-  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) {
-    super( id, data, options, module, builder );
+  constructor( result: { data: Data }, options: Object, module: Module, builder: Builder ) {
+    super( result, options, module, builder );
 
     this.deps = [];
 
     this.treeAdapter = new TreeAdapter();
 
-    this.originalCode = data.toString();
+    this.originalCode = result.data.toString();
 
     this.document = parse5.parse( this.originalCode, {
       treeAdapter: this.treeAdapter,

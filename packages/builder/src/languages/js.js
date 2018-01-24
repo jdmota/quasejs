@@ -120,8 +120,8 @@ export default class JsLanguage extends Language {
   +_importNames: ImportedName[];
   +_exportNames: ExportedName[];
 
-  constructor( id: string, data: Data, options: Object, module: Module, builder: Builder ) {
-    super( id, data, options, module, builder );
+  constructor( result: { data: Data, ast?: ?Object }, options: Object, module: Module, builder: Builder ) {
+    super( result, options, module, builder );
 
     const babelOpts = this.options.babelOpts || {};
 
@@ -134,8 +134,8 @@ export default class JsLanguage extends Language {
       this.options.babelOpts || {}
     );
 
-    this.dataToString = data.toString();
-    this.ast = parse( this.dataToString, this.parserOpts );
+    this.dataToString = result.data.toString();
+    this.ast = result.ast || parse( this.dataToString, this.parserOpts );
     this.deps = [];
 
     this.lastRender = null;
