@@ -69,7 +69,7 @@ export default class Watcher extends EventEmitter {
   onUpdate( id: string, type: string ) {
     this.nextJob( () => {
       this.needsBuild = this.needsBuild || this.filesThatTriggerBuild.has( id ) || !!this.builder.entries.find( e => e === id );
-      this.builder.removeFile( id );
+      this.builder.removeFile( id, type === "removed" );
       this.emit( "update", { id, type } );
     } );
   }

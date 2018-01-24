@@ -164,7 +164,7 @@ export default class Builder {
     }
   }
 
-  removeFile( path: string ) {
+  removeFile( path: string, removed: boolean ) {
     path = lowerPath( path );
 
     const modules = this.modulesPerFile.get( path );
@@ -184,7 +184,11 @@ export default class Builder {
       set.forEach( f => this.resetDeps( f ) );
     }
 
-    this.fileSystem.purge( path );
+    if ( removed ) {
+      this.fileSystem.purge( path );
+    } else {
+      this.fileSystem.purgeContent( path );
+    }
   }
 
   createRuntime( obj: RuntimeArg ) {
