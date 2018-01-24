@@ -29,7 +29,14 @@ export function getOnePlugin( p: ProvidedPlugin, requireFn: ?Function ): Plugin 
 
   if ( typeof plugin === "string" ) {
     name = plugin;
-    plugin = ( requireFn && requireFn( name ) ) || requireRelative( name );
+    plugin = requireFn && requireFn( name );
+
+    if ( typeof plugin === "string" ) {
+      name = plugin;
+      plugin = requireRelative( name );
+    } else if ( !plugin ) {
+      plugin = requireRelative( name );
+    }
 
     if ( plugin.default ) {
       plugin = plugin.default;
