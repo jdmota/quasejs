@@ -455,4 +455,13 @@ it( "get config", () => {
     } );
   } ).toThrow( /^Config file was not found/ );
 
+  result = getConfig( {
+    cwd: __dirname,
+    configFiles: [],
+    configKey: ""
+  } );
+
+  expect( result.config ).toBe( undefined );
+  expect( result.location ).toBe( undefined );
+
 } );

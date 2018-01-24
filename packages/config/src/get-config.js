@@ -9,7 +9,7 @@ export function getConfig( opts ) {
     location: undefined
   };
 
-  if ( configFiles ) {
+  if ( configFiles && configFiles.length ) {
     const location = findUp.sync( configFiles, { cwd } );
 
     if ( location ) {
