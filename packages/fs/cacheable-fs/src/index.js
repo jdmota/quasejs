@@ -5,9 +5,18 @@ import File from "./file";
 export default class FileSystem {
 
   +data: Map<string, File>;
+  +directChilds: Map<string, Set<string>>;
 
   constructor() {
     this.data = new Map();
+    this.directChilds = new Map();
+  }
+
+  _setDirectChild( file: string ) {
+    const parent = dirname( file );
+    const set = this.directChilds.get( parent ) || new Set();
+    set.add( file );
+    this.directChilds.set( parent, set );
   }
 
   getObjFile( file: string ): File {
@@ -16,6 +25,7 @@ export default class FileSystem {
     if ( !obj ) {
       obj = new File( file );
       this.data.set( file, obj );
+      this._setDirectChild( file );
     }
     return obj;
   }
@@ -50,10 +60,49 @@ export default class FileSystem {
     return overwrite;
   }
 
+  _purge( file: string, level: number ) {
+    const parent = dirname( file );
+
+    // Remove cached contents
+    if ( level > 0 ) {
+      this.data.delete( file );
+    }
+
+    // Remove cached readdir of the parent
+    if ( level > 1 ) {
+      this.data.delete( parent );
+
+      const set = this.directChilds.get( parent );
+      if ( set ) {
+        set.delete( file );
+      }
+    }
+
+    // Remove all nested contents
+    if ( level > 2 ) {
+      const set = this.directChilds.get( file );
+      if ( set ) {
+        for ( const f of set ) {
+          this._purge( f, 3 );
+        }
+        this.directChilds.delete( file );
+      }
+    }
+  }
+
+  // React to "file changed"
+  purgeContent( what: string ) {
+    this._purge( makeAbsolutePath( what ), 1 );
+  }
+
+  // React to "file added" or "file removed"
   purge( what: string ) {
-    const file = makeAbsolutePath( what );
-    this.data.delete( dirname( file ) );
-    this.data.delete( file );
+    this._purge( makeAbsolutePath( what ), 2 );
+  }
+
+  // React to "folder added" or "folder removed"
+  purgeNested( what: string ) {
+    this._purge( makeAbsolutePath( what ), 3 );
   }
 
 }
