@@ -1,11 +1,11 @@
-# @quase/config-validate
+# @quase/config
 
 ## About
 
 Provides utilities to get configuration (from a file or `package.json`), apply defaults and validate options.
 
 ```js
-import { getConfig, applyDefaults, t, validate } from "@quase/config-validate";
+import { getConfig, applyDefaults, t, validate } from "@quase/config";
 
 const schema = {
   foo: {

@@ -11,7 +11,7 @@ const camelcaseKeys = require( "camelcase-keys" );
 const decamelize = require( "decamelize" );
 const trimNewlines = require( "trim-newlines" );
 const redent = require( "redent" );
-const { getConfig, t, types, applyDefaults } = require( "@quase/config-validate" );
+const { getConfig, t, types, applyDefaults } = require( "@quase/config" );
 
 function isObject( x ) {
   return x != null && typeof x === "object";

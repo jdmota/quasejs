@@ -4,7 +4,7 @@ import Reporter from "./reporter";
 import { check } from "./checker";
 import { resolvePath } from "./id";
 
-const { ValidationError } = require( "@quase/config-validate" );
+const { ValidationError } = require( "@quase/config" );
 const { getPlugins, getOnePlugin } = require( "@quase/get-plugins" );
 const fs = require( "fs-extra" );
 const path = require( "path" );

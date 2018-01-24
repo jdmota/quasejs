@@ -18,7 +18,7 @@ It's a bundler with easy configuration, good performance and support for javascr
 
 Allows you to create a command line interface very easily.
 
-**[config-validate](packages/config-validate)** - *WIP*
+**[config](packages/config)** - *WIP*
 
 Utilities to get configuration, apply defaults and validate options.
 

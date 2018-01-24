@@ -1,11 +1,11 @@
 {
   "private": true,
-  "name": "@quase/config-validate",
+  "name": "@quase/config",
   "version": "0.1.0-0",
   "description": "Configuration utilities",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
-  "repository": "https://github.com/quase/quasejs/tree/master/packages/config-validate",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/config",
   "module": "src/index.js",
   "main": "dist/index.js",
   "dependencies": {

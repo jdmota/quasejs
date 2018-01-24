@@ -1,7 +1,7 @@
 import Builder from "./builder";
 import Watcher from "./watcher";
 
-const { printError } = require( "@quase/config-validate" );
+const { printError } = require( "@quase/config" );
 const EventEmitter = require( "events" );
 
 function run( options ) {

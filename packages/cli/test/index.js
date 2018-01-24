@@ -1,6 +1,6 @@
 import cli from "../src";
 
-const { t } = require( "@quase/config-validate" );
+const { t } = require( "@quase/config" );
 
 /* eslint-disable no-console */
 

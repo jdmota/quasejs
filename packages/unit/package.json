@@ -15,7 +15,7 @@
     "@quase/cli": "0.3.0-0",
     "@quase/error": "0.1.0-0",
     "@quase/cacheable-fs": "0.1.0-0",
-    "@quase/config-validate": "0.1.0-0",
+    "@quase/config": "0.1.0-0",
     "@quase/find-files": "0.1.0-0",
     "@quase/get-plugins": "0.1.0-0",
     "@quase/path-url": "^0.1.0",

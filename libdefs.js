@@ -9,7 +9,7 @@ declare module "@babel/template" { declare var exports: any; }
 declare module "@babel/types" { declare var exports: any; }
 declare module "@quase/cacheable-fs" { declare var exports: any; }
 declare module "@quase/cli" { declare var exports: any; }
-declare module "@quase/config-validate" { declare var exports: any; }
+declare module "@quase/config" { declare var exports: any; }
 declare module "@quase/error" { declare var exports: any; }
 declare module "@quase/find-files" { declare var exports: any; }
 declare module "@quase/get-plugins" { declare var exports: any; }

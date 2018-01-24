@@ -4,7 +4,7 @@ import NodeReporter from "./reporters/node";
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
 const findFiles = require( "@quase/find-files" ).default;
 const FileSystem = require( "@quase/cacheable-fs" ).default;
-const { printError } = require( "@quase/config-validate" );
+const { printError } = require( "@quase/config" );
 const { beautify: beautifyStack } = require( "@quase/error" );
 const { EventEmitter } = require( "events" );
 const path = require( "path" );

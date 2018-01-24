@@ -3,7 +3,7 @@ import { assertTimeout } from "./util/assert-args";
 import { color as concordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
 import randomizer from "./random";
 
-const { ValidationError, getType, checkType } = require( "@quase/config-validate" );
+const { ValidationError, getType, checkType } = require( "@quase/config" );
 const { getOnePlugin } = require( "@quase/get-plugins" );
 const { supportsColor } = require( "chalk" );
 const isCi = require( "is-ci" );
