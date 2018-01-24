@@ -355,6 +355,10 @@ it( "apply defaults - merge modes", () => {
     }
   }, {
     obj: {
+      foo: [ "...", 2 ]
+    }
+  }, {
+    obj: {
       foo: [ "...", 1 ]
     }
   }, {

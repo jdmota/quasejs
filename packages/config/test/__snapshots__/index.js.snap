@@ -38,6 +38,7 @@ Object {
     "foo": Array [
       0,
       1,
+      2,
     ],
   },
 }
