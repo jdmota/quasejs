@@ -1,0 +1,252 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`apply defaults - merge modes 1`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge modes 2`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge modes 3`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge modes 4`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge modes 5`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge modes 6`] = `
+Object {
+  "obj": Object {
+    "foo": Array [],
+  },
+}
+`;
+
+exports[`apply defaults 1`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      "a",
+      "b",
+    ],
+  },
+}
+`;
+
+exports[`apply defaults 2`] = `
+Object {
+  "obj": Object {
+    "foo": Object {
+      "a": 10,
+      "b": 20,
+    },
+  },
+}
+`;
+
+exports[`apply defaults 3`] = `
+Object {
+  "obj": Object {
+    "foo": 100,
+  },
+}
+`;
+
+exports[`apply defaults 4`] = `
+Object {
+  "obj": false,
+}
+`;
+
+exports[`apply defaults 5`] = `
+Object {
+  "obj": Array [],
+}
+`;
+
+exports[`apply defaults 6`] = `
+Object {
+  "obj": Object {},
+}
+`;
+
+exports[`apply defaults 7`] = `Object {}`;
+
+exports[`apply defaults 8`] = `
+Object {
+  "obj": 0,
+}
+`;
+
+exports[`validate 1`] = `
+Array [
+  Array [
+    "Deprecation Warning: Option 'deprecated' is deprecated.
+",
+  ],
+]
+`;
+
+exports[`validate 2`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'config' must be of type:
+    string
+  but instead received:
+    boolean
+",
+  ],
+]
+`;
+
+exports[`validate 3`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo.bar' must be of type:
+    string
+  but instead received:
+    number
+  Example:
+  {
+    'obj': {
+      'foo': {
+        'bar': 'example'
+      }
+    }
+  }
+",
+  ],
+]
+`;
+
+exports[`validate 4`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' must be of type:
+    object
+  but instead received:
+    number
+",
+  ],
+]
+`;
+
+exports[`validate 5`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Unrecognized option 'obj.foo.baz'. Did you mean 'obj.foo.bar'?
+",
+  ],
+]
+`;
+
+exports[`validate 6`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo.1' must be of type:
+    string
+  but instead received:
+    number
+  Example:
+  {
+    'obj': {
+      'foo': {
+        '1': 'example'
+      }
+    }
+  }
+",
+  ],
+]
+`;
+
+exports[`validate 7`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' must be an array of 2 items.
+",
+  ],
+]
+`;
+
+exports[`validate 8`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' does not match any of the expected types.
+  Example:
+  {
+    'obj': {
+      'foo': 'example'
+    }
+  }
+",
+  ],
+]
+`;
+
+exports[`validate 9`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' should be one of:
+    0 | 1
+  but instead received:
+    2
+",
+  ],
+]
+`;

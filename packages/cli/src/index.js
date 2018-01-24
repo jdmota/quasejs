@@ -2,18 +2,33 @@ const path = require( "path" );
 const chalk = require( "chalk" );
 const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
-const findUp = require( "find-up" );
 const readPkgUp = require( "read-pkg-up" );
-const pkgConf = require( "pkg-conf" );
 const importLocal = require( "import-local" );
 const loudRejection = require( "loud-rejection" );
 const normalizePkg = require( "normalize-package-data" );
-const minimist = require( "minimist" );
+const yargsParser = require( "yargs-parser" );
 const camelcaseKeys = require( "camelcase-keys" );
 const decamelize = require( "decamelize" );
 const trimNewlines = require( "trim-newlines" );
 const redent = require( "redent" );
-const defaultsDeep = require( "lodash.defaultsdeep" );
+const { getConfig, t, types, applyDefaults } = require( "@quase/config-validate" );
+
+function isObject( x ) {
+  return x != null && typeof x === "object";
+}
+
+function arrify( val ) {
+  if ( val == null ) {
+    return [];
+  }
+  return Array.isArray( val ) ? val : [ val ];
+}
+
+function userError( message ) {
+  const e = new Error( message );
+  e.__validation = true;
+  return e;
+}
 
 function notifyFix( opts ) {
   if ( !process.stdout.isTTY || !this.update ) {
@@ -76,53 +91,172 @@ delete require.cache[ __filename ];
 const filename = module.parent.filename;
 const parentDir = path.dirname( filename );
 
-export function getConfig( opts ) {
+function pad( str, length ) {
+  while ( str.length < length ) {
+    str += " ";
+  }
+  return str;
+}
 
-  const { cwd, configFiles, configKey, failIfNotFound } = opts || {};
-  const result = {
-    config: undefined,
-    location: undefined
-  };
+function typeToString( type ) {
+  if ( type ) {
+    if ( typeof type === "string" ) {
+      return `[${type}]`;
+    }
+    if ( type.items || type instanceof types.Array ) {
+      return "[array]";
+    }
+    if ( type.properties ) {
+      return "[object]";
+    }
+  }
+  return "";
+}
 
-  if ( configFiles ) {
-    const location = findUp.sync( configFiles, { cwd } );
+function generateHelp( options ) {
+  const lines = [];
+  let optionsLength = 0;
 
-    if ( location ) {
-      try {
-        result.config = require( location );
-        result.location = location;
-      } catch ( e ) {
-        // Ignore
+  for ( const key in options.schema ) {
+
+    const flag = options.schema[ key ];
+
+    if ( flag.description ) {
+      const line = [
+        `  --${key}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
+        flag.description,
+        typeToString( flag.type )
+      ];
+
+      lines.push( line );
+
+      if ( optionsLength < line[ 0 ].length ) {
+        optionsLength = line[ 0 ].length;
       }
-    } else if ( failIfNotFound ) {
-      throw new Error( `Config file was not found: ${configFiles.toString()}` );
     }
   }
 
-  if ( !result.config ) {
-    if ( configKey ) {
-      try {
-        result.config = pkgConf.sync( configKey, { cwd, skipOnFalse: true } );
-        result.location = "pkg";
-      } catch ( e ) {
-        // Ignore
-      }
-    }
-  }
-
-  return result;
+  return [
+    options.usage ? `Usage: ${options.usage}\n` : "",
+    "Options:"
+  ].concat(
+    lines.map( line => {
+      line[ 0 ] = pad( line[ 0 ], optionsLength );
+      return line.filter( Boolean ).join( " " );
+    } )
+  ).join( "\n" );
 }
 
 const DEFAULT = {};
 
-const defaultOptions = {
-  cwd: process.cwd(),
-  argv: process.argv.slice( 2 ),
-  inferType: true,
-  autoHelp: true,
-  autoVersion: true,
-  schema: {}
-};
+function handleArgs( schema, opts ) {
+  const allAlias = new Set();
+  const yargsOpts = {
+    alias: {},
+    array: [],
+    boolean: [],
+    coerce: {},
+    count: [],
+    default: {},
+    string: [],
+    narg: {},
+    number: [],
+    configuration: {}
+  };
+
+  if ( opts.configFiles ) {
+    yargsOpts.string.push( "config" );
+    yargsOpts.alias.c = "config";
+  }
+
+  if ( !opts.inferType ) {
+    yargsOpts.string.push( "_" );
+  }
+
+  if ( schema[ "--" ] ) {
+    yargsOpts[ "--" ] = true;
+    yargsOpts.configuration[ "populate--" ] = true;
+  }
+
+  function fillOptions( schema, chain ) {
+    for ( const k in schema ) {
+      let { type, argType, alias, coerce, narg } = schema[ k ];
+      let key = decamelize( k, "-" );
+
+      argType = argType || type;
+
+      chain.push( key );
+      key = chain.join( "." );
+
+      if ( argType ) {
+        const acceptedTypes = argType instanceof types.Union ? argType.types : [ argType ];
+
+        for ( const t of acceptedTypes ) {
+          if ( t instanceof types.Object ) {
+            fillOptions( t.properties, chain );
+          } else if ( t instanceof types.Tuple ) {
+            fillOptions( t.items, chain );
+          } else {
+            const arr = yargsOpts[ type instanceof types.Array ? "array" : t ];
+            if ( Array.isArray( arr ) ) {
+              arr.push( key );
+              yargsOpts.default[ key ] = DEFAULT;
+            }
+          }
+        }
+      }
+
+      if ( alias ) {
+        const arr = yargsOpts.alias[ key ] = yargsOpts.alias[ key ] || [];
+        arrify( alias ).forEach( a => {
+          arr.push( a );
+          allAlias.add( a );
+        } );
+      }
+      if ( coerce ) {
+        yargsOpts.coerce[ key ] = coerce;
+      }
+      if ( narg ) {
+        yargsOpts.narg[ key ] = narg;
+      }
+
+      chain.pop();
+    }
+  }
+
+  fillOptions( schema, [] );
+
+  const { error, argv } = yargsParser.detailed( opts.argv, yargsOpts );
+
+  if ( error ) {
+    throw userError( error.message );
+  }
+
+  function clear( obj, chain ) {
+    for ( const key in obj ) {
+      const v = obj[ key ];
+      chain.push( key );
+      if ( v === DEFAULT || allAlias.has( chain.join( "." ) ) ) {
+        delete obj[ key ];
+      } else if ( isObject( v ) ) {
+        clear( v, chain );
+      }
+      chain.pop();
+    }
+  }
+
+  clear( argv, [] );
+
+  const input = argv._;
+  delete argv._;
+
+  const flags = camelcaseKeys( argv, { exclude: [ "--", /^\w$/ ], deep: true } );
+
+  return {
+    flags,
+    input
+  };
+}
 
 export default function( callback, opts ) {
   /* eslint-disable no-process-exit, no-console */
@@ -133,55 +267,19 @@ export default function( callback, opts ) {
 
   loudRejection();
 
-  opts = defaultsDeep( {}, opts, defaultOptions );
+  opts = Object.assign( {
+    cwd: process.cwd(),
+    inferType: false,
+    autoHelp: true,
+    autoVersion: true,
+    argv: process.argv.slice( 2 ),
+    schema: {}
+  }, opts );
+
   opts.cwd = path.resolve( opts.cwd );
 
-  const minimistOpts = {
-    string: [],
-    boolean: [],
-    alias: {},
-    default: {},
-    stopEarly: false,
-    unknown: () => true,
-    "--": true
-  };
-
-  if ( opts.configFiles ) {
-    minimistOpts.string.push( "config" );
-    minimistOpts.alias.c = "config";
-  }
-
-  if ( !opts.inferType ) {
-    minimistOpts.string.push( "_" );
-  }
-
-  const defaults = {};
-
-  for ( const k in opts.schema ) {
-    const { type, alias, default: d } = opts.schema[ k ];
-    defaults[ k ] = d;
-
-    const key = decamelize( k, "-" );
-    if ( type === "string" ) {
-      minimistOpts.string.push( key );
-      minimistOpts.default[ key ] = DEFAULT;
-    } else if ( type === "boolean" ) {
-      minimistOpts.boolean.push( key );
-      minimistOpts.default[ key ] = DEFAULT;
-      if ( d === undefined ) {
-        defaults[ k ] = false;
-      }
-    }
-    minimistOpts.alias[ alias ] = key;
-  }
-
-  const argv = minimist( opts.argv, minimistOpts );
-
-  for ( const key in argv ) {
-    if ( argv[ key ] === DEFAULT ) {
-      delete argv[ key ];
-    }
-  }
+  const schema = typeof opts.schema === "function" ? opts.schema( t ) : opts.schema;
+  const { input, flags } = handleArgs( schema, opts );
 
   const pkg = opts.pkg ? opts.pkg : readPkgUp.sync( {
     cwd: parentDir,
@@ -191,7 +289,7 @@ export default function( callback, opts ) {
   normalizePkg( pkg );
 
   let description;
-  let help = redent( trimNewlines( ( opts.help || "" ).replace( /\t+\n*$/, "" ) ), 2 );
+  let help = redent( opts.help ? trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) : generateHelp( opts ), 2 );
 
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
   description = !opts.description && opts.description !== false ? pkg.description : opts.description;
@@ -207,11 +305,11 @@ export default function( callback, opts ) {
     process.exit();
   };
 
-  if ( argv.version && opts.autoVersion ) {
+  if ( flags.version && opts.autoVersion ) {
     showVersion();
   }
 
-  if ( argv.help && opts.autoHelp ) {
+  if ( flags.help && opts.autoHelp ) {
     showHelp( 0 );
   }
 
@@ -221,17 +319,12 @@ export default function( callback, opts ) {
 
   const { config, location: configLocation } = getConfig( {
     cwd: opts.cwd,
-    configFiles: argv.config || opts.configFiles,
+    configFiles: flags.config || opts.configFiles,
     configKey: opts.configKey,
-    failIfNotFound: !!argv.config
+    failIfNotFound: !!flags.config
   } );
 
-  const input = argv._;
-  delete argv._;
-
-  const flags = camelcaseKeys( argv, { exclude: [ "--", /^\w$/ ] } );
-
-  const options = defaultsDeep( {}, flags, config, defaults );
+  const options = applyDefaults( schema, flags, config );
 
   callback( {
     input,

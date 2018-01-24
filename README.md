@@ -20,7 +20,7 @@ Allows you to create a command line interface very easily.
 
 **[config-validate](packages/config-validate)** - *WIP*
 
-Tools to help validate configuration and show useful errors.
+Utilities to get configuration, apply defaults and validate options.
 
 **[error](packages/error)** - *WIP*
 

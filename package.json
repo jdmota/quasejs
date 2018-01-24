@@ -23,6 +23,7 @@
     "roots": [
       "<rootDir>/packages/builder/test/",
       "<rootDir>/packages/cli/test/",
+      "<rootDir>/packages/config-validate/test/",
       "<rootDir>/packages/package-manager/test/",
       "<rootDir>/packages/pathname/test/",
       "<rootDir>/packages/unit/test/",

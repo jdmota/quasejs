@@ -2,6 +2,8 @@
 
 exports[`cli basic 1`] = `
 "
+  Description
+
   Usage
     foo <input>
       
@@ -20,4 +22,17 @@ Array [
                                                          ",
   ],
 ]
+`;
+
+exports[`cli generate help 1`] = `
+"
+  Description
+
+  Usage: $ bin something
+
+  Options:
+    --number, -n, -n2 number description
+    --unicorn, -u     unicorn description
+    --boolean         boolean description [boolean]
+"
 `;

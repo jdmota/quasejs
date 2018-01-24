@@ -1,12 +1,15 @@
+# @quase/cli
+
 ## About
 
 A simple cli helper.
 
-Based and adapted from [meow](https://github.com/sindresorhus/meow), and includes [update-notifier](https://github.com/yeoman/update-notifier), plus some extensions:
+Based and adapted from [meow](https://github.com/sindresorhus/meow), and includes [update-notifier](https://github.com/yeoman/update-notifier), plus some features:
 
-- We change the update message if Yarn is detected.
+- We change the update notifier message if Yarn is detected.
 - Passing a `configFiles` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 - Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
+- Support for `@quase/config-validate`'s schema and defaults application.
 
 ## Usage example
 
@@ -30,25 +33,35 @@ require( "@quase/cli" ).default(
 
   },
   {
-    // If you pass an array, we try to find the first
+    // If you pass an array, we try to find the first file
     configFiles: "sample.config.js",
     configKey: "sample",
-    schema: {
-      someFlagName: {
-        // Any value is accepted, but if you pass "string" or "boolean", you help `minimist` disambiguate
-        type: "boolean",
-        alias: "s",
-        default: false
-      }
+    // Function or just the object. For more info, see @quase/config-validate
+    schema( t ) {
+      return {
+        someFlagName: {
+          type: "boolean",
+          description: "",
+          alias: "s",
+          default: false
+        },
+        someObject: {
+          type: t.object( {
+            someProp: {
+              type: "number"
+            }
+          } )
+        }
+      };
     },
     // false to disable notification
     notifier: {
       options: {}, // UpdateNotifier options
       notify: {} // .notify() options
     },
-    // Infer the argument type. Default: true
-    inferType: true,
-    // The help text used with --help
+    // Infer the argument type. Default: false
+    inferType: false,
+    // The help text used with --help. Default: generated automatically from schema
     help: "",
     // Description to show above the help text. Default: The package.json "description" property
     description: undefined,
@@ -84,7 +97,6 @@ require( "@quase/cli" ).default(
 require( "@quase/cli" ).default( ( { options, input } ) => {
   require( "../dist" ).default( options, input );
 }, {
-  help: "",
   schema: {},
   configFiles: "sample.config.js",
   configKey: "sample"
