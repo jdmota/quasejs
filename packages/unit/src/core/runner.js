@@ -3,6 +3,7 @@ import addChain from "./add-chain";
 import validateOptions from "./validate-options";
 
 const { EventEmitter } = require( "events" );
+const concordance = require( "concordance" );
 
 class Runner extends EventEmitter {
 
@@ -51,6 +52,10 @@ class Runner extends EventEmitter {
 
   static init( options ) {
     return new Runner( options );
+  }
+
+  format( value ) {
+    return concordance.format( value, this.concordanceOptions );
   }
 
   otherError( err ) {

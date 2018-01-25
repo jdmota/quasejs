@@ -152,8 +152,12 @@ export class Runnable implements ITestResult, ITest {
     }, this.runner.assertions );
   }
 
-  log( text: string ) {
-    this.logs.push( text );
+  log( ...args: mixed[] ) {
+    if ( args.length > 0 ) {
+      this.logs.push( args.map( value => {
+        return typeof value === "string" ? value : this.runner.format( value );
+      } ).join( " " ) );
+    }
   }
 
   matchesSnapshot( something: mixed ) {
