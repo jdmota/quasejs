@@ -18,24 +18,32 @@ class BiMap {
     this.deps = new Map();
     this.incs = new Map();
     this.entrypoints = new Set( builder.moduleEntries );
+  }
 
+  async init( builder: Builder ) {
     for ( const module of builder.modules.values() ) {
-      this.deps.set(
-        module,
-        module.moduleDeps.map( dep => {
-          const required = builder.getModuleForSure( dep.requiredId );
+      const deps = await Promise.all( module.moduleDeps.map( async dep => {
+        const required = builder.getModuleForSure( dep.requiredId );
 
-          let splitPoint = dep.async ? true : builder.isSplitPoint( required, module );
+        let splitPoint = dep.async ? true : await builder.isSplitPoint( required, module );
 
-          if ( splitPoint == null ) {
-            // $FlowFixMe
-            splitPoint = required.lang.constructor.TYPE !== module.lang.constructor.TYPE;
-          }
-
+        if ( splitPoint == null ) {
           // $FlowFixMe
-          return Object.assign( {}, dep, { required, splitPoint } );
-        } )
-      );
+          splitPoint = required.lang.constructor.TYPE !== module.lang.constructor.TYPE;
+        }
+
+        return {
+          path: dep.path,
+          query: dep.query,
+          request: dep.request,
+          loc: dep.loc,
+          async: dep.async,
+          required,
+          splitPoint
+        };
+      } ) );
+
+      this.deps.set( module, deps );
     }
 
     for ( const module of this.deps.keys() ) {
@@ -76,8 +84,10 @@ class BiMap {
   }
 }
 
-export default function processGraph( builder: Builder ) {
+export default async function processGraph( builder: Builder ) {
   const map = new BiMap( builder );
+  await map.init( builder );
+
   const entrypoints = Array.from( map.entrypoints );
 
   // walk over graph and set (1<<n) for all demands

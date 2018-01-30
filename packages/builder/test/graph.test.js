@@ -4,7 +4,7 @@ import processGraph from "../src/graph";
 
 async function createGraphAndRuntime( builder ) {
   builder.moduleEntries = new Set( builder.entries.map( e => builder.getModule( e ) ) );
-  const finalAssets = processGraph( builder );
+  const finalAssets = await processGraph( builder );
   finalAssets.runtime = await createRuntime( {
     context: "context",
     fullPath: builder.entries[ 0 ],

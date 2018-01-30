@@ -2,7 +2,7 @@ module.exports = {
   resolve: {
     extensions: [ ".js", ".ts" ]
   },
-  buildDefaultQuery: function( path ) {
+  loaders: function( path ) {
     if ( /\.ts$/.test( path ) ) {
       return [ "my-ts-loader" ];
     }

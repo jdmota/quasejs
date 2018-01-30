@@ -3,10 +3,10 @@ import hash from "./utils/hash";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
-  FinalAsset, FinalAssets, Query, QueryArr,
+  FinalAsset, FinalAssets, Query,
+  ProvidedPluginsArr, Loader,
   PerformanceOpts, MinimalFS, ToWrite,
-  Checker, GraphTransformer, AfterBuild,
-  Info, Output, Options
+  Info, Options
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
@@ -35,16 +35,13 @@ export default class Builder {
   +fileSystem: FileSystem;
   +fs: MinimalFS;
   +cli: Object;
-  +reporter: Function;
+  +reporter: { plugin: Function, options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
-  +isSplitPoint: ( Module, Module ) => ?boolean;
-  +buildDefaultQuery: ( string ) => ?QueryArr;
+  +loaders: ( string ) => ?ProvidedPluginsArr<Loader>;
   +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
-  +checkers: { plugin: Checker, options: Object, name: ?string }[];
-  +graphTransformers: { plugin: GraphTransformer, options: Object, name: ?string }[];
-  +afterBuild: { plugin: AfterBuild, options: Object, name: ?string }[];
+  +plugins: { plugin: Plugin, options: Object, name: ?string }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -62,9 +59,7 @@ export default class Builder {
     this.context = options.context;
     this.dest = options.dest;
     this.publicPath = options.publicPath;
-    this.isSplitPoint = options.isSplitPoint;
     this.loaderAlias = options.loaderAlias;
-    this.buildDefaultQuery = options.buildDefaultQuery;
     this.fs = options.fs;
     this.sourceMaps = options.sourceMaps;
     this.hashing = options.hashing;
@@ -72,14 +67,16 @@ export default class Builder {
     this.cli = options.cli;
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
-    this.checkers = options.checkers;
-    this.graphTransformers = options.graphTransformers;
-    this.afterBuild = options.afterBuild;
     this.reporter = options.reporter;
     this.cleanBeforeBuild = options.cleanBeforeBuild;
     this.performance = options.performance;
+    this.loaders = options.loaders;
 
     this.fileSystem = new FileSystem();
+
+    this.plugins = options.plugins.map(
+      ( { plugin, options } ) => plugin( options )
+    );
 
     this.requests = options.entries.map( e => {
       const [ path, queryStr ] = Module.parseRequest( e );
@@ -113,8 +110,43 @@ export default class Builder {
 
   }
 
+  isSplitPoint( required: Module, module: Module ): Promise<?boolean> {
+    return this.applyPluginPhaseFirst( "isSplitPoint", required, module );
+  }
+
+  async applyPluginPhaseFirst( phase: string, ...args: mixed[] ): Promise<any> {
+    for ( const plugin of this.plugins ) {
+      const fn = plugin[ phase ];
+      if ( fn ) {
+        const result = await fn( ...args, this );
+        if ( result != null ) {
+          return result;
+        }
+      }
+    }
+  }
+
+  async applyPluginPhasePipe<T>( phase: string, result: T, ...args: mixed[] ): Promise<T> {
+    for ( const plugin of this.plugins ) {
+      const fn = plugin[ phase ];
+      if ( fn ) {
+        result = await fn( result, ...args, this ) || result;
+      }
+    }
+    return result;
+  }
+
+  async applyPluginPhaseSerial( phase: string, ...args: mixed[] ) {
+    for ( const plugin of this.plugins ) {
+      const fn = plugin[ phase ];
+      if ( fn ) {
+        await fn( ...args, this );
+      }
+    }
+  }
+
   getDefaultQuery( path: string ): Query {
-    const arr = this.buildDefaultQuery( path ) || [];
+    const arr = this.loaders( path ) || [];
     return {
       arr,
       str: Module.queryArrToString( arr ),
@@ -258,9 +290,12 @@ export default class Builder {
       await promise;
     }
 
-    await callCheckers( this );
+    await this.applyPluginPhaseSerial( "checker" );
 
-    const finalAssets = await callGraphTransformers( processGraph( this ), this );
+    const finalAssets = await this.applyPluginPhasePipe(
+      "graphTransformer",
+      await processGraph( this )
+    );
 
     await emptyDirPromise;
 
@@ -283,7 +318,7 @@ export default class Builder {
       filesInfo
     };
 
-    await callAfterBuild( out, this );
+    await this.applyPluginPhaseSerial( "afterBuild", out );
 
     return out;
   }
@@ -320,23 +355,4 @@ async function callRenderers(
     throw new Error( `Could not build asset ${asset.id}` );
   }
   return Promise.all( writes );
-}
-
-async function callCheckers( builder: Builder ) {
-  for ( const { plugin, options } of builder.checkers ) {
-    await plugin( builder, options );
-  }
-}
-
-async function callGraphTransformers( finalAssets: FinalAssets, builder: Builder ) {
-  for ( const { plugin, options } of builder.graphTransformers ) {
-    finalAssets = await plugin( finalAssets, builder, options ) || finalAssets;
-  }
-  return finalAssets;
-}
-
-async function callAfterBuild( out: Output, builder: Builder ) {
-  for ( const { plugin, options } of builder.afterBuild ) {
-    await plugin( out, options );
-  }
 }

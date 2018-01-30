@@ -10,15 +10,15 @@ function run( options ) {
   options.warn = options.warn || ( w => emitter.emit( "warning", w ) );
 
   const builder = new Builder( options );
-  const Reporter = builder.reporter;
+  const { plugin: Reporter, options: reporterOpts } = builder.reporter;
 
   if ( builder.watch ) {
     emitter = new Watcher( builder );
-    reporter = new Reporter( builder, emitter );
+    reporter = new Reporter( reporterOpts, builder, emitter );
     emitter.start();
   } else {
     emitter = new EventEmitter();
-    reporter = new Reporter( builder, emitter );
+    reporter = new Reporter( reporterOpts, builder, emitter );
     emitter.emit( "build-start" );
     builder.build().then(
       o => emitter.emit( "build", o ),

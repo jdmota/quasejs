@@ -6,7 +6,7 @@ const prettyBytes = require( "pretty-bytes" );
 
 export default class Reporter {
 
-  constructor( builder, emitter ) {
+  constructor( _, builder, emitter ) {
     this.options = builder.options;
     this.builder = builder;
     this.emitter = emitter;

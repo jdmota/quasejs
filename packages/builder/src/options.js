@@ -2,12 +2,24 @@ import JsLanguage from "./languages/js";
 import HtmlLanguage from "./languages/html";
 import Reporter from "./reporter";
 import { check } from "./checker";
-import { resolvePath } from "./id";
+import { getType, resolvePath } from "./id";
 
 const { ValidationError } = require( "@quase/config" );
 const { getPlugins, getOnePlugin } = require( "@quase/get-plugins" );
 const fs = require( "fs-extra" );
 const path = require( "path" );
+
+function defaultPlugin() {
+  return {
+    async load( path, builder ) {
+      return {
+        type: getType( path ),
+        data: await builder.fileSystem.readFile( path, path )
+      };
+    },
+    checker: check
+  };
+}
 
 export default function( _opts ) {
 
@@ -31,12 +43,6 @@ export default function( _opts ) {
 
   options.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
 
-  options.isExternal = options.isExternal || ( () => {} );
-  options.isSplitPoint = options.isSplitPoint || ( () => {} );
-
-  options.loaderAlias = options.loaderAlias || {};
-  options.buildDefaultQuery = options.buildDefaultQuery || ( () => {} );
-
   options.fs = options.fs || fs;
 
   options.sourceMaps = options.sourceMaps === "inline" ? options.sourceMaps : !!options.sourceMaps;
@@ -48,7 +54,10 @@ export default function( _opts ) {
   options.watch = !!options.watch;
   options.watchOptions = Object.assign( {}, options.watchOptions );
 
-  options.reporter = options.reporter ? getOnePlugin( options.reporter ) : Reporter;
+  options.reporter = getOnePlugin( options.reporter || Reporter );
+
+  options.loaders = options.loaders || ( () => {} );
+  options.loaderAlias = options.loaderAlias || {};
 
   options.languages = getPlugins( options.languages || [] );
   options.languages.unshift( { plugin: JsLanguage, options: {} } );
@@ -59,25 +68,11 @@ export default function( _opts ) {
     }
   } );
 
-  options.checkers = getPlugins( options.checkers || [] );
-  options.checkers.unshift( { plugin: check, options: {} } );
-  options.checkers.forEach( ( { plugin, name } ) => {
+  options.plugins = getPlugins( options.plugins || [] );
+  options.plugins.push( { plugin: defaultPlugin } );
+  options.plugins.forEach( ( { plugin, name } ) => {
     if ( typeof plugin !== "function" ) {
-      throw new ValidationError( `Expected checker ${name ? name + " " : ""}to be a function` );
-    }
-  } );
-
-  options.graphTransformers = getPlugins( options.graphTransformers || [] );
-  options.graphTransformers.forEach( ( { plugin, name } ) => {
-    if ( typeof plugin !== "function" ) {
-      throw new ValidationError( `Expected graph transformer ${name ? name + " " : ""}to be a function` );
-    }
-  } );
-
-  options.afterBuild = getPlugins( options.afterBuild || [] );
-  options.afterBuild.forEach( ( { plugin, name } ) => {
-    if ( typeof plugin !== "function" ) {
-      throw new ValidationError( `Expected after build plugin ${name ? name + " " : ""}to be a function` );
+      throw new ValidationError( `Expected plugin ${name ? name + " " : ""}to be a function` );
     }
   } );
 

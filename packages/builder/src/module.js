@@ -5,10 +5,10 @@ import { hashName } from "./utils/hash";
 import type Builder from "./builder";
 import Language, { type ILanguage } from "./language";
 import type {
-  Data, Loc, ImportedName, ExportedName,
+  LoaderOutput, Data, Loc, ImportedName, ExportedName,
   Dep, NotResolvedDep, QueryArr, Query
 } from "./types";
-import { getType, relative, resolvePath } from "./id";
+import { relative, resolvePath } from "./id";
 import { Checker } from "./checker";
 
 const getPlugins = require( "@quase/get-plugins" ).getPlugins;
@@ -22,7 +22,7 @@ function isObject( obj ) {
 export type ModuleArg = {
   request: { path: string, query: Query },
   isEntry?: ?boolean,
-  initialData?: ?Data,
+  loadResult?: ?LoaderOutput,
   builder: Builder
 };
 
@@ -37,9 +37,10 @@ export default class Module {
   +id: string;
   +hashId: string;
   +isEntry: boolean;
-  +initialData: ?Data;
+  +loadResult: ?LoaderOutput;
   +checker: Checker;
   lang: ?ILanguage;
+  type: string;
   data: Data;
   maps: Object[];
   deps: Dep[];
@@ -49,7 +50,7 @@ export default class Module {
   transforming: ?Promise<Language>;
   resolving: ?Promise<void>;
 
-  constructor( { request: { path, query }, isEntry, initialData, builder }: ModuleArg ) {
+  constructor( { request: { path, query }, isEntry, loadResult, builder }: ModuleArg ) {
     this.path = path;
     this.query = query;
     this.normalized = relative( path, builder.context );
@@ -59,11 +60,12 @@ export default class Module {
     this.hashId = hashName( this.id, builder.usedIds, 5 );
 
     this.isEntry = !!isEntry;
-    this.initialData = initialData;
+    this.loadResult = loadResult;
 
     this.checker = new Checker( this, builder );
     this.lang = null;
 
+    this.type = "";
     this.data = "";
     this.maps = [];
     this.deps = [];
@@ -160,11 +162,11 @@ export default class Module {
 
   async _transform( builder: Builder ): Promise<Language> {
 
-    let data = this.initialData;
+    let result = this.loadResult;
 
-    if ( data == null ) {
+    if ( result == null ) {
       try {
-        data = await builder.fileSystem.readFile( this.path, this.path );
+        result = await builder.applyPluginPhaseFirst( "load", this.path );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );
@@ -173,11 +175,9 @@ export default class Module {
       }
     }
 
-    let result = {
-      type: getType( this.path ),
-      ast: null,
-      data
-    };
+    if ( !isObject( result ) ) {
+      throw error( "Load should return { type: string, data: Buffer | string }" );
+    }
 
     const maps = [];
 
@@ -200,6 +200,7 @@ export default class Module {
       }
     }
 
+    this.type = result.type;
     this.data = result.data;
     this.maps = maps;
 

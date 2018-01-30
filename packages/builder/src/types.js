@@ -25,7 +25,7 @@ export type ExportedName = {
   +loc?: ?Loc
 };
 
-export type ProvidedPluginsArr = $ReadOnlyArray<void | string | Function | [string | Function, Object]>;
+export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string | T, Object]>;
 
 // $FlowFixMe
 export type QueryArr = $ReadOnlyArray<string | [string, Object]>;
@@ -89,11 +89,28 @@ export type Output = {
   filesInfo: Info[]
 };
 
-export type Checker = ( Builder, Object ) => ?Promise<void>;
+export type LoaderOutput = {
+  type: string,
+  data: Data,
+  ast?: ?Object
+};
 
-export type GraphTransformer = ( FinalAssets, Builder, Object ) => ?Promise<?FinalAssets>;
+export type Loader = ( LoaderOutput, Object, Module, Builder ) => ?Promise<LoaderOutput>;
 
-export type AfterBuild = ( Output, Object ) => ?Promise<void>;
+export type Checker = Builder => ?Promise<void>;
+
+export type GraphTransformer = ( FinalAssets, Builder ) => ?Promise<?FinalAssets>;
+
+export type AfterBuild = ( Output, Builder ) => ?Promise<void>;
+
+export type Plugin = {
+  load?: ?( string, Builder ) => ?Promise<LoaderOutput>,
+  isSplitPoint?: ?( Module, Module, Builder ) => Promise<?boolean>,
+  isExternal?: ?( string, Builder ) => Promise<?boolean>,
+  checker?: ?Checker,
+  graphTransformer?: ?GraphTransformer,
+  afterBuild?: ?AfterBuild
+};
 
 export type Options = {
   context: string,
@@ -103,19 +120,16 @@ export type Options = {
   sourceMaps?: ?boolean | "inline",
   hashing?: ?boolean,
   publicPath?: ?string,
-  buildDefaultQuery?: ?( string ) => ?QueryArr;
   warn?: ?Function,
   fs?: ?MinimalFS,
   cli?: ?Object,
   reporter?: ?string | Function,
   watch?: ?boolean,
   watchOptions?: ?Object,
-  languages?: ?ProvidedPluginsArr,
-  isSplitPoint?: ?( Module, Module ) => ?boolean,
+  plugins?: ?ProvidedPluginsArr<Object => Plugin>,
+  languages?: ?ProvidedPluginsArr<Function>,
+  loaders?: ?( string ) => ?ProvidedPluginsArr<Loader>,
   loaderAlias?: ?{ [key: string]: Function },
-  checkers?: ( Checker | [ Checker, Object ] )[];
-  graphTransformers?: ( GraphTransformer | [ GraphTransformer, Object ] )[];
-  afterBuild?: ( AfterBuild | [ AfterBuild, Object ] )[];
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,
