@@ -1,77 +1,77 @@
 /* eslint-disable */
 
-declare module "@babel/code-frame" { declare var exports: any; }
-declare module "@babel/core" { declare var exports: any; }
-declare module "@babel/generator" { declare var exports: any; }
-declare module "@babel/helpers" { declare var exports: any; }
-declare module "@babel/preset-es2015" { declare var exports: any; }
-declare module "@babel/template" { declare var exports: any; }
-declare module "@babel/types" { declare var exports: any; }
-declare module "@quase/cacheable-fs" { declare var exports: any; }
-declare module "@quase/cli" { declare var exports: any; }
-declare module "@quase/config" { declare var exports: any; }
-declare module "@quase/error" { declare var exports: any; }
-declare module "@quase/find-files" { declare var exports: any; }
-declare module "@quase/get-plugins" { declare var exports: any; }
-declare module "@quase/memory-fs" { declare var exports: any; }
-declare module "@quase/path-url" { declare var exports: any; }
-declare module "@quase/source-map" { declare var exports: any; }
-declare module "ansi-styles" { declare var exports: any; }
-declare module "babel-preset-minify" { declare var exports: any; }
-declare module "babylon" { declare var exports: any; }
-declare module "boxen" { declare var exports: any; }
-declare module "chalk" { declare var exports: any; }
-declare module "circular-json" { declare var exports: any; }
-declare module "concordance" { declare var exports: any; }
-declare module "encode-registry" { declare var exports: any; }
-declare module "error-stack-parser" { declare var exports: any; }
-declare module "file-url" { declare var exports: any; }
-declare module "filenamify" { declare var exports: any; }
-declare module "fs-extra" { declare var exports: any; }
-declare module "glob-parent" { declare var exports: any; }
-declare module "has-yarn" { declare var exports: any; }
-declare module "ignore-by-default" { declare var exports: any; }
-declare module "import-fresh" { declare var exports: any; }
-declare module "is-ci" { declare var exports: boolean; }
-declare module "is-installed-globally" { declare var exports: any; }
-declare module "is-url-superb" { declare var exports: any; }
-declare module "jsdom" { declare var exports: any; }
-declare module "json5" { declare var exports: any; }
-declare module "klaw" { declare var exports: any; }
-declare module "leven" { declare var exports: any; }
-declare module "load-json-file" { declare var exports: any; }
-declare module "log-symbols" { declare var exports: any; }
-declare module "magic-string" { declare var exports: any; }
-declare module "matcher" { declare var exports: any; }
-declare module "meow" { declare var exports: any; }
-declare module "micromatch" { declare var exports: any; }
-declare module "node-fetch" { declare var exports: any; }
-declare module "normalize-package-data" { declare var exports: any; }
-declare module "normalize-path" { declare var exports: any; }
-declare module "npm-lifecycle" { declare var exports: any; }
-declare module "npm-package-arg" { declare var exports: any; }
-declare module "npmlog" { declare var exports: any; }
-declare module "ora" { declare var exports: any; }
-declare module "pacote" { declare var exports: any; }
-declare module "parse-npm-tarball-url" { declare var exports: any; }
-declare module "parse5" { declare var exports: any; }
-declare module "pkg-conf" { declare var exports: any; }
-declare module "pretty-bytes" { declare var exports: any; }
-declare module "random-js" { declare var exports: any; }
-declare module "rc" { declare var exports: any; }
-declare module "read-pkg" { declare var exports: any; }
-declare module "read-pkg-up" { declare var exports: any; }
-declare module "require-relative" { declare var exports: any; }
-declare module "resolve" { declare var exports: any; }
-declare module "resolve-from" { declare var exports: any; }
-declare module "slash" { declare var exports: any; }
-declare module "source-map" { declare var exports: any; }
-declare module "strip-url-auth" { declare var exports: any; }
-declare module "sw-precache" { declare var exports: any; }
-declare module "symlink-dir" { declare var exports: any; }
-declare module "update-notifier" { declare var exports: any; }
-declare module "watchpack" { declare var exports: any; }
-declare module "write-file-atomic" { declare var exports: any; }
-declare module "write-json-file" { declare var exports: any; }
-declare module "write-pkg" { declare var exports: any; }
-declare module "zen-observable" { declare var exports: any; }
+declare module "@babel/code-frame" { declare module.exports: any; }
+declare module "@babel/core" { declare module.exports: any; }
+declare module "@babel/generator" { declare module.exports: any; }
+declare module "@babel/helpers" { declare module.exports: any; }
+declare module "@babel/preset-es2015" { declare module.exports: any; }
+declare module "@babel/template" { declare module.exports: any; }
+declare module "@babel/types" { declare module.exports: any; }
+declare module "@quase/cacheable-fs" { declare module.exports: any; }
+declare module "@quase/cli" { declare module.exports: any; }
+declare module "@quase/config" { declare module.exports: any; }
+declare module "@quase/error" { declare module.exports: any; }
+declare module "@quase/find-files" { declare module.exports: any; }
+declare module "@quase/get-plugins" { declare module.exports: any; }
+declare module "@quase/memory-fs" { declare module.exports: any; }
+declare module "@quase/path-url" { declare module.exports: any; }
+declare module "@quase/source-map" { declare module.exports: any; }
+declare module "ansi-styles" { declare module.exports: any; }
+declare module "babel-preset-minify" { declare module.exports: any; }
+declare module "babylon" { declare module.exports: any; }
+declare module "boxen" { declare module.exports: any; }
+declare module "chalk" { declare module.exports: any; }
+declare module "circular-json" { declare module.exports: any; }
+declare module "concordance" { declare module.exports: any; }
+declare module "encode-registry" { declare module.exports: any; }
+declare module "error-stack-parser" { declare module.exports: any; }
+declare module "file-url" { declare module.exports: any; }
+declare module "filenamify" { declare module.exports: any; }
+declare module "fs-extra" { declare module.exports: any; }
+declare module "glob-parent" { declare module.exports: any; }
+declare module "has-yarn" { declare module.exports: any; }
+declare module "ignore-by-default" { declare module.exports: any; }
+declare module "import-fresh" { declare module.exports: any; }
+declare module "is-ci" { declare module.exports: boolean; }
+declare module "is-installed-globally" { declare module.exports: any; }
+declare module "is-url-superb" { declare module.exports: any; }
+declare module "jsdom" { declare module.exports: any; }
+declare module "json5" { declare module.exports: any; }
+declare module "klaw" { declare module.exports: any; }
+declare module "leven" { declare module.exports: any; }
+declare module "load-json-file" { declare module.exports: any; }
+declare module "log-symbols" { declare module.exports: any; }
+declare module "magic-string" { declare module.exports: any; }
+declare module "matcher" { declare module.exports: any; }
+declare module "meow" { declare module.exports: any; }
+declare module "micromatch" { declare module.exports: any; }
+declare module "node-fetch" { declare module.exports: any; }
+declare module "normalize-package-data" { declare module.exports: any; }
+declare module "normalize-path" { declare module.exports: any; }
+declare module "npm-lifecycle" { declare module.exports: any; }
+declare module "npm-package-arg" { declare module.exports: any; }
+declare module "npmlog" { declare module.exports: any; }
+declare module "ora" { declare module.exports: any; }
+declare module "pacote" { declare module.exports: any; }
+declare module "parse-npm-tarball-url" { declare module.exports: any; }
+declare module "parse5" { declare module.exports: any; }
+declare module "pkg-conf" { declare module.exports: any; }
+declare module "pretty-bytes" { declare module.exports: any; }
+declare module "random-js" { declare module.exports: any; }
+declare module "rc" { declare module.exports: any; }
+declare module "read-pkg" { declare module.exports: any; }
+declare module "read-pkg-up" { declare module.exports: any; }
+declare module "require-relative" { declare module.exports: any; }
+declare module "resolve" { declare module.exports: any; }
+declare module "resolve-from" { declare module.exports: any; }
+declare module "slash" { declare module.exports: any; }
+declare module "source-map" { declare module.exports: any; }
+declare module "strip-url-auth" { declare module.exports: any; }
+declare module "sw-precache" { declare module.exports: any; }
+declare module "symlink-dir" { declare module.exports: any; }
+declare module "update-notifier" { declare module.exports: any; }
+declare module "watchpack" { declare module.exports: any; }
+declare module "write-file-atomic" { declare module.exports: any; }
+declare module "write-json-file" { declare module.exports: any; }
+declare module "write-pkg" { declare module.exports: any; }
+declare module "zen-observable" { declare module.exports: any; }
