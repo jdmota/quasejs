@@ -1,4 +1,3 @@
-import fnName from "./util/fn-name";
 import optionChain from "./option-chain";
 import validate from "./validate";
 import { GroupPlaceholder, TestPlaceholder } from "./placeholders";
@@ -33,7 +32,7 @@ function createTest( name, callback, metadata, parent ) {
     }
   }
 
-  name = name || fnName( callback || ( () => {} ) );
+  name = name || "anonymous";
 
   return metadata.type === "group" ? new GroupPlaceholder( name, callback, metadata, parent ) : new TestPlaceholder( name, callback, metadata, parent );
 }
