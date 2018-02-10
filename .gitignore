@@ -1,4 +1,5 @@
 *.txt
+*.log
 __dev__
 .nyc_output
 coverage
