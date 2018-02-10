@@ -20,7 +20,6 @@
 
   /* eslint-disable no-undef, no-unused-vars */
   const publicPath = $_PUBLIC_PATH;
-  const helpers = $_BABEL_HELPERS;
   const files = $_FILES;
   const moduleToFiles = $_MODULE_TO_FILES;
   /* eslint-enable no-undef, no-unused-vars */
@@ -82,13 +81,11 @@
 
       modules[ id ] = moduleExports;
 
-      // $e, $r, $i, $b, $g, $a
-      fn( moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper );
+      // $e, $r, $i, $g, $a
+      fn( moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper );
 
       return moduleExports;
     }
-
-    // TODO deal with externals
 
     throw new Error( `Module ${id} not found` );
   }

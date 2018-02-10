@@ -7,6 +7,8 @@ import type { Loc } from "./types";
 import type Builder from "./builder";
 import type Module from "./module";
 
+const isExportAll = e => e.request && e.name === "*" && e.imported === "*";
+
 export class Checker {
 
   +module: Module;
@@ -14,6 +16,8 @@ export class Checker {
   +id: string;
   _imports: ?{ [key: string]: boolean };
   _exports: ?{ [key: string]: boolean };
+  _exportsSingle: ?{ [key: string]: boolean };
+  _exportsAllFrom: ?{ [key: string]: boolean };
 
   constructor( module: Module, builder: Builder ) {
     this.module = module;
@@ -21,6 +25,8 @@ export class Checker {
     this.id = module.id;
     this._imports = null;
     this._exports = null;
+    this._exportsSingle = null;
+    this._exportsAllFrom = null;
   }
 
   error( msg: string, loc: ?Loc ) {
@@ -49,14 +55,12 @@ export class Checker {
     return this._imports;
   }
 
-  getExports( stack: Map<Module, boolean> = new Map() ) {
-    if ( this._exports ) {
-      return this._exports;
+  getSingleExports() {
+    if ( this._exportsSingle ) {
+      return this._exportsSingle;
     }
 
     const exports = blank();
-    const exportsAllFrom = blank();
-    let namespaceConflict = false;
 
     const checkExport = ( { name, loc } ) => {
       if ( exports[ name ] ) {
@@ -65,36 +69,46 @@ export class Checker {
       exports[ name ] = true;
     };
 
-    const checkExportFrom = ( name, { request, loc } ) => {
-      // $FlowFixMe
-      const text = `${request} (${locToString( loc )})`;
-      if ( exportsAllFrom[ name ] ) {
-        exportsAllFrom[ name ].push( text );
-      } else {
-        exportsAllFrom[ name ] = [ text ];
-      }
-      if ( exports[ name ] ) {
-        namespaceConflict = true;
-      }
-      exports[ name ] = true;
-    };
-
-    stack.set( this.module, true );
-
-    const isExportAll = e => e.request && e.name === "*" && e.imported === "*";
-
     this.module.exportedNames.forEach( exportedName => {
       if ( !isExportAll( exportedName ) ) {
         checkExport( exportedName );
       }
     } );
 
+    this._exportsSingle = exports;
+    return exports;
+  }
+
+  getAllFromExports( stack: Set<Module> = new Set() ) {
+    if ( this._exportsAllFrom ) {
+      return this._exportsAllFrom;
+    }
+
+    const singleExports = this.getSingleExports();
+    const exportsAllFrom = blank();
+    let namespaceConflict = false;
+
+    const checkExportFrom = ( name, { request, loc } ) => {
+      // $FlowFixMe
+      const text = `${request} (${locToString( loc )})`;
+      if ( singleExports[ name ] || exportsAllFrom[ name ] ) {
+        namespaceConflict = true;
+      }
+      if ( exportsAllFrom[ name ] ) {
+        exportsAllFrom[ name ].push( text );
+      } else {
+        exportsAllFrom[ name ] = [ text ];
+      }
+    };
+
+    stack.add( this.module );
+
     this.module.exportedNames.forEach( exportedName => {
       if ( isExportAll( exportedName ) ) {
         const module = this.getModule( exportedName.request );
 
         if ( stack.has( module ) ) {
-          const trace = Array.from( stack ).map( entry => entry[ 0 ].id );
+          const trace = Array.from( stack ).map( entry => entry.id );
           while ( trace[ 0 ] !== module.id ) {
             trace.shift();
           }
@@ -112,8 +126,6 @@ export class Checker {
       }
     } );
 
-    stack.delete( this.module );
-
     if ( namespaceConflict ) {
       for ( const name in exportsAllFrom ) {
         this.builder.warn(
@@ -122,8 +134,17 @@ export class Checker {
       }
     }
 
-    this._exports = exports;
-    return exports;
+    stack.delete( this.module );
+
+    this._exportsAllFrom = exportsAllFrom;
+    return exportsAllFrom;
+  }
+
+  getExports( stack: Set<Module> | void ) {
+    return this._exports || ( this._exports = {
+      ...this.getSingleExports(),
+      ...this.getAllFromExports( stack )
+    } );
   }
 
   checkImportsExports() {
@@ -135,7 +156,7 @@ export class Checker {
         const exports = this.getModule( request ).checker.getExports();
 
         if ( isEmpty( exports ) ) {
-          this.error( `${request} exports nothing`, loc );
+          this.error( `${request} exports nothing${imported === "*" ? "" : `. Looking for ${imported}`}`, loc );
         }
 
         if ( imported !== "*" && !exports[ imported ] ) {
@@ -148,9 +169,19 @@ export class Checker {
     this.module.exportedNames.forEach( check );
   }
 
+  reset() {
+    if ( !isEmpty( this._exportsAllFrom ) ) {
+      this._exports = null;
+      this._exportsAllFrom = null;
+    }
+  }
+
 }
 
 export function check( builder: Builder ) {
+  for ( const [ , module ] of builder.modules ) {
+    module.checker.reset();
+  }
   for ( const [ , module ] of builder.modules ) {
     module.checker.checkImportsExports();
   }

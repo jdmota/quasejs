@@ -1,21 +1,11 @@
-import JsLanguage from "../src/languages/js";
-import HtmlLanguage from "../src/languages/html";
 import Builder from "../src/builder";
 import { relative } from "../src/id";
 import { testLog } from "../../assert";
+import transformConfig from "./transform-config";
 
 function isRegExp( obj ) {
   return obj != null && typeof obj.test === "function";
 }
-
-const DEFAULT_BABEL_OPTS = {
-  presets: [
-    [ "@babel/env", {
-      targets: { chrome: 50 },
-      loose: true
-    } ]
-  ]
-};
 
 describe( "builder", () => {
 
@@ -39,19 +29,8 @@ describe( "builder", () => {
       const warnings = [];
 
       const fixturePath = path.resolve( FIXTURES, folder );
-      const config = require( path.resolve( fixturePath, "config.js" ) );
+      const config = transformConfig( require( path.resolve( fixturePath, "config.js" ) ), fixturePath );
 
-      expect( config ).not.toBe( null );
-
-      config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.languages = [
-        [ JsLanguage, {
-          resolve: config.resolve,
-          babelOpts: config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS
-        } ],
-        HtmlLanguage
-      ];
-      config.cwd = fixturePath;
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "files";
       config.dest = config.dest || "atual";
@@ -98,9 +77,17 @@ describe( "builder", () => {
           throw err;
         } else {
           if ( isRegExp( config._error ) ) {
-            expect( config._error.test( err.message ) ).toBe( true );
+            if ( config._error.test( err.message ) ) {
+              expect( true ).toBe( true );
+            } else {
+              expect( err.stack ).toBe( config._error );
+            }
           } else {
-            expect( err.message ).toBe( config._error );
+            if ( err.message === config._error ) {
+              expect( err.message ).toBe( config._error );
+            } else {
+              expect( err.stack ).toBe( config._error );
+            }
           }
           expect( assetsNum ).toBe( 0 );
         }

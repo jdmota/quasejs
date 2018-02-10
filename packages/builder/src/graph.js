@@ -24,17 +24,10 @@ class BiMap {
     for ( const module of builder.modules.values() ) {
       const deps = await Promise.all( module.moduleDeps.map( async dep => {
         const required = builder.getModuleForSure( dep.requiredId );
-
-        let splitPoint = dep.async ? true : await builder.isSplitPoint( required, module );
-
-        if ( splitPoint == null ) {
-          // $FlowFixMe
-          splitPoint = required.lang.constructor.TYPE !== module.lang.constructor.TYPE;
-        }
+        const splitPoint = dep.async ? true : await builder.isSplitPoint( required, module );
 
         return {
           path: dep.path,
-          query: dep.query,
           request: dep.request,
           loc: dep.loc,
           async: dep.async,

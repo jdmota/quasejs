@@ -11,11 +11,18 @@ const path = require( "path" );
 
 function defaultPlugin() {
   return {
+    name: "quase_builder_internal_plugin",
     async load( path, builder ) {
       return {
         type: getType( path ),
         data: await builder.fileSystem.readFile( path, path )
       };
+    },
+    async resolve( importee, importerModule, builder ) {
+      return importerModule.lang.resolve( importee, importerModule.path, builder );
+    },
+    isSplitPoint( required, module ) {
+      return required.type !== module.type;
     },
     checker: check
   };
@@ -55,9 +62,6 @@ export default function( _opts ) {
   options.watchOptions = Object.assign( {}, options.watchOptions );
 
   options.reporter = getOnePlugin( options.reporter || Reporter );
-
-  options.loaders = options.loaders || ( () => {} );
-  options.loaderAlias = options.loaderAlias || {};
 
   options.languages = getPlugins( options.languages || [] );
   options.languages.unshift( { plugin: JsLanguage, options: {} } );

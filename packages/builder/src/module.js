@@ -1,26 +1,21 @@
 // @flow
-
 import error from "./utils/error";
 import { hashName } from "./utils/hash";
 import type Builder from "./builder";
 import Language, { type ILanguage } from "./language";
 import type {
   LoaderOutput, Data, Loc, ImportedName, ExportedName,
-  Dep, NotResolvedDep, QueryArr, Query
+  Dep, NotResolvedDep,
 } from "./types";
 import { relative, resolvePath } from "./id";
 import { Checker } from "./checker";
-
-const getPlugins = require( "@quase/get-plugins" ).getPlugins;
-const { joinSourceMaps } = require( "@quase/source-map" );
-const JSON5 = require( "json5" );
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
 }
 
 export type ModuleArg = {
-  request: { path: string, query: Query },
+  path: string,
   isEntry?: ?boolean,
   loadResult?: ?LoaderOutput,
   builder: Builder
@@ -31,7 +26,6 @@ export type ModuleArg = {
 export default class Module {
 
   +path: string;
-  +query: Query;
   +normalized: string;
   +dest: string;
   +id: string;
@@ -42,6 +36,8 @@ export default class Module {
   lang: ?ILanguage;
   type: string;
   data: Data;
+  originalData: Data;
+  ast: ?Object;
   maps: Object[];
   deps: Dep[];
   moduleDeps: ( Dep & { requiredId: string } )[];
@@ -50,13 +46,12 @@ export default class Module {
   transforming: ?Promise<Language>;
   resolving: ?Promise<void>;
 
-  constructor( { request: { path, query }, isEntry, loadResult, builder }: ModuleArg ) {
+  constructor( { path, isEntry, loadResult, builder }: ModuleArg ) {
     this.path = path;
-    this.query = query;
     this.normalized = relative( path, builder.context );
     this.dest = resolvePath( this.normalized, builder.dest );
 
-    this.id = `${this.normalized}${query.default ? "" : `!!${query.str}`}`;
+    this.id = this.normalized;
     this.hashId = hashName( this.id, builder.usedIds, 5 );
 
     this.isEntry = !!isEntry;
@@ -67,6 +62,8 @@ export default class Module {
 
     this.type = "";
     this.data = "";
+    this.originalData = "";
+    this.ast = null;
     this.maps = [];
     this.deps = [];
     this.moduleDeps = [];
@@ -77,46 +74,16 @@ export default class Module {
     this.resolving = null;
   }
 
-  static parseRequest( request: string ): [string, string] {
-    const idx = request.indexOf( "!!" );
-    const path = idx < 0 ? request : request.slice( 0, idx );
-    const query = idx < 0 ? "" : request.slice( idx + 1 );
-    return [ path, query ];
-  }
-
-  static parseQuery( str: string ): Query {
-    let parsed;
-
-    try {
-      parsed = JSON5.parse( str || "[]" );
-    } catch ( e ) {
-      // Ignore
-    }
-
-    if ( !Array.isArray( parsed ) ) {
-      throw new Error( `Invalid query ${str}` );
-    }
-
-    const arr = parsed.filter( Boolean );
-    return {
-      arr,
-      str: Module.queryArrToString( arr )
-    };
-  }
-
-  static queryArrToString( arr: QueryArr ) {
-    return arr.length === 0 ? "" : JSON5.stringify( arr );
-  }
-
   moduleError( message: string ) {
     throw new Error( `${message}. Module: ${this.normalized}` );
   }
 
   error( message: string, loc: ?Loc ) {
     error( message, {
-      id: this.normalized,
+      id: this.id,
+      originalCode: loc && this.originalData && this.originalData.toString(),
       code: loc && this.data.toString(),
-      map: loc && joinSourceMaps( this.maps )
+      mapChain: this.maps
     }, loc );
   }
 
@@ -124,19 +91,20 @@ export default class Module {
     const p = deps.map( async obj => {
 
       const { request, loc, async } = obj;
-      let [ path, queryStr ] = Module.parseRequest( request );
 
       if ( !request ) {
         throw this.error( "Empty import", loc );
       }
 
-      path = await lang.resolve( path, this.path, builder );
+      let path = await builder.applyPluginPhaseFirst( "resolve", null, request, this );
 
       if ( !path ) {
         throw this.error( `Could not resolve ${request}`, loc );
       }
 
-      path = resolvePath( path, builder.cwd );
+      if ( /^\.\.?(\/|\\|$)/.test( path ) ) {
+        throw this.error( `Resolution returned a non absolute path: ${path}`, loc );
+      }
 
       if ( path === this.path ) {
         throw this.error( "A module cannot import itself", loc );
@@ -146,11 +114,8 @@ export default class Module {
         throw this.error( "Don't import the destination file", loc );
       }
 
-      const query = Module.parseQuery( queryStr );
-
       return {
         path,
-        query: query.arr.length ? query : builder.getDefaultQuery( path ),
         request,
         loc,
         async
@@ -167,8 +132,9 @@ export default class Module {
 
     if ( result == null ) {
       try {
-        const out = await builder.applyPluginPhaseFirst( "load", this.path );
-        result = handleOutput( out, maps, "Load hook" );
+        result = await builder.applyPluginPhaseFirst( "load", ( result, name ) => {
+          return handleOutput( result, null, maps, "Load", name );
+        }, this.path );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );
@@ -177,54 +143,44 @@ export default class Module {
       }
     }
 
-    const loaders = getPlugins( this.query.arr, name => builder.loaderAlias[ name ] );
+    this.originalData = result.data;
 
-    for ( const { name, plugin, options } of loaders ) {
-      const out = await plugin(
-        Object.assign( {}, result ),
-        options,
-        module,
-        builder
-      );
-      if ( out ) {
-        result = handleOutput( out, maps, `Loader${name ? " " + name : ""}` );
-      }
-    }
+    result = await builder.applyPluginPhasePipe( "transform", ( result, prevResult, name ) => {
+      return handleOutput( result, prevResult.data, maps, "Transform", name );
+    }, result, this );
 
     this.type = result.type;
     this.data = result.data;
+    this.ast = result.ast;
     this.maps = maps;
 
     const [ C, opts ] = builder.languages[ result.type ] || [ Language, {} ];
 
-    const lang = new C( result, opts, this, builder );
+    const lang = new C( opts, this, builder );
     this.lang = lang;
     return lang;
   }
 
   async _resolveDeps( builder: Builder, lang: Language ) {
 
-    this.deps = await this._handleDeps(
-      builder,
-      lang,
-      await lang.dependenciesImpl()
-    );
+    const depsInfo = await lang.dependencies();
+
+    this.deps = await this._handleDeps( builder, lang, depsInfo.dependencies );
 
     this.moduleDeps = this.deps.map( dep => {
-      const { path, query } = dep;
       const requiredId = builder.addModule( {
-        request: { path, query },
+        path: dep.path,
         isEntry: false,
         builder
       } ).id;
       return Object.assign( {}, dep, { requiredId } );
     } );
 
-    this.importedNames = await lang.importedNamesImpl();
-    this.exportedNames = await lang.exportedNamesImpl();
+    this.importedNames = depsInfo.importedNames;
+    this.exportedNames = depsInfo.exportedNames;
 
     // TODO
-    /* const moreLangs = await lang.moreLanguagesImpl();
+    /* const moreLangs = await lang.moreLanguages();
     for ( const { type, data } of moreLangs ) {
       builder.addModule( type, lang.path, data );
     }*/
@@ -257,7 +213,9 @@ export default class Module {
 
 }
 
-function handleOutput( out, maps, _from ): LoaderOutput {
+function handleOutput( out, prevData, maps, hook, pluginName ): LoaderOutput {
+
+  const _from = `${hook} hook${pluginName ? " from " + pluginName : ""}`;
 
   if ( !isObject( out ) || typeof out.type !== "string" ) {
     throw error( `${_from} should return { type: string, data: Buffer | string }` );
@@ -267,7 +225,17 @@ function handleOutput( out, maps, _from ): LoaderOutput {
     throw error( `${_from} should not return an object with both "data" and "code"` );
   }
 
-  const data = out.data || out.code;
+  let data = out.code == null ? out.data : out.code;
+
+  if ( out.ast ) {
+    if ( prevData == null ) {
+      throw error( `${_from} should not return ast` );
+    }
+    if ( data || out.map ) {
+      throw error( `${_from} should not return data and/or source map with ast` );
+    }
+    data = prevData;
+  }
 
   if ( typeof data !== "string" && !Buffer.isBuffer( data ) ) {
     throw error( `${_from} should return valid data: Buffer or string` );

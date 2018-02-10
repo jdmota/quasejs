@@ -3,8 +3,7 @@ import hash from "./utils/hash";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
-  FinalAsset, FinalAssets, Query,
-  ProvidedPluginsArr, Loader,
+  FinalAsset, FinalAssets,
   PerformanceOpts, MinimalFS, ToWrite,
   Info, Options
 } from "./types";
@@ -26,7 +25,6 @@ export default class Builder {
   +entries: string[];
   +context: string;
   +dest: string;
-  +requests: { path: string, query: Query }[];
   +cwd: string;
   +sourceMaps: boolean | "inline";
   +hashing: boolean;
@@ -38,10 +36,8 @@ export default class Builder {
   +reporter: { plugin: Function, options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
-  +loaders: ( string ) => ?ProvidedPluginsArr<Loader>;
-  +loaderAlias: { [key: string]: Function };
   +languages: { [key: string]: [ Class<Language>, Object ] };
-  +plugins: { plugin: Plugin, options: Object, name: ?string }[];
+  +plugins: { name: ?string, plugin: Plugin }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -59,7 +55,6 @@ export default class Builder {
     this.context = options.context;
     this.dest = options.dest;
     this.publicPath = options.publicPath;
-    this.loaderAlias = options.loaderAlias;
     this.fs = options.fs;
     this.sourceMaps = options.sourceMaps;
     this.hashing = options.hashing;
@@ -70,24 +65,20 @@ export default class Builder {
     this.reporter = options.reporter;
     this.cleanBeforeBuild = options.cleanBeforeBuild;
     this.performance = options.performance;
-    this.loaders = options.loaders;
 
     this.fileSystem = new FileSystem();
 
     this.plugins = options.plugins.map(
-      ( { plugin, options } ) => plugin( options )
+      ( { name, plugin, options } ) => {
+        const p = plugin( options );
+        return {
+          name: p.name || name,
+          plugin: p
+        };
+      }
     );
 
-    this.requests = options.entries.map( e => {
-      const [ path, queryStr ] = Module.parseRequest( e );
-      const query = Module.parseQuery( queryStr );
-      return {
-        path: resolvePath( path, this.context ),
-        query: query.arr.length ? query : this.getDefaultQuery( path )
-      };
-    } );
-
-    this.entries = this.requests.map( r => r.path );
+    this.entries = options.entries.map( e => resolvePath( e, this.context ) );
 
     this.languages = {};
 
@@ -110,48 +101,50 @@ export default class Builder {
 
   }
 
-  isSplitPoint( required: Module, module: Module ): Promise<?boolean> {
-    return this.applyPluginPhaseFirst( "isSplitPoint", required, module );
+  createFakePath( key: string ): string {
+    return resolvePath( `_quase_builder_/${key}`, this.context );
   }
 
-  async applyPluginPhaseFirst( phase: string, ...args: mixed[] ): Promise<any> {
-    for ( const plugin of this.plugins ) {
+  isSplitPoint( required: Module, module: Module ): Promise<boolean> {
+    return this.applyPluginPhaseFirst( "isSplitPoint", null, required, module );
+  }
+
+  async applyPluginPhaseFirst<T>( phase: string, postProcess: ?( any, ?string ) => T, ...args: mixed[] ): Promise<T> {
+    for ( const { name, plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
+        // $FlowFixMe
         const result = await fn( ...args, this );
         if ( result != null ) {
-          return result;
+          return postProcess ? postProcess( result, name ) : result;
         }
       }
     }
+    throw new Error( `No hook ${phase} returned a valid output.` );
   }
 
-  async applyPluginPhasePipe<T>( phase: string, result: T, ...args: mixed[] ): Promise<T> {
-    for ( const plugin of this.plugins ) {
+  async applyPluginPhasePipe<T>( phase: string, postProcess: ?( any, any, ?string ) => T, result: T, ...args: mixed[] ): Promise<T> {
+    for ( const { name, plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
-        result = await fn( result, ...args, this ) || result;
+        // $FlowFixMe
+        const res = await fn( result, ...args, this );
+        if ( res != null ) {
+          result = postProcess ? postProcess( res, result, name ) : res;
+        }
       }
     }
     return result;
   }
 
   async applyPluginPhaseSerial( phase: string, ...args: mixed[] ) {
-    for ( const plugin of this.plugins ) {
+    for ( const { plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
+        // $FlowFixMe
         await fn( ...args, this );
       }
     }
-  }
-
-  getDefaultQuery( path: string ): Query {
-    const arr = this.loaders( path ) || [];
-    return {
-      arr,
-      str: Module.queryArrToString( arr ),
-      default: true
-    };
   }
 
   isEntry( id: string ): boolean {
@@ -277,9 +270,9 @@ export default class Builder {
 
     this.fileSystem.fileUsedBy.clear();
 
-    for ( const request of this.requests ) {
+    for ( const path of this.entries ) {
       this.addModule( {
-        request,
+        path,
         isEntry: true,
         builder: this
       } );
@@ -294,6 +287,7 @@ export default class Builder {
 
     const finalAssets = await this.applyPluginPhasePipe(
       "graphTransformer",
+      null,
       await processGraph( this )
     );
 
@@ -334,20 +328,14 @@ async function callRenderers(
   builder: Builder,
   finalAssets: FinalAssets
 ): Promise<Info[]> {
-  const usedHelpers = new Set();
   const writes = [];
   for ( const asset of finalAssets.files ) {
     const module = builder.getModuleForSure( asset.id );
     const lang = module.lang;
 
     if ( lang ) {
-      const out = await lang.renderAsset( builder, asset, finalAssets, usedHelpers );
+      const out = await lang.renderAsset( builder, asset, finalAssets );
       if ( out ) {
-        if ( !asset.isEntry && out.usedHelpers ) {
-          for ( const key of out.usedHelpers ) {
-            usedHelpers.add( key );
-          }
-        }
         writes.push( builder.write( asset, out ) );
         continue;
       }

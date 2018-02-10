@@ -1,6 +1,6 @@
 module.exports = {
   "plugins": [
-    "transform-runtime",
+    "@babel/plugin-transform-runtime",
     "transform-es2015-template-literals"
   ]
 };

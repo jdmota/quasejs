@@ -2,7 +2,8 @@ module.exports = {
   babelOpts: {
     presets: [
       [ "@babel/env", {
-        targets: { ie: 10 }
+        targets: { ie: 10 },
+        modules: false
       } ]
     ]
   },

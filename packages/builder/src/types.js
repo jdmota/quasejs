@@ -27,15 +27,6 @@ export type ExportedName = {
 
 export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string | T, Object]>;
 
-// $FlowFixMe
-export type QueryArr = $ReadOnlyArray<string | [string, Object]>;
-
-export type Query = {
-  +str: string,
-  +arr: QueryArr,
-  +default?: ?boolean,
-};
-
 export type NotResolvedDep = {
   request: string,
   loc?: ?Loc,
@@ -44,10 +35,15 @@ export type NotResolvedDep = {
 
 export type Dep = {
   path: string,
-  query: Query,
   request: string,
   loc?: ?Loc,
   async?: ?boolean
+};
+
+export type DepsInfo = {
+  dependencies: NotResolvedDep[],
+  importedNames: ImportedName[],
+  exportedNames: ExportedName[]
 };
 
 export type FinalAsset = {
@@ -67,8 +63,7 @@ export type FinalAssets = {
 
 export type ToWrite = {
   data: Data,
-  map?: ?Object,
-  usedHelpers?: ?Set<string>
+  map?: ?Object
 };
 
 export type PerformanceOpts = {
@@ -92,7 +87,8 @@ export type Output = {
 export type LoaderOutput = {
   type: string,
   data: Data,
-  ast?: ?Object
+  ast?: ?Object,
+  map?: ?Object
 };
 
 export type Loader = ( LoaderOutput, Object, Module, Builder ) => ?Promise<LoaderOutput>;
@@ -104,9 +100,12 @@ export type GraphTransformer = ( FinalAssets, Builder ) => ?Promise<?FinalAssets
 export type AfterBuild = ( Output, Builder ) => ?Promise<void>;
 
 export type Plugin = {
-  load?: ?( string, Builder ) => ?Promise<LoaderOutput>,
-  isSplitPoint?: ?( Module, Module, Builder ) => Promise<?boolean>,
-  isExternal?: ?( string, Builder ) => Promise<?boolean>,
+  name?: ?string,
+  load?: ?( string, Builder ) => ?Promise<?LoaderOutput>,
+  resolve?: ?( string, Module, Builder ) => ?Promise<?string | boolean>,
+  transform?: ?( LoaderOutput, Module, Builder ) => ?Promise<?LoaderOutput>,
+  isSplitPoint?: ?( Module, Module, Builder ) => ?Promise<?boolean>,
+  isExternal?: ?( string, Builder ) => ?Promise<?boolean>,
   checker?: ?Checker,
   graphTransformer?: ?GraphTransformer,
   afterBuild?: ?AfterBuild
@@ -128,8 +127,6 @@ export type Options = {
   watchOptions?: ?Object,
   plugins?: ?ProvidedPluginsArr<Object => Plugin>,
   languages?: ?ProvidedPluginsArr<Function>,
-  loaders?: ?( string ) => ?ProvidedPluginsArr<Loader>,
-  loaderAlias?: ?{ [key: string]: Function },
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,

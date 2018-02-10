@@ -103,7 +103,6 @@ Object {
   var fileImports = blank();
   var fetches = blank();
   var publicPath = isNode ? \\"./\\" : \\"/\\";
-  var helpers = undefined;
   var files = [\\"entry.js\\"].map(function (p) {
     return publicPath + p;
   });
@@ -173,7 +172,7 @@ Object {
         value: true
       });
       modules[id] = moduleExports;
-      fn(moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper);
+      fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper);
       return moduleExports;
     }
 
@@ -378,7 +377,6 @@ Object {
   var fileImports = blank();
   var fetches = blank();
   var publicPath = isNode ? \\"./\\" : \\"/\\";
-  var helpers = undefined;
   var files = [\\"entry.js\\"].map(function (p) {
     return publicPath + p;
   });
@@ -447,7 +445,7 @@ Object {
         value: true
       });
       modules[id] = moduleExports;
-      fn(moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper);
+      fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper);
       return moduleExports;
     }
 
@@ -710,7 +708,6 @@ Object {
   var fileImports = blank();
   var fetches = blank();
   var publicPath = isNode ? \\"./\\" : \\"/\\";
-  var helpers = undefined;
   var files = [\\"A.js\\", \\"B.js\\", \\"entry.js\\"].map(function (p) {
     return publicPath + p;
   });
@@ -779,7 +776,7 @@ Object {
         value: true
       });
       modules[id] = moduleExports;
-      fn(moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper);
+      fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper);
       return moduleExports;
     }
 
@@ -1099,7 +1096,6 @@ Object {
   var fileImports = blank();
   var fetches = blank();
   var publicPath = isNode ? \\"./\\" : \\"/\\";
-  var helpers = undefined;
   var files = [\\"entry.js\\", \\"A.js\\", \\"B.js\\", \\"entry.html\\"].map(function (p) {
     return publicPath + p;
   });
@@ -1169,7 +1165,7 @@ Object {
         value: true
       });
       modules[id] = moduleExports;
-      fn(moduleExports, requireSync, requireAsync, helpers, exportHelper, exportAllHelper);
+      fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper);
       return moduleExports;
     }
 

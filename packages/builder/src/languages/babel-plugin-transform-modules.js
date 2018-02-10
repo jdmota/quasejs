@@ -8,7 +8,6 @@ const vars = {
   exports: "$e",
   require: "$r",
   import: "$i",
-  babelHelpers: "$b",
   export: "$g",
   exportAll: "$a"
 };
@@ -128,6 +127,7 @@ export default ( { types: t }, options ) => {
       this.addRequire = ( path, onlySideEffects ) => {
 
         const { node } = path;
+        const originalSource = node.source.value;
         const source = resolveModuleSource( node.source.value );
         const blockHoist = node._blockHoist;
 
@@ -148,7 +148,7 @@ export default ( { types: t }, options ) => {
           ctx = getContext( ctx );
         }
 
-        const uid = context.scope.generateUid( basename( source, extname( source ) ) );
+        const uid = context.scope.generateUid( basename( originalSource, extname( originalSource ) ) );
         const ref = t.identifier( uid );
 
         if ( !context[ REQUIRES ] ) {
@@ -247,6 +247,8 @@ export default ( { types: t }, options ) => {
       },
 
       ImportDeclaration( path ) {
+        extractor( path.node );
+
         path = wrapInBlock( path );
 
         const { node, scope } = path;
@@ -292,6 +294,8 @@ export default ( { types: t }, options ) => {
       },
 
       ExportNamedDeclaration( path ) {
+        extractor( path.node );
+
         path = wrapInBlock( path );
 
         const declarationPath = path.get( "declaration" );
@@ -358,6 +362,8 @@ export default ( { types: t }, options ) => {
       },
 
       ExportDefaultDeclaration( path ) {
+        extractor( path.node );
+
         path = wrapInBlock( path );
 
         // http://stackoverflow.com/questions/39276608/is-there-a-difference-between-export-default-x-and-export-x-as-default/39277065#39277065
@@ -390,6 +396,8 @@ export default ( { types: t }, options ) => {
       },
 
       ExportAllDeclaration( path ) {
+        extractor( path.node );
+
         path = wrapInBlock( path );
 
         const uid = this.addRequire( path, false );
@@ -405,6 +413,8 @@ export default ( { types: t }, options ) => {
         const callee = path.get( "callee" );
 
         if ( node.callee.type === "Import" ) {
+          extractor( node );
+
           callee.replaceWith( t.identifier( getVar( "import" ) ) );
 
           const arg = node.arguments[ 0 ];

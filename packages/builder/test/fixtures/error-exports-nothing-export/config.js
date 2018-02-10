@@ -1,3 +1,3 @@
 module.exports = {
-  _error: "./a exports nothing. See index.js:1:7"
+  _error: "./a exports nothing. Looking for default. See index.js:1:7"
 };

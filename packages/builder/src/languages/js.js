@@ -1,7 +1,7 @@
 // @flow
 import arrayConcat from "../utils/array-concat";
 import type {
-  Loc, Data, NotResolvedDep, ImportedName, ExportedName, FinalAsset, FinalAssets
+  Loc, NotResolvedDep, ImportedName, ExportedName, FinalAsset, FinalAssets
 } from "../types";
 import type Module from "../module";
 import Builder from "../builder";
@@ -12,71 +12,11 @@ import extractNames from "./ast-extract-names";
 
 const path = require( "path" );
 const nodeResolve = require( "resolve" );
-const { parse } = require( "babylon" );
 const babel = require( "@babel/core" );
-const types = require( "@babel/types" );
 const { joinSourceMaps } = require( "@quase/source-map" );
 const MagicString = require( "magic-string" );
 
-function traverseTopLevel( { body }, enter ) {
-  for ( let i = 0; i < body.length; i++ ) {
-    enter( body[ i ] );
-  }
-}
-
-function traverse( node, enter ) {
-  if ( !node ) return;
-
-  const keys = types.VISITOR_KEYS[ node.type ];
-  if ( !keys ) return;
-
-  const go = enter( node );
-
-  if ( !go ) return;
-
-  for ( let i = 0; i < keys.length; i++ ) {
-    const subNode = node[ keys[ i ] ];
-
-    if ( Array.isArray( subNode ) ) {
-      for ( let i = 0; i < subNode.length; i++ ) {
-        traverse( subNode[ i ], enter );
-      }
-    } else {
-      traverse( subNode, enter );
-    }
-  }
-}
-
-const defaultParserOpts = {
-  sourceType: "module",
-  plugins: [
-    "asyncGenerators",
-    "bigInt",
-    "classPrivateMethods",
-    "classPrivateProperties",
-    "classProperties",
-    "decorators2",
-    "doExpressions",
-    "dynamicImport",
-    "exportExtensions",
-    "exportDefaultFrom",
-    "exportNamespaceFrom",
-    "flow",
-    "functionBind",
-    "functionSent",
-    "importMeta",
-    "jsx",
-    "nullishCoalescingOperator",
-    "numericSeparator",
-    "objectRestSpread",
-    "optionalCatchBinding",
-    "optionalChaining",
-    "pipelineOperator",
-    "throwExpressions"
-  ]
-};
-
-const moduleArgs = "$e,$r,$i,$b,$g,$a".split( "," );
+const moduleArgs = "$e,$r,$i,$g,$a".split( "," );
 
 const chunkInit = babel.transform(
   `"use strict";( {
@@ -91,51 +31,27 @@ const chunkInit = babel.transform(
   }
 ).code.replace( /;$/, "" );
 
-// Adapted from https://github.com/babel/babel/blob/master/packages/babel-plugin-external-helpers/src/index.js
-function helpersPlugin( ref, options ) {
-  return {
-    pre( file ) {
-      file.set( "helpersNamespace", ref.types.identifier( "$b" ) );
-
-      const addHelper = file.addHelper;
-      file.addHelper = function( name ) {
-        options.helpers[ name ] = true;
-        return addHelper.call( file, name );
-      };
-    }
-  };
+function getLoc( node ) {
+  return node.loc && node.loc.start;
 }
 
 export default class JsLanguage extends Language {
 
   static TYPE = "js";
 
-  +babelOpts: Object;
-  +parserOpts: Object;
   +dataToString: string;
-  +ast: Object;
+  +ast: ?Object;
   +deps: NotResolvedDep[];
   lastRender: ?Object;
   +_dynamicImports: Object[];
   +_importNames: ImportedName[];
   +_exportNames: ExportedName[];
 
-  constructor( result: { data: Data, ast?: ?Object }, options: Object, module: Module, builder: Builder ) {
-    super( result, options, module, builder );
+  constructor( options: Object, module: Module, builder: Builder ) {
+    super( options, module, builder );
 
-    const babelOpts = this.options.babelOpts || {};
-
-    this.parserOpts = Object.assign( {}, babelOpts.parserOpts );
-    this.parserOpts.plugins = this.parserOpts.plugins || defaultParserOpts.plugins;
-    this.parserOpts.sourceType = this.parserOpts.sourceType || defaultParserOpts.sourceType;
-
-    this.babelOpts = Object.assign(
-      { parserOpts: this.parserOpts },
-      this.options.babelOpts || {}
-    );
-
-    this.dataToString = result.data.toString();
-    this.ast = result.ast || parse( this.dataToString, this.parserOpts );
+    this.dataToString = module.data.toString();
+    this.ast = module.ast;
     this.deps = [];
 
     this.lastRender = null;
@@ -146,15 +62,13 @@ export default class JsLanguage extends Language {
     const self: any = this;
     self.extractDep = self.extractDep.bind( this );
 
-    this.processDeps();
     this.render( module, builder );
   }
 
-  addDep( source: { value: string, loc: { start: Loc } }, async: ?boolean ) {
+  addDep( source: { value: string, loc: ?{ start: Loc } }, async: ?boolean ) {
     this.deps.push( {
       request: source.value,
-      loc: source.loc.start,
-      splitPoint: async,
+      loc: getLoc( source ),
       async
     } );
   }
@@ -167,7 +81,7 @@ export default class JsLanguage extends Language {
     }
 
     if ( opts.commonjs ) {
-      this._exportNames.push( { name: "default", loc: node.loc.start } );
+      this._exportNames.push( { name: "default", loc: getLoc( node ) } );
       return;
     }
 
@@ -179,7 +93,7 @@ export default class JsLanguage extends Language {
       this.addDep( node.source );
 
       node.specifiers.forEach( s => {
-        const loc = s.loc.start;
+        const loc = getLoc( s );
         if ( s.type === "ImportDefaultSpecifier" ) {
           this._importNames.push( {
             imported: "default",
@@ -210,7 +124,7 @@ export default class JsLanguage extends Language {
         arrayConcat(
           this._exportNames,
           extractNames( node.declaration ).map(
-            name => ( { name, loc: node.declaration.loc.start } )
+            name => ( { name, loc: getLoc( node.declaration ) } )
           )
         );
       } else {
@@ -219,7 +133,7 @@ export default class JsLanguage extends Language {
           this.addDep( node.source );
         }
         node.specifiers.forEach( s => {
-          const loc = s.loc.start;
+          const loc = getLoc( s );
           if ( s.type === "ExportDefaultSpecifier" ) { // https://github.com/leebyron/ecmascript-export-default-from
             this._exportNames.push( {
               name: s.exported.name,
@@ -247,7 +161,7 @@ export default class JsLanguage extends Language {
 
     } else if ( type === "ExportDefaultDeclaration" ) {
 
-      this._exportNames.push( { name: "default", loc: node.loc.start } );
+      this._exportNames.push( { name: "default", loc: getLoc( node ) } );
 
     } else if ( type === "ExportAllDeclaration" ) {
 
@@ -257,7 +171,7 @@ export default class JsLanguage extends Language {
         name: "*",
         imported: "*",
         request: node.source.value,
-        loc: node.loc.start
+        loc: getLoc( node )
       } );
 
     } else if ( type === "CallExpression" ) {
@@ -269,7 +183,7 @@ export default class JsLanguage extends Language {
           this._dynamicImports.push( {
             isGlob: false,
             name: arg.value,
-            loc: arg.loc.start
+            loc: getLoc( arg )
           } );
         } else if ( arg.type === "TemplateLiteral" ) {
           let glob = "";
@@ -280,7 +194,7 @@ export default class JsLanguage extends Language {
           this._dynamicImports.push( {
             isGlob: arg.quasis.length > 1,
             name: glob,
-            loc: arg.loc.start
+            loc: getLoc( arg )
           } );
           // TODO test this
         } else {
@@ -288,24 +202,13 @@ export default class JsLanguage extends Language {
           // TODO if it's an identifier, try to get it if it is constant?
           this._dynamicImports.push( {
             warn: true,
-            loc: arg.loc.start
+            loc: getLoc( arg )
           } );
         }
       }
 
-      return true;
-
-    } else {
-
-      return true;
-
     }
 
-  }
-
-  processDeps() {
-    const t = this.parserOpts.allowImportExportEverywhere || this.parserOpts.plugins.indexOf( "dynamicImport" ) > -1 ? traverse : traverseTopLevel;
-    t( this.ast.program, this.extractDep );
   }
 
   resolve( importee: string, importer: string, builder: Builder ): Promise<?string | boolean> {
@@ -358,16 +261,12 @@ export default class JsLanguage extends Language {
     return [];
   }
 
-  async importedNames() {
-    return this._importNames;
-  }
-
-  async exportedNames() {
-    return this._exportNames;
-  }
-
   async dependencies() {
-    return this.deps;
+    return {
+      dependencies: this.deps,
+      importedNames: this._importNames,
+      exportedNames: this._exportNames
+    };
   }
 
   render( module: Module, builder: Builder ) {
@@ -375,40 +274,39 @@ export default class JsLanguage extends Language {
       return this.lastRender;
     }
 
-    const opts = Object.assign( {}, this.options.babelOpts, {
-      filename: module.normalized,
-      filenameRelative: module.path,
-      sourceMaps: !!builder.sourceMaps // sourceMaps can be "inline", just make sure we pass a boolean to babel
-    } );
-
-    const helpers = {};
     const varsUsed = {};
     const imports = [];
 
-    opts.plugins = ( opts.plugins || [] ).concat( [
-      [ helpersPlugin, { helpers } ],
-      [ babelPluginModules, {
-        varsUsed,
-        extractor: this.extractDep,
-        resolveModuleSource( source ) {
-          const key = `__quase_builder_import_${source}__`;
-          imports.push( { source, key } );
-          return key;
-        }
-      } ]
-    ] );
+    const opts = {
+      babelrc: false,
+      parserOpts: {
+        sourceType: "module"
+      },
+      filename: module.normalized,
+      filenameRelative: module.path,
+      sourceMaps: !!builder.sourceMaps, // sourceMaps can be "inline", just make sure we pass a boolean to babel
+      plugins: [
+        [ babelPluginModules, {
+          varsUsed,
+          extractor: this.extractDep,
+          resolveModuleSource( source ) {
+            const key = `__quase_builder_import_${source}__`;
+            imports.push( { source, key } );
+            return key;
+          }
+        } ]
+      ]
+    };
 
-    this.lastRender = babel.transformFromAst( this.ast, this.dataToString, opts );
-    this.lastRender.helpers = helpers;
+    this.lastRender = this.ast ? babel.transformFromAst( this.ast, this.dataToString, opts ) : babel.transform( this.dataToString, opts );
     this.lastRender.varsUsed = varsUsed;
     this.lastRender.imports = imports;
     return this.lastRender;
   }
 
-  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, otherUsedHelpers: Set<string> ) {
+  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets ) {
     const { id, srcs, dest } = asset;
     const entryModule = builder.getModuleForSure( id );
-    const usedHelpers = new Set( otherUsedHelpers );
 
     const build = new StringBuilder( {
       sourceMap: builder.sourceMaps,
@@ -429,47 +327,52 @@ export default class JsLanguage extends Language {
         throw new Error( `Module ${module.id} is not of type 'js'` );
       }
 
-      const { code, map, helpers, varsUsed, imports } = lang.render( module, builder );
+      const { code, map, varsUsed, imports } = lang.render( module, builder );
+      let finalCode, finalMap;
 
-      for ( const name in helpers ) {
-        usedHelpers.add( name );
-      }
+      if ( imports.length ) {
 
-      let finds = [];
-      for ( const { source, key } of imports ) {
-        let index;
-        while ( ( index = code.indexOf( key, index + 1 ) ) > -1 ) {
-          finds.push( {
-            source,
-            key,
-            index
-          } );
+        // FIXME this might take too long for some code (all babel helpers, for example)
+
+        let finds = [];
+        for ( const { source, key } of imports ) {
+          let index;
+          while ( ( index = code.indexOf( key, index + 1 ) ) > -1 ) {
+            finds.push( {
+              source,
+              key,
+              index
+            } );
+          }
         }
-      }
-      finds = finds.sort( ( a, b ) => a.index - b.index );
+        finds = finds.sort( ( a, b ) => a.index - b.index );
 
-      const sourceObj = new MagicString( code );
-      let i = finds.length;
+        const sourceObj = new MagicString( code );
+        let i = finds.length;
 
-      while ( i-- ) {
-        const { source, key, index } = finds[ i ];
-        const m = module.getModuleByRequest( builder, source );
-        const replacement = m ? m.hashId : source;
-        sourceObj.overwrite( index, index + key.length, replacement, { storeName: false } );
-      }
+        while ( i-- ) {
+          const { source, key, index } = finds[ i ];
+          const m = module.getModuleByRequest( builder, source );
+          const replacement = m ? m.hashId : source;
+          sourceObj.overwrite( index, index + key.length, replacement, { storeName: false } );
+        }
 
-      let finalMap;
+        if ( map ) {
+          const map2 = sourceObj.generateMap( {
+            hires: true
+          } );
+          map2.sources[ 0 ] = module.path;
 
-      if ( map ) {
-        const map2 = sourceObj.generateMap( {
-          hires: true
-        } );
-        map2.sources[ 0 ] = module.path;
+          finalMap = joinSourceMaps( module.maps.concat( map, map2 ) );
+        }
 
-        finalMap = joinSourceMaps( module.maps.concat( [
-          map,
-          map2
-        ] ) );
+        finalCode = sourceObj.toString();
+
+      } else {
+        if ( map && module.path !== builder.createFakePath( "babel_helpers" ) ) {
+          finalMap = joinSourceMaps( module.maps.concat( map ) );
+        }
+        finalCode = code;
       }
 
       const args = moduleArgs.slice();
@@ -480,7 +383,7 @@ export default class JsLanguage extends Language {
       const key = /^\d/.test( module.hashId ) ? `"${module.hashId}"` : module.hashId;
 
       build.append( `${first ? "" : ","}\n${key}:function(${args.join( "," )}){` );
-      build.append( sourceObj.toString(), finalMap );
+      build.append( finalCode, finalMap );
       build.append( "\n}" );
 
       first = false;
@@ -493,16 +396,14 @@ export default class JsLanguage extends Language {
         context: builder.context,
         fullPath: asset.path,
         publicPath: builder.publicPath,
-        finalAssets,
-        usedHelpers
+        finalAssets
       } ) );
       build.append( `__quase_builder__.r("${entryModule.hashId}");` );
     }
 
     return {
       data: build.toString(),
-      map: build.sourceMap(),
-      usedHelpers
+      map: build.sourceMap()
     };
   }
 

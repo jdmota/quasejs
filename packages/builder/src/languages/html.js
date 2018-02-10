@@ -1,5 +1,5 @@
 // @flow
-import type { Data, NotResolvedDep, FinalAsset, FinalAssets } from "../types";
+import type { NotResolvedDep, FinalAsset, FinalAssets } from "../types";
 import type Builder from "../builder";
 import type Module from "../module";
 import Language from "../language";
@@ -36,7 +36,6 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
         node,
         async: "async" in attrsObj && attrsObj.async !== "false",
         request: attrsObj.src,
-        splitPoint: true,
         importType: "js"
       } );
       node.__importType = "js";
@@ -49,7 +48,6 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
         node,
         async: false,
         request: attrsObj.href,
-        splitPoint: true,
         importType: "css"
       } );
       node.__importType = "css";
@@ -94,14 +92,14 @@ export default class HtmlLanguage extends Language {
   +originalCode: string;
   +document: Object;
 
-  constructor( result: { data: Data }, options: Object, module: Module, builder: Builder ) {
-    super( result, options, module, builder );
+  constructor( options: Object, module: Module, builder: Builder ) {
+    super( options, module, builder );
 
     this.deps = [];
 
     this.treeAdapter = new TreeAdapter();
 
-    this.originalCode = result.data.toString();
+    this.originalCode = module.data.toString();
 
     this.document = parse5.parse( this.originalCode, {
       treeAdapter: this.treeAdapter,
@@ -119,14 +117,17 @@ export default class HtmlLanguage extends Language {
           line: s.node.__location.line,
           column: s.node.__location.col - 1
         },
-        splitPoint: s.splitPoint,
         async: s.async
       } );
     } );
   }
 
   async dependencies() {
-    return this.deps;
+    return {
+      dependencies: this.deps,
+      importedNames: [],
+      exportedNames: []
+    };
   }
 
   createTextScript( text: string ) {
@@ -158,14 +159,14 @@ export default class HtmlLanguage extends Language {
     this.treeAdapter.detachNode( node );
   }
 
-  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, usedHelpers: Set<string> ) {
+  async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets ) {
     if ( asset.srcs.length !== 1 ) {
       throw new Error( `Asset "${asset.normalized}" to be generated can only have 1 source.` );
     }
-    return this.render( builder, asset, finalAssets, usedHelpers );
+    return this.render( builder, asset, finalAssets );
   }
 
-  async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets, usedHelpers: Set<string> ) {
+  async render( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets ) {
 
     if ( this.treeAdapter.__deps.length ) {
 
@@ -186,8 +187,7 @@ export default class HtmlLanguage extends Language {
             context: builder.context,
             fullPath: asset.path,
             publicPath: builder.publicPath,
-            finalAssets,
-            usedHelpers
+            finalAssets
           } ) ),
           firstScriptDep.node
         );

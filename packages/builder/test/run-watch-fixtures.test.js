@@ -1,15 +1,5 @@
-import JsLanguage from "../src/languages/js";
-import HtmlLanguage from "../src/languages/html";
 import index from "../src";
-
-const DEFAULT_BABEL_OPTS = {
-  presets: [
-    [ "@babel/env", {
-      targets: { chrome: 50 },
-      loose: true
-    } ]
-  ]
-};
+import transformConfig from "./transform-config";
 
 describe( "watcher", () => {
 
@@ -36,17 +26,8 @@ describe( "watcher", () => {
       await fs.emptyDir( workingPath );
       await fs.copy( filesPath, workingPath );
 
-      const config = require( path.resolve( fixturePath, "config.js" ) );
+      const config = transformConfig( require( path.resolve( fixturePath, "config.js" ) ), fixturePath );
 
-      config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
-      config.languages = [
-        [ JsLanguage, {
-          resolve: config.resolve,
-          babelOpts: config.babelOpts ? Object.assign( { babelrc: false }, config.babelOpts ) : DEFAULT_BABEL_OPTS
-        } ],
-        HtmlLanguage
-      ];
-      config.cwd = fixturePath;
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "working";
       config.dest = config.dest || "atual";

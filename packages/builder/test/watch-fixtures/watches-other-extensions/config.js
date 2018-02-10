@@ -2,15 +2,16 @@ module.exports = {
   resolve: {
     extensions: [ ".js", ".ts" ]
   },
-  loaders: function( path ) {
-    if ( /\.ts$/.test( path ) ) {
-      return [ "my-ts-loader" ];
+  plugins: [
+    function() {
+      return {
+        transform( obj ) {
+          if ( obj.type === "ts" ) {
+            obj.type = "js";
+            return obj;
+          }
+        }
+      }
     }
-  },
-  loaderAlias: {
-    "my-ts-loader": function( obj ) {
-      obj.type = "js";
-      return obj;
-    }
-  }
+  ]
 };
