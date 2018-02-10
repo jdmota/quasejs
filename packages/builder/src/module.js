@@ -163,10 +163,12 @@ export default class Module {
   async _transform( builder: Builder ): Promise<Language> {
 
     let result = this.loadResult;
+    const maps = [];
 
     if ( result == null ) {
       try {
-        result = await builder.applyPluginPhaseFirst( "load", this.path );
+        const out = await builder.applyPluginPhaseFirst( "load", this.path );
+        result = handleOutput( out, maps, "Load hook" );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );
@@ -175,28 +177,17 @@ export default class Module {
       }
     }
 
-    if ( !isObject( result ) ) {
-      throw error( "Load should return { type: string, data: Buffer | string }" );
-    }
-
-    const maps = [];
-
     const loaders = getPlugins( this.query.arr, name => builder.loaderAlias[ name ] );
 
-    for ( const { plugin, options } of loaders ) {
+    for ( const { name, plugin, options } of loaders ) {
       const out = await plugin(
         Object.assign( {}, result ),
         options,
         module,
         builder
       );
-      if ( isObject( out ) ) {
-        result.type = out.type;
-        result.data = out.data;
-        result.ast = out.ast;
-        if ( out.map ) {
-          maps.push( out.map );
-        }
+      if ( out ) {
+        result = handleOutput( out, maps, `Loader${name ? " " + name : ""}` );
       }
     }
 
@@ -264,4 +255,40 @@ export default class Module {
     this.resolving = null;
   }
 
+}
+
+function handleOutput( out, maps, _from ): LoaderOutput {
+
+  if ( !isObject( out ) || typeof out.type !== "string" ) {
+    throw error( `${_from} should return { type: string, data: Buffer | string }` );
+  }
+
+  if ( out.code && out.data ) {
+    throw error( `${_from} should not return an object with both "data" and "code"` );
+  }
+
+  const data = out.data || out.code;
+
+  if ( typeof data !== "string" && !Buffer.isBuffer( data ) ) {
+    throw error( `${_from} should return valid data: Buffer or string` );
+  }
+
+  if ( out.map ) {
+    if ( isObject( out.map ) ) {
+      maps.push( out.map );
+    } else {
+      throw error( `${_from} should return valid source map object or none` );
+    }
+  }
+
+  if ( out.ast && !isObject( out.ast ) ) {
+    throw error( `${_from} should return valid ast object or none` );
+  }
+
+  return {
+    type: out.type,
+    data,
+    ast: out.ast,
+    map: out.map
+  };
 }
