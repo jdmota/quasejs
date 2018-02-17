@@ -105,6 +105,8 @@ export async function publish( opts ) {
     }
     opts.gitRoot = await execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
 
+    console.log();
+
     // Show commits
     const repositoryUrl = githubUrlFromGit( pkg.repository.url );
     const tagPattern = opts.gitTag.replace( /(%s|%n)/g, "*" );
@@ -126,9 +128,9 @@ export async function publish( opts ) {
         } )
         .join( "\n" );
 
-      info( `\nCommits since ${tag}:\n${history || ""}\n` );
+      info( `Commits since ${tag}:\n${history || ""}\n` );
     } else {
-      info( `\nNo previous git tags found with pattern ${tagPattern}` );
+      info( `No previous git tags found with pattern ${tagPattern}` );
     }
   }
 
