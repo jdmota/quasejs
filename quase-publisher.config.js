@@ -21,7 +21,7 @@ module.exports = {
     return {
       title: "Publish",
       task() {
-        return exec( "yarn", [ "publish", "--access", "public" ], {
+        return exec( "yarn", [ "publish", "--access", "public", "--new-version", opts.version ], {
           cwd: opts.folder
         } );
       }
