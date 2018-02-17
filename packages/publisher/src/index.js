@@ -109,7 +109,7 @@ export async function publish( opts ) {
 
     // Show commits
     const repositoryUrl = githubUrlFromGit( pkg.repository.url );
-    const tagPattern = opts.gitTag.replace( /(%s|%n)/g, "*" );
+    const tagPattern = opts.gitTag.replace( /%s/g, "*" ).replace( /%n/g, pkg.name );
     let tag;
     try {
       tag = await execa.stdout( "git", [ "tag", "-l", tagPattern ] );
