@@ -10,7 +10,7 @@ export default function( opts ) {
       return execa.stdout( "git", [ "symbolic-ref", "--short", "HEAD" ] ).then( branch => {
         if ( branch !== opts.gitBranch ) {
           throw error(
-            `Not on \`${opts.gitBranch}\` branch. Use --branch to change from which branch you are publishing.`
+            `Not on \`${opts.gitBranch}\` branch. Use --git-branch to change from which branch you are publishing.`
           );
         }
       } );

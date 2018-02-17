@@ -1,6 +1,6 @@
 # @quase/publisher
 
-Based on [https://github.com/sindresorhus/np/](https://github.com/sindresorhus/np/) and includes [https://github.com/bahmutov/ban-sensitive-files](https://github.com/bahmutov/ban-sensitive-files).
+Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindresorhus/np/).
 
 ## Options
 

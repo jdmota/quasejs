@@ -6,16 +6,18 @@ import { exec, l, error } from "./util";
 const path = require( "path" );
 const execa = require( "execa" );
 const logSymbols = require( "log-symbols" );
-const readPkgUp = require( "read-pkg-up" );
+const readPkg = require( "read-pkg" );
 const hasYarn = require( "has-yarn" );
 const slash = require( "slash" );
+const githubUrlFromGit = require( "github-url-from-git" );
 const versionUtils = require( "np/lib/version" );
+const util = require( "np/lib/util" );
 
 function getConfig( opts, npmKey, yarnKey ) {
   if ( opts.yarn ) {
-    return execa.stdout( "yarn", [ "config", "get", yarnKey ] ).then( o => o.trim() );
+    return execa.stdout( "yarn", [ "config", "get", yarnKey ] );
   }
-  return execa.stdout( "npm", [ "config", "get", npmKey ] ).then( o => o.trim() );
+  return execa.stdout( "npm", [ "config", "get", npmKey ] );
 }
 
 function getVersionGitMessage( opts ) {
@@ -32,10 +34,6 @@ function getVersionSignGitTag( opts ) {
 
 function replace( str, { version, pkg: { name } } ) {
   return str.replace( /%s/g, version ).replace( /%n/, name );
-}
-
-function replaceDefault( str, { version } ) {
-  return str.replace( /%s/g, version );
 }
 
 function defaultTasks( opts ) {
@@ -66,11 +64,9 @@ export async function publish( opts ) {
   defaultTasks( opts );
 
   opts.folder = path.resolve( opts.folder );
+  opts.pkgPath = path.resolve( opts.folder, "package.json" );
 
-  const { pkg, path: pkgPath } = readPkgUp.sync( {
-    cwd: opts.folder,
-    normalize: false
-  } );
+  const pkg = await readPkg( opts.pkgPath );
 
   opts.pkg = pkg;
 
@@ -86,20 +82,63 @@ export async function publish( opts ) {
     throw error( "Missing `version` on package.json." );
   }
 
-  opts.pkgPath = pkgPath;
-  opts.pkgNodeModules = path.resolve( pkgPath, "../node_modules" );
-  opts.pkgRelativePath = slash( path.relative( process.cwd(), pkgPath ) );
+  opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
+  opts.pkgRelativePath = slash( path.relative( process.cwd(), opts.pkgPath ) );
 
   if ( opts.yarn === undefined ) {
     opts.yarn = hasYarn( opts.folder );
   } else if ( opts.yarn && !hasYarn( opts.folder ) ) {
-    throw error( "Could not use Yarn without yarn.lock file" );
+    throw error( "Cannot use Yarn without yarn.lock file" );
+  }
+
+  if ( opts.git ) {
+    if ( !opts.gitMessage ) {
+      opts.gitMessage = await getVersionGitMessage( opts );
+    }
+    if ( !opts.gitTag ) {
+      opts.gitTag = `${await getVersionTagPrefix( opts )}%s`;
+    }
+    if ( opts.signGitTag === undefined ) {
+      opts.signGitTag = await getVersionSignGitTag( opts );
+    } else {
+      opts.signGitTag = !!opts.signGitTag;
+    }
+    opts.gitRoot = await execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
+
+    // Show commits
+    const repositoryUrl = githubUrlFromGit( pkg.repository.url );
+    const tagPattern = opts.gitTag.replace( /(%s|%n)/g, "*" );
+    let tag;
+    try {
+      tag = await execa.stdout( "git", [ "rev-list", "--tags", "--max-count=1", `--grep=${tagPattern}` ] );
+    } catch ( e ) {
+      // Ignore
+    }
+    if ( tag ) {
+      const result = await execa.stdout( "git", [ "log", "--format=%s %h", `${tag}..HEAD`, "--", opts.folder ] );
+
+      const history = result.split( "\n" )
+        .map( commit => {
+          const commitParts = commit.match( /^(.+)\s([a-f0-9]{7})$/ );
+          const commitMessage = util.linkifyIssues( repositoryUrl, commitParts[ 1 ] );
+          const commitId = util.linkifyCommit( repositoryUrl, commitParts[ 2 ] );
+          return `- ${commitMessage}  ${commitId}`;
+        } )
+        .join( "\n" );
+
+      info( `\nCommits since ${tag}:\n${history || ""}\n` );
+    } else {
+      info( `\nNo previous git tags found with pattern ${tagPattern}` );
+    }
   }
 
   if ( opts.version ) {
     if ( !versionUtils.isValidVersionInput( opts.version ) ) {
-      throw error( "Please specify a valid semver, for example, `1.2.3`. See http://semver.org" );
+      throw error( `Version should be either ${versionUtils.SEMVER_INCREMENTS.join( ", " )} or a valid semver version.` );
     }
+
+    opts.version = versionUtils.getNewVersion( opts.pkg.version, opts.version );
+
     if ( !versionUtils.isVersionGreater( pkg.version, opts.version ) ) {
       throw error( `Version must be greater than ${pkg.version}` );
     }
@@ -116,30 +155,8 @@ export async function publish( opts ) {
   }
 
   if ( opts.git ) {
-    const gitMessagePromise = getVersionGitMessage( opts );
-    const gitTagPromise = getVersionTagPrefix( opts );
-    const signGitTagPromise = getVersionSignGitTag( opts );
-    const gitRootPromise = execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] ).then( o => o.trim() );
-
-    if ( opts.gitMessage ) {
-      opts.gitMessage = replace( opts.gitMessage, opts );
-    } else {
-      opts.gitMessage = replaceDefault( await gitMessagePromise, opts );
-    }
-
-    if ( opts.gitTag ) {
-      opts.gitTag = replace( opts.gitTag, opts );
-    } else {
-      opts.gitTag = `${await gitTagPromise}${opts.version}`;
-    }
-
-    if ( opts.signGitTag === undefined ) {
-      opts.signGitTag = await signGitTagPromise;
-    } else {
-      opts.signGitTag = !!opts.signGitTag;
-    }
-
-    opts.gitRoot = await gitRootPromise;
+    opts.gitMessage = replace( opts.gitMessage, opts );
+    opts.gitTag = replace( opts.gitTag, opts );
   }
 
   console.log();
@@ -209,15 +226,14 @@ export async function publish( opts ) {
 
   await tasks.run();
 
-  return readPkgUp( {
-    cwd: opts.folder,
+  return readPkg( opts.pkgPath, {
     normalize: false
   } );
 }
 
 export default async function( opts ) {
   try {
-    const { pkg } = await publish( opts );
+    const pkg = await publish( opts );
     console.log( `\n ${pkg.name} ${pkg.version} published 🎉` );
   } catch ( err ) {
     if ( err.__generated ) {
