@@ -112,12 +112,17 @@ export async function publish( opts ) {
     const tagPattern = opts.gitTag.replace( /(%s|%n)/g, "*" );
     let tag;
     try {
-      tag = await execa.stdout( "git", [ "rev-list", "--tags", "--max-count=1", `--grep=${tagPattern}` ] );
+      tag = await execa.stdout( "git", [ "tag", "-l", tagPattern ] );
     } catch ( e ) {
       // Ignore
     }
     if ( tag ) {
-      const result = await execa.stdout( "git", [ "log", "--format=%s %h", `${tag}..HEAD`, "--", opts.folder ] );
+      const result = await execa.stdout( "git", [ "log", "--format=%s %h", `refs/tags/${tag}..HEAD`, "--", opts.folder ] );
+
+      if ( !result ) {
+        info( `No commits since ${tag}\n` );
+        process.exit( 0 );
+      }
 
       const history = result.split( "\n" )
         .map( commit => {
