@@ -14,7 +14,8 @@ export function getConfig( opts ) {
 
     if ( location ) {
       try {
-        result.config = require( location );
+        const e = require( location );
+        result.config = e && e.__esModule ? e.default : e;
         result.location = location;
       } catch ( e ) {
         // Ignore
