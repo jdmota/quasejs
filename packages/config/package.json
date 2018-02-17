@@ -1,6 +1,6 @@
 {
   "name": "@quase/config",
-  "version": "0.1.0-0",
+  "version": "0.1.0",
   "description": "Configuration utilities",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
