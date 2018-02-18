@@ -4,7 +4,6 @@
   "scripts": {
     "test": "jest",
     "build": "node packages/build.js build",
-    "publish": "node packages/build.js publish",
     "node": "babel-node",
     "flowtype": "flow-typed install",
     "flow": "flow",

@@ -6,11 +6,13 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### preview
 
+### cwd
+
 ### folder
 
 ### tag
 
-### opt
+### access
 
 ### yarn
 
@@ -18,15 +20,13 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### gitBranch
 
+### gitCommitTag
+
 ### gitMessage
 
-### gitTag
+### gitTagPrefix
 
 ### signGitTag
-
-### gitCommitHooks
-
-### gitPushHooks
 
 ## Tasks
 
@@ -44,10 +44,16 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### test
 
+### rootBeforeVersion
+
 ### bumpVersion
 
-### gitCommitTag
+### rootAfterVersion
+
+### rootBeforePublish
 
 ### publish
+
+### rootAfterPublish
 
 ### gitPush

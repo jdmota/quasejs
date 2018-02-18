@@ -1,11 +1,10 @@
 import { exec, error } from "./util";
 import gitTasks from "./git";
 import prerequisiteTasks from "./prerequisite";
+import publishTask from "./publish";
 
 const path = require( "path" );
 const nsp = require( "nsp" );
-const publishTask = require( "np/lib/publish" );
-const execa = require( "execa" );
 const del = require( "del" );
 
 const ban = path.join( __dirname, "ban.js" );
@@ -82,46 +81,109 @@ export function cleanup( opts ) {
 
 
 export function test( opts ) {
+  if ( opts.yarn ) {
+    return {
+      title: "Running tests using Yarn",
+      task: () => exec( "yarn", [ "test" ], {
+        cwd: opts.folder
+      } )
+    };
+  }
   return {
-    title: "Running tests",
+    title: "Running tests using npm",
     task: () => exec( "npm", [ "test" ], {
       cwd: opts.folder
     } )
   };
 }
 
+function buildRootLifecycle( arr, opts ) {
+  return arr.map( name => {
+    return {
+      title: `Executing root's ${name} script using ${opts.yarn ? "Yarn" : "npm"}`,
+      enabled: () => !!opts.rootPkg,
+      skip: () => !!( opts.rootPkg.scripts && opts.rootPkg.scripts[ name ] ),
+      task: () => exec( opts.yarn ? "yarn" : "npm", [ opts.yarn ? "run" : "run-script", name ], {
+        cwd: opts.cwd
+      } )
+    };
+  } );
+}
+
+export function rootBeforeVersion( opts ) {
+  return buildRootLifecycle( [ "preversion" ], opts );
+}
+
 export function bumpVersion( opts ) {
   if ( opts.yarn ) {
+    const args = [ "version", opts.version ];
+
+    if ( opts.git && opts.gitCommitTag ) {
+      if ( opts.gitTagPrefix ) {
+        args.push( "--version-tag-prefix", opts.gitTagPrefix );
+      }
+      if ( opts.gitMessage ) {
+        args.push( "--version-git-message", opts.gitMessage );
+      }
+      if ( opts.signGitTag !== undefined ) {
+        if ( opts.signGitTag ) {
+          args.push( "--version-sign-git-tag" );
+        } else {
+          args.push( "--no-version-sign-git-tag" );
+        }
+      }
+    } else {
+      args.push( "--no-version-git-tag" );
+    }
+
     return {
       title: "Bumping version using Yarn",
-      task: () => exec( "yarn", [ "version", "--new-version", opts.version, "--no-git-tag-version" ], {
+      task: () => exec( "yarn", args, {
         cwd: opts.folder
       } )
     };
   }
+
+  const args = [ "version", opts.version ];
+
+  if ( opts.git && opts.gitCommitTag ) {
+    if ( opts.gitTagPrefix ) {
+      args.push( "--tag-version-prefix", opts.gitTagPrefix );
+    }
+    if ( opts.gitMessage ) {
+      args.push( "--message", opts.gitMessage );
+    }
+    if ( opts.signGitTag !== undefined ) {
+      if ( opts.signGitTag ) {
+        args.push( "--sign-git-tag" );
+      } else {
+        args.push( "--no-sign-git-tag" );
+      }
+    }
+  } else {
+    args.push( "--no-git-tag-version" );
+  }
+
   return {
     title: "Bumping version using npm",
-    task: () => exec( "npm", [ "version", opts.version, "--no-git-tag-version" ], {
+    task: () => exec( "npm", args, {
       cwd: opts.folder
     } )
   };
 }
 
-export function gitCommitTag( opts ) {
-  return {
-    title: "Git commit and tag",
-    task() {
-      return execa( "git", [ "add", opts.pkgRelativePath ] )
-        .then( () => execa( "git", [ "commit", "-m", opts.gitMessage ].concat( opts.gitCommitHooks ? [] : [ "--no-verify" ] ) ) )
-        .then( () => execa( "git", [ "tag", opts.gitTag, opts.signGitTag ? "-sm" : "-am", opts.gitMessage ] ) );
-    }
-  };
+export function rootAfterVersion( opts ) {
+  return buildRootLifecycle( [ "postversion" ], opts );
+}
+
+export function rootBeforePublish( opts ) {
+  return buildRootLifecycle( [ "prepublish", "prepare", "prepublishOnly" ], opts );
 }
 
 export function publish( opts ) {
   return {
-    title: "Publishing package",
-    task: ( ctx, task ) => publishTask( task, opts.tag ),
+    title: `Publishing package using ${opts.yarn ? "Yarn" : "npm"}`,
+    task: ( ctx, task ) => publishTask( task, opts ),
     skip() {
       if ( opts.pkg.private ) {
         return "Private package: not publishing to npm.";
@@ -130,10 +192,14 @@ export function publish( opts ) {
   };
 }
 
-export function gitPush( opts ) {
+export function rootAfterPublish( opts ) {
+  return buildRootLifecycle( [ "publish", "postpublish" ], opts );
+}
+
+export function gitPush() {
   return {
     title: "Pushing commit and tags",
-    task: () => exec( "git", [ "push", "--follow-tags" ].concat( opts.gitPushHooks ? [] : [ "--no-verify" ] ) )
+    task: () => exec( "git", [ "push", "--follow-tags" ] )
   };
 }
 
@@ -144,8 +210,11 @@ export default {
   gitCheck,
   cleanup,
   test,
+  rootBeforeVersion,
   bumpVersion,
-  gitCommitTag,
+  rootAfterVersion,
+  rootBeforePublish,
   publish,
+  rootAfterPublish,
   gitPush
 };

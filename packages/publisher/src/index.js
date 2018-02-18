@@ -1,7 +1,7 @@
 /* eslint-disable no-process-exit, no-console */
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
-import { exec, l, error } from "./util";
+import { exec, l, error, linkifyIssues, linkifyCommit } from "./util";
 
 const path = require( "path" );
 const execa = require( "execa" );
@@ -10,8 +10,9 @@ const readPkg = require( "read-pkg" );
 const hasYarn = require( "has-yarn" );
 const slash = require( "slash" );
 const githubUrlFromGit = require( "github-url-from-git" );
-const versionUtils = require( "np/lib/version" );
-const util = require( "np/lib/util" );
+
+const versionRe = /(%s|%v)/g;
+const nameRe = /%n/g;
 
 function getConfig( opts, npmKey, yarnKey ) {
   if ( opts.yarn ) {
@@ -28,12 +29,8 @@ function getVersionTagPrefix( opts ) {
   return getConfig( opts, "tag-version-prefix", "version-tag-prefix" );
 }
 
-function getVersionSignGitTag( opts ) {
-  return getConfig( opts, "sign-git-tag", "version-git-sign" ).then( o => o === "true" );
-}
-
 function replace( str, { version, pkg: { name } } ) {
-  return str.replace( /%s/g, version ).replace( /%n/, name );
+  return str && str.replace( versionRe, version ).replace( nameRe, name );
 }
 
 function defaultTasks( opts ) {
@@ -54,21 +51,24 @@ export async function publish( opts ) {
 
   opts = Object.assign( {
     preview: false,
+    cwd: process.cwd(),
     folder: process.cwd(),
     git: true,
     gitBranch: "master",
-    gitCommitHooks: true,
-    gitPushHooks: true
+    gitCommitHooks: true
   }, opts );
 
   defaultTasks( opts );
 
   opts.folder = path.resolve( opts.folder );
   opts.pkgPath = path.resolve( opts.folder, "package.json" );
+  opts.rootPkgPath = path.resolve( opts.cwd, "package.json" );
 
-  const pkg = await readPkg( opts.pkgPath );
+  opts.pkg = await readPkg( opts.pkgPath );
 
-  opts.pkg = pkg;
+  if ( opts.pkgPath !== opts.rootPkgPath ) {
+    opts.rootPkg = await readPkg( opts.rootPkgPath );
+  }
 
   if ( !opts.pkg ) {
     throw error( "No package.json found. Make sure you're in the correct project." );
@@ -83,7 +83,7 @@ export async function publish( opts ) {
   }
 
   opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
-  opts.pkgRelativePath = slash( path.relative( process.cwd(), opts.pkgPath ) );
+  opts.pkgRelativePath = slash( path.relative( opts.cwd, opts.pkgPath ) );
 
   if ( opts.yarn === undefined ) {
     opts.yarn = hasYarn( opts.folder );
@@ -92,24 +92,15 @@ export async function publish( opts ) {
   }
 
   if ( opts.git ) {
-    if ( !opts.gitMessage ) {
-      opts.gitMessage = await getVersionGitMessage( opts );
-    }
-    if ( !opts.gitTag ) {
-      opts.gitTag = `${await getVersionTagPrefix( opts )}%s`;
-    }
-    if ( opts.signGitTag === undefined ) {
-      opts.signGitTag = await getVersionSignGitTag( opts );
-    } else {
-      opts.signGitTag = !!opts.signGitTag;
-    }
+    opts.gitMessage = opts.gitMessage || await getVersionGitMessage( opts );
+    opts.gitTagPrefix = opts.gitTagPrefix || await getVersionTagPrefix( opts );
     opts.gitRoot = await execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
 
     console.log();
 
     // Show commits
-    const repositoryUrl = githubUrlFromGit( pkg.repository.url );
-    const tagPattern = opts.gitTag.replace( /%s/g, "*" ).replace( /%n/g, pkg.name );
+    const repositoryUrl = opts.pkg.repository && opts.pkg.repository.url && githubUrlFromGit( opts.pkg.repository.url );
+    const tagPattern = opts.gitTagPrefix.replace( versionRe, "*" ).replace( nameRe, opts.pkg.name ).replace( /\*?$/g, "*" );
     let tag;
     try {
       tag = await execa.stdout( "git", [ "tag", "-l", tagPattern ] );
@@ -127,8 +118,8 @@ export async function publish( opts ) {
       const history = result.split( "\n" )
         .map( commit => {
           const commitParts = commit.match( /^(.+)\s([a-f0-9]{7})$/ );
-          const commitMessage = util.linkifyIssues( repositoryUrl, commitParts[ 1 ] );
-          const commitId = util.linkifyCommit( repositoryUrl, commitParts[ 2 ] );
+          const commitMessage = repositoryUrl ? linkifyIssues( repositoryUrl, commitParts[ 1 ] ) : commitParts[ 1 ];
+          const commitId = repositoryUrl ? linkifyCommit( repositoryUrl, commitParts[ 2 ] ) : commitParts[ 2 ];
           return `- ${commitMessage}  ${commitId}`;
         } )
         .join( "\n" );
@@ -139,31 +130,13 @@ export async function publish( opts ) {
     }
   }
 
-  if ( opts.version ) {
-    if ( !versionUtils.isValidVersionInput( opts.version ) ) {
-      throw error( `Version should be either ${versionUtils.SEMVER_INCREMENTS.join( ", " )} or a valid semver version.` );
-    }
-
-    opts.version = versionUtils.getNewVersion( opts.pkg.version, opts.version );
-
-    if ( !versionUtils.isVersionGreater( pkg.version, opts.version ) ) {
-      throw error( `Version must be greater than ${pkg.version}` );
-    }
-    if ( !pkg.private && versionUtils.isPrereleaseVersion( opts.version ) ) {
-      if ( !opts.tag ) {
-        throw error( "Please specify a tag, for example, `next`." );
-      }
-      if ( opts.tag === "latest" ) {
-        throw error( "It's not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`." );
-      }
-    }
-  } else {
+  if ( !opts.version ) {
     await additionalQuestions( opts );
   }
 
   if ( opts.git ) {
     opts.gitMessage = replace( opts.gitMessage, opts );
-    opts.gitTag = replace( opts.gitTag, opts );
+    opts.gitTagPrefix = replace( opts.gitTagPrefix, opts );
   }
 
   console.log();
@@ -176,7 +149,7 @@ export async function publish( opts ) {
   if ( opts.git ) {
     info( `Git Branch: ${opts.gitBranch}` );
     info( `Git Message: ${opts.gitMessage}` );
-    info( `Git Tag: ${opts.gitTag}` );
+    info( `Git Tag: ${opts.gitTagPrefix}${opts.version}` );
   }
   info( opts.yarn ? "Using Yarn" : "Using npm" );
   console.log();
@@ -187,49 +160,26 @@ export async function publish( opts ) {
 
   const tasks = l();
 
-  if ( opts.checkSensitiveData ) {
-    tasks.add( opts.checkSensitiveData( opts ) );
-  }
-
-  if ( opts.checkDeps ) {
-    tasks.add( opts.checkDeps( opts ) );
-  }
-
-  if ( opts.preCheck ) {
-    tasks.add( opts.preCheck( opts ) );
-  }
-
-  if ( opts.git && opts.gitCheck ) {
-    tasks.add( opts.gitCheck( opts ) );
-  }
-
-  if ( opts.cleanup ) {
-    tasks.add( opts.cleanup( opts ) );
-  }
-
-  if ( opts.build ) {
-    tasks.add( opts.build( opts ) );
-  }
-
-  if ( opts.test ) {
-    tasks.add( opts.test( opts ) );
-  }
-
-  if ( opts.bumpVersion ) {
-    tasks.add( opts.bumpVersion( opts ) );
-  }
-
-  if ( opts.git && opts.gitCommitTag ) {
-    tasks.add( opts.gitCommitTag( opts ) );
-  }
-
-  if ( opts.publish ) {
-    tasks.add( opts.publish( opts ) );
-  }
-
-  if ( opts.git && opts.gitPush ) {
-    tasks.add( opts.gitPush( opts ) );
-  }
+  [
+    opts.checkSensitiveData,
+    opts.checkDeps,
+    opts.preCheck,
+    opts.git && opts.gitCheck,
+    opts.cleanup,
+    opts.build,
+    opts.test,
+    opts.rootBeforeVersion,
+    opts.bumpVersion,
+    opts.rootAfterVersion,
+    opts.rootBeforePublish,
+    opts.publish,
+    opts.rootAfterPublish,
+    opts.git && opts.gitPush,
+  ].forEach( t => {
+    if ( t ) {
+      tasks.add( t( opts ) );
+    }
+  } );
 
   await tasks.run();
 
