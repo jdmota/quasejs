@@ -1,4 +1,5 @@
 import { t, types } from "./types";
+import { addPrefix, validateType, formatOption } from "./validation";
 
 const toString = ( {} ).toString;
 
@@ -102,7 +103,24 @@ function applyDefaultsHelper( info, objValue, srcValue, key, object ) {
 
 }
 
-export function extractDefaults( type ) {
+export function extractDefaults( fullKey, { type, default: d, required } ) {
+  if ( d === undefined ) {
+    if ( required ) {
+      return;
+    }
+  } else {
+    if ( required ) {
+      throw new Error( `[Schema] Don't use "required" with "default" in ${formatOption( fullKey )}` );
+    }
+    if ( type ) {
+      try {
+        validateType( fullKey, d, type );
+      } catch ( e ) {
+        throw new Error( `[Schema] "default" does not match the type in ${formatOption( fullKey )}` );
+      }
+    }
+    return d;
+  }
   if ( !type ) {
     return;
   }
@@ -119,8 +137,7 @@ export function extractDefaults( type ) {
     const schema = type.items;
     const defaults = [];
     for ( let i = 0; i < schema.length; i++ ) {
-      const { type, default: d, required } = schema[ i ];
-      defaults[ i ] = d === undefined && !required ? extractDefaults( type ) : d;
+      defaults[ i ] = extractDefaults( addPrefix( fullKey, i + "" ), schema[ i ] );
     }
     return defaults;
   }
@@ -128,8 +145,7 @@ export function extractDefaults( type ) {
     const schema = type.properties;
     const defaults = {};
     for ( const k in schema ) {
-      const { type, default: d, required } = schema[ k ];
-      defaults[ k ] = d === undefined && !required ? extractDefaults( type ) : d;
+      defaults[ k ] = extractDefaults( addPrefix( fullKey, k ), schema[ k ] );
     }
     return defaults;
   }
@@ -138,9 +154,10 @@ export function extractDefaults( type ) {
 export function applyDefaults( schema, ...args ) {
   const dest = {};
   const type = t.object( schema );
+  const defaults = extractDefaults( "", { type } );
   for ( let i = 0; i < args.length; i++ ) {
     applyDefaultsObject( type, dest, args[ i ] );
   }
-  applyDefaultsObject( type, dest, extractDefaults( type ) );
+  applyDefaultsObject( type, dest, defaults );
   return dest;
 }

@@ -27,9 +27,11 @@ class TUnion extends Type {
 
 class TObject extends Type {
   +properties: Schema;
+  +keys: string[];
   constructor( properties: Schema ) {
     super();
     this.properties = properties;
+    this.keys = Object.keys( properties );
   }
 }
 

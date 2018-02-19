@@ -251,3 +251,14 @@ Array [
   ],
 ]
 `;
+
+exports[`validate 10`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'required' is required.
+",
+  ],
+]
+`;

@@ -4,6 +4,8 @@ import { printWarning } from "./print";
 import { types } from "./types";
 import getType from "./get-type";
 
+type Type = ?string | types.Type;
+
 const concordance = require( "concordance" );
 const chalk = require( "chalk" );
 const leven = require( "leven" );
@@ -41,7 +43,7 @@ export function printDeprecated( option: string, message: ?string ) {
   printWarning( `${chalk.bold( "Deprecation Warning" )}: ${message}` );
 }
 
-export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<string>, type: ?string ) {
+export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<string>, what: ?string ) {
 
   const unrecognizedOptions = keys.filter( arg => !allowedOptions.includes( arg ) );
 
@@ -49,21 +51,21 @@ export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<st
     return;
   }
 
-  type = type || "option";
+  what = what || "option";
   let message;
 
   if ( unrecognizedOptions.length === 1 ) {
     const unrecognized = unrecognizedOptions[ 0 ];
     const didYouMeanMessage = createDidYouMeanMessage( unrecognized, allowedOptions );
-    message = `Unrecognized ${type} ${formatOption( unrecognized )}. ${didYouMeanMessage}`.trimRight();
+    message = `Unrecognized ${what} ${formatOption( unrecognized )}. ${didYouMeanMessage}`.trimRight();
   } else {
-    message = `Following ${type}s were not recognized:\n  ${unrecognizedOptions.map( formatOption ).join( ", " )}`;
+    message = `Following ${what}s were not recognized:\n  ${unrecognizedOptions.map( formatOption ).join( ", " )}`;
   }
 
   throw new ValidationError( message );
 }
 
-function join( array ) {
+export function join( array: ( ?string )[] ) {
   return array.filter( Boolean ).join( "\n" );
 }
 
@@ -119,13 +121,17 @@ export function checkChoices( option: string, value: mixed, choices: Array<mixed
   throw new ValidationError( messageLines.join( "\n" ) );
 }
 
+export function addPrefix( prefix: ?string, key: string ) {
+  return prefix ? `${prefix}.${key}` : key;
+}
+
 export function checkKeys( optionPrefix: ?string, object: any, schema: any ) {
 
   const deprecatedKeys = [];
 
   for ( const key in schema ) {
     const fullKey = addPrefix( optionPrefix, key );
-    const { type, choices, required, default: _default, deprecated, example } = schema[ key ];
+    const { type, choices, required, deprecated } = schema[ key ];
     const value = object[ key ];
     if ( value === undefined ) {
       if ( required ) {
@@ -135,12 +141,12 @@ export function checkKeys( optionPrefix: ?string, object: any, schema: any ) {
       if ( deprecated ) {
         deprecatedKeys.push( fullKey );
       }
-    }
-    if ( choices ) {
-      checkChoices( fullKey, value, choices );
-    }
-    if ( type ) {
-      validateType( fullKey, value, type, example === undefined ? _default : example );
+      if ( choices ) {
+        checkChoices( fullKey, value, choices );
+      }
+      if ( type ) {
+        validateType( fullKey, value, type, getExample( schema[ key ] ) );
+      }
     }
   }
 
@@ -150,25 +156,20 @@ export function checkKeys( optionPrefix: ?string, object: any, schema: any ) {
 
 }
 
-function addPrefix( prefix: ?string, key: string ) {
-  return prefix ? `${prefix}.${key}` : key;
+export function getExample( { default: d, example }: { default: any, example: any } ) {
+  return example === undefined ? d : example;
 }
 
-export function validateType( fullKey: string, value: any, type: ?string | types.Type, example: mixed ) {
+export function validateType( fullKey: string, value: any, type: Type, example: mixed ) {
 
   if ( type instanceof types.Union ) {
-    let passed = false;
     for ( const t of type.types ) {
       try {
         validateType( fullKey, value, t );
-        passed = true;
-        break;
+        return;
       } catch ( e ) {
         // Ignore
       }
-    }
-    if ( passed ) {
-      return;
     }
     const lines = [
       `Option ${formatOption( fullKey )} does not match any of the expected types.`,
@@ -185,7 +186,7 @@ export function validateType( fullKey: string, value: any, type: ?string | types
 
     checkUnrecognized(
       Object.keys( value ).map( o => addPrefix( fullKey, o ) ),
-      Object.keys( type.properties ).map( o => addPrefix( fullKey, o ) )
+      type.keys.map( o => addPrefix( fullKey, o ) )
     );
 
     checkKeys( fullKey, value, type.properties );
@@ -199,7 +200,7 @@ export function validateType( fullKey: string, value: any, type: ?string | types
 
     if ( type.itemType ) {
       for ( let i = 0; i < value.length; i++ ) {
-        validateType( fullKey, value[ i ], type.itemType.type, type.itemType.example );
+        validateType( fullKey, value[ i ], type.itemType.type, getExample( type.itemType ) );
       }
     }
 

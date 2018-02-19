@@ -182,6 +182,15 @@ it( "validate", () => {
     }
   } );
 
+  v( {
+    required: undefined
+  }, {
+    required: {
+      type: "boolean",
+      required: true
+    }
+  } );
+
 } );
 
 function d( schema, ...args ) {
