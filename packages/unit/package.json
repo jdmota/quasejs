@@ -12,7 +12,7 @@
     "quase-unit": "bin/index.js"
   },
   "dependencies": {
-    "@quase/cli": "0.3.0-0",
+    "@quase/cli": "0.3.0",
     "@quase/error": "0.1.0-0",
     "@quase/cacheable-fs": "0.1.0-0",
     "@quase/config": "0.1.0",
