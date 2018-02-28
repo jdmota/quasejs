@@ -27,7 +27,7 @@ describe( "cli", () => {
       schema: {
         "--": { type: "array" },
         number: { default: 0 },
-        unicorn: { alias: "u" },
+        unicorn: { alias: "u", optional: true },
         meow: { default: "dog" },
         boolean: { default: true },
         boolean2: { type: "boolean", default: true },
@@ -132,13 +132,14 @@ describe( "cli", () => {
       usage: "$ bin something",
       schema: {
         number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
-        unicorn: { alias: "u", description: "unicorn description" },
+        unicorn: { alias: "u", optional: true, description: "unicorn description" },
         meow: { type: "string", default: "dog" },
         boolean: { type: "boolean", default: true, description: "boolean description" },
         object: {
           type: t.object( {
             prop: {
-              type: "string"
+              type: "string",
+              optional: true
             }
           } )
         },
@@ -159,7 +160,8 @@ describe( "cli", () => {
               type: "number"
             }
           ] ),
-          description: "union"
+          description: "union",
+          optional: true
         }
       },
       notifier: false
@@ -228,6 +230,7 @@ describe( "cli", () => {
           alias: "a"
         },
         foo: {
+          optional: true,
           argType: t.object( {
             bar: {
               type: "boolean",
@@ -322,7 +325,8 @@ describe( "cli", () => {
       schema: {
         v: {
           type: "number",
-          argType: "count"
+          argType: "count",
+          optional: true
         }
       },
       help: "",
@@ -347,10 +351,12 @@ describe( "cli", () => {
       argv: [ "-a", "foo", "-b", "bar", "baz" ],
       schema: {
         aaa: {
+          optional: true,
           narg: 1,
           alias: "a"
         },
         foo: {
+          optional: true,
           argType: t.object( {
             bar: {
               narg: 2,
