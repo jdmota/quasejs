@@ -5,30 +5,13 @@ const { t } = require( "@quase/config" );
 /* eslint-disable no-console */
 
 describe( "cli", () => {
-  it( "basic", () => {
+  it( "basic", async() => {
 
     process.stdout.isTTY = true;
 
     console.error = jest.fn();
 
-    cli( ( { input, options, pkg, help, showHelp, config } ) => {
-      expect( input[ 0 ] ).toBe( "foo" );
-      expect( options.fooBar ).toBe( true );
-      expect( options.boolean ).toBe( true );
-      expect( options.boolean2 ).toBe( true );
-      expect( options.boolean3 ).toBe( false );
-      expect( options.boolean4 ).toBe( false );
-      expect( options.boolean5 ).toBe( true );
-      expect( options.number ).toBe( 10 );
-      expect( options.meow ).toBe( "dog" );
-      expect( options.unicorn ).toBe( "cat" );
-      expect( options[ "--" ] ).toEqual( [ "unicorn", "10" ] );
-      expect( pkg.name ).toBe( "@quase/eslint-config-quase" );
-      expect( pkg.version ).toBe( "0.0.1" );
-      expect( help ).toMatchSnapshot();
-      expect( typeof showHelp ).toBe( "function" );
-      expect( config.iAmTheConfigFile ).toBe( "yes" );
-    }, {
+    const { input, options, pkg, help, showHelp, config } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -63,22 +46,29 @@ describe( "cli", () => {
       }
     } );
 
+    expect( input[ 0 ] ).toBe( "foo" );
+    expect( options.fooBar ).toBe( true );
+    expect( options.boolean ).toBe( true );
+    expect( options.boolean2 ).toBe( true );
+    expect( options.boolean3 ).toBe( false );
+    expect( options.boolean4 ).toBe( false );
+    expect( options.boolean5 ).toBe( true );
+    expect( options.number ).toBe( 10 );
+    expect( options.meow ).toBe( "dog" );
+    expect( options.unicorn ).toBe( "cat" );
+    expect( options[ "--" ] ).toEqual( [ "unicorn", "10" ] );
+    expect( pkg.name ).toBe( "@quase/eslint-config-quase" );
+    expect( pkg.version ).toBe( "0.0.1" );
+    expect( help ).toMatchSnapshot();
+    expect( typeof showHelp ).toBe( "function" );
+    expect( config.iAmTheConfigFile ).toBe( "yes" );
     expect( console.error.mock.calls ).toMatchSnapshot();
 
   } );
 
-  it( "defaults", () => {
+  it( "defaults", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        foo: false,
-        bar: {
-          prop1: 0,
-          prop2: 1
-        },
-        baz: {}
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -115,13 +105,20 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      foo: false,
+      bar: {
+        prop1: 0,
+        prop2: 1
+      },
+      baz: {}
+    } );
+
   } );
 
-  it( "generate help", () => {
+  it( "generate help", async() => {
 
-    cli( ( { help } ) => {
-      expect( help ).toMatchSnapshot();
-    }, {
+    const { help } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -165,16 +162,13 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( help ).toMatchSnapshot();
+
   } );
 
-  it( "inferType=true", () => {
+  it( "inferType=true", async() => {
 
-    cli( ( { options, input } ) => {
-      expect( options ).toEqual( {
-        prop: 10
-      } );
-      expect( input ).toEqual( [ 10, "abc" ] );
-    }, {
+    const { options, input } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -186,16 +180,16 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      prop: 10
+    } );
+    expect( input ).toEqual( [ 10, "abc" ] );
+
   } );
 
-  it( "inferType=false", () => {
+  it( "inferType=false", async() => {
 
-    cli( ( { options, input } ) => {
-      expect( options ).toEqual( {
-        prop: 10
-      } );
-      expect( input ).toEqual( [ "10", "abc" ] );
-    }, {
+    const { options, input } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -206,18 +200,16 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      prop: 10
+    } );
+    expect( input ).toEqual( [ "10", "abc" ] );
+
   } );
 
-  it( "alias", () => {
+  it( "alias", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        aaa: true,
-        foo: {
-          bar: true
-        }
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -242,21 +234,18 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      aaa: true,
+      foo: {
+        bar: true
+      }
+    } );
+
   } );
 
-  it( "dot notation", () => {
+  it( "dot notation", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        obj: {
-          foo: 10,
-          bar: {
-            baz: "dog",
-            camelCase: "cat"
-          }
-        }
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -267,19 +256,21 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      obj: {
+        foo: 10,
+        bar: {
+          baz: "dog",
+          camelCase: "cat"
+        }
+      }
+    } );
+
   } );
 
-  it( "coerce", () => {
+  it( "coerce", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        obj: {
-          value: {
-            foo: 10
-          }
-        }
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -300,15 +291,19 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      obj: {
+        value: {
+          foo: 10
+        }
+      }
+    } );
+
   } );
 
-  it( "count", () => {
+  it( "count", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        v: 3
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -325,18 +320,15 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      v: 3
+    } );
+
   } );
 
-  it( "narg", () => {
+  it( "narg", async() => {
 
-    cli( ( { options } ) => {
-      expect( options ).toEqual( {
-        aaa: "foo",
-        foo: {
-          bar: [ "bar", "baz" ]
-        }
-      } );
-    }, {
+    const { options } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -361,12 +353,19 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options ).toEqual( {
+      aaa: "foo",
+      foo: {
+        bar: [ "bar", "baz" ]
+      }
+    } );
+
   } );
 
-  it( "narg error", () => {
+  it( "narg error", async() => {
 
-    expect( () => {
-      cli( () => {}, {
+    await expect(
+      cli( {
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -388,17 +387,14 @@ describe( "cli", () => {
         },
         help: "",
         notifier: false
-      } );
-    } ).toThrow( "Not enough arguments following: foo.bar" );
+      } )
+    ).rejects.toThrow( "Not enough arguments following: foo.bar" );
 
   } );
 
-  it( "config", () => {
+  it( "config", async() => {
 
-    cli( ( { config, configLocation } ) => {
-      expect( config.iAmTheConfigFile2 ).toBe( "yes" );
-      expect( typeof configLocation ).toBe( "string" );
-    }, {
+    const { config, configLocation } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -410,14 +406,14 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( config.iAmTheConfigFile2 ).toBe( "yes" );
+    expect( typeof configLocation ).toBe( "string" );
+
   } );
 
-  it( "no config", () => {
+  it( "no config", async() => {
 
-    cli( ( { config, configLocation } ) => {
-      expect( config ).toBe( undefined );
-      expect( configLocation ).toBe( undefined );
-    }, {
+    const { config, configLocation } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -429,14 +425,14 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( config ).toBe( undefined );
+    expect( configLocation ).toBe( undefined );
+
   } );
 
-  it( "config key", () => {
+  it( "config key", async() => {
 
-    cli( ( { config, configLocation } ) => {
-      expect( config.configFromPkg ).toBe( "yes" );
-      expect( configLocation ).toBe( "pkg" );
-    }, {
+    const { config, configLocation } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -449,16 +445,14 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( config.configFromPkg ).toBe( "yes" );
+    expect( configLocation ).toBe( "pkg" );
+
   } );
 
-  it( "config file has priority", () => {
+  it( "config file has priority", async() => {
 
-    cli( ( { options, configLocation } ) => {
-      expect( options.iAmTheConfigFile2 ).toBe( "yes" );
-      expect( options.configFromPkg ).toBe( undefined );
-      expect( typeof configLocation ).toBe( "string" );
-      expect( configLocation ).not.toBe( "pkg" );
-    }, {
+    const { options, configLocation } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -477,12 +471,17 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options.iAmTheConfigFile2 ).toBe( "yes" );
+    expect( options.configFromPkg ).toBe( undefined );
+    expect( typeof configLocation ).toBe( "string" );
+    expect( configLocation ).not.toBe( "pkg" );
+
   } );
 
-  it( "asked for config that does not exist", () => {
+  it( "asked for config that does not exist", async() => {
 
-    expect( () => {
-      cli( () => {}, {
+    await expect(
+      cli( {
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -492,8 +491,8 @@ describe( "cli", () => {
         help: "",
         configFiles: [ "quase-cli-config.js" ],
         notifier: false
-      } );
-    } ).toThrow( /^Config file was not found/ );
+      } )
+    ).rejects.toThrow( /^Config file was not found/ );
 
   } );
 

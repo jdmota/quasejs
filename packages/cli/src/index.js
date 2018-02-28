@@ -262,7 +262,7 @@ function handleArgs( schema, opts ) {
   };
 }
 
-export default function( callback, opts ) {
+export default async function( opts ) {
   /* eslint-disable no-process-exit, no-console */
 
   if ( importLocal( filename ) ) {
@@ -317,20 +317,22 @@ export default function( callback, opts ) {
     showHelp( 0 );
   }
 
-  if ( opts.notifier !== false ) {
-    notify( pkg, opts.notifier || {} );
-  }
-
-  const { config, location: configLocation } = getConfig( {
+  const configJob = getConfig( {
     cwd: opts.cwd,
     configFiles: flags.config || opts.configFiles,
     configKey: opts.configKey,
     failIfNotFound: !!flags.config
   } );
 
+  if ( opts.notifier !== false ) {
+    notify( pkg, opts.notifier || {} );
+  }
+
+  const { config, location: configLocation } = await configJob;
+
   const options = applyDefaults( schema, flags, config );
 
-  callback( {
+  return {
     input,
     options,
     flags,
@@ -340,5 +342,5 @@ export default function( callback, opts ) {
     help,
     showHelp,
     showVersion
-  } );
+  };
 }
