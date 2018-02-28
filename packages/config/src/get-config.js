@@ -13,27 +13,17 @@ export async function getConfig( opts ) {
     const location = await findUp( configFiles, { cwd } );
 
     if ( location ) {
-      try {
-        const e = require( location );
-        result.config = e && e.__esModule ? e.default : e;
-        result.location = location;
-      } catch ( e ) {
-        // Ignore
-      }
+      const e = require( location );
+      result.config = e && e.__esModule ? e.default : e;
+      result.location = location;
     } else if ( failIfNotFound ) {
       throw new Error( `Config file was not found: ${configFiles.toString()}` );
     }
   }
 
-  if ( !result.config ) {
-    if ( configKey ) {
-      try {
-        result.config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
-        result.location = "pkg";
-      } catch ( e ) {
-        // Ignore
-      }
-    }
+  if ( !result.config && configKey ) {
+    result.config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
+    result.location = "pkg";
   }
 
   return result;
