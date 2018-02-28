@@ -55,10 +55,16 @@ export async function publish( opts ) {
     preview: false,
     cwd: process.cwd(),
     folder: process.cwd(),
-    git: true,
-    gitBranch: "master",
-    gitCommitHooks: true
+    git: true
   }, opts );
+
+  opts.git = Object.assign( {
+    branch: "master",
+    commitAndTag: true,
+    message: "",
+    tagPrefix: "",
+    signTag: false
+  }, opts.git === true ? null : opts.git );
 
   defaultTasks( opts );
 
@@ -97,19 +103,19 @@ export async function publish( opts ) {
   }
 
   if ( opts.git ) {
-    const gitMessageJob = opts.gitMessage || getVersionGitMessage( opts );
-    const gitTagPrefixJob = opts.gitTagPrefix || getVersionTagPrefix( opts );
+    const gitMessageJob = opts.git.commitAndTag ? opts.git.message || getVersionGitMessage( opts ) : undefined;
+    const gitTagPrefixJob = opts.git.commitAndTag ? opts.git.tagPrefix || getVersionTagPrefix( opts ) : undefined;
     const gitRootJob = execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
 
-    opts.gitMessage = await gitMessageJob;
-    opts.gitTagPrefix = await gitTagPrefixJob;
-    opts.gitRoot = await gitRootJob;
+    opts.git.message = await gitMessageJob;
+    opts.git.tagPrefix = await gitTagPrefixJob;
+    opts.git.root = await gitRootJob;
 
     console.log();
 
     // Show commits
     const repositoryUrl = opts.pkg.repository && opts.pkg.repository.url && githubUrlFromGit( opts.pkg.repository.url );
-    const tagPattern = opts.gitTagPrefix.replace( versionRe, "*" ).replace( nameRe, opts.pkg.name ).replace( /\*?$/g, "*" );
+    const tagPattern = opts.git.tagPrefix.replace( versionRe, "*" ).replace( nameRe, opts.pkg.name ).replace( /\*?$/g, "*" );
     let tag;
     try {
       tag = await execa.stdout( "git", [ "tag", "-l", tagPattern ] );
@@ -152,8 +158,8 @@ export async function publish( opts ) {
   }
 
   if ( opts.git ) {
-    opts.gitMessage = replace( opts.gitMessage, opts );
-    opts.gitTagPrefix = replace( opts.gitTagPrefix, opts );
+    opts.git.message = replace( opts.git.message, opts );
+    opts.git.tagPrefix = replace( opts.git.tagPrefix, opts );
   }
 
   console.log();
@@ -164,9 +170,9 @@ export async function publish( opts ) {
   }
   info( `Pkg: ${opts.pkgRelativePath}` );
   if ( opts.git ) {
-    info( `Git Branch: ${opts.gitBranch}` );
-    info( `Git Message: ${opts.gitMessage}` );
-    info( `Git Tag: ${opts.gitTagPrefix}${opts.version}` );
+    info( `Git Branch: ${opts.git.branch}` );
+    info( `Git Message: ${opts.git.message}` );
+    info( `Git Tag: ${opts.git.tagPrefix}${opts.version}` );
   }
   info( opts.yarn ? "Using Yarn" : "Using npm" );
   console.log();

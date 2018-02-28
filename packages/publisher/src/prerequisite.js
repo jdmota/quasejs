@@ -87,14 +87,14 @@ export default function( opts ) {
     },
     {
       title: "Check git tag existence",
-      enabled: () => !!( opts.git && opts.gitTagPrefix ),
+      enabled: () => !!( opts.git && opts.git.tagPrefix ),
       task: () => {
         return execa( "git", [ "fetch" ] )
-          .then( () => execa.stdout( "git", [ "rev-parse", "--quiet", "--verify", `refs/tags/${opts.gitTagPrefix}${opts.version}` ] ) )
+          .then( () => execa.stdout( "git", [ "rev-parse", "--quiet", "--verify", `refs/tags/${opts.git.tagPrefix}${opts.version}` ] ) )
           .then(
             output => {
               if ( output ) {
-                throw error( `Git tag \`${opts.gitTagPrefix}${opts.version}\` already exists.` );
+                throw error( `Git tag \`${opts.git.tagPrefix}${opts.version}\` already exists.` );
               }
             },
             err => {

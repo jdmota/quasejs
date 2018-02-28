@@ -12,7 +12,7 @@ const ban = path.join( __dirname, "ban.js" );
 export function checkSensitiveData( opts ) {
   return {
     title: "Checking if there is sensitive data",
-    task: () => exec( process.execPath, [ ban ], opts.gitRoot || opts.folder )
+    task: () => exec( process.execPath, [ ban ], ( opts.git && opts.git.root ) || opts.folder )
   };
 }
 
@@ -118,15 +118,15 @@ export function bumpVersion( opts ) {
   if ( opts.yarn ) {
     const args = [ "version", opts.version ];
 
-    if ( opts.git && opts.gitCommitTag ) {
-      if ( opts.gitTagPrefix ) {
-        args.push( "--version-tag-prefix", opts.gitTagPrefix );
+    if ( opts.git && opts.git.commitAndTag ) {
+      if ( opts.git.tagPrefix ) {
+        args.push( "--version-tag-prefix", opts.git.tagPrefix );
       }
-      if ( opts.gitMessage ) {
-        args.push( "--version-git-message", opts.gitMessage );
+      if ( opts.git.message ) {
+        args.push( "--version-git-message", opts.git.message );
       }
-      if ( opts.signGitTag !== undefined ) {
-        if ( opts.signGitTag ) {
+      if ( opts.git.signTag !== undefined ) {
+        if ( opts.git.signTag ) {
           args.push( "--version-sign-git-tag" );
         } else {
           args.push( "--no-version-sign-git-tag" );
@@ -146,15 +146,15 @@ export function bumpVersion( opts ) {
 
   const args = [ "version", opts.version ];
 
-  if ( opts.git && opts.gitCommitTag ) {
-    if ( opts.gitTagPrefix ) {
-      args.push( "--tag-version-prefix", opts.gitTagPrefix );
+  if ( opts.git && opts.git.commitAndTag ) {
+    if ( opts.git.tagPrefix ) {
+      args.push( "--tag-version-prefix", opts.git.tagPrefix );
     }
-    if ( opts.gitMessage ) {
-      args.push( "--message", opts.gitMessage );
+    if ( opts.git.message ) {
+      args.push( "--message", opts.git.message );
     }
-    if ( opts.signGitTag !== undefined ) {
-      if ( opts.signGitTag ) {
+    if ( opts.git.signTag !== undefined ) {
+      if ( opts.git.signTag ) {
         args.push( "--sign-git-tag" );
       } else {
         args.push( "--no-sign-git-tag" );

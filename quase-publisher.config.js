@@ -4,8 +4,10 @@ const { exec } = require( "./packages/publisher" );
 
 module.exports = {
   yarn: true,
-  gitMessage: "%n: publish %s",
-  gitTagPrefix: "%n-",
+  git: {
+    message: "%n: publish %s",
+    tagPrefix: "%n-"
+  },
   cleanup: false,
   test: false,
   access: "public",

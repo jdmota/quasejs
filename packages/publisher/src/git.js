@@ -10,9 +10,9 @@ export default function( opts ) {
       title: "Check current branch",
       task: () => {
         return execa.stdout( "git", [ "symbolic-ref", "--short", "HEAD" ] ).then( branch => {
-          if ( branch !== opts.gitBranch ) {
+          if ( branch !== opts.git.branch ) {
             throw error(
-              `Not on \`${opts.gitBranch}\` branch. Use --git-branch to change from which branch you are publishing.`
+              `Not on \`${opts.git.branch}\` branch. Use --git.branch to change from which branch you are publishing.`
             );
           }
         } );

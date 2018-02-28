@@ -18,15 +18,15 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### git
 
-### gitBranch
+### git.branch
 
-### gitCommitTag
+### git.commitAndTag
 
-### gitMessage
+### git.message
 
-### gitTagPrefix
+### git.tagPrefix
 
-### signGitTag
+### git.signTag
 
 ## Tasks
 
