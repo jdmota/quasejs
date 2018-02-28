@@ -66,11 +66,11 @@ export async function publish( opts ) {
   opts.pkgPath = path.resolve( opts.folder, "package.json" );
   opts.rootPkgPath = path.resolve( opts.cwd, "package.json" );
 
-  opts.pkg = await readPkg( opts.pkgPath );
+  const pkgJob = readPkg( opts.pkgPath );
+  const rootPkgJob = opts.pkgPath === opts.rootPkgPath ? undefined : readPkg( opts.rootPkgPath );
 
-  if ( opts.pkgPath !== opts.rootPkgPath ) {
-    opts.rootPkg = await readPkg( opts.rootPkgPath );
-  }
+  opts.pkg = await pkgJob;
+  opts.rootPkg = await rootPkgJob;
 
   opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
   opts.pkgRelativePath = slash( path.relative( opts.cwd, opts.pkgPath ) );
@@ -97,9 +97,13 @@ export async function publish( opts ) {
   }
 
   if ( opts.git ) {
-    opts.gitMessage = opts.gitMessage || await getVersionGitMessage( opts );
-    opts.gitTagPrefix = opts.gitTagPrefix || await getVersionTagPrefix( opts );
-    opts.gitRoot = await execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
+    const gitMessageJob = opts.gitMessage || getVersionGitMessage( opts );
+    const gitTagPrefixJob = opts.gitTagPrefix || getVersionTagPrefix( opts );
+    const gitRootJob = execa.stdout( "git", [ "rev-parse", "--show-toplevel" ] );
+
+    opts.gitMessage = await gitMessageJob;
+    opts.gitTagPrefix = await gitTagPrefixJob;
+    opts.gitRoot = await gitRootJob;
 
     console.log();
 
