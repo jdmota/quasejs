@@ -108,8 +108,13 @@ export default function( opts ) {
     }
   ];
 
+  /* eslint-disable no-process-exit */
   return inquirer.prompt( prompts ).then( answers => {
-    opts.version = answers.version;
-    opts.tag = answers.tag;
+    if ( answers.confirm ) {
+      opts.version = answers.version;
+      opts.tag = answers.tag;
+    } else {
+      process.exit( 0 );
+    }
   } );
 }
