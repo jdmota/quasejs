@@ -10,6 +10,7 @@ import { getConfig, applyDefaults, t, validate, printError } from "@quase/config
 const schema = {
   foo: {
     type: "boolean",
+    optional: true,
     deprecated: true
   },
   bar: {
@@ -20,6 +21,7 @@ const schema = {
     type: t.object( {
       prop: {
         type: "number",
+        default: 10,
         example: 10
       }
     } )
@@ -27,10 +29,12 @@ const schema = {
   tuple: {
     type: t.tuple( [
       {
-        type: "string"
+        type: "string",
+        required: true
       },
       {
-        type: "string"
+        type: "string",
+        required: true
       }
     ] )
   },
@@ -42,7 +46,8 @@ const schema = {
     merge: "concat"
   },
   value: {
-    choices: [ 0, 1, 2 ]
+    choices: [ 0, 1, 2 ],
+    default: 0
   }
 };
 

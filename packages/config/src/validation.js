@@ -131,22 +131,25 @@ export function checkKeys( optionPrefix: ?string, object: any, schema: any ) {
 
   for ( const key in schema ) {
     const fullKey = addPrefix( optionPrefix, key );
-    const { type, choices, required, deprecated } = schema[ key ];
+    const { type, choices, required, optional, deprecated } = schema[ key ];
     const value = object[ key ];
     if ( value === undefined ) {
       if ( required ) {
         throw new ValidationError( `Option ${formatOption( fullKey )} is required.` );
       }
+      if ( optional ) {
+        continue;
+      }
     } else {
       if ( deprecated ) {
         deprecatedKeys.push( fullKey );
       }
-      if ( choices ) {
-        checkChoices( fullKey, value, choices );
-      }
-      if ( type ) {
-        validateType( fullKey, value, type, getExample( schema[ key ] ) );
-      }
+    }
+    if ( choices ) {
+      checkChoices( fullKey, value, choices );
+    }
+    if ( type ) {
+      validateType( fullKey, value, type, getExample( schema[ key ] ) );
     }
   }
 

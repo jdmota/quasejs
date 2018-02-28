@@ -118,11 +118,16 @@ Object {
 }
 `;
 
+exports[`apply defaults 9`] = `"[Schema] Provide a default value or mark as \\"optional\\" in 'obj'"`;
+
 exports[`validate 1`] = `
 Array [
   Array [
     "Deprecation Warning: Option 'deprecated' is deprecated.
 ",
+  ],
+  Array [
+    "OK",
   ],
 ]
 `;
@@ -258,6 +263,28 @@ Array [
     "Validation Error:
 
   Option 'required' is required.
+",
+  ],
+]
+`;
+
+exports[`validate 11`] = `
+Array [
+  Array [
+    "OK",
+  ],
+]
+`;
+
+exports[`validate 12`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'required' must be of type:
+    boolean
+  but instead received:
+    undefined
 ",
   ],
 ]

@@ -103,7 +103,10 @@ function applyDefaultsHelper( info, objValue, srcValue, key, object ) {
 
 }
 
-export function extractDefaults( fullKey, { type, default: d, required } ) {
+export function extractDefaults( fullKey, { type, default: d, required, optional } ) {
+  if ( required && optional ) {
+    throw new Error( `[Schema] Don't use "required" and "optional" in ${formatOption( fullKey )}` );
+  }
   if ( d === undefined ) {
     if ( required ) {
       return;
@@ -121,33 +124,35 @@ export function extractDefaults( fullKey, { type, default: d, required } ) {
     }
     return d;
   }
-  if ( !type ) {
-    return;
-  }
-  if ( type === "boolean" ) {
-    return false;
-  }
-  if ( type === "array" || type instanceof types.Array ) {
-    return [];
-  }
-  if ( type === "object" ) {
-    return {};
-  }
-  if ( type instanceof types.Tuple ) {
-    const schema = type.items;
-    const defaults = [];
-    for ( let i = 0; i < schema.length; i++ ) {
-      defaults[ i ] = extractDefaults( addPrefix( fullKey, i + "" ), schema[ i ] );
+  if ( type ) {
+    if ( type === "boolean" ) {
+      return false;
     }
-    return defaults;
-  }
-  if ( type instanceof types.Object ) {
-    const schema = type.properties;
-    const defaults = {};
-    for ( const k in schema ) {
-      defaults[ k ] = extractDefaults( addPrefix( fullKey, k ), schema[ k ] );
+    if ( type === "array" || type instanceof types.Array ) {
+      return [];
     }
-    return defaults;
+    if ( type === "object" ) {
+      return {};
+    }
+    if ( type instanceof types.Tuple ) {
+      const schema = type.items;
+      const defaults = [];
+      for ( let i = 0; i < schema.length; i++ ) {
+        defaults[ i ] = extractDefaults( addPrefix( fullKey, i + "" ), schema[ i ] );
+      }
+      return defaults;
+    }
+    if ( type instanceof types.Object ) {
+      const schema = type.properties;
+      const defaults = {};
+      for ( const k in schema ) {
+        defaults[ k ] = extractDefaults( addPrefix( fullKey, k ), schema[ k ] );
+      }
+      return defaults;
+    }
+  }
+  if ( !optional ) {
+    throw new Error( `[Schema] Provide a default value or mark as "optional" in ${formatOption( fullKey )}` );
   }
 }
 

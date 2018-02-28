@@ -10,6 +10,7 @@ function v( options, schema ) {
   console.warn = mock;
   try {
     validate( schema, options );
+    mock( "OK" );
   } catch ( e ) {
     printError( e );
   }
@@ -191,10 +192,31 @@ it( "validate", () => {
     }
   } );
 
+  v( {
+    optional: undefined
+  }, {
+    optional: {
+      type: "boolean",
+      optional: true
+    }
+  } );
+
+  v( {
+    required: undefined
+  }, {
+    required: {
+      type: "boolean"
+    }
+  } );
+
 } );
 
 function d( schema, ...args ) {
-  expect( applyDefaults( schema, ...args ) ).toMatchSnapshot();
+  try {
+    expect( applyDefaults( schema, ...args ) ).toMatchSnapshot();
+  } catch ( err ) {
+    expect( stripAnsi( err.message ) ).toMatchSnapshot();
+  }
 }
 
 it( "apply defaults", () => {
@@ -281,7 +303,8 @@ it( "apply defaults", () => {
 
   d( {
     obj: {
-      type: "number"
+      type: "number",
+      optional: true
     }
   } );
 
@@ -289,6 +312,12 @@ it( "apply defaults", () => {
     obj: {
       type: "number",
       default: 0
+    }
+  } );
+
+  d( {
+    obj: {
+      type: "number"
     }
   } );
 
