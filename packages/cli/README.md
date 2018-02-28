@@ -40,6 +40,11 @@ require( "@quase/cli" ).default( {
       }
     };
   },
+  // Automatically validate the options against the schema. If validation fails, an error is throw.
+  // If the error is left unhandled, the promise will loudly reject.
+  // See @quase/config for more info.
+  // Default: true
+  validate: true,
   // false to disable notification
   notifier: {
     options: {}, // UpdateNotifier options

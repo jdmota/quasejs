@@ -1,17 +1,21 @@
+import loudRejection from "./loud-rejection";
+
 const path = require( "path" );
 const chalk = require( "chalk" );
 const hasYarn = require( "has-yarn" );
 const updateNotifier = require( "update-notifier" );
 const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
-const loudRejection = require( "loud-rejection" );
 const normalizePkg = require( "normalize-package-data" );
 const yargsParser = require( "yargs-parser" );
 const camelcaseKeys = require( "camelcase-keys" );
 const decamelize = require( "decamelize" );
 const trimNewlines = require( "trim-newlines" );
 const redent = require( "redent" );
-const { getConfig, t, types, applyDefaults } = require( "@quase/config" );
+const { validate, getConfig, applyDefaults, t, types } = require( "@quase/config" );
+
+/* eslint no-process-exit: 0 */
+/* eslint no-console: 0 */
 
 function isObject( x ) {
   return x != null && typeof x === "object";
@@ -22,12 +26,6 @@ function arrify( val ) {
     return [];
   }
   return Array.isArray( val ) ? val : [ val ];
-}
-
-function userError( message ) {
-  const e = new Error( message );
-  e.__validation = true;
-  return e;
 }
 
 function notifyFix( opts ) {
@@ -233,7 +231,10 @@ function handleArgs( schema, opts ) {
   const { error, argv } = yargsParser.detailed( opts.argv, yargsOpts );
 
   if ( error ) {
-    throw userError( error.message );
+    if ( /^Not enough arguments following/.test( error.message ) ) {
+      error.__validation = true;
+    }
+    throw error;
   }
 
   function clear( obj, chain ) {
@@ -263,8 +264,6 @@ function handleArgs( schema, opts ) {
 }
 
 export default async function( opts ) {
-  /* eslint-disable no-process-exit, no-console */
-
   if ( importLocal( filename ) ) {
     return;
   }
@@ -277,7 +276,8 @@ export default async function( opts ) {
     autoHelp: true,
     autoVersion: true,
     argv: process.argv.slice( 2 ),
-    schema: {}
+    schema: {},
+    validate: true
   }, opts );
 
   opts.cwd = path.resolve( opts.cwd );
@@ -331,6 +331,10 @@ export default async function( opts ) {
   const { config, location: configLocation } = await configJob;
 
   const options = applyDefaults( schema, flags, config );
+
+  if ( opts.validate && schema ) {
+    validate( schema, options );
+  }
 
   return {
     input,

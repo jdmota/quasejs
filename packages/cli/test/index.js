@@ -12,6 +12,7 @@ describe( "cli", () => {
     console.error = jest.fn();
 
     const { input, options, pkg, help, showHelp, config } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -69,6 +70,7 @@ describe( "cli", () => {
   it( "defaults", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -119,6 +121,7 @@ describe( "cli", () => {
   it( "generate help", async() => {
 
     const { help } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -169,6 +172,7 @@ describe( "cli", () => {
   it( "inferType=true", async() => {
 
     const { options, input } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -190,6 +194,7 @@ describe( "cli", () => {
   it( "inferType=false", async() => {
 
     const { options, input } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -210,6 +215,7 @@ describe( "cli", () => {
   it( "alias", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -246,6 +252,7 @@ describe( "cli", () => {
   it( "dot notation", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -271,6 +278,7 @@ describe( "cli", () => {
   it( "coerce", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -304,6 +312,7 @@ describe( "cli", () => {
   it( "count", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -329,6 +338,7 @@ describe( "cli", () => {
   it( "narg", async() => {
 
     const { options } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -366,6 +376,7 @@ describe( "cli", () => {
 
     await expect(
       cli( {
+        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -395,6 +406,7 @@ describe( "cli", () => {
   it( "config", async() => {
 
     const { config, configLocation } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -414,6 +426,7 @@ describe( "cli", () => {
   it( "no config", async() => {
 
     const { config, configLocation } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -433,6 +446,7 @@ describe( "cli", () => {
   it( "config key", async() => {
 
     const { config, configLocation } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -453,6 +467,7 @@ describe( "cli", () => {
   it( "config file has priority", async() => {
 
     const { options, configLocation } = await cli( {
+      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -482,6 +497,7 @@ describe( "cli", () => {
 
     await expect(
       cli( {
+        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
