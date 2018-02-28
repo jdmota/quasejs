@@ -46,7 +46,7 @@ const schema = {
   }
 };
 
-const config = getConfig( {
+const config = await getConfig( {
   cwd: process.cwd(),
   configFiles: [],
   configKey: "",
