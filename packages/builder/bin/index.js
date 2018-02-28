@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-require( "@quase/cli" ).default( ( { options } ) => {
-  require( "../dist" ).default( options );
-}, {
+require( "@quase/cli" ).default( {
   usage: "$ quase-builder [options]",
   configFiles: "quase-builder-config.js",
   configKey: "quase-builder",
@@ -13,4 +11,6 @@ require( "@quase/cli" ).default( ( { options } ) => {
       description: "Watch files for changes and re-build"
     }
   }
+} ).then( ( { options } ) => {
+  require( "../dist" ).default( options );
 } );

@@ -36,9 +36,7 @@ Options
   --verbose               Enable verbose output
 `;
 
-require( "@quase/cli" ).default( function( o ) {
-  require( "../dist/cli" ).default( o );
-}, {
+require( "@quase/cli" ).default( {
   help,
   configFiles: "quase-unit-config.js",
   configKey: "quase-unit",
@@ -115,4 +113,6 @@ require( "@quase/cli" ).default( function( o ) {
       default: false
     }
   }
+} ).then( function( o ) {
+  require( "../dist/cli" ).default( o );
 } );

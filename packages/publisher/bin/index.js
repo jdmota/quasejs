@@ -11,10 +11,7 @@ Options
 
 // TODO
 
-require( "@quase/cli" ).default( ( { input, options } ) => {
-  options.version = input[ 0 ];
-  require( "../dist" ).default( options );
-}, {
+require( "@quase/cli" ).default( {
   help,
   configFiles: "quase-publisher.config.js",
   configKey: "quase-publisher",
@@ -24,4 +21,7 @@ require( "@quase/cli" ).default( ( { input, options } ) => {
       default: true
     }
   }
+} ).then( ( { input, options } ) => {
+  options.version = input[ 0 ];
+  require( "../dist" ).default( options );
 } );

@@ -12,7 +12,7 @@
     "qpm": "bin/index.js"
   },
   "dependencies": {
-    "@quase/cli": "0.3.0",
+    "@quase/cli": "0.4.0-0",
     "@quase/get-plugins": "0.1.0-0",
     "filenamify": "^2.0.0",
     "fs-extra": "^5.0.0",

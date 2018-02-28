@@ -20,13 +20,13 @@ Commands
 
 // TODO
 
-require( "@quase/cli" ).default( ( { input, options } ) => {
-  require( "../dist/cli" ).run( input, options );
-}, {
+require( "@quase/cli" ).default( {
   help,
   schema: {
     folder: {
       type: "string"
     }
   }
+} ).then( ( { input, options } ) => {
+  require( "../dist/cli" ).run( input, options );
 } );

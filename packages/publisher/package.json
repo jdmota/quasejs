@@ -12,7 +12,7 @@
     "quase-publisher": "bin/index.js"
   },
   "dependencies": {
-    "@quase/cli": "0.3.0",
+    "@quase/cli": "0.4.0-0",
     "any-observable": "^0.2.0",
     "ban-sensitive-files": "^1.9.2",
     "chalk": "^2.3.1",
