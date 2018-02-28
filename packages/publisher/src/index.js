@@ -1,6 +1,7 @@
 /* eslint-disable no-process-exit, no-console */
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
+import { isValidVersion } from "./version";
 import { exec, l, error, linkifyIssues, linkifyCommit } from "./util";
 
 const path = require( "path" );
@@ -71,20 +72,23 @@ export async function publish( opts ) {
     opts.rootPkg = await readPkg( opts.rootPkgPath );
   }
 
+  opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
+  opts.pkgRelativePath = slash( path.relative( opts.cwd, opts.pkgPath ) );
+
   if ( !opts.pkg ) {
     throw error( "No package.json found. Make sure you're in the correct project." );
   }
 
   if ( !opts.pkg.name ) {
-    throw error( "Missing `name` on package.json." );
+    throw error( `Missing 'name' on ${opts.pkgRelativePath}` );
   }
 
-  if ( !opts.pkg.version ) {
-    throw error( "Missing `version` on package.json." );
+  if ( !isValidVersion( opts.pkg.version ) ) {
+    throw error( `Missing valid 'version' on ${opts.pkgRelativePath}. If this is the first version, just set it to 0.0.1, e.g.` );
   }
 
-  opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
-  opts.pkgRelativePath = slash( path.relative( opts.cwd, opts.pkgPath ) );
+  console.log();
+  info( `Current: ${opts.pkg.name}@${opts.pkg.version} [${opts.pkgRelativePath}]` );
 
   if ( opts.yarn === undefined ) {
     opts.yarn = hasYarn( opts.folder );

@@ -5,7 +5,7 @@ const semver = require( "semver" );
 export const SEMVER_INCREMENTS = [ "patch", "minor", "major", "prepatch", "preminor", "premajor", "prerelease" ];
 export const PRERELEASE_VERSIONS = [ "prepatch", "preminor", "premajor", "prerelease" ];
 
-const isValidVersion = input => Boolean( semver.valid( input ) );
+export const isValidVersion = input => Boolean( semver.valid( input ) );
 
 export const isValidVersionInput = input => SEMVER_INCREMENTS.indexOf( input ) !== -1 || isValidVersion( input );
 
