@@ -3,7 +3,7 @@ const pkgConf = require( "pkg-conf" );
 
 export async function getConfig( opts ) {
 
-  const { cwd, configFiles, configKey, failIfNotFound } = opts || {};
+  const { cwd, configFiles, arg, configKey, failIfNotFound } = opts || {};
   const result = {
     config: undefined,
     location: undefined
@@ -14,7 +14,8 @@ export async function getConfig( opts ) {
 
     if ( location ) {
       const e = require( location );
-      result.config = e && e.__esModule ? e.default : e;
+      const x = e && e.__esModule ? e.default : e;
+      result.config = typeof x === "function" ? await x( arg ) : x;
       result.location = location;
     } else if ( failIfNotFound ) {
       throw new Error( `Config file was not found: ${configFiles.toString()}` );

@@ -473,4 +473,15 @@ it( "get config", async() => {
   expect( result.config ).toBe( undefined );
   expect( result.location ).toBe( undefined );
 
+  result = await getConfig( {
+    cwd: __dirname,
+    arg: 10,
+    configFiles: "quase-config-3.js"
+  } );
+
+  expect( result.config.fromFunction ).toBe( "yes" );
+  expect( result.config.arg ).toBe( 10 );
+  expect( typeof result.location ).toBe( "string" );
+  expect( result.location ).not.toBe( "pkg" );
+
 } );
