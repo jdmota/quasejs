@@ -9,6 +9,7 @@ const logSymbols = require( "log-symbols" );
 const readPkg = require( "read-pkg" );
 const hasYarn = require( "has-yarn" );
 const slash = require( "slash" );
+const inquirer = require( "inquirer" );
 const githubUrlFromGit = require( "github-url-from-git" );
 
 const versionRe = /(%s|%v)/g;
@@ -110,21 +111,29 @@ export async function publish( opts ) {
     if ( tag ) {
       const result = await execa.stdout( "git", [ "log", "--format=%s %h", `refs/tags/${tag}..HEAD`, "--", opts.folder ] );
 
-      if ( !result ) {
-        info( `No commits since ${tag}\n` );
-        process.exit( 0 );
+      if ( result ) {
+        const history = result.split( "\n" )
+          .map( commit => {
+            const commitParts = commit.match( /^(.+)\s([a-f0-9]{7})$/ );
+            const commitMessage = repositoryUrl ? linkifyIssues( repositoryUrl, commitParts[ 1 ] ) : commitParts[ 1 ];
+            const commitId = repositoryUrl ? linkifyCommit( repositoryUrl, commitParts[ 2 ] ) : commitParts[ 2 ];
+            return `- ${commitMessage}  ${commitId}`;
+          } )
+          .join( "\n" );
+
+        info( `Commits since ${tag}:\n${history || ""}\n` );
+      } else {
+        const answers = await inquirer.prompt( [ {
+          type: "confirm",
+          name: "confirm",
+          message: "No commits found since previous release, continue?",
+          default: false
+        } ] );
+
+        if ( !answers.confirm ) {
+          process.exit( 0 );
+        }
       }
-
-      const history = result.split( "\n" )
-        .map( commit => {
-          const commitParts = commit.match( /^(.+)\s([a-f0-9]{7})$/ );
-          const commitMessage = repositoryUrl ? linkifyIssues( repositoryUrl, commitParts[ 1 ] ) : commitParts[ 1 ];
-          const commitId = repositoryUrl ? linkifyCommit( repositoryUrl, commitParts[ 2 ] ) : commitParts[ 2 ];
-          return `- ${commitMessage}  ${commitId}`;
-        } )
-        .join( "\n" );
-
-      info( `Commits since ${tag}:\n${history || ""}\n` );
     } else {
       info( `No previous git tags found with pattern ${tagPattern}` );
     }
