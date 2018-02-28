@@ -418,9 +418,9 @@ it( "apply defaults - merge modes", () => {
 
 } );
 
-it( "get config", () => {
+it( "get config", async() => {
 
-  let result = getConfig( {
+  let result = await getConfig( {
     cwd: __dirname,
     configFiles: "quase-config.js",
   } );
@@ -428,7 +428,7 @@ it( "get config", () => {
   expect( result.config.iAmTheConfigFile ).toBe( "yes" );
   expect( typeof result.location ).toBe( "string" );
 
-  result = getConfig( {
+  result = await getConfig( {
     cwd: __dirname,
     configFiles: "non-existent-file.js",
   } );
@@ -436,7 +436,7 @@ it( "get config", () => {
   expect( result.config ).toBe( undefined );
   expect( result.location ).toBe( undefined );
 
-  result = getConfig( {
+  result = await getConfig( {
     cwd: __dirname,
     configFiles: "non-existent-file.js",
     configKey: "my-key"
@@ -445,7 +445,7 @@ it( "get config", () => {
   expect( result.config.configFromPkg ).toBe( "yes" );
   expect( result.location ).toBe( "pkg" );
 
-  result = getConfig( {
+  result = await getConfig( {
     cwd: __dirname,
     configFiles: "quase-config-2.js",
     configKey: "my-key"
@@ -456,15 +456,15 @@ it( "get config", () => {
   expect( typeof result.location ).toBe( "string" );
   expect( result.location ).not.toBe( "pkg" );
 
-  expect( () => {
+  await expect(
     getConfig( {
       cwd: __dirname,
       configFiles: "non-existante-file.js",
       failIfNotFound: true
-    } );
-  } ).toThrow( /^Config file was not found/ );
+    } )
+  ).rejects.toThrow( /^Config file was not found/ );
 
-  result = getConfig( {
+  result = await getConfig( {
     cwd: __dirname,
     configFiles: [],
     configKey: ""

@@ -1,7 +1,7 @@
 const findUp = require( "find-up" );
 const pkgConf = require( "pkg-conf" );
 
-export function getConfig( opts ) {
+export async function getConfig( opts ) {
 
   const { cwd, configFiles, configKey, failIfNotFound } = opts || {};
   const result = {
@@ -10,7 +10,7 @@ export function getConfig( opts ) {
   };
 
   if ( configFiles && configFiles.length ) {
-    const location = findUp.sync( configFiles, { cwd } );
+    const location = await findUp( configFiles, { cwd } );
 
     if ( location ) {
       try {
@@ -28,7 +28,7 @@ export function getConfig( opts ) {
   if ( !result.config ) {
     if ( configKey ) {
       try {
-        result.config = pkgConf.sync( configKey, { cwd, skipOnFalse: true } );
+        result.config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
         result.location = "pkg";
       } catch ( e ) {
         // Ignore
