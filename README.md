@@ -14,11 +14,11 @@ The purpose of QuaseJS is to include various packages, smaller ones or bigger on
 
 It's a bundler with easy configuration, good performance and support for javascript + html + css.
 
-**[cli](packages/cli)** - **0.2.0**
+**[cli](packages/cli)** - **0.3.0**
 
 Allows you to create a command line interface very easily.
 
-**[config](packages/config)** - *WIP*
+**[config](packages/config)** - **0.1.0**
 
 Utilities to get configuration, apply defaults and validate options.
 
