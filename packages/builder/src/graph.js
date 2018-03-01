@@ -1,5 +1,5 @@
 // @flow
-
+import error from "./utils/error";
 import type Builder from "./builder";
 import type Module from "./module";
 import type { Dep, FinalAsset } from "./types";
@@ -134,6 +134,7 @@ export default async function processGraph( builder: Builder ) {
   };
 
   const files = [];
+  const fileNames = new Set();
   const moduleToFile: Map<Module, FinalAsset> = new Map();
 
   hashes.forEach( ( hash, module ) => {
@@ -149,6 +150,11 @@ export default async function processGraph( builder: Builder ) {
         srcs: srcs.map( ( { id } ) => id )
       };
       files.push( f );
+      if ( fileNames.has( f.dest ) ) {
+        throw error( `Generated graph has duplicate file output: ${f.dest}` );
+      } else {
+        fileNames.add( f.dest );
+      }
       for ( const src of srcs ) {
         moduleToFile.set( src, f );
       }
