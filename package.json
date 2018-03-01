@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "jest",
-    "build": "node packages/build.js build",
+    "build": "node packages/build.js",
     "node": "babel-node",
     "flowtype": "flow-typed install",
     "flow": "flow",
@@ -58,6 +58,7 @@
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^22.4.1",
     "eslint": "^4.18.0",
+    "execa": "^0.9.0",
     "flow-bin": "^0.66.0",
     "flow-typed": "^2.1.5",
     "fs-extra": "^5.0.0",
