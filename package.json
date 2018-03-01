@@ -19,6 +19,7 @@
   "author": "João Mota",
   "license": "MIT",
   "jest": {
+    "resolver": "<rootDir>/packages/resolver",
     "roots": [
       "<rootDir>/packages/builder/test/",
       "<rootDir>/packages/cli/test/",
@@ -64,6 +65,7 @@
     "fs-extra": "^5.0.0",
     "jest": "^22.4.2",
     "lerna": "^3.0.0-alpha.1",
-    "npm-check": "^5.5.2"
+    "npm-check": "^5.5.2",
+    "resolve": "^1.5.0"
   }
 }
