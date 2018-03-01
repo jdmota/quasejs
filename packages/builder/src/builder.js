@@ -5,7 +5,7 @@ import processGraph from "./graph";
 import type {
   FinalAsset, FinalAssets,
   PerformanceOpts, MinimalFS, ToWrite,
-  Info, Options
+  Info, Options, Plugin
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import Language from "./language";
@@ -109,7 +109,7 @@ export default class Builder {
     return this.applyPluginPhaseFirst( "isSplitPoint", null, required, module );
   }
 
-  async applyPluginPhaseFirst<T>( phase: string, postProcess: ?( any, ?string ) => T, ...args: mixed[] ): Promise<T> {
+  async applyPluginPhaseFirst<T>( phase: $Keys<Plugin>, postProcess: ?( any, ?string ) => T, ...args: mixed[] ): Promise<T> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
@@ -123,7 +123,7 @@ export default class Builder {
     throw new Error( `No hook ${phase} returned a valid output.` );
   }
 
-  async applyPluginPhasePipe<T>( phase: string, postProcess: ?( any, any, ?string ) => T, result: T, ...args: mixed[] ): Promise<T> {
+  async applyPluginPhasePipe<T>( phase: $Keys<Plugin>, postProcess: ?( any, any, ?string ) => T, result: T, ...args: mixed[] ): Promise<T> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
@@ -137,7 +137,7 @@ export default class Builder {
     return result;
   }
 
-  async applyPluginPhaseSerial( phase: string, ...args: mixed[] ) {
+  async applyPluginPhaseSerial( phase: $Keys<Plugin>, ...args: mixed[] ) {
     for ( const { plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
