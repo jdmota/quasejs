@@ -299,7 +299,7 @@ export default class Builder {
       const swPrecache = require( "sw-precache" );
       const serviceWorkerCode = await swPrecache.generate( this.serviceWorker );
 
-      await fs.writeFile( this.serviceWorker.filename, serviceWorkerCode );
+      await fs.outputFile( this.serviceWorker.filename, serviceWorkerCode );
 
       filesInfo.push( {
         file: this.serviceWorker.filename,
