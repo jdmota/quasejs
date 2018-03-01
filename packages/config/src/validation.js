@@ -229,5 +229,5 @@ export function validateType( fullKey: string, value: any, type: Type, example: 
     return;
   }
 
-  throw new Error( `Invalid schema. See ${fullKey}` );
+  throw new Error( `[Schema] Invalid type. See ${fullKey}` );
 }
