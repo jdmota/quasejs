@@ -1,5 +1,6 @@
 // @flow
 import error from "./utils/error";
+import { reExt } from "./id";
 import type Builder from "./builder";
 import type Module from "./module";
 import type { Dep, FinalAsset } from "./types";
@@ -137,16 +138,16 @@ export default async function processGraph( builder: Builder ) {
   const fileNames = new Set();
   const moduleToFile: Map<Module, FinalAsset> = new Map();
 
-  hashes.forEach( ( hash, module ) => {
-    const srcs = grow( module );
+  hashes.forEach( ( hash, m ) => {
+    const srcs = grow( m );
     if ( srcs ) {
       const f = {
-        id: module.id,
-        path: module.path,
-        normalized: module.normalized,
-        dest: module.dest,
-        relativeDest: module.normalized,
-        isEntry: module.isEntry,
+        id: m.id,
+        path: m.path,
+        normalized: m.normalized,
+        dest: m.type ? m.dest.replace( reExt, `.${m.type}` ) : m.dest,
+        relativeDest: m.normalized,
+        isEntry: m.isEntry,
         srcs: srcs.map( ( { id } ) => id )
       };
       files.push( f );

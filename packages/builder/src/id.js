@@ -3,6 +3,8 @@
 const path = require( "path" );
 const slash = require( "slash" );
 
+export const reExt = /\.(.+)$/;
+
 export function lowerPath( p: string ) {
   return path.sep === "\\" ? p.toLowerCase() : p;
 }
@@ -20,6 +22,6 @@ export function resolvePath( id: string, cwd: string ): string {
 }
 
 export function getType( id: string ): string {
-  const match = id.match( /\.(.+)$/ );
+  const match = id.match( reExt );
   return match ? match[ 1 ] : "";
 }
