@@ -233,11 +233,11 @@ export default class JsLanguage extends Language {
           cb( err );
         }
       },
-      packageFilter( pkg, path, relativePath ) {
+      packageFilter( pkg, path ) {
         if ( pkg.module ) {
           pkg.main = pkg.module;
         }
-        return resolveOpts.pathFilter ? resolveOpts.pathFilter( pkg, path, relativePath ) : pkg;
+        return resolveOpts.pathFilter ? resolveOpts.pathFilter( pkg, path ) : pkg;
       },
       pathFilter,
       paths,
