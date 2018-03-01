@@ -10,6 +10,8 @@ import type {
 import { relative, resolvePath } from "./id";
 import { Checker } from "./checker";
 
+const { isAbsolute } = require( "path" );
+
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
 }
@@ -102,7 +104,7 @@ export default class Module {
         throw this.error( `Could not resolve ${request}`, loc );
       }
 
-      if ( /^\.\.?(\/|\\|$)/.test( path ) ) {
+      if ( !isAbsolute( path ) ) {
         throw this.error( `Resolution returned a non absolute path: ${path}`, loc );
       }
 
