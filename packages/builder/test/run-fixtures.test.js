@@ -23,6 +23,8 @@ describe( "builder", () => {
 
     it( `Fixture: ${folder}`, async() => {
 
+      jest.setTimeout( 20000 );
+
       let builder;
       let assetsNum = 0;
       const assets = {};

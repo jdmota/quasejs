@@ -54,7 +54,7 @@ exports[`watcher Fixture: watch-fixtures/custom-code-frame 2`] = `
 
 --------
 
-Could not resolve ./a
+Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -72,7 +72,7 @@ File working/a.js was changed.
 
 --------
 
-./a exports nothing. Looking for default
+./a exports nothing. Looking for default. See index.js:1:7
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -103,7 +103,7 @@ File working/a.js was removed.
 
 --------
 
-Could not resolve ./a
+Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -216,7 +216,7 @@ exports[`watcher Fixture: watch-fixtures/watches-missing-file 2`] = `
 
 --------
 
-Could not resolve ./a
+Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -230,7 +230,7 @@ File working/a.js was changed.
 
 --------
 
-./a exports nothing. Looking for default
+./a exports nothing. Looking for default. See index.js:1:7
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -257,7 +257,7 @@ File working/a.js was removed.
 
 --------
 
-Could not resolve ./a
+Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
@@ -302,7 +302,7 @@ File working/index.js was changed.
 
 --------
 
-Could not resolve ./stuff
+Could not resolve ./stuff. See index.js:1:18
 
 > 1 | import stuff from './stuff';
 
@@ -408,7 +408,7 @@ File working/a.js was removed.
 
 --------
 
-Could not resolve ./a
+Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
