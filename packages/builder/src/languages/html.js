@@ -85,8 +85,6 @@ const NAMESPACE = "http://www.w3.org/1999/xhtml";
 
 export default class HtmlLanguage extends Language {
 
-  static TYPE = "html";
-
   +deps: NotResolvedDep[];
   +treeAdapter: TreeAdapter;
   +originalCode: string;

@@ -24,8 +24,6 @@ export interface ILanguage {
 
 export default class Language implements ILanguage {
 
-  static TYPE = "";
-
   +id: string;
   +data: Data;
   +dataType: DataType;

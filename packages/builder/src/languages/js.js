@@ -37,8 +37,6 @@ function getLoc( node ) {
 
 export default class JsLanguage extends Language {
 
-  static TYPE = "js";
-
   +dataToString: string;
   +ast: ?Object;
   +deps: NotResolvedDep[];

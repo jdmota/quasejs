@@ -156,10 +156,13 @@ export default class Module {
     this.ast = result.ast;
     this.maps = maps;
 
-    const [ C, opts ] = builder.languages[ result.type ] || [ Language, {} ];
+    const lang = this.lang = await builder.applyPluginPhaseFirst( "getLanguage", ( result, name ) => {
+      if ( result instanceof Language ) {
+        return result;
+      }
+      throw error( `'getLanguage' hook${name ? " from " + name : ""} did not return a Language` );
+    }, this );
 
-    const lang = new C( opts, this, builder );
-    this.lang = lang;
     return lang;
   }
 

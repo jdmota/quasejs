@@ -36,7 +36,6 @@ export default class Builder {
   +reporter: { plugin: Function, options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
-  +languages: { [key: string]: [ Class<Language>, Object ] };
   +plugins: { name: ?string, plugin: Plugin }[];
   +performance: PerformanceOpts;
   +serviceWorker: Object;
@@ -80,14 +79,7 @@ export default class Builder {
 
     this.entries = options.entries.map( e => resolvePath( e, this.context ) );
 
-    this.languages = {};
-
-    options.languages.forEach( ( { plugin, options } ) => {
-      this.languages[ plugin.TYPE ] = [ plugin, options ];
-    } );
-
     this.serviceWorker = options.serviceWorker;
-
     this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
     this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
     this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
@@ -98,7 +90,6 @@ export default class Builder {
     this.usedIds = new Set();
 
     this.promises = [];
-
   }
 
   createFakePath( key: string ): string {

@@ -1,6 +1,7 @@
 // @flow
 import type Builder from "./builder";
 import type Module from "./module";
+import type Language from "./language";
 
 export type Data = Buffer | string;
 
@@ -102,6 +103,7 @@ export type AfterBuild = ( Output, Builder ) => ?Promise<void>;
 export type Plugin = {
   name?: ?string,
   load?: ?( string, Builder ) => ?Promise<?LoaderOutput>,
+  getLanguage?: ?( Module, Builder ) => ?Promise<?Language>,
   resolve?: ?( string, Module, Builder ) => ?Promise<?string | boolean>,
   transform?: ?( LoaderOutput, Module, Builder ) => ?Promise<?LoaderOutput>,
   isSplitPoint?: ?( Module, Module, Builder ) => ?Promise<?boolean>,
@@ -126,7 +128,6 @@ export type Options = {
   watch?: ?boolean,
   watchOptions?: ?Object,
   plugins?: ?ProvidedPluginsArr<Object => Plugin>,
-  languages?: ?ProvidedPluginsArr<Function>,
   performance?: ?PerformanceOpts,
   serviceWorker?: ?Object,
   cleanBeforeBuild?: ?boolean,

@@ -1,5 +1,6 @@
 import JsLanguage from "./languages/js";
 import HtmlLanguage from "./languages/html";
+import Language from "./language";
 import Reporter from "./reporter";
 import { check } from "./checker";
 import { getType, resolvePath } from "./id";
@@ -17,6 +18,15 @@ function defaultPlugin() {
         type: getType( path ),
         data: await builder.fileSystem.readFile( path, path )
       };
+    },
+    getLanguage( module, builder ) {
+      if ( module.type === "js" ) {
+        return new JsLanguage( {}, module, builder );
+      }
+      if ( module.type === "html" ) {
+        return new HtmlLanguage( {}, module, builder );
+      }
+      return new Language( {}, module, builder );
     },
     async resolve( importee, importerModule, builder ) {
       return importerModule.lang.resolve( importee, importerModule.path, builder );
@@ -62,15 +72,6 @@ export default function( _opts ) {
   options.watchOptions = Object.assign( {}, options.watchOptions );
 
   options.reporter = getOnePlugin( options.reporter || Reporter );
-
-  options.languages = getPlugins( options.languages || [] );
-  options.languages.unshift( { plugin: JsLanguage, options: {} } );
-  options.languages.unshift( { plugin: HtmlLanguage, options: {} } );
-  options.languages.forEach( ( { plugin, name } ) => {
-    if ( typeof plugin !== "function" ) {
-      throw new ValidationError( `Expected language ${name ? name + " " : ""}to be a function` );
-    }
-  } );
 
   options.plugins = getPlugins( options.plugins || [] );
   options.plugins.push( { plugin: defaultPlugin } );
