@@ -43,7 +43,8 @@ require( "@quase/cli" ).default( {
   schema: {
     match: {
       type: "string",
-      alias: "m"
+      alias: "m",
+      optional: true
     },
     watch: {
       type: "boolean",
@@ -60,7 +61,8 @@ require( "@quase/cli" ).default( {
     },
     concurrency: {
       type: "number",
-      alias: "c"
+      alias: "c",
+      optional: true
     },
     updateSnapshots: {
       type: "boolean",
@@ -69,10 +71,12 @@ require( "@quase/cli" ).default( {
     },
     timeout: {
       type: "number",
-      alias: "t"
+      alias: "t",
+      optional: true
     },
     slow: {
-      type: "number"
+      type: "number",
+      optional: true
     },
     allowNoPlan: {
       type: "boolean",
@@ -87,10 +91,12 @@ require( "@quase/cli" ).default( {
       default: false
     },
     snapshotDir: {
-      type: "string"
+      type: "string",
+      optional: true
     },
     reporter: {
-      type: "string"
+      type: "string",
+      optional: true
     },
     diff: {
       type: "boolean",

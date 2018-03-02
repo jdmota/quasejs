@@ -2,7 +2,7 @@ import validateOptions from "./core/validate-options";
 import NodeReporter from "./reporters/node";
 
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
-const findFiles = require( "@quase/find-files" ).default;
+const findFilesObservable = require( "@quase/find-files" ).findFilesObservable;
 const FileSystem = require( "@quase/cacheable-fs" ).default;
 const { printError } = require( "@quase/config" );
 const { beautify: beautifyStack } = require( "@quase/error" );
@@ -448,7 +448,7 @@ export default function cli( { input, options, configLocation } ) {
   const spinner = ora( "Looking for files..." ).start();
 
   const files = new Set();
-  const observable = findFiles( { src: options.files } );
+  const observable = findFilesObservable( options.files );
 
   observable.subscribe( {
     next( file ) {
