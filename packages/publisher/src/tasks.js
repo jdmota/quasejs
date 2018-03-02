@@ -133,7 +133,7 @@ export function bumpVersion( opts ) {
         }
       }
     } else {
-      args.push( "--no-version-git-tag" );
+      args.push( "--no-git-tag-version" );
     }
 
     return {
