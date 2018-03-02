@@ -96,7 +96,7 @@ function pad( str, length ) {
   return str;
 }
 
-function typeToString( type ) {
+function typeToString( { type, choices } ) {
   if ( type ) {
     if ( typeof type === "string" ) {
       return type;
@@ -108,8 +108,14 @@ function typeToString( type ) {
       return "object";
     }
     if ( type instanceof types.Union ) {
-      return type.types.map( t => typeToString( t.type ) ).join( " | " );
+      return type.types.map( x => typeToString( { type: x } ) ).join( " | " );
     }
+    if ( type instanceof types.Value ) {
+      return JSON.stringify( type.value );
+    }
+  }
+  if ( choices ) {
+    return choices.map( JSON.stringify ).join( " | " );
   }
   return "";
 }
@@ -123,7 +129,7 @@ function generateHelp( options ) {
     const flag = options.schema[ key ];
 
     if ( flag.description ) {
-      const typeStr = typeToString( flag.type );
+      const typeStr = typeToString( flag );
       const line = [
         `  --${key}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
         flag.description,

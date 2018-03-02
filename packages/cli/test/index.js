@@ -153,15 +153,21 @@ describe( "cli", () => {
         },
         union: {
           type: t.union( [
-            {
-              type: "string"
-            },
-            {
-              type: "number"
-            }
+            "string",
+            "number"
           ] ),
           description: "union",
           optional: true
+        },
+        choices1: {
+          choices: [ 0, 1, 2 ],
+          description: "choices1",
+          default: 0
+        },
+        choices2: {
+          type: t.union( [ 0, 1, 2 ].map( t.value ) ),
+          description: "choices2",
+          default: 0
         }
       },
       notifier: false

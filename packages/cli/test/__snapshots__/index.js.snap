@@ -37,5 +37,7 @@ exports[`cli generate help 1`] = `
     --tuple           tuple [array]
     --array           array of strings [array]
     --union           union [string | number]
+    --choices1        choices1 [0 | 1 | 2]
+    --choices2        choices2 [0 | 1 | 2]
 "
 `;
