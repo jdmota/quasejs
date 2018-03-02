@@ -1,29 +1,19 @@
 // @flow
 /* eslint-disable no-console */
+import { indent, formatTypes, formatOption, format } from "./formating";
 import { printWarning } from "./print";
-import { types } from "./types";
+import { type MaybeType, types } from "./types";
 import getType from "./get-type";
 
-type Type = ?string | types.Type;
-
-const concordance = require( "concordance" );
 const chalk = require( "chalk" );
 const leven = require( "leven" );
 
 export class ValidationError extends Error {
   +__validation: boolean;
-  constructor( message: string ) {
-    super( message );
+  constructor( message: string | string[] ) {
+    super( Array.isArray( message ) ? message.join( "\n" ) : message );
     this.__validation = true;
   }
-}
-
-export function formatOption( str: string ): string {
-  return chalk.bold( concordance.format( str ) );
-}
-
-export function format( value: any ) {
-  return concordance.format( value );
 }
 
 export function getSuggestion( unrecognized: string, allowedOptions: Array<string> ): ?string {
@@ -65,10 +55,6 @@ export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<st
   throw new ValidationError( message );
 }
 
-export function join( array: ( ?string )[] ) {
-  return array.filter( Boolean ).join( "\n" );
-}
-
 export function makeExample( option: string, example: mixed ) {
   const lines = [];
   if ( example !== undefined ) {
@@ -76,16 +62,22 @@ export function makeExample( option: string, example: mixed ) {
     lines.push( `{` );
     const chain = option.split( "." );
     for ( let i = 0; i < chain.length; i++ ) {
-      lines.push(
-        `${"  ".repeat( i + 1 )}${formatOption( chain[ i ] )}: ${i === chain.length - 1 ? chalk.bold( format( example ) ) : "{"}`
-      );
+      if ( i === chain.length - 1 ) {
+        lines.push(
+          indent( `${formatOption( chain[ i ] )}: ${chalk.bold( format( example ) )}`, "  ".repeat( i + 1 ) )
+        );
+      } else {
+        lines.push(
+          `${"  ".repeat( i + 1 )}${formatOption( chain[ i ] )}: {`
+        );
+      }
     }
     for ( let i = chain.length - 2; i >= 0; i-- ) {
       lines.push( `${"  ".repeat( i + 1 )}}` );
     }
     lines.push( `}` );
   }
-  return join( lines );
+  return lines.join( "\n" );
 }
 
 export function checkType( option: string, actualType: string, expectedType: string, example: mixed ) {
@@ -94,15 +86,13 @@ export function checkType( option: string, actualType: string, expectedType: str
     return;
   }
 
-  const messageLines = [
+  throw new ValidationError( [
     `Option ${formatOption( option )} must be of type:`,
-    `  ${chalk.bold.green( expectedType )}`,
+    `${indent( chalk.bold.green( expectedType ) )}`,
     `but instead received:`,
-    `  ${chalk.bold.red( actualType )}`,
+    `${indent( chalk.bold.red( actualType ) )}`,
     makeExample( option, example )
-  ];
-
-  throw new ValidationError( join( messageLines ) );
+  ] );
 }
 
 export function checkChoices( option: string, value: mixed, choices: Array<mixed> ) {
@@ -111,14 +101,12 @@ export function checkChoices( option: string, value: mixed, choices: Array<mixed
     return;
   }
 
-  const messageLines = [
+  throw new ValidationError( [
     `Option ${formatOption( option )} should be one of:`,
-    `  ${chalk.bold.green( choices.map( format ).join( " | " ) )}`,
+    `${indent( chalk.bold.green( choices.map( format ).join( " | " ) ) )}`,
     `but instead received:`,
-    `  ${chalk.bold.red( format( value ) )}`
-  ];
-
-  throw new ValidationError( messageLines.join( "\n" ) );
+    `${indent( chalk.bold.red( format( value ) ) )}`
+  ] );
 }
 
 export function addPrefix( prefix: ?string, key: string ) {
@@ -163,7 +151,7 @@ export function getExample( { default: d, example }: { default: any, example: an
   return example === undefined ? d : example;
 }
 
-export function validateType( fullKey: string, value: any, type: Type, example: mixed ) {
+export function validateType( fullKey: string, value: any, type: MaybeType, example: mixed ) {
 
   if ( type instanceof types.Union ) {
     for ( const t of type.types ) {
@@ -174,11 +162,13 @@ export function validateType( fullKey: string, value: any, type: Type, example: 
         // Ignore
       }
     }
-    const lines = [
-      `Option ${formatOption( fullKey )} does not match any of the expected types.`,
+    throw new ValidationError( [
+      `Option ${formatOption( fullKey )} should be one of these types:`,
+      `${indent( chalk.bold.green( formatTypes( type.types ) ) )}`,
+      `but instead received:`,
+      `${indent( chalk.bold.red( format( value ) ) )}`,
       makeExample( fullKey, example )
-    ];
-    throw new ValidationError( join( lines ) );
+    ] );
   }
 
   const actualType = getType( value );
@@ -213,15 +203,29 @@ export function validateType( fullKey: string, value: any, type: Type, example: 
   if ( type instanceof types.Tuple ) {
 
     if ( !Array.isArray( value ) || value.length !== type.items.length ) {
-      throw new ValidationError( join( [
+      throw new ValidationError( [
         `Option ${formatOption( fullKey )} must be an array of ${type.items.length} items.`,
         makeExample( fullKey, example )
-      ] ) );
+      ] );
     }
 
     checkKeys( fullKey, value, type.items );
 
     return;
+  }
+
+  if ( type instanceof types.Value ) {
+
+    if ( value === type.value ) {
+      return;
+    }
+
+    throw new ValidationError( [
+      `Option ${formatOption( fullKey )} should be:`,
+      `${indent( format( type.value ) )}`,
+      `but instead received:`,
+      `${indent( chalk.bold.red( format( value ) ) )}`
+    ] );
   }
 
   if ( typeof type === "string" ) {

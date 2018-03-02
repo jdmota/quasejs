@@ -147,6 +147,7 @@ Array [
     string
   but instead received:
     boolean
+
 ",
   ],
 ]
@@ -183,6 +184,7 @@ Array [
     object
   but instead received:
     number
+
 ",
   ],
 ]
@@ -227,6 +229,7 @@ Array [
     "Validation Error:
 
   Option 'obj.foo' must be an array of 2 items.
+
 ",
   ],
 ]
@@ -237,7 +240,13 @@ Array [
   Array [
     "Validation Error:
 
-  Option 'obj.foo' does not match any of the expected types.
+  Option 'obj.foo' should be one of these types:
+    string | number
+  but instead received:
+    [
+      'string',
+      10,
+    ]
   Example:
   {
     'obj': {
@@ -291,7 +300,56 @@ Array [
     boolean
   but instead received:
     undefined
+
 ",
+  ],
+]
+`;
+
+exports[`validate 13`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' should be one of these types:
+    0 | 1 | 'object'
+  but instead received:
+    2
+  Example:
+  {
+    'obj': {
+      'foo': 1
+    }
+  }
+",
+  ],
+]
+`;
+
+exports[`validate 14`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' should be one of these types:
+    0 | 1 | object
+  but instead received:
+    2
+  Example:
+  {
+    'obj': {
+      'foo': 1
+    }
+  }
+",
+  ],
+]
+`;
+
+exports[`validate 15`] = `
+Array [
+  Array [
+    "OK",
   ],
 ]
 `;

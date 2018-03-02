@@ -4,8 +4,10 @@ class Type {
 
 }
 
+export type MaybeType = ?string | Type;
+
 export type SchemaProp = {
-  type?: ?string | Type,
+  type?: MaybeType,
   choices?: ?Array<mixed>,
   required?: ?boolean,
   default?: mixed,
@@ -51,12 +53,21 @@ class TTuple extends Type {
   }
 }
 
+class TValue extends Type {
+  +value: mixed;
+  constructor( value: mixed ) {
+    super();
+    this.value = value;
+  }
+}
+
 export const types = {
   Type,
   Union: TUnion,
   Object: TObject,
   Array: TArray,
-  Tuple: TTuple
+  Tuple: TTuple,
+  Value: TValue
 };
 
 export const t = {
@@ -71,5 +82,8 @@ export const t = {
   },
   tuple( x: SchemaProp[] ) {
     return new types.Tuple( x );
+  },
+  value( x: mixed ) {
+    return new types.Value( x );
   }
 };

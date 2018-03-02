@@ -209,6 +209,57 @@ it( "validate", () => {
     }
   } );
 
+  v( {
+    obj: {
+      foo: 2
+    }
+  }, {
+    obj: {
+      type: t.object( {
+        foo: {
+          type: t.union(
+            [ 0, 1, "object" ].map( t.value )
+          ),
+          example: 1
+        }
+      } )
+    }
+  } );
+
+  v( {
+    obj: {
+      foo: 2
+    }
+  }, {
+    obj: {
+      type: t.object( {
+        foo: {
+          type: t.union(
+            [ t.value( 0 ), t.value( 1 ), "object" ]
+          ),
+          example: 1
+        }
+      } )
+    }
+  } );
+
+  v( {
+    obj: {
+      foo: 0
+    }
+  }, {
+    obj: {
+      type: t.object( {
+        foo: {
+          type: t.union(
+            [ t.value( 0 ), t.value( 1 ), "object" ]
+          ),
+          example: 1
+        }
+      } )
+    }
+  } );
+
 } );
 
 function d( schema, ...args ) {

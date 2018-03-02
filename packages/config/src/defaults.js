@@ -1,5 +1,6 @@
 import { t, types } from "./types";
-import { addPrefix, validateType, formatOption } from "./validation";
+import { formatOption } from "./formating";
+import { addPrefix, validateType } from "./validation";
 
 const toString = ( {} ).toString;
 
