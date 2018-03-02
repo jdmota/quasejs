@@ -12,8 +12,10 @@
     "fs-extra": "^4.0.2",
     "glob-parent": "^3.1.0",
     "ignore-by-default": "^1.0.1",
+    "is-negated-glob": "^1.0.0",
     "micromatch": "^3.1.4",
     "slash": "^1.0.0",
+    "to-absolute-glob": "^2.0.2",
     "zen-observable": "^0.6.0"
   }
 }

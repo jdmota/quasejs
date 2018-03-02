@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic 1`] = `
+Object {
+  "files": Array [
+    "a/1.js",
+    "a/2.js",
+    "c/1.js",
+    "c/2.js",
+  ],
+  "visitedDirs": Array [
+    "a",
+    "c",
+  ],
+}
+`;

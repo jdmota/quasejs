@@ -3,46 +3,46 @@ const path = require( "path" );
 const ignoredDirectories = require( "ignore-by-default" ).directories().map( dir => `!**/${dir}/**` );
 const mm = require( "micromatch" );
 const globParent = require( "glob-parent" );
+const toAbsoluteGlob = require( "to-absolute-glob" );
+const isNegatedGlob = require( "is-negated-glob" );
 const slash = require( "slash" );
 const Observable = require( "zen-observable" );
 
 class Pattern {
 
-  constructor( pattern, _opts ) {
-    const options = this.negated ? Object.assign( {}, _opts, { dot: true } ) : _opts;
-
-    this.negated = /^![^(]/.test( pattern );
-    if ( this.negated ) {
-      pattern = pattern.slice( 1 );
-    }
-
-    this.regexp = mm.makeRe( pattern, options );
+  constructor( _pattern, { cwd, micromatch } ) {
+    const micromatchOpts = this.negated ? Object.assign( {}, micromatch, { dot: true } ) : micromatch;
+    const { negated, pattern } = isNegatedGlob( _pattern );
+    this.negated = negated;
+    this.regexp = mm.makeRe( pattern, micromatchOpts );
     this.endsWithGlobstar = pattern.slice( -3 ) === "/**";
     this.parent = globParent( pattern ).replace( /^\.$/g, "" );
+    this.fullParent = toAbsoluteGlob( this.parent, { cwd } );
   }
 
 }
 
 class Reader {
 
-  constructor( patterns, cwd, observer, options ) {
+  constructor( patterns, observer, options ) {
     this.patterns = patterns;
-    this.cwd = cwd;
+    this.cwd = options.cwd;
     this.observer = observer;
     this.cancelled = false;
     this.pending = 0;
-    this.includeDirs = !!options.includeDirs;
+    this.includeDirs = options.includeDirs;
     this.visitedDirs = options.visitedDirs;
-    this.error = this.error.bind( this );
-    this.cancel = this.cancel.bind( this );
+    this.relative = options.relative;
     this.fsStat = options.fs.stat;
     this.fsReadDir = options.fs.readdir;
+    this.error = this.error.bind( this );
+    this.cancel = this.cancel.bind( this );
   }
 
   start() {
-    for ( const { negated, parent } of this.patterns ) {
+    for ( const { negated, fullParent } of this.patterns ) {
       if ( !negated ) {
-        this.check( path.resolve( this.cwd, parent ) );
+        this.check( fullParent );
       }
     }
     this.checkPending();
@@ -135,14 +135,14 @@ class Reader {
 
       if ( stats.isDirectory() ) {
         if ( this.includeDirs && this.matches( relativePath ) ) {
-          this.next( file );
+          this.next( this.relative ? relativePath : file );
           this.readDir( file );
         } else if ( this.matchesDir( relativePath ) ) {
           this.readDir( file );
         }
       } else if ( stats.isFile() ) {
         if ( this.matches( relativePath ) ) {
-          this.next( file );
+          this.next( this.relative ? relativePath : file );
         }
       }
 
@@ -175,39 +175,38 @@ class Reader {
 
 }
 
-function makeSureArray( obj ) {
-  if ( typeof obj === "string" ) {
-    return [ obj ];
+function makeSureArray( val ) {
+  if ( val == null ) {
+    return [];
   }
-  return Array.isArray( obj ) ? obj : [];
+  return Array.isArray( val ) ? val : [ val ];
 }
 
-/*
-{
-  src: [], // Pattern(s) to match.
-  cwd: process.cwd(), // Files emitted are relative to this path.
-  append: [], // An array of patterns to append to the array. Used to override the default.
-  micromatch: {} // Options to be passed to micromatch.
-  includeDirs: false // Include directories in the output.
-}
-*/
-function findFiles( _opts ) {
+export function findFilesObservable( src, _opts ) {
 
   const options = Object.assign( {}, _opts );
 
+  options.cwd = options.cwd ? path.resolve( options.cwd ) : process.cwd();
   options.fs = options.fs || fs;
   options.fs.stat = options.fs.stat || fs.stat;
   options.fs.readdir = options.fs.readdir || fs.readdir;
-
   options.append = makeSureArray( options.append || ignoredDirectories );
 
-  const cwd = options.cwd ? path.resolve( options.cwd ) : process.cwd();
-
-  const patterns = makeSureArray( options.src ).concat( options.append ).map(
-    pattern => new Pattern( pattern, options.micromatch )
+  const patterns = makeSureArray( src ).concat( options.append ).map(
+    pattern => new Pattern( pattern, options )
   );
 
-  return new Observable( observer => new Reader( patterns, cwd, observer, options ).start() );
+  return new Observable( observer => new Reader( patterns, observer, options ).start() );
 }
 
-export default findFiles;
+export default function( patterns, options ) {
+  return new Promise( ( resolve, reject ) => {
+    const files = [];
+
+    findFilesObservable( patterns, options ).subscribe( {
+      error: reject,
+      next: x => files.push( x ),
+      complete: () => resolve( files )
+    } );
+  } );
+}

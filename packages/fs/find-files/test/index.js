@@ -1,20 +1,31 @@
-/*
+import { findFilesObservable } from "../src";
 
-TODO
+const path = require( "path" );
 
-const visitedDirs = [];
+function run( patterns ) {
+  return new Promise( ( resolve, reject ) => {
+    const files = [];
+    const visitedDirs = [];
 
-findFiles( {
-  src: [ "packages/builder/**", "!packages/**", "packages/cli/**" ],
-  fs: {
-    readdir( folder ) {
-      visitedDirs.push( slash( path.relative( process.cwd(), folder ) ) );
-      return fs.readdir( folder );
-    }
-  }
-} ).subscribe( {
-  next: x => console.log( "Output: ", x ),
-  complete: () => console.log( visitedDirs.sort() )
+    findFilesObservable( patterns, {
+      cwd: path.join( __dirname, "fixtures" ),
+      relative: true,
+      visitedDirs
+    } ).subscribe( {
+      error: reject,
+      next: x => files.push( x ),
+      complete: () => resolve( {
+        files: files.sort(),
+        visitedDirs: visitedDirs.sort()
+      } )
+    } );
+  } );
+}
+
+it( "basic", async() => {
+
+  expect(
+    await run( [ "a/**", "!b/**", "c/**" ] )
+  ).toMatchSnapshot();
+
 } );
-
-*/
