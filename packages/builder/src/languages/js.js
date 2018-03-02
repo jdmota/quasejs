@@ -255,10 +255,6 @@ export default class JsLanguage extends Language {
     } ) );
   }
 
-  async moreLanguages() {
-    return [];
-  }
-
   async dependencies() {
     return {
       dependencies: this.deps,

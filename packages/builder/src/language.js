@@ -17,7 +17,6 @@ function getDataType( data ) {
 
 export interface ILanguage {
   resolve( string, string, Builder ): Promise<?string | boolean>,
-  moreLanguages( Builder ): Promise<{ type: string, data: Data }[]>,
   dependencies( Builder ): Promise<DepsInfo>,
   renderAsset( Builder, FinalAsset, FinalAssets ): Promise<ToWrite>
 }
@@ -40,10 +39,6 @@ export default class Language implements ILanguage {
     const resolved = path.resolve( path.dirname( importer ), imported );
     const isFile = await builder.fileSystem.isFile( resolved, importer );
     return isFile && resolved;
-  }
-
-  async moreLanguages() {
-    return [];
   }
 
   async dependencies() {

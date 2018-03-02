@@ -183,12 +183,6 @@ export default class Module {
 
     this.importedNames = depsInfo.importedNames;
     this.exportedNames = depsInfo.exportedNames;
-
-    // TODO
-    /* const moreLangs = await lang.moreLanguages();
-    for ( const { type, data } of moreLangs ) {
-      builder.addModule( type, lang.path, data );
-    }*/
   }
 
   transform( builder: Builder ) {
