@@ -9,7 +9,7 @@ Based and adapted from [meow](https://github.com/sindresorhus/meow), and include
 - We change the update notifier message if Yarn is detected.
 - Passing a `configFiles` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 - Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
-- Support for `@quase/config`'s schema and defaults application.
+- Support for `@quase/config`'s schema, defaults application, and validation.
 
 ## Usage example
 
