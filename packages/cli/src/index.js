@@ -151,7 +151,8 @@ function generateHelp( options ) {
 
 const DEFAULT = {};
 
-function handleArgs( schema, opts ) {
+function handleArgs( opts ) {
+  const schema = opts.schema;
   const allAlias = new Set();
   const yargsOpts = {
     alias: {},
@@ -263,14 +264,13 @@ function handleArgs( schema, opts ) {
   };
 }
 
-export default async function( opts ) {
+export default async function( _opts ) {
   if ( importLocal( filename ) ) {
     return;
   }
-
   loudRejection();
 
-  opts = Object.assign( {
+  const opts = Object.assign( {
     cwd: process.cwd(),
     inferType: false,
     autoHelp: true,
@@ -278,17 +278,20 @@ export default async function( opts ) {
     argv: process.argv.slice( 2 ),
     schema: {},
     validate: true
-  }, opts );
+  }, _opts );
 
   opts.cwd = path.resolve( opts.cwd );
 
-  const schema = typeof opts.schema === "function" ? opts.schema( t ) : opts.schema;
-  const { input, flags } = handleArgs( schema, opts );
+  const schema = opts.schema = typeof opts.schema === "function" ? opts.schema( t ) : opts.schema;
 
-  const pkg = opts.pkg ? opts.pkg : readPkgUp.sync( {
-    cwd: parentDir,
-    normalize: false
-  } ).pkg;
+  const { input, flags } = handleArgs( opts );
+
+  const pkg = opts.pkg ? opts.pkg : await (
+    readPkgUp( {
+      cwd: parentDir,
+      normalize: false
+    } )
+  ).pkg;
 
   normalizePkg( pkg );
 
@@ -319,7 +322,7 @@ export default async function( opts ) {
 
   const configJob = getConfig( {
     cwd: opts.cwd,
-    configFiles: flags.config || opts.configFiles,
+    configFiles: opts.configFiles ? flags.config || opts.configFiles : undefined,
     configKey: opts.configKey,
     failIfNotFound: !!flags.config
   } );
