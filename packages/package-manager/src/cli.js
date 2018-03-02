@@ -1,9 +1,7 @@
 // @flow
 /* eslint-disable no-console */
-
 import installer from "../src/installer";
 import check from "../src/check";
-import init from "../src/init";
 import { read as readPkg, write as writePkg } from "../src/pkg";
 
 const path = require( "path" );
@@ -40,10 +38,6 @@ export function run( input: string[], flags: Object ) {
 
     case "check":
       check( folder ).then( showDone, showError );
-      break;
-
-    case "init":
-      init( folder, input[ 1 ] ).then( showDone, showError );
       break;
 
     default:

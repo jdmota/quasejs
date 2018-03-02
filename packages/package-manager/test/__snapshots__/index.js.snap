@@ -1,27 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`init basic 1`] = `
-".npmignore was created.
-.eslintignore was created.
-.gitignore was created.
-.gitattributes was created.
-.editorconfig was created.
-.eslintrc.json was created.
-package.json was created.
-"
-`;
-
-exports[`init basic 2`] = `
-".npmignore already exists!
-.eslintignore already exists!
-.gitignore already exists!
-.gitattributes already exists!
-.editorconfig already exists!
-.eslintrc.json already exists!
-package.json already exists!
-"
-`;
-
 exports[`installer basic 1`] = `
 "{ [Function] sync: [Function] }
 { [Function] sync: [Function] }
@@ -189,9 +167,9 @@ exports[`installer basic 2`] = `
 		],
 		[
 			\\"make-dir\\",
-			\\"1.1.0\\",
-			\\"https://registry.npmjs.org/make-dir/-/make-dir-1.1.0.tgz\\",
-			\\"sha512-0Pkui4wLJ7rxvmfUvs87skoEaxmu0hCUApF8nonzpl7q//FWp9zu8W61Scz4sd/kUiqDxvUhtoam2efDyiBzcA==\\",
+			\\"1.2.0\\",
+			\\"https://registry.npmjs.org/make-dir/-/make-dir-1.2.0.tgz\\",
+			\\"sha512-aNUAa4UMg/UougV25bbrU4ZaaKNjJ/3/xnvg/twpmKROPdKZPZ9wGgI0opdZzO8q/zUFawoUuixuOv33eZ61Iw==\\",
 			[
 				14
 			]
@@ -217,42 +195,53 @@ exports[`installer basic 2`] = `
 		],
 		[
 			\\"semver\\",
-			\\"5.4.1\\",
-			\\"https://registry.npmjs.org/semver/-/semver-5.4.1.tgz\\",
-			\\"sha512-WfG/X9+oATh81XtllIo/I8gOiY9EXRdv1cQdyykeXK17YcUW3EXUAi2To4pcH6nZtJPr7ZOpM5OMyWJZm+8Rsg==\\",
+			\\"5.5.0\\",
+			\\"https://registry.npmjs.org/semver/-/semver-5.5.0.tgz\\",
+			\\"sha512-4SJ3dm0WAwWy/NVeioZh5AntkdJoWKxHxcmyP622fOkgHa4z3R0TdBJICINyaSDE6uNwVc8gZr+ZinwZAH4xIA==\\",
 			[]
 		],
 		[
 			\\"validate-npm-package-license\\",
-			\\"3.0.1\\",
-			\\"https://registry.npmjs.org/validate-npm-package-license/-/validate-npm-package-license-3.0.1.tgz\\",
-			\\"sha1-KAS6vnEq0zeUWaz74kdGqywwP7w=\\",
+			\\"3.0.3\\",
+			\\"https://registry.npmjs.org/validate-npm-package-license/-/validate-npm-package-license-3.0.3.tgz\\",
+			\\"sha512-63ZOUnL4SIXj4L0NixR3L1lcjO38crAbgrTpl28t8jjrfuiOBL5Iygm+60qPs/KsZGzPNg6Smnc/oY16QTjF0g==\\",
 			[
 				18,
-				20
-			]
-		],
-		[
-			\\"spdx-correct\\",
-			\\"1.0.2\\",
-			\\"https://registry.npmjs.org/spdx-correct/-/spdx-correct-1.0.2.tgz\\",
-			\\"sha1-SzBz2TP/UfORLwOsVRlJikFQ20A=\\",
-			[
 				19
 			]
 		],
 		[
-			\\"spdx-license-ids\\",
-			\\"1.2.2\\",
-			\\"https://registry.npmjs.org/spdx-license-ids/-/spdx-license-ids-1.2.2.tgz\\",
-			\\"sha1-yd96NCRZSt5r0RkA1ZZpbcBrrFc=\\",
-			[]
+			\\"spdx-correct\\",
+			\\"3.0.0\\",
+			\\"https://registry.npmjs.org/spdx-correct/-/spdx-correct-3.0.0.tgz\\",
+			\\"sha512-N19o9z5cEyc8yQQPukRCZ9EUmb4HUpnrmaL/fxS2pBo2jbfcFRVuFZ/oFC+vZz0MNNk0h80iMn5/S6qGZOL5+g==\\",
+			[
+				19,
+				21
+			]
 		],
 		[
 			\\"spdx-expression-parse\\",
-			\\"1.0.4\\",
-			\\"https://registry.npmjs.org/spdx-expression-parse/-/spdx-expression-parse-1.0.4.tgz\\",
-			\\"sha1-m98vIOH0DtRH++JzJmGR/O1RYmw=\\",
+			\\"3.0.0\\",
+			\\"https://registry.npmjs.org/spdx-expression-parse/-/spdx-expression-parse-3.0.0.tgz\\",
+			\\"sha512-Yg6D3XpRD4kkOmTpdgbUiEJFKghJH03fiC1OPll5h/0sO6neh2jqRDVHOQ4o/LMea0tgCkbMgea5ip/e+MkWyg==\\",
+			[
+				20,
+				21
+			]
+		],
+		[
+			\\"spdx-exceptions\\",
+			\\"2.1.0\\",
+			\\"https://registry.npmjs.org/spdx-exceptions/-/spdx-exceptions-2.1.0.tgz\\",
+			\\"sha512-4K1NsmrlCU1JJgUrtgEeTVyfx8VaYea9J9LvARxhbHtVtohPs/gFGG5yy49beySjlIMhhXZ4QqujIZEfS4l6Cg==\\",
+			[]
+		],
+		[
+			\\"spdx-license-ids\\",
+			\\"3.0.0\\",
+			\\"https://registry.npmjs.org/spdx-license-ids/-/spdx-license-ids-3.0.0.tgz\\",
+			\\"sha512-2+EPwgbnmOIl8HjGBXXMd9NAu02vLjOO1nWw4kmeRDFyHn+M/ETfHxQUK0oXg8ctgVnl9t3rosNVsZ1jG61nDA==\\",
 			[]
 		],
 		[
@@ -272,7 +261,7 @@ exports[`installer basic 2`] = `
 			[
 				9,
 				15,
-				21
+				22
 			]
 		],
 		[
@@ -299,7 +288,7 @@ exports[`installer basic 2`] = `
 			[
 				4,
 				6,
-				23
+				24
 			]
 		],
 		[
@@ -312,8 +301,8 @@ exports[`installer basic 2`] = `
 				4,
 				13,
 				14,
-				24,
-				25
+				25,
+				26
 			]
 		],
 		[
@@ -322,8 +311,8 @@ exports[`installer basic 2`] = `
 			\\"https://registry.npmjs.org/write-pkg/-/write-pkg-3.1.0.tgz\\",
 			\\"sha1-AwqZlMyZk9JbTnWp8aGSNgcpHOk=\\",
 			[
-				24,
-				26
+				25,
+				27
 			]
 		]
 	],
@@ -331,14 +320,14 @@ exports[`installer basic 2`] = `
 		\\"read-pkg\\": {
 			\\"savedVersion\\": \\"2.0.0\\",
 			\\"resolved\\": \\"https://registry.npmjs.org/read-pkg/-/read-pkg-2.0.0.tgz\\",
-			\\"i\\": 22
+			\\"i\\": 23
 		}
 	},
 	\\"devDeps\\": {
 		\\"write-pkg\\": {
 			\\"savedVersion\\": \\"3.1.0\\",
 			\\"resolved\\": \\"https://registry.npmjs.org/write-pkg/-/write-pkg-3.1.0.tgz\\",
-			\\"i\\": 27
+			\\"i\\": 28
 		}
 	},
 	\\"optionalDeps\\": {}
