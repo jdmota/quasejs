@@ -321,6 +321,13 @@ it( "apply defaults", () => {
     }
   } );
 
+  d( {
+    obj: {
+      type: "number",
+      default: 0
+    }
+  }, undefined, null );
+
 } );
 
 it( "apply defaults - merge modes", () => {

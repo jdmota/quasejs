@@ -120,6 +120,12 @@ Object {
 
 exports[`apply defaults 9`] = `"[Schema] Provide a default value or mark as \\"optional\\" in 'obj'"`;
 
+exports[`apply defaults 10`] = `
+Object {
+  "obj": 0,
+}
+`;
+
 exports[`validate 1`] = `
 Array [
   Array [
