@@ -4,7 +4,7 @@
   "scripts": {
     "test": "jest",
     "build": "node packages/build.js",
-    "node": "babel-node",
+    "babel-node": "babel-node",
     "flowtype": "flow-typed install",
     "flow": "flow",
     "lint": "eslint \"**/*.js\"",
