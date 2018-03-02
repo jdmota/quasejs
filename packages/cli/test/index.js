@@ -518,4 +518,109 @@ describe( "cli", () => {
 
   } );
 
+  it( "subcommands", async() => {
+
+    const { command, input, options } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      commands: {
+        foo_command: {
+          foo: {
+            type: "boolean"
+          }
+        }
+      },
+      argv: [ "foo_command", "--foo" ],
+      notifier: false
+    } );
+
+    expect( input ).toEqual( [] );
+    expect( command ).toBe( "foo_command" );
+    expect( options.foo ).toBe( true );
+
+  } );
+
+  it( "invalid subcommand", async() => {
+
+    await expect(
+      cli( {
+        validate: false,
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        commands: {
+          foo_command: {
+            foo: {
+              type: "boolean"
+            }
+          }
+        },
+        argv: [ "bar_command", "--foo" ],
+        notifier: false
+      } )
+    ).rejects.toThrow( /^"bar_command" is not a supported command$/ );
+
+  } );
+
+  it( "undefined subcommand", async() => {
+
+    await expect(
+      cli( {
+        validate: false,
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        commands: {
+          foo_command: {
+            foo: {
+              type: "boolean"
+            }
+          }
+        },
+        argv: [ "--foo" ],
+        notifier: false
+      } )
+    ).rejects.toThrow( /^undefined is not a supported command$/ );
+
+  } );
+
+  it( "default subcommand", async() => {
+
+    const { command, input, options } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      defaultCommand: "foo_command",
+      commands: {
+        foo_command: {
+          foo: {
+            type: "boolean"
+          }
+        }
+      },
+      argv: [ "--foo" ],
+      notifier: false
+    } );
+
+    expect( input ).toEqual( [] );
+    expect( command ).toBe( "foo_command" );
+    expect( options.foo ).toBe( true );
+
+  } );
+
 } );

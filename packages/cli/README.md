@@ -45,6 +45,15 @@ require( "@quase/cli" ).default( {
   // See @quase/config for more info.
   // Default: true
   validate: true,
+  // Subcommands
+  defaultCommand: "commandName", // Default: undefined
+  commands: { // Default: {}
+    commandName: { // Specific schema for this command. Can also be a function.
+      foo: {
+        type: "boolean"
+      }
+    }
+  },
   // false to disable notification
   notifier: {
     options: {}, // UpdateNotifier options

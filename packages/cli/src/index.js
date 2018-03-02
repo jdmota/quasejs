@@ -151,8 +151,11 @@ function generateHelp( options ) {
 
 const DEFAULT = {};
 
+function handleSchema( schema ) {
+  return typeof schema === "function" ? schema( t ) : schema;
+}
+
 function handleArgs( opts ) {
-  const schema = opts.schema;
   const allAlias = new Set();
   const yargsOpts = {
     alias: {},
@@ -166,6 +169,33 @@ function handleArgs( opts ) {
     number: [],
     configuration: {}
   };
+
+  let providedArgv = opts.argv;
+  let schema, command;
+
+  if ( opts.commands ) {
+
+    const c = opts.argv[ 0 ];
+
+    if ( /^--?/.test( c ) ) {
+      command = opts.defaultCommand;
+    } else {
+      providedArgv = opts.argv.slice( 1 );
+      command = c;
+    }
+
+    const commandSchema = opts.commands[ command ];
+
+    if ( !commandSchema ) {
+      const error = new Error( `${JSON.stringify( command )} is not a supported command` );
+      error.__validation = true;
+      throw error;
+    }
+
+    schema = handleSchema( commandSchema );
+  } else {
+    schema = handleSchema( opts.schema );
+  }
 
   if ( opts.configFiles ) {
     yargsOpts.string.push( "config" );
@@ -229,7 +259,7 @@ function handleArgs( opts ) {
 
   fillOptions( schema, [] );
 
-  const { error, argv } = yargsParser.detailed( opts.argv, yargsOpts );
+  const { error, argv } = yargsParser.detailed( providedArgv, yargsOpts );
 
   if ( error ) {
     if ( /^Not enough arguments following/.test( error.message ) ) {
@@ -259,6 +289,8 @@ function handleArgs( opts ) {
   const flags = camelcaseKeys( argv, { exclude: [ "--", /^\w$/ ], deep: true } );
 
   return {
+    schema,
+    command,
     flags,
     input
   };
@@ -282,9 +314,7 @@ export default async function( _opts ) {
 
   opts.cwd = path.resolve( opts.cwd );
 
-  const schema = opts.schema = typeof opts.schema === "function" ? opts.schema( t ) : opts.schema;
-
-  const { input, flags } = handleArgs( opts );
+  const { schema, command, input, flags } = handleArgs( opts );
 
   const pkg = opts.pkg ? opts.pkg : await (
     readPkgUp( {
@@ -340,6 +370,7 @@ export default async function( _opts ) {
   }
 
   return {
+    command,
     input,
     options,
     flags,
