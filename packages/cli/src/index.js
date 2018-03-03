@@ -121,7 +121,7 @@ function typeToString( { type, choices } ) {
   return "";
 }
 
-function generateHelp( { usage, commands, schema, command, commandSet } ) {
+function generateHelp( { usage, commands, defaultCommand, schema, command, commandSet } ) {
   const optionLines = [];
   const commandLines = [];
   let optionsLength = 0;
@@ -131,10 +131,11 @@ function generateHelp( { usage, commands, schema, command, commandSet } ) {
     for ( const key in commands ) {
       const { description } = commands[ key ];
 
-      if ( description ) {
+      if ( description != null ) {
         const line = [
           `  ${decamelize( key, "-" )}`,
-          description
+          description,
+          key === defaultCommand ? `[default]` : ""
         ];
 
         commandLines.push( line );
@@ -149,7 +150,7 @@ function generateHelp( { usage, commands, schema, command, commandSet } ) {
   for ( const key in schema ) {
     const flag = schema[ key ];
 
-    if ( flag.description ) {
+    if ( flag && flag.description != null ) {
       const typeStr = typeToString( flag );
       const line = [
         `  --${decamelize( key, "-" )}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
@@ -236,8 +237,12 @@ function handleArgs( opts ) {
       command = camelCase( c );
     }
 
-    const commandInfo = opts.commands[ command ];
-    schema = handleSchema( commandInfo && commandInfo.schema );
+    if ( command ) {
+      const commandInfo = opts.commands[ command ];
+      schema = handleSchema( commandInfo && commandInfo.schema );
+    } else {
+      schema = handleSchema( opts.schema );
+    }
   } else {
     schema = handleSchema( opts.schema );
   }
@@ -258,6 +263,10 @@ function handleArgs( opts ) {
 
   function fillOptions( schema, chain ) {
     for ( const k in schema ) {
+      if ( !schema[ k ] ) {
+        continue;
+      }
+
       let { type, argType, alias, coerce, narg } = schema[ k ];
       let key = decamelize( k, "-" );
 
@@ -360,7 +369,7 @@ export default async function( _opts ) {
 
   opts.cwd = path.resolve( opts.cwd );
 
-  const { usage, commands } = opts;
+  const { usage, commands, defaultCommand } = opts;
   const { schema, command, commandSet, input, flags } = handleArgs( opts );
 
   const pkg = opts.pkg ? opts.pkg : (
@@ -377,11 +386,7 @@ export default async function( _opts ) {
     opts.help ?
       trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
       generateHelp( {
-        schema: command ? schema : handleSchema( opts.schema ),
-        usage,
-        commands,
-        command,
-        commandSet
+        schema, usage, defaultCommand, commands, command, commandSet
       } ),
     2
   );

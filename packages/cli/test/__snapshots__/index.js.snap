@@ -40,6 +40,7 @@ exports[`cli generate help 1`] = `
     --choices1        choices1 [0 | 1 | 2]
     --choices2        choices2 [0 | 1 | 2]
     --camel-case      description [string]
+    --no-description 
 "
 `;
 
@@ -65,7 +66,8 @@ exports[`cli generate help with subcommands 1`] = `
   Usage: $ bin <command> [options]
 
   Commands:
-    foo-command foo command description
+    foo-command    foo command description
+    no-description
 
   Options:
     --unicorn, -u unicorn description
@@ -79,7 +81,7 @@ exports[`cli generate help with subcommands including options of default command
   Usage: $ bin <command> [options]
 
   Commands:
-    foo-command foo command description
+    foo-command foo command description [default]
 
   Options:
     --number, -n, -n2 number description

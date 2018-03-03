@@ -173,6 +173,10 @@ describe( "cli", () => {
           type: "string",
           description: "description",
           optional: true
+        },
+        noDescription: {
+          description: "",
+          optional: true
         }
       },
       notifier: false
@@ -658,6 +662,9 @@ describe( "cli", () => {
           schema: {
             number: { default: 0, alias: [ "n", "n2" ], description: "number description" }
           }
+        },
+        noDescription: {
+          description: ""
         }
       },
       schema: {

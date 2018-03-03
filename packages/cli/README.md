@@ -30,6 +30,8 @@ require( "@quase/cli" ).default( {
     return {
       someFlagName: {
         type: "boolean",
+        // If description == null, the flag will not appear in the help text
+        // But with "", it will.
         description: "",
         alias: "s",
         default: false
