@@ -109,7 +109,7 @@ export function extractDefaults( fullKey, { type, default: d, required, optional
     throw new Error( `[Schema] Don't use "required" and "optional" in ${formatOption( fullKey )}` );
   }
   if ( d === undefined ) {
-    if ( required ) {
+    if ( required || optional ) {
       return;
     }
   } else {

@@ -126,6 +126,8 @@ Object {
 }
 `;
 
+exports[`apply defaults 11`] = `Object {}`;
+
 exports[`validate 1`] = `
 Array [
   Array [

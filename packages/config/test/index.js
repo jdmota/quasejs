@@ -379,6 +379,13 @@ it( "apply defaults", () => {
     }
   }, undefined, null );
 
+  d( {
+    obj: {
+      type: "boolean",
+      optional: true
+    }
+  } );
+
 } );
 
 it( "apply defaults - merge modes", () => {
