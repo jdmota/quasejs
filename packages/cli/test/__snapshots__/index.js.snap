@@ -35,9 +35,12 @@ exports[`cli generate help 1`] = `
     --unicorn, -u     unicorn description
     --boolean         boolean description [boolean]
     --no-boolean-no   boolean no description [boolean]
+    --object          [object]
+    --object.prop     [string]
     --tuple           tuple [array]
     --array           array of strings [array]
-    --union           union [string | number]
+    --union           union [string | number | array]
+    --union.0         [string]
     --choices1        choices1 [0 | 1 | 2]
     --choices2        choices2 [0 | 1 | 2]
     --camel-case      description [string]

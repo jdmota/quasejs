@@ -137,9 +137,11 @@ describe( "cli", () => {
         boolean: { type: "boolean", default: false, description: "boolean description" },
         booleanNo: { type: "boolean", default: true, description: "boolean no description" },
         object: {
+          description: "",
           type: t.object( {
             prop: {
               type: "string",
+              description: "",
               optional: true
             }
           } )
@@ -155,7 +157,13 @@ describe( "cli", () => {
         union: {
           type: t.union( [
             "string",
-            "number"
+            "number",
+            t.tuple( [
+              {
+                type: "string",
+                description: "",
+              }
+            ] )
           ] ),
           description: "union",
           optional: true
@@ -277,7 +285,7 @@ describe( "cli", () => {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camelCase=cat" ],
+      argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camelCase=cat", "--no-obj.bool" ],
       help: "",
       notifier: false
     } );
@@ -285,6 +293,7 @@ describe( "cli", () => {
     expect( options ).toEqual( {
       obj: {
         foo: 10,
+        bool: false,
         bar: {
           baz: "dog",
           camelCase: "cat"

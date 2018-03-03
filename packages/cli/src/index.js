@@ -98,6 +98,9 @@ function pad( str, length ) {
 }
 
 function typeToString( { type, choices } ) {
+  if ( choices ) {
+    return choices.map( JSON.stringify ).join( " | " );
+  }
   if ( type ) {
     if ( typeof type === "string" ) {
       return type;
@@ -115,10 +118,35 @@ function typeToString( { type, choices } ) {
       return JSON.stringify( type.value );
     }
   }
-  if ( choices ) {
-    return choices.map( JSON.stringify ).join( " | " );
-  }
   return "";
+}
+
+function flattenSchema( schema ) {
+  const newSchema = {};
+  for ( const key in schema ) {
+    const flag = schema[ key ];
+    if ( flag ) {
+      const { type } = flag;
+      newSchema[ key ] = flag;
+
+      if ( type ) {
+        const list = type instanceof types.Union ? type.types : [ type ];
+
+        for ( const type of list ) {
+          if ( type instanceof types.Tuple ) {
+            for ( let i = 0; i < type.items.length; i++ ) {
+              newSchema[ `${key}.${i}` ] = type.items[ i ];
+            }
+          } else if ( type instanceof types.Object ) {
+            for ( const k in type.properties ) {
+              newSchema[ `${key}.${k}` ] = type.properties[ k ];
+            }
+          }
+        }
+      }
+    }
+  }
+  return newSchema;
 }
 
 function generateHelp( { usage, commands, defaultCommand, schema, command, commandSet } ) {
@@ -147,13 +175,16 @@ function generateHelp( { usage, commands, defaultCommand, schema, command, comma
     }
   }
 
-  for ( const key in schema ) {
-    const flag = schema[ key ];
+  const flattenedSchema = flattenSchema( schema );
 
-    if ( flag && flag.description != null ) {
+  for ( const key in flattenedSchema ) {
+    const flag = flattenedSchema[ key ];
+
+    if ( flag.description != null ) {
       const typeStr = typeToString( flag );
       const prefix = flag.type === "boolean" && flag.default === true ? "no-" : "";
       const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${prefix}${a}` ).join( ", " )}` : "";
+
       const line = [
         `  --${prefix}${decamelize( key, "-" )}${aliasText}`,
         flag.description,
