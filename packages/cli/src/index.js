@@ -463,17 +463,18 @@ export default async function( _opts ) {
 
   const options = applyDefaults( schema, flags, config );
 
-  if ( opts.validate && schema ) {
-
-    const commandInfo = commands[ command ];
-
-    if ( !commandInfo ) {
-      const error = new Error( `${JSON.stringify( command )} is not a supported command` );
-      error.__validation = true;
-      throw error;
+  if ( opts.validate ) {
+    if ( commands ) {
+      const commandInfo = commands[ command ];
+      if ( !commandInfo ) {
+        const error = new Error( `${JSON.stringify( command )} is not a supported command` );
+        error.__validation = true;
+        throw error;
+      }
     }
-
-    validate( schema, options );
+    if ( schema ) {
+      validate( schema, options );
+    }
   }
 
   return {
