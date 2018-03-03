@@ -8,7 +8,6 @@ import type {
   Info, Options, Plugin
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
-import Language from "./language";
 import FileSystem from "./filesystem";
 import Module, { type ModuleArg } from "./module";
 import validateOptions from "./options";

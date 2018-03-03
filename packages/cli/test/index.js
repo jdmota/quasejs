@@ -1,6 +1,6 @@
 import cli from "../src";
 
-const { t } = require( "@quase/config" );
+const { t } = require( "@quase/config" ); // eslint-disable-line node/no-extraneous-require
 
 /* eslint-disable no-console */
 

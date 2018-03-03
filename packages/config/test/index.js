@@ -1,6 +1,6 @@
 import { t, validate, printError, applyDefaults, getConfig } from "../src";
 
-const stripAnsi = require( "strip-ansi" );
+const stripAnsi = require( "strip-ansi" ); // eslint-disable-line node/no-extraneous-require
 
 /* eslint no-console: 0 */
 
