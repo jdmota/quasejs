@@ -149,6 +149,21 @@ function flattenSchema( schema ) {
   return newSchema;
 }
 
+function suffix( flag ) {
+  if (
+    typeof flag.default === "boolean" ||
+    typeof flag.default === "number"
+  ) {
+    return `(default: ${flag.default})`;
+  }
+  if ( typeof flag.default === "string" ) {
+    if ( flag.default.length < 15 ) {
+      return `(default: ${JSON.stringify( flag.default )})`;
+    }
+  }
+  return "";
+}
+
 function generateHelp( { usage, commands, defaultCommand, schema, command, commandSet } ) {
   const optionLines = [];
   const commandLines = [];
@@ -182,12 +197,12 @@ function generateHelp( { usage, commands, defaultCommand, schema, command, comma
 
     if ( flag.description != null ) {
       const typeStr = typeToString( flag );
-      const prefix = flag.type === "boolean" && flag.default === true ? "no-" : "";
-      const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${prefix}${a}` ).join( ", " )}` : "";
+      const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${a}` ).join( ", " )}` : "";
 
       const line = [
-        `  --${prefix}${decamelize( key, "-" )}${aliasText}`,
+        `  --${decamelize( key, "-" )}${aliasText}`,
         flag.description,
+        suffix( flag ),
         typeStr ? `[${typeStr}]` : ""
       ];
 
