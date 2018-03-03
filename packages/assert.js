@@ -21,25 +21,3 @@ export default {
     expect.assertions( n );
   }
 };
-
-/* eslint no-console: 0 */
-
-const join = [].join;
-
-function factory( type ) {
-  return function( block, expected ) {
-    const ref = console[ type ];
-    let actual;
-    console[ type ] = function() {
-      actual = ( actual ? actual + "\n" : "" ) + join.call( arguments, " " );
-    };
-    block();
-    console[ type ] = ref;
-    expect( actual ).toBe( expected );
-  };
-}
-
-export const testConsoleLog = factory( "log" );
-export const testConsoleError = factory( "error" );
-
-export const testLog = testConsoleLog; // Alias

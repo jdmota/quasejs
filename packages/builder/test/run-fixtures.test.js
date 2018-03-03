@@ -1,11 +1,12 @@
 import Builder from "../src/builder";
 import { relative } from "../src/id";
-import { testLog } from "../../assert";
 import transformConfig from "./transform-config";
 
 function isRegExp( obj ) {
   return obj != null && typeof obj.test === "function";
 }
+
+/* eslint no-console: 0, no-new-func: 0 */
 
 describe( "builder", () => {
 
@@ -63,11 +64,15 @@ describe( "builder", () => {
           if ( config._out ) {
             config.entries.forEach( ( entry, i ) => {
               const dest = relative( path.resolve( builder.dest, entry ), builder.cwd );
-              testLog( () => {
-                expect( typeof assets[ dest ] ).toBe( "string" );
-                global.__quase_builder__ = undefined;
-                new Function( assets[ dest ] )(); // eslint-disable-line no-new-func
-              }, config._out[ i ] );
+              expect( typeof assets[ dest ] ).toBe( "string" );
+
+              console.log = jest.fn();
+              global.__quase_builder__ = undefined;
+              new Function( assets[ dest ] )();
+
+              expect(
+                console.log.mock.calls.map( args => args.join( " " ) ).join( "\n" )
+              ).toEqual( config._out[ i ] || "" );
             } );
           }
         }
