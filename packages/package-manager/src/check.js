@@ -2,8 +2,7 @@
 import { read as readPkg } from "./pkg";
 import {
   shouldReuse as shouldReuseLockfile,
-  read as readLockfile,
-  type Lockfile
+  read as readLockfile
 } from "./lockfile";
 
 const fs = require( "fs-extra" );
@@ -69,9 +68,8 @@ async function integrity( folder, lockfile ) {
 }
 
 export default async function( folder: string ) {
-  const configPromises = [ readPkg( folder ), readLockfile( folder ) ];
-  const pkg = await configPromises[ 0 ];
-  const lockfile: Lockfile = await configPromises[ 1 ];
+
+  const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
 
   if ( !shouldReuseLockfile( lockfile ) ) {
     throw new Error( "Lockfile not found." );

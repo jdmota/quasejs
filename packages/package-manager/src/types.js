@@ -21,3 +21,14 @@ export function pathJoin( a: string, b: string, c: Name ) {
 }
 
 export type { Name, Version, ExactVersion, Resolved, Integrity, ResolvedObj };
+
+export type Options = {
+  folder: string,
+  store: string,
+  cache: string,
+  offline?: ?boolean,
+  preferOffline?: ?boolean,
+  preferOnline?: ?boolean,
+  flat?: ?boolean,
+  update?: ?boolean
+};

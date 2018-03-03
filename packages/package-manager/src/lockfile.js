@@ -34,7 +34,7 @@ function invariant( bool: boolean ) {
   }
 }
 
-function isObject( obj: any ): boolean {
+function isObject( obj: mixed ): boolean {
   return obj != null && typeof obj === "object";
 }
 
@@ -80,12 +80,12 @@ export function create(): Lockfile {
   };
 }
 
-export async function read( folder: string ): Promise<Object> {
+export async function read( folder: string ): Promise<Lockfile> {
   try {
     return await loadJsonFile( path.resolve( folder, file ) );
   } catch ( e ) {
     if ( e.code === "ENOENT" ) {
-      return {};
+      return create();
     }
     throw e;
   }

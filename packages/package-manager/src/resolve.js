@@ -1,7 +1,6 @@
 // @flow
 
-import type { Name, Version, Resolved, Integrity, ResolvedObj } from "./types";
-import type { InstallOptions } from "./installer";
+import type { Name, Version, Resolved, Integrity, ResolvedObj, Options } from "./types";
 import pacoteOptions from "./pacote-options";
 
 const npa = require( "npm-package-arg" );
@@ -20,7 +19,7 @@ export function buildId( resolved: Resolved, integrity: Integrity ): string {
   return filenamify( resolved ) + "/" + lowerCaseIntegrity( integrity );
 }
 
-export default async function( name: Name, version: Version, opts: InstallOptions ): Promise<ResolvedObj> {
+export default async function( name: Name, version: Version, opts: Options ): Promise<ResolvedObj> {
 
   if ( !name ) {
     throw new Error( "Missing name" );

@@ -1,5 +1,4 @@
 // @flow
-
 import installer from "../src/installer";
 import check from "../src/check";
 
@@ -45,7 +44,12 @@ describe( "installer", () => {
 
     async function install() {
       await fs.remove( path.resolve( __dirname, "test-folders/package/node_modules" ) );
-      await installer( path.resolve( __dirname, "test-folders/package" ), { store } );
+      await installer( {
+        preferOffline: true,
+        folder: path.resolve( __dirname, "test-folders/package" ),
+        cache: path.join( store, "cache" ),
+        store
+      } );
 
       const processOutput = await testProcess( path.resolve( __dirname, "test-folders/package/index.js" ) );
       const lockfile = await fs.readFile( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ), "utf8" );

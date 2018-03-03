@@ -1,53 +1,28 @@
 // @flow
-
-import type { Name, Version, Resolved } from "./types";
+import type { Name, Version, Resolved, Options } from "./types";
 import { read as readPkg } from "./pkg";
 import {
   shouldReuse as shouldReuseLockfile,
   create as createLockfile,
   read as readLockfile,
-  write as writeLockfile,
-  type Lockfile
+  write as writeLockfile
 } from "./lockfile";
 import resolve from "./resolve";
 import { Tree } from "./resolution";
 import Store from "./store";
 
-const path = require( "path" );
-
-export type InstallOptions = {
-  store: string,
-  cache: string,
-  offline: ?boolean,
-  preferOffline: ?boolean,
-  preferOnline: ?boolean,
-  flat: ?boolean,
-  update: ?boolean,
-  check: ?boolean
-};
-
 type DepType = "deps" | "devDeps" | "optionalDeps";
 
 /* eslint no-await-in-loop: 0 */
 
-export default async function( folder: string, _opts: Object ) {
+export default async function( opts: Options ) {
 
-  const opts: InstallOptions = Object.assign( {}, _opts );
-  if ( opts.store == null ) {
-    opts.store = Store.DEFAULT;
-  }
-  if ( opts.offline == null && opts.preferOnline == null ) {
-    opts.preferOffline = true;
-  }
-  opts.cache = opts.cache || path.join( opts.store, "cache" );
-
-  const configPromises = [ readPkg( folder ), readLockfile( folder ) ];
-  const pkg = await configPromises[ 0 ];
-  const lockfile: Lockfile = await configPromises[ 1 ];
+  const folder = opts.folder;
+  const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
 
   const reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
 
-  const newLockfile: Lockfile = createLockfile();
+  const newLockfile = createLockfile();
 
   const store = new Store( opts.store );
   const tree = new Tree();
@@ -102,12 +77,14 @@ export default async function( folder: string, _opts: Object ) {
 
   async function resolveDep( name: Name, version: Version, depType: DepType ) {
     if ( reuseLockfile ) {
-      const deps = lockfile[ depType ] || {};
-      const { savedVersion, resolved, i } = deps[ name ] || {};
-      if ( savedVersion === version ) {
-        newLockfile[ depType ][ name ] = deps[ name ];
-        allDeps.push( resolved );
-        return installFromLock( i );
+      const dep = lockfile[ depType ][ name ];
+      if ( dep ) {
+        const { savedVersion, resolved, i } = dep;
+        if ( savedVersion === version ) {
+          newLockfile[ depType ][ name ] = dep;
+          allDeps.push( resolved );
+          return installFromLock( i );
+        }
       }
     }
 

@@ -1,10 +1,9 @@
 // @flow
 
-import type { Resolved, Integrity } from "./types";
+import type { Resolved, Integrity, Options } from "./types";
 import { pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
 import { buildId } from "./resolve";
-import type { InstallOptions } from "./installer";
 import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
 
 const fs = require( "fs-extra" );
@@ -56,7 +55,7 @@ export default class Store {
     this.store = path.resolve( store, STORE_VERSION );
   }
 
-  async extract( resolved: Resolved, opts: InstallOptions, integrity: Integrity ) {
+  async extract( resolved: Resolved, opts: Options, integrity: Integrity ) {
     const id = buildId( resolved, integrity );
     const folder = path.join( this.store, id, "files" );
     const integrityFile = path.join( folder, ".qpm-integrity" );
