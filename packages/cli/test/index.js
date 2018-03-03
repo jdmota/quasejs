@@ -285,7 +285,7 @@ describe( "cli", () => {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camelCase=cat", "--no-obj.bool" ],
+      argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camel-case=cat", "--no-obj.bool" ],
       help: "",
       notifier: false
     } );

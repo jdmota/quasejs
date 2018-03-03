@@ -251,7 +251,9 @@ function handleArgs( opts ) {
     string: [],
     narg: {},
     number: [],
-    configuration: {}
+    configuration: {
+      "camel-case-expansion": false
+    }
   };
 
   let providedArgv = opts.argv;
