@@ -323,8 +323,8 @@ export default async function( _opts ) {
 
   const { schema, command, input, flags } = handleArgs( opts );
 
-  const pkg = opts.pkg ? opts.pkg : await (
-    readPkgUp( {
+  const pkg = opts.pkg ? opts.pkg : (
+    await readPkgUp( {
       cwd: parentDir,
       normalize: false
     } )
