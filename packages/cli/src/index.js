@@ -152,8 +152,10 @@ function generateHelp( { usage, commands, defaultCommand, schema, command, comma
 
     if ( flag && flag.description != null ) {
       const typeStr = typeToString( flag );
+      const prefix = flag.type === "boolean" && flag.default === true ? "no-" : "";
+      const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${prefix}${a}` ).join( ", " )}` : "";
       const line = [
-        `  --${decamelize( key, "-" )}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
+        `  --${prefix}${decamelize( key, "-" )}${aliasText}`,
         flag.description,
         typeStr ? `[${typeStr}]` : ""
       ];

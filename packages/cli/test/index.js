@@ -134,7 +134,8 @@ describe( "cli", () => {
         number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
         unicorn: { alias: "u", optional: true, description: "unicorn description" },
         meow: { type: "string", default: "dog" },
-        boolean: { type: "boolean", default: true, description: "boolean description" },
+        boolean: { type: "boolean", default: false, description: "boolean description" },
+        booleanNo: { type: "boolean", default: true, description: "boolean no description" },
         object: {
           type: t.object( {
             prop: {

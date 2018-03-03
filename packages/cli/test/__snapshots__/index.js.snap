@@ -34,6 +34,7 @@ exports[`cli generate help 1`] = `
     --number, -n, -n2 number description
     --unicorn, -u     unicorn description
     --boolean         boolean description [boolean]
+    --no-boolean-no   boolean no description [boolean]
     --tuple           tuple [array]
     --array           array of strings [array]
     --union           union [string | number]
@@ -55,7 +56,7 @@ exports[`cli generate help for subcommand 1`] = `
   Options:
     --number, -n, -n2 number description
     --unicorn, -u     unicorn description
-    --boolean         boolean description [boolean]
+    --no-boolean      boolean description [boolean]
 "
 `;
 
