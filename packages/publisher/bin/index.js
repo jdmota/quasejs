@@ -15,6 +15,7 @@ require( "@quase/cli" ).default( {
   help,
   configFiles: "quase-publisher.config.js",
   configKey: "quase-publisher",
+  validate: false,
   schema: {
     cleanup: {
       type: "boolean",

@@ -6,6 +6,8 @@ import publishTask from "./publish";
 const path = require( "path" );
 const nsp = require( "nsp" );
 const del = require( "del" );
+const hasYarn = require( "has-yarn" );
+const execa = require( "execa" );
 
 const ban = path.join( __dirname, "ban.js" );
 
@@ -57,6 +59,9 @@ export function cleanup( opts ) {
       title: "Installing dependencies using Yarn",
       enabled: () => opts.yarn === true,
       task() {
+        if ( !hasYarn( opts.folder ) ) {
+          Promise.reject( error( "Cannot use Yarn without yarn.lock file" ) );
+        }
         return exec( "yarn", [ "install", "--frozen-lockfile", "--production=false" ], {
           cwd: opts.folder
         } ).catch( err => {
@@ -101,8 +106,7 @@ function buildRootLifecycle( arr, opts ) {
   return arr.map( name => {
     return {
       title: `Executing root's ${name} script using ${opts.yarn ? "Yarn" : "npm"}`,
-      enabled: () => !!opts.rootPkg,
-      skip: () => !!( opts.rootPkg.scripts && opts.rootPkg.scripts[ name ] ),
+      enabled: () => !!( opts.rootPkg && opts.rootPkg.scripts && opts.rootPkg.scripts[ name ] ),
       task: () => exec( opts.yarn ? "yarn" : "npm", [ opts.yarn ? "run" : "run-script", name ], {
         cwd: opts.cwd
       } )
@@ -116,59 +120,33 @@ export function rootBeforeVersion( opts ) {
 
 export function bumpVersion( opts ) {
   if ( opts.yarn ) {
-    const args = [ "version", opts.version ];
-
-    if ( opts.git && opts.git.commitAndTag ) {
-      if ( opts.git.tagPrefix ) {
-        args.push( "--version-tag-prefix", opts.git.tagPrefix );
-      }
-      if ( opts.git.message ) {
-        args.push( "--version-git-message", opts.git.message );
-      }
-      if ( opts.git.signTag !== undefined ) {
-        if ( opts.git.signTag ) {
-          args.push( "--version-sign-git-tag" );
-        } else {
-          args.push( "--no-version-sign-git-tag" );
-        }
-      }
-    } else {
-      args.push( "--no-git-tag-version" );
-    }
-
     return {
       title: "Bumping version using Yarn",
-      task: () => exec( "yarn", args, {
+      task: () => exec( "yarn", [ "version", "--new-version", opts.version, "--no-git-tag-version" ], {
         cwd: opts.folder
       } )
     };
   }
 
-  const args = [ "version", opts.version ];
-
-  if ( opts.git && opts.git.commitAndTag ) {
-    if ( opts.git.tagPrefix ) {
-      args.push( "--tag-version-prefix", opts.git.tagPrefix );
-    }
-    if ( opts.git.message ) {
-      args.push( "--message", opts.git.message );
-    }
-    if ( opts.git.signTag !== undefined ) {
-      if ( opts.git.signTag ) {
-        args.push( "--sign-git-tag" );
-      } else {
-        args.push( "--no-sign-git-tag" );
-      }
-    }
-  } else {
-    args.push( "--no-git-tag-version" );
-  }
-
   return {
     title: "Bumping version using npm",
-    task: () => exec( "npm", args, {
+    task: () => exec( "npm", [ "version", opts.version, "--no-git-tag-version" ], {
       cwd: opts.folder
     } )
+  };
+}
+
+export function commitAndTag( opts ) {
+  return {
+    title: "Commit and tag",
+    skip: () => !( opts.git && opts.git.commitAndTag && opts.git.message ),
+    task: async() => {
+      await execa( "git", [ "add", opts.pkgRelativePath ] );
+      await execa( "git", [ "commit", "-m", opts.git.message ].concat( opts.git.commitHooks ? [] : [ "--no-verify" ] ) );
+      if ( opts.git.tagPrefix ) {
+        await execa( "git", [ "tag", opts.git.tagPrefix + opts.version, opts.git.signTag ? "-sm" : "-am", opts.git.message ] );
+      }
+    }
   };
 }
 
@@ -212,6 +190,7 @@ export default {
   test,
   rootBeforeVersion,
   bumpVersion,
+  commitAndTag,
   rootAfterVersion,
   rootBeforePublish,
   publish,

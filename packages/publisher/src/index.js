@@ -63,6 +63,7 @@ export async function publish( opts ) {
     commitAndTag: true,
     message: "",
     tagPrefix: "",
+    commitHooks: true,
     signTag: false
   }, opts.git === true ? null : opts.git );
 
@@ -98,8 +99,6 @@ export async function publish( opts ) {
 
   if ( opts.yarn === undefined ) {
     opts.yarn = hasYarn( opts.folder );
-  } else if ( opts.yarn && !hasYarn( opts.folder ) ) {
-    throw error( "Cannot use Yarn without yarn.lock file" );
   }
 
   if ( opts.git ) {
@@ -193,6 +192,7 @@ export async function publish( opts ) {
     opts.test,
     opts.rootBeforeVersion,
     opts.bumpVersion,
+    opts.commitAndTag,
     opts.rootAfterVersion,
     opts.rootBeforePublish,
     opts.publish,

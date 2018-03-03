@@ -17,9 +17,11 @@ module.exports = {
       title: "Build",
       async task() {
         const src = path.join( opts.folder, "src" );
-        const dist = path.join( opts.folder, "dist" );
-        await fs.emptyDir( dist );
-        return exec( "babel", [ src, "--out-dir", dist, "--copy-files" ] );
+        if ( await fs.pathExists( src ) ) {
+          const dist = path.join( opts.folder, "dist" );
+          await fs.emptyDir( dist );
+          return exec( "babel", [ src, "--out-dir", dist, "--copy-files" ] );
+        }
       }
     };
   }
