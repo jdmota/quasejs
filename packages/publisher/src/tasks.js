@@ -174,10 +174,10 @@ export function rootAfterPublish( opts ) {
   return buildRootLifecycle( [ "publish", "postpublish" ], opts );
 }
 
-export function gitPush() {
+export function gitPush( opts ) {
   return {
     title: "Pushing commit and tags",
-    task: () => exec( "git", [ "push", "--follow-tags" ] )
+    task: () => exec( "git", [ "push", "--follow-tags" ].concat( opts.git.pushHooks ? [] : [ "--no-verify" ] ) )
   };
 }
 

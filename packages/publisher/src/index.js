@@ -63,8 +63,9 @@ export async function publish( opts ) {
     commitAndTag: true,
     message: "",
     tagPrefix: "",
+    signTag: false,
     commitHooks: true,
-    signTag: false
+    pushHooks: true
   }, opts.git === true ? null : opts.git );
 
   defaultTasks( opts );
