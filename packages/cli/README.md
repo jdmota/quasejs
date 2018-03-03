@@ -12,6 +12,7 @@ Adapted from [meow](https://github.com/sindresorhus/meow), plus some features:
 - Passing a `configFiles` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 - Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
 - Support for `@quase/config`'s schema, defaults application, and validation.
+- Automatic help generation.
 
 ## Usage example
 
@@ -50,9 +51,12 @@ require( "@quase/cli" ).default( {
   // Subcommands
   defaultCommand: "commandName", // Default: undefined
   commands: { // Default: {}
-    commandName: { // Specific schema for this command. Can also be a function.
-      foo: {
-        type: "boolean"
+    commandName: {
+      description: "",
+      schema: { // Specific schema for this command. Can also be a function.
+        foo: {
+          type: "boolean"
+        }
       }
     }
   },

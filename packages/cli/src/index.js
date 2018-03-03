@@ -121,23 +121,43 @@ function typeToString( { type, choices } ) {
   return "";
 }
 
-function generateHelp( options ) {
-  const lines = [];
+function generateHelp( { usage, commands, schema, command, commandSet } ) {
+  const optionLines = [];
+  const commandLines = [];
   let optionsLength = 0;
+  let commandsLength = 0;
 
-  for ( const key in options.schema ) {
+  if ( !commandSet && commands ) {
+    for ( const key in commands ) {
+      const { description } = commands[ key ];
 
-    const flag = options.schema[ key ];
+      if ( description ) {
+        const line = [
+          `  ${decamelize( key, "-" )}`,
+          description
+        ];
+
+        commandLines.push( line );
+
+        if ( commandsLength < line[ 0 ].length ) {
+          commandsLength = line[ 0 ].length;
+        }
+      }
+    }
+  }
+
+  for ( const key in schema ) {
+    const flag = schema[ key ];
 
     if ( flag.description ) {
       const typeStr = typeToString( flag );
       const line = [
-        `  --${key}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
+        `  --${decamelize( key, "-" )}${flag.alias ? `, ${arrify( flag.alias ).map( a => "-" + a ).join( ", " )}` : ""}`,
         flag.description,
         typeStr ? `[${typeStr}]` : ""
       ];
 
-      lines.push( line );
+      optionLines.push( line );
 
       if ( optionsLength < line[ 0 ].length ) {
         optionsLength = line[ 0 ].length;
@@ -145,21 +165,44 @@ function generateHelp( options ) {
     }
   }
 
-  return [
-    options.usage ? `Usage: ${options.usage}\n` : "",
-    "Options:"
-  ].concat(
-    lines.map( line => {
-      line[ 0 ] = pad( line[ 0 ], optionsLength );
-      return line.filter( Boolean ).join( " " );
-    } )
-  ).join( "\n" );
+  let result = [
+    usage ? `Usage: ${usage.replace( /<command>/, commandSet ? command : "<command>" )}\n` : ""
+  ];
+
+  if ( commandLines.length ) {
+    result = result.concat(
+      "Commands:",
+      commandLines.map( line => {
+        line[ 0 ] = pad( line[ 0 ], commandsLength );
+        return line.filter( Boolean ).join( " " );
+      } )
+    );
+  }
+
+  if ( commandSet ) {
+    const commandInfo = commands[ command ];
+    if ( commandInfo && commandInfo.description ) {
+      result.push( commandInfo.description + "\n" );
+    }
+  }
+
+  if ( optionLines.length ) {
+    result = result.concat(
+      commandLines.length ? "\nOptions:" : "Options:",
+      optionLines.map( line => {
+        line[ 0 ] = pad( line[ 0 ], optionsLength );
+        return line.filter( Boolean ).join( " " );
+      } )
+    );
+  }
+
+  return result.join( "\n" );
 }
 
 const DEFAULT = {};
 
 function handleSchema( schema ) {
-  return typeof schema === "function" ? schema( t ) : schema;
+  return typeof schema === "function" ? schema( t ) : schema || {};
 }
 
 function handleArgs( opts ) {
@@ -179,27 +222,22 @@ function handleArgs( opts ) {
 
   let providedArgv = opts.argv;
   let schema, command;
+  let commandSet = false;
 
   if ( opts.commands ) {
 
     const c = opts.argv[ 0 ];
 
-    if ( /^--?/.test( c ) ) {
+    if ( opts.argv.length === 0 || /^--?/.test( c ) ) {
       command = opts.defaultCommand;
     } else {
+      commandSet = true;
       providedArgv = opts.argv.slice( 1 );
       command = camelCase( c );
     }
 
-    const commandSchema = opts.commands[ command ];
-
-    if ( !commandSchema ) {
-      const error = new Error( `${JSON.stringify( command )} is not a supported command` );
-      error.__validation = true;
-      throw error;
-    }
-
-    schema = handleSchema( commandSchema );
+    const commandInfo = opts.commands[ command ];
+    schema = handleSchema( commandInfo && commandInfo.schema );
   } else {
     schema = handleSchema( opts.schema );
   }
@@ -298,6 +336,7 @@ function handleArgs( opts ) {
   return {
     schema,
     command,
+    commandSet,
     flags,
     input
   };
@@ -321,7 +360,8 @@ export default async function( _opts ) {
 
   opts.cwd = path.resolve( opts.cwd );
 
-  const { schema, command, input, flags } = handleArgs( opts );
+  const { usage, commands } = opts;
+  const { schema, command, commandSet, input, flags } = handleArgs( opts );
 
   const pkg = opts.pkg ? opts.pkg : (
     await readPkgUp( {
@@ -333,7 +373,18 @@ export default async function( _opts ) {
   normalizePkg( pkg );
 
   let description;
-  let help = redent( opts.help ? trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) : generateHelp( opts ), 2 );
+  let help = redent(
+    opts.help ?
+      trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
+      generateHelp( {
+        schema: command ? schema : handleSchema( opts.schema ),
+        usage,
+        commands,
+        command,
+        commandSet
+      } ),
+    2
+  );
 
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
   description = !opts.description && opts.description !== false ? pkg.description : opts.description;
@@ -373,6 +424,15 @@ export default async function( _opts ) {
   const options = applyDefaults( schema, flags, config );
 
   if ( opts.validate && schema ) {
+
+    const commandInfo = commands[ command ];
+
+    if ( !commandInfo ) {
+      const error = new Error( `${JSON.stringify( command )} is not a supported command` );
+      error.__validation = true;
+      throw error;
+    }
+
     validate( schema, options );
   }
 

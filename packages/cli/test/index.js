@@ -168,6 +168,11 @@ describe( "cli", () => {
           type: t.union( [ 0, 1, 2 ].map( t.value ) ),
           description: "choices2",
           default: 0
+        },
+        camelCase: {
+          type: "string",
+          description: "description",
+          optional: true
         }
       },
       notifier: false
@@ -536,8 +541,10 @@ describe( "cli", () => {
       },
       commands: {
         fooCommand: {
-          foo: {
-            type: "boolean"
+          schema: {
+            foo: {
+              type: "boolean"
+            }
           }
         }
       },
@@ -555,7 +562,6 @@ describe( "cli", () => {
 
     await expect(
       cli( {
-        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -564,8 +570,10 @@ describe( "cli", () => {
         },
         commands: {
           fooCommand: {
-            foo: {
-              type: "boolean"
+            schema: {
+              foo: {
+                type: "boolean"
+              }
             }
           }
         },
@@ -580,7 +588,6 @@ describe( "cli", () => {
 
     await expect(
       cli( {
-        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -589,8 +596,10 @@ describe( "cli", () => {
         },
         commands: {
           fooCommand: {
-            foo: {
-              type: "boolean"
+            schema: {
+              foo: {
+                type: "boolean"
+              }
             }
           }
         },
@@ -614,8 +623,10 @@ describe( "cli", () => {
       defaultCommand: "fooCommand",
       commands: {
         fooCommand: {
-          foo: {
-            type: "boolean"
+          schema: {
+            foo: {
+              type: "boolean"
+            }
           }
         }
       },
@@ -626,6 +637,100 @@ describe( "cli", () => {
     expect( input ).toEqual( [] );
     expect( command ).toBe( "fooCommand" );
     expect( options.foo ).toBe( true );
+
+  } );
+
+  it( "generate help with subcommands", async() => {
+
+    const { help } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "--help" ],
+      usage: "$ bin <command> [options]",
+      commands: {
+        fooCommand: {
+          description: "foo command description",
+          schema: {
+            number: { default: 0, alias: [ "n", "n2" ], description: "number description" }
+          }
+        }
+      },
+      schema: {
+        unicorn: { alias: "u", optional: true, description: "unicorn description" }
+      },
+      autoHelp: false,
+      notifier: false
+    } );
+
+    expect( help ).toMatchSnapshot();
+
+  } );
+
+  it( "generate help with subcommands including options of default command", async() => {
+
+    const { help } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "--help" ],
+      defaultCommand: "fooCommand",
+      usage: "$ bin <command> [options]",
+      commands: {
+        fooCommand: {
+          description: "foo command description",
+          schema: {
+            number: { default: 0, alias: [ "n", "n2" ], description: "number description" }
+          }
+        }
+      },
+      schema: {
+        unicorn: { alias: "u", optional: true, description: "unicorn description" }
+      },
+      autoHelp: false,
+      notifier: false
+    } );
+
+    expect( help ).toMatchSnapshot();
+
+  } );
+
+  it( "generate help for subcommand", async() => {
+
+    const { help } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "fooCommand" ],
+      usage: "$ bin <command> [options]",
+      commands: {
+        fooCommand: {
+          description: "foo command description",
+          schema: {
+            number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
+            unicorn: { alias: "u", optional: true, description: "unicorn description" },
+            meow: { type: "string", default: "dog" },
+            boolean: { type: "boolean", default: true, description: "boolean description" },
+          }
+        }
+      },
+      schema: {},
+      notifier: false
+    } );
+
+    expect( help ).toMatchSnapshot();
 
   } );
 

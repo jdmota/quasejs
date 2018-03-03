@@ -39,5 +39,49 @@ exports[`cli generate help 1`] = `
     --union           union [string | number]
     --choices1        choices1 [0 | 1 | 2]
     --choices2        choices2 [0 | 1 | 2]
+    --camel-case      description [string]
+"
+`;
+
+exports[`cli generate help for subcommand 1`] = `
+"
+  Description
+
+  Usage: $ bin fooCommand [options]
+
+  foo command description
+
+  Options:
+    --number, -n, -n2 number description
+    --unicorn, -u     unicorn description
+    --boolean         boolean description [boolean]
+"
+`;
+
+exports[`cli generate help with subcommands 1`] = `
+"
+  Description
+
+  Usage: $ bin <command> [options]
+
+  Commands:
+    foo-command foo command description
+
+  Options:
+    --unicorn, -u unicorn description
+"
+`;
+
+exports[`cli generate help with subcommands including options of default command 1`] = `
+"
+  Description
+
+  Usage: $ bin <command> [options]
+
+  Commands:
+    foo-command foo command description
+
+  Options:
+    --number, -n, -n2 number description
 "
 `;
