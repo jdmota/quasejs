@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "hooks times", () => {
 
-    assert.expect( 5 );
+    expect.assertions( 5 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -16,40 +15,40 @@ describe( "unit", () => {
     let afterEach = 0;
     let test = 0;
 
-    t.before( function() {
+    t.before( () => {
       before++;
     } );
 
-    t.after( function() {
+    t.after( () => {
       after++;
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       beforeEach++;
     } );
 
-    t( function() {
+    t( () => {
       test++;
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       afterEach++;
     } );
 
-    t( function() {
+    t( () => {
       test++;
     } );
 
-    t( function() {
+    t( () => {
       test++;
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( before, 1 );
-      assert.strictEqual( after, 1 );
-      assert.strictEqual( beforeEach, 3 );
-      assert.strictEqual( afterEach, 3 );
-      assert.strictEqual( test, 3 );
+    return runner.run().then( () => {
+      expect( before ).toBe( 1 );
+      expect( after ).toBe( 1 );
+      expect( beforeEach ).toBe( 3 );
+      expect( afterEach ).toBe( 3 );
+      expect( test ).toBe( 3 );
     } );
 
   } );

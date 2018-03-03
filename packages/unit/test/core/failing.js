@@ -1,55 +1,55 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "failing", () => {
 
-    assert.expect( 10 );
+    expect.assertions( 10 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
-    t.failing( "failing test", function() {
+    t.failing( "failing test", () => {
       throw new Error( "abc" );
     } );
 
-    t.failing( "failing test 2", function() {} );
+    t.failing( "failing test 2", () => {} );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 2 ], "testStart" );
+      expect( results[ 2 ] ).toBe( "testStart" );
 
       delete results[ 3 ].defaultStack;
 
-      assert.deepEqual( results[ 3 ], {
+      expect( results[ 3 ] ).toEqual( {
         name: "failing test",
         fullname: [ "failing test" ],
         suiteName: ""
       } );
 
-      assert.deepEqual( results[ 4 ], "testEnd" );
-      assert.deepEqual( results[ 5 ].status, "passed" );
+      expect( results[ 4 ] ).toEqual( "testEnd" );
+      expect( results[ 5 ].status ).toEqual( "passed" );
 
-      assert.strictEqual( results[ 6 ], "testStart" );
+      expect( results[ 6 ] ).toBe( "testStart" );
 
       delete results[ 7 ].defaultStack;
 
-      assert.deepEqual( results[ 7 ], {
+      expect( results[ 7 ] ).toEqual( {
         name: "failing test 2",
         fullname: [ "failing test 2" ],
         suiteName: ""
       } );
 
-      assert.strictEqual( results[ 8 ], "testEnd" );
-      assert.strictEqual( results[ 9 ].status, "failed" );
-      assert.strictEqual(
-        results[ 9 ].errors[ 0 ].message,
+      expect( results[ 8 ] ).toBe( "testEnd" );
+      expect( results[ 9 ].status ).toBe( "failed" );
+      expect(
+        results[ 9 ].errors[ 0 ].message
+      ).toBe(
         "Test was expected to fail, but succeeded, you should stop marking the test as failing."
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 
@@ -57,53 +57,53 @@ describe( "unit", () => {
 
   it( "failing in groups", () => {
 
-    assert.expect( 9 );
+    expect.assertions( 9 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
-    t.group.failing( "group", function() {
+    t.group.failing( "group", () => {
 
-      t( "failing test", function() {
+      t( "failing test", () => {
         throw new Error( "abc" );
       } );
 
-      t( "failing test 2", function() {
+      t( "failing test 2", () => {
         throw new Error( "abc" );
       } );
 
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 4 ], "testStart" );
+      expect( results[ 4 ] ).toBe( "testStart" );
 
       delete results[ 5 ].defaultStack;
 
-      assert.deepEqual( results[ 5 ], {
+      expect( results[ 5 ] ).toEqual( {
         name: "failing test",
         fullname: [ "group", "failing test" ],
         suiteName: "group"
       } );
 
-      assert.deepEqual( results[ 6 ], "testEnd" );
-      assert.deepEqual( results[ 7 ].status, "passed" );
+      expect( results[ 6 ] ).toEqual( "testEnd" );
+      expect( results[ 7 ].status ).toEqual( "passed" );
 
-      assert.strictEqual( results[ 8 ], "testStart" );
+      expect( results[ 8 ] ).toBe( "testStart" );
 
       delete results[ 9 ].defaultStack;
 
-      assert.deepEqual( results[ 9 ], {
+      expect( results[ 9 ] ).toEqual( {
         name: "failing test 2",
         fullname: [ "group", "failing test 2" ],
         suiteName: "group"
       } );
 
-      assert.strictEqual( results[ 10 ], "testEnd" );
-      assert.strictEqual( results[ 11 ].status, "passed" );
+      expect( results[ 10 ] ).toBe( "testEnd" );
+      expect( results[ 11 ].status ).toBe( "passed" );
 
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
 
     } );
 
@@ -111,55 +111,56 @@ describe( "unit", () => {
 
   it( "failing in groups 2", () => {
 
-    assert.expect( 10 );
+    expect.assertions( 10 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
-    t.group.failing( "group", function() {
+    t.group.failing( "group", () => {
 
-      t( "failing test", function() {
+      t( "failing test", () => {
         throw new Error( "abc" );
       } );
 
-      t( "failing test 2", function() {} );
+      t( "failing test 2", () => {} );
 
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 4 ], "testStart" );
+      expect( results[ 4 ] ).toBe( "testStart" );
 
       delete results[ 5 ].defaultStack;
 
-      assert.deepEqual( results[ 5 ], {
+      expect( results[ 5 ] ).toEqual( {
         name: "failing test",
         fullname: [ "group", "failing test" ],
         suiteName: "group"
       } );
 
-      assert.deepEqual( results[ 6 ], "testEnd" );
-      assert.deepEqual( results[ 7 ].status, "passed" );
+      expect( results[ 6 ] ).toEqual( "testEnd" );
+      expect( results[ 7 ].status ).toEqual( "passed" );
 
-      assert.strictEqual( results[ 8 ], "testStart" );
+      expect( results[ 8 ] ).toBe( "testStart" );
 
       delete results[ 9 ].defaultStack;
 
-      assert.deepEqual( results[ 9 ], {
+      expect( results[ 9 ] ).toEqual( {
         name: "failing test 2",
         fullname: [ "group", "failing test 2" ],
         suiteName: "group"
       } );
 
-      assert.strictEqual( results[ 10 ], "testEnd" );
-      assert.strictEqual( results[ 11 ].status, "failed" );
-      assert.strictEqual(
-        results[ 11 ].errors[ 0 ].message,
+      expect( results[ 10 ] ).toBe( "testEnd" );
+      expect( results[ 11 ].status ).toBe( "failed" );
+      expect(
+        results[ 11 ].errors[ 0 ].message
+      ).toBe(
         "Test was expected to fail, but succeeded, you should stop marking the test as failing."
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 
@@ -167,59 +168,60 @@ describe( "unit", () => {
 
   it( "failing in groups 3", () => {
 
-    assert.expect( 10 );
+    expect.assertions( 10 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
 
-    t.group.failing( "root", function() {
+    t.group.failing( "root", () => {
 
-      t.group( "group", function() {
+      t.group( "group", () => {
 
-        t( "failing test", function() {
+        t( "failing test", () => {
           throw new Error( "abc" );
         } );
 
-        t( "failing test 2", function() {} );
+        t( "failing test 2", () => {} );
 
       } );
 
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 6 ], "testStart" );
+      expect( results[ 6 ] ).toBe( "testStart" );
 
       delete results[ 7 ].defaultStack;
 
-      assert.deepEqual( results[ 7 ], {
+      expect( results[ 7 ] ).toEqual( {
         name: "failing test",
         fullname: [ "root", "group", "failing test" ],
         suiteName: "group"
       } );
 
-      assert.deepEqual( results[ 8 ], "testEnd" );
-      assert.deepEqual( results[ 9 ].status, "passed" );
+      expect( results[ 8 ] ).toEqual( "testEnd" );
+      expect( results[ 9 ].status ).toEqual( "passed" );
 
-      assert.strictEqual( results[ 10 ], "testStart" );
+      expect( results[ 10 ] ).toBe( "testStart" );
 
       delete results[ 11 ].defaultStack;
 
-      assert.deepEqual( results[ 11 ], {
+      expect( results[ 11 ] ).toEqual( {
         name: "failing test 2",
         fullname: [ "root", "group", "failing test 2" ],
         suiteName: "group"
       } );
 
-      assert.strictEqual( results[ 12 ], "testEnd" );
-      assert.strictEqual( results[ 13 ].status, "failed" );
-      assert.strictEqual(
-        results[ 13 ].errors[ 0 ].message,
+      expect( results[ 12 ] ).toBe( "testEnd" );
+      expect( results[ 13 ].status ).toBe( "failed" );
+      expect(
+        results[ 13 ].errors[ 0 ].message
+      ).toBe(
         "Test was expected to fail, but succeeded, you should stop marking the test as failing."
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 
@@ -227,7 +229,7 @@ describe( "unit", () => {
 
   it( "failing in groups with beforeEach", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -247,16 +249,16 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results.pop().status, "passed" );
-      assert.deepEqual( actual, [] );
+    return runner.run().then( () => {
+      expect( results.pop().status ).toBe( "passed" );
+      expect( actual ).toEqual( [] );
     } );
 
   } );
 
   it( "failing in group + skip test", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -266,20 +268,20 @@ describe( "unit", () => {
 
       t.skip( () => {
         /* istanbul ignore next */
-        assert.ok( false );
+        expect( false ).toBe( true );
       } );
 
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "skipped" );
+      expect( results.pop().status ).toBe( "skipped" );
     } );
 
   } );
 
   it( "todo in group + failing test", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init();
     const results = runner.listen();
@@ -289,13 +291,13 @@ describe( "unit", () => {
 
       t.failing( () => {
         /* istanbul ignore next */
-        assert.ok( false );
+        expect( false ).toBe( true );
       } );
 
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "todo" );
+      expect( results.pop().status ).toBe( "todo" );
     } );
 
   } );

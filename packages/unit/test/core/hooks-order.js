@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "hooks order", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -30,62 +29,62 @@ describe( "unit", () => {
       "after 2"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after 2" );
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
-    t.serial( function() {
+    t.serial( () => {
       actual.push( "test" );
     } );
 
-    t.group( function() {
+    t.group( () => {
 
       actual.push( "group" );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach" );
       } );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach 2" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach 2" );
       } );
 
-      t( function() {
+      t( () => {
         actual.push( "group test" );
       } );
 
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach 2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );

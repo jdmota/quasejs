@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "context", () => {
 
-    assert.expect( 12 );
+    expect.assertions( 12 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -13,49 +12,49 @@ describe( "unit", () => {
     let runCount = 0;
 
     t.before( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
       context.ran = true;
       runCount++;
     } );
 
     t.after( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
       context.ran = true;
       runCount++;
     } );
 
     t.beforeEach( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
       context.ran = true;
       context.shared = true;
       runCount++;
     } );
 
     t.afterEach( ( { context } ) => {
-      assert.ok( context.ran );
-      assert.ok( context.shared );
+      expect( context.ran ).toBe( true );
+      expect( context.shared ).toBe( true );
       runCount++;
     } );
 
     t( ( { context } ) => {
-      assert.ok( context.ran );
-      assert.ok( context.shared );
+      expect( context.ran ).toBe( true );
+      expect( context.shared ).toBe( true );
       runCount++;
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( runCount, 5 );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( runCount ).toBe( 5 );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "context in nested groups", () => {
 
-    assert.expect( 24 );
+    expect.assertions( 24 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -63,23 +62,23 @@ describe( "unit", () => {
     let runCount = 0;
 
     t.before( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
       context.ran = true;
       runCount++;
     } );
 
     t.after( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
       context.ran = true;
       runCount++;
     } );
 
     t.beforeEach( ( { context } ) => {
-      assert.ok( !context.ran );
-      assert.ok( !context.shared );
-      assert.ok( !context.count );
+      expect( context.ran ).toBe( undefined );
+      expect( context.shared ).toBe( undefined );
+      expect( context.count ).toBe( undefined );
       context.ran = true;
       context.shared = true;
       context.count = 1;
@@ -91,9 +90,9 @@ describe( "unit", () => {
       t.group( () => {
 
         t( ( { context } ) => {
-          assert.ok( context.ran );
-          assert.ok( context.shared );
-          assert.strictEqual( context.count, 1 );
+          expect( context.ran ).toBe( true );
+          expect( context.shared ).toBe( true );
+          expect( context.count ).toBe( 1 );
           context.count++;
           runCount++;
         } );
@@ -101,9 +100,9 @@ describe( "unit", () => {
       } );
 
       t( ( { context } ) => {
-        assert.ok( context.ran );
-        assert.ok( context.shared );
-        assert.strictEqual( context.count, 1 );
+        expect( context.ran ).toBe( true );
+        expect( context.shared ).toBe( true );
+        expect( context.count ).toBe( 1 );
         context.count++;
         runCount++;
       } );
@@ -111,15 +110,15 @@ describe( "unit", () => {
     } );
 
     t.afterEach( ( { context } ) => {
-      assert.ok( context.ran );
-      assert.ok( context.shared );
-      assert.strictEqual( context.count, 2 );
+      expect( context.ran ).toBe( true );
+      expect( context.shared ).toBe( true );
+      expect( context.count ).toBe( 2 );
       runCount++;
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( runCount, 8 );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( runCount ).toBe( 8 );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );

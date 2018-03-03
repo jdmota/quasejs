@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
@@ -16,8 +15,8 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Planned 10 but 2 assertions were run." );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Planned 10 but 2 assertions were run." );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
@@ -36,8 +35,8 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Planned 1 but 3 assertions were run." );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Planned 1 but 3 assertions were run." );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
@@ -62,9 +61,9 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Planned 1 but 2 assertions were run." );
-      assert.strictEqual( results.pop().status, "failed" );
-      assert.strictEqual( didRun, false );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Planned 1 but 2 assertions were run." );
+      expect( results.pop().status ).toBe( "failed" );
+      expect( didRun ).toBe( false );
     } );
 
   } );
@@ -82,7 +81,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
@@ -96,8 +95,8 @@ describe( "unit", () => {
     test( () => {} );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "No assertions were run." );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "No assertions were run." );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
@@ -121,7 +120,7 @@ describe( "unit", () => {
     test.afterEach( () => {} );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
@@ -137,7 +136,7 @@ describe( "unit", () => {
     test( () => {} );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
@@ -151,7 +150,7 @@ describe( "unit", () => {
     test.allowNoPlan( () => {} );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
@@ -167,7 +166,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );

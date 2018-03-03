@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
@@ -8,7 +7,7 @@ describe( "unit", () => {
     const runner = Runner.init( { random: "0x5F379806" } );
     const t = runner.test;
 
-    assert.strictEqual( runner.randomizer.hex, "0x5F379806" );
+    expect( runner.randomizer.hex ).toBe( "0x5F379806" );
 
     const actual = [];
     const expected = [
@@ -54,7 +53,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
+      expect( actual ).toEqual( expected );
     } );
 
   } );
@@ -64,7 +63,7 @@ describe( "unit", () => {
     const runner = Runner.init( { random: "0x5F379806" } );
     const t = runner.test;
 
-    assert.strictEqual( runner.randomizer.hex, "0x5F379806" );
+    expect( runner.randomizer.hex ).toBe( "0x5F379806" );
 
     const actual = [];
     const expected = [
@@ -83,9 +82,9 @@ describe( "unit", () => {
 
     t.group( group => {
 
-      assert.strictEqual( group.allowRandomization(), true );
+      expect( group.allowRandomization() ).toBe( true );
       group.allowRandomization( false );
-      assert.strictEqual( group.allowRandomization(), false );
+      expect( group.allowRandomization() ).toBe( false );
 
       t.before( () => {
         actual.push( "before" );
@@ -118,7 +117,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
+      expect( actual ).toEqual( expected );
     } );
 
   } );

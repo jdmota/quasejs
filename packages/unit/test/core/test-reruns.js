@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "test reruns", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -23,15 +22,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "only rerun if passing", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -49,15 +48,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "test reruns with delay", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -72,16 +71,16 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( times.length, 2 );
-      assert.ok( times[ 1 ] - times[ 0 ] >= 100 );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( times.length ).toBe( 2 );
+      expect( times[ 1 ] - times[ 0 ] >= 100 ).toBe( true );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "test reruns inherit value from group", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -104,15 +103,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "hooks are also run when rerunning", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -147,15 +146,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "dont rerun if beforeEach failed", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -188,15 +187,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "dont rerun if afterEach failed", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -229,15 +228,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "calling .reruns() again makes no difference", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -262,15 +261,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "mark as skipped if called t.skip() in second run", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -312,15 +311,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "skipped" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "skipped" );
     } );
 
   } );
 
   it( "mark as skipped if called t.skip() (inside beforeEach) in second run", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -360,15 +359,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "skipped" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "skipped" );
     } );
 
   } );
 
   it( ".reruns() not available for hooks", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -387,15 +386,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, ".reruns() is not available for hooks" );
+      expect( actual ).toEqual( expected );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( ".reruns() is not available for hooks" );
     } );
 
   } );
 
   it( ".rerunDelay() not available for hooks", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -414,8 +413,8 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, ".rerunDelay() is not available for hooks" );
+      expect( actual ).toEqual( expected );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( ".rerunDelay() is not available for hooks" );
     } );
 
   } );
@@ -425,11 +424,11 @@ describe( "unit", () => {
     const runner = Runner.init( { allowNoPlan: true } );
     const test = runner.test;
 
-    assert.throws( () => {
+    expect( () => {
       test.group( t => {
         t.rerunDelay( "abc" );
       } );
-    }, /Expected a number but saw/ );
+    } ).toThrow( /Expected a number but saw/ );
 
   } );
 
@@ -438,17 +437,17 @@ describe( "unit", () => {
     const runner = Runner.init( { allowNoPlan: true } );
     const test = runner.test;
 
-    assert.throws( () => {
+    expect( () => {
       test.group( t => {
         t.rerunDelay( 2 ** 31 + 1 );
       } );
-    }, /2147483649 is too big of a delay value/ );
+    } ).toThrow( /2147483649 is too big of a delay value/ );
 
   } );
 
   it( "test retries + reruns passing", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -488,15 +487,15 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "test retries + reruns failing", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -533,8 +532,8 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );

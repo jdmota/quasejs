@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "todo", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init();
     const results = runner.listen();
@@ -15,18 +14,18 @@ describe( "unit", () => {
 
     t.todo( "test2", () => {
       /* istanbul ignore next */
-      assert.ok( false );
+      expect( false ).toBe( true );
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "todo" );
+      expect( results.pop().status ).toBe( "todo" );
     } );
 
   } );
 
   it( "todo in group", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init();
     const results = runner.listen();
@@ -34,7 +33,7 @@ describe( "unit", () => {
 
     t.beforeEach( () => {
       /* istanbul ignore next */
-      assert.ok( false );
+      expect( false ).toBe( true );
     } );
 
     t.group.todo( () => {
@@ -43,35 +42,35 @@ describe( "unit", () => {
 
         t( () => {
           /* istanbul ignore next */
-          assert.ok( false );
+          expect( false ).toBe( true );
         } );
 
         t( () => {
           /* istanbul ignore next */
-          assert.ok( false );
+          expect( false ).toBe( true );
         } );
 
       } );
 
       t( () => {
         /* istanbul ignore next */
-        assert.ok( false );
+        expect( false ).toBe( true );
       } );
 
       t( () => {
         /* istanbul ignore next */
-        assert.ok( false );
+        expect( false ).toBe( true );
       } );
 
     } );
 
     t.afterEach( () => {
       /* istanbul ignore next */
-      assert.ok( false );
+      expect( false ).toBe( true );
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( results.pop().testCounts, {
+      expect( results.pop().testCounts ).toEqual( {
         failed: 0,
         passed: 0,
         skipped: 0,
@@ -84,7 +83,7 @@ describe( "unit", () => {
 
   it( "failing in group + todo test", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -94,13 +93,13 @@ describe( "unit", () => {
 
       t.todo( () => {
         /* istanbul ignore next */
-        assert.ok( false );
+        expect( false ).toBe( true );
       } );
 
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "todo" );
+      expect( results.pop().status ).toBe( "todo" );
     } );
 
   } );

@@ -1,16 +1,15 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "supports observables", () => {
 
     if ( typeof require === "undefined" ) {
-      assert.expect( 0 );
+      expect.assertions( 0 );
       return;
     }
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let Observable = require( "zen-observable" );
 
@@ -31,7 +30,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toEqual( "passed" );
     } );
 
   } );

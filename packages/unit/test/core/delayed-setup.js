@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "delayed setup", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const results = runner.listen();
@@ -41,8 +40,8 @@ describe( "unit", () => {
     } ) );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+      expect( actual ).toEqual( expected );
+      expect( results[ results.length - 1 ].testCounts ).toEqual( {
         passed: 3,
         skipped: 0,
         failed: 0,

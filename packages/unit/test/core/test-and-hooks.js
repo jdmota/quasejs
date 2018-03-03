@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "error in before hook", () => {
 
-    assert.expect( 4 );
+    expect.assertions( 4 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -17,50 +16,50 @@ describe( "unit", () => {
       "after"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
       throw new Error( "Error in hook." );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.group( function() {
-      t( function() {
+    t.group( () => {
+      t( () => {
         /* istanbul ignore next */
         actual.push( "don't run" );
       } );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 19 ].skipReason, "Failed because of an error in a previous hook." );
-      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 19 ].skipReason ).toBe( "Failed because of an error in a previous hook." );
+      expect( results[ results.length - 1 ].testCounts ).toEqual( {
         passed: 1,
         skipped: 3,
         failed: 1,
         todo: 0,
         total: 5
       } );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( ".skip() in before hook", () => {
 
-    assert.expect( 7 );
+    expect.assertions( 7 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -83,48 +82,48 @@ describe( "unit", () => {
       t.skip( "reason 2" );
     } );
 
-    t.test( "test1", function() {
+    t.test( "test1", () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.group( function() {
-      t( function() {
+    t.group( () => {
+      t( () => {
         /* istanbul ignore next */
         actual.push( "don't run" );
       } );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 13 ].name, "test1" );
-      assert.strictEqual( results[ 13 ].status, "skipped" );
-      assert.strictEqual( results[ 13 ].skipReason, "reason 1" );
-      assert.strictEqual( results[ 13 ].runtime, 0 );
-      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 13 ].name ).toBe( "test1" );
+      expect( results[ 13 ].status ).toBe( "skipped" );
+      expect( results[ 13 ].skipReason ).toBe( "reason 1" );
+      expect( results[ 13 ].runtime ).toBe( 0 );
+      expect( results[ results.length - 1 ].testCounts ).toEqual( {
         passed: 1,
         skipped: 5,
         failed: 0,
         todo: 0,
         total: 6
       } );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "error in beforeEach hook", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -137,43 +136,43 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
       throw new Error( "Error" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.group( function() {
+    t.group( () => {
       actual.push( "group" );
-      t.test( function() {
+      t.test( () => {
         /* istanbul ignore next */
         actual.push( "don't run" );
       } );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( ".skip() in beforeEach hook", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -193,35 +192,35 @@ describe( "unit", () => {
       t.skip();
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.group( function() {
+    t.group( () => {
       actual.push( "group" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.length, 16 );
-      assert.strictEqual( results.pop().status, "skipped" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.length ).toBe( 16 );
+      expect( results.pop().status ).toBe( "skipped" );
     } );
 
   } );
 
   it( "skip + error in beforeEach hooks", () => {
 
-    assert.expect( 5 );
+    expect.assertions( 5 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -239,33 +238,33 @@ describe( "unit", () => {
       t.skip();
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach 2" );
       throw new Error( "Error" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       /* istanbul ignore next */
       actual.push( "don't run" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.length, 8 );
-      assert.strictEqual( results[ 5 ].skipReason, undefined );
-      assert.strictEqual( results[ 5 ].status, "failed" );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.length ).toBe( 8 );
+      expect( results[ 5 ].skipReason ).toBe( undefined );
+      expect( results[ 5 ].status ).toBe( "failed" );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in beforeEach causes other tests to be skipped", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -278,16 +277,16 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
       throw new Error( "Error" );
     } );
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach 2" );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
@@ -307,25 +306,25 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in beforeEach does not skip tests in outer suites", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -389,16 +388,16 @@ describe( "unit", () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in beforeEach skips tests in the suite it was defined and in subsuites", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -410,7 +409,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
       throw new Error( "Error" );
     } );
@@ -430,25 +429,25 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in beforeEach skips tests in the suite it was defined and in subsuites even if succeded before", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -467,7 +466,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
       if ( count > 1 ) {
         throw new Error( "Error" );
@@ -476,7 +475,7 @@ describe( "unit", () => {
     } );
 
     test.group( () => {
-      test.beforeEach( function() {
+      test.beforeEach( () => {
         actual.push( "beforeEach 2" );
         throw new Error( "Error" );
       } );
@@ -486,7 +485,7 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "test 1" );
     } );
 
@@ -502,20 +501,20 @@ describe( "unit", () => {
       actual.push( "dont run" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in afterEach causes other tests to be skipped", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -533,7 +532,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
@@ -554,24 +553,24 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "outer test" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in afterEach skips tests in the suite it was defined and in subsuites", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -584,7 +583,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
@@ -602,26 +601,26 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
       throw new Error( "Error" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in afterEach skips tests in the suite it was defined and in subsuites even if succeded before", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -639,7 +638,7 @@ describe( "unit", () => {
       "after"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
@@ -669,16 +668,16 @@ describe( "unit", () => {
       actual.push( "after" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "skip in after hook", () => {
 
-    assert.expect( 4 );
+    expect.assertions( 4 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -691,11 +690,11 @@ describe( "unit", () => {
       "after"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       actual.push( "test" );
     } );
 
@@ -704,18 +703,18 @@ describe( "unit", () => {
       t.skip();
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.length, 16 );
-      assert.strictEqual( results[ 13 ].status, "skipped" );
-      assert.strictEqual( results.pop().status, "passed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.length ).toBe( 16 );
+      expect( results[ 13 ].status ).toBe( "skipped" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "skip in afterEach hook", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -728,11 +727,11 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
-    t.test( function() {
+    t.test( () => {
       actual.push( "test" );
     } );
 
@@ -741,17 +740,17 @@ describe( "unit", () => {
       t.skip();
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.length, 8 );
-      assert.strictEqual( results.pop().status, "passed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.length ).toBe( 8 );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "error in serial sequence does not affect concurrent sequence", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -767,7 +766,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
@@ -781,13 +780,13 @@ describe( "unit", () => {
       } );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );

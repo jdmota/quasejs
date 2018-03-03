@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "serial tests with async code", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let timeouts = 0;
     let called = 0;
@@ -46,76 +45,76 @@ describe( "unit", () => {
       "after 2"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
       return timeout();
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
       return timeout();
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after 2" );
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
       return timeout();
     } );
 
-    t.serial( function() {
+    t.serial( () => {
       actual.push( "test" );
       return timeout();
     } );
 
-    t.serial( function() {
+    t.serial( () => {
       actual.push( "test 2" );
       return timeout();
     } );
 
-    t.group( function() {
+    t.group( () => {
 
       actual.push( "group" );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach" );
         return timeout();
       } );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach 2" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach 2" );
       } );
 
-      t( function() {
+      t( () => {
         actual.push( "group test" );
         return timeout();
       } );
 
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach 2" );
       return timeout();
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( timeouts, 12 );
-      assert.strictEqual( called, timeouts );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( timeouts ).toBe( 12 );
+      expect( called ).toBe( timeouts );
     } );
 
   } );

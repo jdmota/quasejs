@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
@@ -16,12 +15,12 @@ describe( "unit", () => {
     } );
 
     const p1 = runner.run().then( () => {
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
     const p2 = new Promise( resolve => {
       runner.on( "otherError", err => {
-        assert.strictEqual( err.message, "You should not call .timeout() after the test has finished." );
+        expect( err.message ).toBe( "You should not call .timeout() after the test has finished." );
         resolve();
       } );
     } );

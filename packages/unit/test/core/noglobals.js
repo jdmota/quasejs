@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 /* eslint no-console: 0 */
 /* global window */
@@ -8,7 +7,7 @@ describe( "unit", () => {
 
   it( "noglobals", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       globals: false
@@ -16,7 +15,7 @@ describe( "unit", () => {
     let results = runner.listen();
     let test = runner.test;
 
-    test( function() {
+    test( () => {
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */
@@ -27,12 +26,12 @@ describe( "unit", () => {
 
     } );
 
-    test.after( function() {} );
+    test.after( () => {} );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Introduced global variable(s): abc" );
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Introduced global variable(s): abc" );
+      expect( results.pop().status ).toBe( "failed" );
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */
@@ -47,7 +46,7 @@ describe( "unit", () => {
 
   it( "noglobals 2", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       globals: false
@@ -55,7 +54,7 @@ describe( "unit", () => {
     let results = runner.listen();
     let test = runner.test;
 
-    test( function() {
+    test( () => {
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */
@@ -66,7 +65,7 @@ describe( "unit", () => {
 
     } );
 
-    test.after( function() {} );
+    test.after( () => {} );
 
     if ( typeof global === "undefined" ) {
       /* istanbul ignore next */
@@ -75,16 +74,16 @@ describe( "unit", () => {
       global.abc = 10;
     }
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Deleted global variable(s): abc" );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Deleted global variable(s): abc" );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "noglobals 3", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       globals: false
@@ -92,7 +91,7 @@ describe( "unit", () => {
     let results = runner.listen();
     let test = runner.test;
 
-    test( function() {
+    test( () => {
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */
@@ -110,7 +109,7 @@ describe( "unit", () => {
 
     } );
 
-    test.after( function() {} );
+    test.after( () => {} );
 
     if ( typeof global === "undefined" ) {
       /* istanbul ignore next */
@@ -119,14 +118,15 @@ describe( "unit", () => {
       global.abc = 10;
     }
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual(
-        results[ 5 ].errors[ 0 ].message,
+      expect(
+        results[ 5 ].errors[ 0 ].message
+      ).toBe(
         "Introduced global variable(s): cba; Deleted global variable(s): abc"
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
       if ( typeof global === "undefined" ) {
         delete window.cba;
@@ -141,7 +141,7 @@ describe( "unit", () => {
 
   it( "noglobals - don't get tricked", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       globals: false
@@ -167,14 +167,15 @@ describe( "unit", () => {
       }
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual(
-        results[ 5 ].errors[ 0 ].message,
+      expect(
+        results[ 5 ].errors[ 0 ].message
+      ).toBe(
         "Introduced global variable(s): foo"
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 
@@ -182,7 +183,7 @@ describe( "unit", () => {
 
   it( "allow some globals", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     const runner = Runner.init( {
       globals: [ "abc" ]
@@ -212,12 +213,13 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
 
-      assert.strictEqual(
-        results[ 5 ].errors[ 0 ].message,
+      expect(
+        results[ 5 ].errors[ 0 ].message
+      ).toBe(
         "Introduced global variable(s): cba"
       );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */
@@ -239,7 +241,7 @@ describe( "unit", () => {
 
   it( "allow any globals", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init( {
       globals: true,
@@ -270,7 +272,7 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
 
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
 
       if ( typeof global === "undefined" ) {
         /* istanbul ignore next */

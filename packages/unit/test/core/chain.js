@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "chain", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     const runner = Runner.init( { allowNoPlan: true } );
     const test = runner.test;
@@ -16,20 +15,20 @@ describe( "unit", () => {
     const t2 = test.before;
     const t3 = t2.after;
 
-    t3( "after", function() {
+    t3( "after", () => {
       actual.push( "after" );
     } );
 
-    t2.test( "test", function() {
+    t2.test( "test", () => {
       actual.push( "test" );
     } );
 
-    t2( "before", function() {
+    t2( "before", () => {
       actual.push( "before" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );

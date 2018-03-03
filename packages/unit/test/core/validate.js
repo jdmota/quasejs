@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
@@ -11,9 +10,9 @@ describe( "unit", () => {
         strict: true
       } );
 
-      assert.throws( () => {
+      expect( () => {
         runner.test[ type ]( () => {} );
-      }, /modifiers are not allowed in strict mode/ );
+      } ).toThrow( /modifiers are not allowed in strict mode/ );
 
     } );
 
@@ -26,13 +25,13 @@ describe( "unit", () => {
       const runner = Runner.init();
       let fineHere = false;
 
-      assert.throws( () => {
+      expect( () => {
         runner.test.skip( () => {} );
         fineHere = true;
         runner.group.strict( () => {
           runner.test[ type ]( () => {} );
         } );
-      }, /modifiers are not allowed in strict mode/ );
+      } ).toThrow( /modifiers are not allowed in strict mode/ );
 
       expect( fineHere ).toBe( true );
 

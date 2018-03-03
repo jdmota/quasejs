@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "global force serial", () => {
 
-    assert.expect( 4 );
+    expect.assertions( 4 );
 
     let timeouts = 0;
     let called = 0;
@@ -77,7 +76,7 @@ describe( "unit", () => {
 
     t.group( group => {
 
-      assert.strictEqual( group.forceSerial(), true );
+      expect( group.forceSerial() ).toBe( true );
 
       actual.push( "group" );
 
@@ -115,16 +114,16 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( timeouts, 12 );
-      assert.strictEqual( called, timeouts );
+      expect( actual ).toEqual( expected );
+      expect( timeouts ).toBe( 12 );
+      expect( called ).toBe( timeouts );
     } );
 
   } );
 
   it( "local force serial", () => {
 
-    assert.expect( 5 );
+    expect.assertions( 5 );
 
     let timeouts = 0;
     let called = 0;
@@ -154,9 +153,9 @@ describe( "unit", () => {
 
     t.group( group => {
 
-      assert.strictEqual( group.forceSerial(), false );
+      expect( group.forceSerial() ).toBe( false );
       group.forceSerial( true );
-      assert.strictEqual( group.forceSerial(), true );
+      expect( group.forceSerial() ).toBe( true );
 
       actual.push( "group" );
 
@@ -183,9 +182,9 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( timeouts, 6 );
-      assert.strictEqual( called, timeouts );
+      expect( actual ).toEqual( expected );
+      expect( timeouts ).toBe( 6 );
+      expect( called ).toBe( timeouts );
     } );
 
   } );

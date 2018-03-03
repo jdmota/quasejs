@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "fast bail is off by default", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -18,29 +17,29 @@ describe( "unit", () => {
       "test2"
     ];
 
-    test( function() {
+    test( () => {
       actual.push( "test" );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "bail" );
       throw new Error( "Error" );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "test2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "fast bail", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       bail: true,
@@ -57,15 +56,15 @@ describe( "unit", () => {
       "after"
     ];
 
-    test.before( function() {
+    test.before( () => {
       actual.push( "before" );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "test" );
     } );
 
-    test( function() {
+    test( () => {
       actual.push( "bail" );
       throw new Error( "Error" );
     } );
@@ -92,25 +91,25 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.after( function() {
+    test.after( () => {
       actual.push( "after" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "fast bail - error in before", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       bail: true,
@@ -126,21 +125,21 @@ describe( "unit", () => {
       "after"
     ];
 
-    test.before( function() {
+    test.before( () => {
       actual.push( "before" );
       throw new Error( "Error" );
     } );
 
-    test.before( function() {
+    test.before( () => {
       actual.push( "before 2" );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
@@ -167,25 +166,25 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.after( function() {
+    test.after( () => {
       actual.push( "after" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "fast bail - error in beforeEach", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       bail: true,
@@ -201,16 +200,16 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
       throw new Error( "Error" );
     } );
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach 2" );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
@@ -226,25 +225,25 @@ describe( "unit", () => {
       } );
     } );
 
-    test( function() {
+    test( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "fast bail in group with async code", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     function timeout() {
       return new Promise( function( resolve ) {
@@ -262,37 +261,37 @@ describe( "unit", () => {
       "test 2"
     ];
 
-    test.group( function() {
+    test.group( () => {
 
-      test.serial( function() {
+      test.serial( () => {
         actual.push( "test 1" );
         return timeout();
       } );
 
-      test.serial( function() {
+      test.serial( () => {
         actual.push( "test 2" );
-        return timeout().then( function() {
+        return timeout().then( () => {
           throw new Error( "Error" );
         } );
       } );
 
-      test.serial( function() {
+      test.serial( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "error in serial sequence stops concurrent sequence", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true, bail: true } );
     let results = runner.listen();
@@ -305,7 +304,7 @@ describe( "unit", () => {
       "afterEach"
     ];
 
-    test.beforeEach( function() {
+    test.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
@@ -320,20 +319,20 @@ describe( "unit", () => {
       } );
     } );
 
-    test.afterEach( function() {
+    test.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "skipped test remains skipped", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     const runner = Runner.init( {
       bail: true,
@@ -362,10 +361,10 @@ describe( "unit", () => {
       actual.push( "dont run 2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ results.length - 1 ].status, "failed" );
-      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ results.length - 1 ].status ).toBe( "failed" );
+      expect( results[ results.length - 1 ].testCounts ).toEqual( {
         failed: 1,
         skipped: 2,
         passed: 0,
@@ -378,7 +377,7 @@ describe( "unit", () => {
 
   it( "skipped group remains skipped", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     const runner = Runner.init( {
       bail: true,
@@ -409,10 +408,10 @@ describe( "unit", () => {
       } );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ results.length - 1 ].status, "failed" );
-      assert.deepEqual( results[ results.length - 1 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ results.length - 1 ].status ).toBe( "failed" );
+      expect( results[ results.length - 1 ].testCounts ).toEqual( {
         failed: 1,
         skipped: 2,
         passed: 0,

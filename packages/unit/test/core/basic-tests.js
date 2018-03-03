@@ -1,5 +1,4 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
@@ -15,32 +14,32 @@ describe( "unit", () => {
       t.incCount();
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 0 ], "runStart" );
-      assert.strictEqual( results[ 6 ], "runEnd" );
+      expect( results[ 0 ] ).toBe( "runStart" );
+      expect( results[ 6 ] ).toBe( "runEnd" );
 
-      assert.strictEqual( results[ 2 ], "testStart" );
+      expect( results[ 2 ] ).toBe( "testStart" );
 
       delete results[ 3 ].defaultStack;
 
-      assert.deepEqual( results[ 3 ], {
+      expect( results[ 3 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
-      assert.strictEqual( results[ 4 ], "testEnd" );
+      expect( results[ 4 ] ).toBe( "testEnd" );
 
-      assert.strictEqual( typeof results[ 5 ].runtime, "number" );
+      expect( typeof results[ 5 ].runtime ).toBe( "number" );
 
-      assert.deepEqual( results[ 5 ].status, "failed" );
+      expect( results[ 5 ].status ).toEqual( "failed" );
 
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Planned 10 but 2 assertions were run." );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Planned 10 but 2 assertions were run." );
 
-      assert.strictEqual( results[ 5 ].assertions[ 0 ].message, "Planned 10 but 2 assertions were run." );
+      expect( results[ 5 ].assertions[ 0 ].message ).toBe( "Planned 10 but 2 assertions were run." );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 
@@ -56,29 +55,29 @@ describe( "unit", () => {
       t.plan( 0 );
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 0 ], "runStart" );
-      assert.strictEqual( results[ 6 ], "runEnd" );
+      expect( results[ 0 ] ).toBe( "runStart" );
+      expect( results[ 6 ] ).toBe( "runEnd" );
 
-      assert.strictEqual( results[ 2 ], "testStart" );
+      expect( results[ 2 ] ).toBe( "testStart" );
 
       delete results[ 3 ].defaultStack;
 
-      assert.deepEqual( results[ 3 ], {
+      expect( results[ 3 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
-      assert.strictEqual( results[ 4 ], "testEnd" );
+      expect( results[ 4 ] ).toBe( "testEnd" );
 
-      assert.strictEqual( typeof results[ 5 ].runtime, "number" );
+      expect( typeof results[ 5 ].runtime ).toBe( "number" );
 
       delete results[ 5 ].runtime;
       delete results[ 5 ].defaultStack;
 
-      assert.deepEqual( results[ 5 ], {
+      expect( results[ 5 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: "",
@@ -91,7 +90,7 @@ describe( "unit", () => {
         assertions: []
       } );
 
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( results.pop().status ).toBe( "passed" );
 
     } );
 
@@ -108,29 +107,29 @@ describe( "unit", () => {
       t.skip( "skip reason" );
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 0 ], "runStart" );
-      assert.strictEqual( results[ 6 ], "runEnd" );
+      expect( results[ 0 ] ).toBe( "runStart" );
+      expect( results[ 6 ] ).toBe( "runEnd" );
 
-      assert.strictEqual( results[ 2 ], "testStart" );
+      expect( results[ 2 ] ).toBe( "testStart" );
 
       delete results[ 3 ].defaultStack;
 
-      assert.deepEqual( results[ 3 ], {
+      expect( results[ 3 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
-      assert.strictEqual( results[ 4 ], "testEnd" );
+      expect( results[ 4 ] ).toBe( "testEnd" );
 
-      assert.strictEqual( typeof results[ 5 ].runtime, "number" );
+      expect( typeof results[ 5 ].runtime ).toBe( "number" );
 
       delete results[ 5 ].runtime;
       delete results[ 5 ].defaultStack;
 
-      assert.deepEqual( results[ 5 ], {
+      expect( results[ 5 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: "",
@@ -143,7 +142,7 @@ describe( "unit", () => {
         assertions: []
       } );
 
-      assert.strictEqual( results.pop().status, "skipped" );
+      expect( results.pop().status ).toBe( "skipped" );
 
     } );
 
@@ -168,34 +167,34 @@ describe( "unit", () => {
       } );
     } );
 
-    return runner.run().then( function() {
+    return runner.run().then( () => {
 
-      assert.strictEqual( results[ 0 ], "runStart" );
-      assert.strictEqual( results[ 6 ], "runEnd" );
+      expect( results[ 0 ] ).toBe( "runStart" );
+      expect( results[ 6 ] ).toBe( "runEnd" );
 
-      assert.strictEqual( results[ 2 ], "testStart" );
+      expect( results[ 2 ] ).toBe( "testStart" );
 
       delete results[ 3 ].defaultStack;
 
-      assert.deepEqual( results[ 3 ], {
+      expect( results[ 3 ] ).toEqual( {
         name: "anonymous",
         fullname: [ "anonymous" ],
         suiteName: ""
       } );
 
-      assert.strictEqual( results[ 4 ], "testEnd" );
+      expect( results[ 4 ] ).toBe( "testEnd" );
 
-      assert.strictEqual( typeof results[ 5 ].runtime, "number" );
+      expect( typeof results[ 5 ].runtime ).toBe( "number" );
 
-      assert.deepEqual( results[ 5 ].status, "failed" );
+      expect( results[ 5 ].status ).toEqual( "failed" );
 
-      assert.deepEqual( results[ 5 ].skipReason, undefined );
+      expect( results[ 5 ].skipReason ).toEqual( undefined );
 
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "message" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "message" );
 
-      assert.strictEqual( results[ 5 ].assertions[ 0 ].message, "message" );
+      expect( results[ 5 ].assertions[ 0 ].message ).toBe( "message" );
 
-      assert.strictEqual( results.pop().status, "failed" );
+      expect( results.pop().status ).toBe( "failed" );
 
     } );
 

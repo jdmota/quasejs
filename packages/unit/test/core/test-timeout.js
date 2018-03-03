@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "test timeout", () => {
 
-    assert.expect( 6 );
+    expect.assertions( 6 );
 
     let runner = Runner.init( {
       timeout: 3000,
@@ -17,25 +16,25 @@ describe( "unit", () => {
 
     test( "test", function( t ) {
       t.timeout( 1 );
-      assert.strictEqual( t.timeout(), 1 );
+      expect( t.timeout() ).toBe( 1 );
       return new Promise( function( resolve ) {
         setTimeout( resolve, 100 );
       } ).then( () => counts++ );
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( counts, 0, "If the timeout exceeds, end the test." );
-      assert.strictEqual( results[ 5 ].status, "failed" );
-      assert.strictEqual( results[ 5 ].errors[ 0 ].message, "Timeout exceeded." );
-      assert.ok( results[ 5 ].errors[ 0 ].stack );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( counts ).toBe( 0, "If the timeout exceeds, end the test." );
+      expect( results[ 5 ].status ).toBe( "failed" );
+      expect( results[ 5 ].errors[ 0 ].message ).toBe( "Timeout exceeded." );
+      expect( results[ 5 ].errors[ 0 ].stack ).toBeTruthy();
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "test timeout inside group", () => {
 
-    assert.expect( 5 );
+    expect.assertions( 5 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -47,7 +46,7 @@ describe( "unit", () => {
       t.timeout( 1 );
 
       test( "test", function( t ) {
-        assert.strictEqual( t.timeout(), 1 );
+        expect( t.timeout() ).toBe( 1 );
         return new Promise( function( resolve ) {
           setTimeout( resolve, 100 );
         } ).then( () => counts++ );
@@ -55,18 +54,18 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( counts, 0, "If the timeout exceeds, end the test." );
-      assert.strictEqual( results[ 7 ].status, "failed" );
-      assert.strictEqual( results[ 7 ].errors[ 0 ].message, "Timeout exceeded." );
-      assert.strictEqual( results.pop().status, "failed" );
+    return runner.run().then( () => {
+      expect( counts ).toBe( 0, "If the timeout exceeds, end the test." );
+      expect( results[ 7 ].status ).toBe( "failed" );
+      expect( results[ 7 ].errors[ 0 ].message ).toBe( "Timeout exceeded." );
+      expect( results.pop().status ).toBe( "failed" );
     } );
 
   } );
 
   it( "test timeout inside group (override)", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( {
       timeout: 1,
@@ -80,7 +79,7 @@ describe( "unit", () => {
 
       t.timeout( 3000 );
 
-      test( "test", function() {
+      test( "test", () => {
         return new Promise( function( resolve ) {
           setTimeout( resolve, 10 );
         } ).then( () => counts++ );
@@ -88,17 +87,17 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( counts, 1 );
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results.pop().status, "passed" );
+    return runner.run().then( () => {
+      expect( counts ).toBe( 1 );
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "test timeout of zero disables", () => {
 
-    assert.expect( 6 );
+    expect.assertions( 6 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -107,15 +106,15 @@ describe( "unit", () => {
 
     test.group( t => {
 
-      assert.strictEqual( t.timeout(), 0 );
+      expect( t.timeout() ).toBe( 0 );
 
       t.timeout( 2 );
 
-      assert.strictEqual( t.timeout(), 2 );
+      expect( t.timeout() ).toBe( 2 );
 
       test( "test", t => {
         t.timeout( 0 );
-        assert.strictEqual( t.timeout(), 0 );
+        expect( t.timeout() ).toBe( 0 );
         return new Promise( resolve => {
           setTimeout( resolve, 100 );
         } ).then( () => counts++ );
@@ -124,16 +123,16 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( counts, 1 );
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( counts ).toBe( 1 );
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "test timeout of zero disables 2", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( {
       timeout: 2,
@@ -147,7 +146,7 @@ describe( "unit", () => {
 
       t.timeout( 0 );
 
-      test( "test", function() {
+      test( "test", () => {
         return new Promise( function( resolve ) {
           setTimeout( resolve, 100 );
         } ).then( () => counts++ );
@@ -155,17 +154,17 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( counts, 1 );
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results.pop().status, "passed" );
+    return runner.run().then( () => {
+      expect( counts ).toBe( 1 );
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "timeouts: false", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     const runner = Runner.init( {
       timeouts: false,
@@ -188,16 +187,16 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( counts, 1 );
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( counts ).toBe( 1 );
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
 
   it( "timeouts: false with debug: true", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     const runner = Runner.init( {
       debug: true,
@@ -220,9 +219,9 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( counts, 1 );
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results.pop().status, "passed" );
+      expect( counts ).toBe( 1 );
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results.pop().status ).toBe( "passed" );
     } );
 
   } );
@@ -232,11 +231,11 @@ describe( "unit", () => {
     let runner = Runner.init( { allowNoPlan: true } );
     let test = runner.test;
 
-    assert.throws( () => {
+    expect( () => {
       test.group( t => {
         t.timeout( "abc" );
       } );
-    }, /Expected a number but saw/ );
+    } ).toThrow( /Expected a number but saw/ );
 
   } );
 
@@ -245,11 +244,11 @@ describe( "unit", () => {
     let runner = Runner.init( { allowNoPlan: true } );
     let test = runner.test;
 
-    assert.throws( () => {
+    expect( () => {
       test.group( t => {
         t.timeout( 2 ** 31 + 1 );
       } );
-    }, /2147483649 is too big of a timeout value/ );
+    } ).toThrow( /2147483649 is too big of a timeout value/ );
 
   } );
 

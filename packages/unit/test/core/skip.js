@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "skip", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -26,85 +25,85 @@ describe( "unit", () => {
       "after 2"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after 2" );
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.group( function() {
+    t.group( () => {
 
       actual.push( "group" );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach" );
       } );
 
-      t.beforeEach( function() {
+      t.beforeEach( () => {
         actual.push( "group beforeEach 2" );
       } );
 
-      t.afterEach( function() {
+      t.afterEach( () => {
         actual.push( "group afterEach 2" );
       } );
 
-      t( function() {
+      t( () => {
         actual.push( "group test" );
       } );
 
-      t.skip( function() {
+      t.skip( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
-      t.skip( function() {
+      t.skip( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach 2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );
 
   it( "skip works with groups", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -115,62 +114,62 @@ describe( "unit", () => {
       "group"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after 2" );
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       /* istanbul ignore next */
       actual.push( "beforeEach" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.group.skip( function() {
+    t.group.skip( () => {
 
       actual.push( "group" );
 
-      t( function() {
+      t( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
-      t( function() {
+      t( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       /* istanbul ignore next */
       actual.push( "afterEach" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       /* istanbul ignore next */
       actual.push( "afterEach 2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.deepEqual( results.pop().testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().testCounts ).toEqual( {
         failed: 0,
         passed: 0,
         skipped: 4,
@@ -183,7 +182,7 @@ describe( "unit", () => {
 
   it( "skip in the test", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -195,7 +194,7 @@ describe( "unit", () => {
       "test 2"
     ];
 
-    t( function() {
+    t( () => {
       actual.push( "test 1" );
     } );
 
@@ -206,10 +205,10 @@ describe( "unit", () => {
       actual.push( "dont run after skip()" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 9 ].skipReason, "reason for skipping" );
-      assert.deepEqual( results[ 11 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 9 ].skipReason ).toBe( "reason for skipping" );
+      expect( results[ 11 ].testCounts ).toEqual( {
         failed: 0,
         passed: 1,
         skipped: 1,
@@ -222,7 +221,7 @@ describe( "unit", () => {
 
   it( "skip inside Promise in the test", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -234,7 +233,7 @@ describe( "unit", () => {
       "test 2"
     ];
 
-    t( function() {
+    t( () => {
       actual.push( "test 1" );
     } );
 
@@ -243,10 +242,10 @@ describe( "unit", () => {
       return new Promise( resolve => resolve() ).then( () => p.skip( "reason for skipping in promise" ) );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.strictEqual( results[ 9 ].skipReason, "reason for skipping in promise" );
-      assert.deepEqual( results[ 11 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 9 ].skipReason ).toBe( "reason for skipping in promise" );
+      expect( results[ 11 ].testCounts ).toEqual( {
         failed: 0,
         passed: 1,
         skipped: 1,
@@ -259,7 +258,7 @@ describe( "unit", () => {
 
   it( "skip in the beforeHook", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -278,18 +277,18 @@ describe( "unit", () => {
       actual.push( "dont run after skip()" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t( function() {
+    t( () => {
       /* istanbul ignore next */
       actual.push( "dont run test" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.deepEqual( results[ 15 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 15 ].testCounts ).toEqual( {
         failed: 0,
         passed: 1,
         skipped: 2,
@@ -302,7 +301,7 @@ describe( "unit", () => {
 
   it( "skip inside Promise in the beforeHook", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -319,18 +318,18 @@ describe( "unit", () => {
       return new Promise( resolve => resolve() ).then( () => p.skip() );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t( function() {
+    t( () => {
       /* istanbul ignore next */
       actual.push( "dont run test" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
-      assert.deepEqual( results[ 15 ].testCounts, {
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
+      expect( results[ 15 ].testCounts ).toEqual( {
         failed: 0,
         passed: 1,
         skipped: 2,
@@ -343,7 +342,7 @@ describe( "unit", () => {
 
   it( "skip modifier in before hook should not affect tests", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -369,8 +368,8 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      assert.deepEqual( actual, expected );
-      assert.deepEqual( results.pop().testCounts, {
+      expect( actual ).toEqual( expected );
+      expect( results.pop().testCounts ).toEqual( {
         failed: 0,
         passed: 2,
         skipped: 1,
@@ -383,7 +382,7 @@ describe( "unit", () => {
 
   it( "don't run before/after when tests are skipped", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -391,63 +390,63 @@ describe( "unit", () => {
     let actual = [];
     let expected = [];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after 2" );
     } );
 
-    t.beforeEach( function() {
+    t.beforeEach( () => {
       actual.push( "beforeEach" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.skip( function() {
+    t.skip( () => {
       /* istanbul ignore next */
       actual.push( "dont run" );
     } );
 
-    t.group( function() {
+    t.group( () => {
 
-      t.skip( function() {
+      t.skip( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
-      t.skip( function() {
+      t.skip( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach" );
     } );
 
-    t.afterEach( function() {
+    t.afterEach( () => {
       actual.push( "afterEach 2" );
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );
 
   it( "don't run before/after when related tests are skipped", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -459,40 +458,40 @@ describe( "unit", () => {
       "after"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t( function() {
+    t( () => {
       actual.push( "test" );
     } );
 
-    t.group( function() {
+    t.group( () => {
 
-      t.before( function() {
+      t.before( () => {
         actual.push( "before 2" );
       } );
 
-      t.skip( function() {
+      t.skip( () => {
         /* istanbul ignore next */
         actual.push( "dont run" );
       } );
 
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );
 
   it( "don't run before/after when related tests are skipped + delayed setup", () => {
 
-    assert.expect( 1 );
+    expect.assertions( 1 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let t = runner.test;
@@ -504,26 +503,26 @@ describe( "unit", () => {
       "after"
     ];
 
-    t.before( function() {
+    t.before( () => {
       actual.push( "before" );
     } );
 
-    t.after( function() {
+    t.after( () => {
       actual.push( "after" );
     } );
 
-    t( function() {
+    t( () => {
       actual.push( "test" );
     } );
 
     t.group( function( g ) {
 
-      g.before( function() {
+      g.before( () => {
         actual.push( "before 2" );
       } );
 
       return Promise.resolve().then( () => {
-        g.skip( function() {
+        g.skip( () => {
           /* istanbul ignore next */
           actual.push( "dont run" );
         } );
@@ -531,8 +530,8 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.deepEqual( actual, expected );
+    return runner.run().then( () => {
+      expect( actual ).toEqual( expected );
     } );
 
   } );

@@ -1,11 +1,10 @@
 import Runner from "../../src/core/runner";
-import assert from "../../../assert";
 
 describe( "unit", () => {
 
   it( "test slow", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       slow: 5000,
@@ -21,16 +20,16 @@ describe( "unit", () => {
       } );
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 5 ].status, "passed" );
-      assert.strictEqual( results[ 5 ].slow, true );
+    return runner.run().then( () => {
+      expect( results[ 5 ].status ).toBe( "passed" );
+      expect( results[ 5 ].slow ).toBe( true );
     } );
 
   } );
 
   it( "test slow inside group", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -40,7 +39,7 @@ describe( "unit", () => {
 
       t.slow( 1 );
 
-      test( "test", function() {
+      test( "test", () => {
         return new Promise( function( resolve ) {
           setTimeout( resolve, 100 );
         } );
@@ -48,16 +47,16 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results[ 7 ].slow, true );
+    return runner.run().then( () => {
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results[ 7 ].slow ).toBe( true );
     } );
 
   } );
 
   it( "test slow inside group (override)", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( {
       slow: 1,
@@ -70,9 +69,9 @@ describe( "unit", () => {
 
       t.slow( 3000 );
 
-      assert.strictEqual( t.slow(), 3000 );
+      expect( t.slow() ).toBe( 3000 );
 
-      test( "test", function() {
+      test( "test", () => {
         return new Promise( function( resolve ) {
           setTimeout( resolve, 10 );
         } );
@@ -80,16 +79,16 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results[ 7 ].slow, false );
+    return runner.run().then( () => {
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results[ 7 ].slow ).toBe( false );
     } );
 
   } );
 
   it( "test slow of zero disables", () => {
 
-    assert.expect( 3 );
+    expect.assertions( 3 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -101,7 +100,7 @@ describe( "unit", () => {
 
       test( "test", function( t ) {
         t.slow( 0 );
-        assert.strictEqual( t.slow(), 0 );
+        expect( t.slow() ).toBe( 0 );
         return new Promise( function( resolve ) {
           setTimeout( resolve, 100 );
         } );
@@ -109,16 +108,16 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results[ 7 ].slow, false );
+    return runner.run().then( () => {
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results[ 7 ].slow ).toBe( false );
     } );
 
   } );
 
   it( "test slow of zero disables 2", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       slow: 2,
@@ -131,7 +130,7 @@ describe( "unit", () => {
 
       t.slow( 0 );
 
-      test( "test", function() {
+      test( "test", () => {
         return new Promise( function( resolve ) {
           setTimeout( resolve, 100 );
         } );
@@ -139,16 +138,16 @@ describe( "unit", () => {
 
     } );
 
-    return runner.run().then( function() {
-      assert.strictEqual( results[ 7 ].status, "passed" );
-      assert.strictEqual( results[ 7 ].slow, false );
+    return runner.run().then( () => {
+      expect( results[ 7 ].status ).toBe( "passed" );
+      expect( results[ 7 ].slow ).toBe( false );
     } );
 
   } );
 
   it( "t.slow() returns current value from parent suite", () => {
 
-    assert.expect( 4 );
+    expect.assertions( 4 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
@@ -156,25 +155,25 @@ describe( "unit", () => {
 
     const g = test.group();
 
-    assert.strictEqual( g.slow(), 0 );
+    expect( g.slow() ).toBe( 0 );
 
     g.slow( 1000 );
 
-    assert.strictEqual( g.slow(), 1000 );
+    expect( g.slow() ).toBe( 1000 );
 
     g.test( t => {
-      assert.strictEqual( t.slow(), 1000 );
+      expect( t.slow() ).toBe( 1000 );
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 11 ].status, "passed" );
+      expect( results[ 11 ].status ).toBe( "passed" );
     } );
 
   } );
 
   it( "t.slow() returns current value from runner", () => {
 
-    assert.expect( 2 );
+    expect.assertions( 2 );
 
     let runner = Runner.init( {
       slow: 5000,
@@ -184,11 +183,11 @@ describe( "unit", () => {
     let test = runner.test;
 
     test( "test", t => {
-      assert.strictEqual( t.slow(), 5000 );
+      expect( t.slow() ).toBe( 5000 );
     } );
 
     return runner.run().then( () => {
-      assert.strictEqual( results[ 5 ].status, "passed" );
+      expect( results[ 5 ].status ).toBe( "passed" );
     } );
 
   } );
