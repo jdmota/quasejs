@@ -8,6 +8,7 @@ const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
 const normalizePkg = require( "normalize-package-data" );
 const yargsParser = require( "yargs-parser" );
+const camelCase = require( "camelcase" );
 const camelcaseKeys = require( "camelcase-keys" );
 const decamelize = require( "decamelize" );
 const trimNewlines = require( "trim-newlines" );
@@ -187,7 +188,7 @@ function handleArgs( opts ) {
       command = opts.defaultCommand;
     } else {
       providedArgv = opts.argv.slice( 1 );
-      command = c;
+      command = camelCase( c );
     }
 
     const commandSchema = opts.commands[ command ];

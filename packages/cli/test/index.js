@@ -535,18 +535,18 @@ describe( "cli", () => {
         description: "Description"
       },
       commands: {
-        foo_command: {
+        fooCommand: {
           foo: {
             type: "boolean"
           }
         }
       },
-      argv: [ "foo_command", "--foo" ],
+      argv: [ "foo-command", "--foo" ],
       notifier: false
     } );
 
     expect( input ).toEqual( [] );
-    expect( command ).toBe( "foo_command" );
+    expect( command ).toBe( "fooCommand" );
     expect( options.foo ).toBe( true );
 
   } );
@@ -563,16 +563,16 @@ describe( "cli", () => {
           description: "Description"
         },
         commands: {
-          foo_command: {
+          fooCommand: {
             foo: {
               type: "boolean"
             }
           }
         },
-        argv: [ "bar_command", "--foo" ],
+        argv: [ "bar-command", "--foo" ],
         notifier: false
       } )
-    ).rejects.toThrow( /^"bar_command" is not a supported command$/ );
+    ).rejects.toThrow( /^"barCommand" is not a supported command$/ );
 
   } );
 
@@ -588,7 +588,7 @@ describe( "cli", () => {
           description: "Description"
         },
         commands: {
-          foo_command: {
+          fooCommand: {
             foo: {
               type: "boolean"
             }
@@ -611,9 +611,9 @@ describe( "cli", () => {
         version: "0.0.1",
         description: "Description"
       },
-      defaultCommand: "foo_command",
+      defaultCommand: "fooCommand",
       commands: {
-        foo_command: {
+        fooCommand: {
           foo: {
             type: "boolean"
           }
@@ -624,7 +624,7 @@ describe( "cli", () => {
     } );
 
     expect( input ).toEqual( [] );
-    expect( command ).toBe( "foo_command" );
+    expect( command ).toBe( "fooCommand" );
     expect( options.foo ).toBe( true );
 
   } );
