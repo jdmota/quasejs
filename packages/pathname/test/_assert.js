@@ -9,9 +9,3 @@ export default {
     expect( a ).toThrow( b );
   }
 };
-
-// assert\.strictEqual\(([^,]+),([^)]+)\)
-// expect($1 ).toBe($2)
-
-// assert\.deepEqual\(([^,]+),([^)]+)\)
-// expect($1 ).toEqual($2)

@@ -1,5 +1,5 @@
 import pathToRegExp from "../src/path-to-regexp";
-import assert from "../../assert";
+import assert from "./_assert";
 
 it( "pathToRegExp", () => {
 
