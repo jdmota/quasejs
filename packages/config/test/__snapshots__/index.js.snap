@@ -128,6 +128,42 @@ Object {
 
 exports[`apply defaults 11`] = `Object {}`;
 
+exports[`apply defaults 12`] = `
+Object {
+  "obj": Object {
+    "a": true,
+    "b": true,
+  },
+}
+`;
+
+exports[`apply defaults 13`] = `
+Object {
+  "obj": Object {
+    "a": false,
+    "b": false,
+  },
+}
+`;
+
+exports[`apply defaults 14`] = `
+Object {
+  "obj": Object {
+    "a": true,
+    "b": true,
+  },
+}
+`;
+
+exports[`apply defaults 15`] = `
+Object {
+  "obj": Object {
+    "a": false,
+    "b": true,
+  },
+}
+`;
+
 exports[`validate 1`] = `
 Array [
   Array [

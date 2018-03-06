@@ -386,6 +386,92 @@ it( "apply defaults", () => {
     }
   } );
 
+  d( {
+    obj: {
+      type: t.object( {
+        a: {
+          type: "boolean",
+          default: true
+        },
+        b: {
+          type: "boolean",
+          default: true
+        }
+      } ),
+      map: x => (
+        x === true ? undefined : x === false ? { a: false, b: false } : x
+      )
+    }
+  }, {
+    obj: true
+  } );
+
+  d( {
+    obj: {
+      type: t.object( {
+        a: {
+          type: "boolean",
+          default: true
+        },
+        b: {
+          type: "boolean",
+          default: true
+        }
+      } ),
+      map: x => (
+        x === true ? undefined : x === false ? { a: false, b: false } : x
+      )
+    }
+  }, {
+    obj: false
+  } );
+
+  d( {
+    obj: {
+      type: t.object( {
+        a: {
+          type: "boolean",
+          default: true
+        },
+        b: {
+          type: "boolean",
+          default: true
+        }
+      } ),
+      map: x => (
+        x === true ? undefined : x === false ? { a: false, b: false } : x
+      )
+    }
+  }, {
+    obj: undefined
+  } );
+
+  d( {
+    obj: {
+      type: t.object( {
+        a: {
+          type: "boolean",
+          default: true
+        },
+        b: {
+          type: "boolean",
+          default: true
+        }
+      } ),
+      map: x => (
+        x === true ? undefined : x === false ? { a: false, b: false } : x
+      )
+    }
+  }, {
+    obj: true
+  }, {
+    obj: {
+      a: false
+    }
+  }, {
+    obj: true
+  } );
+
 } );
 
 it( "apply defaults - merge modes", () => {

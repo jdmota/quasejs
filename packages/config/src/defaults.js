@@ -64,8 +64,10 @@ function applyDefaultsArrayMerge( type, object, src ) {
 
 function applyDefaultsHelper( info, object, src, key ) {
 
+  const { type, map, merge } = info || {};
+
   const objValue = object[ key ];
-  const srcValue = src[ key ];
+  const srcValue = map ? map( src[ key ] ) : src[ key ];
 
   if ( objValue === undefined ) {
     if ( srcValue !== undefined ) {
@@ -73,8 +75,6 @@ function applyDefaultsHelper( info, object, src, key ) {
     }
     return;
   }
-
-  const { type, merge } = info || {};
 
   if ( typeof merge === "function" ) {
     const newValue = merge( objValue, srcValue );
