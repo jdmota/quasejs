@@ -1,6 +1,6 @@
 import { t, types } from "./types";
-import { formatOption } from "./formating";
-import { addPrefix, validateType } from "./validation";
+import { formatPathOption } from "./formating";
+import { validateType } from "./validation";
 
 const toString = ( {} ).toString;
 
@@ -44,10 +44,9 @@ function applyDefaultsObject( type, object, src ) {
   for ( const key in src ) {
     applyDefaultsHelper(
       type && type.properties ? type.properties[ key ] : null,
-      object[ key ],
-      src[ key ],
-      key,
-      object
+      object,
+      src,
+      key
     );
   }
 }
@@ -56,15 +55,17 @@ function applyDefaultsArrayMerge( type, object, src ) {
   for ( let i = 0; i < src.length; i++ ) {
     applyDefaultsHelper(
       type && type.items ? type.items[ i ] : null,
-      object[ i ],
-      src[ i ],
-      i,
-      object
+      object,
+      src,
+      i
     );
   }
 }
 
-function applyDefaultsHelper( info, objValue, srcValue, key, object ) {
+function applyDefaultsHelper( info, object, src, key ) {
+
+  const objValue = object[ key ];
+  const srcValue = src[ key ];
 
   if ( objValue === undefined ) {
     if ( srcValue !== undefined ) {
@@ -104,9 +105,11 @@ function applyDefaultsHelper( info, objValue, srcValue, key, object ) {
 
 }
 
-export function extractDefaults( fullKey, { type, default: d, required, optional } ) {
+const opt = formatPathOption;
+
+export function extractDefaults( path, { type, default: d, required, optional } ) {
   if ( required && optional ) {
-    throw new Error( `[Schema] Don't use "required" and "optional" in ${formatOption( fullKey )}` );
+    throw new Error( `[Schema] Don't use "required" and "optional" in ${opt( path )}` );
   }
   if ( d === undefined ) {
     if ( required || optional ) {
@@ -114,13 +117,13 @@ export function extractDefaults( fullKey, { type, default: d, required, optional
     }
   } else {
     if ( required ) {
-      throw new Error( `[Schema] Don't use "required" with "default" in ${formatOption( fullKey )}` );
+      throw new Error( `[Schema] Don't use "required" with "default" in ${opt( path )}` );
     }
     if ( type ) {
       try {
-        validateType( fullKey, d, type );
+        validateType( path, d, type );
       } catch ( e ) {
-        throw new Error( `[Schema] "default" does not match the type in ${formatOption( fullKey )}` );
+        throw new Error( `[Schema] "default" does not match the type in ${opt( path )}` );
       }
     }
     return d;
@@ -139,7 +142,9 @@ export function extractDefaults( fullKey, { type, default: d, required, optional
       const schema = type.items;
       const defaults = [];
       for ( let i = 0; i < schema.length; i++ ) {
-        defaults[ i ] = extractDefaults( addPrefix( fullKey, i + "" ), schema[ i ] );
+        path.push( i + "" );
+        defaults[ i ] = extractDefaults( path, schema[ i ] );
+        path.pop();
       }
       return defaults;
     }
@@ -147,20 +152,22 @@ export function extractDefaults( fullKey, { type, default: d, required, optional
       const schema = type.properties;
       const defaults = {};
       for ( const k in schema ) {
-        defaults[ k ] = extractDefaults( addPrefix( fullKey, k ), schema[ k ] );
+        path.push( k );
+        defaults[ k ] = extractDefaults( path, schema[ k ] );
+        path.pop();
       }
       return defaults;
     }
   }
   if ( !optional ) {
-    throw new Error( `[Schema] Provide a default value or mark as "optional" in ${formatOption( fullKey )}` );
+    throw new Error( `[Schema] Provide a default value or mark as "optional" in ${opt( path )}` );
   }
 }
 
 export function applyDefaults( schema, ...args ) {
   const dest = {};
   const type = t.object( schema );
-  const defaults = extractDefaults( "", { type } );
+  const defaults = extractDefaults( [], { type } );
   for ( let i = 0; i < args.length; i++ ) {
     applyDefaultsObject( type, dest, args[ i ] );
   }

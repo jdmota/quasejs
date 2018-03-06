@@ -34,8 +34,16 @@ export function formatTypes( list: $ReadOnlyArray<MaybeType>, separator: string 
   } ).join( separator );
 }
 
-export function formatOption( str: string ): string {
-  return chalk.bold( concordance.format( str ) );
+export function formatOption( option: string ): string {
+  return chalk.bold( concordance.format( option ) );
+}
+
+export function pathToStr( path: string[] ): string {
+  return path.join( "." );
+}
+
+export function formatPathOption( path: string[] ): string {
+  return chalk.bold( concordance.format( pathToStr( path ) ) );
 }
 
 export function format( value: any ) {
