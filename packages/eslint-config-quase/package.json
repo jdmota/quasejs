@@ -1,6 +1,6 @@
 {
   "name": "@quase/eslint-config-quase",
-  "version": "0.3.0-0",
+  "version": "0.3.0-1",
   "description": "Eslint config used by Quase",
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
