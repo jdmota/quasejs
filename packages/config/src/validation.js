@@ -11,6 +11,7 @@ export class ValidationError extends Error {
   +__validation: boolean;
   constructor( message: string | string[] ) {
     super( Array.isArray( message ) ? message.join( "\n" ) : message );
+    this.name = "ValidationError";
     this.__validation = true;
   }
 }
