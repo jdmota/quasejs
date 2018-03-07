@@ -11,7 +11,7 @@ describe( "cli", () => {
 
     console.error = jest.fn();
 
-    const { input, options, pkg, help, showHelp, config } = await cli( {
+    const { input, options, pkg, generateHelp, showHelp, config } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -60,7 +60,7 @@ describe( "cli", () => {
     expect( options[ "--" ] ).toEqual( [ "unicorn", "10" ] );
     expect( pkg.name ).toBe( "@quase/eslint-config-quase" );
     expect( pkg.version ).toBe( "0.0.1" );
-    expect( help ).toMatchSnapshot();
+    expect( generateHelp() ).toMatchSnapshot();
     expect( typeof showHelp ).toBe( "function" );
     expect( config.iAmTheConfigFile ).toBe( "yes" );
     expect( console.error.mock.calls ).toMatchSnapshot();
@@ -120,7 +120,7 @@ describe( "cli", () => {
 
   it( "generate help", async() => {
 
-    const { help } = await cli( {
+    const { generateHelp } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -191,7 +191,7 @@ describe( "cli", () => {
       notifier: false
     } );
 
-    expect( help ).toMatchSnapshot();
+    expect( generateHelp() ).toMatchSnapshot();
 
   } );
 
@@ -656,7 +656,7 @@ describe( "cli", () => {
 
   it( "generate help with subcommands", async() => {
 
-    const { help } = await cli( {
+    const { generateHelp } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -684,13 +684,13 @@ describe( "cli", () => {
       notifier: false
     } );
 
-    expect( help ).toMatchSnapshot();
+    expect( generateHelp() ).toMatchSnapshot();
 
   } );
 
   it( "generate help with subcommands including options of default command", async() => {
 
-    const { help } = await cli( {
+    const { generateHelp } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -716,13 +716,13 @@ describe( "cli", () => {
       notifier: false
     } );
 
-    expect( help ).toMatchSnapshot();
+    expect( generateHelp() ).toMatchSnapshot();
 
   } );
 
   it( "generate help for subcommand", async() => {
 
-    const { help } = await cli( {
+    const { generateHelp } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -747,7 +747,7 @@ describe( "cli", () => {
       notifier: false
     } );
 
-    expect( help ).toMatchSnapshot();
+    expect( generateHelp() ).toMatchSnapshot();
 
   } );
 

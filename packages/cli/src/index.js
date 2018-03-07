@@ -164,7 +164,7 @@ function suffix( flag ) {
   return "";
 }
 
-function generateHelp( { usage, commands, defaultCommand, schema, command, commandSet } ) {
+function generateHelpHelper( { usage, commands, defaultCommand, schema, command, commandSet } ) {
   const optionLines = [];
   const commandLines = [];
   let optionsLength = 0;
@@ -419,34 +419,35 @@ export default async function( _opts ) {
 
   opts.cwd = path.resolve( opts.cwd );
 
+  const pkgJob = opts.pkg ? Promise.resolve( opts ) : readPkgUp( {
+    cwd: parentDir,
+    normalize: false
+  } );
+
   const { usage, commands, defaultCommand } = opts;
   const { schema, command, commandSet, input, flags } = handleArgs( opts );
 
-  const pkg = opts.pkg ? opts.pkg : (
-    await readPkgUp( {
-      cwd: parentDir,
-      normalize: false
-    } )
-  ).pkg;
+  const pkg = ( await pkgJob ).pkg;
 
   normalizePkg( pkg );
 
-  let description;
-  let help = redent(
-    opts.help ?
-      trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
-      generateHelp( {
-        schema, usage, defaultCommand, commands, command, commandSet
-      } ),
-    2
-  );
-
+  let description = !opts.description && opts.description !== false ? pkg.description : opts.description;
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
-  description = !opts.description && opts.description !== false ? pkg.description : opts.description;
-  help = ( description ? `\n  ${description}\n` : "" ) + ( help ? `\n${help}\n` : "\n" );
+
+  const generateHelp = () => {
+    const help = redent(
+      opts.help ?
+        trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
+        generateHelpHelper( {
+          schema, usage, defaultCommand, commands, command, commandSet
+        } ),
+      2
+    );
+    return ( description ? `\n  ${description}\n` : "" ) + ( help ? `\n${help}\n` : "\n" );
+  };
 
   const showHelp = code => {
-    console.log( help );
+    console.log( generateHelp() );
     process.exit( typeof code === "number" ? code : 2 );
   };
 
@@ -500,7 +501,7 @@ export default async function( _opts ) {
     config,
     configLocation,
     pkg,
-    help,
+    generateHelp,
     showHelp,
     showVersion
   };

@@ -90,7 +90,7 @@ require( "@quase/cli" ).default( {
   config, // The config object only
   configLocation, // The absolute path of the config file found or "pkg"
   pkg, // The package.json object
-  help, // The help text used with --help
+  generateHelp, // Function that returns the help text used with --help
   showHelp, // showHelp([code=2]) - Show the help text and exit with code
   showVersion, // showVersion() - Show the version text and exit
 } ) => {
