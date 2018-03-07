@@ -431,13 +431,14 @@ export default async function( _opts ) {
 
   normalizePkg( pkg );
 
-  let description = !opts.description && opts.description !== false ? pkg.description : opts.description;
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
 
   const generateHelp = () => {
+    const description = !opts.description && opts.description !== false ? pkg.description : opts.description;
+    const providedHelp = ( commandSet && commands[ command ] && commands[ command ].help ) || opts.help;
     const help = redent(
-      opts.help ?
-        trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
+      providedHelp ?
+        trimNewlines( providedHelp.replace( /\t+\n*$/, "" ) ) :
         generateHelpHelper( {
           schema, usage, defaultCommand, commands, command, commandSet
         } ),

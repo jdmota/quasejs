@@ -1,5 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`cli accept help for subcommand 1`] = `
+"
+  Description
+
+  Custom subcommand help
+"
+`;
+
 exports[`cli basic 1`] = `
 "
   Description

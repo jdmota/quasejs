@@ -751,4 +751,36 @@ describe( "cli", () => {
 
   } );
 
+  it( "accept help for subcommand", async() => {
+
+    const { generateHelp } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "fooCommand" ],
+      usage: "$ bin <command> [options]",
+      commands: {
+        fooCommand: {
+          description: "foo command description",
+          help: "Custom subcommand help",
+          schema: {
+            number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
+            unicorn: { alias: "u", optional: true, description: "unicorn description" },
+            meow: { type: "string", default: "dog" },
+            boolean: { type: "boolean", default: true, description: "boolean description" },
+          }
+        }
+      },
+      schema: {},
+      notifier: false
+    } );
+
+    expect( generateHelp() ).toMatchSnapshot();
+
+  } );
+
 } );
