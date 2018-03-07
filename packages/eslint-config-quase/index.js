@@ -2,10 +2,24 @@
 
 module.exports = {
   env: {
-    es6: true,
-    "jest/globals": true
+    es6: true
   },
   extends: [ "eslint:recommended", "plugin:flowtype/recommended", "plugin:import/recommended", "plugin:node/recommended" ],
+  overrides: [
+    {
+      env: {
+        "jest/globals": true
+      },
+      files: [ "**/test/**/*.js" ],
+      plugins: [ "jest" ],
+      rules: {
+        "jest/no-focused-tests": "error",
+        "jest/prefer-to-have-length": "error",
+        "jest/valid-describe": "error",
+        "jest/valid-expect": "error"
+      }
+    }
+  ],
   parser: "babel-eslint",
   parserOptions: {
     ecmaFeatures: {
@@ -14,7 +28,7 @@ module.exports = {
     ecmaVersion: 8,
     sourceType: "module"
   },
-  plugins: [ "flowtype", "import", "jest", "node" ],
+  plugins: [ "flowtype", "import", "node" ],
   rules: {
     "accessor-pairs": "error",
     "array-bracket-spacing": [
