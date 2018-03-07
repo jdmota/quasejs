@@ -105,7 +105,7 @@ describe( "builder", () => {
         if ( config._warn ) {
           expect( warnings.join( "|" ) ).toBe( config._warn );
         } else {
-          expect( warnings.length ).toBe( 0 );
+          expect( warnings ).toHaveLength( 0 );
         }
       }
 
