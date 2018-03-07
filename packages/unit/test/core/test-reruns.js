@@ -71,7 +71,7 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      expect( times.length ).toBe( 2 );
+      expect( times ).toHaveLength( 2 );
       expect( times[ 1 ] - times[ 0 ] >= 100 ).toBe( true );
       expect( results.pop().status ).toBe( "passed" );
     } );

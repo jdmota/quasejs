@@ -25,7 +25,7 @@ describe( "unit", () => {
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
       expect( results[ 5 ].errors[ 0 ].message ).toBe( "error" );
-      expect( results[ 5 ].errors.length ).toBe( 1 );
+      expect( results[ 5 ].errors ).toHaveLength( 1 );
       expect( results.pop().status ).toBe( "failed" );
     } );
 
@@ -49,10 +49,10 @@ describe( "unit", () => {
     } );
 
     return runner.run().then( () => {
-      expect( times.length ).toBe( 2 );
+      expect( times ).toHaveLength( 2 );
       expect( times[ 1 ] - times[ 0 ] >= 100 ).toBe( true );
       expect( results[ 5 ].errors[ 0 ].message ).toBe( "error" );
-      expect( results[ 5 ].errors.length ).toBe( 1 );
+      expect( results[ 5 ].errors ).toHaveLength( 1 );
       expect( results.pop().status ).toBe( "failed" );
     } );
 
@@ -246,7 +246,7 @@ describe( "unit", () => {
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
       expect( results[ 5 ].errors[ 0 ].message ).toBe( "error" );
-      expect( results[ 5 ].errors.length ).toBe( 1 );
+      expect( results[ 5 ].errors ).toHaveLength( 1 );
       expect( results.pop().status ).toBe( "failed" );
     } );
 

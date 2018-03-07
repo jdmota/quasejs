@@ -121,8 +121,8 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
-      expect( results[ 3 ].tests.length ).toEqual( 1 );
-      expect( results[ 3 ].childSuites.length ).toBe( 1 );
+      expect( results[ 3 ].tests ).toHaveLength( 1 );
+      expect( results[ 3 ].childSuites ).toHaveLength( 1 );
       expect( results[ 3 ].testCounts.total ).toBe( 5 );
 
       delete results[ 21 ].defaultStack;

@@ -212,7 +212,7 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
-      expect( results.length ).toBe( 16 );
+      expect( results ).toHaveLength( 16 );
       expect( results.pop().status ).toBe( "skipped" );
     } );
 
@@ -254,7 +254,7 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
-      expect( results.length ).toBe( 8 );
+      expect( results ).toHaveLength( 8 );
       expect( results[ 5 ].skipReason ).toBe( undefined );
       expect( results[ 5 ].status ).toBe( "failed" );
       expect( results.pop().status ).toBe( "failed" );
@@ -705,7 +705,7 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
-      expect( results.length ).toBe( 16 );
+      expect( results ).toHaveLength( 16 );
       expect( results[ 13 ].status ).toBe( "skipped" );
       expect( results.pop().status ).toBe( "passed" );
     } );
@@ -742,7 +742,7 @@ describe( "unit", () => {
 
     return runner.run().then( () => {
       expect( actual ).toEqual( expected );
-      expect( results.length ).toBe( 8 );
+      expect( results ).toHaveLength( 8 );
       expect( results.pop().status ).toBe( "passed" );
     } );
 
