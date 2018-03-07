@@ -1,10 +1,10 @@
 // @flow
 import { t, types, type Schema } from "./types";
-import { validateType, ValidationError, checkType } from "./validation";
+import { ValidationError, checkType } from "./validation";
 import getType from "./get-type";
 
 export function validate( schema: Schema, config: ?Object ) {
-  validateType( [], config || {}, t.object( schema ) );
+  t.object( schema ).validate( [], config || {}, {} );
 }
 
 export { applyDefaults } from "./defaults";

@@ -193,4 +193,4 @@ try {
   printError( e );
 }
 
-// yarn node packages/config/src/example
+// yarn n packages/config/src/example

@@ -1,8 +1,7 @@
 // @flow
-/* eslint-disable no-console */
-import { indent, formatTypes, formatOption, formatPathOption, format, pathToStr } from "./formating";
+import { indent, formatOption, formatPathOption, format, pathToStr } from "./formating";
 import { printWarning } from "./print";
-import { type MaybeType, types } from "./types";
+import { type SchemaProp, types } from "./types";
 import getType from "./get-type";
 
 const chalk = require( "chalk" );
@@ -55,8 +54,9 @@ export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<st
   throw new ValidationError( message );
 }
 
-export function makeExample( chain: string[], example: mixed ) {
+export function makeExample( chain: string[], { default: d, example: e }: SchemaProp ) {
   const lines = [];
+  const example = e === undefined ? d : e;
   if ( example !== undefined ) {
     lines.push( `Example:` );
     lines.push( `{` );
@@ -79,7 +79,7 @@ export function makeExample( chain: string[], example: mixed ) {
   return lines.join( "\n" );
 }
 
-export function checkType( path: string[], actualType: string, expectedType: string, example: mixed ) {
+export function checkType( path: string[], actualType: string, expectedType: string, info: SchemaProp ) {
 
   if ( actualType === expectedType ) {
     return;
@@ -90,7 +90,7 @@ export function checkType( path: string[], actualType: string, expectedType: str
     `${indent( chalk.bold.green( expectedType ) )}`,
     `but instead received:`,
     `${indent( chalk.bold.red( actualType ) )}`,
-    makeExample( path, example )
+    makeExample( path, info )
   ] );
 }
 
@@ -106,10 +106,6 @@ export function checkChoices( path: string[], value: mixed, choices: Array<mixed
     `but instead received:`,
     `${indent( chalk.bold.red( format( value ) ) )}`
   ] );
-}
-
-export function addPrefix( path: string[], key: string ) {
-  return path.length ? `${pathToStr( path )}.${key}` : key;
 }
 
 export function checkKeys( path: string[], object: any, schema: any ) {
@@ -135,7 +131,7 @@ export function checkKeys( path: string[], object: any, schema: any ) {
       checkChoices( path, value, choices );
     }
     if ( type ) {
-      validateType( path, value, type, getExample( schema[ key ] ) );
+      validateType( path, value, schema[ key ] );
     }
 
     path.pop();
@@ -143,89 +139,17 @@ export function checkKeys( path: string[], object: any, schema: any ) {
 
 }
 
-export function getExample( { default: d, example }: { default: any, example: any } ) {
-  return example === undefined ? d : example;
-}
+export function validateType( path: string[], value: any, info: SchemaProp ) {
 
-export function validateType( path: string[], value: any, type: MaybeType, example: mixed ) {
+  const { type } = info;
 
-  if ( type instanceof types.Union ) {
-    for ( const t of type.types ) {
-      try {
-        validateType( path, value, t );
-        return;
-      } catch ( e ) {
-        // Ignore
-      }
-    }
-    throw new ValidationError( [
-      `Option ${formatPathOption( path )} should be one of these types:`,
-      `${indent( chalk.bold.green( formatTypes( type.types ) ) )}`,
-      `but instead received:`,
-      `${indent( chalk.bold.red( format( value ) ) )}`,
-      makeExample( path, example )
-    ] );
-  }
-
-  const actualType = getType( value );
-
-  if ( type instanceof types.Object ) {
-
-    checkType( path, actualType, "object", example );
-
-    checkUnrecognized(
-      Object.keys( value ).map( o => addPrefix( path, o ) ),
-      type.keys.map( o => addPrefix( path, o ) )
-    );
-
-    checkKeys( path, value, type.properties );
-
+  if ( type instanceof types.Type ) {
+    type.validate( path, value, info );
     return;
-  }
-
-  if ( type instanceof types.Array ) {
-
-    checkType( path, actualType, "array", example );
-
-    if ( type.itemType ) {
-      for ( let i = 0; i < value.length; i++ ) {
-        validateType( path, value[ i ], type.itemType.type, getExample( type.itemType ) );
-      }
-    }
-
-    return;
-  }
-
-  if ( type instanceof types.Tuple ) {
-
-    if ( !Array.isArray( value ) || value.length !== type.items.length ) {
-      throw new ValidationError( [
-        `Option ${formatPathOption( path )} must be an array of ${type.items.length} items.`,
-        makeExample( path, example )
-      ] );
-    }
-
-    checkKeys( path, value, type.items );
-
-    return;
-  }
-
-  if ( type instanceof types.Value ) {
-
-    if ( value === type.value ) {
-      return;
-    }
-
-    throw new ValidationError( [
-      `Option ${formatPathOption( path )} should be:`,
-      `${indent( format( type.value ) )}`,
-      `but instead received:`,
-      `${indent( chalk.bold.red( format( value ) ) )}`
-    ] );
   }
 
   if ( typeof type === "string" ) {
-    checkType( path, actualType, type, example );
+    checkType( path, getType( value ), type, info );
     return;
   }
 

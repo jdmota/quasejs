@@ -10,6 +10,10 @@ export function indent( str: string, str2: string = "  " ) {
   return str.replace( reIndent, str2 );
 }
 
+export function addPrefix( path: string[], key: string ) {
+  return path.length ? `${pathToStr( path )}.${key}` : key;
+}
+
 export function formatTypes( list: $ReadOnlyArray<MaybeType>, separator: string = " | " ): string {
   return list.filter( Boolean ).map( x => {
     if ( typeof x === "string" ) {

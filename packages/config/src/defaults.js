@@ -107,7 +107,8 @@ function applyDefaultsHelper( info, object, src, key ) {
 
 const opt = formatPathOption;
 
-export function extractDefaults( path, { type, default: d, required, optional } ) {
+export function extractDefaults( path, info ) {
+  const { type, default: d, required, optional } = info;
   if ( required && optional ) {
     throw new Error( `[Schema] Don't use "required" and "optional" in ${opt( path )}` );
   }
@@ -121,7 +122,7 @@ export function extractDefaults( path, { type, default: d, required, optional } 
     }
     if ( type ) {
       try {
-        validateType( path, d, type );
+        validateType( path, d, info );
       } catch ( e ) {
         throw new Error( `[Schema] "default" does not match the type in ${opt( path )}` );
       }
@@ -138,25 +139,8 @@ export function extractDefaults( path, { type, default: d, required, optional } 
     if ( type === "object" ) {
       return {};
     }
-    if ( type instanceof types.Tuple ) {
-      const schema = type.items;
-      const defaults = [];
-      for ( let i = 0; i < schema.length; i++ ) {
-        path.push( i + "" );
-        defaults[ i ] = extractDefaults( path, schema[ i ] );
-        path.pop();
-      }
-      return defaults;
-    }
-    if ( type instanceof types.Object ) {
-      const schema = type.properties;
-      const defaults = {};
-      for ( const k in schema ) {
-        path.push( k );
-        defaults[ k ] = extractDefaults( path, schema[ k ] );
-        path.pop();
-      }
-      return defaults;
+    if ( type instanceof types.Tuple || type instanceof types.Object ) {
+      return type.defaults( path );
     }
   }
   if ( !optional ) {
