@@ -51,23 +51,6 @@ export { exec, tasks };
 
 export async function publish( opts ) {
 
-  opts = Object.assign( {
-    preview: false,
-    cwd: process.cwd(),
-    folder: process.cwd(),
-    git: true
-  }, opts );
-
-  opts.git = Object.assign( {
-    branch: "master",
-    commitAndTag: true,
-    message: "",
-    tagPrefix: "",
-    signTag: false,
-    commitHooks: true,
-    pushHooks: true
-  }, opts.git === true ? null : opts.git );
-
   defaultTasks( opts );
 
   opts.folder = path.resolve( opts.folder );

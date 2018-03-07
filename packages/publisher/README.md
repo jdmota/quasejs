@@ -52,6 +52,8 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### bumpVersion
 
+### commitAndTag
+
 ### rootAfterVersion
 
 ### rootBeforePublish
