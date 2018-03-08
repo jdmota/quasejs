@@ -164,6 +164,13 @@ Object {
 }
 `;
 
+exports[`apply defaults 16`] = `
+Object {
+  "minify": true,
+  "mode": "production",
+}
+`;
+
 exports[`validate 1`] = `
 Array [
   Array [

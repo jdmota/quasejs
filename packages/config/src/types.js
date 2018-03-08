@@ -7,7 +7,7 @@ import { ValidationError, makeExample, validateType, checkType, checkUnrecognize
 const chalk = require( "chalk" );
 
 class Type {
-  defaults( path: string[] ) { // eslint-disable-line
+  defaults( path: string[], dest: Object ) { // eslint-disable-line
     return undefined;
   }
   validate( path: string[], value: any, info: SchemaProp ) { // eslint-disable-line
@@ -63,12 +63,12 @@ class TObject extends Type {
     this.properties = properties;
     this.keys = Object.keys( properties );
   }
-  defaults( path: string[] = [] ) {
+  defaults( path: string[] = [], dest: Object ) {
     const schema = this.properties;
     const defaults = {};
     for ( const k in schema ) {
       path.push( k );
-      defaults[ k ] = extractDefaults( path, schema[ k ] );
+      defaults[ k ] = extractDefaults( path, schema[ k ], dest );
       path.pop();
     }
     return defaults;
@@ -116,12 +116,12 @@ class TTuple extends Type {
     super();
     this.items = items;
   }
-  defaults( path: string[] = [] ) {
+  defaults( path: string[] = [], dest: Object ) {
     const schema = this.items;
     const defaults = [];
     for ( let i = 0; i < schema.length; i++ ) {
       path.push( i + "" );
-      defaults[ i ] = extractDefaults( path, schema[ i ] );
+      defaults[ i ] = extractDefaults( path, schema[ i ], dest );
       path.pop();
     }
     return defaults;

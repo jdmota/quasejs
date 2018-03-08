@@ -1,4 +1,4 @@
-import { t, validate, printError, applyDefaults, getConfig } from "../src";
+import { t, types, validate, printError, applyDefaults, getConfig } from "../src";
 
 const stripAnsi = require( "strip-ansi" ); // eslint-disable-line node/no-extraneous-require
 
@@ -470,6 +470,27 @@ it( "apply defaults", () => {
     }
   }, {
     obj: true
+  } );
+
+  class CustomType extends types.Type {
+    defaults( path, dest ) {
+      if ( dest.mode === "production" ) {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  d( {
+    mode: {
+      type: "string",
+      optional: true
+    },
+    minify: {
+      type: new CustomType()
+    }
+  }, {
+    mode: "production"
   } );
 
 } );
