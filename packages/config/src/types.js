@@ -10,7 +10,7 @@ class Type {
   defaults( path: string[], dest: Object ) { // eslint-disable-line
     return undefined;
   }
-  validate( path: string[], value: any, info: SchemaProp ) { // eslint-disable-line
+  validate( path: string[], value: any, info: SchemaProp, dest: Object ) { // eslint-disable-line
     throw new Error( "abstract" );
   }
 }
@@ -36,10 +36,10 @@ class TUnion extends Type {
     super();
     this.types = types;
   }
-  validate( path: string[], value: any, info: SchemaProp ) {
+  validate( path: string[], value: any, info: SchemaProp, dest: Object ) {
     for ( const type of this.types ) {
       try {
-        validateType( path, value, { type } );
+        validateType( path, value, { type }, dest );
         return;
       } catch ( e ) {
         // Ignore
@@ -73,7 +73,7 @@ class TObject extends Type {
     }
     return defaults;
   }
-  validate( path: string[], value: any, info: SchemaProp ) {
+  validate( path: string[], value: any, info: SchemaProp, dest: Object ) {
 
     checkType( path, getType( value ), "object", info );
 
@@ -82,7 +82,7 @@ class TObject extends Type {
       this.keys.map( o => addPrefix( path, o ) )
     );
 
-    checkKeys( path, value, this.properties );
+    checkKeys( path, value, this.properties, dest );
   }
 }
 
@@ -95,7 +95,7 @@ class TArray extends Type {
   defaults() {
     return [];
   }
-  validate( path: string[], value: any, info: SchemaProp ) {
+  validate( path: string[], value: any, info: SchemaProp, dest: Object ) {
     checkType( path, getType( value ), "array", info );
 
     const itemInfo = this.itemType;
@@ -103,7 +103,7 @@ class TArray extends Type {
     if ( itemInfo ) {
       for ( let i = 0; i < value.length; i++ ) {
         path.push( i + "" );
-        validateType( path, value[ i ], itemInfo );
+        validateType( path, value[ i ], itemInfo, dest );
         path.pop();
       }
     }
@@ -126,7 +126,7 @@ class TTuple extends Type {
     }
     return defaults;
   }
-  validate( path: string[], value: any, info: SchemaProp ) {
+  validate( path: string[], value: any, info: SchemaProp, dest: Object ) {
     if ( !Array.isArray( value ) || value.length !== this.items.length ) {
       throw new ValidationError( [
         `Option ${formatPathOption( path )} must be an array of ${this.items.length} items.`,
@@ -134,7 +134,7 @@ class TTuple extends Type {
       ] );
     }
 
-    checkKeys( path, value, this.items );
+    checkKeys( path, value, this.items, dest );
   }
 }
 

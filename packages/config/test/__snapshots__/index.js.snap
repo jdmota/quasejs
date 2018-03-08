@@ -398,3 +398,14 @@ Array [
   ],
 ]
 `;
+
+exports[`validate 16`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  foo and bar should not be set at the same time
+",
+  ],
+]
+`;

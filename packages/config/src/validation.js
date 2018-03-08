@@ -109,7 +109,7 @@ export function checkChoices( path: string[], value: mixed, choices: Array<mixed
   ] );
 }
 
-export function checkKeys( path: string[], object: any, schema: any ) {
+export function checkKeys( path: string[], object: any, schema: any, dest: Object ) {
 
   for ( const key in schema ) {
     path.push( key );
@@ -132,7 +132,7 @@ export function checkKeys( path: string[], object: any, schema: any ) {
       checkChoices( path, value, choices );
     }
     if ( type ) {
-      validateType( path, value, schema[ key ] );
+      validateType( path, value, schema[ key ], dest );
     }
 
     path.pop();
@@ -140,12 +140,12 @@ export function checkKeys( path: string[], object: any, schema: any ) {
 
 }
 
-export function validateType( path: string[], value: any, info: SchemaProp ) {
+export function validateType( path: string[], value: any, info: SchemaProp, dest: Object ) {
 
   const { type } = info;
 
   if ( type instanceof types.Type ) {
-    type.validate( path, value, info );
+    type.validate( path, value, info, dest );
     return;
   }
 

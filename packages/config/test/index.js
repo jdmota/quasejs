@@ -1,4 +1,4 @@
-import { t, types, validate, printError, applyDefaults, getConfig } from "../src";
+import { t, types, validate, printError, applyDefaults, getConfig, ValidationError } from "../src";
 
 const stripAnsi = require( "strip-ansi" ); // eslint-disable-line node/no-extraneous-require
 
@@ -257,6 +257,26 @@ it( "validate", () => {
           example: 1
         }
       } )
+    }
+  } );
+
+  class CustomType extends types.Type {
+    validate( path, value, info, dest ) {
+      if ( dest.bar === true ) {
+        throw new ValidationError( "foo and bar should not be set at the same time" );
+      }
+    }
+  }
+
+  v( {
+    foo: true,
+    bar: true
+  }, {
+    foo: {
+      type: new CustomType()
+    },
+    bar: {
+      type: "boolean"
     }
   } );
 

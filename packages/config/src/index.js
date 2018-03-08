@@ -4,7 +4,8 @@ import { ValidationError, checkType } from "./validation";
 import getType from "./get-type";
 
 export function validate( schema: Schema, config: ?Object ) {
-  t.object( schema ).validate( [], config || {}, {} );
+  config = config || {};
+  t.object( schema ).validate( [], config, {}, config );
 }
 
 export { applyDefaults } from "./defaults";
