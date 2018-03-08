@@ -1,6 +1,5 @@
 import { t, types } from "./types";
 import { formatPathOption } from "./formating";
-import { validateType } from "./validation";
 
 const toString = ( {} ).toString;
 
@@ -119,13 +118,6 @@ export function extractDefaults( path, info, dest ) {
   } else {
     if ( required ) {
       throw new Error( `[Schema] Don't use "required" with "default" in ${opt( path )}` );
-    }
-    if ( type ) {
-      try {
-        validateType( path, d, info );
-      } catch ( e ) {
-        throw new Error( `[Schema] "default" does not match the type in ${opt( path )}` );
-      }
     }
     return d;
   }
