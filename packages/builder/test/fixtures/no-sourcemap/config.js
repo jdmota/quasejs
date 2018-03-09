@@ -1,5 +1,7 @@
 module.exports = {
-  sourceMaps: false,
+  optimization: {
+    sourceMaps: false
+  },
   _out: [
     "foo"
   ]

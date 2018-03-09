@@ -6,10 +6,12 @@ const EventEmitter = require( "events" );
 
 function run( options ) {
   let reporter, emitter;
-  options = options || {};
-  options.warn = options.warn || ( w => emitter.emit( "warning", w ) );
 
-  const builder = new Builder( options );
+  const builder = new Builder(
+    options,
+    w => emitter.emit( "warning", w )
+  );
+
   const { plugin: Reporter, options: reporterOpts } = builder.reporter;
 
   if ( builder.watch ) {

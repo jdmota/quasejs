@@ -1,3 +1,5 @@
 module.exports = {
-  hashing: true
+  optimization: {
+    hashing: true
+  }
 };

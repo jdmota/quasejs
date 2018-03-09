@@ -1,16 +1,12 @@
 #!/usr/bin/env node
 
+const schema = require( "../dist/options" ).schema;
+
 require( "@quase/cli" ).default( {
   usage: "$ quase-builder [options]",
   configFiles: "quase-builder-config.js",
   configKey: "quase-builder",
-  schema: {
-    watch: {
-      type: "boolean",
-      alias: "w",
-      description: "Watch files for changes and re-build"
-    }
-  }
+  schema
 } ).then( ( { options } ) => {
   require( "../dist" ).default( options );
 } );

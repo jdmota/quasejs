@@ -1,5 +1,7 @@
 module.exports = {
-  sourceMaps: "inline",
+  optimization: {
+    sourceMaps: "inline"
+  },
   _out: [
     "foo"
   ]

@@ -32,14 +32,11 @@ describe( "builder", () => {
       const warnings = [];
 
       const fixturePath = path.resolve( FIXTURES, folder );
-      const config = transformConfig( require( path.resolve( fixturePath, "config.js" ) ), fixturePath );
 
+      let config = require( path.resolve( fixturePath, "config.js" ) );
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "files";
       config.dest = config.dest || "atual";
-      config.warn = w => {
-        warnings.push( w );
-      };
       config.fs = {
         mkdirp: () => {},
         writeFile: ( file, content ) => {
@@ -52,8 +49,11 @@ describe( "builder", () => {
           assets[ f ] = content;
         }
       };
+      config = transformConfig( config, fixturePath );
 
-      builder = new Builder( config );
+      builder = new Builder( config, w => {
+        warnings.push( w );
+      } );
 
       function success() {
         if ( config._error ) {

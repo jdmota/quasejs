@@ -1,3 +1,4 @@
+import { schema } from "../src/options";
 import JsLanguage from "../src/languages/js";
 import babelPlugin from "../src/plugins/babel";
 
@@ -32,12 +33,14 @@ function jsPlugin( options ) {
   };
 }
 
+const { applyDefaults } = require( "@quase/config" );
+
 export default function( config, fixturePath ) {
-  config = config || {};
   config.cwd = fixturePath;
-  config.sourceMaps = config.sourceMaps === undefined ? true : config.sourceMaps;
+  config.optimization = Object.assign( {}, config.optimization );
+  config.optimization.sourceMaps = config.optimization.sourceMaps === undefined ? true : config.optimization.sourceMaps;
   config.plugins = config.plugins || [];
   config.plugins.push( [ babelPlugin, Object.assign( {}, BABEL_OPTS, config.babelOpts ) ] );
   config.plugins.push( [ jsPlugin, { resolve: config.resolve } ] );
-  return config;
+  return applyDefaults( schema, config );
 }

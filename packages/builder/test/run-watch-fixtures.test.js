@@ -22,23 +22,20 @@ describe( "watcher", () => {
       const fixturePath = path.resolve( FIXTURES, folder );
       const filesPath = path.resolve( fixturePath, "files" );
       const workingPath = path.resolve( fixturePath, "working" );
+      const assets = {};
 
       await fs.emptyDir( workingPath );
       await fs.copy( filesPath, workingPath );
 
-      const config = transformConfig( require( path.resolve( fixturePath, "config.js" ) ), fixturePath );
-
+      let config = require( path.resolve( fixturePath, "config.js" ) );
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "working";
       config.dest = config.dest || "atual";
+      config.reporter = [ "default", { hideDates: true } ];
       config.watch = true;
-      config._hideDates = true;
       config.watchOptions = {
         aggregateTimeout: 1
       };
-
-      const assets = {};
-
       config.fs = {
         mkdirp: () => {},
         writeFile: ( file, content ) => {
@@ -47,6 +44,7 @@ describe( "watcher", () => {
           assets[ path.relative( fixturePath, file ).replace( /\\/g, "/" ) ] = content;
         }
       };
+      config = transformConfig( config, fixturePath );
 
       let output = "";
 

@@ -98,7 +98,19 @@ export default class Module {
         throw this.error( "Empty import", loc );
       }
 
-      let path = await builder.applyPluginPhaseFirst( "resolve", null, request, this );
+      let path;
+
+      for ( const { plugin } of builder.plugins ) {
+        const fn = plugin.resolve;
+        if ( fn ) {
+          // $FlowFixMe
+          const result = await fn( request, this, builder );
+          if ( result ) {
+            path = result;
+            break;
+          }
+        }
+      }
 
       if ( !path ) {
         throw this.error( `Could not resolve ${request}`, loc );

@@ -114,22 +114,28 @@ export type Plugin = {
 };
 
 export type Options = {
+  mode: "production" | "development",
   context: string,
   entries: string[],
   dest: string,
-  cwd?: ?string,
-  sourceMaps?: ?boolean | "inline",
-  hashing?: ?boolean,
-  publicPath?: ?string,
-  warn?: ?Function,
-  fs?: ?MinimalFS,
-  cli?: ?Object,
-  reporter?: ?string | Function,
-  watch?: ?boolean,
-  watchOptions?: ?Object,
-  plugins?: ?ProvidedPluginsArr<Object => Plugin>,
-  performance?: ?PerformanceOpts,
-  serviceWorker?: ?Object,
-  cleanBeforeBuild?: ?boolean,
-  _hideDates?: ?boolean
+  cwd: string,
+  publicPath: string,
+  warn: Function,
+  fs: MinimalFS,
+  cli: Object,
+  reporter: ProvidedPluginsArr<Function>,
+  watch: boolean,
+  watchOptions: Object,
+  plugins: ProvidedPluginsArr<Object => Plugin>,
+  performance: PerformanceOpts,
+  optimization: {
+    hashId: boolean,
+    hashing: boolean,
+    sourceMaps: boolean | "inline",
+    /* minification: boolean,
+    concatenateModules: boolean,
+    treeShaking: boolean, */
+    cleanup: boolean
+  },
+  serviceWorker: Object
 };

@@ -6,13 +6,12 @@ const prettyBytes = require( "pretty-bytes" );
 
 export default class Reporter {
 
-  constructor( _, builder, emitter ) {
-    this.options = builder.options;
+  constructor( options, builder, emitter ) {
     this.builder = builder;
     this.emitter = emitter;
     this.time = undefined;
     this.first = true;
-    this.hideDates = !!this.options._hideDates;
+    this.hideDates = !!options.hideDates;
     this.codeFrameOpts = this.builder.cli.codeFrame;
     this.log = process.stdout.write.bind( process.stdout );
 

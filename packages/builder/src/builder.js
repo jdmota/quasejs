@@ -1,5 +1,6 @@
 // @flow
 import hash from "./utils/hash";
+import defaultPlugin from "./plugins/default";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
 import processGraph from "./graph";
 import type {
@@ -9,18 +10,19 @@ import type {
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import FileSystem from "./filesystem";
+import Reporter from "./reporter";
 import Module, { type ModuleArg } from "./module";
-import validateOptions from "./options";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
+const { ValidationError } = require( "@quase/config" );
+const { getPlugins, getOnePlugin } = require( "@quase/get-plugins" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
 
 export default class Builder {
 
-  +options: Object;
   +entries: string[];
   +context: string;
   +dest: string;
@@ -45,29 +47,30 @@ export default class Builder {
   +usedIds: Set<string>;
   +promises: Promise<void>[];
 
-  constructor( _opts: Options ) {
+  constructor( options: Options, warn: Function ) {
 
-    const options = this.options = validateOptions( _opts );
-
-    this.cwd = options.cwd;
-    this.context = options.context;
-    this.dest = options.dest;
-    this.publicPath = options.publicPath;
+    this.cwd = path.resolve( options.cwd );
+    this.context = resolvePath( options.context, options.cwd );
+    this.dest = resolvePath( options.dest, options.cwd );
+    this.entries = options.entries.map( e => resolvePath( e, this.context ) );
+    this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
+    this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
     this.fs = options.fs;
-    this.sourceMaps = options.sourceMaps;
-    this.hashing = options.hashing;
-    this.warn = options.warn;
+    this.sourceMaps = options.optimization.sourceMaps;
+    this.hashing = options.optimization.hashing;
+    this.cleanBeforeBuild = options.optimization.cleanup;
     this.cli = options.cli;
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
-    this.reporter = options.reporter;
-    this.cleanBeforeBuild = options.cleanBeforeBuild;
     this.performance = options.performance;
-
     this.fileSystem = new FileSystem();
+    this.warn = warn;
 
-    this.plugins = options.plugins.map(
+    this.plugins = getPlugins( options.plugins.concat( defaultPlugin ) ).map(
       ( { name, plugin, options } ) => {
+        if ( typeof plugin !== "function" ) {
+          throw new ValidationError( `Expected plugin ${name ? name + " " : ""}to be a function` );
+        }
         const p = plugin( options );
         return {
           name: p.name || name,
@@ -75,8 +78,6 @@ export default class Builder {
         };
       }
     );
-
-    this.entries = options.entries.map( e => resolvePath( e, this.context ) );
 
     this.serviceWorker = options.serviceWorker;
     this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );

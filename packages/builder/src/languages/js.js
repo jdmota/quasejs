@@ -274,7 +274,10 @@ export default class JsLanguage extends Language {
     const opts = {
       babelrc: false,
       parserOpts: {
-        sourceType: "module"
+        sourceType: "module",
+        plugins: [
+          "dynamicImport"
+        ]
       },
       filename: module.normalized,
       filenameRelative: module.path,
