@@ -8,6 +8,7 @@
     // "istanbul",
     // [ "module:fast-async", { "spec": true } ],
     "@babel/plugin-transform-flow-strip-types",
+    "@babel/plugin-proposal-object-rest-spread",
     [ "@babel/plugin-proposal-class-properties", { "loose": true } ]
   ],
   "ignore": [

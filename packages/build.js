@@ -19,4 +19,6 @@ console.log( `Running build in ${pkg}...` );
 
 fs.emptyDir( dist ).then( () => execa( "babel", [ src, "--out-dir", dist, "--copy-files" ], {
   stdio: "inherit"
-} ) );
+} ) ).catch( () => {
+  process.exitCode = 1;
+} );
