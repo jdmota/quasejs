@@ -176,14 +176,12 @@ export default ( { types: t }, options ) => {
 
       this.visitorReferencedIdentifier = path => {
         const { node, scope } = path;
-        const name = node.name;
-        const remaps = this.remaps[ name ] || [];
+        const { name } = node;
 
-        for ( let i = 0; i < remaps.length; i++ ) {
-          const [ requireScope, member ] = remaps[ i ];
-          if ( requireScope.getBinding( name ) === scope.getBinding( name ) ) {
-            remapImport( path, member );
-            return;
+        if ( this.remaps[ name ] ) {
+          const bind = scope.getBinding( name );
+          if ( bind && bind.__quasePlugin ) {
+            remapImport( path, bind.__quasePlugin );
           }
         }
       };
@@ -255,6 +253,8 @@ export default ( { types: t }, options ) => {
         const { specifiers } = node;
         const uid = this.addRequire( path, specifiers.length === 0 );
 
+        const locals = [];
+
         for ( let i = 0; i < specifiers.length; i++ ) {
           const specifier = specifiers[ i ];
 
@@ -268,15 +268,10 @@ export default ( { types: t }, options ) => {
               const member = t.memberExpression( t.identifier( uid ), t.identifier( importedName ) );
               member.loc = specifier.loc;
 
-              if ( !scope.bindings[ localName ] ) {
-                scope.moveBindingTo( localName, scope );
-              }
+              const specifierPath = path.get( `specifiers.${i}` );
+              locals.push( [ localName, specifierPath, member ] );
 
-              if ( !this.remaps[ localName ] ) {
-                this.remaps[ localName ] = [];
-              }
-              this.remaps[ localName ].push( [ scope, member ] );
-
+              this.remaps[ localName ] = true;
               break;
             }
             default: { // "ImportNamespaceSpecifier"
@@ -290,6 +285,13 @@ export default ( { types: t }, options ) => {
         }
 
         path.remove();
+
+        // path.remove() removes bindings
+        // https://github.com/babel/babel/commit/4887d81929b7b598abf2e04b77c95586b5230b35
+        for ( const [ localName, specifierPath, member ] of locals ) {
+          scope.registerBinding( "const", specifierPath );
+          scope.bindings[ localName ].__quasePlugin = member;
+        }
 
       },
 

@@ -29,8 +29,10 @@ describe( "babel transform modules", () => {
         config = {};
       }
 
+      config.babelrc = false;
+      config.filename = file;
+
       config.parserOpts = Object.assign( {
-        babelrc: false,
         sourceType: "module",
         allowImportExportEverywhere: true,
         plugins: [ "dynamicImport", "exportExtensions", "exportDefaultFrom", "exportNamespaceFrom", "jsx" ]
