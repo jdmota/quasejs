@@ -300,6 +300,7 @@ function handleArgs( opts ) {
   if ( opts.configFiles ) {
     yargsOpts.string.push( "config" );
     yargsOpts.alias.c = "config";
+    allAlias.add( "c" );
   }
 
   if ( !opts.inferType ) {
@@ -326,7 +327,8 @@ function handleArgs( opts ) {
       key = chain.join( "." );
 
       if ( argType ) {
-        const acceptedTypes = argType instanceof types.Union ? argType.types : [ argType ];
+        const wasUnion = argType instanceof types.Union;
+        const acceptedTypes = wasUnion ? argType.types : [ argType ];
 
         for ( const t of acceptedTypes ) {
           if ( t instanceof types.Object ) {
@@ -336,8 +338,14 @@ function handleArgs( opts ) {
           } else {
             const arr = yargsOpts[ type instanceof types.Array ? "array" : t ];
             if ( Array.isArray( arr ) ) {
-              arr.push( key );
-              yargsOpts.default[ key ] = DEFAULT;
+              if ( t === "boolean" ) {
+                if ( !wasUnion ) {
+                  arr.push( key );
+                  yargsOpts.default[ key ] = DEFAULT;
+                }
+              } else {
+                arr.push( key );
+              }
             }
           }
         }
@@ -477,6 +485,10 @@ export default async function( _opts ) {
   }
 
   const { config, location: configLocation } = await configJob;
+
+  if ( opts.configFiles ) {
+    delete flags.config;
+  }
 
   const options = applyDefaults( schema, flags, config );
 

@@ -238,6 +238,44 @@ describe( "cli", () => {
 
   } );
 
+  it( "dont set default value on flags", async() => {
+
+    const { flags } = await cli( {
+      validate: false,
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1"
+      },
+      argv: [ "" ],
+      schema: {
+        array: {
+          type: "array"
+        },
+        string: {
+          type: "string",
+          optional: true
+        },
+        number: {
+          type: "number",
+          optional: true
+        },
+        boolean: {
+          type: "boolean"
+        },
+        union: {
+          type: t.union( [ "boolean", "array" ] ),
+          optional: true
+        }
+      },
+      help: "",
+      notifier: false
+    } );
+
+    expect( flags ).toEqual( {} );
+
+  } );
+
   it( "alias", async() => {
 
     const { options } = await cli( {
@@ -436,7 +474,7 @@ describe( "cli", () => {
 
   it( "config", async() => {
 
-    const { config, configLocation } = await cli( {
+    const { options, config, configLocation } = await cli( {
       validate: false,
       cwd: __dirname,
       pkg: {
@@ -449,6 +487,8 @@ describe( "cli", () => {
       notifier: false
     } );
 
+    expect( options.config ).toBe( undefined );
+    expect( options.c ).toBe( undefined );
     expect( config.iAmTheConfigFile2 ).toBe( "yes" );
     expect( typeof configLocation ).toBe( "string" );
 
