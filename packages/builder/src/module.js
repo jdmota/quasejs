@@ -54,7 +54,7 @@ export default class Module {
     this.dest = resolvePath( this.normalized, builder.dest );
 
     this.id = this.normalized;
-    this.hashId = hashName( this.id, builder.usedIds, 5 );
+    this.hashId = builder.optimization.hashId ? hashName( this.id, builder.usedIds, 5 ) : this.id;
 
     this.isEntry = !!isEntry;
     this.loadResult = loadResult;
@@ -105,7 +105,7 @@ export default class Module {
         if ( fn ) {
           // $FlowFixMe
           const result = await fn( request, this, builder );
-          if ( result ) {
+          if ( typeof result === "string" ) {
             path = result;
             break;
           }

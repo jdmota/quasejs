@@ -13,8 +13,8 @@ import extractNames from "./ast-extract-names";
 const path = require( "path" );
 const nodeResolve = require( "resolve" );
 const babel = require( "@babel/core" );
+const generate = require( "@babel/generator" ).default;
 const { joinSourceMaps } = require( "@quase/source-map" );
-const MagicString = require( "magic-string" );
 
 const moduleArgs = "$e,$r,$i,$g,$a".split( "," );
 
@@ -40,10 +40,11 @@ export default class JsLanguage extends Language {
   +dataToString: string;
   +ast: ?Object;
   +deps: NotResolvedDep[];
-  lastRender: ?Object;
   +_dynamicImports: Object[];
   +_importNames: ImportedName[];
   +_exportNames: ExportedName[];
+  _transformCache: ?Object;
+  _renderCache: ?Object;
 
   constructor( options: Object, module: Module, builder: Builder ) {
     super( options, module, builder );
@@ -52,15 +53,17 @@ export default class JsLanguage extends Language {
     this.ast = module.ast;
     this.deps = [];
 
-    this.lastRender = null;
     this._dynamicImports = [];
     this._importNames = [];
     this._exportNames = [];
 
+    this._transformCache = null;
+    this._renderCache = null;
+
     const self: any = this;
     self.extractDep = self.extractDep.bind( this );
 
-    this.render( module, builder );
+    this.transform( module );
   }
 
   addDep( source: { value: string, loc: ?{ start: Loc } }, async: ?boolean ) {
@@ -263,9 +266,9 @@ export default class JsLanguage extends Language {
     };
   }
 
-  render( module: Module, builder: Builder ) {
-    if ( this.lastRender ) {
-      return this.lastRender;
+  transform( module: Module ) {
+    if ( this._transformCache ) {
+      return this._transformCache;
     }
 
     const varsUsed = {};
@@ -281,24 +284,56 @@ export default class JsLanguage extends Language {
       },
       filename: module.normalized,
       filenameRelative: module.path,
-      sourceMaps: !!builder.sourceMaps, // sourceMaps can be "inline", just make sure we pass a boolean to babel
+      code: false,
+      sourceMaps: false,
       plugins: [
         [ babelPluginModules, {
           varsUsed,
           extractor: this.extractDep,
-          resolveModuleSource( source ) {
-            const key = `__quase_builder_import_${source}__`;
-            imports.push( { source, key } );
-            return key;
+          extractModuleSource( stringLiteral ) {
+            imports.push( {
+              source: stringLiteral.value,
+              stringLiteral
+            } );
           }
         } ]
       ]
     };
 
-    this.lastRender = this.ast ? babel.transformFromAst( this.ast, this.dataToString, opts ) : babel.transform( this.dataToString, opts );
-    this.lastRender.varsUsed = varsUsed;
-    this.lastRender.imports = imports;
-    return this.lastRender;
+    this._transformCache = this.ast ? babel.transformFromAst( this.ast, this.dataToString, opts ) : babel.transform( this.dataToString, opts );
+    this._transformCache.varsUsed = varsUsed;
+    this._transformCache.imports = imports;
+    return this._transformCache;
+  }
+
+  render( module: Module, builder: Builder ) {
+    const { ast, varsUsed, imports } = this.transform( module );
+    let regenerate = false;
+
+    for ( const { source, stringLiteral } of imports ) {
+      const m = module.getModuleByRequest( builder, source );
+      const newSource = m ? m.hashId : source;
+      if ( newSource !== stringLiteral.value ) {
+        regenerate = true;
+        stringLiteral.value = newSource;
+      }
+    }
+
+    if ( this._renderCache && !regenerate ) {
+      return this._renderCache;
+    }
+
+    const opts = {
+      filename: module.normalized,
+      sourceFileName: module.path,
+      sourceMaps: !!builder.sourceMaps, // sourceMaps can be "inline", just make sure we pass a boolean to babel
+      comments: !builder.optimization.minify,
+      minified: builder.optimization.minify
+    };
+
+    this._renderCache = generate( ast, opts, this.dataToString );
+    this._renderCache.varsUsed = varsUsed;
+    return this._renderCache;
   }
 
   async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets ) {
@@ -324,63 +359,18 @@ export default class JsLanguage extends Language {
         throw new Error( `Module ${module.id} is not of type 'js'` );
       }
 
-      const { code, map, varsUsed, imports } = lang.render( module, builder );
-      let finalCode, finalMap;
-
-      if ( imports.length ) {
-
-        // FIXME this might take too long for some code (all babel helpers, for example)
-
-        let finds = [];
-        for ( const { source, key } of imports ) {
-          let index;
-          while ( ( index = code.indexOf( key, index + 1 ) ) > -1 ) {
-            finds.push( {
-              source,
-              key,
-              index
-            } );
-          }
-        }
-        finds = finds.sort( ( a, b ) => a.index - b.index );
-
-        const sourceObj = new MagicString( code );
-        let i = finds.length;
-
-        while ( i-- ) {
-          const { source, key, index } = finds[ i ];
-          const m = module.getModuleByRequest( builder, source );
-          const replacement = m ? m.hashId : source;
-          sourceObj.overwrite( index, index + key.length, replacement, { storeName: false } );
-        }
-
-        if ( map ) {
-          const map2 = sourceObj.generateMap( {
-            hires: true
-          } );
-          map2.sources[ 0 ] = module.path;
-
-          finalMap = joinSourceMaps( module.maps.concat( map, map2 ) );
-        }
-
-        finalCode = sourceObj.toString();
-
-      } else {
-        if ( map && module.path !== builder.createFakePath( "babel_helpers" ) ) {
-          finalMap = joinSourceMaps( module.maps.concat( map ) );
-        }
-        finalCode = code;
-      }
+      const { code, map, varsUsed } = lang.render( module, builder );
+      const finalMap = module.path === builder.createFakePath( "babel_helpers" ) ? undefined : joinSourceMaps( module.maps.concat( map ) );
 
       const args = moduleArgs.slice();
       while ( args.length > 0 && !varsUsed[ args[ args.length - 1 ] ] ) {
         args.pop();
       }
 
-      const key = /^\d/.test( module.hashId ) ? `"${module.hashId}"` : module.hashId;
+      const key = /(^\d|\.|"|')/.test( module.hashId ) ? JSON.stringify( module.hashId ) : module.hashId;
 
       build.append( `${first ? "" : ","}\n${key}:function(${args.join( "," )}){` );
-      build.append( finalCode, finalMap );
+      build.append( code, finalMap );
       build.append( "\n}" );
 
       first = false;

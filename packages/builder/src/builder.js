@@ -6,7 +6,7 @@ import processGraph from "./graph";
 import type {
   FinalAsset, FinalAssets,
   PerformanceOpts, MinimalFS, ToWrite,
-  Info, Options, Plugin
+  Info, OptimizationOptions, Options, Plugin
 } from "./types";
 import { resolvePath, relative, lowerPath } from "./id";
 import FileSystem from "./filesystem";
@@ -38,6 +38,7 @@ export default class Builder {
   +watch: boolean;
   +watchOptions: ?Object;
   +plugins: { name: ?string, plugin: Plugin }[];
+  +optimization: OptimizationOptions;
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
@@ -56,6 +57,7 @@ export default class Builder {
     this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
     this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
     this.fs = options.fs;
+    this.optimization = options.optimization;
     this.sourceMaps = options.optimization.sourceMaps;
     this.hashing = options.optimization.hashing;
     this.cleanBeforeBuild = options.optimization.cleanup;
@@ -65,6 +67,10 @@ export default class Builder {
     this.performance = options.performance;
     this.fileSystem = new FileSystem();
     this.warn = warn;
+
+    if ( this.watch ) {
+      this.optimization.hashId = false;
+    }
 
     this.plugins = getPlugins( options.plugins.concat( defaultPlugin ) ).map(
       ( { name, plugin, options } ) => {

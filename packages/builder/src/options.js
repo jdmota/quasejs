@@ -3,6 +3,44 @@ import Reporter from "./reporter";
 const { t } = require( "@quase/config" );
 const fs = require( "fs-extra" );
 
+const OptimizationOptions = t.object( {
+  hashId: {
+    type: "boolean"
+  },
+  hashing: {
+    type: "boolean"
+  },
+  sourceMaps: {
+    type: t.union( [ "boolean", t.value( "inline" ) ] ),
+    default: false
+  },
+  minify: {
+    type: "boolean",
+  },
+  cleanup: {
+    type: "boolean"
+  }
+} );
+
+OptimizationOptions.defaults = function( path, dest ) {
+  if ( dest.mode === "production" ) {
+    return {
+      hashId: true,
+      hashing: true,
+      sourceMaps: true,
+      minify: true,
+      cleanup: true
+    };
+  }
+  return {
+    hashId: false,
+    hashing: false,
+    sourceMaps: true,
+    minify: false,
+    cleanup: false
+  };
+};
+
 export const schema = {
   mode: {
     type: t.union( [ "production", "development" ].map( t.value ) ),
@@ -95,24 +133,7 @@ export const schema = {
     } )
   },
   optimization: {
-    type: t.object( {
-      hashId: {
-        type: "boolean"
-      },
-      hashing: {
-        type: "boolean"
-      },
-      sourceMaps: {
-        type: t.union( [ "boolean", t.value( "inline" ) ] ),
-        default: false
-      },
-      /* minification: boolean,
-      concatenateModules: boolean,
-      treeShaking: boolean, */
-      cleanup: {
-        type: "boolean"
-      }
-    } )
+    type: OptimizationOptions
   },
   serviceWorker: {
     type: "object",

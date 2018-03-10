@@ -36,9 +36,11 @@ function jsPlugin( options ) {
 const { applyDefaults } = require( "@quase/config" );
 
 export default function( config, fixturePath ) {
+  config.mode = "development";
   config.cwd = fixturePath;
-  config.optimization = Object.assign( {}, config.optimization );
-  config.optimization.sourceMaps = config.optimization.sourceMaps === undefined ? true : config.optimization.sourceMaps;
+  config.optimization = Object.assign( {
+    hashId: true
+  }, config.optimization );
   config.plugins = config.plugins || [];
   config.plugins.push( [ babelPlugin, Object.assign( {}, BABEL_OPTS, config.babelOpts ) ] );
   config.plugins.push( [ jsPlugin, { resolve: config.resolve } ] );

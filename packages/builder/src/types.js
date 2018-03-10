@@ -113,6 +113,16 @@ export type Plugin = {
   afterBuild?: ?AfterBuild
 };
 
+export type OptimizationOptions = {
+  hashId: boolean,
+  hashing: boolean,
+  sourceMaps: boolean | "inline",
+  minify: boolean,
+  /* concatenateModules: boolean,
+  treeShaking: boolean, */
+  cleanup: boolean
+};
+
 export type Options = {
   mode: "production" | "development",
   context: string,
@@ -128,14 +138,6 @@ export type Options = {
   watchOptions: Object,
   plugins: ProvidedPluginsArr<Object => Plugin>,
   performance: PerformanceOpts,
-  optimization: {
-    hashId: boolean,
-    hashing: boolean,
-    sourceMaps: boolean | "inline",
-    /* minification: boolean,
-    concatenateModules: boolean,
-    treeShaking: boolean, */
-    cleanup: boolean
-  },
+  optimization: OptimizationOptions,
   serviceWorker: Object
 };

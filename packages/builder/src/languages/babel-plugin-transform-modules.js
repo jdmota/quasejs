@@ -30,6 +30,7 @@ export default ( { types: t }, options ) => {
   const TOP_NODES = Symbol();
   const extractor = options.extractor || ( () => {} );
   const resolveModuleSource = options.resolveModuleSource || ( x => x );
+  const extractModuleSource = options.extractModuleSource || ( () => {} );
   const varsUsed = options.varsUsed || {};
 
   function getVar( name ) {
@@ -128,7 +129,7 @@ export default ( { types: t }, options ) => {
 
         const { node } = path;
         const originalSource = node.source.value;
-        const source = resolveModuleSource( node.source.value );
+        const source = resolveModuleSource( originalSource );
         const blockHoist = node._blockHoist;
 
         const context = getContext( path );
@@ -155,7 +156,10 @@ export default ( { types: t }, options ) => {
           context[ REQUIRES ] = blank();
         }
 
-        const requireExpression = runTemplate( "require", t.stringLiteral( source ) ).expression;
+        const stringLiteral = t.stringLiteral( source );
+        extractModuleSource( stringLiteral );
+
+        const requireExpression = runTemplate( "require", stringLiteral ).expression;
 
         const varDecl = t.variableDeclaration( "var", [ t.variableDeclarator( ref, requireExpression ) ] );
         const varDeclOnlyEffect = t.expressionStatement( requireExpression );
@@ -423,18 +427,26 @@ export default ( { types: t }, options ) => {
 
           if ( arg && arg.type === "StringLiteral" ) {
             arg.value = resolveModuleSource( arg.value );
+            extractModuleSource( arg );
           }
         } else if ( node.callee.type === "Identifier" ) {
 
-          if ( checkGlobal( callee, "require" ) && node.arguments[ 0 ].type === "StringLiteral" ) {
+          if ( checkGlobal( callee, "require" ) ) {
 
-            extractor( node, { require: true } );
-            node.arguments[ 0 ].value = resolveModuleSource( node.arguments[ 0 ].value );
+            const arg = node.arguments[ 0 ];
 
-            callee.replaceWith( t.memberExpression(
-              t.identifier( getVar( "require" ) ),
-              t.identifier( "r" )
-            ) );
+            if ( arg && arg.type === "StringLiteral" ) {
+
+              extractor( node, { require: true } );
+
+              arg.value = resolveModuleSource( arg.value );
+              extractModuleSource( arg );
+
+              callee.replaceWith( t.memberExpression(
+                t.identifier( getVar( "require" ) ),
+                t.identifier( "r" )
+              ) );
+            }
           }
 
         }
