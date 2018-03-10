@@ -68,10 +68,6 @@ export const schema = {
     type: "string",
     default: ""
   },
-  warn: {
-    type: "function",
-    default: ( () => {} )
-  },
   fs: {
     type: t.object( {
       writeFile: {
@@ -108,8 +104,7 @@ export const schema = {
   },
   plugins: {
     type: "array",
-    merge: "concat",
-    default: []
+    merge: "concat"
   },
   performance: {
     type: t.object( {
@@ -136,10 +131,18 @@ export const schema = {
     type: OptimizationOptions
   },
   serviceWorker: {
-    type: "object",
-    default: {
-      staticFileGlobs: [],
-      stripPrefixMulti: {}
-    }
+    type: t.object( {
+      filename: {
+        type: "string",
+        optional: true
+      },
+      staticFileGlobs: {
+        type: "array"
+      },
+      stripPrefixMulti: {
+        type: "object"
+      }
+    } ),
+    additionalProperties: true
   }
 };
