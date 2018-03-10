@@ -280,6 +280,37 @@ it( "validate", () => {
     }
   } );
 
+  v( {
+    foo: {
+      boolean: true,
+      unknown: "stuff"
+    }
+  }, {
+    foo: {
+      type: t.object( {
+        boolean: {
+          type: "boolean"
+        }
+      } )
+    }
+  } );
+
+  v( {
+    foo: {
+      boolean: true,
+      unknown: "stuff"
+    }
+  }, {
+    foo: {
+      type: t.object( {
+        boolean: {
+          type: "boolean"
+        }
+      } ),
+      additionalProperties: true
+    }
+  } );
+
 } );
 
 function d( schema, ...args ) {

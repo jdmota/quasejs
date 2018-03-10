@@ -22,6 +22,7 @@ export type SchemaProp = {
   choices?: ?Array<mixed>,
   required?: ?boolean,
   default?: mixed,
+  additionalProperties?: ?boolean,
   deprecated?: ?boolean,
   example?: ?mixed
 };
@@ -77,10 +78,12 @@ class TObject extends Type {
 
     checkType( path, getType( value ), "object", info );
 
-    checkUnrecognized(
-      Object.keys( value ).map( o => addPrefix( path, o ) ),
-      this.keys.map( o => addPrefix( path, o ) )
-    );
+    if ( !info.additionalProperties ) {
+      checkUnrecognized(
+        Object.keys( value ).map( o => addPrefix( path, o ) ),
+        this.keys.map( o => addPrefix( path, o ) )
+      );
+    }
 
     checkKeys( path, value, this.properties, dest );
   }

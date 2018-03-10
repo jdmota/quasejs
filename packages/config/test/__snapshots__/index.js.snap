@@ -409,3 +409,22 @@ Array [
   ],
 ]
 `;
+
+exports[`validate 17`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Unrecognized option 'foo.unknown'.
+",
+  ],
+]
+`;
+
+exports[`validate 18`] = `
+Array [
+  Array [
+    "OK",
+  ],
+]
+`;
