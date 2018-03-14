@@ -1,6 +1,7 @@
 {
   // "babelrc": false,
   // "sourceMaps": true,
+  "sourceType": "module",
   "parserOpts": {
     "sourceType": "module"
   },
