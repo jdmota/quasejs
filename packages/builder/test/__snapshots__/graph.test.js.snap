@@ -84,7 +84,9 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";(function (global, nodeRequire) {
+  "runtime": "\\"use strict\\";
+
+(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -358,7 +360,9 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";(function (global, nodeRequire) {
+  "runtime": "\\"use strict\\";
+
+(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -689,7 +693,9 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";(function (global, nodeRequire) {
+  "runtime": "\\"use strict\\";
+
+(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -1077,7 +1083,9 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";(function (global, nodeRequire) {
+  "runtime": "\\"use strict\\";
+
+(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;

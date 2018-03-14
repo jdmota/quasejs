@@ -42,10 +42,12 @@ export default function( options ) {
       }
 
       const babelOpts = Object.assign( {
+        sourceType: "module",
         filename: module.normalized,
         filenameRelative: module.path,
         sourceMaps: false,
-        code: false
+        code: false,
+        ast: true
       }, options );
 
       babelOpts.plugins = ( babelOpts.plugins || [] ).concat( importHelperPlugin );

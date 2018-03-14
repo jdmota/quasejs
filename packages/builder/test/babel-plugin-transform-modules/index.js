@@ -43,7 +43,7 @@ describe( "babel transform modules", () => {
 
       const code = await fs.readFile( file, "utf8" );
 
-      const out = babel.transform( code, config );
+      const out = babel.transformSync( code, config );
 
       expect( out.code ).toMatchSnapshot();
       expect( out.map.mappings ).toBeTruthy();

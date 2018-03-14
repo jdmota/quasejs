@@ -18,7 +18,7 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
 
   const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
 
-  const p = await fs.readFile( runtimePath, "utf8" );
+  const p = fs.readFile( runtimePath, "utf8" );
 
   const fileToIdx = {};
   const $files = files.map( ( m, i ) => {
@@ -43,8 +43,9 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
 
   const minified = minify === undefined ? true : !!minify;
 
-  const { code } = babel.transform( input, {
+  const { code } = babel.transformSync( input, {
     babelrc: false,
+    sourceType: "module",
     presets: [
       require( "@babel/preset-es2015" )
     ].concat( minified ? [ [ require( "babel-preset-minify" ), { evaluate: false } ] ] : [] ),
@@ -53,5 +54,5 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
     minified
   } );
 
-  return "\"use strict\";" + code.trim();
+  return code.trim();
 }

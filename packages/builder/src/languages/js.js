@@ -18,11 +18,11 @@ const { joinSourceMaps } = require( "@quase/source-map" );
 
 const moduleArgs = "$e,$r,$i,$g,$a".split( "," );
 
-const chunkInit = babel.transform(
+const chunkInit = babel.transformSync(
   `"use strict";( {
     g: typeof self !== "undefined" ? self : Function( "return this" )(),
-    p: function( m ) {
-      ( this.g.__quase_builder__ = this.g.__quase_builder__ || { q: [] } ).q.push( m );
+    p( m ) {
+      ( this.g.__quase_builder__ = this.g.__quase_builder__ || { q: [] } ).q.push( m )
     }
   } )`,
   {
@@ -276,6 +276,7 @@ export default class JsLanguage extends Language {
 
     const opts = {
       babelrc: false,
+      sourceType: "module",
       parserOpts: {
         sourceType: "module",
         plugins: [
@@ -285,6 +286,7 @@ export default class JsLanguage extends Language {
       filename: module.normalized,
       filenameRelative: module.path,
       code: false,
+      ast: true,
       sourceMaps: false,
       plugins: [
         [ babelPluginModules, {
@@ -300,7 +302,7 @@ export default class JsLanguage extends Language {
       ]
     };
 
-    this._transformCache = this.ast ? babel.transformFromAst( this.ast, this.dataToString, opts ) : babel.transform( this.dataToString, opts );
+    this._transformCache = this.ast ? babel.transformFromAstSync( this.ast, this.dataToString, opts ) : babel.transformSync( this.dataToString, opts );
     this._transformCache.varsUsed = varsUsed;
     this._transformCache.imports = imports;
     return this._transformCache;

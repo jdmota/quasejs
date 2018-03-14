@@ -2,7 +2,7 @@
 
 exports[`watcher Fixture: watch-fixtures/basic 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){$r(\\"a.js\\");
 },
 \\"a.js\\":function($e){$e.default = 10;
@@ -20,7 +20,7 @@ exports[`watcher Fixture: watch-fixtures/basic 2`] = `
 
 Assets:
 
-[entry] atual/index.js | 2.21 kB
+[entry] atual/index.js | 2.2 kB
 
 Done building.
 Watching 8 files...
@@ -33,7 +33,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/custom-code-frame 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){var _a = $r(\\"a.js\\");
 
 console.log(_a.default);
@@ -92,7 +92,7 @@ File working/a.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.32 kB
+[entry] atual/index.js | 2.31 kB
 
 Done building.
 Watching 11 files...
@@ -128,7 +128,7 @@ Object {
   
 
 </body></html>",
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){$r(\\"a.js\\");
 },
 \\"a.js\\":function($e){$e.default = 10;
@@ -146,7 +146,7 @@ exports[`watcher Fixture: watch-fixtures/performance-hints 2`] = `
 
 Assets:
 
-atual/index.js | 248 B > 100 B [performance!]
+atual/index.js | 239 B > 100 B [performance!]
 [entry] atual/index.html | 2.19 kB > 10 B [performance!]
 
 Done building.
@@ -160,7 +160,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/watches-missing-entry 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function(){
 }});\\"use strict\\";(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function get(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{writable:!0,value:!0}),w[a]=c,b(c,k,l,f,g),c}throw new Error(\\"Module \\".concat(a,\\" not found\\"))}function k(a){return h(a)||(C[a]||[]).forEach(m),j(a)}function l(a){return q.all(h(a)?[]:(C[a]||[]).map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\".concat(f,\\" failed\\")))}var f=B[a];if(y[f]!==o)return q.resolve(y[f]);if(z[f])return z[f];var e=[o,o],g=new q(function(a,b){e[0]=function(b){z[f]=o,a(y[f]=b)},e[1]=function(a){z[f]=o,b(a)}});if(z[f]=g,!v)return q.resolve(f).then(d).then(e[0],e[1]),g;var h=s.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=12e4,h.src=f;var i=setTimeout(c,12e4);return h.onload=function(){b()},h.onerror=c,s.head.appendChild(h),g}var o,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=t?\\"./\\":\\"/\\",B=[\\"index.js\\"].map(function(a){return A+a}),C={\\"index.js\\":[0]};k.r=function(a){var b=k(a);return!1===b.__esModule?b.default:b};var D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return}a.__quase_builder__={r:k,i:l,q:{push:e}}})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);__quase_builder__.r(\\"index.js\\");
 //# sourceMappingURL=index.js.map",
@@ -187,7 +187,7 @@ File working/index.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.14 kB
+[entry] atual/index.js | 2.13 kB
 
 Done building.
 Watching 1 files...
@@ -200,7 +200,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/watches-missing-file 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){var _a = $r(\\"a.js\\");
 },
 \\"a.js\\":function($e){$e.default = 10;
@@ -246,7 +246,7 @@ File working/a.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.22 kB
+[entry] atual/index.js | 2.21 kB
 
 Done building.
 Watching 11 files...
@@ -273,7 +273,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){var _a = $r(\\"a.js\\");
 },
 \\"a.js\\":function($e){$e.default = 30;
@@ -291,7 +291,7 @@ exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 2`] = `
 
 Assets:
 
-[entry] atual/index.js | 2.22 kB
+[entry] atual/index.js | 2.21 kB
 
 Done building.
 Watching 8 files...
@@ -322,7 +322,7 @@ File working/index.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.22 kB
+[entry] atual/index.js | 2.21 kB
 
 Done building.
 Watching 13 files...
@@ -335,7 +335,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/watches-other-extensions 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){$r(\\"a.js\\");
 },
 \\"a.js\\":function($e){$e.default = 40;
@@ -353,7 +353,7 @@ exports[`watcher Fixture: watch-fixtures/watches-other-extensions 2`] = `
 
 Assets:
 
-[entry] atual/index.js | 2.21 kB
+[entry] atual/index.js | 2.2 kB
 
 Done building.
 Watching 9 files...
@@ -366,7 +366,7 @@ File working/a.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.21 kB
+[entry] atual/index.js | 2.2 kB
 
 Done building.
 Watching 9 files...
@@ -379,7 +379,7 @@ Closed.
 
 exports[`watcher Fixture: watch-fixtures/watches-rename 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p:function(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"index.js\\":function($e,$r){var _b = $r(\\"b.js\\");
 },
 \\"b.js\\":function($e){$e.default = 10;
@@ -397,7 +397,7 @@ exports[`watcher Fixture: watch-fixtures/watches-rename 2`] = `
 
 Assets:
 
-[entry] atual/index.js | 2.22 kB
+[entry] atual/index.js | 2.21 kB
 
 Done building.
 Watching 8 files...
@@ -424,7 +424,7 @@ File working/index.js was changed.
 
 Assets:
 
-[entry] atual/index.js | 2.22 kB
+[entry] atual/index.js | 2.21 kB
 
 Done building.
 Watching 13 files...
