@@ -47,10 +47,11 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
     babelrc: false,
     sourceType: "module",
     presets: [
-      require( "@babel/preset-es2015" )
+      require( "./babel-preset" ).default
     ].concat( minified ? [ [ require( "babel-preset-minify" ), { evaluate: false } ] ] : [] ),
     comments: false,
     sourceMaps: false,
+    ast: false,
     minified
   } );
 

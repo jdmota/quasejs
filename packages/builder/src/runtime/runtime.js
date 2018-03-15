@@ -185,9 +185,10 @@
       me.i = requireAsync;
       me.q = { push };
     }
-    return;
+    return me.r;
   }
 
   global.__quase_builder__ = { r: requireSync, i: requireAsync, q: { push } };
+  return requireSync;
 
 } )( typeof self !== "undefined" ? self : Function( "return this" )(), typeof require !== "undefined" && require ); // eslint-disable-line

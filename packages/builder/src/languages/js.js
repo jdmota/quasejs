@@ -381,13 +381,13 @@ export default class JsLanguage extends Language {
     build.append( "});" );
 
     if ( asset.isEntry ) {
-      build.append( await builder.createRuntime( {
+      const runtime = await builder.createRuntime( {
         context: builder.context,
         fullPath: asset.path,
         publicPath: builder.publicPath,
         finalAssets
-      } ) );
-      build.append( `__quase_builder__.r("${entryModule.hashId}");` );
+      } );
+      build.append( runtime.replace( /;?$/, `("${entryModule.hashId}");` ) );
     }
 
     return {

@@ -84,9 +84,7 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";
-
-(function (global, nodeRequire) {
+  "runtime": "(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -148,7 +146,7 @@ Object {
       Object.defineProperty(e, k, {
         configurable: true,
         enumerable: true,
-        get: function get() {
+        get: function () {
           return o[k];
         }
       });
@@ -178,7 +176,7 @@ Object {
       return moduleExports;
     }
 
-    throw new Error(\\"Module \\".concat(id, \\" not found\\"));
+    throw new Error(\\"Module \\" + id + \\" not found\\");
   }
 
   function requireSync(id) {
@@ -255,7 +253,7 @@ Object {
     }
 
     function onError() {
-      done(new Error(\\"Fetching \\".concat(src, \\" failed\\")));
+      done(new Error(\\"Fetching \\" + src + \\" failed\\"));
     }
 
     script.onload = function () {
@@ -282,7 +280,7 @@ Object {
       };
     }
 
-    return;
+    return me.r;
   }
 
   global.__quase_builder__ = {
@@ -292,6 +290,7 @@ Object {
       push: push
     }
   };
+  return requireSync;
 })(typeof self !== \\"undefined\\" ? self : Function(\\"return this\\")(), typeof require !== \\"undefined\\" && require);",
 }
 `;
@@ -360,9 +359,7 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";
-
-(function (global, nodeRequire) {
+  "runtime": "(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -423,7 +420,7 @@ Object {
       Object.defineProperty(e, k, {
         configurable: true,
         enumerable: true,
-        get: function get() {
+        get: function () {
           return o[k];
         }
       });
@@ -453,7 +450,7 @@ Object {
       return moduleExports;
     }
 
-    throw new Error(\\"Module \\".concat(id, \\" not found\\"));
+    throw new Error(\\"Module \\" + id + \\" not found\\");
   }
 
   function requireSync(id) {
@@ -530,7 +527,7 @@ Object {
     }
 
     function onError() {
-      done(new Error(\\"Fetching \\".concat(src, \\" failed\\")));
+      done(new Error(\\"Fetching \\" + src + \\" failed\\"));
     }
 
     script.onload = function () {
@@ -557,7 +554,7 @@ Object {
       };
     }
 
-    return;
+    return me.r;
   }
 
   global.__quase_builder__ = {
@@ -567,6 +564,7 @@ Object {
       push: push
     }
   };
+  return requireSync;
 })(typeof self !== \\"undefined\\" ? self : Function(\\"return this\\")(), typeof require !== \\"undefined\\" && require);",
 }
 `;
@@ -693,9 +691,7 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";
-
-(function (global, nodeRequire) {
+  "runtime": "(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -756,7 +752,7 @@ Object {
       Object.defineProperty(e, k, {
         configurable: true,
         enumerable: true,
-        get: function get() {
+        get: function () {
           return o[k];
         }
       });
@@ -786,7 +782,7 @@ Object {
       return moduleExports;
     }
 
-    throw new Error(\\"Module \\".concat(id, \\" not found\\"));
+    throw new Error(\\"Module \\" + id + \\" not found\\");
   }
 
   function requireSync(id) {
@@ -863,7 +859,7 @@ Object {
     }
 
     function onError() {
-      done(new Error(\\"Fetching \\".concat(src, \\" failed\\")));
+      done(new Error(\\"Fetching \\" + src + \\" failed\\"));
     }
 
     script.onload = function () {
@@ -890,7 +886,7 @@ Object {
       };
     }
 
-    return;
+    return me.r;
   }
 
   global.__quase_builder__ = {
@@ -900,6 +896,7 @@ Object {
       push: push
     }
   };
+  return requireSync;
 })(typeof self !== \\"undefined\\" ? self : Function(\\"return this\\")(), typeof require !== \\"undefined\\" && require);",
 }
 `;
@@ -1083,9 +1080,7 @@ Object {
       },
     ],
   },
-  "runtime": "\\"use strict\\";
-
-(function (global, nodeRequire) {
+  "runtime": "(function (global, nodeRequire) {
   var UNDEFINED = undefined;
   var NULL = null;
   var Promise = global.Promise;
@@ -1147,7 +1142,7 @@ Object {
       Object.defineProperty(e, k, {
         configurable: true,
         enumerable: true,
-        get: function get() {
+        get: function () {
           return o[k];
         }
       });
@@ -1177,7 +1172,7 @@ Object {
       return moduleExports;
     }
 
-    throw new Error(\\"Module \\".concat(id, \\" not found\\"));
+    throw new Error(\\"Module \\" + id + \\" not found\\");
   }
 
   function requireSync(id) {
@@ -1254,7 +1249,7 @@ Object {
     }
 
     function onError() {
-      done(new Error(\\"Fetching \\".concat(src, \\" failed\\")));
+      done(new Error(\\"Fetching \\" + src + \\" failed\\"));
     }
 
     script.onload = function () {
@@ -1281,7 +1276,7 @@ Object {
       };
     }
 
-    return;
+    return me.r;
   }
 
   global.__quase_builder__ = {
@@ -1291,6 +1286,7 @@ Object {
       push: push
     }
   };
+  return requireSync;
 })(typeof self !== \\"undefined\\" ? self : Function(\\"return this\\")(), typeof require !== \\"undefined\\" && require);",
 }
 `;
