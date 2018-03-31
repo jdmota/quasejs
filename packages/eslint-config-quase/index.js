@@ -22,10 +22,7 @@ module.exports = {
   ],
   parser: "babel-eslint",
   parserOptions: {
-    ecmaFeatures: {
-      experimentalObjectRestSpread: true
-    },
-    ecmaVersion: 8,
+    ecmaVersion: 2018,
     sourceType: "module"
   },
   plugins: [ "flowtype", "import", "node" ],
