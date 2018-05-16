@@ -36,6 +36,7 @@ export function run( command: string, _opts: Object ) {
   const options = handleOptions( _opts );
   const { folder } = options;
 
+  // $FlowIgnore
   if ( options.cliTest ) {
     console.log( command, options );
     return;

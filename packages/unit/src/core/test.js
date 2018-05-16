@@ -600,7 +600,7 @@ export default class Test implements ITestResult, IRunnable {
 
   runTry(): IRunReturn<Test> {
     const run = this.runnable.run();
-    if ( isPromise( run ) ) {
+    if ( run instanceof Promise ) {
       return run.then( this.end );
     }
     return this.end();

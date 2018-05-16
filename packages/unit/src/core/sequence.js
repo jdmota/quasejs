@@ -295,7 +295,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRun
     }
   }
 
-  addResult( result: IRunnableResult ) {
+  addResult( result: IRunnableResult | ITestResult ) {
 
     const metadata = result.metadata || {};
 

@@ -2,6 +2,7 @@
 packages
 
 [ignore]
+.*/__dev__/.*
 .*/node_modules/.*
 <PROJECT_ROOT>/libdefs.js
 
@@ -9,5 +10,6 @@ packages
 ./libdefs.js
 
 [options]
+suppress_comment=.*\\$FlowIgnore
 suppress_comment=.*\\$FlowFixMe
 suppress_comment=.*\\$FlowIssue
