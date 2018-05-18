@@ -19,9 +19,9 @@
     "packages/util/get-plugins",
     "packages/view"
   ],
-  "commands": {
+  "command": {
     "publish": {
-      "ignore": [
+      "ignoreChanges": [
         "*.md",
         "test/**"
       ]
