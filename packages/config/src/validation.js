@@ -1,7 +1,7 @@
 // @flow
 import { indent, formatOption, formatPathOption, format, pathToStr } from "./formating";
 import { printWarning } from "./print";
-import { type SchemaProp, types } from "./types";
+import { type GeneralType, types } from "./types";
 import getType from "./get-type";
 
 const chalk = require( "chalk" );
@@ -55,7 +55,7 @@ export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<st
   throw new ValidationError( message );
 }
 
-export function makeExample( chain: string[], { default: d, example: e }: SchemaProp ) {
+export function makeExample( chain: string[], d: mixed, e: mixed ) {
   const lines = [];
   const example = e === undefined ? d : e;
   if ( example !== undefined ) {
@@ -80,7 +80,9 @@ export function makeExample( chain: string[], { default: d, example: e }: Schema
   return lines.join( "\n" );
 }
 
-export function checkType( path: string[], actualType: string, expectedType: string, info: SchemaProp ) {
+export function checkType(
+  path: string[], actualType: string, expectedType: string, d: mixed, e: mixed
+) {
 
   if ( actualType === expectedType ) {
     return;
@@ -91,68 +93,35 @@ export function checkType( path: string[], actualType: string, expectedType: str
     `${indent( chalk.bold.green( expectedType ) )}`,
     `but instead received:`,
     `${indent( chalk.bold.red( actualType ) )}`,
-    makeExample( path, info )
+    makeExample( path, d, e )
   ] );
 }
 
-export function checkChoices( path: string[], value: mixed, choices: Array<mixed> ) {
-
-  if ( choices.some( v => v === value ) ) {
-    return;
-  }
-
-  throw new ValidationError( [
-    `Option ${formatPathOption( path )} should be one of:`,
-    `${indent( chalk.bold.green( choices.map( format ).join( " | " ) ) )}`,
-    `but instead received:`,
-    `${indent( chalk.bold.red( format( value ) ) )}`
-  ] );
-}
-
-export function checkKeys( path: string[], object: any, schema: any, dest: Object ) {
-
-  for ( const key in schema ) {
+export function checkKeys( properties: any, path: string[], object: any, dest: Object ) {
+  for ( const key in properties ) {
     path.push( key );
-
-    const { type, choices, required, optional, deprecated } = schema[ key ];
-    const value = object[ key ];
-    if ( value === undefined ) {
-      if ( required ) {
-        throw new ValidationError( `Option ${formatPathOption( path )} is required.` );
-      }
-      if ( optional ) {
-        continue;
-      }
-    } else {
-      if ( deprecated ) {
-        printDeprecated( path );
-      }
-    }
-    if ( choices ) {
-      checkChoices( path, value, choices );
-    }
+    const type = properties[ key ];
     if ( type ) {
-      validateType( path, value, schema[ key ], dest );
+      validateType( type, path, object[ key ], dest );
     }
-
     path.pop();
   }
-
 }
 
-export function validateType( path: string[], value: any, info: SchemaProp, dest: Object ) {
-
-  const { type } = info;
-
-  if ( type instanceof types.Type ) {
-    type.validate( path, value, info, dest );
-    return;
-  }
-
+export function validateType( type: GeneralType, path: string[], value: mixed, dest: Object ) {
   if ( typeof type === "string" ) {
-    checkType( path, getType( value ), type, info );
+    checkType( path, getType( value ), type, undefined, undefined );
     return;
   }
-
+  if ( type != null && typeof type === "object" ) {
+    if ( type instanceof types.Type ) {
+      type.validate( path, value, dest );
+      return;
+    }
+    if ( typeof type.type === "string" ) {
+      new types.Primitive( type ).validate( path, value, dest );
+      return;
+    }
+  }
   throw new Error( `[Schema] Invalid type. See ${pathToStr( path )}` );
 }

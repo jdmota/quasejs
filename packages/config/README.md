@@ -17,38 +17,26 @@ const schema = {
     type: "boolean",
     default: true
   },
-  object: {
-    type: t.object( {
+  object: t.object( {
+    properties: {
       prop: {
         type: "number",
         default: 10,
         example: 10
       }
-    } )
-  },
-  tuple: {
-    type: t.tuple( [
-      {
-        type: "string",
-        required: true
-      },
-      {
-        type: "string",
-        required: true
-      }
-    ] )
-  },
-  array: {
-    // Array of numbers
-    type: t.array( {
-      type: "number"
-    } ),
+    }
+  } ),
+  tuple: t.tuple( {
+    items: [ "string", "string" ]
+  } ),
+  array: t.array( {
+    itemType: "number",
     merge: "concat"
-  },
-  value: {
-    choices: [ 0, 1, 2 ],
+  } ),
+  value: t.choices( {
+    values: [ 0, 1, 2 ],
     default: 0
-  }
+  } )
 };
 
 const config = await getConfig( {

@@ -9,6 +9,7 @@ export function printWarning( str: string ) {
 
 export function printError( error: Error ) {
   let message;
+  // $FlowIgnore
   if ( error.__validation ) {
     message = `${chalk.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
   } else {

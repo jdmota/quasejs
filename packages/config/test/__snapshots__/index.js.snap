@@ -341,11 +341,7 @@ Array [
   Array [
     "Validation Error:
 
-  Option 'required' must be of type:
-    boolean
-  but instead received:
-    undefined
-
+  Option 'required' is required.
 ",
   ],
 ]

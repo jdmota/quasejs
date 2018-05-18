@@ -1,5 +1,5 @@
 // @flow
-import { type MaybeType, types } from "./types";
+import { type GeneralType, types } from "./types";
 
 const concordance = require( "concordance" );
 const chalk = require( "chalk" );
@@ -14,25 +14,31 @@ export function addPrefix( path: string[], key: string ) {
   return path.length ? `${pathToStr( path )}.${key}` : key;
 }
 
-export function formatTypes( list: $ReadOnlyArray<MaybeType>, separator: string = " | " ): string {
+export function formatTypes( list: $ReadOnlyArray<?GeneralType>, separator: string = " | " ): string {
   return list.filter( Boolean ).map( x => {
     if ( typeof x === "string" ) {
       return x;
     }
-    if ( x instanceof types.Union ) {
-      return formatTypes( x.types );
-    }
-    if ( x instanceof types.Value ) {
-      return format( x.value );
-    }
-    if ( x instanceof types.Tuple ) {
-      return formatTypes( x.items.map( i => i.type ), ", " );
-    }
-    if ( x instanceof types.Array ) {
-      return "array";
-    }
-    if ( x instanceof types.Object ) {
-      return "object";
+    if ( x != null ) {
+      if ( x instanceof types.Type ) {
+        if ( x instanceof types.Union ) {
+          return formatTypes( x.types );
+        }
+        if ( x instanceof types.Value ) {
+          return format( x.value );
+        }
+        if ( x instanceof types.Tuple ) {
+          return formatTypes( x.items, ", " );
+        }
+        if ( x instanceof types.Array ) {
+          return "array";
+        }
+        if ( x instanceof types.Object ) {
+          return "object";
+        }
+      } else if ( typeof x.type === "string" ) {
+        return x.type;
+      }
     }
     return "";
   } ).join( separator );

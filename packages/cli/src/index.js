@@ -1,4 +1,6 @@
+import { isObject, arrify, pad, DEFAULT } from "./utils";
 import loudRejection from "./loud-rejection";
+import { typeToString, flattenSchema, fillOptions } from "./schema";
 
 const path = require( "path" );
 const chalk = require( "chalk" );
@@ -13,21 +15,10 @@ const camelcaseKeys = require( "camelcase-keys" );
 const decamelize = require( "decamelize" );
 const trimNewlines = require( "trim-newlines" );
 const redent = require( "redent" );
-const { validate, getConfig, applyDefaults, t, types } = require( "@quase/config" );
+const { validate, getConfig, applyDefaults, t } = require( "@quase/config" );
 
 /* eslint no-process-exit: 0 */
 /* eslint no-console: 0 */
-
-function isObject( x ) {
-  return x != null && typeof x === "object";
-}
-
-function arrify( val ) {
-  if ( val == null ) {
-    return [];
-  }
-  return Array.isArray( val ) ? val : [ val ];
-}
 
 function notifyFix( opts ) {
   if ( !process.stdout.isTTY || !this.update ) {
@@ -90,75 +81,13 @@ delete require.cache[ __filename ];
 const filename = module.parent.filename;
 const parentDir = path.dirname( filename );
 
-function pad( str, length ) {
-  while ( str.length < length ) {
-    str += " ";
+function suffixDefault( d ) {
+  if ( typeof d === "boolean" || typeof d === "number" ) {
+    return `(default: ${d})`;
   }
-  return str;
-}
-
-function typeToString( { type, choices } ) {
-  if ( choices ) {
-    return choices.map( JSON.stringify ).join( " | " );
-  }
-  if ( type ) {
-    if ( typeof type === "string" ) {
-      return type;
-    }
-    if ( type instanceof types.Tuple || type instanceof types.Array ) {
-      return "array";
-    }
-    if ( type instanceof types.Object ) {
-      return "object";
-    }
-    if ( type instanceof types.Union ) {
-      return type.types.map( x => typeToString( { type: x } ) ).join( " | " );
-    }
-    if ( type instanceof types.Value ) {
-      return JSON.stringify( type.value );
-    }
-  }
-  return "";
-}
-
-function flattenSchema( schema ) {
-  const newSchema = {};
-  for ( const key in schema ) {
-    const flag = schema[ key ];
-    if ( flag ) {
-      const { type } = flag;
-      newSchema[ key ] = flag;
-
-      if ( type ) {
-        const list = type instanceof types.Union ? type.types : [ type ];
-
-        for ( const type of list ) {
-          if ( type instanceof types.Tuple ) {
-            for ( let i = 0; i < type.items.length; i++ ) {
-              newSchema[ `${key}.${i}` ] = type.items[ i ];
-            }
-          } else if ( type instanceof types.Object ) {
-            for ( const k in type.properties ) {
-              newSchema[ `${key}.${k}` ] = type.properties[ k ];
-            }
-          }
-        }
-      }
-    }
-  }
-  return newSchema;
-}
-
-function suffix( flag ) {
-  if (
-    typeof flag.default === "boolean" ||
-    typeof flag.default === "number"
-  ) {
-    return `(default: ${flag.default})`;
-  }
-  if ( typeof flag.default === "string" ) {
-    if ( flag.default.length < 15 ) {
-      return `(default: ${JSON.stringify( flag.default )})`;
+  if ( typeof d === "string" ) {
+    if ( d.length < 15 ) {
+      return `(default: ${JSON.stringify( d )})`;
     }
   }
   return "";
@@ -193,16 +122,17 @@ function generateHelpHelper( { usage, commands, defaultCommand, schema, command,
   const flattenedSchema = flattenSchema( schema );
 
   for ( const key in flattenedSchema ) {
-    const flag = flattenedSchema[ key ];
+    const type = flattenedSchema[ key ];
+    const flag = type.extra;
 
     if ( flag.description != null ) {
-      const typeStr = typeToString( flag );
+      const typeStr = typeToString( type );
       const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${a}` ).join( ", " )}` : "";
 
       const line = [
         `  --${decamelize( key, "-" )}${aliasText}`,
         flag.description,
-        suffix( flag ),
+        suffixDefault( type.default ),
         typeStr ? `[${typeStr}]` : ""
       ];
 
@@ -247,8 +177,6 @@ function generateHelpHelper( { usage, commands, defaultCommand, schema, command,
 
   return result.join( "\n" );
 }
-
-const DEFAULT = {};
 
 function handleSchema( schema ) {
   return typeof schema === "function" ? schema( t ) : schema || {};
@@ -312,64 +240,7 @@ function handleArgs( opts ) {
     yargsOpts.configuration[ "populate--" ] = true;
   }
 
-  function fillOptions( schema, chain ) {
-    for ( const k in schema ) {
-      if ( !schema[ k ] ) {
-        continue;
-      }
-
-      let { type, argType, alias, coerce, narg } = schema[ k ];
-      let key = decamelize( k, "-" );
-
-      argType = argType || type;
-
-      chain.push( key );
-      key = chain.join( "." );
-
-      if ( argType ) {
-        const wasUnion = argType instanceof types.Union;
-        const acceptedTypes = wasUnion ? argType.types : [ argType ];
-
-        for ( const t of acceptedTypes ) {
-          if ( t instanceof types.Object ) {
-            fillOptions( t.properties, chain );
-          } else if ( t instanceof types.Tuple ) {
-            fillOptions( t.items, chain );
-          } else {
-            const arr = yargsOpts[ type instanceof types.Array ? "array" : t ];
-            if ( Array.isArray( arr ) ) {
-              if ( t === "boolean" ) {
-                if ( !wasUnion ) {
-                  arr.push( key );
-                  yargsOpts.default[ key ] = DEFAULT;
-                }
-              } else {
-                arr.push( key );
-              }
-            }
-          }
-        }
-      }
-
-      if ( alias ) {
-        const arr = yargsOpts.alias[ key ] = yargsOpts.alias[ key ] || [];
-        arrify( alias ).forEach( a => {
-          arr.push( a );
-          allAlias.add( a );
-        } );
-      }
-      if ( coerce ) {
-        yargsOpts.coerce[ key ] = coerce;
-      }
-      if ( narg ) {
-        yargsOpts.narg[ key ] = narg;
-      }
-
-      chain.pop();
-    }
-  }
-
-  fillOptions( schema, [] );
+  fillOptions( schema, yargsOpts, allAlias );
 
   const { error, argv } = yargsParser.detailed( providedArgv, yargsOpts );
 

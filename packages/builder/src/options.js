@@ -4,21 +4,23 @@ const { t } = require( "@quase/config" );
 const fs = require( "fs-extra" );
 
 const OptimizationOptions = t.object( {
-  hashId: {
-    type: "boolean"
-  },
-  hashing: {
-    type: "boolean"
-  },
-  sourceMaps: {
-    type: t.union( [ "boolean", t.value( "inline" ) ] ),
-    default: false
-  },
-  minify: {
-    type: "boolean",
-  },
-  cleanup: {
-    type: "boolean"
+  properties: {
+    hashId: {
+      type: "boolean"
+    },
+    hashing: {
+      type: "boolean"
+    },
+    sourceMaps: t.union( {
+      types: [ "boolean", t.value( { value: "inline" } ) ],
+      default: false
+    } ),
+    minify: {
+      type: "boolean",
+    },
+    cleanup: {
+      type: "boolean"
+    }
   }
 } );
 
@@ -42,20 +44,18 @@ OptimizationOptions.defaults = function( path, dest ) {
 };
 
 export const schema = {
-  mode: {
-    type: t.union( [ "production", "development" ].map( t.value ) ),
+  mode: t.choices( {
+    values: [ "production", "development" ],
     required: true
-  },
+  } ),
   context: {
     type: "string",
     required: true
   },
-  entries: {
-    type: t.array( {
-      type: "string"
-    } ),
+  entries: t.array( {
+    itemType: "string",
     required: true
-  },
+  } ),
   dest: {
     type: "string",
     required: true
@@ -68,8 +68,8 @@ export const schema = {
     type: "string",
     default: ""
   },
-  fs: {
-    type: t.object( {
+  fs: t.object( {
+    properties: {
       writeFile: {
         type: "function",
         default: fs.writeFile
@@ -78,22 +78,26 @@ export const schema = {
         type: "function",
         default: fs.mkdirp
       }
-    } )
-  },
+    }
+  } ),
   cli: {
     type: "object"
   },
-  reporter: {
-    type: t.union( [
+  reporter: t.union( {
+    types: [
       "string",
       "function",
-      t.tuple( [
-        t.union( [ "string", "function" ] ),
-        "object"
-      ] )
-    ] ),
+      t.tuple( {
+        items: [
+          t.union( {
+            types: [ "string", "function" ]
+          } ),
+          "object"
+        ]
+      } )
+    ],
     default: Reporter
-  },
+  } ),
   watch: {
     type: "boolean",
     alias: "w",
@@ -106,13 +110,13 @@ export const schema = {
     type: "array",
     merge: "concat"
   },
-  performance: {
-    type: t.object( {
-      hints: {
-        type: t.union( [ "warning", "error" ].map( t.value ) ),
+  performance: t.object( {
+    properties: {
+      hints: t.choices( {
+        values: [ "warning", "error" ],
         map: x => ( x === true ? "warning" : x ),
         default: "warning"
-      },
+      } ),
       maxEntrypointSize: {
         type: "number",
         default: 250000
@@ -125,13 +129,11 @@ export const schema = {
         type: "function",
         default: f => ( !/\.map$/.test( f ) )
       }
-    } )
-  },
-  optimization: {
-    type: OptimizationOptions
-  },
-  serviceWorker: {
-    type: t.object( {
+    }
+  } ),
+  optimization: OptimizationOptions,
+  serviceWorker: t.object( {
+    properties: {
       filename: {
         type: "string",
         optional: true
@@ -142,7 +144,7 @@ export const schema = {
       stripPrefixMulti: {
         type: "object"
       }
-    } ),
+    },
     additionalProperties: true
-  }
+  } )
 };

@@ -82,27 +82,27 @@ describe( "cli", () => {
         foo: {
           type: "boolean"
         },
-        bar: {
-          type: t.object( {
+        bar: t.object( {
+          properties: {
             prop1: {
               default: 0
             },
             prop2: {
               default: 0
             }
-          } )
-        },
-        baz: {
-          type: t.object( {
+          }
+        } ),
+        baz: t.object( {
+          properties: {
             prop1: {
               default: 0
             },
             prop2: {
               default: 0
             }
-          } ),
+          },
           default: {}
-        }
+        } )
       },
       notifier: false
     } );
@@ -136,48 +136,50 @@ describe( "cli", () => {
         meow: { type: "string", description: "", default: "dog" },
         boolean: { type: "boolean", default: false, description: "boolean description" },
         booleanNo: { type: "boolean", default: true, description: "boolean no description" },
-        object: {
-          description: "",
-          type: t.object( {
+        object: t.object( {
+          properties: {
             prop: {
               type: "string",
               description: "",
               optional: true
             }
-          } )
-        },
-        tuple: {
-          type: t.tuple( [] ),
+          },
+          description: ""
+        } ),
+        tuple: t.tuple( {
+          items: [],
           description: "tuple"
-        },
-        array: {
-          type: t.array( "string" ),
+        } ),
+        array: t.array( {
+          itemType: "string",
           description: "array of strings"
-        },
-        union: {
-          type: t.union( [
+        } ),
+        union: t.union( {
+          types: [
             "string",
             "number",
-            t.tuple( [
-              {
-                type: "string",
-                description: "",
-              }
-            ] )
-          ] ),
+            t.tuple( {
+              items: [
+                {
+                  type: "string",
+                  description: "",
+                }
+              ]
+            } )
+          ],
           description: "union",
           optional: true
-        },
-        choices1: {
-          choices: [ 0, 1, 2 ],
+        } ),
+        choices1: t.choices( {
+          values: [ 0, 1, 2 ],
           description: "choices1",
           default: 0
-        },
-        choices2: {
-          type: t.union( [ 0, 1, 2 ].map( t.value ) ),
+        } ),
+        choices2: t.union( {
+          types: [ 0, 1, 2 ].map( x => t.value( { value: x } ) ),
           description: "choices2",
           default: 0
-        },
+        } ),
         camelCase: {
           type: "string",
           description: "description",
@@ -263,10 +265,10 @@ describe( "cli", () => {
         boolean: {
           type: "boolean"
         },
-        union: {
-          type: t.union( [ "boolean", "array" ] ),
+        union: t.union( {
+          types: [ "boolean", "array" ],
           optional: true
-        }
+        } )
       },
       help: "",
       notifier: false
@@ -291,15 +293,15 @@ describe( "cli", () => {
           type: "boolean",
           alias: "a"
         },
-        foo: {
-          optional: true,
-          argType: t.object( {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "boolean",
               alias: "b"
             }
-          } )
-        }
+          },
+          optional: true,
+        } )
       },
       help: "",
       notifier: false
@@ -418,15 +420,15 @@ describe( "cli", () => {
           narg: 1,
           alias: "a"
         },
-        foo: {
-          optional: true,
-          argType: t.object( {
+        foo: t.object( {
+          properties: {
             bar: {
               narg: 2,
               alias: "b"
             }
-          } )
-        }
+          },
+          optional: true
+        } )
       },
       help: "",
       notifier: false
@@ -457,13 +459,13 @@ describe( "cli", () => {
             narg: 1,
             alias: "a"
           },
-          foo: {
-            argType: t.object( {
+          foo: t.object( {
+            properties: {
               bar: {
                 narg: 5
               }
-            } )
-          }
+            }
+          } )
         },
         help: "",
         notifier: false

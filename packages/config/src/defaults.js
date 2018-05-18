@@ -1,13 +1,14 @@
-import { t, types } from "./types";
+// @flow
+import { t, types, toTypeMaybe, type GeneralType } from "./types";
 import { formatPathOption } from "./formating";
 
 const toString = ( {} ).toString;
 
-function isObject( x ) {
+function isObject( x: any ) {
   return x != null && typeof x === "object";
 }
 
-function isPlainObject( value ) {
+function isPlainObject( value: any ) {
   if ( !isObject( value ) || toString.call( value ) !== "[object Object]" ) {
     return false;
   }
@@ -21,7 +22,7 @@ function isPlainObject( value ) {
   return Object.getPrototypeOf( value ) === proto;
 }
 
-function clone( x ) {
+function clone( x: any ) {
   if ( Array.isArray( x ) ) {
     const value = [];
     for ( let i = 0; i < x.length; i++ ) {
@@ -39,7 +40,7 @@ function clone( x ) {
   return x;
 }
 
-function applyDefaultsObject( type, object, src ) {
+function applyDefaultsObject( type: any, object: any, src: any ) {
   for ( const key in src ) {
     applyDefaultsHelper(
       type && type.properties ? type.properties[ key ] : null,
@@ -50,7 +51,7 @@ function applyDefaultsObject( type, object, src ) {
   }
 }
 
-function applyDefaultsArrayMerge( type, object, src ) {
+function applyDefaultsArrayMerge( type: any, object: any, src: any ) {
   for ( let i = 0; i < src.length; i++ ) {
     applyDefaultsHelper(
       type && type.items ? type.items[ i ] : null,
@@ -61,9 +62,10 @@ function applyDefaultsArrayMerge( type, object, src ) {
   }
 }
 
-function applyDefaultsHelper( info, object, src, key ) {
+function applyDefaultsHelper( _type: ?GeneralType, object: any, src: any, key: any ) {
 
-  const { type, map, merge } = info || {};
+  const type = toTypeMaybe( _type );
+  const { map, merge } = type || {};
 
   const objValue = object[ key ];
   const srcValue = map ? map( src[ key ] ) : src[ key ];
@@ -106,8 +108,9 @@ function applyDefaultsHelper( info, object, src, key ) {
 
 const opt = formatPathOption;
 
-export function extractDefaults( path, info, dest ) {
-  const { type, default: d, required, optional } = info;
+export function extractDefaults( _type: GeneralType, path: string[], dest: Object ) {
+  const type = toTypeMaybe( _type );
+  const { default: d, required, optional } = type || {};
   if ( required && optional ) {
     throw new Error( `[Schema] Don't use "required" and "optional" in ${opt( path )}` );
   }
@@ -122,20 +125,9 @@ export function extractDefaults( path, info, dest ) {
     return d;
   }
   if ( type ) {
-    if ( type === "boolean" ) {
-      return false;
-    }
-    if ( type === "array" || type instanceof types.Array ) {
-      return [];
-    }
-    if ( type === "object" ) {
-      return {};
-    }
-    if ( type instanceof types.Type ) {
-      const customDefault = type.defaults( path, dest );
-      if ( customDefault !== undefined ) {
-        return customDefault;
-      }
+    const customDefault = type.defaults( path, dest );
+    if ( customDefault !== undefined ) {
+      return customDefault;
     }
   }
   if ( !optional ) {
@@ -143,12 +135,12 @@ export function extractDefaults( path, info, dest ) {
   }
 }
 
-export function applyDefaults( schema, ...args ) {
+export function applyDefaults( schema: Object, ...args: Object[] ) {
   const dest = {};
-  const type = t.object( schema );
+  const type = t.object( { properties: schema } );
   for ( let i = 0; i < args.length; i++ ) {
     applyDefaultsObject( type, dest, args[ i ] );
   }
-  applyDefaultsObject( type, dest, extractDefaults( [], { type }, dest ) );
+  applyDefaultsObject( type, dest, extractDefaults( type, [], dest ) );
   return dest;
 }

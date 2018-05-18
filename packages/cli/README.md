@@ -36,13 +36,13 @@ require( "@quase/cli" ).default( {
         alias: "s",
         default: false
       },
-      someObject: {
-        type: t.object( {
+      someObject: t.object( {
+        properties: {
           someProp: {
             type: "number"
           }
-        } )
-      }
+        }
+      } )
     };
   },
   // Automatically validate the options against the schema. If validation fails, an error is throw.

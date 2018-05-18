@@ -30,6 +30,7 @@ it( "validate", () => {
     deprecated: true
   }, {
     deprecated: {
+      type: "boolean",
       deprecated: true
     }
   } );
@@ -49,18 +50,18 @@ it( "validate", () => {
       }
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -68,18 +69,18 @@ it( "validate", () => {
       foo: 10
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -89,18 +90,18 @@ it( "validate", () => {
       }
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -108,10 +109,10 @@ it( "validate", () => {
       foo: [ "string", 10 ]
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.tuple( [
+    obj: t.object( {
+      properties: {
+        foo: t.tuple( {
+          items: [
             {
               type: "string",
               example: "example"
@@ -119,10 +120,10 @@ it( "validate", () => {
               type: "string",
               example: "example"
             }
-          ] )
-        }
-      } )
-    }
+          ]
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -130,10 +131,10 @@ it( "validate", () => {
       foo: {}
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.tuple( [
+    obj: t.object( {
+      properties: {
+        foo: t.tuple( {
+          items: [
             {
               type: "string",
               example: "example"
@@ -141,10 +142,10 @@ it( "validate", () => {
               type: "string",
               example: "example"
             }
-          ] )
-        }
-      } )
-    }
+          ]
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -152,17 +153,17 @@ it( "validate", () => {
       foo: [ "string", 10 ]
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.union( [
+    obj: t.object( {
+      properties: {
+        foo: t.union( {
+          types: [
             "string",
             "number"
-          ] ),
+          ],
           example: "example"
-        }
-      } )
-    }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -170,17 +171,17 @@ it( "validate", () => {
       foo: 2
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          choices: [
+    obj: t.object( {
+      properties: {
+        foo: t.choices( {
+          values: [
             0,
             1
           ],
           example: 1
-        }
-      } )
-    }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -214,16 +215,14 @@ it( "validate", () => {
       foo: 2
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.union(
-            [ 0, 1, "object" ].map( t.value )
-          ),
+    obj: t.object( {
+      properties: {
+        foo: t.union( {
+          types: [ 0, 1, "object" ].map( v => t.value( { value: v } ) ),
           example: 1
-        }
-      } )
-    }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -231,16 +230,14 @@ it( "validate", () => {
       foo: 2
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.union(
-            [ t.value( 0 ), t.value( 1 ), "object" ]
-          ),
+    obj: t.object( {
+      properties: {
+        foo: t.union( {
+          types: [ t.value( { value: 0 } ), t.value( { value: 1 } ), "object" ],
           example: 1
-        }
-      } )
-    }
+        } )
+      }
+    } )
   } );
 
   v( {
@@ -248,20 +245,18 @@ it( "validate", () => {
       foo: 0
     }
   }, {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.union(
-            [ t.value( 0 ), t.value( 1 ), "object" ]
-          ),
+    obj: t.object( {
+      properties: {
+        foo: t.union( {
+          types: [ t.value( { value: 0 } ), t.value( { value: 1 } ), "object" ],
           example: 1
-        }
-      } )
-    }
+        } )
+      }
+    } )
   } );
 
   class CustomType extends types.Type {
-    validate( path, value, info, dest ) {
+    validate( path, value, dest ) {
       if ( dest.bar === true ) {
         throw new ValidationError( "foo and bar should not be set at the same time" );
       }
@@ -272,9 +267,7 @@ it( "validate", () => {
     foo: true,
     bar: true
   }, {
-    foo: {
-      type: new CustomType()
-    },
+    foo: new CustomType(),
     bar: {
       type: "boolean"
     }
@@ -286,13 +279,13 @@ it( "validate", () => {
       unknown: "stuff"
     }
   }, {
-    foo: {
-      type: t.object( {
+    foo: t.object( {
+      properties: {
         boolean: {
           type: "boolean"
         }
-      } )
-    }
+      }
+    } )
   } );
 
   v( {
@@ -301,14 +294,14 @@ it( "validate", () => {
       unknown: "stuff"
     }
   }, {
-    foo: {
-      type: t.object( {
+    foo: t.object( {
+      properties: {
         boolean: {
           type: "boolean"
         }
-      } ),
+      },
       additionalProperties: true
-    }
+    } )
   } );
 
 } );
@@ -324,10 +317,10 @@ function d( schema, ...args ) {
 it( "apply defaults", () => {
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.tuple( [
+    obj: t.object( {
+      properties: {
+        foo: t.tuple( {
+          items: [
             {
               type: "string",
               default: "a"
@@ -335,10 +328,10 @@ it( "apply defaults", () => {
               type: "string",
               default: "b"
             }
-          ] )
-        }
-      } )
-    }
+          ]
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: []
@@ -346,39 +339,39 @@ it( "apply defaults", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             a: {
               default: 10
             },
             b: {
               default: 20
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   }, {
     obj: {}
   } );
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             a: {
               default: 10
             },
             b: {
               default: 20
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: 100
@@ -438,8 +431,8 @@ it( "apply defaults", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         a: {
           type: "boolean",
           default: true
@@ -448,18 +441,18 @@ it( "apply defaults", () => {
           type: "boolean",
           default: true
         }
-      } ),
+      },
       map: x => (
         x === true ? undefined : x === false ? { a: false, b: false } : x
       )
-    }
+    } )
   }, {
     obj: true
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         a: {
           type: "boolean",
           default: true
@@ -468,18 +461,18 @@ it( "apply defaults", () => {
           type: "boolean",
           default: true
         }
-      } ),
+      },
       map: x => (
         x === true ? undefined : x === false ? { a: false, b: false } : x
       )
-    }
+    } )
   }, {
     obj: false
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         a: {
           type: "boolean",
           default: true
@@ -488,18 +481,18 @@ it( "apply defaults", () => {
           type: "boolean",
           default: true
         }
-      } ),
+      },
       map: x => (
         x === true ? undefined : x === false ? { a: false, b: false } : x
       )
-    }
+    } )
   }, {
     obj: undefined
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         a: {
           type: "boolean",
           default: true
@@ -508,11 +501,11 @@ it( "apply defaults", () => {
           type: "boolean",
           default: true
         }
-      } ),
+      },
       map: x => (
         x === true ? undefined : x === false ? { a: false, b: false } : x
       )
-    }
+    } )
   }, {
     obj: true
   }, {
@@ -537,9 +530,7 @@ it( "apply defaults", () => {
       type: "string",
       optional: true
     },
-    minify: {
-      type: new CustomType()
-    }
+    minify: new CustomType()
   }, {
     mode: "production"
   } );
@@ -549,14 +540,14 @@ it( "apply defaults", () => {
 it( "apply defaults - merge modes", () => {
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         foo: {
           type: "array",
           merge: "concat"
         }
-      } )
-    }
+      }
+    } )
   }, {
     obj: {
       foo: [ 1 ]
@@ -568,14 +559,13 @@ it( "apply defaults - merge modes", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.array(),
+    obj: t.object( {
+      properties: {
+        foo: t.array( {
           merge: "concat"
-        }
-      } )
-    }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: [ 1 ]
@@ -587,14 +577,13 @@ it( "apply defaults - merge modes", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.array(),
+    obj: t.object( {
+      properties: {
+        foo: t.array( {
           merge: "spreadMeansConcat"
-        }
-      } )
-    }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: [ 1 ]
@@ -606,14 +595,13 @@ it( "apply defaults - merge modes", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.array(),
+    obj: t.object( {
+      properties: {
+        foo: t.array( {
           merge: "spreadMeansConcat"
-        }
-      } )
-    }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: [ "...", 2 ]
@@ -629,14 +617,14 @@ it( "apply defaults - merge modes", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         foo: {
           type: "array",
           merge: "merge"
         }
-      } )
-    }
+      }
+    } )
   }, {
     obj: {
       foo: [ 1 ]
@@ -648,16 +636,16 @@ it( "apply defaults - merge modes", () => {
   } );
 
   d( {
-    obj: {
-      type: t.object( {
+    obj: t.object( {
+      properties: {
         foo: {
           type: "array",
           merge() {
             return [];
           }
         }
-      } )
-    }
+      }
+    } )
   }, {
     obj: {
       foo: [ 1 ]
