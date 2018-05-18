@@ -1,4 +1,4 @@
-import { arrify, DEFAULT } from "./utils";
+import { arrify } from "./utils";
 
 const decamelize = require( "decamelize" );
 const { types, toType } = require( "@quase/config" );
@@ -76,17 +76,9 @@ export function fillOptions( schema, yargsOpts, allAlias, chain = [] ) {
         } else if ( t instanceof types.Tuple ) {
           fillOptions( t.items, yargsOpts, allAlias, chain );
         } else {
-          const typeStr = argType || typeToString( t );
-          const arr = yargsOpts[ typeStr ];
+          const arr = yargsOpts[ argType || typeToString( t ) ];
           if ( Array.isArray( arr ) ) {
-            if ( typeStr === "boolean" ) {
-              if ( !wasUnion ) {
-                arr.push( key );
-                yargsOpts.default[ key ] = DEFAULT;
-              }
-            } else {
-              arr.push( key );
-            }
+            arr.push( key );
           }
         }
       }

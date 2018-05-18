@@ -15,5 +15,3 @@ export function pad( str, length ) {
   }
   return str;
 }
-
-export const DEFAULT = {};
