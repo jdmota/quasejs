@@ -1,11 +1,8 @@
 const fs = require( "fs" );
 const resolve = require( "resolve" );
 
-function isLocal( path ) {
-  if ( /@quase/.test( path ) ) {
-    return !/node_modules/.test( fs.realpathSync( path ) );
-  }
-  return false;
+function isLocal( pkg, path ) {
+  return /@quase/.test( pkg.name ) && !/node_modules/.test( fs.realpathSync( path ) );
 }
 
 function toLocal( path ) {
@@ -24,7 +21,7 @@ module.exports = function( path, options ) {
     rootDir: options.rootDir,
     preserveSymlinks: false,
     packageFilter( pkg, path ) {
-      if ( pkg.module && isLocal( path ) ) {
+      if ( pkg.module && isLocal( pkg, path ) ) {
         pkg.main = pkg.module;
       }
       return pkg;
