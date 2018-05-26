@@ -4,7 +4,8 @@ import { exec } from "./util";
 
 const execa = require( "execa" );
 const listrInput = require( "listr-input" );
-const Observable = require( "any-observable" );
+const { throwError, from } = require( "rxjs" );
+const { catchError } = require( "rxjs/operators" );
 const chalk = require( "chalk" );
 
 const npmPublish = opts => {
@@ -34,10 +35,12 @@ const handleError = ( task, err, opts, message ) => {
 
         return npmPublish( { folder: opts.folder, tag: opts.tag, otp } );
       }
-    } ).catch( err => handleError( task, err, opts, "OTP was incorrect, try again:" ) );
+    } ).pipe(
+      catchError( err => handleError( task, err, opts, "OTP was incorrect, try again:" ) )
+    );
   }
 
-  return Observable.throw( err );
+  return throwError( err );
 };
 
 export default function( task, opts ) {
@@ -58,5 +61,7 @@ export default function( task, opts ) {
       cwd: opts.folder
     } );
   }
-  return Observable.fromPromise( npmPublish( { folder: opts.folder, tag: opts.tag } ) ).catch( err => handleError( task, err, opts ) );
+  return from( npmPublish( { folder: opts.folder, tag: opts.tag } ) ).pipe(
+    catchError( err => handleError( task, err, opts ) )
+  );
 }

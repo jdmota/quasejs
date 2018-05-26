@@ -38,6 +38,7 @@ export function checkDeps( opts ) {
 export function preCheck( opts ) {
   return {
     title: "Prerequisite check",
+    enabled: () => opts.publish,
     task: () => prerequisiteTasks( opts )
   };
 }

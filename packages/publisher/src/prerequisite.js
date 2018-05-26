@@ -63,7 +63,6 @@ export default function( opts ) {
     },
     {
       title: "Check for pre-release version",
-      enabled: () => opts.publish,
       task: () => {
         if ( !pkg.private && version.isPrereleaseVersion( opts.version ) ) {
           if ( !opts.tag ) {

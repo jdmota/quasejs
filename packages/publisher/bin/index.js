@@ -109,3 +109,10 @@ require( "@quase/cli" ).default( {
   options.version = input[ 0 ];
   require( ".." ).default( options );
 } );
+
+/* eslint-disable no-process-exit, no-console */
+
+process.on( "SIGINT", () => {
+  console.log( "\nAborted!" );
+  process.exit( 1 );
+} );

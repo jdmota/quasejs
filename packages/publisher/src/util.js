@@ -1,20 +1,20 @@
 require( "any-observable/register/rxjs-all" ); // eslint-disable-line import/no-unassigned-import
-const Observable = require( "any-observable" );
-const streamToObservable = require( "stream-to-observable" );
+const { merge } = require( "rxjs" );
+const { filter } = require( "rxjs/operators" );
+const streamToObservable = require( "@samverschueren/stream-to-observable" );
 const split = require( "split" );
 const execa = require( "execa" );
 const Listr = require( "listr" );
 const issueRegex = require( "issue-regex" );
-const hyperlinker = require( "hyperlinker" );
-const supportsHyperlinks = require( "supports-hyperlinks" );
+const terminalLink = require( "terminal-link" );
 
 export function exec( cmd, args, opts ) {
   const cp = execa( cmd, args, opts );
 
-  return Observable.merge(
+  return merge(
     streamToObservable( cp.stdout.pipe( split() ), { await: cp } ),
     streamToObservable( cp.stderr.pipe( split() ), { await: cp } )
-  ).filter( Boolean );
+  ).pipe( filter( Boolean ) );
 }
 
 export function l( tasks ) {
@@ -32,21 +32,21 @@ export function error( message ) {
 // Adapted from https://github.com/sindresorhus/np
 
 export function linkifyIssues( url, message ) {
-  if ( !supportsHyperlinks.stdout ) {
+  if ( !url || !terminalLink.isSupported ) {
     return message;
   }
   return message.replace( issueRegex(), issue => {
     const issuePart = issue.replace( "#", "/issues/" );
     if ( issue.startsWith( "#" ) ) {
-      return hyperlinker( issue, `${url}${issuePart}` );
+      return terminalLink( issue, `${url}${issuePart}` );
     }
-    return hyperlinker( issue, `https://github.com/${issuePart}` );
+    return terminalLink( issue, `https://github.com/${issuePart}` );
   } );
 }
 
 export function linkifyCommit( url, commit ) {
-  if ( !supportsHyperlinks.stdout ) {
+  if ( !url || !terminalLink.isSupported ) {
     return commit;
   }
-  return hyperlinker( commit, `${url}/commit/${commit}` );
+  return terminalLink( commit, `${url}/commit/${commit}` );
 }
