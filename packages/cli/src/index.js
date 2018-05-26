@@ -1,4 +1,4 @@
-import { isObject, arrify, pad, DEFAULT } from "./utils";
+import { isObject, arrify, pad } from "./utils";
 import loudRejection from "./loud-rejection";
 import { typeToString, flattenSchema, fillOptions } from "./schema";
 
@@ -255,7 +255,7 @@ function handleArgs( opts ) {
     for ( const key in obj ) {
       const v = obj[ key ];
       chain.push( key );
-      if ( v === DEFAULT || allAlias.has( chain.join( "." ) ) ) {
+      if ( allAlias.has( chain.join( "." ) ) ) {
         delete obj[ key ];
       } else if ( isObject( v ) ) {
         clear( v, chain );
