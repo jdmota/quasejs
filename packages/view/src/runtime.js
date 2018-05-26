@@ -59,7 +59,7 @@
     }
 
     createNode() {
-      const fragment = doc.importNode( this.template.element.content, true );
+      const fragment = this.template.element.content.cloneNode( true );
       const parts = this.template.parts;
 
       if ( parts.length > 0 ) {
