@@ -3,6 +3,9 @@ import gitTasks from "./git";
 import prerequisiteTasks from "./prerequisite";
 import publishTask from "./publish";
 
+const { throwError } = require( "rxjs" );
+const { catchError } = require( "rxjs/operators" );
+
 const path = require( "path" );
 const nsp = require( "nsp" );
 const del = require( "del" );
@@ -65,14 +68,18 @@ export function cleanup( opts ) {
         }
         return exec( "yarn", [ "install", "--frozen-lockfile", "--production=false" ], {
           cwd: opts.folder
-        } ).catch( err => {
-          if ( err.stderr.startsWith( "error Your lockfile needs to be updated" ) ) {
-            throw error(
-              "yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again."
-            );
-          }
-          throw err;
-        } );
+        } ).pipe(
+          catchError( err => {
+            if ( err.stderr.startsWith( "error Your lockfile needs to be updated" ) ) {
+              throwError(
+                error(
+                  "yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again."
+                )
+              );
+            }
+            throwError( err );
+          } )
+        );
       }
     },
     {
@@ -92,7 +99,14 @@ export function test( opts ) {
       title: "Running tests using Yarn",
       task: () => exec( "yarn", [ "test" ], {
         cwd: opts.folder
-      } )
+      } ).pipe(
+        catchError( err => {
+          if ( err.message.includes( 'Command "test" not found' ) ) {
+            return [];
+          }
+          throwError( err );
+        } )
+      )
     };
   }
   return {

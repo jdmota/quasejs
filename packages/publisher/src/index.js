@@ -111,9 +111,9 @@ export async function publish( opts ) {
       if ( result ) {
         const history = result.split( "\n" )
           .map( commit => {
-            const commitParts = commit.match( /^(.+)\s([a-f0-9]{7})$/ );
-            const commitMessage = repositoryUrl ? linkifyIssues( repositoryUrl, commitParts[ 1 ] ) : commitParts[ 1 ];
-            const commitId = repositoryUrl ? linkifyCommit( repositoryUrl, commitParts[ 2 ] ) : commitParts[ 2 ];
+            const splitIndex = commit.lastIndexOf( " " );
+            const commitMessage = linkifyIssues( repositoryUrl, commit.substring( 0, splitIndex ) );
+            const commitId = linkifyCommit( repositoryUrl, commit.substring( splitIndex + 1 ) );
             return `- ${commitMessage}  ${commitId}`;
           } )
           .join( "\n" );
