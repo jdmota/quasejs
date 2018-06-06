@@ -1,5 +1,4 @@
 // @flow
-
 import isPromise from "./util/is-promise";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import type Runner from "./runner";
@@ -8,7 +7,7 @@ import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
 import addChain from "./add-chain";
-import { type Metadata } from "./types";
+import { type TestMetadata, type GroupMetadata } from "./types";
 
 const { getStack } = require( "@quase/error" );
 
@@ -54,16 +53,16 @@ type NumOrVoid = number | void;
 
 export class GroupPlaceholder {
 
-  name: string;
-  fullname: string[];
-  callback: Function;
-  metadata: Metadata;
-  parent: GroupPlaceholder;
-  runner: Runner;
-  level: number;
-  defaultStack: string;
-  collection: TestCollection;
-  api: GroupApi;
+  +name: string;
+  +fullname: string[];
+  +callback: Function;
+  +metadata: GroupMetadata;
+  +parent: GroupPlaceholder;
+  +runner: Runner;
+  +level: number;
+  +defaultStack: string;
+  +collection: TestCollection;
+  +api: GroupApi;
 
   maxTimeout: number;
   timeoutStack: ?string;
@@ -78,7 +77,7 @@ export class GroupPlaceholder {
   randomizationAllowed: boolean;
   serialForced: boolean;
 
-  constructor( name: string, callback: Function, metadata: Metadata, parent: GroupPlaceholder, root: ?boolean ) {
+  constructor( name: string, callback: Function, metadata: GroupMetadata, parent: GroupPlaceholder, root: ?boolean ) {
     this.name = name;
     this.fullname = root ? [] : parent.fullname.concat( this.name );
     this.metadata = metadata;
@@ -187,15 +186,15 @@ export class GroupPlaceholder {
 
 export class TestPlaceholder {
 
-  name: string;
-  fullname: string[];
-  callback: Function;
-  metadata: Metadata;
-  parent: GroupPlaceholder;
-  level: number;
-  defaultStack: string;
+  +name: string;
+  +fullname: string[];
+  +callback: Function;
+  +metadata: TestMetadata;
+  +parent: GroupPlaceholder;
+  +level: number;
+  +defaultStack: string;
 
-  constructor( name: string, callback: Function, metadata: Metadata, parent: GroupPlaceholder ) {
+  constructor( name: string, callback: Function, metadata: TestMetadata, parent: GroupPlaceholder ) {
     this.name = name;
     this.fullname = parent.fullname.concat( this.name );
     this.callback = callback;

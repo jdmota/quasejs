@@ -6,6 +6,40 @@ import { type Placeholder, TestPlaceholder, GroupPlaceholder } from "./placehold
 
 const matcher = require( "matcher" );
 
+// They are returned in reverse order
+function getBeforeEach( suite: Suite ) {
+
+  const hooks = [];
+  let p = suite.placeholder;
+
+  while ( p && p.collection ) {
+    const beforeEach = p.collection.hooks.beforeEach;
+    for ( let i = beforeEach.length - 1; i >= 0; i-- ) {
+      hooks.push( beforeEach[ i ] );
+    }
+    p = p.parent;
+  }
+
+  return hooks;
+}
+
+// They are returned in correct order
+function getAfterEach( suite: Suite ) {
+
+  const hooks = [];
+  let p = suite.placeholder;
+
+  while ( p && p.collection ) {
+    const afterEach = p.collection.hooks.afterEach;
+    for ( let i = 0; i < afterEach.length; i++ ) {
+      hooks.push( afterEach[ i ] );
+    }
+    p = p.parent;
+  }
+
+  return hooks;
+}
+
 export default class TestCollection {
 
   hasExclusive: boolean;
@@ -44,7 +78,7 @@ export default class TestCollection {
     const type = metadata.type;
 
     if ( type !== "test" && type !== "group" ) {
-      // $FlowFixMe
+      // $FlowIgnore
       this.hooks[ type ].push( test );
       return;
     }
@@ -86,40 +120,6 @@ export default class TestCollection {
 
   }
 
-  // They are returned in reverse order
-  getBeforeEach( suite: Suite ) { // eslint-disable-line class-methods-use-this
-
-    const hooks = [];
-    let p = suite.placeholder;
-
-    while ( p && p.collection ) {
-      const beforeEach = p.collection.hooks.beforeEach;
-      for ( let i = beforeEach.length - 1; i >= 0; i-- ) {
-        hooks.push( beforeEach[ i ] );
-      }
-      p = p.parent;
-    }
-
-    return hooks;
-  }
-
-  // They are returned in correct order
-  getAfterEach( suite: Suite ) { // eslint-disable-line class-methods-use-this
-
-    const hooks = [];
-    let p = suite.placeholder;
-
-    while ( p && p.collection ) {
-      const afterEach = p.collection.hooks.afterEach;
-      for ( let i = 0; i < afterEach.length; i++ ) {
-        hooks.push( afterEach[ i ] );
-      }
-      p = p.parent;
-    }
-
-    return hooks;
-  }
-
   buildTest( test: Placeholder, suite: Suite ) {
 
     if ( test instanceof GroupPlaceholder ) {
@@ -133,14 +133,14 @@ export default class TestCollection {
     const context = {};
     const seq = new InTestSequence( suite.level, test.metadata, test.buildRunnable( context, suite ) );
 
-    const beforeEachHooks = this.getBeforeEach( suite );
+    const beforeEachHooks = getBeforeEach( suite );
     for ( let i = beforeEachHooks.length - 1; i >= 0; i-- ) {
       seq.add( beforeEachHooks[ i ].buildRunnable( context, suite ) );
     }
 
     seq.pushMiddle();
 
-    const afterEachHooks = this.getAfterEach( suite );
+    const afterEachHooks = getAfterEach( suite );
     for ( let i = 0; i < afterEachHooks.length; i++ ) {
       seq.add( afterEachHooks[ i ].buildRunnable( context, suite ) );
     }

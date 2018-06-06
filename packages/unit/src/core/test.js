@@ -8,7 +8,7 @@ import SkipError from "./util/skip-error";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
 import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
-import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, Metadata } from "./types";
+import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, TestMetadata } from "./types";
 import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
@@ -31,7 +31,7 @@ export class Runnable implements ITestResult, ITest {
   logs: string[];
   placeholder: TestPlaceholder;
   callback: Function;
-  metadata: Metadata;
+  metadata: TestMetadata;
   context: Object;
   didPlan: boolean;
   planned: number;
@@ -451,7 +451,7 @@ export default class Test implements ITestResult, IRunnable {
   skipReason: ?string;
   placeholder: TestPlaceholder;
   runnable: Runnable | InTestSequence;
-  metadata: Metadata;
+  metadata: TestMetadata;
   runner: Runner;
   memoryUsage: number;
 

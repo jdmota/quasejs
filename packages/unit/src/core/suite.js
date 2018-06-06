@@ -1,7 +1,6 @@
-/* @flow */
-
+// @flow
 import isPromise from "./util/is-promise";
-import type { Status, IRunnable, Metadata } from "./types";
+import type { Status, IRunnable, GroupMetadata } from "./types";
 import type Runner from "./runner";
 import type Test from "./test";
 import type TestCollection from "./test-collection";
@@ -28,7 +27,7 @@ export default class Suite implements IRunnable {
   skipReason: ?string;
   timeStart: number;
   finished: boolean;
-  metadata: Metadata;
+  metadata: GroupMetadata;
   runner: Runner;
   placeholder: GroupPlaceholder;
   collection: TestCollection;

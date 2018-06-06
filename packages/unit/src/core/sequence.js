@@ -1,7 +1,7 @@
 // @flow
 import type Runner from "./runner";
 import skipReasons from "./skip-reasons";
-import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, Metadata } from "./types";
+import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, TestMetadata } from "./types";
 import type { Runnable } from "./test";
 
 class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRunnable<R> {
@@ -70,7 +70,7 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
     return this.runner.shouldBail();
   }
 
-  // $FlowFixMe
+  // $FlowIgnore
   getResult(): SequenceImpl<R, T> {
     this.status = this.failTest ? "failed" : this.skipTest ? "skipped" : "passed";
     if ( this.failTest ) {
@@ -190,7 +190,7 @@ export class Sequence extends SequenceImpl<IRunnableResult, IRunnable> implement
 export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements ITestResult, ITest {
 
   slow: boolean;
-  metadata: Metadata;
+  metadata: TestMetadata;
   errors: Object[];
   assertions: Object[];
   logs: string[];
@@ -198,7 +198,7 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
   middleRunnable: Runnable;
   middleRunnableProxy: ClonableProxy;
 
-  constructor( level: number, metadata: Metadata, middleRunnable: Runnable ) {
+  constructor( level: number, metadata: TestMetadata, middleRunnable: Runnable ) {
     super( false, false, level );
     this.errors = [];
     this.assertions = [];

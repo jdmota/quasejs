@@ -3,20 +3,30 @@
 
 export type Status = ?( "passed" | "skipped" | "failed" | "todo" );
 
-export type Metadata = {
-  type: "test" | "group" | "before" | "after" | "beforeEach" | "afterEach",
-  serial: boolean,
-  exclusive: boolean,
-  strict: boolean,
-  status: "" | "skipped" | "todo" | "failing",
-  bail: boolean,
-  allowNoPlan: boolean
+export type GroupMetadata = {
+  +type: "group",
+  +serial: boolean,
+  +exclusive: boolean,
+  +strict: boolean,
+  +status: "" | "skipped" | "todo" | "failing",
+  +bail: boolean,
+  +allowNoPlan: boolean
+};
+
+export type TestMetadata = {
+  +type: "test" | "before" | "after" | "beforeEach" | "afterEach",
+  +serial: boolean,
+  +exclusive: boolean,
+  +strict: boolean,
+  +status: "" | "skipped" | "todo" | "failing",
+  +bail: boolean,
+  +allowNoPlan: boolean
 };
 
 export type IRunReturn<+T> = Promise<T> | T;
 
 export interface IRunnableResult {
-  level: number,
+  +level: number,
   failedBecauseOfHook: ?{ level: number },
   skipReason: ?string,
   status: Status
@@ -31,8 +41,8 @@ export interface GenericRunnable<T> {
 export interface IRunnable extends GenericRunnable<IRunnableResult> {}
 
 export interface ITestResult extends IRunnableResult {
+  +metadata: TestMetadata,
   slow: boolean,
-  metadata: Metadata,
   errors: Object[],
   assertions: Object[],
   logs: string[],
