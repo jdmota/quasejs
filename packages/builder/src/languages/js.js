@@ -49,8 +49,8 @@ export default class JsLanguage extends Language {
   constructor( options: Object, module: Module, builder: Builder ) {
     super( options, module, builder );
 
-    this.dataToString = module.data.toString();
-    this.ast = module.ast;
+    this.dataToString = this.output.data.toString();
+    this.ast = this.output.ast;
     this.deps = [];
 
     this._dynamicImports = [];

@@ -86,10 +86,10 @@ export type Output = {
 };
 
 export type LoaderOutput = {
-  type: string,
-  data: Data,
-  ast?: ?Object,
-  map?: ?Object
+  +type: string,
+  +data: Data,
+  +map: ?Object,
+  +ast: ?Object
 };
 
 export type Loader = ( LoaderOutput, Object, Module, Builder ) => ?Promise<LoaderOutput>;
@@ -101,16 +101,16 @@ export type GraphTransformer = ( FinalAssets, Builder ) => ?Promise<?FinalAssets
 export type AfterBuild = ( Output, Builder ) => ?Promise<void>;
 
 export type Plugin = {
-  name?: ?string,
-  load?: ?( string, Builder ) => ?Promise<?LoaderOutput>,
-  getLanguage?: ?( Module, Builder ) => ?Promise<?Language>,
-  resolve?: ?( string, Module, Builder ) => ?Promise<?string | boolean>,
-  transform?: ?( LoaderOutput, Module, Builder ) => ?Promise<?LoaderOutput>,
-  isSplitPoint?: ?( Module, Module, Builder ) => ?Promise<?boolean>,
-  isExternal?: ?( string, Builder ) => ?Promise<?boolean>,
-  checker?: ?Checker,
-  graphTransformer?: ?GraphTransformer,
-  afterBuild?: ?AfterBuild
+  +name?: ?string,
+  +load?: ?( string, Builder ) => ?Promise<?LoaderOutput>,
+  +transform?: ?( LoaderOutput, Module, Builder ) => ?Promise<?LoaderOutput>,
+  +getLanguage?: ?( Module, Builder ) => ?Promise<?Language>,
+  +resolve?: ?( string, Module, Builder ) => ?Promise<?string | false>,
+  +isSplitPoint?: ?( Module, Module, Builder ) => ?Promise<?boolean>,
+  +isExternal?: ?( string, Builder ) => ?Promise<?boolean>,
+  +checker?: ?Checker,
+  +graphTransformer?: ?GraphTransformer,
+  +afterBuild?: ?AfterBuild
 };
 
 export type OptimizationOptions = {

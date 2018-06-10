@@ -37,9 +37,8 @@ export default class Module {
   +checker: Checker;
   lang: ?ILanguage;
   type: string;
-  data: Data;
   originalData: Data;
-  ast: ?Object;
+  lastOutput: LoaderOutput;
   maps: Object[];
   deps: Dep[];
   moduleDeps: ( Dep & { requiredId: string } )[];
@@ -63,9 +62,13 @@ export default class Module {
     this.lang = null;
 
     this.type = "";
-    this.data = "";
     this.originalData = "";
-    this.ast = null;
+    this.lastOutput = {
+      type: "",
+      data: "",
+      map: null,
+      ast: null
+    };
     this.maps = [];
     this.deps = [];
     this.moduleDeps = [];
@@ -80,11 +83,21 @@ export default class Module {
     throw new Error( `${message}. Module: ${this.normalized}` );
   }
 
+  getOriginalCode(): ?string {
+    const data = this.originalData;
+    return data && data.toString();
+  }
+
+  getCode(): ?string {
+    const data = this.lastOutput && this.lastOutput.data;
+    return data && data.toString();
+  }
+
   error( message: string, loc: ?Loc ) {
     error( message, {
       id: this.id,
-      originalCode: loc && this.originalData && this.originalData.toString(),
-      code: loc && this.data.toString(),
+      originalCode: loc && this.getOriginalCode(),
+      code: loc && this.getCode(),
       mapChain: this.maps
     }, loc );
   }
@@ -103,7 +116,6 @@ export default class Module {
       for ( const { plugin } of builder.plugins ) {
         const fn = plugin.resolve;
         if ( fn ) {
-          // $FlowFixMe
           const result = await fn( request, this, builder );
           if ( typeof result === "string" ) {
             path = result;
@@ -147,7 +159,7 @@ export default class Module {
     if ( result == null ) {
       try {
         result = await builder.applyPluginPhaseFirst( "load", ( result, name ) => {
-          return handleOutput( result, null, maps, "Load", name );
+          return handleOutput( result, maps, "Load", name );
         }, this.path );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
@@ -159,14 +171,18 @@ export default class Module {
 
     this.originalData = result.data;
 
-    result = await builder.applyPluginPhasePipe( "transform", ( result, prevResult, name ) => {
-      return handleOutput( result, prevResult.data, maps, "Transform", name );
+    result = await builder.applyPluginPhasePipe( "transform", ( result, name ) => {
+      return handleOutput( result, maps, "Transform", name );
     }, result, this );
 
     this.type = result.type;
-    this.data = result.data;
-    this.ast = result.ast;
     this.maps = maps;
+    this.lastOutput = {
+      type: result.type,
+      data: result.data,
+      map: null,
+      ast: result.ast
+    };
 
     const lang = this.lang = await builder.applyPluginPhaseFirst( "getLanguage", ( result, name ) => {
       if ( result instanceof Language ) {
@@ -224,50 +240,54 @@ export default class Module {
 
 }
 
-function handleOutput( out, prevData, maps, hook, pluginName ): LoaderOutput {
+function handleOutput( out, maps, hook, pluginName ): LoaderOutput {
 
   const _from = `${hook} hook${pluginName ? " from " + pluginName : ""}`;
 
-  if ( !isObject( out ) || typeof out.type !== "string" ) {
+  if ( !isObject( out ) ) {
     throw error( `${_from} should return { type: string, data: Buffer | string }` );
   }
 
-  if ( out.code && out.data ) {
-    throw error( `${_from} should not return an object with both "data" and "code"` );
-  }
+  const { type, data, map, ast } = out;
 
-  let data = out.code == null ? out.data : out.code;
-
-  if ( out.ast ) {
-    if ( prevData == null ) {
-      throw error( `${_from} should not return ast` );
-    }
-    if ( data || out.map ) {
-      throw error( `${_from} should not return data and/or source map with ast` );
-    }
-    data = prevData;
+  if ( typeof type !== "string" ) {
+    throw error( `${_from} should return { type: string, data: Buffer | string }` );
   }
 
   if ( typeof data !== "string" && !Buffer.isBuffer( data ) ) {
     throw error( `${_from} should return valid data: Buffer or string` );
   }
 
-  if ( out.map ) {
-    if ( isObject( out.map ) ) {
-      maps.push( out.map );
+  if ( ast ) {
+
+    if ( typeof ast !== "object" ) {
+      throw error( `${_from} should return valid ast object or none` );
+    }
+
+    if ( map ) {
+      throw error( `${_from} should not return source map with ast` );
+    }
+
+    return {
+      type,
+      data,
+      map: null,
+      ast
+    };
+  }
+
+  if ( map ) {
+    if ( typeof map === "object" ) {
+      maps.push( map );
     } else {
       throw error( `${_from} should return valid source map object or none` );
     }
   }
 
-  if ( out.ast && !isObject( out.ast ) ) {
-    throw error( `${_from} should return valid ast object or none` );
-  }
-
   return {
-    type: out.type,
+    type,
     data,
-    ast: out.ast,
-    map: out.map
+    map,
+    ast: null
   };
 }

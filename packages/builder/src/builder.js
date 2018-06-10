@@ -34,10 +34,10 @@ export default class Builder {
   +fileSystem: FileSystem;
   +fs: MinimalFS;
   +cli: Object;
-  +reporter: { plugin: Function, options: Object };
+  +reporter: { +plugin: Function, +options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
-  +plugins: { name: ?string, plugin: Plugin }[];
+  +plugins: { +name: ?string, +plugin: Plugin }[];
   +optimization: OptimizationOptions;
   +performance: PerformanceOpts;
   +serviceWorker: Object;
@@ -120,14 +120,14 @@ export default class Builder {
     throw new Error( `No hook ${phase} returned a valid output.` );
   }
 
-  async applyPluginPhasePipe<T>( phase: $Keys<Plugin>, postProcess: ?( any, any, ?string ) => T, result: T, ...args: mixed[] ): Promise<T> {
+  async applyPluginPhasePipe<T>( phase: $Keys<Plugin>, postProcess: ?( any, ?string ) => T, result: T, ...args: mixed[] ): Promise<T> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin[ phase ];
       if ( fn ) {
         // $FlowFixMe
         const res = await fn( result, ...args, this );
         if ( res != null ) {
-          result = postProcess ? postProcess( res, result, name ) : res;
+          result = postProcess ? postProcess( res, name ) : res;
         }
       }
     }

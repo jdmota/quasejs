@@ -97,7 +97,7 @@ export default class HtmlLanguage extends Language {
 
     this.treeAdapter = new TreeAdapter();
 
-    this.originalCode = module.data.toString();
+    this.originalCode = this.output.data.toString();
 
     this.document = parse5.parse( this.originalCode, {
       treeAdapter: this.treeAdapter,
