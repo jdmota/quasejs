@@ -12,6 +12,13 @@ export type Loc = {
   +column?: ?number
 };
 
+export type LoaderOutput = {
+  +type: string,
+  +data: Data,
+  +map?: ?Object,
+  +ast?: ?Object
+};
+
 export type ImportedName = {
   +request: string,
   +imported: string,
@@ -30,6 +37,7 @@ export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string |
 
 export type NotResolvedDep = {
   request: string,
+  output?: ?LoaderOutput,
   loc?: ?Loc,
   async?: ?boolean
 };
@@ -42,9 +50,9 @@ export type Dep = {
 };
 
 export type DepsInfo = {
-  dependencies: NotResolvedDep[],
-  importedNames: ImportedName[],
-  exportedNames: ExportedName[]
+  dependencies?: ?NotResolvedDep[],
+  importedNames?: ?ImportedName[],
+  exportedNames?: ?ExportedName[]
 };
 
 export type FinalAsset = {
@@ -83,13 +91,6 @@ export type Info = { file: string, size: number, isEntry: boolean };
 
 export type Output = {
   filesInfo: Info[]
-};
-
-export type LoaderOutput = {
-  +type: string,
-  +data: Data,
-  +map: ?Object,
-  +ast: ?Object
 };
 
 export type Loader = ( LoaderOutput, Object, Module, Builder ) => ?Promise<LoaderOutput>;

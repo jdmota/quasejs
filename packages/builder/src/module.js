@@ -11,6 +11,7 @@ import { relative, resolvePath } from "./id";
 import { Checker } from "./checker";
 
 const { isAbsolute } = require( "path" );
+const EMPTY_ARR = [];
 
 function isObject( obj ) {
   return obj != null && typeof obj === "object";
@@ -18,8 +19,10 @@ function isObject( obj ) {
 
 export type ModuleArg = {
   path: string,
+  index?: ?number,
   isEntry?: ?boolean,
-  loadResult?: ?LoaderOutput,
+  initialOuput?: ?LoaderOutput,
+  loc?: ?Loc,
   builder: Builder
 };
 
@@ -28,35 +31,38 @@ export type ModuleArg = {
 export default class Module {
 
   +path: string;
+  +index: number;
   +normalized: string;
   +dest: string;
   +id: string;
   +hashId: string;
   +isEntry: boolean;
-  +loadResult: ?LoaderOutput;
+  +initialOuput: ?LoaderOutput;
+  +locOffset: ?Loc;
   +checker: Checker;
   lang: ?ILanguage;
   type: string;
   originalData: Data;
   lastOutput: LoaderOutput;
   maps: Object[];
-  deps: Dep[];
   moduleDeps: ( Dep & { requiredId: string } )[];
   importedNames: ImportedName[];
   exportedNames: ExportedName[];
   transforming: ?Promise<Language>;
   resolving: ?Promise<void>;
 
-  constructor( { path, isEntry, loadResult, builder }: ModuleArg ) {
+  constructor( { path, index, isEntry, initialOuput, loc, builder }: ModuleArg ) {
     this.path = path;
+    this.index = index || 0;
     this.normalized = relative( path, builder.context );
     this.dest = resolvePath( this.normalized, builder.dest );
 
-    this.id = this.normalized;
+    this.id = index ? `${this.normalized} (index:${index})` : this.normalized;
     this.hashId = builder.optimization.hashId ? hashName( this.id, builder.usedIds, 5 ) : this.id;
 
     this.isEntry = !!isEntry;
-    this.loadResult = loadResult;
+    this.initialOuput = initialOuput;
+    this.locOffset = loc;
 
     this.checker = new Checker( this, builder );
     this.lang = null;
@@ -69,11 +75,11 @@ export default class Module {
       map: null,
       ast: null
     };
-    this.maps = [];
-    this.deps = [];
-    this.moduleDeps = [];
-    this.importedNames = [];
-    this.exportedNames = [];
+    this.maps = EMPTY_ARR;
+
+    this.moduleDeps = EMPTY_ARR;
+    this.importedNames = EMPTY_ARR;
+    this.exportedNames = EMPTY_ARR;
 
     this.transforming = null;
     this.resolving = null;
@@ -102,16 +108,19 @@ export default class Module {
     }, loc );
   }
 
-  async _handleDeps( builder: Builder, lang: Language, deps: NotResolvedDep[] ): Promise<Dep[]> {
-    const p = deps.map( async obj => {
+  async _handleDep( builder: Builder, { request, output, loc, async }: NotResolvedDep ) {
 
-      const { request, loc, async } = obj;
+    if ( !request ) {
+      throw this.error( "Empty import", loc );
+    }
 
-      if ( !request ) {
-        throw this.error( "Empty import", loc );
-      }
+    let path;
 
-      let path;
+    if ( output ) {
+
+      path = this.path;
+
+    } else {
 
       for ( const { plugin } of builder.plugins ) {
         const fn = plugin.resolve;
@@ -140,27 +149,29 @@ export default class Module {
         throw this.error( "Don't import the destination file", loc );
       }
 
-      return {
-        path,
-        request,
-        loc,
-        async
-      };
-    } );
+    }
 
-    return Promise.all( p );
+    return {
+      path,
+      output,
+      request,
+      loc,
+      async
+    };
   }
 
   async _transform( builder: Builder ): Promise<Language> {
 
-    let result = this.loadResult;
+    let result = this.initialOuput;
     const maps = [];
 
     if ( result == null ) {
       try {
-        result = await builder.applyPluginPhaseFirst( "load", ( result, name ) => {
-          return handleOutput( result, maps, "Load", name );
-        }, this.path );
+        result = await builder.applyPluginPhaseFirst(
+          "load",
+          ( result, name ) => handleOutput( result, maps, "Load", name ),
+          this.path
+        );
       } catch ( err ) {
         if ( err.code === "ENOENT" ) {
           throw error( `Could not find ${this.normalized}` );
@@ -171,9 +182,12 @@ export default class Module {
 
     this.originalData = result.data;
 
-    result = await builder.applyPluginPhasePipe( "transform", ( result, name ) => {
-      return handleOutput( result, maps, "Transform", name );
-    }, result, this );
+    result = await builder.applyPluginPhasePipe(
+      "transform",
+      ( result, name ) => handleOutput( result, maps, "Transform", name ),
+      result,
+      this
+    );
 
     this.type = result.type;
     this.maps = maps;
@@ -198,19 +212,47 @@ export default class Module {
 
     const depsInfo = await lang.dependencies();
 
-    this.deps = await this._handleDeps( builder, lang, depsInfo.dependencies );
+    const p = [];
+    for ( const dep of depsInfo.dependencies || EMPTY_ARR ) {
+      p.push( this._handleDep( builder, dep ) );
+    }
 
-    this.moduleDeps = this.deps.map( dep => {
-      const requiredId = builder.addModule( {
-        path: dep.path,
-        isEntry: false,
-        builder
-      } ).id;
-      return Object.assign( {}, dep, { requiredId } );
-    } );
+    const deps = await Promise.all( p );
+    const moduleDeps = [];
 
-    this.importedNames = depsInfo.importedNames;
-    this.exportedNames = depsInfo.exportedNames;
+    let index = 1;
+
+    for ( const { path, request, loc, async, output } of deps ) {
+
+      let requiredId;
+
+      if ( output ) {
+        requiredId = builder.addModule( {
+          path,
+          index: index++,
+          initialOuput: output,
+          loc,
+          builder
+        } ).id;
+      } else {
+        requiredId = builder.addModule( {
+          path,
+          builder
+        } ).id;
+      }
+
+      moduleDeps.push( {
+        path,
+        request,
+        loc,
+        async,
+        requiredId
+      } );
+    }
+
+    this.moduleDeps = moduleDeps;
+    this.importedNames = depsInfo.importedNames || EMPTY_ARR;
+    this.exportedNames = depsInfo.exportedNames || EMPTY_ARR;
   }
 
   transform( builder: Builder ) {
@@ -233,7 +275,6 @@ export default class Module {
   }
 
   resetDeps() {
-    this.deps.length = 0;
     this.moduleDeps.length = 0;
     this.resolving = null;
   }

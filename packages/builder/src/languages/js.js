@@ -27,6 +27,7 @@ const chunkInit = babel.transformSync(
   } )`,
   {
     babelrc: false,
+    configFile: false,
     minified: true
   }
 ).code.replace( /;$/, "" );
@@ -276,6 +277,7 @@ export default class JsLanguage extends Language {
 
     const opts = {
       babelrc: false,
+      configFile: false,
       sourceType: "module",
       parserOpts: {
         sourceType: "module",

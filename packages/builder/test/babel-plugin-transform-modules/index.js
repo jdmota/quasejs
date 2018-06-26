@@ -30,6 +30,7 @@ describe( "babel transform modules", () => {
       }
 
       config.babelrc = false;
+      config.configFile = false;
       config.filename = file;
 
       config.parserOpts = Object.assign( {

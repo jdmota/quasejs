@@ -8,8 +8,8 @@ module.exports = {
       } ]
     ],
     plugins: [
-      require( "@babel/plugin-proposal-export-default-from" ),
-      require( "@babel/plugin-proposal-export-namespace-from" )
+      require( "@babel/plugin-proposal-export-default-from" ).default,
+      require( "@babel/plugin-proposal-export-namespace-from" ).default
     ]
   },
   _out: [

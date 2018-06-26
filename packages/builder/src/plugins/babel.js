@@ -57,6 +57,7 @@ export default function( options ) {
 
         return {
           type,
+          data,
           ast
         };
       }

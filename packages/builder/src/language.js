@@ -30,11 +30,7 @@ export default class Language implements ILanguage {
   }
 
   async dependencies() {
-    return {
-      dependencies: [],
-      importedNames: [],
-      exportedNames: []
-    };
+    return {};
   }
 
   async renderAsset( builder: Builder, asset: FinalAsset, finalAssets: FinalAssets ) { // eslint-disable-line

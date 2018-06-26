@@ -6,6 +6,7 @@ import Language from "../language";
 import cloneAst from "./clone-ast";
 
 const parse5 = require( "parse5" );
+const defaultTreeAdapter = require( "parse5/lib/tree-adapters/default" );
 
 function attrsToObj( attrs ) {
   const attrsObj = {};
@@ -19,7 +20,6 @@ function TreeAdapter() {
   this.__deps = [];
 }
 
-const defaultTreeAdapter = parse5.treeAdapters.default;
 Object.assign( TreeAdapter.prototype, defaultTreeAdapter );
 
 // TODO be able to transform inline javascript?
@@ -101,7 +101,7 @@ export default class HtmlLanguage extends Language {
 
     this.document = parse5.parse( this.originalCode, {
       treeAdapter: this.treeAdapter,
-      locationInfo: true
+      sourceCodeLocationInfo: true
     } );
 
     this.processDeps();
@@ -112,8 +112,8 @@ export default class HtmlLanguage extends Language {
       this.deps.push( {
         request: s.request,
         loc: {
-          line: s.node.__location.line,
-          column: s.node.__location.col - 1
+          line: s.node.sourceCodeLocation.startLine,
+          column: s.node.sourceCodeLocation.startCol - 1
         },
         async: s.async
       } );
@@ -122,9 +122,7 @@ export default class HtmlLanguage extends Language {
 
   async dependencies() {
     return {
-      dependencies: this.deps,
-      importedNames: [],
-      exportedNames: []
+      dependencies: this.deps
     };
   }
 

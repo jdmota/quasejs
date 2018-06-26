@@ -4,6 +4,7 @@ import babelPlugin from "../src/plugins/babel";
 
 const BABEL_OPTS = {
   babelrc: false,
+  configFile: false,
   parserOpts: {
     sourceType: "module",
     plugins: [

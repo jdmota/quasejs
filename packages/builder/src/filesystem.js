@@ -1,10 +1,5 @@
 // @flow
-const pathUrl = require( "@quase/path-url" );
-const FileSystem = require( "@quase/cacheable-fs" ).default;
-
-function makeAbsolutePath( p: string ): string {
-  return pathUrl.lowerPath( pathUrl.makeAbsolutePath( p ) );
-}
+const { default: FileSystem, makeAbsolutePath } = require( "@quase/cacheable-fs" );
 
 export default class TrackableFileSystem extends FileSystem {
 

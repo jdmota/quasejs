@@ -45,6 +45,7 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
 
   const { code } = babel.transformSync( input, {
     babelrc: false,
+    configFile: false,
     sourceType: "module",
     presets: [
       require( "./babel-preset" ).default
