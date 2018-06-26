@@ -2,6 +2,8 @@
 import { dirname, makeAbsolutePath } from "./util";
 import File from "./file";
 
+export { File, dirname, makeAbsolutePath };
+
 export default class FileSystem {
 
   +data: Map<string, File>;
