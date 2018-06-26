@@ -1,4 +1,3 @@
-// @flow
 import installer from "../src/installer";
 import check from "../src/check";
 
@@ -8,7 +7,7 @@ const path = require( "path" );
 const store = path.resolve( require( "os" ).homedir(), ".qpm-store-test" );
 
 async function testProcess( file ) {
-  // $FlowFixMe
+
   const p = childProcess.fork( file, {
     stdio: "pipe"
   } );

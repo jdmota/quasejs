@@ -3,15 +3,14 @@
   "private": true,
   "scripts": {
     "test": "jest",
-    "build": "node packages/build.js",
+    "build": "node scripts/build.js",
     "babel-node": "babel-node",
-    "n": "node packages/node",
-    "flowtype": "flow-typed install",
+    "n": "node scripts/node",
     "flow": "flow",
     "lint": "eslint \"**/*.js\"",
     "coverage": "nyc jest && nyc report --reporter=html",
     "bootstrap": "lerna bootstrap",
-    "outdated": "npm-check --ignore eslint-config-* --ignore fast-async --ignore flow-typed --ignore @babel/*"
+    "outdated": "npm-check --ignore eslint-config-* --ignore flow-typed --ignore @babel/* --ignore @quase/*"
   },
   "repository": {
     "type": "git",
@@ -20,7 +19,7 @@
   "author": "João Mota",
   "license": "MIT",
   "jest": {
-    "resolver": "<rootDir>/packages/resolver",
+    "resolver": "<rootDir>/scripts/resolver",
     "roots": [
       "<rootDir>/packages/builder/test/",
       "<rootDir>/packages/cli/test/",
@@ -68,7 +67,6 @@
     "eslint": "^4.18.0",
     "execa": "^0.10.0",
     "flow-bin": "^0.75.0",
-    "flow-typed": "^2.1.5",
     "fs-extra": "^6.0.1",
     "jest": "^23.2.0",
     "lerna": "^3.0.0-beta.21",

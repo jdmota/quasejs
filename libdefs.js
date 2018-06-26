@@ -55,6 +55,7 @@ declare module "ora" { declare module.exports: any; }
 declare module "pacote" { declare module.exports: any; }
 declare module "parse-npm-tarball-url" { declare module.exports: any; }
 declare module "parse5" { declare module.exports: any; }
+declare module "parse5/lib/tree-adapters/default" { declare module.exports: any; }
 declare module "pkg-conf" { declare module.exports: any; }
 declare module "pretty-bytes" { declare module.exports: any; }
 declare module "random-js" { declare module.exports: any; }
