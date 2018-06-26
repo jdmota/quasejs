@@ -34,6 +34,9 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/packages/package-manager/test/test-folders"
     ],
+    "transform": {
+      "^.+\\.jsx?$": "<rootDir>/scripts/babel-jest"
+    },
     "testRegex": "/test/(index|.+\\.test)\\.js$",
     "testEnvironment": "node"
   },
@@ -51,23 +54,23 @@
     ]
   },
   "devDependencies": {
-    "@babel/cli": "7.0.0-beta.41",
-    "@babel/core": "^7.0.0-beta.41",
-    "@babel/node": "7.0.0-beta.41",
-    "@babel/plugin-proposal-class-properties": "7.0.0-beta.41",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.41",
-    "@babel/plugin-transform-flow-strip-types": "7.0.0-beta.41",
-    "@babel/preset-env": "7.0.0-beta.41",
-    "@babel/register": "^7.0.0-beta.41",
+    "@babel/cli": "^7.0.0-beta.51",
+    "@babel/core": "^7.0.0-beta.51",
+    "@babel/node": "^7.0.0-beta.51",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.51",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.51",
+    "@babel/plugin-transform-flow-strip-types": "^7.0.0-beta.51",
+    "@babel/preset-env": "^7.0.0-beta.51",
+    "@babel/register": "^7.0.0-beta.51",
     "@quase/eslint-config-quase": "^0.3.0-1",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^22.4.1",
+    "babel-core": "^7.0.0-0",
+    "babel-jest": "^23.2.0",
     "eslint": "^4.18.0",
     "execa": "^0.10.0",
-    "flow-bin": "^0.74.0",
+    "flow-bin": "^0.75.0",
     "flow-typed": "^2.1.5",
     "fs-extra": "^6.0.1",
-    "jest": "^22.4.2",
+    "jest": "^23.2.0",
     "lerna": "^3.0.0-beta.21",
     "npm-check": "^5.7.1",
     "resolve": "^1.7.1"
