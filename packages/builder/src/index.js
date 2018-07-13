@@ -39,3 +39,5 @@ export default function( options ) {
 }
 
 export { Builder, Watcher };
+
+export { schema } from "./options";

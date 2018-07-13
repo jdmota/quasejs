@@ -3,6 +3,7 @@
 declare module "@babel/code-frame" { declare module.exports: any; }
 declare module "@babel/core" { declare module.exports: any; }
 declare module "@babel/generator" { declare module.exports: any; }
+declare module "@babel/helper-module-imports" { declare module.exports: any; }
 declare module "@babel/helpers" { declare module.exports: any; }
 declare module "@babel/preset-es2015" { declare module.exports: any; }
 declare module "@babel/template" { declare module.exports: any; }

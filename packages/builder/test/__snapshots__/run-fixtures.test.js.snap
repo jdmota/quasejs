@@ -2,12 +2,12 @@
 
 exports[`builder Fixture: babel-helpers 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 new _func.default().a();
 },
-b203b:function($e,$r,$i,$g){var _babel_helpers = $r(\\"e228d\\");
+b203b:function($e,$r,$i,$g){var _babel_helpers = $r(\\"1bc7b\\");
 
 $g($e, \\"default\\", function () {
   return A;
@@ -29,7 +29,7 @@ function () {
   return A;
 }(); // Comment at the end
 },
-e228d:function($e,$r,$i,$g){$g($e, \\"typeof\\", function () {
+\\"1bc7b\\":function($e,$r,$i,$g){$g($e, \\"typeof\\", function () {
   return _typeof;
 });
 $g($e, \\"jsx\\", function () {
@@ -109,6 +109,9 @@ $g($e, \\"newArrowCheck\\", function () {
 });
 $g($e, \\"objectDestructuringEmpty\\", function () {
   return _objectDestructuringEmpty;
+});
+$g($e, \\"objectWithoutPropertiesLoose\\", function () {
+  return _objectWithoutPropertiesLoose;
 });
 $g($e, \\"objectWithoutProperties\\", function () {
   return _objectWithoutProperties;
@@ -450,6 +453,22 @@ function _asyncGeneratorDelegate(inner, awaitWrap) {
   return iter;
 }
 
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
 function _asyncToGenerator(fn) {
   return function () {
     var self = this,
@@ -457,31 +476,15 @@ function _asyncToGenerator(fn) {
     return new Promise(function (resolve, reject) {
       var gen = fn.apply(self, args);
 
-      function step(key, arg) {
-        try {
-          var info = gen[key](arg);
-          var value = info.value;
-        } catch (error) {
-          reject(error);
-          return;
-        }
-
-        if (info.done) {
-          resolve(value);
-        } else {
-          Promise.resolve(value).then(_next, _throw);
-        }
-      }
-
       function _next(value) {
-        step(\\"next\\", value);
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, \\"next\\", value);
       }
 
       function _throw(err) {
-        step(\\"throw\\", err);
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, \\"throw\\", err);
       }
 
-      _next();
+      _next(undefined);
     });
   };
 }
@@ -748,7 +751,7 @@ function _objectDestructuringEmpty(obj) {
   if (obj == null) throw new TypeError(\\"Cannot destructure undefined\\");
 }
 
-function _objectWithoutProperties(source, excluded) {
+function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
   var sourceKeys = Object.keys(source);
@@ -759,6 +762,16 @@ function _objectWithoutProperties(source, excluded) {
     if (excluded.indexOf(key) >= 0) continue;
     target[key] = source[key];
   }
+
+  return target;
+}
+
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+
+  var target = _objectWithoutPropertiesLoose(source, excluded);
+
+  var key, i;
 
   if (Object.getOwnPropertySymbols) {
     var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
@@ -1076,7 +1089,7 @@ function _classPrivateFieldSet(receiver, privateMap, value) {
   privateMap.set(receiver, value);
   return value;
 }
-}});(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{writable:!0,value:!0}),w[a]=c,b(c,k,l,f,g),c}throw new Error(\\"Module \\"+a+\\" not found\\")}function k(a){return h(a)||(C[a]||[]).forEach(m),j(a)}function l(a){return q.all(h(a)?[]:(C[a]||[]).map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\"+f+\\" failed\\"))}var f=B[a];if(y[f]!==o)return q.resolve(y[f]);if(z[f])return z[f];var e=[o,o],g=new q(function(a,b){e[0]=function(b){z[f]=o,a(y[f]=b)},e[1]=function(a){z[f]=o,b(a)}});if(z[f]=g,!v)return q.resolve(f).then(d).then(e[0],e[1]),g;var h=s.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=12e4,h.src=f;var i=setTimeout(c,12e4);return h.onload=function(){b()},h.onerror=c,s.head.appendChild(h),g}var o=void 0,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=t?\\"./\\":\\"/\\",B=[\\"index.js\\"].map(function(a){return A+a}),C={16872:[0],b203b:[0],e228d:[0]};k.r=function(a){var b=k(a);return!1===b.__esModule?b.default:b};var D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return D.r}return a.__quase_builder__={r:k,i:l,q:{push:e}},k})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require)(\\"16872\\");
+}});(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{writable:!0,value:!0}),w[a]=c,b(c,k,l,f,g),c}throw new Error(\\"Module \\"+a+\\" not found\\")}function k(a){return h(a)||(C[a]||[]).forEach(m),j(a)}function l(a){return q.all(h(a)?[]:(C[a]||[]).map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\"+f+\\" failed\\"))}var f=B[a];if(y[f]!==o)return q.resolve(y[f]);if(z[f])return z[f];var e=[o,o],g=new q(function(a,b){e[0]=function(b){z[f]=o,a(y[f]=b)},e[1]=function(a){z[f]=o,b(a)}});if(z[f]=g,!v)return q.resolve(f).then(d).then(e[0],e[1]),g;var h=s.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=12e4,h.src=f;var i=setTimeout(c,12e4);return h.onload=function(){b()},h.onerror=c,s.head.appendChild(h),g}var o=void 0,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=t?\\"./\\":\\"/\\",B=[\\"index.js\\"].map(function(a){return A+a}),C={16872:[0],b203b:[0],\\"1bc7b\\":[0]};k.r=function(a){var b=k(a);return!1===b.__esModule?b.default:b};var D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return D.r}return a.__quase_builder__={r:k,i:l,q:{push:e}},k})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require)(\\"16872\\");
 //# sourceMappingURL=index.js.map",
   "atual/index.js.map": "{\\"version\\":3,\\"sources\\":[\\"../files/index.js\\",\\"../files/func.js\\"],\\"names\\":[\\"a\\",\\"A\\",\\"console\\",\\"log\\"],\\"mappings\\":\\";wBAAc;;AAEd,IAFO,aAEP,GAAQA,CAAR;;;;;SCFqBC,C;;;IAAAA,C;;;;;;;;;sBAChBD,E,EAAI;AACLE,cAAQC,GAAR,CAAa,KAAb;AACD;;;KAEH\\",\\"file\\":\\"index.js\\",\\"sourcesContent\\":[\\"import A from \\\\\\"./func\\\\\\";\\\\n\\\\nnew A().a();\\\\n\\",\\"export default class A {\\\\n  a( a ) {\\\\n    console.log( \\\\\\"foo\\\\\\" );\\\\n  }\\\\n}\\\\n// Comment at the end\\\\n\\"]}",
 }
@@ -1084,7 +1097,7 @@ function _classPrivateFieldSet(receiver, privateMap, value) {
 
 exports[`builder Fixture: basic 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 (0, _func.default)(); // Comment at the end
@@ -1103,7 +1116,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: basic-commonjs 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"5c945\\");
 
 const func = $r.r(\\"b203b\\");
@@ -1135,7 +1148,7 @@ $e.default = function () {
 
 exports[`builder Fixture: cycles 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _createObject = $r(\\"2fe97\\");
 
 console.log((0, _createObject.default)(13).children.length);
@@ -1176,7 +1189,7 @@ function createChildren(i) {
 
 exports[`builder Fixture: dynamic-import 1`] = `
 Object {
-  "atual/func.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/func.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 b203b:function($e){$e.default = {
   default: function () {
     console.log(\\"foo\\");
@@ -1184,7 +1197,7 @@ b203b:function($e){$e.default = {
   }
 }.default;
 }});",
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r,$i){$i(\\"b203b\\").then(module => module.default());
 }});(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var c={};return Object.defineProperty(c,\\"__esModule\\",{writable:!0,value:!0}),w[a]=c,b(c,k,l,f,g),c}throw new Error(\\"Module \\"+a+\\" not found\\")}function k(a){return h(a)||(C[a]||[]).forEach(m),j(a)}function l(a){return q.all(h(a)?[]:(C[a]||[]).map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){function b(a){clearTimeout(i),h.onerror=h.onload=o,e[a?1:0](a||p)}function c(){b(new Error(\\"Fetching \\"+f+\\" failed\\"))}var f=B[a];if(y[f]!==o)return q.resolve(y[f]);if(z[f])return z[f];var e=[o,o],g=new q(function(a,b){e[0]=function(b){z[f]=o,a(y[f]=b)},e[1]=function(a){z[f]=o,b(a)}});if(z[f]=g,!v)return q.resolve(f).then(d).then(e[0],e[1]),g;var h=s.createElement(\\"script\\");h.type=\\"text/javascript\\",h.charset=\\"utf-8\\",h.async=!0,h.timeout=12e4,h.src=f;var i=setTimeout(c,12e4);return h.onload=function(){b()},h.onerror=c,s.head.appendChild(h),g}var o=void 0,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=t?\\"./\\":\\"/\\",B=[\\"func.js\\",\\"index.js\\"].map(function(a){return A+a}),C={16872:[1],b203b:[0]};k.r=function(a){var b=k(a);return!1===b.__esModule?b.default:b};var D=a.__quase_builder__;if(D){if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return D.r}return a.__quase_builder__={r:k,i:l,q:{push:e}},k})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require)(\\"16872\\");",
 }
@@ -1192,7 +1205,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: hash-entry 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 (0, _func.default)();
@@ -1210,7 +1223,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: html-and-dynamic-imports 1`] = `
 Object {
-  "atual/func.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/func.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 b203b:function($e){$e.default = {
   default: function () {
     console.log(\\"foo\\");
@@ -1225,7 +1238,7 @@ b203b:function($e){$e.default = {
   
 
 </body></html>",
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r,$i){$i(\\"b203b\\");
 }});
 //# sourceMappingURL=index.js.map",
@@ -1240,7 +1253,7 @@ Object {
   
 
 </body></html>",
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 (0, _func.default)(); // Comment at the end
@@ -1259,7 +1272,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: imports-exports 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _importAndExport = $r(\\"ce52c\\");
 
 console.log(_importAndExport.a, _importAndExport.b, _importAndExport.c, _importAndExport.d, _importAndExport.e, _importAndExport.f, _importAndExport.g, _importAndExport.h, _importAndExport.i, _importAndExport.j, _importAndExport.k.value);
@@ -1368,7 +1381,7 @@ const value = 11;
 
 exports[`builder Fixture: inline-sourcemap 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 (0, _func.default)(); // Comment at the end
@@ -1386,7 +1399,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: keep-module-for-side-effects 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){$r(\\"32b3a\\");
 },
 \\"32b3a\\":function($e,$r){$r(\\"c3010\\");
@@ -1401,7 +1414,7 @@ c3010:function(){console.log(\\"foo\\");
 
 exports[`builder Fixture: no-sourcemap 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 (0, _func.default)();
@@ -1418,7 +1431,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: override-export-namespace 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _export = $r(\\"f1a41\\");
 
 console.log(_export.foo);
@@ -1447,7 +1460,7 @@ const foo = \\"b\\";
 
 exports[`builder Fixture: override-export-namespace-named 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _export = $r(\\"f1a41\\");
 
 console.log(_export.foo);
@@ -1472,7 +1485,7 @@ const foo = \\"a\\";
 
 exports[`builder Fixture: variable-conflict-exports-require 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r){var _func = $r(\\"b203b\\");
 
 let exports = 10; // eslint-disable-line
@@ -1492,7 +1505,7 @@ b203b:function($e){$e.default = {
 
 exports[`builder Fixture: warn-duplicate-export-namespace 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r,$i,$g,$a){var _a = $r(\\"95f0a\\");
 
 var _b = $r(\\"656ad\\");
@@ -1517,7 +1530,7 @@ const foo = 20;
 
 exports[`builder Fixture: warn-duplicate-export-namespace-and-named 1`] = `
 Object {
-  "atual/index.js": "\\"use strict\\";({g:typeof self!==\\"undefined\\"?self:Function(\\"return this\\")(),p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
+  "atual/index.js": "\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
 \\"16872\\":function($e,$r,$i,$g,$a){var _a = $r(\\"95f0a\\");
 
 $a($e, _a);

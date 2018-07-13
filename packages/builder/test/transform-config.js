@@ -1,5 +1,5 @@
 import { schema } from "../src/options";
-import JsLanguage from "../src/languages/js";
+import jsPlugin from "../src/plugins/js";
 import babelPlugin from "../src/plugins/babel";
 
 const BABEL_OPTS = {
@@ -22,17 +22,6 @@ const BABEL_OPTS = {
     } ]
   ]
 };
-
-function jsPlugin( options ) {
-  return {
-    name: "quase_builder_test_js_plugin",
-    getLanguage( module, builder ) {
-      if ( module.type === "js" ) {
-        return new JsLanguage( options, module, builder );
-      }
-    }
-  };
-}
 
 const { applyDefaults } = require( "@quase/config" );
 

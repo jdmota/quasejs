@@ -1,7 +1,10 @@
+// @flow
 import { addNamed } from "@babel/helper-module-imports";
 import { buildExternalHelpers, transformSync, transformFromAstSync } from "@babel/core";
+import type ModuleUtils from "../module-utils";
+import type { Plugin } from "../types";
 
-const HELPERS = "babel_helpers";
+const HELPERS = "babel_helpers.js";
 
 function importHelperPlugin() {
   return {
@@ -19,46 +22,47 @@ function importHelperPlugin() {
 
 const babelExternalsCode = buildExternalHelpers( null, "module" );
 
-export default function( options ) {
+const PLUGIN_NAME = "quase_builder_babel_plugin";
+
+export default function babelPlugin( options: Object ): Plugin {
   return {
-    resolve( id, _, builder ) {
-      if ( id === HELPERS ) {
-        return builder.createFakePath( HELPERS );
+    name: PLUGIN_NAME,
+    load( path, importerUtils ) {
+      if ( path === importerUtils.createFakePath( HELPERS ) ) {
+        return babelExternalsCode;
       }
     },
-    load( id, builder ) {
-      const helpers = builder.createFakePath( HELPERS );
-      if ( id === helpers ) {
-        return {
-          type: "js",
-          data: babelExternalsCode
-        };
+    resolve: {
+      js( importee: string, importerUtils: ModuleUtils ) {
+        if ( importee === HELPERS ) {
+          return importerUtils.createFakePath( HELPERS );
+        }
       }
     },
-    transform( { type, data, ast: prevAst }, module, builder ) {
+    transform: {
+      js( { data, ast: prevAst, map }, module: ModuleUtils ) {
 
-      if ( module.path === builder.createFakePath( HELPERS ) ) {
-        return;
-      }
+        if ( module.path === module.createFakePath( HELPERS ) ) {
+          return;
+        }
 
-      const babelOpts = Object.assign( {
-        sourceType: "module",
-        filename: module.normalized,
-        filenameRelative: module.path,
-        sourceMaps: false,
-        code: false,
-        ast: true
-      }, options );
+        const babelOpts = Object.assign( {
+          sourceType: "module",
+          filename: module.normalized,
+          filenameRelative: module.path,
+          sourceMaps: false,
+          code: false,
+          ast: true
+        }, options );
 
-      babelOpts.plugins = ( babelOpts.plugins || [] ).concat( importHelperPlugin );
+        babelOpts.plugins = ( babelOpts.plugins || [] ).concat( importHelperPlugin );
 
-      if ( type === "js" ) {
         const { ast } = prevAst ? transformFromAstSync( prevAst, data.toString(), babelOpts ) : transformSync( data.toString(), babelOpts );
 
         return {
-          type,
           data,
-          ast
+          ast,
+          map
         };
       }
     }

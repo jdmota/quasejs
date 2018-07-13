@@ -12,18 +12,18 @@
     "quase-builder": "bin/index.js"
   },
   "dependencies": {
-    "@babel/code-frame": "7.0.0-beta.51",
-    "@babel/core": "7.0.0-beta.51",
-    "@babel/generator": "7.0.0-beta.51",
-    "@babel/helpers": "7.0.0-beta.51",
-    "@babel/plugin-transform-template-literals": "7.0.0-beta.51",
-    "@babel/plugin-transform-arrow-functions": "7.0.0-beta.51",
-    "@babel/plugin-transform-block-scoped-functions": "7.0.0-beta.51",
-    "@babel/plugin-transform-shorthand-properties": "7.0.0-beta.51",
-    "@babel/plugin-transform-parameters": "7.0.0-beta.51",
-    "@babel/plugin-transform-destructuring": "7.0.0-beta.51",
-    "@babel/plugin-transform-block-scoping": "7.0.0-beta.51",
-    "@babel/template": "7.0.0-beta.51",
+    "@babel/code-frame": "7.0.0-beta.53",
+    "@babel/core": "7.0.0-beta.53",
+    "@babel/generator": "7.0.0-beta.53",
+    "@babel/helpers": "7.0.0-beta.53",
+    "@babel/plugin-transform-template-literals": "7.0.0-beta.53",
+    "@babel/plugin-transform-arrow-functions": "7.0.0-beta.53",
+    "@babel/plugin-transform-block-scoped-functions": "7.0.0-beta.53",
+    "@babel/plugin-transform-shorthand-properties": "7.0.0-beta.53",
+    "@babel/plugin-transform-parameters": "7.0.0-beta.53",
+    "@babel/plugin-transform-destructuring": "7.0.0-beta.53",
+    "@babel/plugin-transform-block-scoping": "7.0.0-beta.53",
+    "@babel/template": "7.0.0-beta.53",
     "@quase/cacheable-fs": "0.1.0-0",
     "@quase/cli": "0.4.0-0",
     "@quase/config": "0.2.0-0",
@@ -38,10 +38,10 @@
     "watchpack": "^1.6.0"
   },
   "devDependencies": {
-    "@babel/plugin-external-helpers": "7.0.0-beta.51",
-    "@babel/plugin-proposal-export-default-from": "7.0.0-beta.51",
-    "@babel/plugin-proposal-export-namespace-from": "7.0.0-beta.51",
-    "@babel/plugin-transform-runtime": "7.0.0-beta.51",
+    "@babel/plugin-external-helpers": "7.0.0-beta.53",
+    "@babel/plugin-proposal-export-default-from": "7.0.0-beta.53",
+    "@babel/plugin-proposal-export-namespace-from": "7.0.0-beta.53",
+    "@babel/plugin-transform-runtime": "7.0.0-beta.53",
     "sw-precache": "^5.2.1"
   }
 }

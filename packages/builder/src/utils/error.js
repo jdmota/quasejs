@@ -1,17 +1,14 @@
 import { locToString } from "./loc";
 
 const codeFrameColumns = require( "@babel/code-frame" ).codeFrameColumns;
-const { joinSourceMaps, getOriginalLocation } = require( "@quase/source-map" );
+const { getOriginalLocation } = require( "@quase/source-map" );
 
-export default function( message, { id, code, mapChain, originalCode } = {}, loc ) {
-  if ( loc && originalCode && mapChain ) {
-    const finalMap = joinSourceMaps( mapChain );
-    if ( finalMap ) {
-      const originalLoc = getOriginalLocation( finalMap, loc );
-      if ( originalLoc.line != null ) {
-        loc = originalLoc;
-        code = originalCode;
-      }
+export default function( message, { id, code, map, originalCode } = {}, loc ) {
+  if ( loc && originalCode && map ) {
+    const originalLoc = getOriginalLocation( map, loc );
+    if ( originalLoc.line != null ) {
+      loc = originalLoc;
+      code = originalCode;
     }
   }
 

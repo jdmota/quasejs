@@ -14,6 +14,22 @@ export type RuntimeArg = {
   minify?: ?boolean
 };
 
+export const chunkInit = babel.transformSync(
+  `"use strict";( {
+    g: "undefined" == typeof self ? Function( "return this" )() : self,
+    p( m ) {
+      ( this.g.__quase_builder__ = this.g.__quase_builder__ || { q: [] } ).q.push( m )
+    }
+  } )`,
+  {
+    babelrc: false,
+    configFile: false,
+    minified: true
+  }
+).code.replace( /;$/, "" );
+
+export const moduleArgs = "$e,$r,$i,$g,$a".split( "," );
+
 export default async function( { context, fullPath, publicPath, finalAssets: { files, moduleToAssets }, minify }: RuntimeArg ): Promise<string> {
 
   const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
@@ -21,14 +37,14 @@ export default async function( { context, fullPath, publicPath, finalAssets: { f
   const p = fs.readFile( runtimePath, "utf8" );
 
   const fileToIdx = {};
-  const $files = files.map( ( m, i ) => {
-    fileToIdx[ m.relativeDest ] = i;
-    return m.relativeDest;
+  const $files = files.map( ( f, i ) => {
+    fileToIdx[ f.relative ] = i;
+    return f.relative;
   } );
 
   const $idToFiles = {};
   for ( const [ hashId, files ] of moduleToAssets ) {
-    $idToFiles[ hashId ] = files.map( f => fileToIdx[ f.relativeDest ] );
+    $idToFiles[ hashId ] = files.map( f => fileToIdx[ f.relative ] );
   }
 
   let input = await p;

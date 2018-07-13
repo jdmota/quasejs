@@ -2,87 +2,117 @@
 import error from "./utils/error";
 import { hashName } from "./utils/hash";
 import type Builder from "./builder";
-import Language, { type ILanguage } from "./language";
 import type {
-  LoaderOutput, Data, Loc, ImportedName, ExportedName,
-  Dep, NotResolvedDep,
+  Data, Loc, TransformOutput, InnerModule,
+  ImportedName, ExportedName,
+  DepsInfo, NotResolvedDep, ModuleDep
 } from "./types";
-import { relative, resolvePath } from "./id";
+import { relative, resolvePath, lowerPath } from "./id";
 import { Checker } from "./checker";
+import ModuleUtils from "./module-utils";
+
+/* eslint-disable no-use-before-define */
 
 const { isAbsolute } = require( "path" );
-const EMPTY_ARR = [];
-
-function isObject( obj ) {
-  return obj != null && typeof obj === "object";
-}
+const EMPTY_DEPS: $ReadOnlyArray<NotResolvedDep> = [];
+const EMPTY_IMPORTS: $ReadOnlyArray<ImportedName> = [];
+const EMPTY_EXPORTS: $ReadOnlyArray<ExportedName> = [];
 
 export type ModuleArg = {
-  path: string,
-  index?: ?number,
-  isEntry?: ?boolean,
-  initialOuput?: ?LoaderOutput,
-  loc?: ?Loc,
-  builder: Builder
+  +builder: Builder,
+  +path: string,
+  +type: string,
+  +index: number,
+  +isEntry?: ?boolean,
+  +loc?: ?Loc,
+  +inner?: ?InnerModule,
+  +parent?: ?Module
 };
 
-// Note: don't save references for other modules in a module. That can break incremental builds.
+export type ModuleNotLoaded = {
+  +state: 0
+};
+
+export type ModuleLoaded = {
+  +state: 1,
+  +result: TransformOutput,
+};
+
+export type ModuleTransformed = {
+  +state: 2,
+  +result: TransformOutput
+};
+
+export type ModuleWithDeps = {
+  +state: 3,
+  +result: TransformOutput,
+  +depsInfo: DepsInfo
+};
+
+export type ModuleWithResolvedDeps = {
+  +state: 4,
+  +result: TransformOutput,
+  +depsInfo: DepsInfo,
+  +moduleDeps: Map<string, ModuleDep>
+};
+
+export type ModuleState = ModuleNotLoaded | ModuleLoaded | ModuleTransformed | ModuleWithDeps | ModuleWithResolvedDeps;
 
 export default class Module {
 
-  +path: string;
-  +index: number;
-  +normalized: string;
-  +dest: string;
   +id: string;
+  +path: string;
+  +type: string;
+  +index: number;
+  +relative: string;
+  +dest: string;
+  +normalized: string;
   +hashId: string;
   +isEntry: boolean;
-  +initialOuput: ?LoaderOutput;
   +locOffset: ?Loc;
   +checker: Checker;
-  lang: ?ILanguage;
-  type: string;
-  originalData: Data;
-  lastOutput: LoaderOutput;
-  maps: Object[];
-  moduleDeps: ( Dep & { requiredId: string } )[];
-  importedNames: ImportedName[];
-  exportedNames: ExportedName[];
-  transforming: ?Promise<Language>;
-  resolving: ?Promise<void>;
+  +parent: ?Module;
+  +utils: ModuleUtils;
+  originalData: ?Data;
+  originalMap: ?Object;
+  state: ModuleState;
+  loading: ?Promise<ModuleLoaded>;
+  transforming: ?Promise<ModuleTransformed>;
+  gettingDeps: ?Promise<ModuleWithDeps>;
+  resolvingDeps: ?Promise<ModuleWithResolvedDeps>;
 
-  constructor( { path, index, isEntry, initialOuput, loc, builder }: ModuleArg ) {
+  constructor( id: string, { builder, path, type, index, isEntry, loc, inner, parent }: ModuleArg ) {
+    this.id = id;
     this.path = path;
-    this.index = index || 0;
-    this.normalized = relative( path, builder.context );
-    this.dest = resolvePath( this.normalized, builder.dest );
+    this.type = type;
+    this.index = index;
+    this.relative = relative( path, builder.context );
+    this.dest = resolvePath( this.relative, builder.dest );
+    this.normalized = this.relative;
 
-    this.id = index ? `${this.normalized} (index:${index})` : this.normalized;
     this.hashId = builder.optimization.hashId ? hashName( this.id, builder.usedIds, 5 ) : this.id;
 
     this.isEntry = !!isEntry;
-    this.initialOuput = initialOuput;
     this.locOffset = loc;
 
+    this.originalData = inner ? inner.data : null;
+    this.originalMap = inner ? inner.map : null;
+
     this.checker = new Checker( this, builder );
-    this.lang = null;
 
-    this.type = "";
-    this.originalData = "";
-    this.lastOutput = {
-      type: "",
-      data: "",
-      map: null,
-      ast: null
+    this.utils = new ModuleUtils( this, builder );
+
+    this.parent = parent;
+    if ( parent ) builder.addRef( this, parent, "byParent" );
+
+    this.state = {
+      state: 0
     };
-    this.maps = EMPTY_ARR;
 
-    this.moduleDeps = EMPTY_ARR;
-    this.importedNames = EMPTY_ARR;
-    this.exportedNames = EMPTY_ARR;
-
+    this.loading = null;
     this.transforming = null;
-    this.resolving = null;
+    this.gettingDeps = null;
+    this.resolvingDeps = null;
   }
 
   moduleError( message: string ) {
@@ -95,20 +125,117 @@ export default class Module {
   }
 
   getCode(): ?string {
-    const data = this.lastOutput && this.lastOutput.data;
-    return data && data.toString();
+    const state = this.state;
+    if ( state.state === 0 || state.state === 1 ) {
+      return;
+    }
+    return state.result.data.toString();
+  }
+
+  getMap(): ?Object {
+    const state = this.state;
+    if ( state.state === 0 || state.state === 1 ) {
+      return;
+    }
+    return state.result.map;
   }
 
   error( message: string, loc: ?Loc ) {
     error( message, {
-      id: this.id,
+      id: this.normalized,
       originalCode: loc && this.getOriginalCode(),
       code: loc && this.getCode(),
-      mapChain: this.maps
+      map: loc && this.getMap()
     }, loc );
   }
 
-  async _handleDep( builder: Builder, { request, output, loc, async }: NotResolvedDep ) {
+  async _load( builder: Builder ): Promise<ModuleLoaded> {
+    try {
+
+      let data, map, ast, final;
+
+      // For inline dependency module
+      if ( this.originalData ) {
+
+        data = this.originalData;
+        map = this.originalMap;
+
+      } else {
+        const parent = this.parent;
+
+        // For modules generated from other module in different type
+        if ( parent ) {
+          const parentTransform = await parent.transform( builder );
+          const result = await builder.pluginsRunner.generate( this.type, parentTransform.result, this.utils, parent.utils );
+
+          data = result.data;
+          map = result.map;
+          ast = result.ast;
+          final = result.final;
+
+        // Original module from disk
+        } else {
+          data = await builder.pluginsRunner.load( this.path, this.utils );
+        }
+
+        this.originalData = data;
+        this.originalMap = map;
+      }
+
+      const state = this.state = {
+        state: 1,
+        result: {
+          data,
+          map,
+          ast,
+          final
+        }
+      };
+
+      return state;
+    } catch ( err ) {
+      if ( err.code === "ENOENT" ) {
+        throw error( `Could not find ${this.normalized}` );
+      }
+      throw err;
+    }
+  }
+
+  async _transform( builder: Builder ): Promise<ModuleTransformed> {
+
+    const { result: initial } = await this.load( builder );
+
+    const { data, ast, map } = await builder.pluginsRunner.transform( initial, this.utils );
+
+    const state = this.state = {
+      state: 2,
+      result: {
+        data,
+        ast,
+        map,
+      }
+    };
+
+    return state;
+  }
+
+  async _getDeps( builder: Builder ): Promise<ModuleWithDeps> {
+
+    const { result } = await this.transform( builder );
+
+    const depsInfo = await builder.pluginsRunner.dependencies( result, this.utils );
+
+    const state = this.state = {
+      state: 3,
+      result,
+      depsInfo,
+      promise: null
+    };
+
+    return state;
+  }
+
+  async _handleDep( builder: Builder, { request, inner, loc, async }: NotResolvedDep ) {
 
     if ( !request ) {
       throw this.error( "Empty import", loc );
@@ -116,30 +243,23 @@ export default class Module {
 
     let path;
 
-    if ( output ) {
+    if ( inner ) {
 
       path = this.path;
 
     } else {
 
-      for ( const { plugin } of builder.plugins ) {
-        const fn = plugin.resolve;
-        if ( fn ) {
-          const result = await fn( request, this, builder );
-          if ( typeof result === "string" ) {
-            path = result;
-            break;
-          }
-        }
-      }
+      path = await builder.pluginsRunner.resolve( request, this.utils );
 
-      if ( !path ) {
+      if ( !path || typeof path !== "string" ) {
         throw this.error( `Could not resolve ${request}`, loc );
       }
 
       if ( !isAbsolute( path ) ) {
         throw this.error( `Resolution returned a non absolute path: ${path}`, loc );
       }
+
+      path = lowerPath( path );
 
       if ( path === this.path ) {
         throw this.error( "A module cannot import itself", loc );
@@ -153,182 +273,170 @@ export default class Module {
 
     return {
       path,
-      output,
+      inner,
       request,
       loc,
       async
     };
   }
 
-  async _transform( builder: Builder ): Promise<Language> {
+  async _resolveDeps( builder: Builder ): Promise<ModuleWithResolvedDeps> {
 
-    let result = this.initialOuput;
-    const maps = [];
+    const { result, depsInfo } = await this.getDeps( builder );
 
-    if ( result == null ) {
-      try {
-        result = await builder.applyPluginPhaseFirst(
-          "load",
-          ( result, name ) => handleOutput( result, maps, "Load", name ),
-          this.path
-        );
-      } catch ( err ) {
-        if ( err.code === "ENOENT" ) {
-          throw error( `Could not find ${this.normalized}` );
-        }
-        throw err;
-      }
-    }
-
-    this.originalData = result.data;
-
-    result = await builder.applyPluginPhasePipe(
-      "transform",
-      ( result, name ) => handleOutput( result, maps, "Transform", name ),
-      result,
-      this
-    );
-
-    this.type = result.type;
-    this.maps = maps;
-    this.lastOutput = {
-      type: result.type,
-      data: result.data,
-      map: null,
-      ast: result.ast
-    };
-
-    const lang = this.lang = await builder.applyPluginPhaseFirst( "getLanguage", ( result, name ) => {
-      if ( result instanceof Language ) {
-        return result;
-      }
-      throw error( `'getLanguage' hook${name ? " from " + name : ""} did not return a Language` );
-    }, this );
-
-    return lang;
-  }
-
-  async _resolveDeps( builder: Builder, lang: Language ) {
-
-    const depsInfo = await lang.dependencies();
+    const parent = this.parent;
+    const parentModuleDeps = parent ? ( await parent.resolveDeps( builder ) ).moduleDeps : new Map();
 
     const p = [];
-    for ( const dep of depsInfo.dependencies || EMPTY_ARR ) {
-      p.push( this._handleDep( builder, dep ) );
+    for ( const dep of depsInfo.dependencies || EMPTY_DEPS ) {
+      if ( !parentModuleDeps.has( dep.request ) ) {
+        p.push( this._handleDep( builder, dep ) );
+      }
     }
 
+    const moduleDeps = new Map();
     const deps = await Promise.all( p );
-    const moduleDeps = [];
 
-    let index = 1;
+    for ( const { path, inner, request, loc, async } of deps ) {
 
-    for ( const { path, request, loc, async, output } of deps ) {
+      let required;
 
-      let requiredId;
-
-      if ( output ) {
-        requiredId = builder.addModule( {
+      if ( inner ) {
+        required = builder.addModuleAndGenerate( {
+          builder,
           path,
-          index: index++,
-          initialOuput: output,
+          type: inner.type,
+          index: inner.index,
           loc,
-          builder
-        } ).id;
+          inner
+        }, this );
       } else {
-        requiredId = builder.addModule( {
+        required = builder.addModuleAndGenerate( {
+          builder,
           path,
-          builder
-        } ).id;
+          type: builder.pluginsRunner.getType( path ),
+          index: -1
+        }, this );
       }
 
-      moduleDeps.push( {
+      const splitPoint = builder.pluginsRunner.isSplitPoint( this.utils, required.utils ) || !!async;
+
+      moduleDeps.set( request, {
         path,
         request,
         loc,
         async,
-        requiredId
+        splitPoint,
+        required,
+        inherit: false
       } );
+
+      builder.addRef( this, required, "byDep" );
     }
 
-    this.moduleDeps = moduleDeps;
-    this.importedNames = depsInfo.importedNames || EMPTY_ARR;
-    this.exportedNames = depsInfo.exportedNames || EMPTY_ARR;
-  }
+    for ( const { path, request, loc, async, splitPoint, required } of parentModuleDeps.values() ) {
 
-  transform( builder: Builder ) {
-    return this.transforming || ( this.transforming = this._transform( builder ) );
-  }
+      // TODO generation?
 
-  resolveDeps( builder: Builder, lang: Language ) {
-    return this.resolving || ( this.resolving = this._resolveDeps( builder, lang ) );
+      moduleDeps.set( request, {
+        path,
+        request,
+        loc,
+        async,
+        splitPoint,
+        required,
+        inherit: true
+      } );
+
+      builder.addRef( this, required, "byDep" );
+    }
+
+    const state = this.state = {
+      state: 4,
+      result,
+      depsInfo,
+      moduleDeps
+    };
+
+    return state;
   }
 
   async load( builder: Builder ) {
-    await this.resolveDeps( builder, await this.transform( builder ) );
+    return this.loading || ( this.loading = this._load( builder ) );
   }
 
-  getModuleByRequest( builder: Builder, request: string ): ?Module {
-    const dep = this.moduleDeps.find( dep => dep.request === request );
-    if ( dep ) {
-      return builder.getModule( dep.requiredId );
+  async transform( builder: Builder ) {
+    return this.transforming || ( this.transforming = this._transform( builder ) );
+  }
+
+  async getDeps( builder: Builder ) {
+    return this.gettingDeps || ( this.gettingDeps = this._getDeps( builder ) );
+  }
+
+  async resolveDeps( builder: Builder ) {
+    return this.resolvingDeps || ( this.resolvingDeps = this._resolveDeps( builder ) );
+  }
+
+  async process( builder: Builder ): Promise<void> {
+    await this.resolveDeps( builder );
+  }
+
+  generate( builder: Builder, newType: string ): Module {
+    return builder.addModule( {
+      builder,
+      path: this.path,
+      index: this.index,
+      type: newType,
+      parent: this
+    } );
+  }
+
+  resetDeps( builder: Builder ) {
+    const currState = this.state;
+
+    if ( currState.state === 4 ) {
+
+      for ( const { required } of currState.moduleDeps.values() ) {
+        builder.removeRef( this, required, "byDep" );
+      }
+
+      this.state = {
+        state: 3,
+        result: currState.result,
+        depsInfo: currState.depsInfo
+      };
     }
+
+    this.resolvingDeps = null;
   }
 
-  resetDeps() {
-    this.moduleDeps.length = 0;
-    this.resolving = null;
+  getModuleByRequest( request: string ): ?Module {
+    const dep = this.getModuleDeps().get( request );
+    return dep && dep.required;
   }
 
-}
-
-function handleOutput( out, maps, hook, pluginName ): LoaderOutput {
-
-  const _from = `${hook} hook${pluginName ? " from " + pluginName : ""}`;
-
-  if ( !isObject( out ) ) {
-    throw error( `${_from} should return { type: string, data: Buffer | string }` );
-  }
-
-  const { type, data, map, ast } = out;
-
-  if ( typeof type !== "string" ) {
-    throw error( `${_from} should return { type: string, data: Buffer | string }` );
-  }
-
-  if ( typeof data !== "string" && !Buffer.isBuffer( data ) ) {
-    throw error( `${_from} should return valid data: Buffer or string` );
-  }
-
-  if ( ast ) {
-
-    if ( typeof ast !== "object" ) {
-      throw error( `${_from} should return valid ast object or none` );
+  getModuleDeps(): Map<string, ModuleDep> {
+    const state = this.state;
+    if ( state.state !== 4 ) {
+      throw new Error( `Internal: Cannot call getModuleDeps on module ${this.id} in state ${state.state}` );
     }
-
-    if ( map ) {
-      throw error( `${_from} should not return source map with ast` );
-    }
-
-    return {
-      type,
-      data,
-      map: null,
-      ast
-    };
+    return state.moduleDeps;
   }
 
-  if ( map ) {
-    if ( typeof map === "object" ) {
-      maps.push( map );
-    } else {
-      throw error( `${_from} should return valid source map object or none` );
+  getImportedNames() {
+    const state = this.state;
+    if ( state.state !== 4 ) {
+      throw new Error( `Internal: Cannot call getImportedNames on module ${this.id} in state ${state.state}` );
     }
+    return state.depsInfo.importedNames || EMPTY_IMPORTS;
   }
 
-  return {
-    type,
-    data,
-    map,
-    ast: null
-  };
+  getExportedNames() {
+    const state = this.state;
+    if ( state.state !== 4 ) {
+      throw new Error( `Internal: Cannot call getExportedNames on module ${this.id} in state ${state.state}` );
+    }
+    return state.depsInfo.exportedNames || EMPTY_EXPORTS;
+  }
+
 }

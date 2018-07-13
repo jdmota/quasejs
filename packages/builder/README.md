@@ -31,21 +31,24 @@ module.exports = {
 
 ## Lifecycle
 
+- Plugin: getType
 - Plugin: load
 - Plugin: transform's
-- Plugin: getLanguage
+- Plugin: dependencies
 - Plugin: resolve
-- Plugin: checker
-- Graph production
-  - Plugin: isSplitPoint
+- Plugin: isSplitPoint
+- Plugin: getGeneration
+- Plugin: check
 - Plugin: graphTransform's
-- Render
-  - language.renderAsset
+- Plugin: renderAsset
 - Plugin: afterBuild
 
 ## Plugins
 
 Plugins are applied by the order they are in the array.
+
+Plugins are also deduplicated by name. This allows you to set options on internal plugins (for example), without having them run twice.
+The ones that appear first in the array take precedence.
 
 A plugin is a function that returns an object with one or more of the following properties:
 
@@ -53,76 +56,97 @@ A plugin is a function that returns an object with one or more of the following 
 
 It's a string with the name of the plugin. Optional but should be used.
 
+### getType
+
+A synchronous function which receives `( path: string )` and returns a string with the type of the file.
+
+The default is the extension of the file.
+
 ### load
 
-A (maybe asynchronous) function that accepts `( id: string, builder: Builder )` and returns `null` or:
-
-```
-{
-  type: string,
-  data: Buffer | string,
-  map: ?Object
-} | {
-  type: string,
-  ast: Object
-}
-```
-
-`type` is a string that represents the type of data. Examples: `js`, `html`.
-
-`data` is a buffer or a string with the data.
+A (maybe asynchronous) function that accepts `( path: string, m: ModuleUtils )` and returns `null` or `Buffer | string`.
 
 Returning `null` defers to other `load` functions.
 
-The default is to load from the file system, having `type` as the extension of the file.
+The default is to load from the file system.
 
 ### transform
 
-A (maybe asynchronous) function that accepts `( { type, data, map, ast }, Module, Builder )` and returns `null` or:
+An object where the key is a module type, and the value a function.
+
+The function can be asynchronous and accepts `( { data, map, ast }, ModuleUtils )` and returns `null` or:
 
 ```
 {
-  type: string,
   data: Buffer | string,
+  ast: ?Object,
   map: ?Object
-} | {
-  type: string,
-  data: Buffer | string,
-  ast: Object
 }
 ```
 
-Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer (or loader, if it's the first transform).
-
-You can optionally return a sourcemap or an ast, but not both. At the end, sourcemaps will be collapsed automatically, you don't have to do that.
+Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
 
 The builder will use the last output from the last transformer.
 
-### getLanguage
+### dependencies
 
-A (maybe asynchronous) function that accepts `( Module, Builder )` and returns `null` or a `Language`.
+An object where the key is a module type, and the value a function.
 
-Returning `null` defers to other `getLanguage` functions.
+The function can be asynchronous and accepts `( { data, map, ast }, ModuleUtils )` and returns `null` or:
 
-This function is used to associate a language type to a module.
+```
+{
+  dependencies: NotResolvedDep[],
+  importedNames: ImportedName[],
+  exportedNames: ExportedName[]
+}
+```
 
 ### resolve
 
-A (maybe asynchronous) function that accepts `( importee: string, importer: Module, Builder )` and returns `null`, `false` or a path to the resolved file.
+An object where the key is a module type, and the value a function.
+
+The function can be asynchronous and accepts `( importee: string, importer: ModuleUtils )` and returns `null`, `false` or a path to the resolved file.
 
 Returning `null` defers to other `resolve` functions. Returning `false` means the resolution should stop because the dependency was not found.
 
-This function is used to resolve a dependency of a module. The default is to use the `resolve` function from the language.
-
 ### isSplitPoint
 
-A (maybe asynchronous) function that accepts `( importee: Module, importer: Module, Builder )` and returns `null` or a boolean.
+A (maybe asynchronous) function that accepts `( importee: ModuleUtils, importer: ModuleUtils )` and returns `null` or a boolean.
 
 Returning `null` defers to other `isSplitPoint` functions.
 
-This function is used to decide if in the final result a importee module should go in a different file than the importer. The default is to exclude modules with a different type associated with it.
+This function is used to decide if in the final result a importee module should go in a different file than the importer. The default is to exclude modules with a different type associated with it or when an asynchronous import is used.
 
-Note that the function is not called for asynchronous dependency imports (like `import()` in JavaScript). For those the split will happen always by default.
+## getGeneration
+
+A synchronous function that accepts `( importee: ModuleUtils, importer: ?ModuleUtils )` and returns `null` or an array of strings.
+
+Returning `null` defers to other `getGeneration` functions.
+
+The function is used to decide if, for example, a CSS file should be converted to JS, when a JS module is importing it.
+
+The array can suply various convertions.
+
+The default is to do nothing.
+
+```js
+export default function() {
+  return {
+    getGeneration( importee, importer ) {
+      // If it's an entry file, don't convert
+      if ( !importer ) {
+        return [];
+      }
+      // If what is importing is a JS file,
+      // convert the importee to JS too
+      if ( importer && importer.type === "js" ) {
+        return [ "js" ];
+      }
+    }
+  };
+}
+```
 
 ### checker
 
@@ -138,31 +162,67 @@ All `graphTransformer` functions are called in order passing the last produced v
 
 The last graph produced will be used.
 
+### renderAsset
+
+An object where the key is a module type, and the value a function.
+
+The function can be asynchronous and accepts `( FinalAsset, FinalAssets, Builder )` and returns `null` or `ToWrite`.
+
+Returning `null` defers to other `renderAsset` functions.
+
 ### afterBuild
 
 A (maybe asynchronous) function that is called after the build was done and the files were wrote to the file system.
 
-## Builder
-
-Some useful functions you can find in the builder:
-
-### createFakePath( string )
-
-A function that returns a fake path that you can use.
-
-## Module
+## ModuleUtils
 
 Information that each module provides:
 
+- `id`: an unique id of the module
+- `type`: type of the module
 - `path`: string path of the file
 - `normalized`: string path relative to the `context` provided in the options
-- `dest`: the destination path
-- `id`: an unique id of the module
 
-## Language
+Some useful functions you can find:
 
-See examples of Language implementations at:
+### builderOptions()
 
-- [Base class](/packages/builder/src/language.js)
-- [HTML](/packages/builder/src/languages/html.js)
-- [JS](/packages/builder/src/languages/js.js)
+Returns the options passed to the builder.
+
+Useful to know if source map generation was requested, for example.
+
+```js
+moduleUtils.builderOptions().optimization.sourceMaps // boolean | "inline"
+```
+
+### createFakePath( key: string ): string
+
+A function that returns a fake path that you can use.
+
+### isFakePath( path: string ): boolean
+
+Returns `true` if the string contains a fake path.
+
+### async stat( path: string )
+
+Same as the `fs.stat` but returns a promise.
+
+You should use this instead of the native `fs.stat` to tell the builder that it should watch the file in `path` for changes.
+
+### async readFile( path: string, encoding: ?string )
+
+Same as the `fs.readFile` but returns a promise.
+
+You should use this instead of the native `fs.readFile` to tell the builder that it should watch the file in `path` for changes.
+
+### cacheGet( key: any ): any
+
+Get the value associated with `key` from the cache map associated with this module.
+
+### cacheSet( key: any, value: any ): any
+
+Set a key on the cache map associated with this module.
+
+### cacheDelete( key: any ): boolean
+
+Delete a key on the cache map associated with this module.

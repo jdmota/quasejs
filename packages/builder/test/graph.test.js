@@ -1,9 +1,27 @@
 import { hashName } from "../src/utils/hash";
+import { getType } from "../src/id";
 import createRuntime from "../src/runtime/create-runtime";
 import processGraph from "../src/graph";
 
 async function createGraphAndRuntime( builder ) {
   builder.moduleEntries = new Set( builder.entries.map( e => builder.getModule( e ) ) );
+
+  for ( const module of builder.modules.values() ) {
+    const map = new Map();
+    for ( const dep of module.deps ) {
+      const required = builder.getModule( dep.path );
+      map.set(
+        dep.path,
+        Object.assign( {}, dep, {
+          request: dep.path,
+          splitPoint: builder.isSplitPoint( required, module ),
+          required
+        } )
+      );
+    }
+    module.moduleDeps = map;
+  }
+
   const finalAssets = await processGraph( builder );
   finalAssets.runtime = await createRuntime( {
     context: "context",
@@ -17,21 +35,22 @@ async function createGraphAndRuntime( builder ) {
 }
 
 function createDummyModule( builder, id, deps ) {
-  const normalized = id.replace( "context/", "" );
+  const relative = id.replace( "context/", "" );
   const m = {
     builder,
     id,
     path: id,
-    normalized,
+    relative,
+    normalized: relative,
+    type: getType( id ),
     isEntry: builder.entries.includes( id ),
     dest: id.replace( "context/", "dest/" ),
-    hashId: hashName( normalized, builder.usedIds, 5 ),
-    deps,
-    moduleDeps: ( deps || [] ).map( ( { path, async } ) => ( {
-      path,
-      async,
-      requiredId: path
-    } ) )
+    hashId: hashName( relative, builder.usedIds, 5 ),
+    deps: deps || [],
+    moduleDeps: null,
+    getModuleDeps() {
+      return this.moduleDeps;
+    }
   };
   builder.modules.set( id, m );
   return m;

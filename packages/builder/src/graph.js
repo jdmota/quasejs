@@ -1,9 +1,8 @@
 // @flow
-import error from "./utils/error";
 import { reExt } from "./id";
 import type Builder from "./builder";
 import type Module from "./module";
-import type { Dep, FinalAsset } from "./types";
+import type { ModuleDep, FinalAsset } from "./types";
 
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
@@ -11,7 +10,7 @@ const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 class BiMap {
 
-  deps: Map<Module, ( Dep & { required: Module, splitPoint: boolean } )[]>;
+  deps: Map<Module, $ReadOnlyArray<ModuleDep>>;
   incs: Map<Module, Module[]>;
   entrypoints: Set<Module>;
 
@@ -21,23 +20,9 @@ class BiMap {
     this.entrypoints = new Set( builder.moduleEntries );
   }
 
-  async init( builder: Builder ) {
+  init( builder: Builder ) {
     for ( const module of builder.modules.values() ) {
-      const deps = await Promise.all( module.moduleDeps.map( async dep => {
-        const required = builder.getModuleForSure( dep.requiredId );
-        const splitPoint = dep.async ? true : await builder.isSplitPoint( required, module );
-
-        return {
-          path: dep.path,
-          request: dep.request,
-          loc: dep.loc,
-          async: dep.async,
-          required,
-          splitPoint
-        };
-      } ) );
-
-      this.deps.set( module, deps );
+      this.deps.set( module, Array.from( module.getModuleDeps().values() ) );
     }
 
     for ( const module of this.deps.keys() ) {
@@ -78,9 +63,9 @@ class BiMap {
   }
 }
 
-export default async function processGraph( builder: Builder ) {
+export default function processGraph( builder: Builder ) {
   const map = new BiMap( builder );
-  await map.init( builder );
+  map.init( builder );
 
   const entrypoints = Array.from( map.entrypoints );
 
@@ -135,32 +120,55 @@ export default async function processGraph( builder: Builder ) {
   };
 
   const files = [];
-  const fileNames = new Set();
+  const filesByPath = new Map();
   const moduleToFile: Map<Module, FinalAsset> = new Map();
 
   hashes.forEach( ( hash, m ) => {
     const srcs = grow( m );
     if ( srcs ) {
+
       const f = {
         id: m.id,
         path: m.path,
+        type: m.type,
+        index: m.index,
         normalized: m.normalized,
-        dest: m.type ? m.dest.replace( reExt, `.${m.type}` ) : m.dest,
-        relativeDest: m.normalized,
+        dest: m.dest,
+        relative: m.relative,
         isEntry: m.isEntry,
         srcs: srcs.map( ( { id } ) => id )
       };
+
       files.push( f );
-      if ( fileNames.has( f.dest ) ) {
-        throw error( `Generated graph has duplicate file output: ${f.dest}` );
-      } else {
-        fileNames.add( f.dest );
-      }
+
+      const possibleDest = f.dest.replace( reExt, `.${f.type}` );
+      const arr = filesByPath.get( possibleDest ) || [];
+      arr.push( f );
+      filesByPath.set( possibleDest, arr );
+
       for ( const src of srcs ) {
         moduleToFile.set( src, f );
       }
     }
   } );
+
+  for ( const [ possibleDest, files ] of filesByPath ) {
+    if ( files.length === 1 ) {
+      const f = files[ 0 ];
+      f.dest = possibleDest;
+      f.relative = f.relative.replace( reExt, `.${f.type}` );
+    } else {
+      for ( const f of files ) {
+        if ( f.index === -1 ) {
+          f.dest = `${f.dest}.${f.type}`;
+          f.relative = `${f.relative}.${f.type}`;
+        } else {
+          f.dest = `${f.dest}.${f.index}.${f.type}`;
+          f.relative = `${f.relative}.${f.index}.${f.type}`;
+        }
+      }
+    }
+  }
 
   const moduleToAssets: Map<string, FinalAsset[]> = new Map();
   for ( const [ module, file ] of moduleToFile ) {

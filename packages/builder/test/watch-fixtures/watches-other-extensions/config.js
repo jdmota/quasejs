@@ -5,10 +5,19 @@ module.exports = {
   plugins: [
     function() {
       return {
-        transform( obj ) {
-          if ( obj.type === "ts" ) {
-            obj.type = "js";
-            return obj;
+        getGeneration( module, importer ) {
+          if ( !importer && module.type === "ts" ) {
+            return [ "js" ];
+          }
+          if ( importer && importer.type === "js" ) {
+            return [ "js" ];
+          }
+        },
+        generate: {
+          ts: {
+            js( obj ) {
+              return obj;
+            }
           }
         }
       }

@@ -1,66 +1,85 @@
 // @flow
 import type Builder from "./builder";
 import type Module from "./module";
-import type Language from "./language";
+import type ModuleUtils from "./module-utils";
 
 export type Data = Buffer | string;
 
 export type DataType = "buffer" | "string";
 
-export type Loc = {
+export type Loc = {|
   +line: number,
   +column?: ?number
-};
+|};
 
-export type LoaderOutput = {
-  +type: string,
+export type TransformOutput = {|
   +data: Data,
   +map?: ?Object,
-  +ast?: ?Object
-};
+  +ast?: ?Object,
+  +final?: ?boolean
+|};
 
-export type ImportedName = {
+export type ImportedName = {|
   +request: string,
   +imported: string,
   +name: string,
   +loc?: ?Loc
-};
+|};
 
-export type ExportedName = {
+export type ExportedName = {|
   +request?: ?string,
   +imported?: ?string,
   +name: string,
   +loc?: ?Loc
-};
+|};
 
 export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string | T, Object]>;
 
-export type NotResolvedDep = {
-  request: string,
-  output?: ?LoaderOutput,
-  loc?: ?Loc,
-  async?: ?boolean
-};
+export type InnerModule = {|
+  +index: number,
+  +type: string,
+  +data: Data,
+  +map?: ?Object
+|};
 
-export type Dep = {
-  path: string,
-  request: string,
-  loc?: ?Loc,
-  async?: ?boolean
-};
+export type NotResolvedDep = {|
+  +request: string,
+  +inner?: ?InnerModule,
+  +loc?: ?Loc,
+  +async?: ?boolean
+|};
 
-export type DepsInfo = {
-  dependencies?: ?NotResolvedDep[],
-  importedNames?: ?ImportedName[],
-  exportedNames?: ?ExportedName[]
-};
+export type Dep = {|
+  +path: string,
+  +request: string,
+  +loc?: ?Loc,
+  +async?: ?boolean
+|};
+
+export type ModuleDep = {|
+  +path: string,
+  +request: string,
+  +loc?: ?Loc,
+  +async?: ?boolean,
+  +splitPoint: boolean,
+  +required: Module,
+  +inherit: boolean
+|};
+
+export type DepsInfo = {|
+  +dependencies: $ReadOnlyArray<NotResolvedDep>,
+  +importedNames: $ReadOnlyArray<ImportedName>,
+  +exportedNames: $ReadOnlyArray<ExportedName>
+|};
 
 export type FinalAsset = {
   id: string,
   path: string,
+  type: string,
+  index: number,
   normalized: string,
   dest: string,
-  relativeDest: string,
+  relative: string,
   isEntry: boolean,
   srcs: string[]
 };
@@ -70,10 +89,10 @@ export type FinalAssets = {
   moduleToAssets: Map<string, FinalAsset[]>
 };
 
-export type ToWrite = {
-  data: Data,
-  map?: ?Object
-};
+export type ToWrite = {|
+  +data: Data,
+  +map?: ?Object
+|};
 
 export type PerformanceOpts = {
   hints: boolean | "warning" | "error",
@@ -90,27 +109,44 @@ export type MinimalFS = {
 export type Info = { file: string, size: number, isEntry: boolean };
 
 export type Output = {
-  filesInfo: Info[]
+  filesInfo: Info[],
+  time: number
 };
 
-export type Loader = ( LoaderOutput, Object, Module, Builder ) => ?Promise<LoaderOutput>;
+type ThingOrPromise<T> = T | Promise<T>;
 
-export type Checker = Builder => ?Promise<void>;
+export type Loader = ( string, ModuleUtils ) => ThingOrPromise<?Data>;
 
-export type GraphTransformer = ( FinalAssets, Builder ) => ?Promise<?FinalAssets>;
+export type Transformer = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
 
-export type AfterBuild = ( Output, Builder ) => ?Promise<void>;
+export type DepExtractor = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?DepsInfo>;
+
+export type Resolver = ( string, ModuleUtils ) => ThingOrPromise<?string | false>;
+
+export type Checker = Builder => ThingOrPromise<void>;
+
+export type Generator = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
+
+export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
+
+export type AssetRenderer = ( FinalAsset, FinalAssets, Builder ) => ThingOrPromise<?ToWrite>;
+
+export type AfterBuild = ( Output, Builder ) => ThingOrPromise<void>;
 
 export type Plugin = {
   +name?: ?string,
-  +load?: ?( string, Builder ) => ?Promise<?LoaderOutput>,
-  +transform?: ?( LoaderOutput, Module, Builder ) => ?Promise<?LoaderOutput>,
-  +getLanguage?: ?( Module, Builder ) => ?Promise<?Language>,
-  +resolve?: ?( string, Module, Builder ) => ?Promise<?string | false>,
-  +isSplitPoint?: ?( Module, Module, Builder ) => ?Promise<?boolean>,
-  +isExternal?: ?( string, Builder ) => ?Promise<?boolean>,
-  +checker?: ?Checker,
-  +graphTransformer?: ?GraphTransformer,
+  +getType?: ?( string ) => ?string,
+  +getGeneration?: ?( ModuleUtils, ?ModuleUtils ) => ?$ReadOnlyArray<string>,
+  +load?: ?Loader,
+  +transform?: ?{ [key: string]: ?Transformer },
+  +dependencies?: ?{ [key: string]: ?DepExtractor },
+  +resolve?: ?{ [key: string]: ?Resolver },
+  +generate?: ?{ [key: string]: ?{ [key: string]: ?Generator } },
+  +isSplitPoint?: ?( ModuleUtils, ModuleUtils ) => ?boolean,
+  +isExternal?: ?( string ) => ThingOrPromise<?boolean>,
+  +check?: ?Checker,
+  +graphTransform?: ?GraphTransformer,
+  +renderAsset?: ?{ [key: string]: ?AssetRenderer },
   +afterBuild?: ?AfterBuild
 };
 

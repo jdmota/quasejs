@@ -1,33 +1,28 @@
-import JsLanguage from "../languages/js";
-import HtmlLanguage from "../languages/html";
-import Language from "../language";
+// @flow
 import { check } from "../checker";
 import { getType } from "../id";
+import type { Plugin } from "../types";
 
-export default function defaultPlugin() {
+const path = require( "path" );
+
+export default function defaultPlugin(): Plugin {
   return {
     name: "quase_builder_internal_plugin",
-    async load( path, builder ) {
-      return {
-        type: getType( path ),
-        data: await builder.fileSystem.readFile( path, path )
-      };
+    getType,
+    check,
+    load( path, module ) {
+      return module.readFile( path );
     },
-    getLanguage( module, builder ) {
-      if ( module.type === "js" ) {
-        return new JsLanguage( {}, module, builder );
+    resolve: {
+      "*": async function( importee, importerModule ) {
+        const importer = importerModule.path;
+        const resolved = path.resolve( path.dirname( importer ), importee );
+        const isFile = await importerModule.isFile( resolved );
+        return isFile && resolved;
       }
-      if ( module.type === "html" ) {
-        return new HtmlLanguage( {}, module, builder );
-      }
-      return new Language( {}, module, builder );
-    },
-    async resolve( importee, importerModule, builder ) {
-      return importerModule.lang.resolve( importee, importerModule.path, builder );
     },
     isSplitPoint( required, module ) {
       return required.type !== module.type;
-    },
-    checker: check
+    }
   };
 }

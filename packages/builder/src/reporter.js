@@ -9,14 +9,12 @@ export default class Reporter {
   constructor( options, builder, emitter ) {
     this.builder = builder;
     this.emitter = emitter;
-    this.time = undefined;
     this.first = true;
     this.hideDates = !!options.hideDates;
     this.codeFrameOpts = this.builder.cli.codeFrame;
     this.log = process.stdout.write.bind( process.stdout );
 
     emitter.on( "build-start", this.onBuildStart.bind( this ) );
-    emitter.on( "build-unnecessary", this.onBuildUnnecessary.bind( this ) );
     emitter.on( "build", this.onBuild.bind( this ) );
     emitter.on( "watching", this.onWatching.bind( this ) );
     emitter.on( "update", this.onUpdate.bind( this ) );
@@ -35,15 +33,9 @@ export default class Reporter {
       this.first = false;
     }
     this.log( "\n--------\n" );
-    this.time = Date.now();
   }
 
-  onBuildUnnecessary() {
-    this.log( "Build not necessary.\n" );
-    this.log( "\n--------\n\n" );
-  }
-
-  onBuild( { filesInfo } ) {
+  onBuild( { filesInfo, time } ) {
 
     const { performance, cwd } = this.builder;
     const output = [ "\nAssets:\n" ];
@@ -72,7 +64,7 @@ export default class Reporter {
       this.log( "Done building.\n" );
     } else {
       const now = new Date();
-      this.log( `Done building in ${+now - this.time}ms. ${now.toLocaleString()}\n` );
+      this.log( `Done building in ${time}ms. ${now.toLocaleString()}\n` );
     }
 
   }

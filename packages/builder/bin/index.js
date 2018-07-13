@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const schema = require( "../dist/options" ).schema;
+const { default: start, schema } = require( ".." );
 
 require( "@quase/cli" ).default( {
   usage: "$ quase-builder [options]",
@@ -8,5 +8,5 @@ require( "@quase/cli" ).default( {
   configKey: "quase-builder",
   schema
 } ).then( ( { options } ) => {
-  require( "../dist" ).default( options );
+  start( options );
 } );
