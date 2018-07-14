@@ -8,24 +8,12 @@
 
   const doc = win.document;
 
-  function handlePart( instance, node, part ) {
-    switch ( part[ 0 ] ) {
-      case 0:
-        return new AttributePart( instance, node, part[ 2 ] );
-      case 1:
-        return new PropertyPart( instance, node, part[ 2 ] );
-      case 2:
-        return new EventPart( instance, node, part[ 2 ] );
-      default:
-        return new NodePart( instance, node );
-    }
-  }
-
   class Template {
-    constructor( parts, html ) {
+    constructor( parts, strings, html ) {
       this.element = doc.createElement( "template" );
       this.element.innerHTML = html;
       this.parts = parts;
+      this.strings = strings;
     }
   }
 
@@ -53,6 +41,7 @@
     createNode() {
       const fragment = this.template.element.content.cloneNode( true );
       const parts = this.template.parts;
+      const strings = this.template.strings;
 
       if ( parts.length > 0 ) {
         // Edge needs all 4 parameters present
@@ -64,13 +53,34 @@
         );
 
         let index = -1;
+        let strIdx = 0;
         for ( let i = 0; i < parts.length; i++ ) {
-          const part = parts[ i ];
-          while ( index < part[ 1 ] ) {
+          const partInfo = parts[ i ];
+          const partIdx = partInfo >>> 2;
+
+          while ( index < partIdx ) {
             index++;
             walker.nextNode();
           }
-          this.parts.push( handlePart( this, walker.currentNode, part ) );
+
+          const node = walker.currentNode;
+          let part;
+
+          switch ( partInfo & 0b11 ) {
+            case 0:
+              part = new AttributePart( this, node, strings[ strIdx++ ] );
+              break;
+            case 1:
+              part = new PropertyPart( this, node, strings[ strIdx++ ] );
+              break;
+            case 2:
+              part = new EventPart( this, node, strings[ strIdx++ ] );
+              break;
+            default:
+              part = new NodePart( this, node );
+          }
+
+          this.parts.push( part );
         }
       }
       return fragment;
@@ -157,7 +167,7 @@
         this._setText( value );
       } else if ( value instanceof TemplateResult ) {
         this._setTemplateResult( value );
-      } else if ( Array.isArray( value ) || value[ Symbol.iterator ] ) {
+      } else if ( value[ Symbol.iterator ] ) {
         this._setIterable( value );
       } else if ( value instanceof win.Node ) {
         this._setNode( value );
@@ -212,7 +222,7 @@
     }
 
     _setIterable( value ) {
-      if ( !Array.isArray( this._value ) ) {
+      if ( !this._value || !this._value[ Symbol.iterator ] ) {
         this._replace( doc.createComment( "" ) );
         this._value = [];
       }

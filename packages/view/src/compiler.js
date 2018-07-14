@@ -1,7 +1,8 @@
 import jsx from "@babel/plugin-syntax-jsx";
 import {
   PART_ATTR, PART_PROP, PART_EVENT, PART_NODE,
-  TEMPLATE, TEMPLATE_RESULT
+  TEMPLATE, TEMPLATE_RESULT,
+  partValue
 } from "./spec";
 
 /*
@@ -51,33 +52,27 @@ type JSXElement = {
 const escapeHTML = require( "he" ).encode;
 const reOn = /^on[A-Z]/;
 
-function handleAttr( t, index, attrName ) {
+function handleAttr( result, t, attrName ) {
+  let type;
+  let string;
   if ( reOn.test( attrName ) ) {
-    return t.arrayExpression( [
-      t.numericLiteral( PART_EVENT ),
-      t.numericLiteral( index ),
-      t.stringLiteral( attrName.slice( 2 ).toLowerCase() )
-    ] );
+    type = PART_EVENT;
+    string = attrName.slice( 2 ).toLowerCase();
+  } else if ( attrName.endsWith( "$" ) ) {
+    type = PART_ATTR;
+    string = attrName.slice( 0, -1 );
+  } else {
+    type = PART_PROP;
+    string = attrName;
   }
-  if ( attrName.endsWith( "$" ) ) {
-    return t.arrayExpression( [
-      t.numericLiteral( PART_ATTR ),
-      t.numericLiteral( index ),
-      t.stringLiteral( attrName.slice( 0, -1 ) )
-    ] );
-  }
-  return t.arrayExpression( [
-    t.numericLiteral( PART_PROP ),
-    t.numericLiteral( index ),
-    t.stringLiteral( attrName )
-  ] );
+  result.parts.push( t.numericLiteral( partValue( result.index, type ) ) );
+  result.strings.push( t.stringLiteral( string ) );
 }
 
-function handleNode( t, index ) {
-  return t.arrayExpression( [
-    t.numericLiteral( PART_NODE ),
-    t.numericLiteral( index )
-  ] );
+function handleNode( result, t ) {
+  result.parts.push(
+    t.numericLiteral( partValue( result.index, PART_NODE ) )
+  );
 }
 
 const visitor = {
@@ -133,7 +128,7 @@ const visitor = {
             result.html.push( `${name}="${escapeHTML( expression.value )}"` );
             break;
           default:
-            result.parts.push( handleAttr( t, result.index, name ) );
+            handleAttr( result, t, name );
             result.expressions.push( expression );
         }
         break;
@@ -150,8 +145,8 @@ const visitor = {
         result.html.push( escapeHTML( expression.value ) );
         break;
       default:
-        result.html.push( "<!--{{}}-->" );
-        result.parts.push( handleNode( t, result.index ) );
+        handleNode( result, t );
+        result.html.push( "<!---->" );
         result.expressions.push( expression );
         result.index++;
     }
@@ -172,6 +167,7 @@ export default function( { types: t } ) {
         const result = {
           html: [],
           parts: [],
+          strings: [],
           expressions: [],
           index: 0
         };
@@ -184,7 +180,11 @@ export default function( { types: t } ) {
             [
               t.newExpression(
                 quaseViewTemplate,
-                [ t.arrayExpression( result.parts ), t.stringLiteral( result.html.join( "" ) ) ]
+                [
+                  t.arrayExpression( result.parts ),
+                  t.arrayExpression( result.strings ),
+                  t.stringLiteral( result.html.join( "" ) )
+                ]
               ),
               t.arrayExpression( result.expressions )
             ]
