@@ -1,135 +1,182 @@
-import TreeWalker from "./tree-walker";
+import jsx from "@babel/plugin-syntax-jsx";
+import {
+  PART_ATTR, PART_PROP, PART_EVENT, PART_NODE,
+  TEMPLATE, TEMPLATE_RESULT
+} from "./spec";
 
-const parse5 = require( "parse5" );
+/*
+type Expression = {
+  [key: string]: any
+};
 
-/* eslint-disable no-control-regex */
-const lastAttrNameRegex =
-  /[ \x09\x0a\x0c\x0d]([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*)$/;
-const marker = `{{quase-view-${String( Math.random() ).slice( 2 )}}}`;
-const nodeMarker = `<!--${marker}-->`;
-
-function findTagClose( str ) {
-  const close = str.lastIndexOf( ">" );
-  const open = str.indexOf( "<", close + 1 );
-  return open > -1 ? str.length : close;
-}
-
-function getHtml( strings, svg ) {
-  const l = strings.length - 1;
-  let html = "";
-  let isTextBinding = true;
-  for ( let i = 0; i < l; i++ ) {
-    const s = strings[ i ];
-    html += s;
-    // If the previous string closed its tags, we're in a text position.
-    // If it doesn't have any tags, then we use the previous text position
-    // state.
-    const closing = findTagClose( s );
-    isTextBinding = closing > -1 ? closing < s.length : isTextBinding;
-    html += isTextBinding ? nodeMarker : marker;
+type StringLiteral = {
+  value: string,
+  extra: {
+    rawValue: string,
+    raw: string
   }
-  html += strings[ l ];
-  return svg ? `<svg>${html}</svg>` : html;
-}
+};
 
-const treeAdapter = parse5.treeAdapters.htmlparser2;
+type JSXEmptyExpression = {};
 
-const reOn = /^on-/i;
+type JSXText = {
+  value: string,
+  extra: {
+    rawValue: string,
+    raw: string
+  }
+};
 
-function handleAttr( t, index, attrName, attrNameInPart, strings ) {
+type JSXExpressionContainer = {
+  expression: JSXEmptyExpression | Expression
+};
+
+type JSXAttribute = {
+  name: JSXIdentifier,
+  value: StringLiteral | JSXExpressionContainer
+};
+
+type JSXOpeningElement = {
+  name: JSXIdentifier,
+  attributes: JSXAttribute[],
+  selfClosing: boolean
+};
+
+type JSXElement = {
+  openingElement: JSXOpeningElement,
+  children: ( JSXElement | JSXText | JSXExpressionContainer )[]
+};
+*/
+
+const escapeHTML = require( "he" ).encode;
+const reOn = /^on[A-Z]/;
+
+function handleAttr( t, index, attrName ) {
   if ( reOn.test( attrName ) ) {
-    return t.arrayExpression(
-      [
-        t.stringLiteral( "event" ),
-        t.numericLiteral( index ),
-        t.stringLiteral( attrNameInPart.slice( 3 ) )
-      ]
-    );
-  }
-  if ( attrNameInPart.endsWith( "$" ) ) {
-    return t.arrayExpression(
-      [
-        t.stringLiteral( "attr" ),
-        t.numericLiteral( index ),
-        t.stringLiteral( attrNameInPart.slice( 0, -1 ) ),
-        t.arrayExpression( strings.map( s => t.stringLiteral( s ) ) )
-      ]
-    );
-  }
-  return t.arrayExpression(
-    [
-      t.stringLiteral( "prop" ),
+    return t.arrayExpression( [
+      t.numericLiteral( PART_EVENT ),
       t.numericLiteral( index ),
-      t.stringLiteral( attrNameInPart ),
-      t.arrayExpression( strings.map( s => t.stringLiteral( s ) ) )
-    ]
-  );
+      t.stringLiteral( attrName.slice( 2 ).toLowerCase() )
+    ] );
+  }
+  if ( attrName.endsWith( "$" ) ) {
+    return t.arrayExpression( [
+      t.numericLiteral( PART_ATTR ),
+      t.numericLiteral( index ),
+      t.stringLiteral( attrName.slice( 0, -1 ) )
+    ] );
+  }
+  return t.arrayExpression( [
+    t.numericLiteral( PART_PROP ),
+    t.numericLiteral( index ),
+    t.stringLiteral( attrName )
+  ] );
 }
 
 function handleNode( t, index ) {
-  return t.arrayExpression( [ t.stringLiteral( "node" ), t.numericLiteral( index ) ] );
+  return t.arrayExpression( [
+    t.numericLiteral( PART_NODE ),
+    t.numericLiteral( index )
+  ] );
 }
 
-export default function compile( strings, svg, t ) {
+const visitor = {
+  JSXElement( result, t, { openingElement, children } ) {
 
-  const code = getHtml( strings, svg );
-  const doc = parse5.parseFragment( code, { treeAdapter } );
-  const parts = [];
-  const walker = new TreeWalker( doc );
+    if ( openingElement.selfClosing ) {
+      result.html.push( `<${openingElement.name.name}` );
+    } else {
+      result.html.push( `<${openingElement.name.name}>` );
+    }
 
-  let index = 0;
-  let partIndex = 0;
+    for ( const attr of openingElement.attributes ) {
+      visitor.JSXAttribute( result, t, attr );
+    }
 
-  while ( walker.nextNode() ) {
-    const node = walker.currentNode;
+    result.index++;
 
-    if ( treeAdapter.isElementNode( node ) ) {
+    if ( openingElement.selfClosing ) {
+      result.html.push( `/>` );
+    } else {
 
-      for ( const attrName in node.attribs ) {
-        const value = node.attribs[ attrName ];
-        if ( value.indexOf( marker ) >= 0 ) {
-          const attrNameInPart = lastAttrNameRegex.exec( strings[ partIndex ] )[ 1 ];
-          const stringsForAttr = value.split( marker );
-          delete node.attribs[ attrName ];
-          parts.push( handleAttr( t, index, attrName, attrNameInPart, stringsForAttr ) );
-          partIndex += stringsForAttr.length - 1;
+      for ( const child of children ) {
+        switch ( child.type ) {
+          case "JSXElement":
+            visitor.JSXElement( result, t, child );
+            break;
+          case "JSXText":
+            result.html.push( escapeHTML( child.value ) );
+            break;
+          case "JSXExpressionContainer":
+            visitor.JSXExpressionContainer( result, t, child );
+            break;
+          default:
+            throw new Error( `Unknown child of type ${child.type}` );
         }
       }
 
-    } else if ( treeAdapter.isCommentNode( node ) && node.data === marker ) {
-
-      node.data = "{{}}";
-      parts.push( handleNode( t, index ) );
-      partIndex++;
-
+      result.html.push( `</${openingElement.name.name}>` );
     }
 
-    index++;
-  }
-
-  const html = parse5.serialize( doc, { treeAdapter } );
-
-  return {
-    parts,
-    html
-  };
-}
-
-export function babelPlugin( { types: t } ) {
-  return {
-    visitor: {
-      TaggedTemplateExpression( path ) {
-        if ( path.node.tag.name !== "html" && path.node.tag.name !== "svg" ) {
-          return;
+  },
+  JSXAttribute( result, t, { name: { name }, value } ) {
+    switch ( value.type ) {
+      case "StringLiteral":
+        result.html.push( `${name}="${escapeHTML( value.value )}"` );
+        break;
+      case "JSXExpressionContainer": {
+        const { expression } = value;
+        switch ( expression.type ) {
+          case "JSXEmptyExpression":
+            throw new Error( `Cannot use JSXEmptyExpression in JSXAttribute` );
+          case "StringLiteral":
+            result.html.push( `${name}="${escapeHTML( expression.value )}"` );
+            break;
+          default:
+            result.parts.push( handleAttr( t, result.index, name ) );
+            result.expressions.push( expression );
         }
-        const quaseViewTemplate = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( "Template" ) );
-        const quaseViewTemplateResult = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( "TemplateResult" ) );
+        break;
+      }
+      default:
+        throw new Error( `Unknown attr value of type ${value.type}` );
+    }
+  },
+  JSXExpressionContainer( result, t, { expression } ) {
+    switch ( expression.type ) {
+      case "JSXEmptyExpression":
+        break;
+      case "StringLiteral":
+        result.html.push( escapeHTML( expression.value ) );
+        break;
+      default:
+        result.html.push( "<!--{{}}-->" );
+        result.parts.push( handleNode( t, result.index ) );
+        result.expressions.push( expression );
+        result.index++;
+    }
+  }
+};
 
-        const { parts, html } = compile(
-          path.node.quasi.quasis.map( q => q.value.cooked ),
-          path.node.tag.name === "svg",
-          t
-        );
+export default function( { types: t } ) {
+  return {
+    inherits: jsx,
+    visitor: {
+      JSXElement( path ) {
+
+        const { node } = path;
+
+        const quaseViewTemplate = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE ) );
+        const quaseViewTemplateResult = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE_RESULT ) );
+
+        const result = {
+          html: [],
+          parts: [],
+          expressions: [],
+          index: 0
+        };
+
+        visitor.JSXElement( result, t, node );
 
         path.replaceWith(
           t.newExpression(
@@ -137,12 +184,13 @@ export function babelPlugin( { types: t } ) {
             [
               t.newExpression(
                 quaseViewTemplate,
-                [ t.arrayExpression( parts ), t.stringLiteral( html ) ]
+                [ t.arrayExpression( result.parts ), t.stringLiteral( result.html.join( "" ) ) ]
               ),
-              t.arrayExpression( path.node.quasi.expressions )
+              t.arrayExpression( result.expressions )
             ]
           )
         );
+
       }
     }
   };

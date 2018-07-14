@@ -10,17 +10,15 @@
 
   function handlePart( instance, node, part ) {
     switch ( part[ 0 ] ) {
-      case "attr":
-        return new AttributePart( instance, node, part[ 2 ], part[ 3 ] );
-      case "prop":
-        return new PropertyPart( instance, node, part[ 2 ], part[ 3 ] );
-      case "event":
+      case 0:
+        return new AttributePart( instance, node, part[ 2 ] );
+      case 1:
+        return new PropertyPart( instance, node, part[ 2 ] );
+      case 2:
         return new EventPart( instance, node, part[ 2 ] );
-      case "node":
-        return new NodePart( instance, node );
       default:
+        return new NodePart( instance, node );
     }
-    throw new Error( `Unknown part type ${part[ 0 ]}` );
   }
 
   class Template {
@@ -46,15 +44,9 @@
     }
 
     update( values ) {
-      let valueIndex = 0;
+      let i = 0;
       for ( const part of this.parts ) {
-        if ( part.size === undefined ) {
-          part.setValue( values[ valueIndex ] );
-          valueIndex++;
-        } else {
-          part.setValue( values, valueIndex );
-          valueIndex += part.size;
-        }
+        part.setValue( values[ i++ ] );
       }
     }
 
@@ -89,6 +81,7 @@
     constructor( instance, element ) {
       this.instance = instance;
       this.element = element;
+      this._value = undefined;
     }
     getValue( value ) {
       if ( typeof value === "function" && value.__directive ) {
@@ -104,43 +97,27 @@
 
   class AttributePart extends Part {
 
-    constructor( instance, element, name, strings ) {
+    constructor( instance, element, name ) {
       super( instance, element );
       this.name = name;
-      this.strings = strings;
-      this.size = strings.length - 1;
-      this._previousValue = null;
     }
 
-    _interpolate( values, startIdx ) {
-      const s = this.strings;
-      if ( this.size === 1 && s[ 0 ] === "" && s[ 1 ] === "" ) {
-        return this.getValueNoFalse( values[ startIdx ] );
-      }
-
-      let text = "";
-      for ( let i = 0; i < this.size; i++ ) {
-        text += s[ i ] + this.getValueNoFalse( values[ startIdx + i ] );
-      }
-      return text + s[ this.size ];
-    }
-
-    setValue( values, startIdx ) {
-      const value = this._interpolate( values, startIdx );
-      if ( this._previousValue !== value ) {
+    setValue( _value ) {
+      const value = this.getValueNoFalse( _value );
+      if ( this._value !== value ) {
         if ( value == null ) {
           this.element.removeAttribute( this.name );
         } else {
           this.element.setAttribute( this.name, value );
         }
-        this._previousValue = value;
+        this._value = value;
       }
     }
   }
 
   class PropertyPart extends AttributePart {
-    setValue( values, startIdx ) {
-      this.element[ this.name ] = this._interpolate( values, startIdx );
+    setValue( value ) {
+      this.element[ this.name ] = value;
     }
   }
 
@@ -149,17 +126,16 @@
     constructor( instance, element, eventName ) {
       super( instance, element );
       this.eventName = eventName;
-      this._listener = null;
     }
 
     setValue( value ) {
       const listener = this.getValueNoFalse( value );
-      const previous = this._listener;
+      const previous = this._value;
       if ( listener === previous ) {
         return;
       }
 
-      this._listener = listener;
+      this._value = listener;
       if ( previous != null ) {
         this.element.removeEventListener( this.eventName, previous );
       }
@@ -171,16 +147,11 @@
 
   class NodePart extends Part {
 
-    constructor( instance, element ) {
-      super( instance, element );
-      this._previousValue = undefined;
-    }
-
     setValue( value ) {
       value = this.getValue( value );
 
       if ( value == null || !( typeof value === "object" || typeof value === "function" ) ) {
-        if ( value === this._previousValue ) {
+        if ( value === this._value ) {
           return;
         }
         this._setText( value );
@@ -203,11 +174,11 @@
     }
 
     _setNode( value ) {
-      if ( this._previousValue === value ) {
+      if ( this._value === value ) {
         return;
       }
       this._replace( value );
-      this._previousValue = value;
+      this._value = value;
     }
 
     _setText( value ) {
@@ -216,37 +187,37 @@
       } else {
         this._setNode( doc.createTextNode( value == null ? "" : value ) );
       }
-      this._previousValue = value;
+      this._value = value;
     }
 
     _setTemplateResult( value ) {
       let instance;
-      if ( this._previousValue && this._previousValue.template === value.template ) {
-        instance = this._previousValue;
+      if ( this._value && this._value.template === value.template ) {
+        instance = this._value;
       } else {
         instance = new TemplateInstance( value.template );
         this._setNode( instance.createNode() );
-        this._previousValue = instance;
+        this._value = instance;
       }
       instance.update( value.values );
     }
 
     _setPromise( value ) {
-      this._previousValue = value;
+      this._value = value;
       value.then( v => {
-        if ( this._previousValue === value ) {
+        if ( this._value === value ) {
           this.setValue( v );
         }
       } );
     }
 
     _setIterable( value ) {
-      if ( !Array.isArray( this._previousValue ) ) {
+      if ( !Array.isArray( this._value ) ) {
         this._replace( doc.createComment( "" ) );
-        this._previousValue = [];
+        this._value = [];
       }
 
-      const itemParts = this._previousValue;
+      const itemParts = this._value;
       let partIndex = 0;
 
       for ( const item of value ) {
@@ -312,8 +283,8 @@
     }
   }
 
-  QuaseView.Template = Template;
-  QuaseView.TemplateResult = TemplateResult;
+  QuaseView.t = Template;
+  QuaseView.r = TemplateResult;
   QuaseView.render = render;
 
   const modules = Object.create( null );

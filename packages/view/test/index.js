@@ -1,4 +1,4 @@
-import { babelPlugin } from "../src/compiler";
+import babelPlugin from "../src/compiler";
 
 const babel = require( "@babel/core" );
 const jsdom = require( "jsdom" );
@@ -7,18 +7,15 @@ const { JSDOM } = jsdom;
 const fixtures = [
   `
   render = function render() {
-    return html\`
-    <div
-      someProp="\${1}"
-      a-nother="\${2}"
-      multiParts='\${3} \${4}'
-      👍=\${5}
-      (a)=\${6}
-      [a]=\${7}
-      a$=\${8}>
-      <p>\${9}</p>
-      <div aThing="\${10}">\${[1,html\`<span>\${2}</span>\`,3]}</div>
-    </div>\`
+    return <div
+      someProp={1}
+      a-nother={2}
+      multiParts={\`\${3} \${4}\`}
+      a={5}
+      a$={6}>
+      <p>{7}</p>
+      <div aThing={8}>{[9,<span>{10}</span>,11]}</div>
+    </div>;
   };
   `
 ];
@@ -30,8 +27,10 @@ describe( "compile and runtime", () => {
   for ( const code of fixtures ) {
     it( `test ${i++}`, () => {
 
-      const finalCode = babel.transform( code, {
+      const finalCode = babel.transformSync( code, {
         plugins: [ babelPlugin ],
+        babelrc: false,
+        configFile: false,
         sourceMaps: false,
         generatorOpts: {
           retainLines: true
