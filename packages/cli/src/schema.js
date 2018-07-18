@@ -55,16 +55,13 @@ export function flattenSchema( schema ) {
   return newSchema;
 }
 
-export function fillOptions( schema, yargsOpts, allAlias, chain = [] ) {
-
+export function fillYargsOptions( schema, yargsOpts, allAlias, chain = [] ) {
   for ( const k in schema ) {
+    chain.push( decamelize( k, "-" ) );
 
-    const type = toType( schema[ k ] );
+    const type = toType( schema[ k ], chain );
     const { argType, alias, coerce, narg } = type.extra;
-    let key = decamelize( k, "-" );
-
-    chain.push( key );
-    key = chain.join( "." );
+    const key = chain.join( "." );
 
     if ( type ) {
       const wasUnion = type instanceof types.Union;
@@ -72,9 +69,9 @@ export function fillOptions( schema, yargsOpts, allAlias, chain = [] ) {
 
       for ( const t of acceptedTypes ) {
         if ( t instanceof types.Object ) {
-          fillOptions( t.properties, yargsOpts, allAlias, chain );
+          fillYargsOptions( t.properties, yargsOpts, allAlias, chain );
         } else if ( t instanceof types.Tuple ) {
-          fillOptions( t.items, yargsOpts, allAlias, chain );
+          fillYargsOptions( t.items, yargsOpts, allAlias, chain );
         } else {
           const arr = yargsOpts[ argType || typeToString( t ) ];
           if ( Array.isArray( arr ) ) {
@@ -86,19 +83,20 @@ export function fillOptions( schema, yargsOpts, allAlias, chain = [] ) {
 
     if ( alias ) {
       const arr = yargsOpts.alias[ key ] = yargsOpts.alias[ key ] || [];
-      arrify( alias ).forEach( a => {
+      for ( const a of arrify( alias ) ) {
         arr.push( a );
         allAlias.add( a );
-      } );
+      }
     }
+
     if ( coerce ) {
       yargsOpts.coerce[ key ] = coerce;
     }
+
     if ( narg ) {
       yargsOpts.narg[ key ] = narg;
     }
 
     chain.pop();
   }
-
 }

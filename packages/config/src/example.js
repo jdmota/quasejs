@@ -2,9 +2,11 @@ import { validate, printError, t } from ".";
 
 try {
   validate( {
-    deprecated: {
-      deprecated: true
-    }
+    deprecated: t.object( {
+      properties: {
+        deprecated: true
+      }
+    } )
   }, {
     deprecated: true
   } );
@@ -26,18 +28,18 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: {
@@ -51,18 +53,18 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: 10
@@ -74,18 +76,18 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.object( {
+    obj: t.object( {
+      properties: {
+        foo: t.object( {
+          properties: {
             bar: {
               type: "string",
               example: "example"
             }
-          } )
-        }
-      } )
-    }
+          }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: {
@@ -99,10 +101,10 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.tuple( [
+    obj: t.object( {
+      properties: {
+        foo: t.tuple( {
+          items: [
             {
               type: "string",
               example: "example"
@@ -110,10 +112,10 @@ try {
               type: "string",
               example: "example"
             }
-          ] )
-        }
-      } )
-    }
+          ]
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: [ "string", 10 ]
@@ -125,10 +127,10 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.tuple( [
+    obj: t.object( {
+      properties: {
+        foo: t.tuple( {
+          items: [
             {
               type: "string",
               example: "example"
@@ -136,10 +138,10 @@ try {
               type: "string",
               example: "example"
             }
-          ] )
-        }
-      } )
-    }
+          ]
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: {}
@@ -151,17 +153,17 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          type: t.union( [
+    obj: t.object( {
+      properties: {
+        foo: t.union( {
+          types: [
             "string",
             "number"
-          ] ),
+          ],
           example: "example"
-        }
-      } )
-    }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: [ "string", 10 ]
@@ -173,17 +175,17 @@ try {
 
 try {
   validate( {
-    obj: {
-      type: t.object( {
-        foo: {
-          choices: [
+    obj: t.object( {
+      properties: {
+        foo: t.choices( {
+          values: [
             0,
             1
           ],
           example: 1
-        }
-      } )
-    }
+        } )
+      }
+    } )
   }, {
     obj: {
       foo: 2

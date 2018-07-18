@@ -50,7 +50,7 @@ const config = await getConfig( {
   failIfNotFound: false
 } );
 
-const options = applyDefaults( schema, config ); // The first object passed (after schema) takes precedence
+const options = applyDefaults( schema, [ config ], [ "config" ] ); // The first object passed (after schema) takes precedence
 
 try {
   validate( schema, options );
@@ -67,4 +67,3 @@ It is used to customize how values are merged when applying defaults and merging
 - `"merge"`: If they are arrays, merge them.
 - `"concat"`: If they are arrays, just concats them.
 - `"spreadMeansConcat"`: If they are arrays, concat them when the value with higher precedence has `"..."` as its first element.
-- You can also provide a function of the form `( obj, src ) => any`.

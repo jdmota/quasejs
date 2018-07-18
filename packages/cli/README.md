@@ -12,7 +12,8 @@ Adapted from [meow](https://github.com/sindresorhus/meow), plus some features:
 - Passing a `configFiles` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 - Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
 - Support for `@quase/config`'s schema, defaults application, and validation.
-- Automatic help generation.
+  - The options are validated automatically against the schema. If validation fails, an error is throw. If the error is left unhandled, the promise will loudly reject.
+- Automatic help generation from the schema.
 
 ## Usage example
 
@@ -25,12 +26,13 @@ require( "@quase/cli" ).default( {
   // If you pass an array, we try to find the first file
   configFiles: "sample.config.js",
   configKey: "sample",
-  // Function or just the object. For more info, see @quase/config
-  schema( t ) {
+  // Function or just the object.
+  // For more info, see @quase/config
+  schema( { t } ) {
     return {
       someFlagName: {
         type: "boolean",
-        // If description == null, the flag will not appear in the help text
+        // If description == null, the flag will not appear in the help text.
         // But with "", it will.
         description: "",
         alias: "s",
@@ -45,11 +47,6 @@ require( "@quase/cli" ).default( {
       } )
     };
   },
-  // Automatically validate the options against the schema. If validation fails, an error is throw.
-  // If the error is left unhandled, the promise will loudly reject.
-  // See @quase/config for more info.
-  // Default: true
-  validate: true,
   // Subcommands
   defaultCommand: "commandName", // Default: undefined
   commands: { // Default: {}

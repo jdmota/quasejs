@@ -1,118 +1,65 @@
 // @flow
-import { t, types, toTypeMaybe, type GeneralType } from "./types";
-import { formatPathOption } from "./formating";
+import Path from "./path";
+import { t, toType } from "./types";
 
-const toString = ( {} ).toString;
+export function clone( path: Path, _type: any, cloned: any, src: any, key: any ) {
 
-function isObject( x: any ) {
-  return x != null && typeof x === "object";
-}
+  path.push( key );
 
-function isPlainObject( value: any ) {
-  if ( !isObject( value ) || toString.call( value ) !== "[object Object]" ) {
-    return false;
-  }
-  if ( Object.getPrototypeOf( value ) === null ) {
-    return true;
-  }
-  let proto = value;
-  while ( Object.getPrototypeOf( proto ) !== null ) {
-    proto = Object.getPrototypeOf( proto );
-  }
-  return Object.getPrototypeOf( value ) === proto;
-}
+  const type = toType( _type, path );
+  const { map } = type.extra;
+  const srcValue = map ? map( src[ key ] ) : src[ key ];
 
-function clone( x: any ) {
-  if ( Array.isArray( x ) ) {
-    const value = [];
-    for ( let i = 0; i < x.length; i++ ) {
-      value[ i ] = clone( x[ i ] );
-    }
-    return value;
+  if ( srcValue === undefined ) {
+    return;
   }
-  if ( isPlainObject( x ) ) {
-    const value = {};
-    for ( const key in x ) {
-      value[ key ] = clone( x[ key ] );
-    }
-    return value;
-  }
-  return x;
-}
 
-function applyDefaultsObject( type: any, object: any, src: any ) {
-  for ( const key in src ) {
-    applyDefaultsHelper(
-      type && type.properties ? type.properties[ key ] : null,
-      object,
-      src,
-      key
-    );
+  const newValue = type.clone( path, srcValue );
+
+  path.pop();
+
+  if ( newValue !== undefined ) {
+    cloned[ key ] = newValue;
   }
 }
 
-function applyDefaultsArrayMerge( type: any, object: any, src: any ) {
-  for ( let i = 0; i < src.length; i++ ) {
-    applyDefaultsHelper(
-      type && type.items ? type.items[ i ] : null,
-      object,
-      src,
-      i
-    );
-  }
-}
+export function merge( path: Path, _type: any, object: any, src: any, key: any ) {
 
-function applyDefaultsHelper( _type: ?GeneralType, object: any, src: any, key: any ) {
+  path.push( key );
 
-  const type = toTypeMaybe( _type );
-  const { map, merge } = type || {};
-
+  const type = toType( _type, path );
+  const { map, merge } = type.extra;
   const objValue = object[ key ];
   const srcValue = map ? map( src[ key ] ) : src[ key ];
 
+  if ( srcValue === undefined ) {
+    return;
+  }
+
+  if ( objValue !== undefined && merge === "override" ) {
+    return;
+  }
+
+  let newValue;
+
   if ( objValue === undefined ) {
-    if ( srcValue !== undefined ) {
-      object[ key ] = clone( srcValue );
-    }
-    return;
+    newValue = type.clone( path, srcValue );
+  } else {
+    newValue = type.merge( path, objValue, srcValue );
   }
 
-  if ( typeof merge === "function" ) {
-    const newValue = merge( objValue, srcValue );
-    if ( newValue !== undefined ) {
-      object[ key ] = newValue;
-      return;
-    }
-  }
+  path.pop();
 
-  if ( merge === "override" ) {
-    return;
+  if ( newValue !== undefined ) {
+    object[ key ] = newValue;
   }
-
-  if ( Array.isArray( objValue ) && Array.isArray( srcValue ) ) {
-    if ( merge === "merge" || type instanceof types.Tuple ) {
-      applyDefaultsArrayMerge( type, objValue, srcValue );
-    } else if ( merge === "concat" ) {
-      object[ key ] = srcValue.concat( objValue );
-    } else if ( merge === "spreadMeansConcat" && objValue[ 0 ] === "..." ) {
-      object[ key ] = srcValue.concat( objValue.slice( 1 ) );
-    }
-    return;
-  }
-
-  if ( isPlainObject( objValue ) && isPlainObject( srcValue ) ) {
-    applyDefaultsObject( type, objValue, srcValue );
-  }
-
 }
 
-const opt = formatPathOption;
-
-export function extractDefaults( _type: GeneralType, path: string[], dest: Object ) {
-  const type = toTypeMaybe( _type );
+function extractDefaultsHelper( path: Path, _type: any, defaults: any, key: any, dest: Object ) {
+  const type = toType( _type, path );
   const { default: d, required, optional } = type || {};
   if ( required && optional ) {
-    throw new Error( `[Schema] Don't use "required" and "optional" in ${opt( path )}` );
+    throw new Error( `[Schema] Don't use "required" and "optional" in ${path.chainToString()}` );
   }
   if ( d === undefined ) {
     if ( required || optional ) {
@@ -120,27 +67,46 @@ export function extractDefaults( _type: GeneralType, path: string[], dest: Objec
     }
   } else {
     if ( required ) {
-      throw new Error( `[Schema] Don't use "required" with "default" in ${opt( path )}` );
+      throw new Error( `[Schema] Don't use "required" with "default" in ${path.chainToString()}` );
     }
     return d;
   }
-  if ( type ) {
-    const customDefault = type.defaults( path, dest );
-    if ( customDefault !== undefined ) {
-      return customDefault;
-    }
+  const customDefault = type.defaults( path, dest );
+  if ( customDefault !== undefined ) {
+    return customDefault;
   }
   if ( !optional ) {
-    throw new Error( `[Schema] Provide a default value or mark as "optional" in ${opt( path )}` );
+    throw new Error( `[Schema] Provide a default value or mark as "optional" in ${path.chainToString()}` );
   }
 }
 
-export function applyDefaults( schema: Object, ...args: Object[] ) {
-  const dest = {};
-  const type = t.object( { properties: schema } );
-  for ( let i = 0; i < args.length; i++ ) {
-    applyDefaultsObject( type, dest, args[ i ] );
+export function extractDefaults( path: Path, _type: any, defaults: any, key: any, dest: Object ) {
+
+  path.push( key );
+
+  const d = extractDefaultsHelper( path, _type, defaults, key, dest );
+
+  if ( d !== undefined ) {
+    defaults[ key ] = d;
   }
-  applyDefaultsObject( type, dest, extractDefaults( type, [], dest ) );
-  return dest;
+
+  path.pop();
+}
+
+export function applyDefaults( schema: Object, args: Object[], where: string[] = [] ) {
+  const path = new Path();
+  const type = t.object( { properties: schema } );
+  if ( args.length > 0 ) {
+    path.where = where[ 0 ];
+    const dest = type.clone( path, args[ 0 ] );
+    for ( let i = 1; i < args.length; i++ ) {
+      path.where = where[ i ];
+      type.merge( path, dest, args[ i ] );
+    }
+    path.where = null;
+    type.merge( path, dest, type.defaults( path, dest ) );
+    type.validate( path, dest, dest );
+    return dest;
+  }
+  return type.defaults( path, {} );
 }

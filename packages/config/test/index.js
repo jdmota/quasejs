@@ -308,11 +308,48 @@ it( "validate", () => {
 
 function d( schema, ...args ) {
   try {
-    expect( applyDefaults( schema, ...args ) ).toMatchSnapshot();
+    expect( applyDefaults( schema, [ ...args ] ) ).toMatchSnapshot();
   } catch ( err ) {
-    expect( stripAnsi( err.message ) ).toMatchSnapshot();
+    if ( err.__validation || /\[Schema\] [^I]/.test( err.message ) ) {
+      expect( stripAnsi( err.message ) ).toMatchSnapshot();
+    } else {
+      expect( stripAnsi( err.stack ) ).toMatchSnapshot();
+    }
   }
 }
+
+it( "show where the error is", () => {
+
+  function d( schema, ...args ) {
+    try {
+      expect( applyDefaults( schema, [ ...args ], [ "a", "b", "c" ] ) ).toMatchSnapshot();
+    } catch ( err ) {
+      if ( err.__validation || /\[Schema\] [^I]/.test( err.message ) ) {
+        expect( stripAnsi( err.message ) ).toMatchSnapshot();
+      } else {
+        expect( stripAnsi( err.stack ) ).toMatchSnapshot();
+      }
+    }
+  }
+
+  d( {
+    obj: t.object( {
+      properties: {
+        prop: {
+          type: "string",
+          optional: true
+        }
+      }
+    } )
+  }, {
+    obj: {
+      prop: "text"
+    }
+  }, {
+    obj: [ "text" ]
+  } );
+
+} );
 
 it( "apply defaults", () => {
 
@@ -344,9 +381,11 @@ it( "apply defaults", () => {
         foo: t.object( {
           properties: {
             a: {
+              type: "any",
               default: 10
             },
             b: {
+              type: "any",
               default: 20
             }
           }
@@ -421,7 +460,7 @@ it( "apply defaults", () => {
       type: "number",
       default: 0
     }
-  }, undefined, null );
+  }, {}, {} );
 
   d( {
     obj: {
@@ -544,6 +583,7 @@ it( "apply defaults - merge modes", () => {
       properties: {
         foo: {
           type: "array",
+          itemType: "number",
           merge: "concat"
         }
       }
@@ -562,6 +602,7 @@ it( "apply defaults - merge modes", () => {
     obj: t.object( {
       properties: {
         foo: t.array( {
+          itemType: "number",
           merge: "concat"
         } )
       }
@@ -580,6 +621,7 @@ it( "apply defaults - merge modes", () => {
     obj: t.object( {
       properties: {
         foo: t.array( {
+          itemType: "number",
           merge: "spreadMeansConcat"
         } )
       }
@@ -598,6 +640,7 @@ it( "apply defaults - merge modes", () => {
     obj: t.object( {
       properties: {
         foo: t.array( {
+          itemType: "number",
           merge: "spreadMeansConcat"
         } )
       }
@@ -621,28 +664,8 @@ it( "apply defaults - merge modes", () => {
       properties: {
         foo: {
           type: "array",
+          itemType: "number",
           merge: "merge"
-        }
-      }
-    } )
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  }, {
-    obj: {
-      foo: [ 0 ]
-    }
-  } );
-
-  d( {
-    obj: t.object( {
-      properties: {
-        foo: {
-          type: "array",
-          merge() {
-            return [];
-          }
         }
       }
     } )

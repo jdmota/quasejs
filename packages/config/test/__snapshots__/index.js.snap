@@ -54,14 +54,6 @@ Object {
 }
 `;
 
-exports[`apply defaults - merge modes 6`] = `
-Object {
-  "obj": Object {
-    "foo": Array [],
-  },
-}
-`;
-
 exports[`apply defaults 1`] = `
 Object {
   "obj": Object {
@@ -85,11 +77,11 @@ Object {
 `;
 
 exports[`apply defaults 3`] = `
-Object {
-  "obj": Object {
-    "foo": 100,
-  },
-}
+"Option 'obj.foo' must be of type:
+  object
+but instead received:
+  number
+"
 `;
 
 exports[`apply defaults 4`] = `
@@ -118,7 +110,7 @@ Object {
 }
 `;
 
-exports[`apply defaults 9`] = `"[Schema] Provide a default value or mark as \\"optional\\" in 'obj'"`;
+exports[`apply defaults 9`] = `"[Schema] Provide a default value or mark as \\"optional\\" in obj"`;
 
 exports[`apply defaults 10`] = `
 Object {
@@ -169,6 +161,14 @@ Object {
   "minify": true,
   "mode": "production",
 }
+`;
+
+exports[`show where the error is 1`] = `
+"Option 'obj [in b]' must be of type:
+  object
+but instead received:
+  array
+"
 `;
 
 exports[`validate 1`] = `

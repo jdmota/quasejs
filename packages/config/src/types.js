@@ -1,8 +1,10 @@
 // @flow
-import { extractDefaults } from "./defaults";
-import { indent, formatTypes, formatPathOption, format, addPrefix, pathToStr } from "./formating";
+import type Path from "./path";
 import getType from "./get-type";
-import { ValidationError, makeExample, validateType, printDeprecated, checkType, checkUnrecognized, checkKeys } from "./validation";
+import { clone, merge, extractDefaults } from "./defaults";
+import { indent, formatTypes, format, addPrefix } from "./formating";
+import { ValidationError, makeExample, validateType, printDeprecated, checkType, checkUnrecognized } from "./validation";
+import { clone as cloneHelper, isPlainObject } from "./utils";
 
 const chalk = require( "chalk" );
 
@@ -22,28 +24,45 @@ export class Type {
   +default: mixed;
   +deprecated: boolean;
   +example: mixed;
-  +map: any;
-  +merge: any;
   +extra: { +[key: string]: any };
   constructor( info: ?Info ) {
     const extra = info || {};
-    const { required, optional, default: d, deprecated, example, map, merge } = extra;
+    const { required, optional, default: d, deprecated, example } = extra;
     this.required = !!required;
     this.optional = !!optional;
     this.default = d;
     this.deprecated = !!deprecated;
     this.example = example;
-    this.map = map;
-    this.merge = merge;
     this.extra = extra;
   }
-  defaults( path: string[], dest: Object ) { // eslint-disable-line
+  clone( path: Path, value: any ) { // eslint-disable-line
+    return cloneHelper( value );
+  }
+  merge( path: Path, objValue: any, srcValue: any ) { // eslint-disable-line
+    if ( Array.isArray( objValue ) && Array.isArray( srcValue ) ) {
+      if ( merge === "merge" ) {
+        for ( let i = 0; i < srcValue.length; i++ ) {
+          merge( path, anyType, objValue, srcValue, i ); // eslint-disable-line no-use-before-define
+        }
+      } else if ( merge === "concat" ) {
+        return srcValue.concat( objValue );
+      } else if ( merge === "spreadMeansConcat" && objValue[ 0 ] === "..." ) {
+        return srcValue.concat( objValue.slice( 1 ) );
+      }
+    } else if ( isPlainObject( objValue ) && isPlainObject( srcValue ) ) {
+      for ( const key in srcValue ) {
+        merge( path, anyType, objValue, srcValue, key ); // eslint-disable-line no-use-before-define
+      }
+    }
+    return objValue;
+  }
+  defaults( path: Path, dest: Object ) { // eslint-disable-line
     return undefined;
   }
-  validate( path: string[], value: any, dest: Object ) { // eslint-disable-line
+  validate( path: Path, value: any, dest: Object ) { // eslint-disable-line
     if ( value === undefined ) {
       if ( !this.optional ) {
-        throw new ValidationError( `Option ${formatPathOption( path )} is required.` );
+        throw new ValidationError( `Option ${path.format()} is required.` );
       }
     } else {
       if ( this.deprecated ) {
@@ -51,9 +70,22 @@ export class Type {
       }
     }
   }
+  checkType( path: Path, value: any, expected: string ) {
+    checkType( path, getType( value ), expected, this.default, this.example );
+  }
 }
 
 export type GeneralType = string | Type | ( { type: ?string } & Info );
+
+class TAny extends Type {
+  validate( path: Path, value: any, dest: Object ) { // eslint-disable-line
+    if ( this.deprecated && value !== undefined ) {
+      printDeprecated( path );
+    }
+  }
+}
+
+const anyType = new TAny();
 
 type ObjectInfo = Info & {
   +properties?: ?Object,
@@ -61,40 +93,64 @@ type ObjectInfo = Info & {
 };
 
 class TObject extends Type {
-  +properties: ?Object;
+  +properties: Object;
   +additionalProperties: boolean;
   +keys: string[];
   constructor( info: ?ObjectInfo ) {
     super( info );
-    this.properties = info && info.properties;
+    this.properties = ( info && info.properties ) || {};
     this.additionalProperties = info ? !!info.additionalProperties : true;
     this.keys = this.properties ? Object.keys( this.properties ) : [];
   }
-  defaults( path: string[], dest: Object ) {
+  checkUnrecognized( path: Path, value: any ) {
+    if ( !this.additionalProperties ) {
+      checkUnrecognized(
+        Object.keys( value ).map( o => addPrefix( path, o ) ),
+        this.keys.map( o => addPrefix( path, o ) )
+      );
+    }
+  }
+  clone( path: Path, value: any ) {
+    this.checkType( path, value, "object" );
+    this.checkUnrecognized( path, value );
+
+    const cloned = {};
+    for ( const key in value ) {
+      clone( path, this.properties[ key ] || anyType, cloned, value, key );
+    }
+    return cloned;
+  }
+  merge( path: Path, objValue: any, srcValue: any ) {
+    this.checkType( path, srcValue, "object" );
+    this.checkUnrecognized( path, srcValue );
+
+    for ( const key in srcValue ) {
+      merge( path, this.properties[ key ] || anyType, objValue, srcValue, key );
+    }
+    return objValue;
+  }
+  defaults( path: Path, dest: Object ) {
     const schema = this.properties;
     const defaults = {};
     for ( const k in schema ) {
-      path.push( k );
-      defaults[ k ] = extractDefaults( schema[ k ], path, dest );
-      path.pop();
+      extractDefaults( path, schema[ k ], defaults, k, dest );
     }
     return defaults;
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
-      checkType( path, getType( value ), "object", this.default, this.example );
+      this.checkType( path, value, "object" );
+      this.checkUnrecognized( path, value );
 
-      if ( !this.additionalProperties ) {
-        checkUnrecognized(
-          Object.keys( value ).map( o => addPrefix( path, o ) ),
-          this.keys.map( o => addPrefix( path, o ) )
-        );
-      }
-
-      if ( this.properties ) {
-        checkKeys( this.properties, path, value, dest );
+      for ( const key in this.properties ) {
+        const type = this.properties[ key ];
+        if ( type ) {
+          path.push( key );
+          validateType( type, path, value[ key ], dest );
+          path.pop();
+        }
       }
     }
   }
@@ -110,20 +166,46 @@ class TArray extends Type {
     super( info );
     this.itemType = info && info.itemType;
   }
+  clone( path: Path, value: any ) {
+    this.checkType( path, value, "array" );
+
+    const cloned = [];
+    for ( let i = 0; i < value.length; i++ ) {
+      clone( path, this.itemType, cloned, value, i );
+    }
+    return cloned;
+  }
+  merge( path: Path, objValue: any, srcValue: any ) {
+    this.checkType( path, srcValue, "array" );
+
+    const mergeOpts = this.extra.merge;
+
+    if ( mergeOpts === "merge" ) {
+      for ( let i = 0; i < srcValue.length; i++ ) {
+        merge( path, this.itemType, objValue, srcValue, i );
+      }
+    } else if ( mergeOpts === "concat" ) {
+      objValue = srcValue.concat( objValue );
+    } else if ( mergeOpts === "spreadMeansConcat" && objValue[ 0 ] === "..." ) {
+      objValue = srcValue.concat( objValue.slice( 1 ) );
+    }
+
+    return objValue;
+  }
   defaults() {
     return [];
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
-      checkType( path, getType( value ), "array", this.default, this.example );
+      this.checkType( path, value, "array" );
 
       const itemType = this.itemType;
 
       if ( itemType ) {
         for ( let i = 0; i < value.length; i++ ) {
-          path.push( i + "" );
+          path.push( i );
           validateType( itemType, path, value[ i ], dest );
           path.pop();
         }
@@ -140,30 +222,62 @@ class TTuple extends Type {
   +items: GeneralType[];
   constructor( info: TupleInfo ) {
     super( info );
-    this.items = info.items;
+    this.items = info.items || [];
   }
-  defaults( path: string[], dest: Object ) {
+  _error( path: Path ) {
+    throw new ValidationError( [
+      `Option ${path.format()} must be an array of ${this.items.length} items.`,
+      makeExample( path, this.default, this.example )
+    ] );
+  }
+  validateSize( path: Path, size: number ) {
+    if ( size > this.items.length ) {
+      this._error( path );
+    }
+  }
+  clone( path: Path, value: any ) {
+    this.checkType( path, value, "array" );
+    this.validateSize( path, value.length );
+
+    const cloned = [];
+    for ( let i = 0; i < value.length; i++ ) {
+      clone( path, this.items[ i ], cloned, value, i );
+    }
+    return cloned;
+  }
+  merge( path: Path, objValue: any, srcValue: any ) {
+    this.checkType( path, srcValue, "array" );
+    this.validateSize( path, srcValue.length );
+
+    for ( let i = 0; i < srcValue.length; i++ ) {
+      merge( path, this.items[ i ], objValue, srcValue, i );
+    }
+    return objValue;
+  }
+  defaults( path: Path, dest: Object ) {
     const schema = this.items;
     const defaults = [];
     for ( let i = 0; i < schema.length; i++ ) {
-      path.push( i + "" );
-      defaults[ i ] = extractDefaults( schema[ i ], path, dest );
-      path.pop();
+      extractDefaults( path, schema[ i ], defaults, i, dest );
     }
     return defaults;
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
       if ( !Array.isArray( value ) || value.length !== this.items.length ) {
-        throw new ValidationError( [
-          `Option ${formatPathOption( path )} must be an array of ${this.items.length} items.`,
-          makeExample( path, this.default, this.example )
-        ] );
+        this._error( path );
       }
 
-      checkKeys( this.items, path, value, dest );
+      for ( let i = 0; i < this.items.length; i++ ) {
+        const type = this.items[ i ];
+        if ( type ) {
+          path.push( i );
+          validateType( type, path, value[ i ], dest );
+          path.pop();
+        }
+      }
     }
   }
 }
@@ -178,7 +292,7 @@ class TValue extends Type {
     super( info );
     this.value = info.value;
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
@@ -186,7 +300,7 @@ class TValue extends Type {
         return;
       }
       throw new ValidationError( [
-        `Option ${formatPathOption( path )} should be:`,
+        `Option ${path.format()} should be:`,
         `${indent( format( this.value ) )}`,
         `but instead received:`,
         `${indent( chalk.bold.red( format( value ) ) )}`
@@ -205,7 +319,7 @@ class TUnion extends Type {
     super( info );
     this.types = info.types;
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
@@ -218,7 +332,7 @@ class TUnion extends Type {
         }
       }
       throw new ValidationError( [
-        `Option ${formatPathOption( path )} should be one of these types:`,
+        `Option ${path.format()} should be one of these types:`,
         `${indent( chalk.bold.green( formatTypes( this.types ) ) )}`,
         `but instead received:`,
         `${indent( chalk.bold.red( format( value ) ) )}`,
@@ -238,7 +352,7 @@ class TChoices extends Type {
     super( info );
     this.values = info.values;
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
     if ( value !== undefined ) {
@@ -247,7 +361,7 @@ class TChoices extends Type {
       }
 
       throw new ValidationError( [
-        `Option ${formatPathOption( path )} should be one of:`,
+        `Option ${path.format()} should be one of:`,
         `${indent( chalk.bold.green( this.values.map( format ).join( " | " ) ) )}`,
         `but instead received:`,
         `${indent( chalk.bold.red( format( value ) ) )}`
@@ -266,7 +380,7 @@ class TPrimitive extends Type {
     super( info );
     this.type = info.type;
   }
-  defaults( path: string[], dest: Object ) { // eslint-disable-line
+  defaults( path: Path, dest: Object ) { // eslint-disable-line
     if ( this.type === "boolean" ) {
       return false;
     }
@@ -277,13 +391,11 @@ class TPrimitive extends Type {
       return {};
     }
   }
-  validate( path: string[], value: any, dest: Object ) {
+  validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
-    const type = this.type;
-
-    if ( type != null && value !== undefined ) {
-      checkType( path, getType( value ), type, this.default, this.example );
+    if ( this.type != null && value !== undefined ) {
+      this.checkType( path, value, this.type );
     }
   }
 }
@@ -292,26 +404,31 @@ export type Schema = {
   [key: string]: GeneralType;
 };
 
-export function toTypeMaybe( type: ?GeneralType ): ?Type {
+export function toType( type: ?GeneralType, path: Path ): Type {
   if ( typeof type === "string" ) {
+    if ( type === "any" ) {
+      return new TAny();
+    }
     return new TPrimitive( { type: type } );
   }
   if ( type != null && typeof type === "object" ) {
     if ( type instanceof Type ) {
       return type;
     }
-    if ( type.type === undefined || typeof type.type === "string" ) {
+    if ( typeof type.type === "string" ) {
+      if ( type.type === "object" ) {
+        return new TObject( type );
+      }
+      if ( type.type === "array" ) {
+        return new TArray( type );
+      }
+      if ( type.type === "any" ) {
+        return new TAny( type );
+      }
       return new TPrimitive( type );
     }
   }
-}
-
-export function toType( _type: ?GeneralType, path: string[] ): Type {
-  const type = toTypeMaybe( _type );
-  if ( type ) {
-    return type;
-  }
-  throw new Error( `[Schema] Invalid type. See ${pathToStr( path )}` );
+  throw new Error( `[Schema] Invalid type. See ${path.chainToString()}` );
 }
 
 export const types = {
@@ -322,7 +439,8 @@ export const types = {
   Value: TValue,
   Union: TUnion,
   Choices: TChoices,
-  Primitive: TPrimitive
+  Primitive: TPrimitive,
+  Any: TAny
 };
 
 export const t = {
@@ -346,5 +464,8 @@ export const t = {
   },
   primitive( x: PrimitiveInfo ) {
     return new types.Primitive( x );
+  },
+  any( x: Info ) {
+    return new types.Any( x );
   }
 };

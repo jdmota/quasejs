@@ -1,8 +1,9 @@
 // @flow
-import { indent, formatOption, formatPathOption, format, pathToStr } from "./formating";
+import type Path from "./path";
+import getType from "./get-type";
+import { indent, formatOption, format } from "./formating";
 import { printWarning } from "./print";
 import { type GeneralType, types } from "./types";
-import getType from "./get-type";
 
 const chalk = require( "chalk" );
 const leven = require( "leven" );
@@ -28,8 +29,8 @@ export function createDidYouMeanMessage( unrecognized: string, allowedOptions: A
   return suggestion ? `Did you mean ${formatOption( suggestion )}?` : "";
 }
 
-export function printDeprecated( path: string[], message: ?string ) {
-  message = message || `Option ${formatPathOption( path )} is deprecated.`;
+export function printDeprecated( path: Path, message: ?string ) {
+  message = message || `Option ${path.format()} is deprecated.`;
   printWarning( `${chalk.bold( "Deprecation Warning" )}: ${message}` );
 }
 
@@ -55,7 +56,8 @@ export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<st
   throw new ValidationError( message );
 }
 
-export function makeExample( chain: string[], d: mixed, e: mixed ) {
+export function makeExample( path: Path, d: mixed, e: mixed ) {
+  const chain = path.arr;
   const lines = [];
   const example = e === undefined ? d : e;
   if ( example !== undefined ) {
@@ -80,35 +82,22 @@ export function makeExample( chain: string[], d: mixed, e: mixed ) {
   return lines.join( "\n" );
 }
 
-export function checkType(
-  path: string[], actualType: string, expectedType: string, d: mixed, e: mixed
-) {
+export function checkType( path: Path, actual: string, expected: string, d: mixed, e: mixed ) {
 
-  if ( actualType === expectedType ) {
+  if ( actual === expected ) {
     return;
   }
 
   throw new ValidationError( [
-    `Option ${formatPathOption( path )} must be of type:`,
-    `${indent( chalk.bold.green( expectedType ) )}`,
+    `Option ${path.format()} must be of type:`,
+    `${indent( chalk.bold.green( expected ) )}`,
     `but instead received:`,
-    `${indent( chalk.bold.red( actualType ) )}`,
+    `${indent( chalk.bold.red( actual ) )}`,
     makeExample( path, d, e )
   ] );
 }
 
-export function checkKeys( properties: any, path: string[], object: any, dest: Object ) {
-  for ( const key in properties ) {
-    path.push( key );
-    const type = properties[ key ];
-    if ( type ) {
-      validateType( type, path, object[ key ], dest );
-    }
-    path.pop();
-  }
-}
-
-export function validateType( type: GeneralType, path: string[], value: mixed, dest: Object ) {
+export function validateType( type: GeneralType, path: Path, value: mixed, dest: Object ) {
   if ( typeof type === "string" ) {
     checkType( path, getType( value ), type, undefined, undefined );
     return;
@@ -118,10 +107,21 @@ export function validateType( type: GeneralType, path: string[], value: mixed, d
       type.validate( path, value, dest );
       return;
     }
+    if ( type.type === "any" ) {
+      return;
+    }
+    if ( type.type === "object" ) {
+      new types.Object( type ).validate( path, value, dest );
+      return;
+    }
+    if ( type.type === "array" ) {
+      new types.Array( type ).validate( path, value, dest );
+      return;
+    }
     if ( typeof type.type === "string" ) {
       new types.Primitive( type ).validate( path, value, dest );
       return;
     }
   }
-  throw new Error( `[Schema] Invalid type. See ${pathToStr( path )}` );
+  throw new Error( `[Schema] Invalid type. See ${path.chainToString()}` );
 }

@@ -12,7 +12,6 @@ describe( "cli", () => {
     console.error = jest.fn();
 
     const { input, options, pkg, generateHelp, showHelp, config } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -25,15 +24,17 @@ describe( "cli", () => {
           foo <input>
       `,
       schema: {
-        "--": { type: "array" },
-        number: { default: 0 },
-        unicorn: { alias: "u", optional: true },
-        meow: { default: "dog" },
-        boolean: { default: true },
+        "--": { type: "array", itemType: "string" },
+        number: { type: "number", default: 0 },
+        unicorn: { type: "string", alias: "u", optional: true },
+        meow: { type: "any", default: "dog" },
+        boolean: { type: "boolean", default: true },
         boolean2: { type: "boolean", default: true },
         boolean3: { type: "boolean" },
         boolean4: { type: "boolean" },
-        boolean5: { type: "boolean" }
+        boolean5: { type: "boolean" },
+        iAmTheConfigFile: { type: "string", optional: true },
+        fooBar: { type: "boolean" }
       },
       inferType: true,
       configFiles: "quase-cli-config.js",
@@ -70,7 +71,6 @@ describe( "cli", () => {
   it( "defaults", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -85,9 +85,11 @@ describe( "cli", () => {
         bar: t.object( {
           properties: {
             prop1: {
+              type: "number",
               default: 0
             },
             prop2: {
+              type: "number",
               default: 0
             }
           }
@@ -95,13 +97,14 @@ describe( "cli", () => {
         baz: t.object( {
           properties: {
             prop1: {
+              type: "number",
               default: 0
             },
             prop2: {
+              type: "number",
               default: 0
             }
-          },
-          default: {}
+          }
         } )
       },
       notifier: false
@@ -113,7 +116,10 @@ describe( "cli", () => {
         prop1: 0,
         prop2: 1
       },
-      baz: {}
+      baz: {
+        prop1: 0,
+        prop2: 0
+      }
     } );
 
   } );
@@ -121,7 +127,6 @@ describe( "cli", () => {
   it( "generate help", async() => {
 
     const { generateHelp } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -131,8 +136,8 @@ describe( "cli", () => {
       argv: [],
       usage: "$ bin something",
       schema: {
-        number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
-        unicorn: { alias: "u", optional: true, description: "unicorn description" },
+        number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
+        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
         meow: { type: "string", description: "", default: "dog" },
         boolean: { type: "boolean", default: false, description: "boolean description" },
         booleanNo: { type: "boolean", default: true, description: "boolean no description" },
@@ -186,6 +191,7 @@ describe( "cli", () => {
           optional: true
         },
         noDescription: {
+          type: "any",
           description: "",
           optional: true
         }
@@ -200,7 +206,6 @@ describe( "cli", () => {
   it( "inferType=true", async() => {
 
     const { options, input } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -209,7 +214,13 @@ describe( "cli", () => {
       argv: [ "--prop=10", "10", "abc" ],
       inferType: true,
       help: "",
-      notifier: false
+      notifier: false,
+      schema: {
+        prop: {
+          type: "any",
+          optional: true
+        }
+      }
     } );
 
     expect( options ).toEqual( {
@@ -222,7 +233,6 @@ describe( "cli", () => {
   it( "inferType=false", async() => {
 
     const { options, input } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -230,7 +240,13 @@ describe( "cli", () => {
       },
       argv: [ "--prop=10", "10", "abc" ],
       help: "",
-      notifier: false
+      notifier: false,
+      schema: {
+        prop: {
+          type: "any",
+          optional: true
+        }
+      }
     } );
 
     expect( options ).toEqual( {
@@ -243,7 +259,6 @@ describe( "cli", () => {
   it( "dont set default value on flags", async() => {
 
     const { flags } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -281,7 +296,6 @@ describe( "cli", () => {
   it( "alias", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -319,7 +333,6 @@ describe( "cli", () => {
   it( "dot notation", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -327,7 +340,32 @@ describe( "cli", () => {
       },
       argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camel-case=cat", "--no-obj.bool" ],
       help: "",
-      notifier: false
+      notifier: false,
+      schema: {
+        obj: t.object( {
+          properties: {
+            foo: {
+              type: "number",
+              default: 0
+            },
+            bool: {
+              type: "boolean"
+            },
+            bar: t.object( {
+              properties: {
+                baz: {
+                  type: "string",
+                  optional: true
+                },
+                camelCase: {
+                  type: "string",
+                  optional: true
+                }
+              }
+            } )
+          }
+        } )
+      }
     } );
 
     expect( options ).toEqual( {
@@ -346,7 +384,6 @@ describe( "cli", () => {
   it( "coerce", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -356,6 +393,7 @@ describe( "cli", () => {
       schema: {
         obj: {
           type: "object",
+          additionalProperties: true,
           coerce( value ) {
             return {
               value: JSON.parse( value )
@@ -380,7 +418,6 @@ describe( "cli", () => {
   it( "count", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -407,7 +444,6 @@ describe( "cli", () => {
   it( "narg", async() => {
 
     const { options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -415,17 +451,19 @@ describe( "cli", () => {
       },
       argv: [ "-a", "foo", "-b", "bar", "baz" ],
       schema: {
-        aaa: {
+        aaa: t.array( {
+          itemType: "string",
           optional: true,
           narg: 1,
           alias: "a"
-        },
+        } ),
         foo: t.object( {
           properties: {
-            bar: {
+            bar: t.array( {
+              itemType: "string",
               narg: 2,
               alias: "b"
-            }
+            } )
           },
           optional: true
         } )
@@ -435,7 +473,7 @@ describe( "cli", () => {
     } );
 
     expect( options ).toEqual( {
-      aaa: "foo",
+      aaa: [ "foo" ],
       foo: {
         bar: [ "bar", "baz" ]
       }
@@ -447,7 +485,6 @@ describe( "cli", () => {
 
     await expect(
       cli( {
-        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -456,12 +493,14 @@ describe( "cli", () => {
         argv: [ "-a", "foo", "--foo.bar", "bar", "baz" ],
         schema: {
           aaa: {
+            type: "any",
             narg: 1,
             alias: "a"
           },
           foo: t.object( {
             properties: {
               bar: {
+                type: "any",
                 narg: 5
               }
             }
@@ -477,7 +516,6 @@ describe( "cli", () => {
   it( "config", async() => {
 
     const { options, config, configLocation } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -485,6 +523,12 @@ describe( "cli", () => {
       },
       argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
+      schema: {
+        iAmTheConfigFile2: {
+          type: "string",
+          optional: true
+        }
+      },
       configFiles: "quase-cli-config.js",
       notifier: false
     } );
@@ -499,7 +543,6 @@ describe( "cli", () => {
   it( "no config", async() => {
 
     const { config, configLocation } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -507,6 +550,7 @@ describe( "cli", () => {
       },
       argv: [],
       help: "",
+      schema: {},
       configFiles: "non-existent-file.js",
       notifier: false
     } );
@@ -519,7 +563,6 @@ describe( "cli", () => {
   it( "config key", async() => {
 
     const { config, configLocation } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -527,6 +570,12 @@ describe( "cli", () => {
       },
       argv: [ "" ],
       help: "",
+      schema: {
+        configFromPkg: {
+          type: "string",
+          optional: true
+        }
+      },
       configFiles: "non-existent-file.js",
       configKey: "my-key",
       notifier: false
@@ -540,7 +589,6 @@ describe( "cli", () => {
   it( "config file has priority", async() => {
 
     const { options, configLocation } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -570,7 +618,6 @@ describe( "cli", () => {
 
     await expect(
       cli( {
-        validate: false,
         cwd: __dirname,
         pkg: {
           name: "@quase/eslint-config-quase",
@@ -578,6 +625,7 @@ describe( "cli", () => {
         },
         argv: [ "--config=non-existante-file.js" ],
         help: "",
+        schema: {},
         configFiles: [ "quase-cli-config.js" ],
         notifier: false
       } )
@@ -588,7 +636,6 @@ describe( "cli", () => {
   it( "subcommands", async() => {
 
     const { command, input, options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -611,6 +658,32 @@ describe( "cli", () => {
     expect( input ).toEqual( [] );
     expect( command ).toBe( "fooCommand" );
     expect( options.foo ).toBe( true );
+
+  } );
+
+  it( "required subcommand", async() => {
+
+    await expect(
+      cli( {
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        commands: {
+          fooCommand: {
+            schema: {
+              foo: {
+                type: "boolean"
+              }
+            }
+          }
+        },
+        argv: [ "--foo" ],
+        notifier: false
+      } )
+    ).rejects.toThrow( "Command required. E.g. fooCommand" );
 
   } );
 
@@ -640,36 +713,9 @@ describe( "cli", () => {
 
   } );
 
-  it( "undefined subcommand", async() => {
-
-    await expect(
-      cli( {
-        cwd: __dirname,
-        pkg: {
-          name: "@quase/eslint-config-quase",
-          version: "0.0.1",
-          description: "Description"
-        },
-        commands: {
-          fooCommand: {
-            schema: {
-              foo: {
-                type: "boolean"
-              }
-            }
-          }
-        },
-        argv: [ "--foo" ],
-        notifier: false
-      } )
-    ).rejects.toThrow( /^undefined is not a supported command$/ );
-
-  } );
-
   it( "default subcommand", async() => {
 
     const { command, input, options } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -699,7 +745,6 @@ describe( "cli", () => {
   it( "generate help with subcommands", async() => {
 
     const { generateHelp } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -712,7 +757,8 @@ describe( "cli", () => {
         fooCommand: {
           description: "foo command description",
           schema: {
-            number: { default: 0, alias: [ "n", "n2" ], description: "number description" }
+            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
+            help: { type: "boolean" }
           }
         },
         noDescription: {
@@ -720,7 +766,8 @@ describe( "cli", () => {
         }
       },
       schema: {
-        unicorn: { alias: "u", optional: true, description: "unicorn description" }
+        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
+        help: { type: "boolean" }
       },
       autoHelp: false,
       notifier: false
@@ -733,7 +780,6 @@ describe( "cli", () => {
   it( "generate help with subcommands including options of default command", async() => {
 
     const { generateHelp } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -747,12 +793,14 @@ describe( "cli", () => {
         fooCommand: {
           description: "foo command description",
           schema: {
-            number: { default: 0, alias: [ "n", "n2" ], description: "number description" }
+            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
+            help: { type: "boolean" }
           }
         }
       },
       schema: {
-        unicorn: { alias: "u", optional: true, description: "unicorn description" }
+        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
+        help: { type: "boolean" }
       },
       autoHelp: false,
       notifier: false
@@ -765,7 +813,6 @@ describe( "cli", () => {
   it( "generate help for subcommand", async() => {
 
     const { generateHelp } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -778,8 +825,8 @@ describe( "cli", () => {
         fooCommand: {
           description: "foo command description",
           schema: {
-            number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
-            unicorn: { alias: "u", optional: true, description: "unicorn description" },
+            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
+            unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
             meow: { type: "string", default: "dog" },
             boolean: { type: "boolean", default: true, description: "boolean description" },
           }
@@ -796,7 +843,6 @@ describe( "cli", () => {
   it( "accept help for subcommand", async() => {
 
     const { generateHelp } = await cli( {
-      validate: false,
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -810,8 +856,8 @@ describe( "cli", () => {
           description: "foo command description",
           help: "Custom subcommand help",
           schema: {
-            number: { default: 0, alias: [ "n", "n2" ], description: "number description" },
-            unicorn: { alias: "u", optional: true, description: "unicorn description" },
+            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
+            unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
             meow: { type: "string", default: "dog" },
             boolean: { type: "boolean", default: true, description: "boolean description" },
           }

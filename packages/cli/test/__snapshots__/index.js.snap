@@ -39,8 +39,8 @@ exports[`cli generate help 1`] = `
   Usage: $ bin something
 
   Options:
-    --number, -n, -n2 number description (default: 0)
-    --unicorn, -u     unicorn description
+    --number, -n, -n2 number description (default: 0) [number]
+    --unicorn, -u     unicorn description [string]
     --meow            (default: \\"dog\\") [string]
     --boolean         boolean description (default: false) [boolean]
     --boolean-no      boolean no description (default: true) [boolean]
@@ -66,8 +66,8 @@ exports[`cli generate help for subcommand 1`] = `
   foo command description
 
   Options:
-    --number, -n, -n2 number description (default: 0)
-    --unicorn, -u     unicorn description
+    --number, -n, -n2 number description (default: 0) [number]
+    --unicorn, -u     unicorn description [string]
     --boolean         boolean description (default: true) [boolean]
 "
 `;
@@ -83,7 +83,7 @@ exports[`cli generate help with subcommands 1`] = `
     no-description
 
   Options:
-    --unicorn, -u unicorn description
+    --unicorn, -u unicorn description [string]
 "
 `;
 
@@ -97,6 +97,6 @@ exports[`cli generate help with subcommands including options of default command
     foo-command foo command description [default]
 
   Options:
-    --number, -n, -n2 number description (default: 0)
+    --number, -n, -n2 number description (default: 0) [number]
 "
 `;
