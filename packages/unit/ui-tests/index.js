@@ -2,6 +2,7 @@ const test = require( "../dist" );
 
 test( "Test 1", t => {
   t.plan( 1 );
+  t.log( process.argv );
 } );
 
 test.skip( "Test 2", () => {

@@ -82,6 +82,7 @@ export default function( options ) {
 
   options.assertions = ( options.assertions || [] ).map( a => getOnePlugin( a ).plugin );
 
+  options[ "--" ] = arrify( options[ "--" ] );
   options.files = arrify( options.files );
   options.match = arrify( options.match );
   options.globals = arrify( options.globals );

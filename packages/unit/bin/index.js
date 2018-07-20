@@ -10,6 +10,10 @@ require( "@quase/cli" ).default( {
   configFiles: "quase-unit-config.js",
   configKey: "quase-unit",
   schema: ( { t } ) => ( {
+    "--": t.array( {
+      itemType: "string",
+      description: "Options to be passed to fork processes"
+    } ),
     files: t.array( {
       itemType: "string",
       optional: true,

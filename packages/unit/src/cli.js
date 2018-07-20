@@ -390,6 +390,10 @@ class NodeRunner extends EventEmitter {
       args.push( "--no-color" );
     }
 
+    for ( const arg of options[ "--" ] ) {
+      args.push( arg );
+    }
+
     if ( options.debug ) {
       execArgv.push( "--inspect-brk=0" );
       debugging = true;
