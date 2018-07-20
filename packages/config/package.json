@@ -8,7 +8,6 @@
   "module": "src/index.js",
   "main": "dist/index.js",
   "dependencies": {
-    "concordance": "^3.0.0",
     "find-up": "^3.0.0",
     "leven": "^2.1.0",
     "pkg-conf": "^2.1.0",

@@ -288,10 +288,7 @@ Array [
   Option 'obj.foo' should be one of these types:
     string | number
   but instead received:
-    [
-      'string',
-      10,
-    ]
+    [ 'string', 10 ]
   Example:
   {
     'obj': {
@@ -421,6 +418,45 @@ exports[`validate 18`] = `
 Array [
   Array [
     "OK",
+  ],
+]
+`;
+
+exports[`validate 19`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'obj.foo' must be of type:
+    array
+  but instead received:
+    object
+  Example:
+  {
+    'obj': {
+      'foo': [ 'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a',
+        'a' ]
+    }
+  }
+",
   ],
 ]
 `;

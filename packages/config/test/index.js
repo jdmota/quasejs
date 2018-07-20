@@ -304,6 +304,21 @@ it( "validate", () => {
     } )
   } );
 
+  v( {
+    obj: {
+      foo: {}
+    }
+  }, {
+    obj: t.object( {
+      properties: {
+        foo: t.array( {
+          itemType: "string",
+          example: "aaaaaaaaaaaaaaaaaaaa".split( "" )
+        } )
+      }
+    } )
+  } );
+
 } );
 
 function d( schema, ...args ) {

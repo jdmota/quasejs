@@ -2,7 +2,6 @@
 import type Path from "./path";
 import { type GeneralType, types } from "./types";
 
-const concordance = require( "concordance" );
 const turbocolor = require( "turbocolor" );
 
 const reIndent = /^(?!\s*$)/mg;
@@ -45,10 +44,12 @@ export function formatTypes( list: $ReadOnlyArray<?GeneralType>, separator: stri
   } ).join( separator );
 }
 
+const util = require( "util" );
+
 export function formatOption( option: string ): string {
-  return turbocolor.bold( concordance.format( option ) );
+  return turbocolor.bold( util.inspect( option ) );
 }
 
 export function format( value: any ) {
-  return concordance.format( value );
+  return util.inspect( value );
 }
