@@ -65,16 +65,14 @@ export async function publish( opts ) {
   opts.folder = path.resolve( opts.cwd, opts.folder );
   opts.relativeFolder = slash( path.relative( opts.cwd, opts.folder ) );
 
-  opts.pkgPath = path.resolve( opts.folder, "package.json" );
-  opts.rootPkgPath = path.resolve( opts.cwd, "package.json" );
-
-  const pkgJob = readPkg( opts.pkgPath );
-  const rootPkgJob = opts.pkgPath === opts.rootPkgPath ? undefined : readPkg( opts.rootPkgPath );
+  const pkgJob = readPkg( { cwd: opts.folder } );
+  const rootPkgJob = opts.folder === opts.cwd ? undefined : readPkg( { cwd: opts.cwd } );
 
   opts.pkg = await pkgJob;
   opts.rootPkg = await rootPkgJob;
 
-  opts.pkgNodeModules = path.resolve( opts.pkgPath, "../node_modules" );
+  opts.pkgPath = path.resolve( opts.folder, "package.json" );
+  opts.pkgNodeModules = path.resolve( opts.folder, "node_modules" );
   opts.pkgRelativePath = slash( path.relative( opts.cwd, opts.pkgPath ) );
 
   if ( !opts.pkg ) {
@@ -204,7 +202,8 @@ export async function publish( opts ) {
 
   await tasks.run();
 
-  return readPkg( opts.pkgPath, {
+  return readPkg( {
+    cwd: opts.folder,
     normalize: false
   } );
 }
