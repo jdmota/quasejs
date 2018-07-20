@@ -78,9 +78,9 @@ ci-info@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-1.1.1.tgz#47b44df118c48d2597b56d342e7e25791060171a"
 
-circular-json@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/circular-json/-/circular-json-0.4.0.tgz#c448ea998b7fe31ecf472ec29c6b608e2e2a62fd"
+circular-json@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/circular-json/-/circular-json-0.5.5.tgz#64182ef359042d37cd8e767fc9de878b1e9447d3"
 
 cli-cursor@^2.1.0:
   version "2.1.0"
@@ -150,9 +150,9 @@ file-url@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/file-url/-/file-url-2.0.2.tgz#e951784d79095127d3713029ab063f40818ca2ae"
 
-fs-extra@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-5.0.0.tgz#414d0110cdd06705734d055652c5411260c31abd"
+fs-extra@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-7.0.0.tgz#8cc3f47ce07ef7b3593a11b9fb245f7e34c041d6"
   dependencies:
     graceful-fs "^4.1.2"
     jsonfile "^4.0.0"
@@ -189,9 +189,9 @@ ip-regex@^1.0.1:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/ip-regex/-/ip-regex-1.0.3.tgz#dc589076f659f419c222039a33316f1c7387effd"
 
-is-ci@^1.0.10:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/is-ci/-/is-ci-1.0.10.tgz#f739336b2632365061a9d48270cd56ae3369318e"
+is-ci@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/is-ci/-/is-ci-1.1.0.tgz#247e4162e7860cebbdaf30b774d6b0ac7dcfe7a5"
   dependencies:
     ci-info "^1.0.0"
 
@@ -227,21 +227,15 @@ lodash.merge@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/lodash.merge/-/lodash.merge-4.6.0.tgz#69884ba144ac33fe699737a6086deffadd0f89c5"
 
-log-symbols@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-2.1.0.tgz#f35fa60e278832b538dc4dddcbb478a45d3e3be6"
-  dependencies:
-    chalk "^2.0.1"
-
 log-symbols@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-2.2.0.tgz#5740e1c5d6f0dfda4ad9323b5332107ef6b4c40a"
   dependencies:
     chalk "^2.0.1"
 
-matcher@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/matcher/-/matcher-1.0.0.tgz#aaf0c4816eb69b92094674175625f3466b0e3e19"
+matcher@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/matcher/-/matcher-1.1.1.tgz#51d8301e138f840982b338b116bb0c09af62c1c2"
   dependencies:
     escape-string-regexp "^1.0.4"
 
@@ -265,9 +259,9 @@ onetime@^2.0.0:
   dependencies:
     mimic-fn "^1.0.0"
 
-ora@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/ora/-/ora-2.0.0.tgz#8ec3a37fa7bffb54a3a0c188a1f6798e7e1827cd"
+ora@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/ora/-/ora-3.0.0.tgz#8179e3525b9aafd99242d63cc206fd64732741d0"
   dependencies:
     chalk "^2.3.1"
     cli-cursor "^2.1.0"
@@ -357,6 +351,6 @@ write-file-atomic@^2.3.0:
     imurmurhash "^0.1.4"
     signal-exit "^3.0.2"
 
-zen-observable@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.6.0.tgz#8a6157ed15348d185d948cfc4a59d90a2c0f70ee"
+zen-observable@^0.8.8:
+  version "0.8.8"
+  resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.8.tgz#1ea93995bf098754a58215a1e0a7309e5749ec42"
