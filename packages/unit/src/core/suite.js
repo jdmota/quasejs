@@ -6,6 +6,7 @@ import type Test from "./test";
 import type TestCollection from "./test-collection";
 import type { BeforeTestsAfterSequence } from "./sequence";
 import type { GroupPlaceholder } from "./placeholders";
+import { ContextRef } from "./context";
 
 export default class Suite implements IRunnable {
 
@@ -113,6 +114,7 @@ export default class Suite implements IRunnable {
           testCounts.todo++;
           break;
         default:
+          throw new Error( `Test '${t.fullname.join( " " )}' [${t.metadata.type}] did not finish` );
       }
     } );
 
@@ -123,8 +125,10 @@ export default class Suite implements IRunnable {
       testCounts.todo += t.testCounts.todo;
     } );
 
-    if ( testCounts.total !== testCounts.passed + testCounts.failed + testCounts.skipped + testCounts.todo ) {
-      throw new Error( "Wrong count." );
+    const sum = testCounts.passed + testCounts.failed + testCounts.skipped + testCounts.todo;
+
+    if ( testCounts.total !== sum ) {
+      throw new Error( `Wrong count. Total: ${testCounts.total}, Sum: ${sum}` );
     }
 
     if ( testCounts.total === testCounts.skipped ) {
@@ -179,7 +183,7 @@ export default class Suite implements IRunnable {
 
     this.timeStart = Date.now();
 
-    const result = this.sequence.run();
+    const result = this.sequence.run( new ContextRef() );
 
     if ( isPromise( result ) ) {
       return result.then( this.exit, this.exit );

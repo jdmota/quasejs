@@ -4,49 +4,38 @@ describe( "unit", () => {
 
   it( "context", () => {
 
-    expect.assertions( 12 );
+    expect.assertions( 9 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
-    let runCount = 0;
 
     t.before( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      context.ran = true;
-      runCount++;
-    } );
-
-    t.after( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      context.ran = true;
-      runCount++;
+      expect( context.a ).toBe( undefined );
+      context.a = 1;
     } );
 
     t.beforeEach( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      context.ran = true;
-      context.shared = true;
-      runCount++;
+      expect( context.a ).toBe( 1 );
+      context.a++;
+    } );
+
+    t( ( { context, reruns } ) => {
+      reruns( 1 );
+      expect( context.a ).toBe( 2 );
+      context.a++;
     } );
 
     t.afterEach( ( { context } ) => {
-      expect( context.ran ).toBe( true );
-      expect( context.shared ).toBe( true );
-      runCount++;
+      expect( context.a ).toBe( 3 );
+      context.a++;
     } );
 
-    t( ( { context } ) => {
-      expect( context.ran ).toBe( true );
-      expect( context.shared ).toBe( true );
-      runCount++;
+    t.after( ( { context } ) => {
+      expect( context.a ).toBe( 1 );
     } );
 
     return runner.run().then( () => {
-      expect( runCount ).toBe( 5 );
       expect( results.pop().status ).toBe( "passed" );
     } );
 
@@ -54,70 +43,68 @@ describe( "unit", () => {
 
   it( "context in nested groups", () => {
 
-    expect.assertions( 24 );
+    expect.assertions( 21 );
 
     let runner = Runner.init( { allowNoPlan: true } );
     let results = runner.listen();
     let t = runner.test;
-    let runCount = 0;
 
     t.before( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      context.ran = true;
-      runCount++;
-    } );
-
-    t.after( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      context.ran = true;
-      runCount++;
+      expect( context.a ).toBe( undefined );
+      context.a = 1;
     } );
 
     t.beforeEach( ( { context } ) => {
-      expect( context.ran ).toBe( undefined );
-      expect( context.shared ).toBe( undefined );
-      expect( context.count ).toBe( undefined );
-      context.ran = true;
-      context.shared = true;
-      context.count = 1;
-      runCount++;
+      expect( context.a ).toBe( 1 );
+      context.a++;
+    } );
+
+    t( ( { context, reruns } ) => {
+      reruns( 1 );
+      expect( context.a ).toBe( 2 );
+      context.a++;
+    } );
+
+    t.afterEach( ( { context } ) => {
+      expect( context.a ).toBe( context.secondTest ? 5 : 3 );
+      context.a++;
+    } );
+
+    t.after( ( { context } ) => {
+      expect( context.a ).toBe( 1 );
     } );
 
     t.group( () => {
 
-      t.group( () => {
-
-        t( ( { context } ) => {
-          expect( context.ran ).toBe( true );
-          expect( context.shared ).toBe( true );
-          expect( context.count ).toBe( 1 );
-          context.count++;
-          runCount++;
-        } );
-
+      t.before( ( { context } ) => {
+        expect( context.a ).toBe( undefined );
+        context.a = 1;
       } );
 
-      t( ( { context } ) => {
-        expect( context.ran ).toBe( true );
-        expect( context.shared ).toBe( true );
-        expect( context.count ).toBe( 1 );
-        context.count++;
-        runCount++;
+      t.beforeEach( ( { context } ) => {
+        expect( context.a ).toBe( 2 );
+        context.a++;
       } );
 
-    } );
+      t( ( { context, reruns } ) => {
+        reruns( 1 );
+        expect( context.a ).toBe( 3 );
+        context.a++;
+        context.secondTest = true;
+      } );
 
-    t.afterEach( ( { context } ) => {
-      expect( context.ran ).toBe( true );
-      expect( context.shared ).toBe( true );
-      expect( context.count ).toBe( 2 );
-      runCount++;
+      t.afterEach( ( { context } ) => {
+        expect( context.a ).toBe( 4 );
+        context.a++;
+      } );
+
+      t.after( ( { context } ) => {
+        expect( context.a ).toBe( 1 );
+      } );
+
     } );
 
     return runner.run().then( () => {
-      expect( runCount ).toBe( 8 );
       expect( results.pop().status ).toBe( "passed" );
     } );
 

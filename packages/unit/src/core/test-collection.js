@@ -127,22 +127,21 @@ export default class TestCollection {
     }
 
     if ( test.metadata.status === "skipped" || test.metadata.status === "todo" ) {
-      return test.build( test.buildRunnable( {}, suite ), suite );
+      return test.build( test.buildRunnable( suite ), suite );
     }
 
-    const context = {};
-    const seq = new InTestSequence( suite.level, test.metadata, test.buildRunnable( context, suite ) );
+    const seq = new InTestSequence( suite.level, test.metadata, test.buildRunnable( suite ) );
 
     const beforeEachHooks = getBeforeEach( suite );
     for ( let i = beforeEachHooks.length - 1; i >= 0; i-- ) {
-      seq.add( beforeEachHooks[ i ].buildRunnable( context, suite ) );
+      seq.add( beforeEachHooks[ i ].buildRunnable( suite ) );
     }
 
     seq.pushMiddle();
 
     const afterEachHooks = getAfterEach( suite );
     for ( let i = 0; i < afterEachHooks.length; i++ ) {
-      seq.add( afterEachHooks[ i ].buildRunnable( context, suite ) );
+      seq.add( afterEachHooks[ i ].buildRunnable( suite ) );
     }
 
     return test.build( seq, suite );
@@ -194,7 +193,7 @@ export default class TestCollection {
 
     if ( runBeforeAfter ) {
       for ( let i = 0; i < before.length; i++ ) {
-        seq.add( before[ i ].build( before[ i ].buildRunnable( null, suite ), suite ) );
+        seq.add( before[ i ].build( before[ i ].buildRunnable( suite ), suite ) );
       }
     }
 
@@ -212,7 +211,7 @@ export default class TestCollection {
 
     if ( runBeforeAfter ) {
       for ( let i = 0; i < after.length; i++ ) {
-        seq.add( after[ i ].build( after[ i ].buildRunnable( null, suite ), suite ) );
+        seq.add( after[ i ].build( after[ i ].buildRunnable( suite ), suite ) );
       }
     }
 

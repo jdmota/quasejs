@@ -1,5 +1,4 @@
-/* @flow */
-
+// @flow
 import defer from "./util/defer";
 import isObservable from "./util/is-observable";
 import isPromise from "./util/is-promise";
@@ -14,6 +13,7 @@ import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
 import { InTestSequence } from "./sequence";
 import { processError } from "./process-error";
+import { type ContextRef, EMPTY_REF } from "./context";
 
 const { getStack } = require( "@quase/error" );
 
@@ -32,7 +32,6 @@ export class Runnable implements ITestResult, ITest {
   placeholder: TestPlaceholder;
   callback: Function;
   metadata: TestMetadata;
-  context: Object;
   didPlan: boolean;
   planned: number;
   planStack: ?string;
@@ -58,7 +57,7 @@ export class Runnable implements ITestResult, ITest {
 
   snapshotsWaiting: IDeferred<?Object>[];
 
-  constructor( placeholder: TestPlaceholder, context: ?Object, parent: Suite ) {
+  constructor( placeholder: TestPlaceholder, parent: Suite ) {
 
     this.name = placeholder.name;
     this.fullname = placeholder.fullname;
@@ -77,7 +76,6 @@ export class Runnable implements ITestResult, ITest {
 
     this.callback = placeholder.callback;
     this.metadata = placeholder.metadata;
-    this.context = context || {};
 
     this.didPlan = false;
     this.planned = 0;
@@ -117,11 +115,8 @@ export class Runnable implements ITestResult, ITest {
     _this.exitError = this.exitError.bind( this );
   }
 
-  clone( context: Object ) {
-    if ( !context ) {
-      throw new Error( ".clone() should receive new context" );
-    }
-    return new Runnable( this.placeholder, context, this.parent );
+  clone() {
+    return new Runnable( this.placeholder, this.parent );
   }
 
   assertCall( name: string ) {
@@ -135,7 +130,7 @@ export class Runnable implements ITestResult, ITest {
     return true;
   }
 
-  publicApi() {
+  publicApi( context: ContextRef ) {
     return Object.assign( {
       plan: this.plan.bind( this ),
       incCount: this.incCount.bind( this ),
@@ -148,7 +143,12 @@ export class Runnable implements ITestResult, ITest {
       slow: this.defineSlow.bind( this ),
       log: this.log.bind( this ),
       matchesSnapshot: this.matchesSnapshot.bind( this ),
-      context: this.context
+      get context() {
+        return context.get();
+      },
+      set context( context ) {
+        context.set( context );
+      }
     }, this.runner.assertions );
   }
 
@@ -381,7 +381,7 @@ export class Runnable implements ITestResult, ITest {
     return this.exitTodo();
   }
 
-  run() {
+  run( context: ContextRef ) {
     if ( this.metadata.status === "skipped" ) {
       return this.exitSkip();
     }
@@ -401,7 +401,7 @@ export class Runnable implements ITestResult, ITest {
     }
 
     try {
-      ret = callback( this.publicApi() );
+      ret = callback( this.publicApi( context ) );
     } catch ( e ) {
       error = e;
     }
@@ -517,7 +517,7 @@ export default class Test implements ITestResult, IRunnable {
     this.runner.testStart( this );
   }
 
-  end(): IRunReturn<Test> {
+  end( context: ContextRef, copyContext: ContextRef ): IRunReturn<Test> {
     this.errors = this.runnable.errors;
     this.assertions = this.runnable.assertions;
     this.status = this.runnable.status;
@@ -570,9 +570,9 @@ export default class Test implements ITestResult, IRunnable {
       if ( this.currentRerun < this.reruns ) {
         this.currentRetry = 0;
         this.currentRerun++;
-        this.runnable = this.runnable.clone( {} );
+        this.runnable = this.runnable.clone();
         return new Promise( resolve => {
-          setTimeout( () => resolve( this.runTry() ), this.rerunDelayValue );
+          setTimeout( () => resolve( this.runTry( context ) ), this.rerunDelayValue );
         } );
       }
     }
@@ -580,11 +580,16 @@ export default class Test implements ITestResult, IRunnable {
     if ( this.status === "failed" && !this.failedBecauseOfHook ) {
       if ( this.currentRetry < this.maxRetries ) {
         this.currentRetry++;
-        this.runnable = this.runnable.clone( {} );
+        this.runnable = this.runnable.clone();
         return new Promise( resolve => {
-          setTimeout( () => resolve( this.runTry() ), this.retryDelayValue );
+          setTimeout( () => resolve( this.runTry( context ) ), this.retryDelayValue );
         } );
       }
+    }
+
+    if ( this.metadata.type !== "test" ) {
+      // To share context between before/after hooks
+      context.set( copyContext.get() );
     }
 
     this.runner.testEnd( this );
@@ -594,26 +599,27 @@ export default class Test implements ITestResult, IRunnable {
   runSkip( reason: ?string ) {
     this.start();
     this.runnable.runSkip( reason );
-    return this.end();
+    return this.end( EMPTY_REF, EMPTY_REF );
   }
 
   runTodo() {
     this.start();
     this.runnable.runTodo();
-    return this.end();
+    return this.end( EMPTY_REF, EMPTY_REF );
   }
 
-  runTry(): IRunReturn<Test> {
-    const run = this.runnable.run();
+  runTry( context: ContextRef ): IRunReturn<Test> {
+    const copyContext = context.copy();
+    const run = this.runnable.run( copyContext );
     if ( run instanceof Promise ) {
-      return run.then( this.end );
+      return run.then( () => this.end( context, copyContext ) );
     }
-    return this.end();
+    return this.end( context, copyContext );
   }
 
-  run() {
+  run( context: ContextRef ) {
     this.start();
-    return this.runTry();
+    return this.runTry( context );
   }
 
 }

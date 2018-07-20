@@ -36,7 +36,7 @@ Modifiers can be chained!
 - `strict`: disallows the usage of `only`, `failing`, `todo`, `skipped` modifiers for any inner test or group. Can be applied globally.
 - `allowNoPlan`: makes a test or tests inside a group still succeed if no assertions are run and no planning was done. Can be applied globally.
 
-`serial`, `failing`, `todo`, `only`, `allowZeroPlanned` don't make sense for hooks.
+`serial`, `failing`, `todo`, `only`, `allowNoPlan` don't make sense for hooks.
 
 ## Test api
 
@@ -46,7 +46,7 @@ Modifiers can be chained!
 
 Assertion plans ensure tests only pass when a **exact** number of assertions have been executed. They'll help you catch cases where tests exit too early or when too many assertions are executed.
 
-If you do not specify an assertion plan, your test will still fail if no assertions are executed. Set the `failWithoutAssertions` option to `false` to disable this behavior.
+If you do not specify an assertion plan, your test will still fail if no assertions are executed. Set the `allowNoPlan` option to `true` to disable this behavior.
 
 ```js
 test( t => {
@@ -353,7 +353,7 @@ If you'd like to use your `package.json` to store configuration, use the `"quase
 
 You can also pass configuration via the arguments used in the command line interface. These will override the ones used in the config.
 
-Note that in the command line you should use `--snapshot-dir` notation but in the config you should use camelCase like: `snapshotDir`.
+Note that in the command line you should use `--snapshot-location` notation but in the config you should use camelCase like: `snapshotLocation`.
 
 > We look first for the configuration file, and then the config in `package.json`. See `@quase/cli` for more info.
 
@@ -365,7 +365,7 @@ Tests fail if snapshots are missing on CI, instead of creating them.
 
 #### Custom directory
 
-You can specify a fixed location for storing the snapshot files using the `snapshotDir` config.
+You can specify a fixed location for storing the snapshot files using the `snapshotLocation` config.
 
 The snapshot files will be saved in a directory structure that mirrors that of your test files.
 

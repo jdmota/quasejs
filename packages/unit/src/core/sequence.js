@@ -3,12 +3,13 @@ import type Runner from "./runner";
 import skipReasons from "./skip-reasons";
 import type { Status, IRunReturn, GenericRunnable, IRunnableResult, ITestResult, IRunnable, ITest, TestMetadata } from "./types";
 import type { Runnable } from "./test";
+import type { ContextRef } from "./context";
 
 class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRunnable<R> {
   test: T;
   seq: SequenceImpl<R, T>;
-  proxyFn: ( T, SequenceImpl<R, T> ) => IRunReturn<R>;
-  constructor( test: T, seq: SequenceImpl<R, T>, proxyFn: ( T, SequenceImpl<R, T> ) => IRunReturn<R> ) {
+  proxyFn: ( ContextRef, T, SequenceImpl<R, T> ) => IRunReturn<R>;
+  constructor( test: T, seq: SequenceImpl<R, T>, proxyFn: ( ContextRef, T, SequenceImpl<R, T> ) => IRunReturn<R> ) {
     this.test = test;
     this.seq = seq;
     this.proxyFn = proxyFn;
@@ -16,8 +17,8 @@ class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRun
     const _this: any = this;
     _this.run = this.run.bind( this );
   }
-  run() {
-    return this.proxyFn( this.test, this.seq );
+  run( context: ContextRef ) {
+    return this.proxyFn( context, this.test, this.seq );
   }
   runSkip( skipReason: ?string ) {
     return this.test.runSkip( skipReason );
@@ -30,8 +31,8 @@ class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRun
 class Proxy extends ProxyImpl<IRunnableResult, IRunnable> implements IRunnable {}
 
 class ClonableProxy extends ProxyImpl<ITestResult, ITest> implements ITest {
-  clone( context: Object ): ClonableProxy {
-    return new ClonableProxy( this.test.clone( context ), this.seq, this.proxyFn );
+  clone(): ClonableProxy {
+    return new ClonableProxy( this.test.clone(), this.seq, this.proxyFn );
   }
 }
 
@@ -96,13 +97,13 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
     return this.getResult();
   }
 
-  run() {
+  run( context: ContextRef ) {
 
     const tests = this.tests;
 
     for ( let i = 0; i < tests.length; i++ ) {
 
-      let result = tests[ i ].run();
+      let result = tests[ i ].run( context );
 
       if ( result instanceof Promise ) {
 
@@ -112,7 +113,7 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
 
           for ( let j = i + 1; j < tests.length; j++ ) {
 
-            result = tests[ j ].run();
+            result = tests[ j ].run( context );
 
             if ( result instanceof Promise ) {
               promises.push( result.then( this.addResult ) );
@@ -128,7 +129,7 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
         result = result.then( this.addResult );
 
         for ( let j = i + 1; j < tests.length; j++ ) {
-          result = result.then( tests[ j ].run ).then( this.addResult );
+          result = result.then( () => tests[ j ].run( context ) ).then( this.addResult );
         }
 
         return result.then( this.getResult );
@@ -164,14 +165,14 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
 
 export class Sequence extends SequenceImpl<IRunnableResult, IRunnable> implements IRunnableResult, IRunnable {
 
-  static proxy( t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
+  static proxy( context: ContextRef, t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
     if ( seq.shouldBail() ) {
       return t.runSkip( skipReasons.bailed );
     }
-    return t.run();
+    return t.run( context.copy() );
   }
 
   add( t: IRunnable ) {
@@ -211,23 +212,23 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
     this.middleRunnableProxy = new ClonableProxy( middleRunnable, this, InTestSequence.proxy );
   }
 
-  static proxy( t: ITest, seq: SequenceImpl<ITestResult, ITest> ) {
+  static proxy( context: ContextRef, t: ITest, seq: SequenceImpl<ITestResult, ITest> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
     if ( seq.skipTest ) {
       return t.runSkip( seq.skipReason );
     }
-    return t.run();
+    return t.run( context );
   }
 
-  clone( context: Object ) {
-    const seq = new InTestSequence( this.level, this.metadata, this.middleRunnable.clone( context ) );
+  clone() {
+    const seq = new InTestSequence( this.level, this.metadata, this.middleRunnable.clone() );
     this.tests.forEach( t => {
       if ( t === this.middleRunnableProxy ) {
         seq.pushMiddle();
       } else {
-        seq.add( t.clone( context ) );
+        seq.add( t.clone() );
       }
     } );
     return seq;
@@ -274,7 +275,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRun
     super( runner, false, level );
   }
 
-  static proxy( t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
+  static proxy( context: ContextRef, t: IRunnable, seq: SequenceImpl<IRunnableResult, IRunnable> ) {
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
@@ -284,7 +285,7 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRun
     if ( seq.skipTest ) {
       return t.runSkip( seq.skipReason );
     }
-    return t.run();
+    return t.run( context.copy() );
   }
 
   add( t: IRunnable, inMiddle: ?boolean ) {

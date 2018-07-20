@@ -1,4 +1,6 @@
-/* @flow */
+// @flow
+import { type ContextRef } from "./context";
+
 /* eslint no-use-before-define: 0 */
 
 export type Status = ?( "passed" | "skipped" | "failed" | "todo" );
@@ -33,7 +35,7 @@ export interface IRunnableResult {
 }
 
 export interface GenericRunnable<T> {
-  run(): IRunReturn<T>,
+  run( ContextRef ): IRunReturn<T>,
   runSkip( ?string ): T,
   runTodo(): T
 }
@@ -50,7 +52,7 @@ export interface ITestResult extends IRunnableResult {
 }
 
 export interface ITest extends GenericRunnable<ITestResult> {
-  clone( context: Object ): ITest
+  clone(): ITest
 }
 
 export interface IDeferred<T> {

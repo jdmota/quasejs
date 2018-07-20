@@ -210,8 +210,8 @@ export class TestPlaceholder {
     return new Test( this, runnable, parent );
   }
 
-  buildRunnable( context: ?Object, parent: Suite ): Runnable {
-    return new Runnable( this, context, parent );
+  buildRunnable( parent: Suite ): Runnable {
+    return new Runnable( this, parent );
   }
 
 }
