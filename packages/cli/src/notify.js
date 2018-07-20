@@ -9,7 +9,7 @@ function notifyFix( opts ) {
 
   opts = Object.assign( {}, opts );
 
-  opts.isGlobal = opts.isGlobal === undefined ? opts.isGlobal : require( "is-installed-globally" );
+  opts.isGlobal = opts.isGlobal === undefined ? require( "is-installed-globally" ) : opts.isGlobal;
 
   const defaultMsg = hasYarn() ?
     `Update available ${turbocolor.dim( this.update.current )}${turbocolor.reset( " → " )}${turbocolor.green( this.update.latest )}` +
