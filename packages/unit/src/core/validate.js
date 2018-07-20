@@ -17,8 +17,8 @@ function validate( name, callback, options ) {
       return "The `todo` modifier is only for documentation of future tests and cannot be used with hooks.";
     }
 
-    if ( options.allowZeroPlanned ) {
-      return "The `allowZeroPlanned` modifier is not need for hooks.";
+    if ( options.allowNoPlan ) {
+      return "The `allowNoPlan` modifier is not need for hooks.";
     }
   }
 
