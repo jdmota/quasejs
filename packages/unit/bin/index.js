@@ -40,7 +40,7 @@ require( "@quase/cli" ).default( {
   help,
   configFiles: "quase-unit-config.js",
   configKey: "quase-unit",
-  schema: {
+  schema: ( { t } ) => ( {
     match: {
       type: "string",
       alias: "m",
@@ -90,10 +90,10 @@ require( "@quase/cli" ).default( {
       type: "boolean",
       default: false
     },
-    snapshotDir: {
-      type: "string",
+    snapshotLocation: t.union( {
+      types: [ "string", "function" ],
       optional: true
-    },
+    } ),
     reporter: {
       type: "string",
       optional: true
@@ -118,7 +118,7 @@ require( "@quase/cli" ).default( {
       type: "boolean",
       default: false
     }
-  }
-} ).then( function( o ) {
+  } )
+} ).then( o => {
   require( "../dist/cli" ).default( o );
 } );

@@ -1,6 +1,6 @@
 # Quase-unit Snapshot Report for `packages/unit/ui-tests/snapshots.js`
 
-## anonymous (4:5)
+## anonymous key (4:5)
 
 ```
 'abc'

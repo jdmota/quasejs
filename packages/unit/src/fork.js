@@ -89,7 +89,7 @@ function start( cli, files ) {
 
   options = runner.options;
 
-  runner.on( "matchesSnapshot", async( { something, stack, fullname, deferred } ) => {
+  runner.on( "matchesSnapshot", async( { something, stack, key, deferred } ) => {
     const id = uuid++;
     const answerDefer = defer();
     testsWaitingAnswer.set( id, answerDefer );
@@ -118,8 +118,8 @@ function start( cli, files ) {
 
     try {
       manager.matchesSnapshot(
-        fullname.join( " " ),
-        `${fullname.join( " " )} (${line}:${column})`,
+        key,
+        `${key} (${line}:${column})`,
         something
       );
     } catch ( e ) {

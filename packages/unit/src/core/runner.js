@@ -182,11 +182,11 @@ class Runner extends EventEmitter {
     }
   }
 
-  matchesSnapshot( something, stack, fullname, deferred ) {
+  matchesSnapshot( something, stack, key, deferred ) {
     this.emit( "matchesSnapshot", {
       something,
       stack,
-      fullname,
+      key,
       deferred
     } );
   }

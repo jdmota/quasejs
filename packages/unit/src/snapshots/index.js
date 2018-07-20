@@ -62,10 +62,19 @@ class SnapshotMissing extends Error {
 
 type Stats = { added: number, updated: number, removed: number, obsolete: number };
 
-function getFile( projectDir: string, filePath: string, fixedLocation: ?string ) {
-  if ( fixedLocation ) {
-    const relative = path.relative( projectDir, filePath );
-    return path.resolve( projectDir, fixedLocation, relative );
+function getFile( projectDir: string, filePath: string, snapshotLocation: ?string | string => string ) {
+  if ( snapshotLocation ) {
+    if ( typeof snapshotLocation === "string" ) {
+      const relative = path.relative( projectDir, filePath );
+      return path.resolve( projectDir, snapshotLocation, relative );
+    }
+    if ( typeof snapshotLocation === "function" ) {
+      const out = snapshotLocation( filePath );
+      if ( typeof out === "string" ) {
+        return path.resolve( projectDir, out );
+      }
+    }
+    throw new Error( `Expected 'snapshotDir' to be a 'string' or 'string => string'` );
   }
   return path.resolve( filePath, "..", "__snapshots__", path.basename( filePath ) );
 }
@@ -88,12 +97,12 @@ export default class SnapshotsManager {
   constructor(
     projectDir: string,
     filePath: string,
-    fixedLocation: ?string,
+    snapshotLocation: ?string | string => string,
     updating: ?boolean,
     concordanceOptions: Object,
     fs: ?FS
   ) {
-    const file = getFile( projectDir, filePath, fixedLocation );
+    const file = getFile( projectDir, filePath, snapshotLocation );
     this.filePath = filePath;
     this.snapPath = file + ".snap";
     this.reportPath = file + ".md";
