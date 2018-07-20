@@ -167,10 +167,10 @@
         this._setText( value );
       } else if ( value instanceof TemplateResult ) {
         this._setTemplateResult( value );
-      } else if ( value[ Symbol.iterator ] ) {
-        this._setIterable( value );
       } else if ( value instanceof win.Node ) {
         this._setNode( value );
+      } else if ( value[ Symbol.iterator ] ) {
+        this._setIterable( value );
       } else if ( value.then != null ) {
         this._setPromise( value );
       } else {
