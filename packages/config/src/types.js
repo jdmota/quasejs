@@ -6,7 +6,7 @@ import { indent, formatTypes, format, addPrefix } from "./formating";
 import { ValidationError, makeExample, validateType, printDeprecated, checkType, checkUnrecognized } from "./validation";
 import { clone as cloneHelper, isPlainObject } from "./utils";
 
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 
 type Info = {
   +required?: ?boolean;
@@ -303,7 +303,7 @@ class TValue extends Type {
         `Option ${path.format()} should be:`,
         `${indent( format( this.value ) )}`,
         `but instead received:`,
-        `${indent( chalk.bold.red( format( value ) ) )}`
+        `${indent( turbocolor.bold.red( format( value ) ) )}`
       ] );
     }
   }
@@ -333,9 +333,9 @@ class TUnion extends Type {
       }
       throw new ValidationError( [
         `Option ${path.format()} should be one of these types:`,
-        `${indent( chalk.bold.green( formatTypes( this.types ) ) )}`,
+        `${indent( turbocolor.bold.green( formatTypes( this.types ) ) )}`,
         `but instead received:`,
-        `${indent( chalk.bold.red( format( value ) ) )}`,
+        `${indent( turbocolor.bold.red( format( value ) ) )}`,
         makeExample( path, this.default, this.example )
       ] );
     }
@@ -362,9 +362,9 @@ class TChoices extends Type {
 
       throw new ValidationError( [
         `Option ${path.format()} should be one of:`,
-        `${indent( chalk.bold.green( this.values.map( format ).join( " | " ) ) )}`,
+        `${indent( turbocolor.bold.green( this.values.map( format ).join( " | " ) ) )}`,
         `but instead received:`,
-        `${indent( chalk.bold.red( format( value ) ) )}`
+        `${indent( turbocolor.bold.red( format( value ) ) )}`
       ] );
     }
   }

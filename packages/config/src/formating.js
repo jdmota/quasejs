@@ -3,7 +3,7 @@ import type Path from "./path";
 import { type GeneralType, types } from "./types";
 
 const concordance = require( "concordance" );
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 
 const reIndent = /^(?!\s*$)/mg;
 
@@ -46,7 +46,7 @@ export function formatTypes( list: $ReadOnlyArray<?GeneralType>, separator: stri
 }
 
 export function formatOption( option: string ): string {
-  return chalk.bold( concordance.format( option ) );
+  return turbocolor.bold( concordance.format( option ) );
 }
 
 export function format( value: any ) {

@@ -5,7 +5,7 @@ import { indent, formatOption, format } from "./formating";
 import { printWarning } from "./print";
 import { type GeneralType, types } from "./types";
 
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 const leven = require( "leven" );
 
 export class ValidationError extends Error {
@@ -31,7 +31,7 @@ export function createDidYouMeanMessage( unrecognized: string, allowedOptions: A
 
 export function printDeprecated( path: Path, message: ?string ) {
   message = message || `Option ${path.format()} is deprecated.`;
-  printWarning( `${chalk.bold( "Deprecation Warning" )}: ${message}` );
+  printWarning( `${turbocolor.bold( "Deprecation Warning" )}: ${message}` );
 }
 
 export function checkUnrecognized( keys: Array<string>, allowedOptions: Array<string>, what: ?string ) {
@@ -66,7 +66,7 @@ export function makeExample( path: Path, d: mixed, e: mixed ) {
     for ( let i = 0; i < chain.length; i++ ) {
       if ( i === chain.length - 1 ) {
         lines.push(
-          indent( `${formatOption( chain[ i ] )}: ${chalk.bold( format( example ) )}`, "  ".repeat( i + 1 ) )
+          indent( `${formatOption( chain[ i ] )}: ${turbocolor.bold( format( example ) )}`, "  ".repeat( i + 1 ) )
         );
       } else {
         lines.push(
@@ -90,9 +90,9 @@ export function checkType( path: Path, actual: string, expected: string, d: mixe
 
   throw new ValidationError( [
     `Option ${path.format()} must be of type:`,
-    `${indent( chalk.bold.green( expected ) )}`,
+    `${indent( turbocolor.bold.green( expected ) )}`,
     `but instead received:`,
-    `${indent( chalk.bold.red( actual ) )}`,
+    `${indent( turbocolor.bold.red( actual ) )}`,
     makeExample( path, d, e )
   ] );
 }

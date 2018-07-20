@@ -1,20 +1,20 @@
 // @flow
 /* eslint-disable no-console */
 
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 
 export function printWarning( str: string ) {
-  console.warn( `${chalk.yellow( str )}\n` );
+  console.warn( `${turbocolor.yellow( str )}\n` );
 }
 
 export function printError( error: Error ) {
   let message;
   // $FlowIgnore
   if ( error.__validation ) {
-    message = `${chalk.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
+    message = `${turbocolor.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
   } else {
     message = error.stack;
   }
-  console.error( `${chalk.red( message )}\n` );
+  console.error( `${turbocolor.red( message )}\n` );
   process.exitCode = 1;
 }
