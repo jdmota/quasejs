@@ -3,7 +3,7 @@ import * as version from "./version";
 const prettyVersionDiff = require( "pretty-version-diff" );
 const execa = require( "execa" );
 const inquirer = require( "inquirer" );
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 
 // Adapted from https://github.com/sindresorhus/np
 
@@ -13,7 +13,7 @@ export default function( opts ) {
   const pkg = opts.pkg;
   const oldVersion = pkg.version;
 
-  console.log( `\nPublish a new version of ${chalk.bold.magenta( pkg.name )} ${chalk.dim( `(current: ${oldVersion})` )}\n` );
+  console.log( `\nPublish a new version of ${turbocolor.bold.magenta( pkg.name )} ${turbocolor.dim( `(current: ${oldVersion})` )}\n` );
 
   const filter = input => ( version.isValidVersionInput( input ) ? version.getNewVersion( oldVersion, input ) : input );
 
@@ -103,7 +103,7 @@ export default function( opts ) {
         const tag = answers.tag || opts.tag;
         const tagPart = tag ? ` and tag this release in npm as ${tag}` : "";
 
-        return `Will bump from ${chalk.cyan( oldVersion )} to ${chalk.cyan( answers.version + tagPart )}. Continue?`;
+        return `Will bump from ${turbocolor.cyan( oldVersion )} to ${turbocolor.cyan( answers.version + tagPart )}. Continue?`;
       }
     }
   ];

@@ -6,7 +6,7 @@ const execa = require( "execa" );
 const listrInput = require( "listr-input" );
 const { throwError, from } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 
 const npmPublish = opts => {
   const args = [ "publish" ];
@@ -27,7 +27,7 @@ const npmPublish = opts => {
 const handleError = ( task, err, opts, message ) => {
   if ( err.stderr.indexOf( "one-time pass" ) !== -1 ) {
     const title = task.title;
-    task.title = `${title} ${chalk.yellow( "(waiting for input…)" )}`;
+    task.title = `${title} ${turbocolor.yellow( "(waiting for input…)" )}`;
 
     return listrInput( message || "Enter OTP:", {
       done: otp => {

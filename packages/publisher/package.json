@@ -16,7 +16,6 @@
     "@samverschueren/stream-to-observable": "^0.3.0",
     "any-observable": "^0.3.0",
     "ban-sensitive-files": "^1.9.2",
-    "chalk": "^2.4.1",
     "del": "^3.0.0",
     "execa": "^0.10.0",
     "github-url-from-git": "^1.5.0",
@@ -34,6 +33,7 @@
     "semver": "^5.5.0",
     "slash": "^2.0.0",
     "split": "^1.0.0",
-    "terminal-link": "^1.1.0"
+    "terminal-link": "^1.1.0",
+    "turbocolor": "^2.4.0"
   }
 }
