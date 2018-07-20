@@ -136,6 +136,7 @@ describe( "cli", () => {
       argv: [],
       usage: "$ bin something",
       schema: {
+        "--": t.array( { itemType: "string", description: "-- args" } ),
         number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
         unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
         meow: { type: "string", description: "", default: "dog" },

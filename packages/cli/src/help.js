@@ -54,7 +54,7 @@ function generateHelpHelper( { usage, commands, defaultCommand, schema, command,
       const aliasText = flag.alias ? `, ${arrify( flag.alias ).map( a => `-${a}` ).join( ", " )}` : "";
 
       const line = [
-        `  --${decamelize( key, "-" )}${aliasText}`,
+        `  --${key === "--" ? "" : decamelize( key, "-" )}${aliasText}`,
         flag.description,
         suffixDefault( type.default ),
         typeStr ? `[${typeStr}]` : ""

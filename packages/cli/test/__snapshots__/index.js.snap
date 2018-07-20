@@ -39,6 +39,7 @@ exports[`cli generate help 1`] = `
   Usage: $ bin something
 
   Options:
+    --                -- args [array]
     --number, -n, -n2 number description (default: 0) [number]
     --unicorn, -u     unicorn description [string]
     --meow            (default: \\"dog\\") [string]
