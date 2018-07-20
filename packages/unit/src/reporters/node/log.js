@@ -1,5 +1,5 @@
-const chalk = require( "chalk" );
-const eol = chalk.reset( "\n" );
+const turbocolor = require( "turbocolor" );
+const eol = turbocolor.reset( "\n" );
 
 export function indentString( str, indent ) {
   indent = indent || 2;

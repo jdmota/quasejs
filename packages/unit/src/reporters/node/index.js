@@ -1,8 +1,7 @@
 import skipReasons from "../../core/skip-reasons";
-import colors from "./colors";
 import { log, log as printLog, logEol, indentString } from "./log";
 
-const chalk = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 const logSymbols = require( "log-symbols" );
 const ora = require( "ora" );
 const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
@@ -34,9 +33,9 @@ export default class NodeReporter {
       await this.logOtherErrors();
 
       if ( process.exitCode ) {
-        log( chalk.bold.red( "Exit code: " + process.exitCode ) );
+        log( turbocolor.bold.red( "Exit code: " + process.exitCode ) );
       } else {
-        log( chalk.bold.green( "Exit code: 0" ) );
+        log( turbocolor.bold.green( "Exit code: 0" ) );
       }
       logEol();
     } );
@@ -51,19 +50,19 @@ export default class NodeReporter {
 
   static showFilesCount( count ) {
     logEol();
-    log( chalk.bold.green( "Files count: " ) + count + "\n" );
+    log( turbocolor.bold.green( "Files count: " ) + count + "\n" );
     logEol();
   }
 
   static showSeed( runner ) {
     if ( runner.options.random ) {
-      log( chalk.bold.yellow( "Random seed: " ) + runner.options.random + "\n" );
+      log( turbocolor.bold.yellow( "Random seed: " ) + runner.options.random + "\n" );
       logEol();
     }
   }
 
   static showConcurrency( runner ) {
-    log( chalk.bold.green( "Child processes: " ) + runner.forks.length + "\n" );
+    log( turbocolor.bold.green( "Child processes: " ) + runner.forks.length + "\n" );
     logEol();
   }
 
@@ -72,12 +71,12 @@ export default class NodeReporter {
       return;
     }
     Promise.all( debuggersPromises ).then( debuggers => {
-      log( chalk.bold.yellow( "Debugging" ) );
+      log( turbocolor.bold.yellow( "Debugging" ) );
       logEol();
-      log( chalk.bold.yellow( "Got to chrome://inspect or check https://nodejs.org/en/docs/inspector" ) );
+      log( turbocolor.bold.yellow( "Got to chrome://inspect or check https://nodejs.org/en/docs/inspector" ) );
       logEol();
       for ( let i = 0; i < debuggers.length; i++ ) {
-        log( chalk.bold( debuggers[ i ] ), 4 );
+        log( turbocolor.bold( debuggers[ i ] ), 4 );
         logEol();
         for ( const file of division[ i ] ) {
           log( prettify( file ), 6 );
@@ -91,7 +90,7 @@ export default class NodeReporter {
   static fatalError( error ) {
     process.exitCode = 1;
     logEol();
-    log( chalk.bold.red( error ) );
+    log( turbocolor.bold.red( error ) );
     logEol();
   }
 
@@ -162,11 +161,11 @@ export default class NodeReporter {
         process.exitCode = 1;
 
         if ( t.runStartNotEmitted ) {
-          log( `\n${chalk.bold.red( `${t.runStartNotEmitted} forks did not emit "runStart" event.` )}\n` );
+          log( `\n${turbocolor.bold.red( `${t.runStartNotEmitted} forks did not emit "runStart" event.` )}\n` );
         }
 
         if ( hasPending ) {
-          log( `\n${chalk.bold.red( `${t.pendingTests.size} Pending tests:` )}\n` );
+          log( `\n${turbocolor.bold.red( `${t.pendingTests.size} Pending tests:` )}\n` );
 
           for ( const stack of t.pendingTests ) {
             await this.logDefaultByStack( stack );
@@ -183,15 +182,15 @@ export default class NodeReporter {
 
         if ( total === 0 ) {
           lines = [
-            colors.error( "\n  The total number of tests was 0." )
+            turbocolor.red( "\n  The total number of tests was 0." )
           ];
         } else {
           lines = [
-            passed > 0 ? "\n  " + colors.pass( passed, "passed" ) : "",
-            skipped > 0 ? "\n  " + colors.skip( skipped, "skipped" ) : "",
-            todo > 0 ? "\n  " + colors.todo( todo, "todo" ) : "",
-            failed > 0 ? "\n  " + colors.error( failed, "failed" ) : "",
-            "\n\n  " + colors.duration( t.runtime, "ms" ),
+            passed > 0 ? "\n  " + turbocolor.green( passed + " passed" ) : "",
+            skipped > 0 ? "\n  " + turbocolor.yellow( skipped + " skipped" ) : "",
+            todo > 0 ? "\n  " + turbocolor.blue( todo + " todo" ) : "",
+            failed > 0 ? "\n  " + turbocolor.red( failed + " failed" ) : "",
+            "\n\n  " + turbocolor.gray( t.runtime + " ms" ),
             t.onlyCount ? `\n\n  The '.only' modifier was used ${t.onlyCount} time${t.onlyCount === 1 ? "" : "s"}.` : ""
           ].filter( Boolean );
         }
@@ -212,7 +211,7 @@ export default class NodeReporter {
 
       }
 
-      log( `\n\n${colors.duration( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
+      log( `\n\n${turbocolor.gray( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
 
       await this.logOtherErrors();
 
@@ -222,7 +221,9 @@ export default class NodeReporter {
 
       if ( debuggersWaitingPromises.length ) {
         Promise.race( debuggersWaitingPromises ).then( () => {
-          log( chalk.bold.yellow( "At least 1 of " + debuggersWaitingPromises.length + " processes are waiting for the debugger to disconnect...\n" ) );
+          log(
+            turbocolor.bold.yellow( "At least 1 of " + debuggersWaitingPromises.length + " processes are waiting for the debugger to disconnect...\n" )
+          );
           logEol();
         } );
       }
@@ -232,19 +233,19 @@ export default class NodeReporter {
 
   showSnapshotStats( lines, { added, updated, removed, obsolete } ) {
     if ( added || updated || removed || obsolete ) {
-      lines.push( chalk.blue( "\n\n  Snapshots" ) );
+      lines.push( turbocolor.blue( "\n\n  Snapshots" ) );
     }
     if ( added ) {
-      lines.push( chalk.green( `\n    Added: ${added}` ) );
+      lines.push( turbocolor.green( `\n    Added: ${added}` ) );
     }
     if ( updated ) {
-      lines.push( chalk.green( `\n    Updated: ${updated}` ) );
+      lines.push( turbocolor.green( `\n    Updated: ${updated}` ) );
     }
     if ( removed ) {
-      lines.push( chalk.red( `\n    Removed: ${removed}` ) );
+      lines.push( turbocolor.red( `\n    Removed: ${removed}` ) );
     }
     if ( obsolete ) {
-      lines.push( chalk.red( `\n    Obsolete: ${obsolete}` ) );
+      lines.push( turbocolor.red( `\n    Obsolete: ${obsolete}` ) );
     }
   }
 
@@ -309,7 +310,7 @@ export default class NodeReporter {
     const codeFrameOptions = this.runner.options.codeFrame;
     const frame = codeFrameOptions === false ? "" : codeFrameColumns( code, { start: { line } }, codeFrameOptions ) + "\n\n";
 
-    return `${colors.errorStack( `${prettify( file )}:${line}:${column}` )}\n\n${frame}`;
+    return `${turbocolor.gray( `${prettify( file )}:${line}:${column}` )}\n\n${frame}`;
   }
 
   async logDefaultByStack( defaultStack ) {
@@ -341,7 +342,7 @@ export default class NodeReporter {
     let log = "\n";
 
     if ( error.message ) {
-      log += colors.title( error.message ) + "\n";
+      log += turbocolor.bold.white( error.message ) + "\n";
     }
 
     if ( error.source ) {
@@ -353,7 +354,7 @@ export default class NodeReporter {
     }
 
     if ( stack && error.stack ) {
-      log += colors.errorStack( error.stack ) + "\n\n";
+      log += turbocolor.gray( error.stack ) + "\n\n";
     }
 
     printLog( log, 4 );
@@ -370,9 +371,9 @@ export default class NodeReporter {
       }
     }
 
-    const statusText = status === "failed" ? colors.error( status ) : status === "passed" ? colors.pass( status ) : colors.skip( status );
+    const statusText = status === "failed" ? turbocolor.red( status ) : status === "passed" ? turbocolor.green( status ) : turbocolor.yellow( status );
 
-    printLog( `\n${colors.title( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? colors.slow( "Slow!" ) : ""}\n` );
+    printLog( `\n${turbocolor.bold.white( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? turbocolor.yellow( "Slow!" ) : ""}\n` );
 
     if ( skipReason ) {
       printLog( `\nSkip reason: ${skipReason}`, 4 );
@@ -391,7 +392,7 @@ export default class NodeReporter {
       printLog( "Logs:\n\n", 4 );
 
       logs.forEach( log => {
-        const logLines = indentString( colors.log( log ), 6 );
+        const logLines = indentString( turbocolor.gray( log ), 6 );
         const logLinesWithFigure = logLines.replace(
           /^ {6}/,
           `    ${logSymbols.info} `
@@ -403,7 +404,7 @@ export default class NodeReporter {
     }
 
     if ( memoryUsage ) {
-      printLog( chalk.yellow( `Memory usage: ${memoryUsage}\n` ), 4 );
+      printLog( turbocolor.yellow( `Memory usage: ${memoryUsage}\n` ), 4 );
       logEol();
     }
 

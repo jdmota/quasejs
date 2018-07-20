@@ -1,32 +1,31 @@
-const ansiStyles = require( "ansi-styles" );
-const chalk = require( "chalk" );
-
-const withColor = new chalk.constructor( { enabled: true, level: 1 } );
-const noColor = new chalk.constructor( { enabled: false } );
+const turbocolor = require( "turbocolor" );
 
 const fakeAnsiStyles = {};
-for ( const key in ansiStyles ) {
+for ( const key in turbocolor.Styles ) {
   fakeAnsiStyles[ key ] = {
     open: "",
     close: ""
   };
 }
 
-function createTheme( chalk, ansi ) {
-  return {
+function createTheme( withColor, ansi ) {
+  const prev = turbocolor.enabled;
+  turbocolor.enabled = withColor;
+
+  const theme = {
     boolean: ansi.yellow,
-    circular: chalk.grey( "[Circular]" ),
+    circular: turbocolor.gray( "[Circular]" ),
     date: {
-      invalid: chalk.red( "invalid" ),
+      invalid: turbocolor.red( "invalid" ),
       value: ansi.blue
     },
     diffGutters: {
-      actual: chalk.red( "+" ) + " ",
-      expected: chalk.green( "-" ) + " ",
+      actual: turbocolor.red( "+" ) + " ",
+      expected: turbocolor.green( "-" ) + " ",
       padding: "  "
     },
     error: {
-      ctor: { open: ansi.grey.open + "(", close: ")" + ansi.grey.close },
+      ctor: { open: ansi.gray.open + "(", close: ")" + ansi.gray.close },
       name: ansi.magenta
     },
     function: {
@@ -34,35 +33,35 @@ function createTheme( chalk, ansi ) {
       stringTag: ansi.magenta
     },
     global: ansi.magenta,
-    item: { after: chalk.grey( "," ) },
-    list: { openBracket: chalk.grey( "[" ), closeBracket: chalk.grey( "]" ) },
-    mapEntry: { after: chalk.grey( "," ) },
-    maxDepth: chalk.grey( "…" ),
+    item: { after: turbocolor.gray( "," ) },
+    list: { openBracket: turbocolor.gray( "[" ), closeBracket: turbocolor.gray( "]" ) },
+    mapEntry: { after: turbocolor.gray( "," ) },
+    maxDepth: turbocolor.gray( "…" ),
     null: ansi.yellow,
     number: ansi.yellow,
     object: {
-      openBracket: chalk.grey( "{" ),
-      closeBracket: chalk.grey( "}" ),
+      openBracket: turbocolor.gray( "{" ),
+      closeBracket: turbocolor.gray( "}" ),
       ctor: ansi.magenta,
       stringTag: { open: ansi.magenta.open + "@", close: ansi.magenta.close },
-      secondaryStringTag: { open: ansi.grey.open + "@", close: ansi.grey.close }
+      secondaryStringTag: { open: ansi.gray.open + "@", close: ansi.gray.close }
     },
     property: {
-      after: chalk.grey( "," ),
-      keyBracket: { open: chalk.grey( "[" ), close: chalk.grey( "]" ) },
-      valueFallback: chalk.grey( "…" )
+      after: turbocolor.gray( "," ),
+      keyBracket: { open: turbocolor.gray( "[" ), close: turbocolor.gray( "]" ) },
+      valueFallback: turbocolor.gray( "…" )
     },
     regexp: {
       source: { open: ansi.blue.open + "/", close: "/" + ansi.blue.close },
       flags: ansi.yellow
     },
-    stats: { separator: chalk.grey( "---" ) },
+    stats: { separator: turbocolor.gray( "---" ) },
     string: {
       open: ansi.blue.open,
       close: ansi.blue.close,
-      line: { open: chalk.blue( "'" ), close: chalk.blue( "'" ) },
-      multiline: { start: chalk.blue( "`" ), end: chalk.blue( "`" ) },
-      controlPicture: ansi.grey,
+      line: { open: turbocolor.blue( "'" ), close: turbocolor.blue( "'" ) },
+      multiline: { start: turbocolor.blue( "`" ), end: turbocolor.blue( "`" ) },
+      controlPicture: ansi.gray,
       diff: {
         insert: {
           open: ansi.bgGreen.open + ansi.black.open,
@@ -89,14 +88,17 @@ function createTheme( chalk, ansi ) {
     },
     undefined: ansi.yellow
   };
+
+  turbocolor.enabled = prev;
+  return theme;
 }
 
 export const color = {
   maxDepth: 3,
-  theme: createTheme( withColor, ansiStyles )
+  theme: createTheme( true, turbocolor.Styles )
 };
 
 export const plain = {
   maxDepth: 3,
-  theme: createTheme( noColor, fakeAnsiStyles )
+  theme: createTheme( false, fakeAnsiStyles )
 };

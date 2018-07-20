@@ -5,7 +5,7 @@ import randomizer from "./random";
 
 const { ValidationError, getType, checkType } = require( "@quase/config" );
 const { getOnePlugin } = require( "@quase/get-plugins" );
-const { supportsColor } = require( "chalk" );
+const turbocolor = require( "turbocolor" );
 const isCi = require( "is-ci" );
 const os = require( "os" );
 
@@ -33,7 +33,7 @@ export default function( options ) {
   }
 
   options.concurrency = ( options.concurrency > 0 && options.concurrency ) || Math.min( os.cpus().length, isCi ? 2 : Infinity );
-  options.color = options.color === undefined ? supportsColor : !!options.color;
+  options.color = options.color === undefined ? turbocolor.enabled : !!options.color;
 
   if ( options.inspect || options.inspectBrk || options.forceSerial ) {
     options.concurrency = 1;

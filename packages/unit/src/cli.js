@@ -384,12 +384,6 @@ class NodeRunner extends EventEmitter {
       args.push( "--expose-gc" );
     }
 
-    if ( options.color ) {
-      env.FORCE_COLOR = 1;
-    } else {
-      env.FORCE_COLOR = 0;
-    }
-
     for ( const arg of options[ "--" ] ) {
       args.push( arg );
     }
@@ -437,6 +431,8 @@ class NodeRunner extends EventEmitter {
 
 }
 
+const turbocolor = require( "turbocolor" );
+
 export default function cli( { input, options, configLocation } ) {
 
   if ( input.length > 0 ) {
@@ -448,6 +444,8 @@ export default function cli( { input, options, configLocation } ) {
   } catch ( err ) {
     return printError( err );
   }
+
+  turbocolor.enabled = options.color;
 
   const spinner = ora( "Looking for files..." ).start();
 
