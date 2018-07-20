@@ -2,7 +2,7 @@
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
 import { isValidVersion } from "./version";
-import { exec, l, error, linkifyIssues, linkifyCommit } from "./util";
+import { exec, l, error, linkifyIssues, linkifyCommit, linkifyCompare } from "./util";
 
 const path = require( "path" );
 const execa = require( "execa" );
@@ -47,13 +47,24 @@ function info( message ) {
   console.log( `${logSymbols.info} ${message}` );
 }
 
+function getRepositoryUrl( { repository } ) {
+  let url = repository && repository.url;
+  if ( !url ) {
+    return;
+  }
+  url = url.replace( /^\/+$/, "" ).replace( /\/tree[^]*$/, "" );
+  return githubUrlFromGit( url, { extraBaseUrls: [ "gitlab.com" ] } );
+}
+
 export { exec, tasks };
 
 export async function publish( opts ) {
 
   defaultTasks( opts );
 
-  opts.folder = path.resolve( opts.folder );
+  opts.folder = path.resolve( opts.cwd, opts.folder );
+  opts.relativeFolder = slash( path.relative( opts.cwd, opts.folder ) );
+
   opts.pkgPath = path.resolve( opts.folder, "package.json" );
   opts.rootPkgPath = path.resolve( opts.cwd, "package.json" );
 
@@ -97,19 +108,21 @@ export async function publish( opts ) {
     console.log();
 
     // Show commits
-    const repositoryUrl = opts.pkg.repository && opts.pkg.repository.url && githubUrlFromGit( opts.pkg.repository.url );
+    const repositoryUrl = getRepositoryUrl( opts.pkg );
     const tagPattern = opts.git.tagPrefix.replace( versionRe, "*" ).replace( nameRe, opts.pkg.name ).replace( /\*?$/g, "*" );
-    let tag;
+    let latestHash;
     try {
-      tag = await execa.stdout( "git", [ "tag", "-l", tagPattern ] );
+      latestHash = await execa.stdout( "git", [ "rev-list", `--tags=${tagPattern}`, "--max-count=1" ] );
     } catch ( e ) {
       // Ignore
     }
-    if ( tag ) {
-      const result = await execa.stdout( "git", [ "log", "--format=%s %h", `refs/tags/${tag}..HEAD`, "--", opts.folder ] );
+    if ( latestHash ) {
+      const MAX = 10;
+      const result = await execa.stdout( "git", [ "log", `--max-count=${MAX}`, "--format=%s %h", `${latestHash}..HEAD`, "--", opts.relativeFolder ] );
 
       if ( result ) {
-        const history = result.split( "\n" )
+        const history = result.split( "\n" );
+        const historyText = history
           .map( commit => {
             const splitIndex = commit.lastIndexOf( " " );
             const commitMessage = linkifyIssues( repositoryUrl, commit.substring( 0, splitIndex ) );
@@ -118,12 +131,13 @@ export async function publish( opts ) {
           } )
           .join( "\n" );
 
-        info( `Commits since ${tag}:\n${history || ""}\n` );
+        info( `Commits since latest release:\n${historyText}\n` );
+        info( `Showing only ${history.length} commits.\nFor maybe more: ${linkifyCompare( repositoryUrl, latestHash, opts.git.branch )}` );
       } else {
         const answers = await inquirer.prompt( [ {
           type: "confirm",
           name: "confirm",
-          message: "No commits found since previous release, continue?",
+          message: `No commits found since ${latestHash}, continue?`,
           default: false
         } ] );
 

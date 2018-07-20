@@ -4,7 +4,7 @@ require( "@quase/cli" ).default( {
   usage: "$ quase-publisher <version> [options]",
   configFiles: "quase-publisher.config.js",
   configKey: "quase-publisher",
-  schema( t ) {
+  schema( { t, extractDefaults } ) {
     const boolOrFn = description => t.union( {
       types: [ "boolean", "function" ],
       default: true,
@@ -51,7 +51,7 @@ require( "@quase/cli" ).default( {
       }
     } );
 
-    const gitConfigDefaults = gitConfig.defaults( [], {} );
+    const gitConfigDefaults = extractDefaults( gitConfig );
 
     return {
       preview: {

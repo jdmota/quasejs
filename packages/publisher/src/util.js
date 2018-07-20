@@ -29,6 +29,16 @@ export function error( message ) {
   return err;
 }
 
+export function linkifyCompare( url, a, b ) {
+  if ( !url ) {
+    return `${a}...${b}`;
+  }
+  if ( !terminalLink.isSupported ) {
+    return `${url}/compare/${a}...${b}`;
+  }
+  return terminalLink( `${a}...${b}`, `${url}/compare/${a}...${b}` );
+}
+
 // Adapted from https://github.com/sindresorhus/np
 
 export function linkifyIssues( url, message ) {
@@ -40,7 +50,8 @@ export function linkifyIssues( url, message ) {
     if ( issue.startsWith( "#" ) ) {
       return terminalLink( issue, `${url}${issuePart}` );
     }
-    return terminalLink( issue, `https://github.com/${issuePart}` );
+    const host = url.replace( /\.com\/[^]*$/, ".com/" );
+    return terminalLink( issue, `${host}${issuePart}` );
   } );
 }
 
