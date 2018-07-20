@@ -19,7 +19,7 @@
     "import-local": "^1.0.0",
     "is-installed-globally": "^0.1.0",
     "normalize-package-data": "^2.4.0",
-    "read-pkg-up": "^3.0.0",
+    "read-pkg-up": "^4.0.0",
     "redent": "^2.0.0",
     "signal-exit": "^3.0.2",
     "trim-newlines": "^2.0.0",
