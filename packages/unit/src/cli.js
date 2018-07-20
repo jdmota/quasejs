@@ -385,9 +385,9 @@ class NodeRunner extends EventEmitter {
     }
 
     if ( options.color ) {
-      args.push( "--color" );
+      env.FORCE_COLOR = 1;
     } else {
-      args.push( "--no-color" );
+      env.FORCE_COLOR = 0;
     }
 
     for ( const arg of options[ "--" ] ) {
