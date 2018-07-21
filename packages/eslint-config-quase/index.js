@@ -4,7 +4,7 @@ module.exports = {
   env: {
     es6: true
   },
-  extends: [ "eslint:recommended", "plugin:flowtype/recommended", "plugin:import/recommended", "plugin:node/recommended" ],
+  extends: [ "plugin:flowtype/recommended", "plugin:import/recommended", "plugin:node/recommended", "eslint:recommended" ],
   overrides: [
     {
       env: {
@@ -253,6 +253,7 @@ module.exports = {
     "new-parens": "error",
     "no-alert": "warn",
     "no-array-constructor": "error",
+    "no-await-in-loop": "off",
     "no-caller": "error",
     "no-class-assign": "error",
     "no-cond-assign": "off",
@@ -425,6 +426,7 @@ module.exports = {
       "error",
       {
         args: "after-used",
+        argsIgnorePattern: "^_",
         ignoreRestSiblings: true,
         vars: "local"
       }
@@ -455,7 +457,8 @@ module.exports = {
     "no-whitespace-before-property": "error",
     "no-with": "error",
     "node/no-unpublished-require": "off",
-    "node/no-unsupported-features": "off",
+    "node/no-unsupported-features/es-builtins": "off",
+    "node/no-unsupported-features/es-syntax": "off",
     "object-curly-newline": [
       "off",
       {
