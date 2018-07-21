@@ -8,7 +8,7 @@ module.exports = {
   overrides: [
     {
       env: {
-        "jest/globals": true
+        jest: true
       },
       files: [ "**/test/**/*.js" ],
       plugins: [ "jest" ],
@@ -22,7 +22,7 @@ module.exports = {
   ],
   parser: "babel-eslint",
   parserOptions: {
-    ecmaVersion: 2018,
+    ecmaVersion: 2019,
     sourceType: "module"
   },
   plugins: [ "flowtype", "import", "node" ],
