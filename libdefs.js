@@ -71,6 +71,7 @@ declare module "source-map" { declare module.exports: any; }
 declare module "strip-url-auth" { declare module.exports: any; }
 declare module "sw-precache" { declare module.exports: any; }
 declare module "symlink-dir" { declare module.exports: any; }
+declare module "turbocolor" { declare module.exports: any; }
 declare module "update-notifier" { declare module.exports: any; }
 declare module "watchpack" { declare module.exports: any; }
 declare module "write-file-atomic" { declare module.exports: any; }
