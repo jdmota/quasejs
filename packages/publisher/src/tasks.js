@@ -7,7 +7,6 @@ const { throwError } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
 
 const path = require( "path" );
-const nsp = require( "nsp" );
 const del = require( "del" );
 const hasYarn = require( "has-yarn" );
 const execa = require( "execa" );
@@ -23,16 +22,20 @@ export function checkSensitiveData( opts ) {
 
 export function checkDeps( opts ) {
   return {
-    title: "Checking for the vulnerable dependencies",
-    task() {
-      return new Promise( ( resolve, reject ) => {
-        nsp.check( { package: opts.pkg }, ( err, data ) => {
-          if ( err || data.length > 0 ) {
-            reject( error( nsp.formatters.summary( err, data ) ) );
-          } else {
-            resolve();
-          }
-        } );
+    title: "Checking for vulnerable dependencies",
+    task( ctx, task ) {
+      if ( opts.yarn === true ) {
+        task.skip( "Yarn does not support audit yet" );
+        return;
+      }
+      return execa.stdout( "npm", [ "audit" ], {
+        cwd: opts.folder
+      } ).catch( err => {
+        if ( /Did you mean/.test( err.stdout ) ) {
+          task.skip( "This version of npm does not support audit. Upgrade to npm>=6" );
+          return;
+        }
+        throw err;
       } );
     }
   };

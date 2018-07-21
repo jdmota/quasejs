@@ -1,4 +1,4 @@
-/* eslint-disable no-process-exit, no-console */
+/* eslint-disable no-console */
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
 import { isValidVersion } from "./version";
@@ -172,13 +172,11 @@ export async function publish( opts ) {
   info( opts.yarn ? "Using Yarn" : "Using npm" );
   console.log();
 
-  if ( opts.preview ) {
-    process.exit( 0 );
-  }
-
   const tasks = l();
-
-  [
+  const toRun = opts.preview ? [
+    opts.checkSensitiveData,
+    opts.checkDeps
+  ] : [
     opts.checkSensitiveData,
     opts.checkDeps,
     opts.preCheck,
@@ -194,30 +192,37 @@ export async function publish( opts ) {
     opts.publish,
     opts.rootAfterPublish,
     opts.git && opts.gitPush,
-  ].forEach( t => {
+  ];
+
+  for ( const t of toRun ) {
     if ( t ) {
       tasks.add( t( opts ) );
     }
-  } );
+  }
 
   await tasks.run();
 
-  return readPkg( {
+  if ( opts.preview ) {
+    return;
+  }
+
+  const newPkg = await readPkg( {
     cwd: opts.folder,
     normalize: false
   } );
+
+  console.log( `\n ${newPkg.name} ${newPkg.version} published 🎉` );
 }
 
 export default async function( opts ) {
   try {
-    const pkg = await publish( opts );
-    console.log( `\n ${pkg.name} ${pkg.version} published 🎉` );
+    await publish( opts );
   } catch ( err ) {
     if ( err.__generated ) {
       console.error( `\n${logSymbols.error} ${err.message}` );
     } else {
       console.error( `\n${logSymbols.error} ${err.stack}` );
     }
-    process.exit( 1 );
+    process.exitCode = 1;
   }
 }
