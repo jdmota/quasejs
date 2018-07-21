@@ -1,30 +1,35 @@
 // @flow
-
 import type { Name, Version, ExactVersion, Resolved, Integrity } from "./types";
+import { isObject, isEmpty } from "./utils";
 
 const path = require( "path" );
 const loadJsonFile = require( "load-json-file" );
 const writeJsonFile = require( "write-json-file" );
 
-const file = "qpm-lockfile.json";
-
+const FILENAME = "qpm-lockfile.json";
 const LOCK_VERSION = "1";
 
-export type Deps = { [name: Name]: { savedVersion: Version, resolved: Resolved, i: number } };
+export type Deps = {
+  [name: Name]: {|
+    savedVersion: Version,
+    resolved: Resolved,
+    i: number
+  |}
+};
 
 export type Entry = [Name, ExactVersion, Resolved, Integrity, number[]];
 
-export type Lockfile = {
+export type Lockfile = {|
   v: string,
   resolutions: Entry[],
   deps: Deps,
   devDeps: Deps,
-  optionalDeps: Deps,
-};
+  optionalDeps: Deps
+|};
 
 function checkSameVersion( v: string ) {
   if ( LOCK_VERSION !== v ) {
-    throw new Error( `Found a lock file with version ${v}. Expected it to be ${LOCK_VERSION}` );
+    throw new Error( `Found a lockfile with version ${v}. Expected it to be ${LOCK_VERSION}` );
   }
 }
 
@@ -32,17 +37,6 @@ function invariant( bool: boolean ) {
   if ( !bool ) {
     throw new Error( "Invalid lockfile." );
   }
-}
-
-function isObject( obj: mixed ): boolean {
-  return obj != null && typeof obj === "object";
-}
-
-function isEmpty( obj: Object ) {
-  for ( const key in obj ) {
-    return false;
-  }
-  return true;
 }
 
 function validateEntry( entry: Object ): boolean {
@@ -82,7 +76,7 @@ export function create(): Lockfile {
 
 export async function read( folder: string ): Promise<Lockfile> {
   try {
-    return await loadJsonFile( path.resolve( folder, file ) );
+    return await loadJsonFile( path.resolve( folder, FILENAME ) );
   } catch ( e ) {
     if ( e.code === "ENOENT" ) {
       return create();
@@ -91,6 +85,6 @@ export async function read( folder: string ): Promise<Lockfile> {
   }
 }
 
-export async function write( folder: string, json: Object ) {
-  return writeJsonFile( path.resolve( folder, file ), json );
+export function write( folder: string, json: Object ): Promise<void> {
+  return writeJsonFile( path.resolve( folder, FILENAME ), json );
 }

@@ -1,6 +1,6 @@
 // @flow
-
-import type { Resolved, Integrity, Options } from "./types";
+import { read, crawl } from "./utils";
+import type { Name, Resolved, Integrity, Options } from "./types";
 import { pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
 import { buildId } from "./resolve";
@@ -9,7 +9,6 @@ import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
 const fs = require( "fs-extra" );
 const path = require( "path" );
 const pacote = require( "pacote" );
-const klaw = require( "klaw" );
 const symlinkDir = require( "symlink-dir" );
 const homedir = require( "os" ).homedir();
 
@@ -26,35 +25,23 @@ Resolution set converted to string: STORE/modules/<id>/res/<hash of resolution s
 STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/<...> === STORE/VERSION/<id>/files/<...> [hard link]
 STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/node_modules has symlinks
 
-.qpm-integrity and .qpm-res files also serve too tell that the job was done
+.qpm-integrity and .qpm-res files also serve to tell that the job was done
 
 */
-
-async function read( p ) {
-  try {
-    return await fs.readFile( p, "utf8" );
-  } catch ( e ) {
-    if ( e.code === "ENOENT" ) {
-      return "";
-    }
-    throw e;
-  }
-}
-
-/* eslint no-await-in-loop: 0 */
 
 export default class Store {
 
   static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
 
-  map: Map<Resolved, Promise<string>>;
-  store: string; // The path includes the version of the store
+  +map: Map<Resolved, Promise<string>>;
+  +store: string; // The path includes the version of the store
 
   constructor( store: string ) {
     this.map = new Map();
     this.store = path.resolve( store, STORE_VERSION );
   }
 
+  // Make sure package is in the store
   async extract( resolved: Resolved, opts: Options, integrity: Integrity ) {
     const id = buildId( resolved, integrity );
     const folder = path.join( this.store, id, "files" );
@@ -71,26 +58,26 @@ export default class Store {
     return id;
   }
 
-  async crawl( folder: string, mapper: Function ): Promise<any> {
+  async removeExcess( folder: string, set: ImmutableResolutionSet ) {
+
     const promises = [];
-    await new Promise( ( resolve, reject ) => {
-      klaw( folder )
-        .on( "data", item => {
-          const p = mapper( item );
-          if ( p ) {
-            promises.push( p );
-          }
-        } )
-        .on( "error", reject )
-        .on( "end", resolve );
-    } );
+
+    for ( const nameStr of await fs.readdir( folder ) ) {
+      const name: Name = nameStr;
+
+      if ( !set.has( name ) ) {
+        promises.push( fs.remove( path.join( folder, nameStr ) ) );
+      }
+    }
+
     return Promise.all( promises );
   }
 
   async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
     const promises = [];
+    const nodeModulesFolder = path.join( folder, "node_modules" );
 
-    await fs.ensureDir( path.join( folder, "node_modules" ) );
+    await fs.ensureDir( nodeModulesFolder );
 
     if ( fake ) {
       set.forEach( res => {
@@ -99,12 +86,12 @@ export default class Store {
             const filesFolder = path.join( path.dirname( path.dirname( resFolder ) ), "files" );
             const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
-            await this.crawl( filesFolder, item => {
+            await crawl( filesFolder, item => {
               if ( item.stats.isFile() ) {
                 const relative = path.relative( filesFolder, item.path );
                 const dest = path.resolve( depFolder, relative );
                 return (
-                  /\.js$/.test( dest ) || !/\..+$/.test( dest ) ?
+                  /\.js$/.test( dest ) ?
                     fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
                     fs.copy( item.path, dest )
                 );
@@ -113,6 +100,9 @@ export default class Store {
           } )
         );
       } );
+
+      promises.push( this.removeExcess( nodeModulesFolder, set ) );
+
     } else {
       set.forEach( res => {
         promises.push(
@@ -126,7 +116,7 @@ export default class Store {
     await Promise.all( promises );
   }
 
-  async createResolution( resolution: ImmutableResolution ): Promise<string> {
+  createResolution( resolution: ImmutableResolution ): Promise<string> {
     let p = this.map.get( resolution.data.resolved );
     if ( !p ) {
       p = this._createResolution( resolution );
@@ -140,12 +130,12 @@ export default class Store {
     const id = buildId( resolution.data.resolved, resolution.data.integrity );
     const filesFolder = path.join( this.store, id, "files" );
     const resFolders = path.join( this.store, id, "res" );
-    const hash = resolution.hashCode(); // The hash includes the Resolution version
-    let i = 0;
+    const hash = resolution.hashCode(); // The hash includes the Resolution format version
+    let collisionIdx = 0;
 
     while ( true ) {
 
-      const uniqueHash = `${hash}-${i}`;
+      const uniqueHash = `${hash}-${collisionIdx}`;
       const res = path.join( resFolders, uniqueHash );
       const resFile = path.join( resFolders, `${uniqueHash}.qpm-res` );
 
@@ -158,7 +148,7 @@ export default class Store {
 
         const linking = this.linkNodeModules( res, resolution.set );
 
-        await this.crawl( filesFolder, item => {
+        await crawl( filesFolder, item => {
           if ( item.stats.isFile() ) {
             const relative = path.relative( filesFolder, item.path );
             const dest = path.resolve( res, relative );
@@ -178,7 +168,7 @@ export default class Store {
 
       }
 
-      if ( i++ > 20 ) {
+      if ( collisionIdx++ > 20 ) {
         break;
       }
     }

@@ -1,5 +1,4 @@
 // @flow
-
 import type { Integrity, Options } from "./types";
 
 // TODO See https://github.com/npm/npm/blob/latest/lib/config/pacote.js

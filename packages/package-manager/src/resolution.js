@@ -1,13 +1,8 @@
 // @flow
-
+import { mapGet, hash } from "./utils";
+import { toStr } from "./types";
 import type { Name, ExactVersion, Resolved, Integrity } from "./types";
 import type { Entry } from "./lockfile";
-
-const crypto = require( "crypto" );
-
-function hash( input ) {
-  return crypto.createHash( "md5" ).update( input ).digest( "hex" ).slice( 0, 10 );
-}
 
 const VERSION = 1;
 
@@ -27,21 +22,25 @@ export interface ImmutableResolution {
 
 export interface ImmutableResolutionSet {
   +size: number;
+  has( name: Name ): boolean;
   forEach( callback: ImmutableResolution => ?boolean ): void;
   buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): Array<Entry>;
 }
 
+// A package resolution
 class Resolution implements ImmutableResolution {
 
-  data: Data;
-  set: ImmutableResolutionSet;
+  +data: Data;
+  +set: ImmutableResolutionSet;
   _hashCode: ?string;
   _string: ?string;
 
   static compare( curr: ImmutableResolution, next: ImmutableResolution ) {
     if ( curr === next ) return 0;
-    if ( curr.data.resolved === next.data.resolved ) return 0;
-    if ( curr.data.resolved < next.data.resolved ) return -1;
+    const a = toStr( curr.data.resolved );
+    const b = toStr( next.data.resolved );
+    if ( a === b ) return 0;
+    if ( a < b ) return -1;
     return 1;
   }
 
@@ -63,7 +62,7 @@ class Resolution implements ImmutableResolution {
     if ( this._string == null ) {
       const arr = [];
       this.buildFlat( arr );
-      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, , deps ] ) => `${resolved},${deps.join( "," )}` ).join( "\n" );
+      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, , deps ] ) => `${toStr( resolved )},${deps.join( "," )}` ).join( "\n" );
     }
     return this._string;
   }
@@ -101,12 +100,15 @@ type Node = {
   right: ?Node
 };
 
+// A set of sorted resolutions
 class ResolutionSet implements ImmutableResolutionSet {
 
+  +names: Set<Name>;
   size: number;
   _root: ?Node;
 
   constructor() {
+    this.names = new Set();
     this.size = 0;
     this._root = null;
   }
@@ -144,7 +146,12 @@ class ResolutionSet implements ImmutableResolutionSet {
     }
   }
 
+  has( name: Name ): boolean {
+    return this.names.has( name );
+  }
+
   _node( value: ImmutableResolution ): Node {
+    this.names.add( value.data.name );
     this.size++;
     return {
       value: value,
@@ -206,8 +213,8 @@ async function createResolution( globalSet: ResolutionSet, data: Data, callback:
 
 export class Tree {
 
-  set: ResolutionSet;
-  map: Map<Resolved, Promise<ImmutableResolution>>;
+  +set: ResolutionSet;
+  +map: Map<Resolved, Promise<ImmutableResolution>>;
 
   constructor() {
     this.set = new ResolutionSet();
@@ -230,8 +237,7 @@ export class Tree {
   async extractDeps( allDeps: Resolved[] ): Promise<ImmutableResolutionSet> {
     const set = new ResolutionSet();
     for ( const key of allDeps ) {
-      // $FlowFixMe
-      set.add( await this.map.get( key ) ); // eslint-disable-line no-await-in-loop
+      set.add( await mapGet( this.map, key ) );
     }
     return set;
   }

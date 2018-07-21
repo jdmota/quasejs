@@ -68,5 +68,5 @@ require( "@quase/cli" ).default( {
     }
   }
 } ).then( ( { command, options } ) => {
-  require( "../dist/cli" ).run( command, options );
+  require( ".." ).run( command, options );
 } );

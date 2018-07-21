@@ -1,5 +1,5 @@
-import installer from "../src/installer";
-import check from "../src/check";
+import installer from "../src/commands/installer";
+import check from "../src/commands/check";
 
 const childProcess = require( "child_process" );
 const fs = require( "fs-extra" );
