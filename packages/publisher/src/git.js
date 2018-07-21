@@ -3,6 +3,7 @@ import { l, error } from "./util";
 // Adapted from https://github.com/sindresorhus/np
 
 const execa = require( "execa" );
+const isWin = process.platform === "win32";
 
 export default function( opts ) {
   const tasks = [
@@ -28,7 +29,7 @@ export default function( opts ) {
     },
     {
       title: "Check remote history",
-      task: () => execa.stdout( "git", [ "rev-list", "--count", "--left-only", "@{u}...HEAD" ] ).then( result => {
+      task: () => execa.stdout( "git", [ "rev-list", "--count", "--left-only", isWin ? "'@{u}...HEAD'" : "@{u}...HEAD" ] ).then( result => {
         if ( result !== "0" ) {
           throw new Error( "Remote history differs. Please pull changes." );
         }
