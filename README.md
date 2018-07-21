@@ -6,8 +6,6 @@ The purpose of QuaseJS is to include various packages, smaller ones or bigger on
 
 ## :construction: This is a work in progress :construction:
 
-*Some modules are intended to work on the browser too, but browser support is not ready.*
-
 ## Features and available modules
 
 **[builder](packages/builder)** - *WIP*
@@ -26,7 +24,7 @@ Utilities to get configuration, apply defaults and validate options.
 
 Some tools to work with Error objects and their stack.
 
-**[eslint-config-quase](packages/eslint-config-quase)** - **0.2.0**
+**[eslint-config-quase](packages/eslint-config-quase)** - **0.3.0**
 
 The Eslint configuration that I use.
 
@@ -50,6 +48,10 @@ Utilities to handle paths and urls.
 
 Allows you to resolve, normalize and match pathnames.
 
+**[publisher](packages/publisher)** - *WIP*
+
+A package publisher heavily inspired by [np](https://github.com/sindresorhus/np).
+
 **[source-map](packages/source-map)** - **0.1.0**
 
 Tools to work with source maps.
@@ -64,14 +66,10 @@ Utility to help you get all the requested plugins.
 
 **[view](packages/view)** - *WIP*
 
-- Create user interfaces with declarative templates.
+- Create declarative user interfaces with JSX.
 - Makes use of the Custom Elements and Shadow Root specs.
 - Implements one-way data flow.
 - Has a compiler that removes the need for a diffing algorithm.
-
-**More?**
-
-TODO
 
 ## Installation
 
