@@ -74,8 +74,8 @@ export default async function( _opts ) {
     failIfNotFound: !!flags.config
   } );
 
-  if ( opts.notifier !== false ) {
-    notify( pkg, opts.notifier || {} );
+  if ( opts.notifier ) {
+    notify( pkg, opts.notifier === true ? {} : opts.notifier );
   }
 
   const { config, location: configLocation } = await configJob;

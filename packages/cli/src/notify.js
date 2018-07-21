@@ -1,6 +1,38 @@
 const turbocolor = require( "turbocolor" );
 const hasYarn = require( "has-yarn" );
-const updateNotifier = require( "update-notifier" );
+
+let _updateNotifier;
+const updateNotifier = () => {
+  if ( !_updateNotifier ) {
+    try {
+      _updateNotifier = require( "update-notifier" );
+    } catch ( err ) {
+      if ( err.code === "MODULE_NOT_FOUND" ) {
+        throw new Error( `If you want to use update-notifier with @quase/cli, you have to install it as well` );
+      } else {
+        throw err;
+      }
+    }
+  }
+  return _updateNotifier;
+};
+
+let _boxen;
+const boxen = () => {
+  // update-notifier will include boxen, but just in case...
+  if ( !_boxen ) {
+    try {
+      _boxen = require( "boxen" );
+    } catch ( err ) {
+      if ( err.code === "MODULE_NOT_FOUND" ) {
+        _boxen = x => x;
+      } else {
+        throw err;
+      }
+    }
+  }
+  return _boxen;
+};
 
 function notifyFix( opts ) {
   if ( !process.stdout.isTTY || !this.update ) {
@@ -19,20 +51,21 @@ function notifyFix( opts ) {
 
   opts.message = opts.message || defaultMsg;
 
-  opts.boxenOpts = opts.boxenOpts || {
+  opts.boxenOpts = opts.boxenOpts === undefined ? {
     padding: 1,
+    margin: 1,
     align: "center",
-    borderStyle: {
-      topLeft: " ",
-      topRight: " ",
-      bottomLeft: " ",
-      bottomRight: " ",
-      horizontal: " ",
-      vertical: " "
-    }
-  };
+    borderColor: "yellow",
+    borderStyle: "round"
+  } : opts.boxenOpts;
 
-  const message = "\n" + require( "boxen" )( opts.message, opts.boxenOpts );
+  let message;
+
+  if ( opts.boxenOpts ) {
+    message = "\n" + boxen()( opts.message, opts.boxenOpts ) + "\n";
+  } else {
+    message = "\n" + opts.message + "\n";
+  }
 
   /* eslint-disable */
   if ( opts.defer === false ) {
@@ -53,7 +86,7 @@ function notifyFix( opts ) {
 }
 
 export default function notify( pkg, notifierOpts ) {
-  const notifier = updateNotifier( Object.assign( { pkg }, notifierOpts.options ) );
+  const notifier = updateNotifier()( Object.assign( { pkg }, notifierOpts.options ) );
   notifier.notify = notifyFix;
   notifier.notify( notifierOpts.notify );
 }

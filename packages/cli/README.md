@@ -7,13 +7,14 @@ A cli helper.
 Adapted from [meow](https://github.com/sindresorhus/meow), plus some features:
 
 - Includes [import-local](https://github.com/sindresorhus/import-local).
-- Includes [update-notifier](https://github.com/yeoman/update-notifier).
-  - We change the update notifier message if Yarn is detected.
 - Passing a `configFiles` value automates the requiring of a config file. The user will be able to override the default using `--config=another-file.js`.
 - Passing a `configKey` value automates the requiring of a config object from the `package.json` file, if a config file is not available.
 - Support for `@quase/config`'s schema, defaults application, and validation.
   - The options are validated automatically against the schema. If validation fails, an error is throw. If the error is left unhandled, the promise will loudly reject.
 - Automatic help generation from the schema.
+- Supports [update-notifier](https://github.com/yeoman/update-notifier).
+  - Update message is changed if Yarn is detected.
+  - If you want to use it, you have to install it and set `notifier` to `true` or an object (like in the example below).
 
 ## Usage example
 
