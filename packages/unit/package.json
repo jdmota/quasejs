@@ -11,6 +11,9 @@
   "bin": {
     "quase-unit": "bin/index.js"
   },
+  "engines": {
+		"node": ">=8"
+	},
   "dependencies": {
     "@quase/cli": "0.4.0-0",
     "@quase/error": "0.1.0-0",

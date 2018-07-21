@@ -37,7 +37,9 @@ export function lowerPath( file: Path ) {
 // Urls
 /* eslint-env browser */
 
-const URL = ( typeof window !== "undefined" && window.URL ) || require( "url" ).URL;
+const URL =
+  ( typeof window !== "undefined" && window.URL ) || // eslint-disable-line node/no-unsupported-features/node-builtins
+  require( "url" ).URL;
 const LOCATION = ( typeof window !== "undefined" && window.location ) || new URL( "http://localhost/" );
 
 const reAbsUrl = /^[a-z][a-z0-9+.-]*:/;

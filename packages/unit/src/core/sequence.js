@@ -7,8 +7,8 @@ import type { ContextRef } from "./context";
 
 class ProxyImpl<R: IRunnableResult, T: GenericRunnable<R>> implements GenericRunnable<R> {
   test: T;
-  seq: SequenceImpl<R, T>;
-  proxyFn: ( ContextRef, T, SequenceImpl<R, T> ) => IRunReturn<R>;
+  seq: SequenceImpl<R, T>; // eslint-disable-line no-use-before-define
+  proxyFn: ( ContextRef, T, SequenceImpl<R, T> ) => IRunReturn<R>; // eslint-disable-line no-use-before-define
   constructor( test: T, seq: SequenceImpl<R, T>, proxyFn: ( ContextRef, T, SequenceImpl<R, T> ) => IRunReturn<R> ) {
     this.test = test;
     this.seq = seq;

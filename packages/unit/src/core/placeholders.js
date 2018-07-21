@@ -13,7 +13,7 @@ const { getStack } = require( "@quase/error" );
 
 // Public interface for suite
 class GroupApi {
-  _current: GroupPlaceholder;
+  _current: GroupPlaceholder; // eslint-disable-line no-use-before-define
 
   constructor( placeholder: GroupPlaceholder ) {
     this._current = placeholder;
