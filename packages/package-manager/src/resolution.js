@@ -53,7 +53,7 @@ class Resolution implements ImmutableResolution {
 
   hashCode() {
     if ( this._hashCode == null ) {
-      this._hashCode = `${VERSION}-${hash( this.toString() )}`;
+      this._hashCode = hash( this.toString() );
     }
     return this._hashCode;
   }
@@ -62,7 +62,7 @@ class Resolution implements ImmutableResolution {
     if ( this._string == null ) {
       const arr = [];
       this.buildFlat( arr );
-      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, , deps ] ) => `${toStr( resolved )},${deps.join( "," )}` ).join( "\n" );
+      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, integrity, deps ] ) => `${toStr( resolved )},${toStr( integrity )},${deps.join( "," )}` ).join( "\n" );
     }
     return this._string;
   }
