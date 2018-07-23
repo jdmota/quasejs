@@ -1,9 +1,9 @@
 // @flow
 import { type Name, toStr } from "../types";
+import { readJSON } from "../utils";
 import { read as readPkg } from "../pkg";
 import { shouldReuse as shouldReuseLockfile, read as readLockfile } from "../lockfile";
 
-const fs = require( "fs-extra" );
 const path = require( "path" );
 
 function compare( a, b, type ) {
@@ -63,12 +63,9 @@ async function integrity( folder, lockfile ) {
       // TODO report if the file does not exist
       // TODO check folder integrity?
 
-      const integrityFile = await fs.readFile(
-        path.join( folder, "node_modules", name, ".qpm-integrity" ),
-        "utf8"
+      const { integrity } = await readJSON(
+        path.join( folder, "node_modules", name, ".qpm" )
       );
-
-      const integrity = integrityFile.trim();
 
       if ( integrity !== hash ) {
         throw new Error(

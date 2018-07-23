@@ -16,7 +16,14 @@ type ResolvedObj = {
   deps: { [name: Name]: Version }
 };
 
-export type { Name, Version, ExactVersion, Resolved, Integrity, ResolvedObj };
+type PartialResolvedObj = {
+  name: Name,
+  version: ExactVersion,
+  resolved: Resolved,
+  integrity: Integrity
+};
+
+export type { Name, Version, ExactVersion, Resolved, Integrity, PartialResolvedObj, ResolvedObj };
 
 export function toStr( str: Name | Version | ExactVersion | Resolved | Integrity ): string {
   return str;

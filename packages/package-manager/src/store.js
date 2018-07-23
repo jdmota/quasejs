@@ -1,9 +1,8 @@
 // @flow
-import { read, crawl } from "./utils";
-import type { Name, Resolved, Integrity, Options } from "./types";
-import { pathJoin } from "./types";
+import { hash, read, readJSON, crawl } from "./utils";
+import type { Name, Resolved, Integrity, PartialResolvedObj, Options } from "./types";
+import { toStr, pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
-import { buildId } from "./resolve";
 import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
 
 const fs = require( "fs-extra" );
@@ -12,50 +11,76 @@ const pacote = require( "pacote" );
 const symlinkDir = require( "symlink-dir" );
 const homedir = require( "os" ).homedir();
 
+const MAX_COLLISIONS = 10;
+
 const STORE_VERSION = "1";
 
 /*
 File system layout:
 
-Files folder: STORE/VERSION/<id>/files
+pkgId = <hash of resolved + integrity>-<index collision>
+resolutionId = <hash of resolution set>-<index collision>
 
-A resolution set folder: STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>
-Resolution set converted to string: STORE/modules/<id>/res/<hash of resolution set>-<index collision>.qpm-res
+Files folder: STORE/VERSION/<pkgId>/files
+Package info: STORE/VERSION/<pkgId>/files/.qpm
 
-STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/<...> === STORE/VERSION/<id>/files/<...> [hard link]
-STORE/VERSION/<id>/res/<hash of resolution set>-<index collision>/node_modules has symlinks
+A resolution set folder: STORE/VERSION/<pkgId>/res/<resolutionId>
+Resolution set converted to string: STORE/VERSION/<pkgId>/res/<resolutionId>.qpm-res
 
-.qpm-integrity and .qpm-res files also serve to tell that the job was done
+STORE/VERSION/<pkgId>/res/<resolutionId>/<...> === STORE/VERSION/<pkgId>/files/<...> [hard link]
+STORE/VERSION/<pkgId>/res/<resolutionId>/node_modules has symlinks
+
+.qpm and .qpm-res files also serve to tell that the job was done
 
 */
+
+function buildId( resolved: Resolved, integrity: Integrity ): string {
+  return hash( `${toStr( resolved )}/${toStr( integrity )}` );
+}
 
 export default class Store {
 
   static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
 
-  +map: Map<Resolved, Promise<string>>;
   +store: string; // The path includes the version of the store
+  +opts: Options;
 
-  constructor( store: string ) {
-    this.map = new Map();
-    this.store = path.resolve( store, STORE_VERSION );
+  constructor( opts: Options ) {
+    this.store = path.resolve( opts.store, STORE_VERSION );
+    this.opts = opts;
   }
 
   // Make sure package is in the store
-  async extract( resolved: Resolved, opts: Options, integrity: Integrity ) {
-    const id = buildId( resolved, integrity );
-    const folder = path.join( this.store, id, "files" );
-    const integrityFile = path.join( folder, ".qpm-integrity" );
-    const currentIntegrity = await read( integrityFile );
+  async extract( { resolved, integrity }: PartialResolvedObj ): Promise<string> {
 
-    if ( !currentIntegrity || currentIntegrity !== integrity ) {
-      // Clean up folder just in case
-      await fs.emptyDir( folder );
-      await pacote.extract( resolved, folder, pacoteOptions( opts, integrity ) );
-      await fs.writeFile( integrityFile, integrity );
+    let collisionIdx = 0;
+
+    while ( true ) {
+
+      const id = `${buildId( resolved, integrity )}-${collisionIdx}`;
+      const folder = path.join( this.store, id, "files" );
+      const idFile = path.join( folder, ".qpm" );
+      const currentID = await readJSON( idFile );
+
+      if ( !currentID.resolved || !currentID.integrity ) {
+        // pacote.extract already empties and ensures the folder's existance
+        await pacote.extract( resolved, folder, pacoteOptions( this.opts, integrity ) );
+        await fs.writeFile( idFile, JSON.stringify( { resolved, integrity } ) );
+        return folder;
+      }
+
+      if ( currentID.resolved === resolved && currentID.integrity === integrity ) {
+        return folder;
+      }
+
+      if ( collisionIdx++ > MAX_COLLISIONS ) {
+        break;
+      }
+
     }
 
-    return id;
+    throw new Error( `Too many collisions?... '${toStr( resolved )}'` );
+
   }
 
   async removeExcess( folder: string, set: ImmutableResolutionSet ) {
@@ -73,63 +98,53 @@ export default class Store {
     return Promise.all( promises );
   }
 
-  async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
-    const promises = [];
+  async ensureNodeModulesFolder( folder: string ): Promise<string> {
     const nodeModulesFolder = path.join( folder, "node_modules" );
-
     await fs.ensureDir( nodeModulesFolder );
+    return nodeModulesFolder;
+  }
+
+  async linkOneNodeModule( folder: string, res: ImmutableResolution, fake: ?boolean ) {
+    const resFolder = await res.job;
 
     if ( fake ) {
-      set.forEach( res => {
-        promises.push(
-          this.createResolution( res ).then( async resFolder => {
-            const filesFolder = path.join( path.dirname( path.dirname( resFolder ) ), "files" );
-            const depFolder = pathJoin( folder, "node_modules", res.data.name );
+      const filesFolder = path.resolve( resFolder, "../../files" );
+      const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
-            await crawl( filesFolder, item => {
-              if ( item.stats.isFile() ) {
-                const relative = path.relative( filesFolder, item.path );
-                const dest = path.resolve( depFolder, relative );
-                return (
-                  /\.js$/.test( dest ) ?
-                    fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
-                    fs.copy( item.path, dest )
-                );
-              }
-            } );
-          } )
-        );
+      await crawl( filesFolder, item => {
+        if ( item.stats.isFile() ) {
+          const relative = path.relative( filesFolder, item.path );
+          const dest = path.resolve( depFolder, relative );
+          return (
+            /\.js$/.test( dest ) ?
+              fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
+              fs.copy( item.path, dest )
+          );
+        }
       } );
-
-      promises.push( this.removeExcess( nodeModulesFolder, set ) );
-
     } else {
-      set.forEach( res => {
-        promises.push(
-          this.createResolution( res ).then( resFolder => {
-            return symlinkDir( resFolder, pathJoin( folder, "node_modules", res.data.name ) );
-          } )
-        );
-      } );
+      await symlinkDir( resFolder, pathJoin( folder, "node_modules", res.data.name ) );
     }
+  }
+
+  async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
+    const promises = [];
+    const nodeModulesFolder = await this.ensureNodeModulesFolder( folder );
+
+    if ( fake ) {
+      promises.push( this.removeExcess( nodeModulesFolder, set ) );
+    }
+
+    set.forEach( res => {
+      promises.push( this.linkOneNodeModule( folder, res, fake ) );
+    } );
 
     await Promise.all( promises );
   }
 
-  createResolution( resolution: ImmutableResolution ): Promise<string> {
-    let p = this.map.get( resolution.data.resolved );
-    if ( !p ) {
-      p = this._createResolution( resolution );
-      this.map.set( resolution.data.resolved, p );
-    }
-    return p;
-  }
+  async createResolution( filesFolder: string, resolution: ImmutableResolution ): Promise<string> {
 
-  async _createResolution( resolution: ImmutableResolution ): Promise<string> {
-
-    const id = buildId( resolution.data.resolved, resolution.data.integrity );
-    const filesFolder = path.join( this.store, id, "files" );
-    const resFolders = path.join( this.store, id, "res" );
+    const resFolders = path.resolve( filesFolder, "../res" );
     const hash = resolution.hashCode(); // The hash includes the Resolution format version
     let collisionIdx = 0;
 
@@ -168,12 +183,12 @@ export default class Store {
 
       }
 
-      if ( collisionIdx++ > 20 ) {
+      if ( collisionIdx++ > MAX_COLLISIONS ) {
         break;
       }
     }
 
-    throw new Error( `Too many collisions?... '${id}'` );
+    throw new Error( `Too many collisions?... '${hash}'` );
   }
 
 }

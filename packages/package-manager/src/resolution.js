@@ -1,21 +1,16 @@
 // @flow
-import { mapGet, hash } from "./utils";
+import { hash } from "./utils";
 import { toStr } from "./types";
-import type { Name, ExactVersion, Resolved, Integrity } from "./types";
+import type { Name, Resolved, PartialResolvedObj } from "./types";
 import type { Entry } from "./lockfile";
 
 const VERSION = 1;
-
-export type Data = {
-  name: Name,
-  version: ExactVersion,
-  resolved: Resolved,
-  integrity: Integrity
-};
+const EMPTY_PROMISE = new Promise( () => {} );
 
 export interface ImmutableResolution {
-  +data: Data;
+  +data: PartialResolvedObj;
   +set: ImmutableResolutionSet; // eslint-disable-line no-use-before-define
+  +job: Promise<string>;
   buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): number;
   hashCode(): string;
 }
@@ -23,15 +18,16 @@ export interface ImmutableResolution {
 export interface ImmutableResolutionSet {
   +size: number;
   has( name: Name ): boolean;
-  forEach( callback: ImmutableResolution => ?boolean ): void;
+  forEach( callback: ImmutableResolution => void ): void;
   buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): Array<Entry>;
 }
 
 // A package resolution
 class Resolution implements ImmutableResolution {
 
-  +data: Data;
-  +set: ImmutableResolutionSet;
+  +data: PartialResolvedObj;
+  +set: ResolutionSet; // eslint-disable-line no-use-before-define
+  job: Promise<string>;
   _hashCode: ?string;
   _string: ?string;
 
@@ -44,11 +40,12 @@ class Resolution implements ImmutableResolution {
     return 1;
   }
 
-  constructor( data: Data, set: ImmutableResolutionSet ) {
+  constructor( data: PartialResolvedObj ) {
     this.data = data;
-    this.set = set;
+    this.set = new ResolutionSet();
     this._hashCode = null;
     this._string = null;
+    this.job = EMPTY_PROMISE;
   }
 
   hashCode() {
@@ -101,7 +98,7 @@ type Node = {
 };
 
 // A set of sorted resolutions
-class ResolutionSet implements ImmutableResolutionSet {
+export class ResolutionSet implements ImmutableResolutionSet {
 
   +names: Set<Name>;
   size: number;
@@ -121,7 +118,7 @@ class ResolutionSet implements ImmutableResolutionSet {
     return arr;
   }
 
-  traverse( node: Node, callback: ImmutableResolution => ?boolean ) {
+  traverse( node: Node, callback: ImmutableResolution => void ) {
 
     const left = node.left;
     const right = node.right;
@@ -130,9 +127,7 @@ class ResolutionSet implements ImmutableResolutionSet {
       this.traverse( left, callback );
     }
 
-    if ( callback( node.value ) === false ) {
-      return;
-    }
+    callback( node.value );
 
     if ( right ) {
       this.traverse( right, callback );
@@ -140,7 +135,7 @@ class ResolutionSet implements ImmutableResolutionSet {
 
   }
 
-  forEach( callback: ImmutableResolution => ?boolean ) {
+  forEach( callback: ImmutableResolution => void ) {
     if ( this._root ) {
       this.traverse( this._root, callback );
     }
@@ -203,43 +198,26 @@ class ResolutionSet implements ImmutableResolutionSet {
 
 }
 
-type Cb = ( set: ResolutionSet ) => Promise<any>;
-
-async function createResolution( globalSet: ResolutionSet, data: Data, callback: Cb ): Promise<ImmutableResolution> {
-  const set = new ResolutionSet();
-  await callback( set );
-  return globalSet.add( new Resolution( data, set ) );
-}
-
 export class Tree {
 
   +set: ResolutionSet;
-  +map: Map<Resolved, Promise<ImmutableResolution>>;
 
   constructor() {
     this.set = new ResolutionSet();
-    this.map = new Map();
   }
 
-  async createResolution( data: Data, callback: Cb ): Promise<ImmutableResolution> {
-    let p = this.map.get( data.resolved );
-    if ( !p ) {
-      p = createResolution( this.set, data, callback );
-      this.map.set( data.resolved, p );
+  createResolution( data: PartialResolvedObj, job: Resolution => Promise<string> ): ImmutableResolution {
+    const resolution = new Resolution( data );
+    const prev = this.set.add( resolution );
+    if ( resolution === prev ) {
+      resolution.job = job( resolution );
+      return resolution;
     }
-    return p;
+    return prev;
   }
 
   generate( arr: Array<Entry>, map: Map<Resolved, number> ) {
     this.set.buildFlat( arr, map );
-  }
-
-  async extractDeps( allDeps: Resolved[] ): Promise<ImmutableResolutionSet> {
-    const set = new ResolutionSet();
-    for ( const key of allDeps ) {
-      set.add( await mapGet( this.map, key ) );
-    }
-    return set;
   }
 
 }

@@ -19,7 +19,7 @@ function guessDependencyType( name: string, pkg: Object ): DependenciesType {
 }
 
 export async function read( folder: string ): Promise<Object> {
-  const x = await readPkg( folder, { normalize: false } );
+  const x = await readPkg( { cwd: folder, normalize: false } );
   normalize( x );
   return x;
 }

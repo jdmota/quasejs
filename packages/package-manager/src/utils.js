@@ -21,7 +21,7 @@ export function mapGet<K, V>( map: Map<K, V>, key: K ): V {
 }
 
 export function hash( input: string ) {
-  return crypto.createHash( "md5" ).update( input ).digest( "hex" ).slice( 0, 10 );
+  return crypto.createHash( "md5" ).update( input ).digest( "hex" ).slice( 0, 20 );
 }
 
 export async function read( p: string ): Promise<string> {
@@ -32,6 +32,37 @@ export async function read( p: string ): Promise<string> {
       return "";
     }
     throw e;
+  }
+}
+
+export async function readJSON( p: string ): Promise<Object> {
+  try {
+    const content = await fs.readFile( p, "utf8" );
+    try {
+      const parsed = JSON.parse( content );
+      if ( isObject( parsed ) ) {
+        return parsed;
+      }
+      return {};
+    } catch ( e ) {
+      return {};
+    }
+  } catch ( e ) {
+    if ( e.code === "ENOENT" ) {
+      return {};
+    }
+    throw e;
+  }
+}
+
+export async function readdir( dir: string ): Promise<string[]> {
+  try {
+    return await fs.readdir( dir );
+  } catch ( err ) {
+    if ( err.code === "ENOENT" ) {
+      return [];
+    }
+    throw err;
   }
 }
 

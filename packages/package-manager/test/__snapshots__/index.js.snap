@@ -31,7 +31,10 @@ exports[`installer basic 1`] = `
      'normalize-package-data': '^2.3.2',
      'path-type': '^2.0.0' },
   devDependencies: { ava: '*', xo: '*' },
-  xo: { esnext: true } }
+  xo: { esnext: true },
+  _resolved: '',
+  _integrity: 'sha1-jvHAYjxqbbDcZxPEv6xGMysjaPg=',
+  _from: 'https://registry.npmjs.org/read-pkg/-/read-pkg-2.0.0.tgz' }
 { name: 'write-pkg',
   version: '3.1.0',
   description: 'Write a package.json file',
@@ -55,7 +58,10 @@ exports[`installer basic 1`] = `
      'package' ],
   dependencies: { 'sort-keys': '^2.0.0', 'write-json-file': '^2.2.0' },
   devDependencies:
-   { ava: '*', 'read-pkg': '^2.0.0', tempfile: '^2.0.0', xo: '*' } }
+   { ava: '*', 'read-pkg': '^2.0.0', tempfile: '^2.0.0', xo: '*' },
+  _resolved: '',
+  _integrity: 'sha1-AwqZlMyZk9JbTnWp8aGSNgcpHOk=',
+  _from: 'https://registry.npmjs.org/write-pkg/-/write-pkg-3.1.0.tgz' }
 
 child process exited with code 0"
 `;
