@@ -1,8 +1,10 @@
 // @flow
 import { hash, read, readJSON, crawl } from "./utils";
-import type { Name, Resolved, Integrity, PartialResolvedObj, Options } from "./types";
+import type { Name, Resolved, Integrity, PartialResolvedObj, Options, Warning } from "./types";
 import { toStr, pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
+import linkBins from "./link-bins";
+import { read as readPkg } from "./pkg";
 import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
 
 const fs = require( "fs-extra" );
@@ -44,10 +46,12 @@ export default class Store {
 
   +store: string; // The path includes the version of the store
   +opts: Options;
+  +warn: Warning => void;
 
-  constructor( opts: Options ) {
+  constructor( opts: Options, warn: Warning => void ) {
     this.store = path.resolve( opts.store, STORE_VERSION );
     this.opts = opts;
+    this.warn = warn;
   }
 
   // Make sure package is in the store
@@ -90,7 +94,7 @@ export default class Store {
     for ( const nameStr of await fs.readdir( folder ) ) {
       const name: Name = nameStr;
 
-      if ( !set.has( name ) ) {
+      if ( name !== ".bin" && !set.has( name ) ) {
         promises.push( fs.remove( path.join( folder, nameStr ) ) );
       }
     }
@@ -104,12 +108,27 @@ export default class Store {
     return nodeModulesFolder;
   }
 
-  async linkOneNodeModule( folder: string, res: ImmutableResolution, fake: ?boolean ) {
+  async ensureBinsFolder( folder: string ): Promise<string> {
+    const binsFolder = path.join( folder, "node_modules", ".bin" );
+    await fs.ensureDir( binsFolder );
+    return binsFolder;
+  }
+
+  async linkOneNodeModule( folder: string, res: ImmutableResolution, binOpts: ?Object ) {
     const resFolder = await res.job;
 
-    if ( fake ) {
+    if ( binOpts ) {
       const filesFolder = path.resolve( resFolder, "../../files" );
       const depFolder = pathJoin( folder, "node_modules", res.data.name );
+      const { binPath, usedCmds } = binOpts;
+
+      await linkBins( {
+        pkg: await readPkg( filesFolder ),
+        pkgPath: filesFolder,
+        binPath,
+        usedCmds,
+        warn: this.warn
+      } );
 
       await crawl( filesFolder, item => {
         if ( item.stats.isFile() ) {
@@ -130,13 +149,18 @@ export default class Store {
   async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
     const promises = [];
     const nodeModulesFolder = await this.ensureNodeModulesFolder( folder );
+    let binOpts;
 
     if ( fake ) {
       promises.push( this.removeExcess( nodeModulesFolder, set ) );
+      binOpts = {
+        binPath: await this.ensureBinsFolder( folder ),
+        usedCmds: {}
+      };
     }
 
     set.forEach( res => {
-      promises.push( this.linkOneNodeModule( folder, res, fake ) );
+      promises.push( this.linkOneNodeModule( folder, res, binOpts ) );
     } );
 
     await Promise.all( promises );

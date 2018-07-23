@@ -43,3 +43,9 @@ export type Options = {
   flat?: ?boolean,
   update?: ?boolean
 };
+
+export type Warning = {
+  code: string,
+  message: string,
+  [key: string]: any
+};

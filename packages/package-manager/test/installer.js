@@ -52,16 +52,20 @@ describe( "installer", () => {
 
       const processOutput = await testProcess( path.resolve( __dirname, "test-folders/package/index.js" ) );
       const lockfile = await fs.readFile( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ), "utf8" );
+      const bins = await fs.readdir( path.resolve( __dirname, "test-folders/package/node_modules/.bin" ) );
 
       if ( outputs ) {
-        expect( processOutput ).toBe( outputs.processOutput );
-        expect( lockfile ).toBe( outputs.lockfile );
+        expect( processOutput ).toEqual( outputs.processOutput );
+        expect( lockfile ).toEqual( outputs.lockfile );
+        expect( bins ).toEqual( outputs.bins );
       } else {
         outputs = {};
         outputs.processOutput = processOutput;
         outputs.lockfile = lockfile;
+        outputs.bins = bins;
         expect( processOutput ).toMatchSnapshot();
         expect( lockfile ).toMatchSnapshot();
+        expect( bins ).toMatchSnapshot();
       }
     }
 

@@ -7,6 +7,7 @@
     "read-pkg": "2.0.0"
   },
   "devDependencies": {
+    "lock-cli": "1.2.0",
     "write-pkg": "3.1.0"
   }
 }

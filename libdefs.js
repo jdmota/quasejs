@@ -17,6 +17,7 @@ declare module "@quase/get-plugins" { declare module.exports: any; }
 declare module "@quase/memory-fs" { declare module.exports: any; }
 declare module "@quase/path-url" { declare module.exports: any; }
 declare module "@quase/source-map" { declare module.exports: any; }
+declare module "@zkochan/cmd-shim" { declare module.exports: any; }
 declare module "ansi-styles" { declare module.exports: any; }
 declare module "babel-preset-minify" { declare module.exports: any; }
 declare module "babylon" { declare module.exports: any; }
@@ -67,6 +68,7 @@ declare module "require-relative" { declare module.exports: any; }
 declare module "resolve" { declare module.exports: any; }
 declare module "resolve-from" { declare module.exports: any; }
 declare module "slash" { declare module.exports: any; }
+declare module "sort-keys" { declare module.exports: any; }
 declare module "source-map" { declare module.exports: any; }
 declare module "strip-url-auth" { declare module.exports: any; }
 declare module "sw-precache" { declare module.exports: any; }

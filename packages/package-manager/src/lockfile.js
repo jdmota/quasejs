@@ -5,6 +5,7 @@ import { isObject, isEmpty } from "./utils";
 const path = require( "path" );
 const loadJsonFile = require( "load-json-file" );
 const writeJsonFile = require( "write-json-file" );
+const sortKeys = require( "sort-keys" );
 
 const FILENAME = "qpm-lockfile.json";
 const LOCK_VERSION = "1";
@@ -86,5 +87,8 @@ export async function read( folder: string ): Promise<Lockfile> {
 }
 
 export function write( folder: string, json: Object ): Promise<void> {
+  json.deps = sortKeys( json.deps );
+  json.devDeps = sortKeys( json.devDeps );
+  json.optionalDeps = sortKeys( json.optionalDeps );
   return writeJsonFile( path.resolve( folder, FILENAME ), json );
 }

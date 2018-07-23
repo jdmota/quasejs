@@ -1,6 +1,6 @@
 // @flow
 import reporter from "../reporters/installer";
-import type { Name, Version, Resolved, Options } from "../types";
+import type { Name, Version, Resolved, Options, Warning } from "../types";
 import { mapGet } from "../utils";
 import { read as readPkg } from "../pkg";
 import {
@@ -65,11 +65,15 @@ export class Installer extends EventEmitter {
   +tree: Tree;
   +store: Store;
   +opts: Options;
+  +warn: Warning => void;
 
   constructor( opts: Options ) {
     super();
     this.opts = opts;
-    this.store = new Store( opts );
+    this.warn = ( warning: Warning ) => {
+      this.emit( "warning", warning );
+    };
+    this.store = new Store( opts, this.warn );
     this.tree = new Tree();
   }
 

@@ -1,5 +1,8 @@
 // @flow
+import type { Warning } from "../types";
 import type { Installer } from "../commands/installer";
+
+/* eslint-disable no-console */
 
 const ora = require( "ora" );
 
@@ -19,6 +22,7 @@ class InstallReporter {
 
   listen( installer: Installer ) {
     installer.on( "start", this.start.bind( this ) );
+    installer.on( "warning", this.warning.bind( this ) );
     installer.on( "folder", this.folder.bind( this ) );
     installer.on( "lockfile", this.lockfile.bind( this ) );
     installer.on( "jobsStart", this.jobsStart.bind( this ) );
@@ -31,6 +35,10 @@ class InstallReporter {
   start() {
     this.startTime = Date.now();
     this.spinner = ora( "Waiting..." ).start();
+  }
+
+  warning( warning: Warning ) {
+    console.warn( `WARN: ${warning.message}` );
   }
 
   folder( { folder } ) {
