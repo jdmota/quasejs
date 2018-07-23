@@ -1,4 +1,4 @@
-import installer from "../src/commands/installer";
+import { Installer } from "../src/commands/installer";
 import check from "../src/commands/check";
 
 const childProcess = require( "child_process" );
@@ -43,12 +43,12 @@ describe( "installer", () => {
 
     async function install() {
       await fs.remove( path.resolve( __dirname, "test-folders/package/node_modules" ) );
-      await installer( {
+      await new Installer( {
         preferOffline: true,
         folder: path.resolve( __dirname, "test-folders/package" ),
         cache: path.join( store, "cache" ),
         store
-      } );
+      } ).install();
 
       const processOutput = await testProcess( path.resolve( __dirname, "test-folders/package/index.js" ) );
       const lockfile = await fs.readFile( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ), "utf8" );

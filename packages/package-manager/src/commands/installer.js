@@ -1,4 +1,5 @@
 // @flow
+import reporter from "../reporters/installer";
 import type { Name, Version, Resolved, Options } from "../types";
 import { mapGet } from "../utils";
 import { read as readPkg } from "../pkg";
@@ -11,6 +12,8 @@ import {
 import resolve from "../resolve";
 import { Tree } from "../resolution";
 import Store from "../store";
+
+const { EventEmitter } = require( "events" );
 
 type DepType = "deps" | "devDeps" | "optionalDeps";
 
@@ -61,75 +64,111 @@ async function install( opts, tree, store, lockfile, obj ) {
   return res;
 }
 
-export default async function( opts: Options ) {
+export class Installer extends EventEmitter {
 
-  const folder = opts.folder;
-  const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
+  +tree: Tree;
+  +store: Store;
+  +opts: Options;
 
-  const reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+  constructor( opts: Options ) {
+    super();
+    this.opts = opts;
+    this.store = new Store( opts.store );
+    this.tree = new Tree();
+  }
 
-  const newLockfile = createLockfile();
+  async install() {
 
-  const store = new Store( opts.store );
-  const tree = new Tree();
+    this.emit( "start" );
 
-  const promises = [];
+    const { opts, store, tree } = this;
 
-  const allDeps = [];
+    const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
 
-  async function resolveDep( name: Name, version: Version, depType: DepType ) {
-    if ( reuseLockfile ) {
-      const dep = lockfile[ depType ][ name ];
-      if ( dep ) {
-        const { savedVersion, resolved, i } = dep;
-        if ( savedVersion === version ) {
-          newLockfile[ depType ][ name ] = dep;
-          allDeps.push( resolved );
-          return installFromLock( opts, tree, store, lockfile, i );
+    const reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+
+    this.emit( "folder", { folder: opts.folder } );
+    this.emit( "lockfile", { reusing: reuseLockfile } );
+
+    const newLockfile = createLockfile();
+
+    const promises = [];
+
+    const allDeps = [];
+
+    async function resolveDep( name: Name, version: Version, depType: DepType ) {
+      if ( reuseLockfile ) {
+        const dep = lockfile[ depType ][ name ];
+        if ( dep ) {
+          const { savedVersion, resolved, i } = dep;
+          if ( savedVersion === version ) {
+            newLockfile[ depType ][ name ] = dep;
+            allDeps.push( resolved );
+            return installFromLock( opts, tree, store, lockfile, i );
+          }
         }
       }
+
+      const obj = await resolve( name, version, opts );
+      newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
+      allDeps.push( obj.resolved );
+      return install( opts, tree, store, lockfile, obj );
     }
 
-    const obj = await resolve( name, version, opts );
-    newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
-    allDeps.push( obj.resolved );
-    return install( opts, tree, store, lockfile, obj );
-  }
+    for ( const nameStr in pkg.dependencies ) {
+      // $FlowIgnore
+      const name: Name = nameStr;
 
-  for ( const nameStr in pkg.dependencies ) {
+      promises.push( resolveDep( name, pkg.dependencies[ name ], "deps" ) );
+    }
+
+    for ( const nameStr in pkg.devDependencies ) {
+      // $FlowIgnore
+      const name: Name = nameStr;
+
+      promises.push( resolveDep( name, pkg.devDependencies[ name ], "devDeps" ) );
+    }
+
+    this.emit( "jobsStart", { count: promises.length } );
+
+    for ( const p of promises ) {
+      await p;
+      this.emit( "jobDone" );
+    }
+
+    this.emit( "linking" );
+
+    await store.linkNodeModules( opts.folder, await tree.extractDeps( allDeps ), true );
+
+    this.emit( "updateLockfile" );
+
+    const map: Map<Resolved, number> = new Map();
+    tree.generate( newLockfile.resolutions, map );
+
+    for ( const nameStr in newLockfile.deps ) {
     // $FlowIgnore
-    const name: Name = nameStr;
+      const name: Name = nameStr;
 
-    promises.push( resolveDep( name, pkg.dependencies[ name ], "deps" ) );
-  }
+      newLockfile.deps[ name ].i = mapGet( map, newLockfile.deps[ name ].resolved );
+    }
 
-  for ( const nameStr in pkg.devDependencies ) {
+    for ( const nameStr in newLockfile.devDeps ) {
     // $FlowIgnore
-    const name: Name = nameStr;
+      const name: Name = nameStr;
 
-    promises.push( resolveDep( name, pkg.devDependencies[ name ], "devDeps" ) );
+      newLockfile.devDeps[ name ].i = mapGet( map, newLockfile.devDeps[ name ].resolved );
+    }
+
+    await writeLockfile( opts.folder, newLockfile );
+
+    this.emit( "done" );
+
   }
 
-  await Promise.all( promises );
-  await store.linkNodeModules( folder, await tree.extractDeps( allDeps ), true );
+}
 
-  const map: Map<Resolved, number> = new Map();
-  tree.generate( newLockfile.resolutions, map );
-
-  for ( const nameStr in newLockfile.deps ) {
-    // $FlowIgnore
-    const name: Name = nameStr;
-
-    newLockfile.deps[ name ].i = mapGet( map, newLockfile.deps[ name ].resolved );
-  }
-
-  for ( const nameStr in newLockfile.devDeps ) {
-    // $FlowIgnore
-    const name: Name = nameStr;
-
-    newLockfile.devDeps[ name ].i = mapGet( map, newLockfile.devDeps[ name ].resolved );
-  }
-
-  await writeLockfile( folder, newLockfile );
-
+export default function( opts: Options ) {
+  const installer = new Installer( opts );
+  reporter( installer );
+  return installer.install();
 }

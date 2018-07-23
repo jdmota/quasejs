@@ -45,7 +45,7 @@ export function run( command: string, _opts: Object ) {
   switch ( command ) {
 
     case "install":
-      return installer( options ).then( showDone, showError );
+      return installer( options ).then( null, showError );
 
     case "upgrade":
       options.update = true;
