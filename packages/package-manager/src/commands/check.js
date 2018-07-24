@@ -110,8 +110,6 @@ export class Checker extends EventEmitter {
     this.emit( "integrity" );
 
     await integrity( folder, lockfile );
-
-    this.emit( "done" );
   }
 
 }
@@ -119,5 +117,9 @@ export class Checker extends EventEmitter {
 export default function( folder: string ) {
   const checker = new Checker();
   reporter( checker );
-  return checker.check( folder );
+  return checker.check( folder ).then( () => {
+    checker.emit( "done" );
+  }, err => {
+    checker.emit( "error", err );
+  } );
 }

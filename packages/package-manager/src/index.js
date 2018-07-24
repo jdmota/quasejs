@@ -45,17 +45,17 @@ export function run( command: string, _opts: Object ) {
   switch ( command ) {
 
     case "install":
-      return installer( options ).then( null, showError );
+      return installer( options );
 
     case "upgrade":
       options.update = true;
-      return installer( options ).then( showDone, showError );
+      return installer( options );
 
     case "normalizePkg":
       return readPkg( folder ).then( pkg => writePkg( folder, pkg ) ).then( showDone, showError );
 
     case "check":
-      return check( folder ).then( showDone, showError );
+      return check( folder );
 
     default:
       return showError( new Error( `Unknown ${command} command.` ) );

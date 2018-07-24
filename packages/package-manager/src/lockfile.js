@@ -1,6 +1,6 @@
 // @flow
 import type { Name, Version, ExactVersion, Resolved, Integrity } from "./types";
-import { isObject, isEmpty } from "./utils";
+import { isObject } from "./utils";
 
 const path = require( "path" );
 const loadJsonFile = require( "load-json-file" );
@@ -25,7 +25,8 @@ export type Lockfile = {|
   resolutions: Entry[],
   deps: Deps,
   devDeps: Deps,
-  optionalDeps: Deps
+  optionalDeps: Deps,
+  __new?: ?boolean
 |};
 
 function checkSameVersion( v: string ) {
@@ -52,7 +53,7 @@ function validateEntry( entry: Object ): boolean {
 }
 
 export function shouldReuse( lockfile: Object ): boolean {
-  if ( isEmpty( lockfile ) ) {
+  if ( lockfile.__new ) {
     return false;
   }
   invariant( typeof lockfile.v === "string" );
@@ -71,7 +72,8 @@ export function create(): Lockfile {
     resolutions: [],
     deps: {},
     devDeps: {},
-    optionalDeps: {}
+    optionalDeps: {},
+    __new: true
   };
 }
 
@@ -87,6 +89,7 @@ export async function read( folder: string ): Promise<Lockfile> {
 }
 
 export function write( folder: string, json: Object ): Promise<void> {
+  delete json.__new;
   json.deps = sortKeys( json.deps );
   json.devDeps = sortKeys( json.devDeps );
   json.optionalDeps = sortKeys( json.optionalDeps );

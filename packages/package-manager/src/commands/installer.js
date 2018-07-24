@@ -79,8 +79,6 @@ export class Installer extends EventEmitter {
 
   async install() {
 
-    this.emit( "start" );
-
     const { opts, store, tree } = this;
 
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
@@ -89,6 +87,7 @@ export class Installer extends EventEmitter {
 
     this.emit( "folder", { folder: opts.folder } );
     this.emit( "lockfile", { reusing: reuseLockfile } );
+    this.emit( "start" );
 
     const newLockfile = createLockfile();
 
@@ -168,8 +167,6 @@ export class Installer extends EventEmitter {
 
     await writeLockfile( opts.folder, newLockfile );
 
-    this.emit( "done" );
-
   }
 
 }
@@ -177,5 +174,9 @@ export class Installer extends EventEmitter {
 export default function( opts: Options ) {
   const installer = new Installer( opts );
   reporter( installer );
-  return installer.install();
+  return installer.install().then( () => {
+    installer.emit( "done" );
+  }, err => {
+    installer.emit( "error", err );
+  } );
 }
