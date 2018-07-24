@@ -1,10 +1,12 @@
 // @flow
+import reporter from "../reporters/check";
 import { type Name, toStr } from "../types";
 import { readJSON } from "../utils";
 import { read as readPkg } from "../pkg";
 import { shouldReuse as shouldReuseLockfile, read as readLockfile } from "../lockfile";
 
 const path = require( "path" );
+const { EventEmitter } = require( "events" );
 
 function compare( a, b, type ) {
 
@@ -13,11 +15,11 @@ function compare( a, b, type ) {
     const name: Name = nameStr;
 
     if ( !b[ name ] ) {
-      throw new Error( `Package.json has ${nameStr} but lockfile has not (on ${type})` );
+      throw new Error( `Package.json has ${nameStr} but lockfile has not (on ${type}).` );
     }
     if ( a[ name ] !== b[ name ].savedVersion ) {
       throw new Error(
-        `Package.json has ${nameStr} with version ${a[ name ]} but lockfile has version ${toStr( b[ name ].savedVersion )} (on ${type})`
+        `Package.json has ${nameStr} with version ${a[ name ]} but lockfile has version ${toStr( b[ name ].savedVersion )} (on ${type}).`
       );
     }
   }
@@ -27,7 +29,7 @@ function compare( a, b, type ) {
     const name: Name = nameStr;
 
     if ( !a[ name ] ) {
-      throw new Error( `Lockfile has ${nameStr} but package.json has not (on ${type})` );
+      throw new Error( `Lockfile has ${nameStr} but package.json has not (on ${type}).` );
     }
   }
 
@@ -43,8 +45,9 @@ async function integrity( folder, lockfile ) {
 
     const resolvedObj = lockfile.deps[ name ];
     const idx = resolvedObj.i;
+    const version = lockfile.resolutions[ idx ][ 1 ];
     const hash = lockfile.resolutions[ idx ][ 3 ];
-    checks.push( { name, hash } );
+    checks.push( { pkg: `${nameStr}@${toStr( version )}`, name, hash } );
   }
 
   for ( const nameStr in lockfile.devDeps ) {
@@ -53,23 +56,27 @@ async function integrity( folder, lockfile ) {
 
     const resolvedObj = lockfile.devDeps[ name ];
     const idx = resolvedObj.i;
+    const version = lockfile.resolutions[ idx ][ 1 ];
     const hash = lockfile.resolutions[ idx ][ 3 ];
-    checks.push( { name, hash } );
+    checks.push( { pkg: `${nameStr}@${toStr( version )}`, name, hash } );
   }
 
   return Promise.all(
-    checks.map( async( { name, hash } ) => {
+    checks.map( async( { pkg, name, hash } ) => {
 
-      // TODO report if the file does not exist
       // TODO check folder integrity?
 
       const { integrity } = await readJSON(
         path.join( folder, "node_modules", name, ".qpm" )
       );
 
+      if ( integrity === undefined ) {
+        throw new Error( `It seems that ${pkg} is not installed.` );
+      }
+
       if ( integrity !== hash ) {
         throw new Error(
-          `Expected integrity ${toStr( hash )} but found ${toStr( integrity )} for ${name}`
+          `Expected integrity ${toStr( hash )} but found ${integrity} for ${pkg}.`
         );
       }
 
@@ -77,19 +84,40 @@ async function integrity( folder, lockfile ) {
   );
 }
 
-export default async function( folder: string ) {
+export class Checker extends EventEmitter {
 
-  const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
+  async check( folder: string ) {
 
-  if ( !shouldReuseLockfile( lockfile ) ) {
-    throw new Error( "Lockfile not found." );
+    this.emit( "start" );
+
+    const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
+
+    if ( !shouldReuseLockfile( lockfile ) ) {
+      throw new Error( "Lockfile not found." );
+    }
+
+    const dependencies = pkg.dependencies || {};
+    const devDependencies = pkg.devDependencies || {};
+
+    this.emit( "comparing", "dependencies" );
+
+    compare( dependencies, lockfile.deps, "dependencies" );
+
+    this.emit( "comparing", "devDependencies" );
+
+    compare( devDependencies, lockfile.devDeps, "devDependencies" );
+
+    this.emit( "integrity" );
+
+    await integrity( folder, lockfile );
+
+    this.emit( "done" );
   }
 
-  const dependencies = pkg.dependencies || {};
-  const devDependencies = pkg.devDependencies || {};
+}
 
-  compare( dependencies, lockfile.deps, "dependencies" );
-  compare( devDependencies, lockfile.devDeps, "devDependencies" );
-
-  await integrity( folder, lockfile );
+export default function( folder: string ) {
+  const checker = new Checker();
+  reporter( checker );
+  return checker.check( folder );
 }

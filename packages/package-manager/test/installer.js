@@ -1,5 +1,5 @@
 import { Installer } from "../src/commands/installer";
-import check from "../src/commands/check";
+import { Checker } from "../src/commands/check";
 
 const childProcess = require( "child_process" );
 const fs = require( "fs-extra" );
@@ -81,7 +81,7 @@ describe( "installer", () => {
 
     await install(); // Install with cache and without lockfile
 
-    await check( path.resolve( __dirname, "test-folders/package" ) );
+    await new Checker().check( path.resolve( __dirname, "test-folders/package" ) );
 
     await fs.remove( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ) );
 
