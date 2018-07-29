@@ -58,11 +58,12 @@ export default class Store {
   // Make sure package is in the store
   async extract( { resolved, integrity }: PartialResolvedObj ): Promise<string> {
 
+    const hash = buildId( resolved, integrity );
     let collisionIdx = 0;
 
     while ( true ) {
 
-      const id = `${buildId( resolved, integrity )}-${collisionIdx}`;
+      const id = `${hash}-${collisionIdx}`;
       const folder = path.join( this.store, id, "files" );
       const idFile = path.join( folder, ".qpm" );
       const currentID = await readJSON( idFile );
@@ -120,7 +121,7 @@ export default class Store {
     const { binPath, usedCmds } = binOpts;
     const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
-    await linkBins( {
+    const p1 = linkBins( {
       pkg: await readPkg( filesFolder ),
       pkgPath: filesFolder,
       binPath,
@@ -128,17 +129,9 @@ export default class Store {
       warn: this.warn
     } );
 
-    await crawl( filesFolder, item => {
-      if ( item.stats.isFile() ) {
-        const relative = path.relative( filesFolder, item.path );
-        const dest = path.resolve( depFolder, relative );
-        return (
-          /\.js$/.test( dest ) ?
-            fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
-            fs.copy( item.path, dest )
-        );
-      }
-    } );
+    const p2 = symlinkDir( resFolder, depFolder );
+
+    await Promise.all( [ p1, p2 ] );
   }
 
   async linkNodeModules( folder: string, set: ImmutableResolutionSet ) {
