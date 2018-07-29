@@ -160,7 +160,19 @@ require( "@quase/cli" ).default( {
       type: "boolean",
       default: false,
       description: "Logs the heap usage after every test. Useful to debug memory leaks."
-    }
+    },
+    concordanceOptions: t.union( {
+      types: [ "string", "object" ],
+      optional: true,
+      description: "Concordance options."
+    } ),
+    assertions: t.array( {
+      itemType: t.union( {
+        types: [ "string", "object" ]
+      } ),
+      optional: true,
+      description: "Extensions of the object passed to each test. Applied by order."
+    } )
   } )
 } ).then( o => {
   require( "../dist/cli" ).default( o );
