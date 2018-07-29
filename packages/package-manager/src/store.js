@@ -29,8 +29,9 @@ Package info: STORE/VERSION/<pkgId>/files/.qpm
 A resolution set folder: STORE/VERSION/<pkgId>/res/<resolutionId>
 Resolution set converted to string: STORE/VERSION/<pkgId>/res/<resolutionId>.qpm-res
 
-STORE/VERSION/<pkgId>/res/<resolutionId>/<...> === STORE/VERSION/<pkgId>/files/<...> [hard link]
-STORE/VERSION/<pkgId>/res/<resolutionId>/node_modules has symlinks
+STORE/VERSION/<pkgId>/res/<resolutionId>/node_modules/<name> has links to:
+- STORE/VERSION/<pkgId>/files [hard link]
+- And its dependencies: STORE/VERSION/<depId>/res/<depResolutionId>/node_modules/<depName>
 
 .qpm and .qpm-res files also serve to tell that the job was done
 
@@ -114,50 +115,42 @@ export default class Store {
     return binsFolder;
   }
 
-  async linkOneNodeModule( folder: string, res: ImmutableResolution, binOpts: ?Object ) {
-    const resFolder = await res.job;
+  async linkOneNodeModule( folder: string, res: ImmutableResolution, binOpts: Object ) {
+    const { resFolder, filesFolder } = await res.job;
+    const { binPath, usedCmds } = binOpts;
+    const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
-    if ( binOpts ) {
-      const filesFolder = path.resolve( resFolder, "../../files" );
-      const depFolder = pathJoin( folder, "node_modules", res.data.name );
-      const { binPath, usedCmds } = binOpts;
+    await linkBins( {
+      pkg: await readPkg( filesFolder ),
+      pkgPath: filesFolder,
+      binPath,
+      usedCmds,
+      warn: this.warn
+    } );
 
-      await linkBins( {
-        pkg: await readPkg( filesFolder ),
-        pkgPath: filesFolder,
-        binPath,
-        usedCmds,
-        warn: this.warn
-      } );
-
-      await crawl( filesFolder, item => {
-        if ( item.stats.isFile() ) {
-          const relative = path.relative( filesFolder, item.path );
-          const dest = path.resolve( depFolder, relative );
-          return (
-            /\.js$/.test( dest ) ?
-              fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
-              fs.copy( item.path, dest )
-          );
-        }
-      } );
-    } else {
-      await symlinkDir( resFolder, pathJoin( folder, "node_modules", res.data.name ) );
-    }
+    await crawl( filesFolder, item => {
+      if ( item.stats.isFile() ) {
+        const relative = path.relative( filesFolder, item.path );
+        const dest = path.resolve( depFolder, relative );
+        return (
+          /\.js$/.test( dest ) ?
+            fs.outputFile( dest, `module.exports=require(${JSON.stringify( path.join( resFolder, relative ) )});` ) :
+            fs.copy( item.path, dest )
+        );
+      }
+    } );
   }
 
-  async linkNodeModules( folder: string, set: ImmutableResolutionSet, fake: ?boolean ) {
+  async linkNodeModules( folder: string, set: ImmutableResolutionSet ) {
     const promises = [];
     const nodeModulesFolder = await this.ensureNodeModulesFolder( folder );
-    let binOpts;
 
-    if ( fake ) {
-      promises.push( this.removeExcess( nodeModulesFolder, set ) );
-      binOpts = {
-        binPath: await this.ensureBinsFolder( folder ),
-        usedCmds: {}
-      };
-    }
+    promises.push( this.removeExcess( nodeModulesFolder, set ) );
+
+    const binOpts = {
+      binPath: await this.ensureBinsFolder( folder ),
+      usedCmds: {}
+    };
 
     set.forEach( res => {
       promises.push( this.linkOneNodeModule( folder, res, binOpts ) );
@@ -166,7 +159,7 @@ export default class Store {
     await Promise.all( promises );
   }
 
-  async createResolution( filesFolder: string, resolution: ImmutableResolution ): Promise<string> {
+  async createResolution( filesFolder: string, resolution: ImmutableResolution ): Promise<{ filesFolder: string, resFolder: string }> {
 
     const resFolders = path.resolve( filesFolder, "../res" );
     const hash = resolution.hashCode(); // The hash includes the Resolution format version
@@ -175,7 +168,7 @@ export default class Store {
     while ( true ) {
 
       const uniqueHash = `${hash}-${collisionIdx}`;
-      const res = path.join( resFolders, uniqueHash );
+      const resFolder = path.join( resFolders, uniqueHash, "node_modules", toStr( resolution.data.name ) );
       const resFile = path.join( resFolders, `${uniqueHash}.qpm-res` );
 
       const currentStr = await read( resFile );
@@ -183,27 +176,42 @@ export default class Store {
       if ( currentStr === "" ) {
 
         // Clean up folder just in case
-        await fs.emptyDir( res );
+        await fs.emptyDir( resFolder );
 
-        const linking = this.linkNodeModules( res, resolution.set );
+        const promises = [];
 
-        await crawl( filesFolder, item => {
+        promises.push( crawl( filesFolder, item => {
           if ( item.stats.isFile() ) {
             const relative = path.relative( filesFolder, item.path );
-            const dest = path.resolve( res, relative );
+            const dest = path.resolve( resFolder, relative );
             return fs.ensureLink( item.path, dest );
           }
+        } ) );
+
+        resolution.set.forEach( depRes => {
+          promises.push( ( async() => {
+            if ( resolution.data.name !== depRes.data.name ) {
+              const { resFolder: depResFolder } = await depRes.job;
+              return symlinkDir( depResFolder, pathJoin( resFolder, "..", depRes.data.name ) );
+            }
+          } )() );
         } );
 
-        await linking;
+        await Promise.all( promises );
 
         await fs.writeFile( resFile, resolution.toString() );
 
-        return res;
+        return {
+          filesFolder,
+          resFolder
+        };
 
       } else if ( currentStr === resolution.toString() ) {
 
-        return res;
+        return {
+          filesFolder,
+          resFolder
+        };
 
       }
 

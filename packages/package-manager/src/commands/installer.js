@@ -17,43 +17,46 @@ const { EventEmitter } = require( "events" );
 
 type DepType = "deps" | "devDeps" | "optionalDeps";
 
-async function installFromLock( opts, tree, store, lockfile, index ) {
+function installFromLock( opts, tree, store, lockfile, index ) {
   const [ name, version, resolved, integrity ] = lockfile.resolutions[ index ];
   const data = { name, version, resolved, integrity };
 
   return tree.createResolution( data, async resolution => {
     const extraction = store.extract( data );
-    const promises = [];
+    const deps = [];
 
     const indexes = lockfile.resolutions[ index ][ 4 ];
     for ( const i of indexes ) {
-      promises.push( installFromLock( opts, tree, store, lockfile, i ) );
+      deps.push( installFromLock( opts, tree, store, lockfile, i ) );
     }
 
-    for ( const p of promises ) {
-      resolution.set.add( await p );
+    for ( const dep of deps ) {
+      await dep.job;
+      resolution.set.add( dep );
     }
 
     return store.createResolution( await extraction, resolution );
   } );
 }
 
-async function install( opts, tree, store, lockfile, data ) {
+function install( opts, tree, store, lockfile, data ) {
   return tree.createResolution( data, async resolution => {
     const extraction = store.extract( data );
-    const promises = [];
+    const awaitingDeps = [];
 
     for ( const nameStr in data.deps ) {
       // $FlowIgnore
       const name: Name = nameStr;
 
-      promises.push(
+      awaitingDeps.push(
         resolve( name, data.deps[ name ], opts ).then( obj => install( opts, tree, store, lockfile, obj ) )
       );
     }
 
-    for ( const p of promises ) {
-      resolution.set.add( await p );
+    for ( const promise of awaitingDeps ) {
+      const dep = await promise;
+      await dep.job;
+      resolution.set.add( dep );
     }
 
     return store.createResolution( await extraction, resolution );
@@ -92,7 +95,7 @@ export class Installer extends EventEmitter {
     const newLockfile = createLockfile();
 
     const promises = [];
-    const allDeps = [];
+    const allDeps = new ResolutionSet();
 
     async function resolveDep( name: Name, version: Version, depType: DepType ) {
       if ( reuseLockfile ) {
@@ -102,9 +105,9 @@ export class Installer extends EventEmitter {
           if ( savedVersion === version ) {
             newLockfile[ depType ][ name ] = dep;
 
-            const installation = installFromLock( opts, tree, store, lockfile, i );
-            allDeps.push( installation );
-            return installation;
+            const resolution = installFromLock( opts, tree, store, lockfile, i );
+            allDeps.add( resolution );
+            return resolution.job;
           }
         }
       }
@@ -112,9 +115,9 @@ export class Installer extends EventEmitter {
       const obj = await resolve( name, version, opts );
       newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
 
-      const installation = install( opts, tree, store, lockfile, obj );
-      allDeps.push( installation );
-      return installation;
+      const resolution = install( opts, tree, store, lockfile, obj );
+      allDeps.add( resolution );
+      return resolution.job;
     }
 
     for ( const nameStr in pkg.dependencies ) {
@@ -140,11 +143,7 @@ export class Installer extends EventEmitter {
 
     this.emit( "linking" );
 
-    const allDepsSet = new ResolutionSet();
-    for ( const d of allDeps ) {
-      allDepsSet.add( await d );
-    }
-    await store.linkNodeModules( opts.folder, allDepsSet, true );
+    await store.linkNodeModules( opts.folder, allDeps );
 
     this.emit( "updateLockfile" );
 

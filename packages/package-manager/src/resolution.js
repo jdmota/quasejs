@@ -10,7 +10,7 @@ const EMPTY_PROMISE = new Promise( () => {} );
 export interface ImmutableResolution {
   +data: PartialResolvedObj;
   +set: ImmutableResolutionSet; // eslint-disable-line no-use-before-define
-  +job: Promise<string>;
+  +job: Promise<{ filesFolder: string, resFolder: string }>;
   buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): number;
   hashCode(): string;
 }
@@ -27,7 +27,7 @@ class Resolution implements ImmutableResolution {
 
   +data: PartialResolvedObj;
   +set: ResolutionSet; // eslint-disable-line no-use-before-define
-  job: Promise<string>;
+  job: Promise<{ filesFolder: string, resFolder: string }>;
   _hashCode: ?string;
   _string: ?string;
 
@@ -67,26 +67,25 @@ class Resolution implements ImmutableResolution {
   buildFlat( arr: Array<Entry>, _map: ?Map<Resolved, number> ): number {
 
     const map = _map || new Map();
-
     const { resolved } = this.data;
+
+    const currIdx = map.get( resolved );
+
+    if ( currIdx != null ) {
+      return currIdx;
+    }
+
     const deps = [];
     const entry: Entry = [ this.data.name, this.data.version, resolved, this.data.integrity, deps ];
 
     const idx = arr.push( entry ) - 1;
+    map.set( resolved, idx );
 
     this.set.forEach( resolution => {
       deps.push( resolution.buildFlat( arr, map ) );
     } );
 
-    const currIdx = map.get( resolved );
-
-    if ( currIdx == null ) {
-      map.set( resolved, idx );
-      return idx;
-    }
-
-    arr.pop();
-    return currIdx;
+    return idx;
   }
 
 }
@@ -206,7 +205,7 @@ export class Tree {
     this.set = new ResolutionSet();
   }
 
-  createResolution( data: PartialResolvedObj, job: Resolution => Promise<string> ): ImmutableResolution {
+  createResolution( data: PartialResolvedObj, job: Resolution => Promise<{ filesFolder: string, resFolder: string }> ): ImmutableResolution {
     const resolution = new Resolution( data );
     const prev = this.set.add( resolution );
     if ( resolution === prev ) {
