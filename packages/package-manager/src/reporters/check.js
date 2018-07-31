@@ -11,7 +11,7 @@ class CheckReporter extends BaseReporter {
   listen( checker: Checker ) {
     super.listen( checker );
     checker.on( "comparing", this.comparing.bind( this ) );
-    checker.on( "integrity", this.warning.bind( this ) );
+    checker.on( "integrity", this.integrity.bind( this ) );
   }
 
   comparing( type: string ) {
