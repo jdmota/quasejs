@@ -140,7 +140,13 @@ export class Resolver {
   }
 
   handleFromLock( index: number ): Resolution {
-    const [ name, version, resolved, integrity ] = this.lockfile.resolutions[ index ];
+    const tuple = this.lockfile.resolutions[ index ];
+
+    if ( !tuple ) {
+      throw new Error( `Corrupt lockfile. Expected resolution at index ${index}` );
+    }
+
+    const [ name, version, resolved, integrity ] = tuple;
     const { isNew, resolution } = this.installer.tree.createResolution( { name, version, resolved, integrity } );
 
     if ( isNew ) {

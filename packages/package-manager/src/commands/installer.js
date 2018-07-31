@@ -61,7 +61,7 @@ export class Installer extends EventEmitter {
 
     const links = [];
     this.tree.forEach( resolution => {
-      links.push( this.store.createResolution( resolution ).then( () => this.emit( "linkingUpdate" ) ) );
+      links.push( this.store.linkResolutionDeps( resolution ).then( () => this.emit( "linkingUpdate" ) ) );
     } );
 
     this.emit( "linkingStart", links.length );

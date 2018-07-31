@@ -48,17 +48,20 @@ export default class Store {
   +store: string; // The path includes the version of the store
   +opts: Options;
   +warn: Warning => void;
-  +creating: Map<Resolution, Promise<void>>;
 
   constructor( opts: Options, warn: Warning => void ) {
     this.store = path.resolve( opts.store, STORE_VERSION );
     this.opts = opts;
     this.warn = warn;
-    this.creating = new Map();
   }
 
   // Make sure package is in the store
   async extract( resolution: Resolution ): Promise<void> {
+    await this.extract1( resolution );
+    await this.extract2( resolution );
+  }
+
+  async extract1( resolution: Resolution ): Promise<void> {
 
     const { resolved, integrity } = resolution.data;
     const hash = buildId( resolved, integrity );
@@ -94,6 +97,88 @@ export default class Store {
 
     throw new Error( `Too many collisions?... '${toStr( resolved )}'` );
 
+  }
+
+  async extract2( resolution: Resolution ): Promise<void> {
+
+    const { filesFolder } = resolution;
+
+    if ( !filesFolder ) {
+      throw new Error( "Assertion: missing filesFolder" );
+    }
+
+    const resFolders = path.resolve( filesFolder, "../res" );
+    const hash = resolution.hashCode(); // The hash includes the Resolution format version
+    let collisionIdx = 0;
+
+    while ( true ) {
+
+      const uniqueHash = `${hash}-${collisionIdx}`;
+      const resFolder = path.join( resFolders, uniqueHash, "node_modules", toStr( resolution.data.name ) );
+      const resFile = path.join( resFolders, `${uniqueHash}.qpm-res` );
+
+      const currentStr = await read( resFile );
+
+      if ( currentStr === "" ) {
+
+        // Clean up folder just in case
+        await fs.emptyDir( resFolder );
+
+        await crawl( filesFolder, item => {
+          if ( item.stats.isFile() ) {
+            const relative = path.relative( filesFolder, item.path );
+            const dest = path.resolve( resFolder, relative );
+            return fs.ensureLink( item.path, dest );
+          }
+        } );
+
+        await fs.writeFile( resFile, resolution.toString() );
+
+        resolution.resFolder = resFolder;
+        return;
+
+      } else if ( currentStr === resolution.toString() ) {
+
+        resolution.resFolder = resFolder;
+        return;
+
+      }
+
+      if ( collisionIdx++ > MAX_COLLISIONS ) {
+        break;
+      }
+    }
+
+    throw new Error( `Too many collisions?... '${hash}'` );
+
+  }
+
+  async linkResolutionDeps( resolution: Resolution ): Promise<void> {
+
+    const { filesFolder, resFolder } = resolution;
+
+    if ( !filesFolder ) {
+      throw new Error( "Assertion: missing filesFolder" );
+    }
+
+    if ( !resFolder ) {
+      throw new Error( "Assertion: missing resFolder" );
+    }
+
+    const promises = [];
+
+    resolution.set.forEach( depRes => {
+      promises.push( ( () => {
+        if ( resolution.data.name !== depRes.data.name ) {
+          if ( !depRes.resFolder ) {
+            throw new Error( "Assertion: missing resFolder in dependency" );
+          }
+          return symlinkDir( depRes.resFolder, pathJoin( resFolder, "..", depRes.data.name ) );
+        }
+      } )() );
+    } );
+
+    await Promise.all( promises );
   }
 
   async removeExcess( folder: string, set: ResolutionSet ) {
@@ -157,81 +242,6 @@ export default class Store {
     } );
 
     await Promise.all( promises );
-  }
-
-  async _createResolution( resolution: Resolution ): Promise<void> {
-
-    const { filesFolder } = resolution;
-
-    if ( !filesFolder ) {
-      throw new Error( "Assertion: missing filesFolder" );
-    }
-
-    const resFolders = path.resolve( filesFolder, "../res" );
-    const hash = resolution.hashCode(); // The hash includes the Resolution format version
-    let collisionIdx = 0;
-
-    while ( true ) {
-
-      const uniqueHash = `${hash}-${collisionIdx}`;
-      const resFolder = path.join( resFolders, uniqueHash, "node_modules", toStr( resolution.data.name ) );
-      const resFile = path.join( resFolders, `${uniqueHash}.qpm-res` );
-
-      const currentStr = await read( resFile );
-
-      if ( currentStr === "" ) {
-
-        // Clean up folder just in case
-        await fs.emptyDir( resFolder );
-
-        const promises = [];
-
-        promises.push( crawl( filesFolder, item => {
-          if ( item.stats.isFile() ) {
-            const relative = path.relative( filesFolder, item.path );
-            const dest = path.resolve( resFolder, relative );
-            return fs.ensureLink( item.path, dest );
-          }
-        } ) );
-
-        resolution.set.forEach( depRes => {
-          promises.push( ( async() => {
-            if ( resolution.data.name !== depRes.data.name ) {
-              await this.createResolution( depRes );
-              return symlinkDir( depRes.resFolder, pathJoin( resFolder, "..", depRes.data.name ) );
-            }
-          } )() );
-        } );
-
-        await Promise.all( promises );
-
-        await fs.writeFile( resFile, resolution.toString() );
-
-        resolution.resFolder = resFolder;
-        return;
-
-      } else if ( currentStr === resolution.toString() ) {
-
-        resolution.resFolder = resFolder;
-        return;
-
-      }
-
-      if ( collisionIdx++ > MAX_COLLISIONS ) {
-        break;
-      }
-    }
-
-    throw new Error( `Too many collisions?... '${hash}'` );
-  }
-
-  createResolution( resolution: Resolution ): Promise<void> {
-    let job = this.creating.get( resolution );
-    if ( !job ) {
-      job = this._createResolution( resolution );
-      this.creating.set( resolution, job );
-    }
-    return job;
   }
 
 }
