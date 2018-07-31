@@ -67,6 +67,7 @@ declare module "read-pkg-up" { declare module.exports: any; }
 declare module "require-relative" { declare module.exports: any; }
 declare module "resolve" { declare module.exports: any; }
 declare module "resolve-from" { declare module.exports: any; }
+declare module "semver" { declare module.exports: any; }
 declare module "slash" { declare module.exports: any; }
 declare module "sort-keys" { declare module.exports: any; }
 declare module "source-map" { declare module.exports: any; }

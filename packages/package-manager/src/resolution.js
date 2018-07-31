@@ -5,47 +5,39 @@ import type { Name, Resolved, PartialResolvedObj } from "./types";
 import type { Entry } from "./lockfile";
 
 const VERSION = 1;
-const EMPTY_PROMISE = new Promise( () => {} );
-
-export interface ImmutableResolution {
-  +data: PartialResolvedObj;
-  +set: ImmutableResolutionSet; // eslint-disable-line no-use-before-define
-  +job: Promise<{ filesFolder: string, resFolder: string }>;
-  buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): number;
-  hashCode(): string;
-}
-
-export interface ImmutableResolutionSet {
-  +size: number;
-  has( name: Name ): boolean;
-  forEach( callback: ImmutableResolution => void ): void;
-  buildFlat( arr: Array<Entry>, map: ?Map<Resolved, number> ): Array<Entry>;
-}
 
 // A package resolution
-class Resolution implements ImmutableResolution {
+export class Resolution {
 
   +data: PartialResolvedObj;
   +set: ResolutionSet; // eslint-disable-line no-use-before-define
-  job: Promise<{ filesFolder: string, resFolder: string }>;
+  filesFolder: string;
+  resFolder: string;
   _hashCode: ?string;
   _string: ?string;
 
-  static compare( curr: ImmutableResolution, next: ImmutableResolution ) {
+  static compare( curr: Resolution, next: Resolution ) {
     if ( curr === next ) return 0;
-    const a = toStr( curr.data.resolved );
-    const b = toStr( next.data.resolved );
-    if ( a === b ) return 0;
-    if ( a < b ) return -1;
-    return 1;
+    // $FlowIgnore
+    const currData: { name: string, version: string, resolved: string } = curr.data;
+    // $FlowIgnore
+    const nextData: { name: string, version: string, resolved: string } = next.data;
+
+    let c = currData.name.localeCompare( nextData.name );
+    if ( c !== 0 ) return c;
+    c = currData.version.localeCompare( nextData.version );
+    if ( c !== 0 ) return c;
+    c = currData.resolved.localeCompare( nextData.resolved );
+    return c;
   }
 
   constructor( data: PartialResolvedObj ) {
     this.data = data;
     this.set = new ResolutionSet();
+    this.filesFolder = "";
+    this.resFolder = "";
     this._hashCode = null;
     this._string = null;
-    this.job = EMPTY_PROMISE;
   }
 
   hashCode() {
@@ -91,13 +83,13 @@ class Resolution implements ImmutableResolution {
 }
 
 type Node = {
-  value: ImmutableResolution,
+  value: Resolution,
   left: ?Node,
   right: ?Node
 };
 
 // A set of sorted resolutions
-export class ResolutionSet implements ImmutableResolutionSet {
+export class ResolutionSet {
 
   +names: Set<Name>;
   size: number;
@@ -117,7 +109,7 @@ export class ResolutionSet implements ImmutableResolutionSet {
     return arr;
   }
 
-  traverse( node: Node, callback: ImmutableResolution => void ) {
+  traverse( node: Node, callback: Resolution => void ) {
 
     const left = node.left;
     const right = node.right;
@@ -134,7 +126,7 @@ export class ResolutionSet implements ImmutableResolutionSet {
 
   }
 
-  forEach( callback: ImmutableResolution => void ) {
+  forEach( callback: Resolution => void ) {
     if ( this._root ) {
       this.traverse( this._root, callback );
     }
@@ -144,7 +136,7 @@ export class ResolutionSet implements ImmutableResolutionSet {
     return this.names.has( name );
   }
 
-  _node( value: ImmutableResolution ): Node {
+  _node( value: Resolution ): Node {
     this.names.add( value.data.name );
     this.size++;
     return {
@@ -154,7 +146,7 @@ export class ResolutionSet implements ImmutableResolutionSet {
     };
   }
 
-  add( value: ImmutableResolution ): ImmutableResolution {
+  add( value: Resolution ): Resolution {
 
     if ( this._root == null ) {
       this._root = this._node( value );
@@ -205,14 +197,23 @@ export class Tree {
     this.set = new ResolutionSet();
   }
 
-  createResolution( data: PartialResolvedObj, job: Resolution => Promise<{ filesFolder: string, resFolder: string }> ): ImmutableResolution {
+  forEach( cb: Resolution => void ) {
+    this.set.forEach( cb );
+  }
+
+  createResolution( data: PartialResolvedObj ): { isNew: boolean, resolution: Resolution } {
     const resolution = new Resolution( data );
     const prev = this.set.add( resolution );
     if ( resolution === prev ) {
-      resolution.job = job( resolution );
-      return resolution;
+      return {
+        isNew: true,
+        resolution
+      };
     }
-    return prev;
+    return {
+      isNew: false,
+      resolution: prev
+    };
   }
 
   generate( arr: Array<Entry>, map: Map<Resolved, number> ) {

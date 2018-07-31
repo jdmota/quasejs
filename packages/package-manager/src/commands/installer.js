@@ -1,74 +1,29 @@
 // @flow
 import reporter from "../reporters/installer";
-import type { Name, Version, Resolved, Options, Warning } from "../types";
+import type { Name, Resolved, Options, Warning } from "../types";
 import { mapGet } from "../utils";
 import { read as readPkg } from "../pkg";
 import {
+  type Lockfile,
   shouldReuse as shouldReuseLockfile,
   create as createLockfile,
   read as readLockfile,
   write as writeLockfile
 } from "../lockfile";
-import resolve from "../resolve";
 import { ResolutionSet, Tree } from "../resolution";
 import Store from "../store";
+import { Resolver } from "../resolve";
 
 const { EventEmitter } = require( "events" );
-
-type DepType = "deps" | "devDeps" | "optionalDeps";
-
-function installFromLock( opts, tree, store, lockfile, index ) {
-  const [ name, version, resolved, integrity ] = lockfile.resolutions[ index ];
-  const data = { name, version, resolved, integrity };
-
-  return tree.createResolution( data, async resolution => {
-    const extraction = store.extract( data );
-    const deps = [];
-
-    const indexes = lockfile.resolutions[ index ][ 4 ];
-    for ( const i of indexes ) {
-      deps.push( installFromLock( opts, tree, store, lockfile, i ) );
-    }
-
-    for ( const dep of deps ) {
-      await dep.job;
-      resolution.set.add( dep );
-    }
-
-    return store.createResolution( await extraction, resolution );
-  } );
-}
-
-function install( opts, tree, store, lockfile, data ) {
-  return tree.createResolution( data, async resolution => {
-    const extraction = store.extract( data );
-    const awaitingDeps = [];
-
-    for ( const nameStr in data.deps ) {
-      // $FlowIgnore
-      const name: Name = nameStr;
-
-      awaitingDeps.push(
-        resolve( name, data.deps[ name ], opts ).then( obj => install( opts, tree, store, lockfile, obj ) )
-      );
-    }
-
-    for ( const promise of awaitingDeps ) {
-      const dep = await promise;
-      await dep.job;
-      resolution.set.add( dep );
-    }
-
-    return store.createResolution( await extraction, resolution );
-  } );
-}
 
 export class Installer extends EventEmitter {
 
   +tree: Tree;
+  +rootDeps: ResolutionSet;
   +store: Store;
   +opts: Options;
   +warn: Warning => void;
+  reuseLockfile: boolean;
 
   constructor( opts: Options ) {
     super();
@@ -78,77 +33,56 @@ export class Installer extends EventEmitter {
     };
     this.store = new Store( opts, this.warn );
     this.tree = new Tree();
+    this.rootDeps = new ResolutionSet();
+    this.reuseLockfile = false;
   }
 
-  async install() {
+  async resolution( pkg: Object, lockfile: Lockfile, newLockfile: Lockfile ) {
+    this.emit( "resolutionStart" );
+    const resolver = new Resolver( this, pkg, lockfile, newLockfile );
+    await resolver.start();
+  }
 
-    const { opts, store, tree } = this;
+  async extraction() {
 
-    const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
+    const extractions = [];
+    this.tree.forEach( resolution => {
+      extractions.push( this.store.extract( resolution ).then( () => this.emit( "extractionUpdate" ) ) );
+    } );
 
-    const reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+    this.emit( "extractionStart", extractions.length );
 
-    this.emit( "folder", { folder: opts.folder } );
-    this.emit( "lockfile", { reusing: reuseLockfile } );
-    this.emit( "start" );
-
-    const newLockfile = createLockfile();
-
-    const promises = [];
-    const allDeps = new ResolutionSet();
-
-    async function resolveDep( name: Name, version: Version, depType: DepType ) {
-      if ( reuseLockfile ) {
-        const dep = lockfile[ depType ][ name ];
-        if ( dep ) {
-          const { savedVersion, i } = dep;
-          if ( savedVersion === version ) {
-            newLockfile[ depType ][ name ] = dep;
-
-            const resolution = installFromLock( opts, tree, store, lockfile, i );
-            allDeps.add( resolution );
-            return resolution.job;
-          }
-        }
-      }
-
-      const obj = await resolve( name, version, opts );
-      newLockfile[ depType ][ name ] = { savedVersion: version, resolved: obj.resolved, i: -1 };
-
-      const resolution = install( opts, tree, store, lockfile, obj );
-      allDeps.add( resolution );
-      return resolution.job;
-    }
-
-    for ( const nameStr in pkg.dependencies ) {
-      // $FlowIgnore
-      const name: Name = nameStr;
-
-      promises.push( resolveDep( name, pkg.dependencies[ name ], "deps" ) );
-    }
-
-    for ( const nameStr in pkg.devDependencies ) {
-      // $FlowIgnore
-      const name: Name = nameStr;
-
-      promises.push( resolveDep( name, pkg.devDependencies[ name ], "devDeps" ) );
-    }
-
-    this.emit( "jobsStart", { count: promises.length } );
-
-    for ( const p of promises ) {
+    for ( const p of extractions ) {
       await p;
-      this.emit( "jobDone" );
     }
+  }
 
-    this.emit( "linking" );
+  async linking() {
 
-    await store.linkNodeModules( opts.folder, allDeps );
+    const links = [];
+    this.tree.forEach( resolution => {
+      links.push( this.store.createResolution( resolution ).then( () => this.emit( "linkingUpdate" ) ) );
+    } );
+
+    this.emit( "linkingStart", links.length );
+
+    for ( const p of links ) {
+      await p;
+    }
+  }
+
+  async localLinking() {
+    this.emit( "localLinkingStart", 1 );
+    await this.store.linkNodeModules( this.opts.folder, this.rootDeps );
+    this.emit( "localLinkingUpdate" );
+  }
+
+  async updateLockfile( newLockfile: Lockfile ) {
 
     this.emit( "updateLockfile" );
 
     const map: Map<Resolved, number> = new Map();
-    tree.generate( newLockfile.resolutions, map );
+    this.tree.generate( newLockfile.resolutions, map );
 
     for ( const nameStr in newLockfile.deps ) {
       // $FlowIgnore
@@ -164,8 +98,27 @@ export class Installer extends EventEmitter {
       newLockfile.devDeps[ name ].i = mapGet( map, newLockfile.devDeps[ name ].resolved );
     }
 
-    await writeLockfile( opts.folder, newLockfile );
+    await writeLockfile( this.opts.folder, newLockfile );
+  }
 
+  async install() {
+
+    const { opts } = this;
+    const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
+
+    const reuseLockfile = this.reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+
+    this.emit( "folder", { folder: opts.folder } );
+    this.emit( "lockfile", { reusing: reuseLockfile } );
+    this.emit( "start" );
+
+    const newLockfile = createLockfile();
+
+    await this.resolution( pkg, lockfile, newLockfile );
+    await this.extraction();
+    await this.linking();
+    await this.localLinking();
+    await this.updateLockfile( newLockfile );
   }
 
 }

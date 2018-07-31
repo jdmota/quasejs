@@ -8,9 +8,12 @@ opaque type ExactVersion = string;
 opaque type Resolved = string;
 opaque type Integrity = string;
 
+type DepType = "deps" | "devDeps" | "optionalDeps";
+
 type ResolvedObj = {
   name: Name,
   version: ExactVersion,
+  savedVersion: Version,
   resolved: Resolved,
   integrity: Integrity,
   deps: { [name: Name]: Version }
@@ -23,7 +26,7 @@ type PartialResolvedObj = {
   integrity: Integrity
 };
 
-export type { Name, Version, ExactVersion, Resolved, Integrity, PartialResolvedObj, ResolvedObj };
+export type { Name, Version, ExactVersion, Resolved, Integrity, PartialResolvedObj, ResolvedObj, DepType };
 
 export function toStr( str: Name | Version | ExactVersion | Resolved | Integrity ): string {
   return str;

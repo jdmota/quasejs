@@ -1,11 +1,11 @@
 // @flow
 import { hash, read, readJSON, crawl } from "./utils";
-import type { Name, Resolved, Integrity, PartialResolvedObj, Options, Warning } from "./types";
+import type { Name, Resolved, Integrity, Options, Warning } from "./types";
 import { toStr, pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
 import linkBins from "./link-bins";
 import { read as readPkg } from "./pkg";
-import type { ImmutableResolution, ImmutableResolutionSet } from "./resolution";
+import type { Resolution, ResolutionSet } from "./resolution";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
@@ -43,21 +43,24 @@ function buildId( resolved: Resolved, integrity: Integrity ): string {
 
 export default class Store {
 
-  static DEFAULT = path.resolve( homedir, `.qpm-store/${STORE_VERSION}` );
+  static DEFAULT = path.resolve( homedir, ".qpm-store" );
 
   +store: string; // The path includes the version of the store
   +opts: Options;
   +warn: Warning => void;
+  +creating: Map<Resolution, Promise<void>>;
 
   constructor( opts: Options, warn: Warning => void ) {
     this.store = path.resolve( opts.store, STORE_VERSION );
     this.opts = opts;
     this.warn = warn;
+    this.creating = new Map();
   }
 
   // Make sure package is in the store
-  async extract( { resolved, integrity }: PartialResolvedObj ): Promise<string> {
+  async extract( resolution: Resolution ): Promise<void> {
 
+    const { resolved, integrity } = resolution.data;
     const hash = buildId( resolved, integrity );
     let collisionIdx = 0;
 
@@ -72,11 +75,15 @@ export default class Store {
         // pacote.extract already empties and ensures the folder's existance
         await pacote.extract( resolved, folder, pacoteOptions( this.opts, integrity ) );
         await fs.writeFile( idFile, JSON.stringify( { resolved, integrity } ) );
-        return folder;
+
+        resolution.filesFolder = folder;
+        return;
       }
 
       if ( currentID.resolved === resolved && currentID.integrity === integrity ) {
-        return folder;
+
+        resolution.filesFolder = folder;
+        return;
       }
 
       if ( collisionIdx++ > MAX_COLLISIONS ) {
@@ -89,7 +96,7 @@ export default class Store {
 
   }
 
-  async removeExcess( folder: string, set: ImmutableResolutionSet ) {
+  async removeExcess( folder: string, set: ResolutionSet ) {
 
     const promises = [];
 
@@ -116,8 +123,8 @@ export default class Store {
     return binsFolder;
   }
 
-  async linkOneNodeModule( folder: string, res: ImmutableResolution, binOpts: Object ) {
-    const { resFolder, filesFolder } = await res.job;
+  async linkOneNodeModule( folder: string, res: Resolution, binOpts: Object ) {
+    const { resFolder, filesFolder } = res;
     const { binPath, usedCmds } = binOpts;
     const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
@@ -134,7 +141,7 @@ export default class Store {
     await Promise.all( [ p1, p2 ] );
   }
 
-  async linkNodeModules( folder: string, set: ImmutableResolutionSet ) {
+  async linkNodeModules( folder: string, set: ResolutionSet ) {
     const promises = [];
     const nodeModulesFolder = await this.ensureNodeModulesFolder( folder );
 
@@ -152,7 +159,13 @@ export default class Store {
     await Promise.all( promises );
   }
 
-  async createResolution( filesFolder: string, resolution: ImmutableResolution ): Promise<{ filesFolder: string, resFolder: string }> {
+  async _createResolution( resolution: Resolution ): Promise<void> {
+
+    const { filesFolder } = resolution;
+
+    if ( !filesFolder ) {
+      throw new Error( "Assertion: missing filesFolder" );
+    }
 
     const resFolders = path.resolve( filesFolder, "../res" );
     const hash = resolution.hashCode(); // The hash includes the Resolution format version
@@ -184,8 +197,8 @@ export default class Store {
         resolution.set.forEach( depRes => {
           promises.push( ( async() => {
             if ( resolution.data.name !== depRes.data.name ) {
-              const { resFolder: depResFolder } = await depRes.job;
-              return symlinkDir( depResFolder, pathJoin( resFolder, "..", depRes.data.name ) );
+              await this.createResolution( depRes );
+              return symlinkDir( depRes.resFolder, pathJoin( resFolder, "..", depRes.data.name ) );
             }
           } )() );
         } );
@@ -194,17 +207,13 @@ export default class Store {
 
         await fs.writeFile( resFile, resolution.toString() );
 
-        return {
-          filesFolder,
-          resFolder
-        };
+        resolution.resFolder = resFolder;
+        return;
 
       } else if ( currentStr === resolution.toString() ) {
 
-        return {
-          filesFolder,
-          resFolder
-        };
+        resolution.resFolder = resFolder;
+        return;
 
       }
 
@@ -214,6 +223,15 @@ export default class Store {
     }
 
     throw new Error( `Too many collisions?... '${hash}'` );
+  }
+
+  createResolution( resolution: Resolution ): Promise<void> {
+    let job = this.creating.get( resolution );
+    if ( !job ) {
+      job = this._createResolution( resolution );
+      this.creating.set( resolution, job );
+    }
+    return job;
   }
 
 }
