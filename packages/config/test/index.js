@@ -319,6 +319,24 @@ it( "validate", () => {
     } )
   } );
 
+  v( {
+    obj: {
+      foo: {}
+    }
+  }, {
+    obj: {
+      type: "any"
+    }
+  } );
+
+  v( {
+    obj: [ 1, {}, [] ]
+  }, {
+    obj: t.array( {
+      itemType: "any"
+    } )
+  } );
+
 } );
 
 function d( schema, ...args ) {
@@ -417,9 +435,11 @@ it( "apply defaults", () => {
         foo: t.object( {
           properties: {
             a: {
+              type: "any",
               default: 10
             },
             b: {
+              type: "any",
               default: 20
             }
           }
@@ -433,21 +453,15 @@ it( "apply defaults", () => {
   } );
 
   d( {
-    obj: {
-      type: "boolean"
-    }
+    obj: "boolean"
   } );
 
   d( {
-    obj: {
-      type: "array"
-    }
+    obj: "array"
   } );
 
   d( {
-    obj: {
-      type: "object"
-    }
+    obj: "object"
   } );
 
   d( {

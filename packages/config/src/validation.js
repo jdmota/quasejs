@@ -1,9 +1,7 @@
 // @flow
 import type Path from "./path";
-import getType from "./get-type";
 import { indent, formatOption, format } from "./formating";
 import { printWarning } from "./print";
-import { type GeneralType, types } from "./types";
 
 const turbocolor = require( "turbocolor" );
 const leven = require( "leven" );
@@ -95,33 +93,4 @@ export function checkType( path: Path, actual: string, expected: string, d: mixe
     `${indent( turbocolor.bold.red( actual ) )}`,
     makeExample( path, d, e )
   ] );
-}
-
-export function validateType( type: GeneralType, path: Path, value: mixed, dest: Object ) {
-  if ( typeof type === "string" ) {
-    checkType( path, getType( value ), type, undefined, undefined );
-    return;
-  }
-  if ( type != null && typeof type === "object" ) {
-    if ( type instanceof types.Type ) {
-      type.validate( path, value, dest );
-      return;
-    }
-    if ( type.type === "any" ) {
-      return;
-    }
-    if ( type.type === "object" ) {
-      new types.Object( type ).validate( path, value, dest );
-      return;
-    }
-    if ( type.type === "array" ) {
-      new types.Array( type ).validate( path, value, dest );
-      return;
-    }
-    if ( typeof type.type === "string" ) {
-      new types.Primitive( type ).validate( path, value, dest );
-      return;
-    }
-  }
-  throw new Error( `[Schema] Invalid type. See ${path.chainToString()}` );
 }

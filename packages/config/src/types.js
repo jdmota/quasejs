@@ -3,7 +3,7 @@ import type Path from "./path";
 import getType from "./get-type";
 import { clone, merge, extractDefaults } from "./defaults";
 import { indent, formatTypes, format, addPrefix } from "./formating";
-import { ValidationError, makeExample, validateType, printDeprecated, checkType, checkUnrecognized } from "./validation";
+import { ValidationError, makeExample, printDeprecated, checkType, checkUnrecognized } from "./validation";
 import { clone as cloneHelper, isPlainObject } from "./utils";
 
 const turbocolor = require( "turbocolor" );
@@ -88,19 +88,28 @@ class TAny extends Type {
 const anyType = new TAny();
 
 type ObjectInfo = Info & {
-  +properties?: ?Object,
+  +properties: Object,
   +additionalProperties?: ?boolean
 };
 
 class TObject extends Type {
-  +properties: Object;
+  +properties: { [key: string]: Type };
   +additionalProperties: boolean;
   +keys: string[];
   constructor( info: ?ObjectInfo ) {
     super( info );
+    this.additionalProperties = !!( info && info.additionalProperties );
+
+    if ( !this.additionalProperties && !( info && info.properties ) ) {
+      throw new Error( "[Schema] Missing 'properties' in object definition" );
+    }
+
     this.properties = ( info && info.properties ) || {};
-    this.additionalProperties = info ? !!info.additionalProperties : true;
-    this.keys = this.properties ? Object.keys( this.properties ) : [];
+    this.keys = Object.keys( this.properties );
+
+    for ( const key of this.keys ) {
+      this.properties[ key ] = toType( this.properties[ key ] );
+    }
   }
   checkUnrecognized( path: Path, value: any ) {
     if ( !this.additionalProperties ) {
@@ -132,8 +141,8 @@ class TObject extends Type {
   defaults( path: Path, dest: Object ) {
     const schema = this.properties;
     const defaults = {};
-    for ( const k in schema ) {
-      extractDefaults( path, schema[ k ], defaults, k, dest );
+    for ( const key of this.keys ) {
+      extractDefaults( path, schema[ key ], defaults, key, dest );
     }
     return defaults;
   }
@@ -144,27 +153,29 @@ class TObject extends Type {
       this.checkType( path, value, "object" );
       this.checkUnrecognized( path, value );
 
-      for ( const key in this.properties ) {
-        const type = this.properties[ key ];
-        if ( type ) {
-          path.push( key );
-          validateType( type, path, value[ key ], dest );
-          path.pop();
-        }
+      for ( const key of this.keys ) {
+        path.push( key );
+        this.properties[ key ].validate( path, value[ key ], dest );
+        path.pop();
       }
     }
   }
 }
 
 type ArrayInfo = Info & {
-  +itemType?: ?GeneralType
+  +itemType: GeneralType
 };
 
 class TArray extends Type {
-  +itemType: ?GeneralType;
+  +itemType: Type;
   constructor( info: ?ArrayInfo ) {
     super( info );
-    this.itemType = info && info.itemType;
+
+    if ( !( info && info.itemType ) ) {
+      throw new Error( "[Schema] Missing 'itemType' in array definition" );
+    }
+
+    this.itemType = toType( info && info.itemType );
   }
   clone( path: Path, value: any ) {
     this.checkType( path, value, "array" );
@@ -201,14 +212,10 @@ class TArray extends Type {
     if ( value !== undefined ) {
       this.checkType( path, value, "array" );
 
-      const itemType = this.itemType;
-
-      if ( itemType ) {
-        for ( let i = 0; i < value.length; i++ ) {
-          path.push( i );
-          validateType( itemType, path, value[ i ], dest );
-          path.pop();
-        }
+      for ( let i = 0; i < value.length; i++ ) {
+        path.push( i );
+        this.itemType.validate( path, value[ i ], dest );
+        path.pop();
       }
     }
   }
@@ -219,10 +226,15 @@ type TupleInfo = Info & {
 };
 
 class TTuple extends Type {
-  +items: GeneralType[];
+  +items: Type[];
   constructor( info: TupleInfo ) {
     super( info );
-    this.items = info.items || [];
+
+    if ( !( info && info.items ) ) {
+      throw new Error( "[Schema] Missing 'items' in tuple definition" );
+    }
+
+    this.items = info.items.map( t => toType( t ) );
   }
   _error( path: Path ) {
     throw new ValidationError( [
@@ -271,12 +283,9 @@ class TTuple extends Type {
       }
 
       for ( let i = 0; i < this.items.length; i++ ) {
-        const type = this.items[ i ];
-        if ( type ) {
-          path.push( i );
-          validateType( type, path, value[ i ], dest );
-          path.pop();
-        }
+        path.push( i );
+        this.items[ i ].validate( path, value[ i ], dest );
+        path.pop();
       }
     }
   }
@@ -314,10 +323,15 @@ type UnionInfo = Info & {
 };
 
 class TUnion extends Type {
-  +types: GeneralType[];
+  +types: Type[];
   constructor( info: UnionInfo ) {
     super( info );
-    this.types = info.types;
+
+    if ( !( info && info.types ) ) {
+      throw new Error( "[Schema] Missing 'types' in union definition" );
+    }
+
+    this.types = info.types.map( t => toType( t ) );
   }
   validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
@@ -325,7 +339,7 @@ class TUnion extends Type {
     if ( value !== undefined ) {
       for ( const type of this.types ) {
         try {
-          validateType( type, path, value, dest );
+          type.validate( path, value, dest );
           return;
         } catch ( e ) {
           // Ignore
@@ -350,6 +364,11 @@ class TChoices extends Type {
   +values: mixed[];
   constructor( info: ChoicesInfo ) {
     super( info );
+
+    if ( !( info && info.values ) ) {
+      throw new Error( "[Schema] Missing 'values' in choices definition" );
+    }
+
     this.values = info.values;
   }
   validate( path: Path, value: any, dest: Object ) {
@@ -371,13 +390,18 @@ class TChoices extends Type {
 }
 
 type PrimitiveInfo = Info & {
-  +type: ?string;
+  +type: string;
 };
 
 class TPrimitive extends Type {
-  +type: ?string;
+  +type: string;
   constructor( info: PrimitiveInfo ) {
     super( info );
+
+    if ( !( info && info.type ) ) {
+      throw new Error( "[Schema] Missing 'type' in primitive definition" );
+    }
+
     this.type = info.type;
   }
   defaults( path: Path, dest: Object ) { // eslint-disable-line
@@ -394,7 +418,7 @@ class TPrimitive extends Type {
   validate( path: Path, value: any, dest: Object ) {
     super.validate( path, value, dest );
 
-    if ( this.type != null && value !== undefined ) {
+    if ( value !== undefined ) {
       this.checkType( path, value, this.type );
     }
   }
@@ -404,7 +428,7 @@ export type Schema = {
   [key: string]: GeneralType;
 };
 
-export function toType( type: ?GeneralType, path: Path ): Type {
+export function toType( type: ?GeneralType, path: ?Path ): Type {
   if ( typeof type === "string" ) {
     if ( type === "any" ) {
       return new TAny();
@@ -428,7 +452,7 @@ export function toType( type: ?GeneralType, path: Path ): Type {
       return new TPrimitive( type );
     }
   }
-  throw new Error( `[Schema] Invalid type. See ${path.chainToString()}` );
+  throw new Error( `[Schema] Invalid type.${path ? ` See ${path.chainToString()}` : ""}` );
 }
 
 export const types = {

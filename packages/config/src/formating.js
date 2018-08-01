@@ -27,6 +27,9 @@ export function formatTypes( list: $ReadOnlyArray<?GeneralType>, separator: stri
         if ( x instanceof types.Value ) {
           return format( x.value );
         }
+        if ( x instanceof types.Choices ) {
+          return x.values.map( format ).join( " | " );
+        }
         if ( x instanceof types.Tuple ) {
           return formatTypes( x.items, ", " );
         }
@@ -35,6 +38,12 @@ export function formatTypes( list: $ReadOnlyArray<?GeneralType>, separator: stri
         }
         if ( x instanceof types.Object ) {
           return "object";
+        }
+        if ( x instanceof types.Any ) {
+          return "any";
+        }
+        if ( x instanceof types.Primitive ) {
+          return x.type;
         }
       } else if ( typeof x.type === "string" ) {
         return x.type;

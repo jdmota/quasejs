@@ -460,3 +460,19 @@ Array [
   ],
 ]
 `;
+
+exports[`validate 20`] = `
+Array [
+  Array [
+    "OK",
+  ],
+]
+`;
+
+exports[`validate 21`] = `
+Array [
+  Array [
+    "OK",
+  ],
+]
+`;

@@ -1,4 +1,4 @@
-import cli from "../src";
+import { cli } from "../src";
 
 const { t } = require( "@quase/config" ); // eslint-disable-line node/no-extraneous-require
 
@@ -268,7 +268,8 @@ describe( "cli", () => {
       argv: [ "" ],
       schema: {
         array: {
-          type: "array"
+          type: "array",
+          itemType: "any"
         },
         string: {
           type: "string",
