@@ -26,6 +26,8 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### git.tagPrefix
 
+### git.signCommit
+
 ### git.signTag
 
 ### git.commitHooks

@@ -159,8 +159,18 @@ export function commitAndTag( opts ) {
     title: "Commit and tag",
     skip: () => !( opts.git && opts.git.commitAndTag && opts.git.message ),
     task: async() => {
+      const commitArgs = [ "commit" ];
+      if ( opts.git.signCommit ) {
+        commitArgs.push( "-S" );
+      }
+      commitArgs.push( "-m" );
+      commitArgs.push( opts.git.message );
+      if ( !opts.git.commitHooks ) {
+        commitArgs.push( "--no-verify" );
+      }
+
       await execa( "git", [ "add", opts.pkgRelativePath ] );
-      await execa( "git", [ "commit", "-m", opts.git.message ].concat( opts.git.commitHooks ? [] : [ "--no-verify" ] ) );
+      await execa( "git", commitArgs );
       if ( opts.git.tagPrefix ) {
         await execa( "git", [ "tag", opts.git.tagPrefix + opts.version, opts.git.signTag ? "-sm" : "-am", opts.git.message ] );
       }

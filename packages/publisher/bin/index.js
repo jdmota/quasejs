@@ -30,6 +30,11 @@ const gitConfig = t.object( {
       optional: true,
       description: ""
     },
+    signCommit: {
+      type: "boolean",
+      default: false,
+      description: ""
+    },
     signTag: {
       type: "boolean",
       default: false,
