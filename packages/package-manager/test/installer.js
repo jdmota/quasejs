@@ -32,12 +32,12 @@ async function testProcess( file ) {
   return str;
 }
 
+// $FlowIgnore
+jest.setTimeout( 30000 );
+
 describe( "installer", () => {
 
   it( "basic", async() => {
-
-    // $FlowFixMe
-    jest.setTimeout( 20000 );
 
     let outputs = null;
 

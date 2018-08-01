@@ -1,6 +1,6 @@
 // @flow
 import type { Installer } from "./commands/installer";
-import type { Name, Version, ResolvedObj, Options, DepType } from "./types";
+import type { Name, Version, ExactVersion, ResolvedObj, Options, DepType } from "./types";
 import type { Resolution } from "./resolution";
 import { toStr } from "./types";
 import type { Lockfile } from "./lockfile";
@@ -19,6 +19,8 @@ type Queued = {|
   +job: Promise<ResolvedObj>
 |};
 
+const VERSION_COMPARATOR = ( a, b ) => semver.rcompare( a.version, b.version );
+
 export class Resolver {
 
   +installer: Installer;
@@ -26,6 +28,7 @@ export class Resolver {
   +lockfile: Object;
   +newLockfile: Object;
   +reuseLockfile: boolean;
+  +sortedLockfile: Map<Name, { version: ExactVersion, index: number }[]>;
   +results: Map<Name, ResolvedObj[]>;
   queueMap: Map<Name, Queued[]>;
 
@@ -35,6 +38,7 @@ export class Resolver {
     this.lockfile = lockfile;
     this.newLockfile = newLockfile;
     this.reuseLockfile = installer.reuseLockfile;
+    this.sortedLockfile = this.reuseLockfile ? sortLockfile( lockfile ) : new Map();
     this.results = new Map();
     // This queue saves information about new resolve operations that were necessary
     // because a matching version was not found in the lockfile
@@ -44,19 +48,13 @@ export class Resolver {
 
   findInLockfile( name: Name, version: Version ): ?number {
     if ( this.reuseLockfile ) {
-      const { resolutions } = this.lockfile;
-      let i = resolutions.length;
-      // Walk in opposite way to prioritize newer versions
-      while ( i-- ) {
-        const [ thisName, exactVersion ] = resolutions[ i ];
-        // $FlowIgnore
-        const c = thisName.localeCompare( name );
-        if ( c === 0 ) {
-          if ( semver.satisfies( exactVersion, version ) ) {
-            return i;
-          }
-        } else if ( c < 0 ) {
-          break;
+      const resolves = this.sortedLockfile.get( name );
+      if ( !resolves ) {
+        return;
+      }
+      for ( const obj of resolves ) {
+        if ( semver.satisfies( obj.version, version ) ) {
+          return obj.index;
         }
       }
     }
@@ -66,9 +64,6 @@ export class Resolver {
     const resolves = this.results.get( name );
     if ( !resolves ) {
       return;
-    }
-    if ( resolves.length === 1 ) {
-      return resolves[ 0 ];
     }
     for ( const obj of resolves ) {
       if ( semver.satisfies( obj.version, version ) ) {
@@ -211,7 +206,7 @@ export class Resolver {
 
       // Sort them again
       for ( const results of this.results.values() ) {
-        results.sort( ( a, b ) => semver.rcompare( a.version, b.version ) );
+        results.sort( VERSION_COMPARATOR );
       }
 
       for ( const queuedList of queueMap.values() ) {
@@ -258,4 +253,22 @@ async function resolve( name: Name, version: Version, opts: Options ): Promise<R
     integrity: pkg._integrity + "",
     deps: pkg.dependencies
   };
+}
+
+function sortLockfile( lockfile: Lockfile ): Map<Name, { version: ExactVersion, index: number }[]> {
+  const map = new Map();
+  const { resolutions } = lockfile;
+  for ( let i = 0; i < resolutions.length; i++ ) {
+    const [ name, version ] = resolutions[ i ];
+    let arr = map.get( name );
+    if ( !arr ) {
+      arr = [];
+      map.set( name, arr );
+    }
+    arr.push( { version, index: i } );
+  }
+  for ( const arr of map.values() ) {
+    arr.sort( VERSION_COMPARATOR );
+  }
+  return map;
 }
