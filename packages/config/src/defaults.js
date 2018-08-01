@@ -93,7 +93,7 @@ export function extractDefaults( path: Path, _type: any, defaults: any, key: any
   path.pop();
 }
 
-export function applyDefaults( schema: Object, args: Object[], where: string[] = [] ) {
+export function apply( schema: Object, args: Object[], where: string[] = [] ) {
   const path = new Path();
   const type = t.object( { properties: schema } );
   if ( args.length > 0 ) {

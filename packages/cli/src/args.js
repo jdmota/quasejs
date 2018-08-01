@@ -4,7 +4,6 @@ import { fillYargsOptions } from "./schema";
 const yargsParser = require( "yargs-parser" );
 const camelCase = require( "camelcase" );
 const camelcaseKeys = require( "camelcase-keys" );
-const quaseConfig = require( "@quase/config" );
 
 function validationError( msg ) {
   const error = new Error( msg );
@@ -14,10 +13,6 @@ function validationError( msg ) {
 
 function missingSchema( command ) {
   throw new Error( `Missing schema${command ? ` for command ${command}` : ""}` );
-}
-
-function handleSchema( schema, command ) {
-  return typeof schema === "function" ? schema( quaseConfig ) : schema || missingSchema( command );
 }
 
 function clearAlias( obj, chain, allAlias ) {
@@ -71,15 +66,19 @@ export function handleArgs( opts ) {
       if ( !commandInfo ) {
         validationError( `${JSON.stringify( command )} is not a supported command` );
       }
-      schema = handleSchema( commandInfo.schema, command );
+      schema = commandInfo.schema;
     } else {
       if ( !opts.schema ) {
         validationError( `Command required. E.g. ${Object.keys( opts.commands ).slice( 0, 3 ).join( ", " )}` );
       }
-      schema = handleSchema( opts.schema );
+      schema = opts.schema;
     }
   } else {
-    schema = handleSchema( opts.schema );
+    schema = opts.schema;
+  }
+
+  if ( !schema ) {
+    missingSchema( command );
   }
 
   if ( opts.configFiles ) {

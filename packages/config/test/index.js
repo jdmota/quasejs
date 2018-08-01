@@ -1,4 +1,4 @@
-import { t, types, validate, printError, applyDefaults, getConfig, ValidationError } from "../src";
+import { t, types, validate, printError, apply, getConfig, ValidationError } from "../src";
 
 const stripAnsi = require( "strip-ansi" ); // eslint-disable-line node/no-extraneous-require
 
@@ -323,7 +323,7 @@ it( "validate", () => {
 
 function d( schema, ...args ) {
   try {
-    expect( applyDefaults( schema, [ ...args ] ) ).toMatchSnapshot();
+    expect( apply( schema, [ ...args ] ) ).toMatchSnapshot();
   } catch ( err ) {
     if ( err.__validation || /\[Schema\] [^I]/.test( err.message ) ) {
       expect( stripAnsi( err.message ) ).toMatchSnapshot();
@@ -337,7 +337,7 @@ it( "show where the error is", () => {
 
   function d( schema, ...args ) {
     try {
-      expect( applyDefaults( schema, [ ...args ], [ "a", "b", "c" ] ) ).toMatchSnapshot();
+      expect( apply( schema, [ ...args ], [ "a", "b", "c" ] ) ).toMatchSnapshot();
     } catch ( err ) {
       if ( err.__validation || /\[Schema\] [^I]/.test( err.message ) ) {
         expect( stripAnsi( err.message ) ).toMatchSnapshot();

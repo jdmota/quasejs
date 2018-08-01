@@ -23,44 +23,44 @@ Adapted from [meow](https://github.com/sindresorhus/meow), plus some features:
 ```js
 #!/usr/bin/env node
 
-require( "@quase/cli" ).default( {
+const { cli, t } = require( "@quase/cli" );
+
+cli( {
   // If you pass an array, we try to find the first file
   configFiles: "sample.config.js",
   configKey: "sample",
-  // Function or just the object.
+  // An object.
   // For more info, see @quase/config
-  schema( { t } ) {
-    return {
-      someFlagName: {
-        type: "boolean",
-        // If description == null, the flag will not appear in the help text.
-        // But with "", it will.
-        description: "",
-        alias: "s",
-        default: false
-      },
-      someObject: t.object( {
-        properties: {
-          someProp: {
-            type: "number"
-          }
+  schema: {
+    someFlagName: {
+      type: "boolean",
+      // If description == null, the flag will not appear in the help text.
+      // But with "", it will.
+      description: "",
+      alias: "s",
+      default: false
+    },
+    someObject: t.object( {
+      properties: {
+        someProp: {
+          type: "number"
         }
-      } )
-    };
+      }
+    } )
   },
   // Subcommands
   defaultCommand: "commandName", // Default: undefined
   commands: { // Default: {}
     commandName: {
       description: "",
-      schema: { // Specific schema for this command. Can also be a function.
+      schema: { // Specific schema for this command.
         foo: {
           type: "boolean"
         }
       }
     }
   },
-  // false to disable notification
+  // Default: false to disable notification
   notifier: {
     options: {}, // UpdateNotifier options
     notify: {} // .notify() options
@@ -114,7 +114,7 @@ require( "@quase/cli" ).default( {
 #!/usr/bin/env node
 const run = require( "../dist" ).default;
 
-require( "@quase/cli" ).default( {
+require( "@quase/cli" ).cli( {
   usage: "$ sample",
   schema: {},
   configFiles: "sample.config.js",

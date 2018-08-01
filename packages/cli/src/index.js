@@ -7,7 +7,8 @@ const path = require( "path" );
 const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
 const normalizePkg = require( "normalize-package-data" );
-const { getConfig, applyDefaults } = require( "@quase/config" );
+const quaseConfig = require( "@quase/config" );
+const { getConfig, apply, t } = quaseConfig;
 
 /* eslint no-process-exit: 0 */
 /* eslint no-console: 0 */
@@ -17,7 +18,7 @@ delete require.cache[ __filename ];
 const filename = module.parent.filename;
 const parentDir = path.dirname( filename );
 
-export default async function( _opts ) {
+async function cli( _opts ) {
   if ( importLocal( filename ) ) {
     return;
   }
@@ -84,7 +85,7 @@ export default async function( _opts ) {
     delete flags.config;
   }
 
-  const options = applyDefaults(
+  const options = apply(
     schema,
     [ flags, config ].filter( Boolean ),
     [ "flags", "config" ]
@@ -103,3 +104,6 @@ export default async function( _opts ) {
     showVersion
   };
 }
+
+export { cli, quaseConfig, t };
+export default cli;

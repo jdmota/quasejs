@@ -5,7 +5,7 @@
 Provides utilities to get configuration (from a file or `package.json`), apply defaults and validate options.
 
 ```js
-import { getConfig, applyDefaults, t, validate, printError } from "@quase/config";
+import { getConfig, apply, t } from "@quase/config";
 
 const schema = {
   foo: {
@@ -50,13 +50,9 @@ const config = await getConfig( {
   failIfNotFound: false
 } );
 
-const options = applyDefaults( schema, [ config ], [ "config" ] ); // The first object passed (after schema) takes precedence
-
-try {
-  validate( schema, options );
-} catch ( e ) {
-  printError( e );
-}
+// Apply defaults and validate
+// The first object passed (after schema) takes precedence
+const options = apply( schema, [ config ], [ "config" ] );
 ```
 
 ### Merge mode

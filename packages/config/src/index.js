@@ -9,7 +9,7 @@ export function validate( schema: Schema, config: ?Object ) {
   t.object( { properties: schema } ).validate( new Path(), config, config );
 }
 
-export { applyDefaults } from "./defaults";
+export { apply } from "./defaults";
 export { getConfig } from "./get-config";
 export { printWarning, printError } from "./print";
 
