@@ -1,7 +1,7 @@
 // @flow
-import { check } from "../checker";
-import { getType } from "../id";
-import type { Plugin } from "../types";
+import { check } from "../../checker";
+import { getType } from "../../id";
+import type { Plugin } from "../../types";
 
 const path = require( "path" );
 

@@ -166,7 +166,7 @@ export default class Module {
         // For modules generated from other module in different type
         if ( parent ) {
           const parentTransform = await parent.transform( builder );
-          const result = await builder.pluginsRunner.generate( this.type, parentTransform.result, this.utils, parent.utils );
+          const result = await builder.pluginsRunner.transformType( this.type, parentTransform.result, this.utils, parent.utils );
 
           data = result.data;
           map = result.map;
@@ -302,7 +302,7 @@ export default class Module {
       let required;
 
       if ( inner ) {
-        required = builder.addModuleAndGenerate( {
+        required = builder.addModuleAndTransform( {
           builder,
           path,
           type: inner.type,
@@ -311,7 +311,7 @@ export default class Module {
           inner
         }, this );
       } else {
-        required = builder.addModuleAndGenerate( {
+        required = builder.addModuleAndTransform( {
           builder,
           path,
           type: builder.pluginsRunner.getType( path ),
@@ -334,9 +334,9 @@ export default class Module {
       builder.addRef( this, required, "byDep" );
     }
 
-    for ( const { path, request, loc, async, splitPoint, required } of parentModuleDeps.values() ) {
+    for ( const { path, request, loc, async, splitPoint, required: originalRequired } of parentModuleDeps.values() ) {
 
-      // TODO generation?
+      const required = builder.transformModuleType( originalRequired, this );
 
       moduleDeps.set( request, {
         path,
@@ -381,12 +381,13 @@ export default class Module {
     await this.resolveDeps( builder );
   }
 
-  generate( builder: Builder, newType: string ): Module {
+  newModuleType( builder: Builder, newType: string ): Module {
     return builder.addModule( {
       builder,
       path: this.path,
       index: this.index,
       type: newType,
+      loc: this.locOffset,
       parent: this
     } );
   }

@@ -80,9 +80,9 @@ export const schema = {
       }
     }
   } ),
-  cli: {
-    type: "object"
-  },
+  cli: t.object( {
+    additionalProperties: true
+  } ),
   reporter: t.union( {
     types: [
       "string",
@@ -103,13 +103,13 @@ export const schema = {
     alias: "w",
     description: "Watch files for changes and re-build"
   },
-  watchOptions: {
-    type: "object"
-  },
-  plugins: {
-    type: "array",
+  watchOptions: t.object( {
+    additionalProperties: true
+  } ),
+  plugins: t.array( {
+    itemType: "any",
     merge: "concat"
-  },
+  } ),
   performance: t.object( {
     properties: {
       hints: t.choices( {
@@ -138,12 +138,12 @@ export const schema = {
         type: "string",
         optional: true
       },
-      staticFileGlobs: {
-        type: "array"
-      },
-      stripPrefixMulti: {
-        type: "object"
-      }
+      staticFileGlobs: t.array( {
+        itemType: "any"
+      } ),
+      stripPrefixMulti: t.object( {
+        additionalProperties: true
+      } )
     },
     additionalProperties: true
   } )

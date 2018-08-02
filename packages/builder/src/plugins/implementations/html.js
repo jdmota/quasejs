@@ -1,6 +1,6 @@
 // @flow
-import type { FinalAsset, FinalAssets, ToWrite, Plugin } from "../types";
-import type Builder from "../builder";
+import type { FinalAsset, FinalAssets, ToWrite, Plugin } from "../../types";
+import type Builder from "../../builder";
 import cloneAst from "./clone-ast";
 
 const parse5 = require( "parse5" );

@@ -37,7 +37,8 @@ module.exports = {
 - Plugin: dependencies
 - Plugin: resolve
 - Plugin: isSplitPoint
-- Plugin: getGeneration
+- Plugin: getTypeTransforms
+- Plugin: transformType's
 - Plugin: check
 - Plugin: graphTransform's
 - Plugin: renderAsset
@@ -112,17 +113,17 @@ Returning `null` defers to other `resolve` functions. Returning `false` means th
 
 ### isSplitPoint
 
-A (maybe asynchronous) function that accepts `( importee: ModuleUtils, importer: ModuleUtils )` and returns `null` or a boolean.
+A synchronous function that accepts `( importee: ModuleUtils, importer: ModuleUtils )` and returns `null` or a boolean.
 
 Returning `null` defers to other `isSplitPoint` functions.
 
 This function is used to decide if in the final result a importee module should go in a different file than the importer. The default is to exclude modules with a different type associated with it or when an asynchronous import is used.
 
-## getGeneration
+## getTypeTransforms
 
 A synchronous function that accepts `( importee: ModuleUtils, importer: ?ModuleUtils )` and returns `null` or an array of strings.
 
-Returning `null` defers to other `getGeneration` functions.
+Returning `null` defers to other `getTypeTransforms` functions.
 
 The function is used to decide if, for example, a CSS file should be converted to JS, when a JS module is importing it.
 
@@ -133,7 +134,7 @@ The default is to do nothing.
 ```js
 export default function() {
   return {
-    getGeneration( importee, importer ) {
+    getTypeTransforms( importee, importer ) {
       // If it's an entry file, don't convert
       if ( !importer ) {
         return [];
@@ -148,17 +149,37 @@ export default function() {
 }
 ```
 
-### checker
+### transformType
+
+Each function (maybe asynchronous) is used to transform a module type to another. In the example below, the function transform `ts` modules to `js`.
+
+Returning `null` defers to other plugins that might support that transformation.
+
+```js
+export default function() {
+  return {
+    transformType: {
+      ts: {
+        js( { data, ast } ) {
+          // TODO generation
+        }
+      }
+    }
+  };
+}
+```
+
+### check
 
 A (maybe asynchronous) function that receives the `Builder` and throws an error to stop the build if a necessary check failed.
 
 All `check` functions are called in order.
 
-### graphTransformer
+### graphTransform
 
 A (maybe asynchronous) function that receives the produced graph and transforms it.
 
-All `graphTransformer` functions are called in order passing the last produced value to each other.
+All `graphTransform` functions are called in order passing the last produced value to each other.
 
 The last graph produced will be used.
 

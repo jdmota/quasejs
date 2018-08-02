@@ -1,14 +1,14 @@
 // @flow
-import _error from "./utils/error";
-import jsPlugin from "./plugins/js";
-import htmlPlugin from "./plugins/html";
-import defaultPlugin from "./plugins/default";
+import _error from "../utils/error";
 import type {
   ProvidedPluginsArr, Plugin, Data, TransformOutput,
   DepsInfo, FinalAsset, FinalAssets, ToWrite, Output
-} from "./types";
-import type Builder from "./builder";
-import type ModuleUtils from "./module-utils";
+} from "../types";
+import type Builder from "../builder";
+import type ModuleUtils from "../module-utils";
+import jsPlugin from "./implementations/js";
+import htmlPlugin from "./implementations/html";
+import defaultPlugin from "./implementations/default";
 
 const { ValidationError } = require( "@quase/config" );
 const { getPlugins } = require( "@quase/get-plugins" );
@@ -87,20 +87,20 @@ export default class PluginsRunner {
     throw new Error( `Unable to get type of ${path}` );
   }
 
-  validateGetGeneration( actual: $ReadOnlyArray<string>, name: ?string ): $ReadOnlyArray<string> {
+  validateGetTypeTransforms( actual: $ReadOnlyArray<string>, name: ?string ): $ReadOnlyArray<string> {
     if ( !Array.isArray( actual ) ) {
-      error( "getGeneration", "array", typeof actual, name );
+      error( "getTypeTransforms", "array", typeof actual, name );
     }
     return actual;
   }
 
-  getGeneration( a: ModuleUtils, b: ?ModuleUtils ): $ReadOnlyArray<string> {
+  getTypeTransforms( a: ModuleUtils, b: ?ModuleUtils ): $ReadOnlyArray<string> {
     for ( const { name, plugin } of this.plugins ) {
-      const fn = plugin.getGeneration;
+      const fn = plugin.getTypeTransforms;
       if ( fn ) {
         const result = fn( a, b );
         if ( result != null ) {
-          return this.validateGetGeneration( result, name );
+          return this.validateGetTypeTransforms( result, name );
         }
       }
     }
@@ -209,28 +209,28 @@ export default class PluginsRunner {
     return false;
   }
 
-  validateGenerate( actual: TransformOutput, name: ?string ): TransformOutput {
+  validateTransformType( actual: TransformOutput, name: ?string ): TransformOutput {
     if ( !isObject( actual ) ) {
-      error( "generate", "object", typeof actual, name );
+      error( "transformType", "object", typeof actual, name );
     }
     return actual;
   }
 
-  async generate( newType: string, output: TransformOutput, generated: ModuleUtils, parent: ModuleUtils ): Promise<TransformOutput> {
-    generated._hook( "generate" );
+  async transformType( newType: string, output: TransformOutput, module: ModuleUtils, parent: ModuleUtils ): Promise<TransformOutput> {
+    module._hook( "transformType" );
     for ( const { name, plugin } of this.plugins ) {
-      const map = plugin.generate || EMPTY_OBJ;
+      const map = plugin.transformType || EMPTY_OBJ;
       const fromType = map[ parent.type ] || EMPTY_OBJ;
       const fn = fromType[ newType ];
       if ( fn ) {
-        const result = await fn( output, generated );
+        const result = await fn( output, module );
         if ( result != null ) {
-          return this.validateGenerate( result, name );
+          return this.validateTransformType( result, name );
         }
       }
     }
     throw new Error(
-      `Unable to generate ${generated.normalized} from ${parent.type} to ${newType}.`
+      `Unable to transform ${module.normalized} from ${parent.type} to ${newType}.`
     );
   }
 

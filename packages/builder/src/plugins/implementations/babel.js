@@ -1,8 +1,8 @@
 // @flow
 import { addNamed } from "@babel/helper-module-imports";
 import { buildExternalHelpers, transformSync, transformFromAstSync } from "@babel/core";
-import type ModuleUtils from "../module-utils";
-import type { Plugin } from "../types";
+import type ModuleUtils from "../../module-utils";
+import type { Plugin } from "../../types";
 
 const HELPERS = "babel_helpers.js";
 

@@ -1,13 +1,13 @@
 // @flow
-import arrayConcat from "../utils/array-concat";
-import type Builder from "../builder";
-import type ModuleUtils from "../module-utils";
+import arrayConcat from "../../utils/array-concat";
+import type Builder from "../../builder";
+import type ModuleUtils from "../../module-utils";
 import type {
   Plugin, NotResolvedDep, ImportedName, ExportedName,
   FinalAsset, FinalAssets
-} from "../types";
-import StringBuilder from "../string-builder";
-import { chunkInit, moduleArgs } from "../runtime/create-runtime";
+} from "../../types";
+import StringBuilder from "../../string-builder";
+import { chunkInit, moduleArgs } from "../../runtime/create-runtime";
 import babelPluginModules from "./babel-plugin-transform-modules";
 import extractNames from "./ast-extract-names";
 

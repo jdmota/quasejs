@@ -5,7 +5,7 @@ module.exports = {
   plugins: [
     function() {
       return {
-        getGeneration( module, importer ) {
+        getTypeTransforms( module, importer ) {
           if ( !importer && module.type === "ts" ) {
             return [ "js" ];
           }
@@ -13,7 +13,7 @@ module.exports = {
             return [ "js" ];
           }
         },
-        generate: {
+        transformType: {
           ts: {
             js( obj ) {
               return obj;

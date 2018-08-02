@@ -1,6 +1,6 @@
 import { schema } from "../src/options";
-import jsPlugin from "../src/plugins/js";
-import babelPlugin from "../src/plugins/babel";
+import jsPlugin from "../src/plugins/implementations/js";
+import babelPlugin from "../src/plugins/implementations/babel";
 
 const BABEL_OPTS = {
   babelrc: false,
@@ -23,7 +23,7 @@ const BABEL_OPTS = {
   ]
 };
 
-const { applyDefaults } = require( "@quase/config" );
+const { apply } = require( "@quase/config" );
 
 export default function( config, fixturePath ) {
   config.mode = "development";
@@ -34,5 +34,7 @@ export default function( config, fixturePath ) {
   config.plugins = config.plugins || [];
   config.plugins.push( [ babelPlugin, Object.assign( {}, BABEL_OPTS, config.babelOpts ) ] );
   config.plugins.push( [ jsPlugin, { resolve: config.resolve } ] );
-  return applyDefaults( schema, config );
+  delete config.resolve;
+  delete config.babelOpts;
+  return apply( schema, [ config ], [ "config" ] );
 }

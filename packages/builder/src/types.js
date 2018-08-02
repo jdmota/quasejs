@@ -125,7 +125,7 @@ export type Resolver = ( string, ModuleUtils ) => ThingOrPromise<?string | false
 
 export type Checker = Builder => ThingOrPromise<void>;
 
-export type Generator = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
+export type TypeTransformer = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
 
 export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
 
@@ -136,14 +136,14 @@ export type AfterBuild = ( Output, Builder ) => ThingOrPromise<void>;
 export type Plugin = {
   +name?: ?string,
   +getType?: ?( string ) => ?string,
-  +getGeneration?: ?( ModuleUtils, ?ModuleUtils ) => ?$ReadOnlyArray<string>,
   +load?: ?Loader,
   +transform?: ?{ [key: string]: ?Transformer },
   +dependencies?: ?{ [key: string]: ?DepExtractor },
   +resolve?: ?{ [key: string]: ?Resolver },
-  +generate?: ?{ [key: string]: ?{ [key: string]: ?Generator } },
   +isSplitPoint?: ?( ModuleUtils, ModuleUtils ) => ?boolean,
+  +getTypeTransforms?: ?( ModuleUtils, ?ModuleUtils ) => ?$ReadOnlyArray<string>,
   +isExternal?: ?( string ) => ThingOrPromise<?boolean>,
+  +transformType?: ?{ [key: string]: ?{ [key: string]: ?TypeTransformer } },
   +check?: ?Checker,
   +graphTransform?: ?GraphTransformer,
   +renderAsset?: ?{ [key: string]: ?AssetRenderer },

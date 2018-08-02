@@ -12,7 +12,7 @@ import TrackableFileSystem from "./filesystem";
 import Reporter from "./reporter";
 import Module, { type ModuleArg } from "./module";
 import { type RequirerInfo } from "./module-utils";
-import PluginsRunner from "./plugins-runner";
+import PluginsRunner from "./plugins/runner";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
@@ -61,8 +61,8 @@ export default class Builder {
 
     this.options = options;
     this.cwd = path.resolve( options.cwd );
-    this.context = resolvePath( options.context, options.cwd );
-    this.dest = resolvePath( options.dest, options.cwd );
+    this.context = resolvePath( options.context, this.cwd );
+    this.dest = resolvePath( options.dest, this.cwd );
     this.entries = options.entries.map( e => resolvePath( e, this.context ) );
     this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
     this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
@@ -190,17 +190,20 @@ export default class Builder {
     return m;
   }
 
-  addModuleAndGenerate( arg: ModuleArg, importer: ?Module ): Module {
+  addModuleAndTransform( arg: ModuleArg, importer: ?Module ): Module {
+    return this.transformModuleType( this.addModule( arg ), importer );
+  }
 
-    let m = this.addModule( arg );
+  transformModuleType( startModule: Module, importer: ?Module ): Module {
 
-    const generation = this.pluginsRunner.getGeneration( m.utils, importer && importer.utils );
+    let m = startModule;
+    const generation = this.pluginsRunner.getTypeTransforms( m.utils, importer && importer.utils );
 
     for ( let i = 0; i < generation.length; i++ ) {
       if ( m.type === generation[ i ] ) {
         continue;
       }
-      m = m.generate( this, generation[ i ] );
+      m = m.newModuleType( this, generation[ i ] );
     }
 
     return m;
@@ -324,7 +327,7 @@ export default class Builder {
     const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
 
     for ( const path of this.entries ) {
-      this.addModuleAndGenerate( {
+      this.addModuleAndTransform( {
         path,
         type: this.pluginsRunner.getType( path ),
         index: -1,

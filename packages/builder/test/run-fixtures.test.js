@@ -49,6 +49,16 @@ describe( "builder", () => {
           assets[ f ] = content;
         }
       };
+
+      const expectedOut = config._out;
+      delete config._out;
+
+      const expectedError = config._error;
+      delete config._error;
+
+      const expectedWarn = config._warn;
+      delete config._warn;
+
       config = transformConfig( config, fixturePath );
 
       builder = new Builder( config, w => {
@@ -56,12 +66,12 @@ describe( "builder", () => {
       } );
 
       function success() {
-        if ( config._error ) {
-          expect( "" ).toBe( config._error );
+        if ( expectedError ) {
+          expect( "" ).toBe( expectedError );
         } else {
           expect( assets ).toMatchSnapshot();
 
-          if ( config._out ) {
+          if ( expectedOut ) {
             config.entries.forEach( ( entry, i ) => {
               const dest = relative( path.resolve( builder.dest, entry ), builder.cwd );
               expect( typeof assets[ dest ] ).toBe( "string" );
@@ -72,7 +82,7 @@ describe( "builder", () => {
 
               expect(
                 console.log.mock.calls.map( args => args.join( " " ) ).join( "\n" )
-              ).toEqual( config._out[ i ] || "" );
+              ).toEqual( expectedOut[ i ] || "" );
             } );
           }
         }
@@ -80,20 +90,20 @@ describe( "builder", () => {
       }
 
       function failure( err ) {
-        if ( config._out || !config._error ) {
+        if ( expectedOut || !expectedError ) {
           throw err;
         } else {
-          if ( isRegExp( config._error ) ) {
-            if ( config._error.test( err.message ) ) {
+          if ( isRegExp( expectedError ) ) {
+            if ( expectedError.test( err.message ) ) {
               expect( true ).toBe( true );
             } else {
-              expect( err.stack ).toBe( config._error );
+              expect( err.stack ).toBe( expectedError );
             }
           } else {
-            if ( err.message === config._error ) {
-              expect( err.message ).toBe( config._error );
+            if ( err.message === expectedError ) {
+              expect( err.message ).toBe( expectedError );
             } else {
-              expect( err.stack ).toBe( config._error );
+              expect( err.stack ).toBe( expectedError );
             }
           }
           expect( assetsNum ).toBe( 0 );
@@ -102,8 +112,8 @@ describe( "builder", () => {
       }
 
       function end() {
-        if ( config._warn ) {
-          expect( warnings.join( "|" ) ).toBe( config._warn );
+        if ( expectedWarn ) {
+          expect( warnings.join( "|" ) ).toBe( expectedWarn );
         } else {
           expect( warnings ).toHaveLength( 0 );
         }

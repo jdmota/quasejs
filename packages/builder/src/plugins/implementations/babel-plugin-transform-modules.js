@@ -1,4 +1,4 @@
-import blank from "../utils/blank";
+import blank from "../../utils/blank";
 import astExtractNames from "./ast-extract-names";
 
 const { basename, extname } = require( "path" );
