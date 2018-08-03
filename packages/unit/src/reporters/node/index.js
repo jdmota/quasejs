@@ -342,7 +342,7 @@ export default class NodeReporter {
     let log = "\n";
 
     if ( error.message ) {
-      log += turbocolor.bold.white( error.message ) + "\n";
+      log += turbocolor.bold( error.message ) + "\n";
     }
 
     if ( error.source ) {
@@ -373,7 +373,7 @@ export default class NodeReporter {
 
     const statusText = status === "failed" ? turbocolor.red( status ) : status === "passed" ? turbocolor.green( status ) : turbocolor.yellow( status );
 
-    printLog( `\n${turbocolor.bold.white( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? turbocolor.yellow( "Slow!" ) : ""}\n` );
+    printLog( `\n${turbocolor.bold( fullname.join( " > " ) )}\n${statusText} | ${runtime} ms ${slow ? turbocolor.yellow( "Slow!" ) : ""}\n` );
 
     if ( skipReason ) {
       printLog( `\nSkip reason: ${skipReason}`, 4 );
