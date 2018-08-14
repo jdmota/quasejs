@@ -1,4 +1,6 @@
 import encoding from "./encoding";
+import SourceMapExtractor from "./extractor";
+import SourceMapExtractorBase from "./extractor-base";
 
 const { SourceMapConsumer, SourceMapGenerator } = require( "source-map" );
 
@@ -9,6 +11,7 @@ function getConsumer( map ) {
   return new SourceMapConsumer( map );
 }
 
+export { SourceMapExtractor, SourceMapExtractorBase };
 export { SourceMapConsumer, SourceMapGenerator };
 
 export function joinSourceMaps( maps ) {
@@ -74,15 +77,21 @@ export function joinSourceMaps( maps ) {
   return map;
 }
 
+export function sourceMapToString( map ) {
+  return JSON.stringify( map );
+}
+
 export function sourceMapToUrl( map ) {
   if ( !encoding.encode ) {
     throw new Error( "Unsupported environment: `window.btoa` or `Buffer` should be supported." );
   }
-  return "data:application/json;charset=utf-8;base64," + encoding.encode( map.toString() );
+  return "data:application/json;charset=utf-8;base64," + encoding.encode( sourceMapToString( map ) );
 }
 
-export function sourceMapToString( map ) {
-  return JSON.stringify( map );
+export const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
+
+export function sourceMapComment( url ) {
+  return `\n//# ${SOURCE_MAP_URL}=${url}`;
 }
 
 export function getOriginalLocation( map, generated ) { // map, generated: { line, column, bias? }

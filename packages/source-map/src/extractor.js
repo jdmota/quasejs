@@ -1,115 +1,95 @@
-import encoding from "./encoding";
+// @flow
+import SourceMapExtractorBase, { type SourceMapInfoWithMap, type Original } from "./extractor-base";
 
-const { SourceMapConsumer } = require( "source-map" );
 const { makeAbsolute, resolveAsUrl, isUrl } = require( "@quase/path-url" );
 
-const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
-    // Matches /* ... */ comments
-    regex1 = new RegExp( "/\\*" + baseRegex + "\\s*\\*/" ),
-    // Matches // .... comments
-    regex2 = new RegExp( "//" + baseRegex + "($|\n|\r\n?)" ),
-    // Matches DataUrls
-    regexDataUrl = /data:[^;\n]+;base64,(.*)/;
+export default class SourceMapExtractor extends SourceMapExtractorBase {
 
-export default class SourceMapExtractor {
+  +fs: Object;
+  +requester: Object;
+  +mapRequest: Map<string, Promise<?SourceMapInfoWithMap>>;
 
-  constructor( fs, requester ) {
+  constructor( fs: Object, requester: Object ) {
+    super();
     this.fs = fs;
     this.requester = requester;
-    this.cacheMapLocation = Object.create( null );
-    this.mapRequest = Object.create( null );
+    this.mapRequest = new Map();
   }
 
-  static consumeSourceMap( data ) {
-    return data == null ? null : new SourceMapConsumer( JSON.parse( data ) );
-  }
-
-  async _read( file ) {
+  async _read( file: string ): Promise<string> {
     return isUrl( file ) ? ( await this.requester.fetch( file ) ).text() : this.fs.readFile( file, "utf8" );
   }
 
-  async _getMap( file ) {
+  async _getMap( file: string ): Promise<?SourceMapInfoWithMap> {
 
     const headers = isUrl( file ) ? ( await this.requester.fetch( file ) ).headers : {};
+    const url = headers.SourceMap || headers[ "X-SourceMap" ];
+    let mapData;
 
-    let url = headers.SourceMap || headers[ "X-SourceMap" ];
-
-    if ( !url ) {
-      const code = await this._read( file );
-      const match = code.match( regex1 ) || code.match( regex2 );
-
-      if ( !match ) {
-        return;
-      }
-
-      url = match[ 1 ];
+    if ( url ) {
+      mapData = this.getMapFromUrl( file, url );
+    } else {
+      mapData = this.getMapFromFile( file, await this._read( file ) );
     }
 
-    const dataUrlMatch = url.match( regexDataUrl );
-
-    if ( dataUrlMatch ) {
-      return {
-        map: SourceMapExtractor.consumeSourceMap( encoding.decode( dataUrlMatch[ 1 ] ) ),
-        mapLocation: file
-      };
+    if ( !mapData ) {
+      return;
     }
 
-    const mapLocation = this.cacheMapLocation[ file ] = resolveAsUrl( file, url );
-
-    let sourcemap;
-
-    try {
-      sourcemap = await this._read( mapLocation );
-    } catch ( e ) {
-      // The sourcemap that was supposed to exist, was not found
-    }
+    const mapLocation = mapData.mapLocation;
+    const map = mapData.map == null ?
+      SourceMapExtractorBase.consumeSourceMap( await this._read( mapData.mapLocation ) ) :
+      mapData.map;
 
     return {
-      map: SourceMapExtractor.consumeSourceMap( sourcemap ),
+      map,
       mapLocation
     };
-
   }
 
-  getMap( file ) {
+  getMap( file: string ): Promise<?SourceMapInfoWithMap> {
     file = makeAbsolute( file );
-    return this.mapRequest[ file ] || ( this.mapRequest[ file ] = this._getMap( file ) );
+
+    let job = this.mapRequest.get( file );
+    if ( !job ) {
+      job = this._getMap( file );
+      this.mapRequest.set( file, job );
+    }
+    return job;
   }
 
-  purge( file ) {
+  purge( file: string ) {
     file = makeAbsolute( file );
     if ( isUrl( file ) ) {
       this.requester.purge( file );
     } else {
       this.fs.purge( file );
     }
-    this.mapRequest[ file ] = null;
-    this.cacheMapLocation[ file ] = null;
+    this.mapRequest.delete( file );
   }
 
   // file, generated: { line, column, bias? }
-  async getOriginalLocation( file, generated ) {
+  async getOriginalLocation( file: string, generated: Object ): Promise<Original | { code: string }> {
 
     const { map, mapLocation } = await this.getMap( file ) || {};
 
     if ( map ) {
-      const pos = map.originalPositionFor( generated ); // { source, line, column, name }
+      const original = this.getOriginalLocationFromMap( map, mapLocation, generated );
 
-      if ( pos.line != null ) {
-        const originalFile = resolveAsUrl( mapLocation, pos.source );
-        const originalCode = map.sourceContentFor( pos.source, true ) || await this._read( originalFile );
-
-        pos.originalFile = originalFile;
-        pos.originalCode = originalCode;
-
-        return pos;
+      if ( original ) {
+        if ( original.originalCode == null ) {
+          original.originalCode = await this._read( original.originalFile );
+        }
+        return original;
       }
     }
 
-    return { code: await this._read( file ) };
+    return {
+      code: await this._read( file )
+    };
   }
 
-  async getOriginalSources( file ) {
+  async getOriginalSources( file: string ): Promise<string[]> {
 
     const { map, mapLocation } = await this.getMap( file ) || {};
 

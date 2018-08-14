@@ -27,6 +27,7 @@
       "<rootDir>/packages/fs/find-files/test/",
       "<rootDir>/packages/package-manager/test/",
       "<rootDir>/packages/pathname/test/",
+      "<rootDir>/packages/source-map/test/",
       "<rootDir>/packages/unit/test/",
       "<rootDir>/packages/view/test/"
     ],

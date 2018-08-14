@@ -10,5 +10,8 @@
   "dependencies": {
     "@quase/path-url": "^0.1.0",
     "source-map": "^0.5.7"
+  },
+  "devDependencies": {
+    "fs-extra": "^7.0.0"
   }
 }

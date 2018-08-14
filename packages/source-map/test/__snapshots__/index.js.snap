@@ -1,0 +1,182 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`get map from file 1`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "multi-line-inline.css",
+}
+`;
+
+exports[`get map from file 2`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "map-file-comment.css.map",
+}
+`;
+
+exports[`get map from file 3`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "single-line-inline.css",
+}
+`;
+
+exports[`get map from file 4`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "map-file-comment.css.map",
+}
+`;
+
+exports[`get map from file content 1`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "multi-line-inline.css",
+}
+`;
+
+exports[`get map from file content 2`] = `
+Object {
+  "map": null,
+  "mapLocation": "map-file-comment.css.map",
+}
+`;
+
+exports[`get map from file content 3`] = `
+Object {
+  "map": SourceMapConsumer {
+    "_mappings": "AAAA,wBAAyB;EACvB,UAAU,EAAE,IAAI;EAChB,MAAM,EAAE,KAAK;EACb,OAAO,EAAE,IAAI;EACb,aAAa,EAAE,iBAAiB;EAChC,KAAK,EAAE,OAAkB;;AAG3B,wBAAyB;EACvB,OAAO,EAAE,IAAI;;ACTf,gBAAiB;EACf,UAAU,EAAE,IAAI;EAChB,KAAK,EAAE,MAAM;;AAGf,kBAAmB;EACjB,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,UAAU,EAAE,KAAK;EACjB,aAAa,EAAE,GAAG;EAClB,KAAK,EAAE,KAAK;;AAEd,kBAAmB;EACjB,KAAK,EAAE,KAAK;;AAGd,mBAAoB;EAClB,KAAK,EAAE,KAAK;EACZ,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,SAAS,EAAE,IAAI",
+    "_names": ArraySet {
+      "_array": Array [],
+      "_set": Map {},
+    },
+    "_sources": ArraySet {
+      "_array": Array [
+        "client/sass/core.scss",
+        "client/sass/main.scss",
+      ],
+      "_set": Map {
+        "client/sass/core.scss" => 0,
+        "client/sass/main.scss" => 1,
+      },
+    },
+    "file": "map-file-comment.css",
+    "sourceRoot": null,
+    "sourcesContent": null,
+  },
+  "mapLocation": "single-line-inline.css",
+}
+`;
+
+exports[`get map from file content 4`] = `
+Object {
+  "map": null,
+  "mapLocation": "map-file-comment.css.map",
+}
+`;
+
+exports[`get original location from map 1`] = `
+Object {
+  "column": 0,
+  "line": 9,
+  "name": null,
+  "originalCode": null,
+  "originalFile": "client/sass/core.scss",
+  "source": "client/sass/core.scss",
+}
+`;
