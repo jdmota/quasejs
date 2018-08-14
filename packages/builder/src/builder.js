@@ -1,32 +1,25 @@
 // @flow
 import hash from "./utils/hash";
 import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
-import processGraph from "./graph";
+import Module, { type ModuleArg } from "./modules/index";
 import type {
   FinalAsset, FinalAssets,
   PerformanceOpts, MinimalFS, ToWrite,
   Info, OptimizationOptions, Options
 } from "./types";
-import { resolvePath, relative, lowerPath } from "./id";
-import TrackableFileSystem from "./filesystem";
+import { resolvePath, relative } from "./id";
+import { Graph, processGraph } from "./graph";
+import FileSystem from "./filesystem";
 import Reporter from "./reporter";
-import Module, { type ModuleArg } from "./module";
-import { type RequirerInfo } from "./module-utils";
 import PluginsRunner from "./plugins/runner";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
 const { getOnePlugin } = require( "@quase/get-plugins" );
+const { joinSourceMaps } = require( "@quase/source-map" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
-
-type ModuleRefs = {
-  byParent: Map<Module, Set<Module>>,
-  byDep: Map<Module, Set<Module>>
-};
-
-const refLocations: Set<$Keys<ModuleRefs>> = new Set( [ "byParent", "byDep" ] );
 
 export default class Builder {
 
@@ -39,7 +32,7 @@ export default class Builder {
   +hashing: boolean;
   +publicPath: string;
   +warn: Function;
-  +fileSystem: TrackableFileSystem<RequirerInfo>;
+  +fileSystem: FileSystem;
   +fs: MinimalFS;
   +cli: Object;
   +reporter: { +plugin: Function, +options: Object };
@@ -51,11 +44,8 @@ export default class Builder {
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
   +modules: Map<string, Module>;
-  +modulesPerFile: Map<string, Set<Module>>;
-  +moduleEntries: Set<Module>;
-  +usedIds: Set<string>;
   +promises: Promise<*>[];
-  +refs: ModuleRefs;
+  buildId: number;
 
   constructor( options: Options, warn: Function ) {
 
@@ -75,7 +65,7 @@ export default class Builder {
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
     this.performance = options.performance;
-    this.fileSystem = new TrackableFileSystem();
+    this.fileSystem = new FileSystem();
     this.warn = warn;
 
     if ( this.watch ) {
@@ -90,52 +80,9 @@ export default class Builder {
     this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
 
     this.modules = new Map();
-    this.modulesPerFile = new Map();
-    this.moduleEntries = new Set();
-    this.usedIds = new Set();
 
     this.promises = [];
-
-    this.refs = {
-      byParent: new Map(),
-      byDep: new Map()
-    };
-  }
-
-  addRef( _from: Module, to: Module, where: $Keys<ModuleRefs> ) {
-    const map = this.refs[ where ];
-    const set = map.get( to ) || new Set();
-    map.set( to, set );
-    set.add( _from );
-  }
-
-  removeRef( _from: Module, to: Module, where: $Keys<ModuleRefs> ) {
-    const map = this.refs[ where ];
-    const set = map.get( to );
-    if ( set ) {
-      set.delete( _from );
-    }
-  }
-
-  destroyRefsTo( to: Module ) {
-    for ( const loc of refLocations ) {
-      const map = this.refs[ loc ];
-      const set = map.get( to );
-      if ( set ) {
-        map.delete( to );
-        for ( const _from of set ) {
-          switch ( loc ) {
-            case "PARENT":
-              this.removeModule( _from );
-              break;
-            case "MODULE_DEPS":
-              _from.resetDeps( this );
-              break;
-            default:
-          }
-        }
-      }
-    }
+    this.buildId = 0;
   }
 
   createFakePath( key: string ): string {
@@ -146,27 +93,16 @@ export default class Builder {
     return path.startsWith( resolvePath( "_quase_builder_", this.context ) );
   }
 
-  isEntry( id: string ): boolean {
-    return this.entries.findIndex( e => e === id ) > -1;
-  }
-
   isDest( id: string ): boolean {
     return id.indexOf( this.dest ) === 0;
   }
 
-  getModuleForSure( id: string ): Module {
-    const m = this.modules.get( id );
-    if ( m ) {
-      return m;
+  makeId( { path, type, innerId }: ModuleArg ) {
+    const r = relative( path, this.context );
+    if ( innerId || !path.endsWith( `.${type}` ) || /\|/.test( r ) ) {
+      return `${r}|${innerId || ""}|${type}`;
     }
-    throw new Error( `Internal: cannot find module ${id}` );
-  }
-
-  makeId( { path, type, index }: ModuleArg ) {
-    if ( index === -1 && path.endsWith( `.${type}` ) ) {
-      return relative( path, this.context );
-    }
-    return `${relative( path, this.context )}\0${index}\0${type}`;
+    return r;
   }
 
   addModule( arg: ModuleArg ): Module {
@@ -176,17 +112,9 @@ export default class Builder {
     if ( !m ) {
       m = new Module( id, arg );
       this.modules.set( id, m );
-
-      const set = this.modulesPerFile.get( m.path ) || new Set();
-      set.add( m );
-      this.modulesPerFile.set( m.path, set );
-
-      if ( m.isEntry ) {
-        this.moduleEntries.add( m );
-      }
     }
 
-    this.promises.push( m.process( this ) );
+    this.promises.push( m.process() );
     return m;
   }
 
@@ -203,61 +131,10 @@ export default class Builder {
       if ( m.type === generation[ i ] ) {
         continue;
       }
-      m = m.newModuleType( this, generation[ i ] );
+      m = m.newModuleType( generation[ i ] );
     }
 
     return m;
-  }
-
-  removeModule( m: Module ) {
-    if ( this.modules.delete( m.id ) ) {
-      this.usedIds.delete( m.hashId );
-
-      if ( m.isEntry ) {
-        this.moduleEntries.delete( m );
-      }
-
-      const modules = this.modulesPerFile.get( m.path );
-      if ( modules ) modules.delete( m );
-
-      this.destroyRefsTo( m );
-    }
-  }
-
-  resetDeps( path: string ) {
-    const modules = this.modulesPerFile.get( path );
-    if ( modules ) {
-      modules.forEach( m => m.resetDeps( this ) );
-    }
-  }
-
-  removeFile( path: string, removed: boolean ) {
-    path = lowerPath( path );
-
-    const modules = this.modulesPerFile.get( path );
-    if ( modules ) {
-      this.modulesPerFile.delete( path );
-      for ( const m of modules ) {
-        this.removeModule( m );
-      }
-    }
-
-    const set = this.fileSystem.fileUsedBy.get( path );
-    if ( set ) {
-      set.forEach( ( { who, when, what } ) => {
-        if ( what === "stat" && when === "resolve" ) {
-          who.resetDeps( this );
-        } else {
-          this.removeModule( who );
-        }
-      } );
-    }
-
-    if ( removed ) {
-      this.fileSystem.purge( path );
-    } else {
-      this.fileSystem.purgeContent( path );
-    }
   }
 
   createRuntime( obj: RuntimeArg ) {
@@ -309,6 +186,22 @@ export default class Builder {
     };
   }
 
+  joinSourceMaps( maps: ( ?Object )[] ) {
+    return joinSourceMaps( maps );
+  }
+
+  wrapInJsPropKey( string: string ): string {
+    return /^[$_a-zA-Z][$_a-zA-Z0-9]*$/.test( string ) ? string : JSON.stringify( string );
+  }
+
+  wrapInJsString( string: string ): string {
+    return /("|'|\\)/.test( string ) ? JSON.stringify( string ) : `'${string}'`;
+  }
+
+  renderAsset( asset: FinalAsset, finalAssets: FinalAssets ): Promise<ToWrite> {
+    return this.pluginsRunner.renderAsset( asset, finalAssets );
+  }
+
   async callRenderers( finalAssets: FinalAssets ): Promise<Info[]> {
     const writes = [];
     for ( const asset of finalAssets.files ) {
@@ -322,18 +215,25 @@ export default class Builder {
     return Promise.all( writes );
   }
 
+  removeModule( m: Module ) {
+    this.modules.delete( m.id );
+  }
+
   async build() {
     const startTime = Date.now();
     const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
+    const moduleEntries = new Set();
+
+    this.buildId++;
 
     for ( const path of this.entries ) {
-      this.addModuleAndTransform( {
-        path,
-        type: this.pluginsRunner.getType( path ),
-        index: -1,
-        isEntry: true,
-        builder: this
-      }, null );
+      moduleEntries.add(
+        this.addModuleAndTransform( {
+          path,
+          type: this.pluginsRunner.getType( path ),
+          builder: this
+        }, null )
+      );
     }
 
     let promise;
@@ -341,9 +241,23 @@ export default class Builder {
       await promise;
     }
 
-    await this.pluginsRunner.check();
+    const remove = [];
+    for ( const module of this.modules.values() ) {
+      if ( module.buildId !== this.buildId ) {
+        remove.push( module );
+      }
+    }
 
-    const finalAssets = await this.pluginsRunner.graphTransform( processGraph( this ) );
+    for ( const module of remove ) {
+      this.removeModule( module );
+    }
+
+    const graph = new Graph( this, moduleEntries );
+    await graph.init( this );
+
+    await this.pluginsRunner.check( graph );
+
+    const finalAssets = await this.pluginsRunner.graphTransform( processGraph( graph ) );
 
     await emptyDirPromise;
 

@@ -33,7 +33,13 @@ describe( "builder", () => {
 
       const fixturePath = path.resolve( FIXTURES, folder );
 
-      let config = require( path.resolve( fixturePath, "config.js" ) );
+      let config;
+      try {
+        config = require( path.resolve( fixturePath, "config.js" ) );
+      } catch ( err ) {
+        config = {};
+      }
+
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "files";
       config.dest = config.dest || "atual";

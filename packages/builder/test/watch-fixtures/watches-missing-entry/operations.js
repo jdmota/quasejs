@@ -1,3 +1,3 @@
 module.exports = [
-  [ "writeFile", "./index.js", "" ]
+  [ "newFile", "./index.js", "" ]
 ];

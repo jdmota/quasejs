@@ -1,5 +1,14 @@
 # Builder
 
+## Features
+
+- Supports any file type or language, even images, not just JavaScript
+- Supports any file types as entries, like HTML
+- Thanks to the plugin architecture, inlined JavaScript in HTML is possible
+- `load` and `error` events are emitted for script tags, replicating the `<script type="module">` behaviour
+- The runtime is small (2kB or less) and is able to fecth the necessary scripts for each module in parallel
+- Errors have code frames to help pinpoint to the problem
+
 ## Config example
 
 `quase-builder.config.js`
@@ -33,7 +42,9 @@ module.exports = {
 
 - Plugin: getType
 - Plugin: load
-- Plugin: transform's
+- Plugin: parse
+- Plugin: transformAst's
+- Plugin: transformBuffer's
 - Plugin: dependencies
 - Plugin: resolve
 - Plugin: isSplitPoint
@@ -55,7 +66,7 @@ A plugin is a function that returns an object with one or more of the following 
 
 ### name
 
-It's a string with the name of the plugin. Optional but should be used.
+It's a string with the name of the plugin. Optional, but should be used.
 
 ### getType
 
@@ -71,19 +82,29 @@ Returning `null` defers to other `load` functions.
 
 The default is to load from the file system.
 
-### transform
+### parse
+
+A (maybe asynchronous) function that accepts `( data: string, m: ModuleUtils )` and returns `null` or an object (the AST).
+
+Returning `null` defers to other `parse` functions.
+
+If no AST is produced, the module contents will be a buffer and `transformBuffer`'s will be called instead of `transformAst`'s in the next phase.
+
+### transformAst
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( { data, map, ast }, ModuleUtils )` and returns `null` or:
+The function can be asynchronous and accepts `( ast, ModuleUtils )` and returns `null` or a new AST.
 
-```
-{
-  data: Buffer | string,
-  ast: ?Object,
-  map: ?Object
-}
-```
+Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
+
+The builder will use the last output from the last transformer.
+
+### transformBuffer
+
+An object where the key is a module type, and the value a function.
+
+The function can be asynchronous and accepts `( buffer, ModuleUtils )` and returns `null` or a new buffer.
 
 Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
 
@@ -93,11 +114,21 @@ The builder will use the last output from the last transformer.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( { data, map, ast }, ModuleUtils )` and returns `null` or:
+The function can be asynchronous and accepts `( ast, ModuleUtils )` and returns `null` or:
 
 ```
 {
-  dependencies: NotResolvedDep[],
+  dependencies: Map<string, {
+    loc: ?Loc,
+    async: ?boolean
+  }>,
+  innerDependencies: Map<string, {
+    type: string,
+    data: Buffer | string,
+    map: ?Object,
+    loc: ?Loc,
+    async: ?boolean
+  }>,
   importedNames: ImportedName[],
   exportedNames: ExportedName[]
 }
@@ -151,17 +182,29 @@ export default function() {
 
 ### transformType
 
-Each function (maybe asynchronous) is used to transform a module type to another. In the example below, the function transform `ts` modules to `js`.
+Each function (maybe asynchronous) is used to transform a module type to another. In the example below, the function transform `ts` modules into `js`.
 
 Returning `null` defers to other plugins that might support that transformation.
 
 ```js
+type TransformOutput = {
+  ast: Object,
+  buffer: void
+} | {
+  ast: void,
+  buffer: Buffer
+};
+
 export default function() {
   return {
     transformType: {
       ts: {
-        js( { data, ast } ) {
+        js( output: TransformOutput ) {
           // TODO generation
+          return {
+            data: "", // string | Buffer
+            map: {}
+          };
         }
       }
     }
@@ -216,13 +259,13 @@ Useful to know if source map generation was requested, for example.
 moduleUtils.builderOptions().optimization.sourceMaps // boolean | "inline"
 ```
 
-### createFakePath( key: string ): string
-
-A function that returns a fake path that you can use.
-
 ### isFakePath( path: string ): boolean
 
 Returns `true` if the string contains a fake path.
+
+### createFakePath( key: string ): string
+
+A function that returns a fake path that you can use.
 
 ### async stat( path: string )
 
@@ -236,14 +279,8 @@ Same as the `fs.readFile` but returns a promise.
 
 You should use this instead of the native `fs.readFile` to tell the builder that it should watch the file in `path` for changes.
 
-### cacheGet( key: any ): any
+### async readdir( path: string )
 
-Get the value associated with `key` from the cache map associated with this module.
+Same as the `fs.readdir` but returns a promise.
 
-### cacheSet( key: any, value: any ): any
-
-Set a key on the cache map associated with this module.
-
-### cacheDelete( key: any ): boolean
-
-Delete a key on the cache map associated with this module.
+You should use this instead of the native `fs.readdir` to tell the builder that it should watch the folder in `path` for changes.

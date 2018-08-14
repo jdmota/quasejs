@@ -1,4 +1,5 @@
 // @flow
+import { lowerPath } from "./id";
 import Builder from "./builder";
 
 const Watchpack = require( "watchpack" );
@@ -6,20 +7,21 @@ const EventEmitter = require( "events" );
 
 export default class Watcher extends EventEmitter {
 
+  +builder: Builder;
+  watcher: ?Object;
   job: Promise<any>;
-  builder: Builder;
-  watcher: Watchpack;
 
   constructor( builder: Builder ) {
     super();
 
     this.job = Promise.resolve();
     this.builder = builder;
-    this.watcher = new Watchpack( builder.watchOptions );
 
-    this.watcher.on( "change", id => this.onUpdate( id, "changed" ) );
-    this.watcher.on( "remove", id => this.onUpdate( id, "removed" ) );
-    this.watcher.on( "aggregated", () => this.queueBuild() );
+    const watcher = new Watchpack( builder.watchOptions );
+    this.watcher = watcher;
+    watcher.on( "change", ( id, mtime, type ) => this.onUpdate( id, type === "add" ? "added" : "changed" ) );
+    watcher.on( "remove", id => this.onUpdate( id, "removed" ) );
+    watcher.on( "aggregated", () => this.queueBuild() );
 
     process.once( "SIGINT", this.stop );
     process.once( "SIGTERM", this.stop );
@@ -58,7 +60,17 @@ export default class Watcher extends EventEmitter {
 
   onUpdate( id: string, type: string ) {
     this.nextJob( () => {
-      this.builder.removeFile( id, type === "removed" );
+
+      const path = lowerPath( id );
+
+      if ( type === "added" || type === "removed" ) {
+        // If a folder was removed, no need to purgeNested,
+        // since if we depended on those files, they will be purged as well.
+        this.builder.fileSystem.purge( path );
+      } else {
+        this.builder.fileSystem.purgeContent( path );
+      }
+
       this.emit( "update", { id, type } );
     } );
   }

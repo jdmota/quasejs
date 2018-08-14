@@ -1,56 +1,60 @@
 // @flow
+import { Producer, type IComputation } from "./utils/data-dependencies";
+
 const { default: FileSystem } = require( "@quase/cacheable-fs" );
 
-export type FSOperation = "stat" | "readFile" | "readdir";
+type FSOperation = "stat" | "readFile" | "readdir";
 
-export default class TrackableFileSystem<T> extends FileSystem {
+type FSProducers = { [key: FSOperation]: Producer<void> };
 
-  +fileUsedBy: Map<string, Set<T>>;
+export default class DependableFileSystem extends FileSystem {
+
+  +producersByFile: Map<string, FSProducers>;
 
   constructor() {
     super();
-    this.fileUsedBy = new Map();
+    this.producersByFile = new Map();
   }
 
-  getObjFile( file: string, requirer: T ) {
+  getObjFile( file: string, sub: IComputation, op: FSOperation ) {
     const obj = super.getObjFile( file );
-    const set = this.fileUsedBy.get( obj.location ) || new Set();
-
-    if ( obj.location !== requirer ) {
-      set.add( requirer );
-    }
-
-    this.fileUsedBy.set( obj.location, set );
+    const producers = this.producersByFile.get( obj.location ) || {
+      stat: new Producer(),
+      readFile: new Producer(),
+      readdir: new Producer()
+    };
+    this.producersByFile.set( obj.location, producers );
+    producers[ op ].subscribe( sub );
     return obj;
   }
 
-  async stat( file: string, requirer: T ) {
-    return this.getObjFile( file, requirer ).stat();
+  async stat( file: string, sub: IComputation ) {
+    return this.getObjFile( file, sub, "stat" ).stat();
   }
 
-  async readFile( file: string, requirer: T, enconding: ?string ) {
-    return this.getObjFile( file, requirer ).readFile( enconding );
+  async readFile( file: string, sub: IComputation, enconding: ?string ) {
+    return this.getObjFile( file, sub, "readFile" ).readFile( enconding );
   }
 
-  async readdir( file: string, requirer: T ) {
-    return this.getObjFile( file, requirer ).readdir();
+  async readdir( file: string, sub: IComputation ) {
+    return this.getObjFile( file, sub, "readdir" ).readdir();
   }
 
-  statSync( file: string, requirer: T ) {
-    return this.getObjFile( file, requirer ).statSync();
+  statSync( file: string, sub: IComputation ) {
+    return this.getObjFile( file, sub, "stat" ).statSync();
   }
 
-  readFileSync( file: string, requirer: T, encoding: ?string ) {
-    return this.getObjFile( file, requirer ).readFileSync( encoding );
+  readFileSync( file: string, sub: IComputation, encoding: ?string ) {
+    return this.getObjFile( file, sub, "readFile" ).readFileSync( encoding );
   }
 
-  readdirSync( file: string, requirer: T ) {
-    return this.getObjFile( file, requirer ).readdirSync();
+  readdirSync( file: string, sub: IComputation ) {
+    return this.getObjFile( file, sub, "readdir" ).readdirSync();
   }
 
-  async isFile( file: string, requirer: T ) {
+  async isFile( file: string, sub: IComputation ) {
     try {
-      const s = await this.stat( file, requirer );
+      const s = await this.stat( file, sub );
       return s.isFile() || s.isFIFO();
     } catch ( err ) {
       if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
@@ -60,33 +64,45 @@ export default class TrackableFileSystem<T> extends FileSystem {
     }
   }
 
-  isFileSync( file: string, requirer: T ) {
+  isFileSync( file: string, sub: IComputation ) {
     try {
-      const s = this.statSync( file, requirer );
+      const s = this.statSync( file, sub );
       return s.isFile() || s.isFIFO();
     } catch ( err ) {
       if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
         return false;
       }
       throw err;
+    }
+  }
+
+  _notify( what: string, statToo: boolean ) {
+    const producers = this.producersByFile.get( what );
+    if ( producers ) {
+      producers.readFile.notify();
+      producers.readdir.notify();
+      if ( statToo ) {
+        producers.stat.notify();
+        this.producersByFile.delete( what );
+      }
     }
   }
 
   // React to "file changed"
   purgeContent( what: string ) {
-    this.fileUsedBy.delete( what );
+    this._notify( what, false );
     super.purgeContent( what );
   }
 
   // React to "file added" or "file removed"
   purge( what: string ) {
-    this.fileUsedBy.delete( what );
+    this._notify( what, true );
     super.purge( what );
   }
 
   // React to "folder added" or "folder removed"
   purgeNested( what: string ) {
-    this.fileUsedBy.delete( what );
+    this._notify( what, true );
     super.purgeNested( what );
   }
 

@@ -3,15 +3,16 @@ import blank from "./utils/blank";
 import error from "./utils/error";
 import isEmpty from "./utils/is-empty";
 import { locToString } from "./utils/loc";
+import type PublicModule from "./modules/public";
 import type { Loc } from "./types";
+import type { Graph } from "./graph";
 import type Builder from "./builder";
-import type Module from "./module";
 
 const isExportAll = e => e.request && e.name === "*" && e.imported === "*";
 
 export class Checker {
 
-  +module: Module;
+  +module: PublicModule;
   +builder: Builder;
   +id: string;
   +normalized: string;
@@ -20,7 +21,7 @@ export class Checker {
   _exportsSingle: ?{ [key: string]: boolean };
   _exportsAllFrom: ?{ [key: string]: boolean };
 
-  constructor( module: Module, builder: Builder ) {
+  constructor( module: PublicModule, builder: Builder ) {
     this.module = module;
     this.builder = builder;
     this.id = module.id;
@@ -35,7 +36,7 @@ export class Checker {
     this.module.error( msg, loc );
   }
 
-  getModule( request: string ): Module {
+  getModule( request: string ): PublicModule {
     const m = this.module.getModuleByRequest( request );
     if ( !m ) {
       throw new Error( `Internal: dependency for ${JSON.stringify( request )} not found.` );
@@ -77,7 +78,7 @@ export class Checker {
     return exports;
   }
 
-  getAllFromExports( stack: Set<Module> = new Set() ) {
+  getAllFromExports( stack: Set<PublicModule> = new Set() ) {
     if ( this._exportsAllFrom ) {
       return this._exportsAllFrom;
     }
@@ -139,7 +140,7 @@ export class Checker {
     return exportsAllFrom;
   }
 
-  getExports( stack: Set<Module> | void ) {
+  getExports( stack: Set<PublicModule> | void ) {
     return this._exports || ( this._exports = {
       ...this.getSingleExports(),
       ...this.getAllFromExports( stack )
@@ -177,11 +178,8 @@ export class Checker {
 
 }
 
-export function check( builder: Builder ) {
-  for ( const [ , module ] of builder.modules ) {
-    module.checker.reset();
-  }
-  for ( const [ , module ] of builder.modules ) {
+export function check( graph: Graph ) {
+  for ( const [ , module ] of graph.modules ) {
     module.checker.checkImportsExports();
   }
 }

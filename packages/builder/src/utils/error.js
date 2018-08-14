@@ -1,17 +1,8 @@
 import { locToString } from "./loc";
 
 const codeFrameColumns = require( "@babel/code-frame" ).codeFrameColumns;
-const { getOriginalLocation } = require( "@quase/source-map" );
 
-export default function( message, { id, code, map, originalCode } = {}, loc ) {
-  if ( loc && originalCode && map ) {
-    const originalLoc = getOriginalLocation( map, loc );
-    if ( originalLoc.line != null ) {
-      loc = originalLoc;
-      code = originalCode;
-    }
-  }
-
+export default function( message, { id, code, loc } = {} ) {
   const error = new Error( `${message}${id ? `. See ${id}${loc ? `:${locToString( loc )}` : ""}` : ""}` );
   error.__fromBuilder = true;
   error.loc = loc;

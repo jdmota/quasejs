@@ -1,11 +1,12 @@
 // @flow
 import _error from "../utils/error";
+import type { ModuleUtils, ModuleUtilsWithFS } from "../modules/utils";
 import type {
-  ProvidedPluginsArr, Plugin, Data, TransformOutput,
+  ProvidedPluginsArr, Plugin, Data, LoadOutput, TransformOutput,
   DepsInfo, FinalAsset, FinalAssets, ToWrite, Output
 } from "../types";
+import type { Graph } from "../graph";
 import type Builder from "../builder";
-import type ModuleUtils from "../module-utils";
 import jsPlugin from "./implementations/js";
 import htmlPlugin from "./implementations/html";
 import defaultPlugin from "./implementations/default";
@@ -114,8 +115,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async load( path: string, module: ModuleUtils ): Promise<Data> {
-    module._hook( "load" );
+  async load( path: string, module: ModuleUtilsWithFS ): Promise<Data> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.load;
       if ( fn ) {
@@ -128,26 +128,72 @@ export default class PluginsRunner {
     throw new Error( `Unable to load ${path}` );
   }
 
-  validateTransform( actual: TransformOutput, name: ?string ): TransformOutput {
+  validateParse( actual: Object, name: ?string ): Object {
     if ( !isObject( actual ) ) {
-      error( "transform", "object", typeof actual, name );
+      error( "parse", "object", typeof actual, name );
     }
     return actual;
   }
 
-  async transform( initial: TransformOutput, module: ModuleUtils ): Promise<TransformOutput> {
-    module._hook( "transform" );
-    let result = initial;
+  async parse( data: Data, module: ModuleUtils ): Promise<?Object> {
+    const wasString = typeof data === "string";
+    let string = null;
     for ( const { name, plugin } of this.plugins ) {
-      if ( result.final ) {
-        break;
-      }
-      const map = plugin.transform || EMPTY_OBJ;
+      const map = plugin.parse || EMPTY_OBJ;
       const fn = map[ module.type ];
       if ( fn ) {
-        const res = await fn( { data: result.data, map: result.map, ast: result.ast }, module );
+        if ( string == null ) {
+          string = data.toString();
+        }
+        const res = await fn( string, module );
         if ( res != null ) {
-          result = this.validateTransform( res, name );
+          return this.validateParse( res, name );
+        }
+      }
+    }
+    if ( wasString ) {
+      throw _error( `'parse' should return an AST since the 'load' phase returned a string for module type ${module.type}` );
+    }
+  }
+
+  validateTransformAst( actual: Object, name: ?string ): Object {
+    if ( !isObject( actual ) ) {
+      error( "transformAst", "object", typeof actual, name );
+    }
+    return actual;
+  }
+
+  async transformAst( ast: Object, module: ModuleUtilsWithFS ): Promise<Object> {
+    let result = ast;
+    for ( const { name, plugin } of this.plugins ) {
+      const map = plugin.transformAst || EMPTY_OBJ;
+      const fn = map[ module.type ];
+      if ( fn ) {
+        const res = await fn( result, module );
+        if ( res != null ) {
+          result = this.validateTransformAst( res, name );
+        }
+      }
+    }
+    return result;
+  }
+
+  validateTransformBuffer( actual: Buffer, name: ?string ): Object {
+    if ( !Buffer.isBuffer( actual ) ) {
+      error( "transformBuffer", "Buffer", typeof actual, name );
+    }
+    return actual;
+  }
+
+  async transformBuffer( buffer: Buffer, module: ModuleUtilsWithFS ): Promise<Buffer> {
+    let result = buffer;
+    for ( const { name, plugin } of this.plugins ) {
+      const map = plugin.transformAst || EMPTY_OBJ;
+      const fn = map[ module.type ];
+      if ( fn ) {
+        const res = await fn( buffer, module );
+        if ( res != null ) {
+          result = this.validateTransformBuffer( res, name );
         }
       }
     }
@@ -159,26 +205,29 @@ export default class PluginsRunner {
       error( "dependencies", "object", typeof actual, name );
     }
     return {
-      dependencies: actual.dependencies || [],
+      dependencies: actual.dependencies || new Map(),
+      innerDependencies: actual.innerDependencies || new Map(),
       importedNames: actual.importedNames || [],
       exportedNames: actual.exportedNames || []
     };
   }
 
   async dependencies( output: TransformOutput, module: ModuleUtils ): Promise<DepsInfo> {
-    module._hook( "dependencies" );
-    for ( const { name, plugin } of this.plugins ) {
-      const map = plugin.dependencies || EMPTY_OBJ;
-      const fn = map[ module.type ];
-      if ( fn ) {
-        const result = await fn( output, module );
-        if ( result != null ) {
-          return this.validateDependencies( result, name );
+    if ( output.ast != null ) {
+      for ( const { name, plugin } of this.plugins ) {
+        const map = plugin.dependencies || EMPTY_OBJ;
+        const fn = map[ module.type ];
+        if ( fn ) {
+          const result = await fn( output.ast, module );
+          if ( result != null ) {
+            return this.validateDependencies( result, name );
+          }
         }
       }
     }
     return {
-      dependencies: [],
+      dependencies: new Map(),
+      innerDependencies: new Map(),
       importedNames: [],
       exportedNames: []
     };
@@ -194,8 +243,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async resolve( imported: string, module: ModuleUtils ): Promise<string | false> {
-    module._hook( "resolve" );
+  async resolve( imported: string, module: ModuleUtilsWithFS ): Promise<string | false> {
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.resolve || EMPTY_OBJ;
       const fn = map[ module.type ] || map[ "*" ];
@@ -209,15 +257,15 @@ export default class PluginsRunner {
     return false;
   }
 
-  validateTransformType( actual: TransformOutput, name: ?string ): TransformOutput {
+  validateTransformType( actual: LoadOutput, name: ?string ): LoadOutput {
     if ( !isObject( actual ) ) {
       error( "transformType", "object", typeof actual, name );
     }
     return actual;
   }
 
-  async transformType( newType: string, output: TransformOutput, module: ModuleUtils, parent: ModuleUtils ): Promise<TransformOutput> {
-    module._hook( "transformType" );
+  async transformType( output: TransformOutput, module: ModuleUtilsWithFS, parent: ModuleUtils ): Promise<LoadOutput> {
+    const newType = module.type;
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.transformType || EMPTY_OBJ;
       const fromType = map[ parent.type ] || EMPTY_OBJ;
@@ -242,8 +290,6 @@ export default class PluginsRunner {
   }
 
   isSplitPoint( a: ModuleUtils, b: ModuleUtils ): ?boolean {
-    a._hook( "isSplitPoint" );
-    b._hook( "isSplitPoint" );
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.isSplitPoint;
       if ( fn ) {
@@ -275,11 +321,11 @@ export default class PluginsRunner {
     return false;
   }
 
-  async check(): Promise<void> {
+  async check( graph: Graph ): Promise<void> {
     for ( const { plugin } of this.plugins ) {
       const fn = plugin.check;
       if ( fn ) {
-        await fn( this.builder );
+        await fn( graph, this.builder );
       }
     }
   }
@@ -309,7 +355,16 @@ export default class PluginsRunner {
     if ( !isObject( actual ) ) {
       error( "renderAsset", "object", typeof actual, name );
     }
-    return actual;
+    if ( this.builder.optimization.sourceMaps ) {
+      return {
+        data: actual.data,
+        map: actual.map
+      };
+    }
+    return {
+      data: actual.data,
+      map: null
+    };
   }
 
   async renderAsset( asset: FinalAsset, assets: FinalAssets ): Promise<ToWrite> {
@@ -328,13 +383,16 @@ export default class PluginsRunner {
       throw new Error( `Asset "${asset.id}" has more than 1 source. Probably there is some plugin missing.` );
     }
 
-    const module = this.builder.getModuleForSure( asset.id );
-    const { result: { data, map } } = await module.transform( this.builder );
+    const { buffer } = asset.module.getTransformResult();
 
-    return {
-      data,
-      map
-    };
+    if ( buffer ) {
+      return {
+        data: buffer,
+        map: null
+      };
+    }
+
+    throw new Error( `Asset "${asset.id}" could not be rendered. Probably there is some plugin missing.` );
   }
 
   async afterBuild( output: Output ): Promise<void> {

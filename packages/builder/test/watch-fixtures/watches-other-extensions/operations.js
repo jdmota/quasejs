@@ -1,3 +1,3 @@
 module.exports = [
-  [ "writeFile", "./a.js", "export default 40;" ]
+  [ "newFile", "./a.js", "export default 40;" ]
 ];

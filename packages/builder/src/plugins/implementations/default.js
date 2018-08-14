@@ -20,9 +20,6 @@ export default function defaultPlugin(): Plugin {
         const isFile = await importerModule.isFile( resolved );
         return isFile && resolved;
       }
-    },
-    isSplitPoint( required, module ) {
-      return required.type !== module.type;
     }
   };
 }

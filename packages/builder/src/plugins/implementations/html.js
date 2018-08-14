@@ -20,24 +20,33 @@ function TreeAdapter() {
 
 Object.assign( TreeAdapter.prototype, defaultTreeAdapter );
 
-// TODO be able to transform inline javascript?
-// TODO be able to inline a file?
-
 TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
   const node = defaultTreeAdapter.createElement( tagName, namespaceURI, attrs );
 
   if ( tagName === "script" ) {
     const attrsObj = attrsToObj( attrs );
 
-    if ( attrsObj.type === "module" && "src" in attrsObj ) {
-      this.__deps.push( {
-        node,
-        async: "async" in attrsObj && attrsObj.async !== "false",
-        request: attrsObj.src,
-        importType: "js"
-      } );
-      node.__importType = "js";
+    if ( attrsObj.type === "module" ) {
+      if ( "src" in attrsObj ) {
+        this.__deps.push( {
+          node,
+          async: "async" in attrsObj && attrsObj.async !== "false",
+          request: attrsObj.src,
+          importType: "js"
+        } );
+        node.__importType = "js";
+      } else {
+        this.__deps.push( {
+          node,
+          async: "async" in attrsObj && attrsObj.async !== "false",
+          request: `${this.__deps.length}`,
+          inner: true,
+          importType: "js"
+        } );
+        node.__importType = "js";
+      }
     }
+
   } else if ( tagName === "link" ) {
     const attrsObj = attrsToObj( attrs );
 
@@ -83,12 +92,10 @@ const NAMESPACE = "http://www.w3.org/1999/xhtml";
 
 class HtmlRenderer {
 
-  +originalCode: string;
   +document: Object;
   +treeAdapter: TreeAdapter;
 
-  constructor( data: string, ast: Object ) {
-    this.originalCode = data;
+  constructor( ast: Object ) {
     this.document = ast;
     this.treeAdapter = ast._treeAdapter;
   }
@@ -124,76 +131,101 @@ class HtmlRenderer {
 
   async render( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ): Promise<ToWrite> {
 
-    if ( this.treeAdapter.__deps.length ) {
+    // TODO preload
 
-      // TODO preload
+    const cloneStack = new Map();
+    const document = cloneAst( this.document, cloneStack );
 
-      const cloneStack = new Map();
-      const document = cloneAst( this.document, cloneStack );
+    const deps = this.treeAdapter.__deps.map( d => {
+      return Object.assign( {}, d, { node: cloneStack.get( d.node ) } );
+    } );
 
-      const deps = this.treeAdapter.__deps.map( d => {
-        return Object.assign( {}, d, { node: cloneStack.get( d.node ) } );
-      } );
+    const firstScriptDep = deps.find( d => d.importType === "js" );
 
-      const firstScriptDep = deps.find( d => d.importType === "js" );
+    if ( asset.isEntry && firstScriptDep ) {
+      this.insertBefore(
+        this.createTextScript( await builder.createRuntime( {
+          context: builder.context,
+          fullPath: asset.path,
+          publicPath: builder.publicPath,
+          runtime: builder.options.runtime,
+          finalAssets
+        } ) ),
+        firstScriptDep.node
+      );
+    }
 
-      if ( asset.isEntry && firstScriptDep ) {
-        this.insertBefore(
-          this.createTextScript( await builder.createRuntime( {
-            context: builder.context,
-            fullPath: asset.path,
-            publicPath: builder.publicPath,
-            finalAssets
-          } ) ),
-          firstScriptDep.node
-        );
+    for ( const { node, request, async, importType } of deps ) {
+      const module = asset.module.getModuleByRequest( request );
+
+      if ( !module ) {
+        throw new Error( `Internal: missing module by request ${request} in ${asset.id}` );
       }
 
-      for ( const { node, request, async, importType } of deps ) {
-        const module = builder.getModuleForSure( asset.id ).getModuleByRequest( request );
+      const neededAssets = finalAssets.moduleToAssets.get( module ) || [];
 
-        if ( !module ) {
-          throw new Error( `Internal: missing module by request ${request} in ${asset.id}` );
+      if ( importType === "css" ) {
+
+        for ( let i = 0; i < neededAssets.length; i++ ) {
+          const { relative } = neededAssets[ i ];
+          if ( i === neededAssets.length - 1 ) {
+            this.treeAdapter.setAttr( node, "href", builder.publicPath + relative );
+          } else {
+            this.insertBefore( this.createHrefCss( builder.publicPath + relative ), node );
+          }
         }
 
-        const assets = finalAssets.moduleToAssets.get( module.hashId ) || [];
+      } else {
 
-        if ( importType === "css" ) {
+        this.treeAdapter.removeAttr( node, "defer" );
+        this.treeAdapter.removeAttr( node, "async" );
+        this.treeAdapter.removeAttr( node, "src" );
+        this.treeAdapter.removeAttr( node, "type" );
+        node.childNodes = [];
 
-          for ( let i = 0; i < assets.length; i++ ) {
-            const { relative } = assets[ i ];
-            if ( i === assets.length - 1 ) {
-              this.treeAdapter.setAttr( node, "href", builder.publicPath + relative );
-            } else {
-              this.insertBefore( this.createHrefCss( builder.publicPath + relative ), node );
-            }
-          }
+        const inlineAsset = asset.inlineAssets.find( a => a.module === module );
 
-        } else {
+        if ( inlineAsset ) {
 
-          this.treeAdapter.removeAttr( node, "defer" );
-          this.treeAdapter.removeAttr( node, "async" );
-          this.treeAdapter.removeAttr( node, "src" );
-          this.treeAdapter.removeAttr( node, "type" );
-          node.children = [];
+          const { data } = await builder.renderAsset( inlineAsset, finalAssets );
 
           if ( async ) {
 
-            this.treeAdapter.insertText( node, `
-              var s=document.currentScript;
-              __quase_builder__.i('${module.hashId}').then(function(){
-                s.dispatchEvent(new Event('load'));
-              },function(){
-                s.dispatchEvent(new Event('error'));
-              });
-            `.replace( /(\n|\s\s)/g, "" ) );
+            this.treeAdapter.setAttr( node, "async", "" );
 
           } else {
 
             this.treeAdapter.setAttr( node, "defer", "" );
-            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r('${module.hashId}');` );
 
-            for ( const { relative } of assets ) {
+            for ( const { relative } of neededAssets ) {
+              this.insertBefore( this.createSrcScript( builder.publicPath + relative ), node );
+            }
+
+          }
+
+          this.treeAdapter.insertText( node, `${data.toString()}\n__quase_builder__.r(${builder.wrapInJsString( module.hashId )});` );
+
+        } else {
+
+          if ( async ) {
+
+            this.treeAdapter.insertText( node, `
+                (function(){
+                  var s=document.currentScript;
+                  __quase_builder__.i(${builder.wrapInJsString( module.hashId )}).then(function(){
+                    s.dispatchEvent(new Event('load'));
+                  },function(){
+                    s.dispatchEvent(new Event('error'));
+                  });
+                })();
+              `.replace( /(\n|\s\s)/g, "" ) );
+
+          } else {
+
+            this.treeAdapter.setAttr( node, "defer", "" );
+            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r(${builder.wrapInJsString( module.hashId )});` );
+
+            for ( const { relative } of neededAssets ) {
               this.insertBefore( this.createSrcScript( builder.publicPath + relative ), node );
             }
 
@@ -203,15 +235,12 @@ class HtmlRenderer {
 
       }
 
-      return {
-        data: parse5.serialize( document, {
-          treeAdapter: this.treeAdapter
-        } )
-      };
     }
 
     return {
-      data: this.originalCode
+      data: parse5.serialize( document, {
+        treeAdapter: this.treeAdapter
+      } )
     };
   }
 
@@ -222,73 +251,94 @@ const PLUGIN_NAME = "quase_builder_html_plugin";
 export default function htmlPlugin(): Plugin {
   return {
     name: PLUGIN_NAME,
-    transform: {
-      async html( { data, map, ast: prevAst } ) {
-
-        const dataToString = data.toString();
-
+    parse: {
+      html( data ) {
+        const treeAdapter = new TreeAdapter();
         const deps = {
-          dependencies: [],
+          dependencies: new Map(),
+          innerDependencies: new Map(),
           importedNames: [],
           exportedNames: []
         };
 
-        const treeAdapter = new TreeAdapter();
-
-        const newAst: Object = prevAst || parse5.parse( data.toString(), {
+        const ast = parse5.parse( data, {
           treeAdapter,
           sourceCodeLocationInfo: true
         } );
 
+        ast._treeAdapter = treeAdapter;
+        ast._deps = deps;
+
+        return ast;
+      }
+    },
+    transformAst: {
+      async html( ast ) {
+
+        const treeAdapter = ast._treeAdapter;
+        const deps = ast._deps;
+
+        if ( !treeAdapter || !deps ) {
+          throw new Error( `${PLUGIN_NAME}: Could not metadata. Did another plugin change the AST?` );
+        }
+
         treeAdapter.__deps.forEach( s => {
-          deps.dependencies.push( {
-            request: s.request,
-            loc: {
-              line: s.node.sourceCodeLocation.startLine,
-              column: s.node.sourceCodeLocation.startCol - 1
-            },
-            async: s.async
-          } );
+          if ( s.inner ) {
+            if ( s.node.childNodes.length === 0 ) {
+              return;
+            }
+
+            const text = s.node.childNodes[ 0 ];
+
+            deps.innerDependencies.set( s.request, {
+              data: text.value,
+              type: s.importType,
+              loc: {
+                line: text.sourceCodeLocation.startLine,
+                column: text.sourceCodeLocation.startCol - 1
+              },
+              async: s.async
+            } );
+          } else {
+            if ( !deps.dependencies.has( s.request ) ) {
+              deps.dependencies.set( s.request, {
+                loc: {
+                  line: s.node.sourceCodeLocation.startLine,
+                  column: s.node.sourceCodeLocation.startCol - 1
+                },
+                async: s.async
+              } );
+            }
+          }
         } );
 
-        newAst._treeAdapter = treeAdapter;
-        newAst._deps = deps;
-
-        return {
-          data: dataToString,
-          ast: newAst,
-          map
-        };
+        return ast;
       }
     },
     dependencies: {
-      html( { ast } ) {
-        const deps = ast && ast._deps;
+      html( ast ) {
+        const deps = ast._deps;
         if ( deps ) {
           return deps;
         }
-        throw new Error( `${PLUGIN_NAME}: Could not find dependencies. Did another plugin change the AST?` );
+        throw new Error( `${PLUGIN_NAME}: Could not metadata. Did another plugin change the AST?` );
       }
     },
     renderAsset: {
-      async html( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ) {
+      html( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ) {
 
         if ( asset.srcs.length !== 1 ) {
           throw new Error( `${PLUGIN_NAME}: Asset "${asset.id}" to be generated can only have 1 source.` );
         }
 
-        const module = builder.getModuleForSure( asset.id );
-
-        const { result: { data, ast } } = await module.transform( builder );
+        const { ast } = asset.module.getTransformResult();
 
         if ( ast ) {
-          const renderer = new HtmlRenderer( data.toString(), ast );
+          const renderer = new HtmlRenderer( ast );
           return renderer.render( asset, finalAssets, builder );
         }
 
-        return {
-          data
-        };
+        throw new Error( `${PLUGIN_NAME}: Could not find AST` );
       }
     }
   };

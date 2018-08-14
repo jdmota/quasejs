@@ -15,9 +15,9 @@ describe( "watcher", () => {
       return;
     }
 
-    it( `Fixture: watch-fixtures/${folder}`, async() => {
+    jest.setTimeout( 60000 );
 
-      jest.setTimeout( 20000 );
+    it( `Fixture: watch-fixtures/${folder}`, async() => {
 
       const fixturePath = path.resolve( FIXTURES, folder );
       const filesPath = path.resolve( fixturePath, "files" );
@@ -27,7 +27,13 @@ describe( "watcher", () => {
       await fs.emptyDir( workingPath );
       await fs.copy( filesPath, workingPath );
 
-      let config = require( path.resolve( fixturePath, "config.js" ) );
+      let config;
+      try {
+        config = require( path.resolve( fixturePath, "config.js" ) );
+      } catch ( err ) {
+        config = {};
+      }
+
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "working";
       config.dest = config.dest || "atual";
@@ -93,6 +99,12 @@ describe( "watcher", () => {
         arg1 = path.resolve( workingPath, arg1 );
 
         switch ( action ) {
+          case "newFile":
+            await fs.writeFile( arg1, arg2 );
+            if ( update( arg1, "added" ) ) {
+              b.queueBuild();
+            }
+            break;
           case "writeFile":
             await fs.writeFile( arg1, arg2 );
             if ( update( arg1, "changed" ) ) {
@@ -105,7 +117,7 @@ describe( "watcher", () => {
           case "rename":
             arg2 = path.resolve( workingPath, arg2 );
             await fs.rename( arg1, arg2 );
-            if ( update( arg1, "removed" ) || update( arg2, "changed" ) ) {
+            if ( update( arg1, "removed" ) || update( arg2, "added" ) ) {
               b.queueBuild();
             }
             break;
@@ -115,14 +127,8 @@ describe( "watcher", () => {
               b.queueBuild();
             }
             break;
-          case "copy":
-            arg2 = path.resolve( workingPath, arg2 );
-            await fs.copy( arg1, arg2 );
-            if ( update( arg2, "changed" ) ) {
-              b.queueBuild();
-            }
-            break;
           default:
+            throw new Error( `Invalid action: ${action}` );
         }
 
         i++;

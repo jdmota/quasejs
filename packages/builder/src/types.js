@@ -1,7 +1,9 @@
 // @flow
+import type Module from "./modules/index";
+import type PublicModule from "./modules/public";
+import type { ModuleUtils, ModuleUtilsWithFS } from "./modules/utils";
 import type Builder from "./builder";
-import type Module from "./module";
-import type ModuleUtils from "./module-utils";
+import type { Graph } from "./graph";
 
 export type Data = Buffer | string;
 
@@ -12,11 +14,17 @@ export type Loc = {|
   +column?: ?number
 |};
 
-export type TransformOutput = {|
+export type LoadOutput = {|
   +data: Data,
-  +map?: ?Object,
-  +ast?: ?Object,
-  +final?: ?boolean
+  +map: ?Object
+|};
+
+export type TransformOutput = {|
+  +ast: Object,
+  +buffer: ?void
+|} | {|
+  +ast: ?void,
+  +buffer: Buffer
 |};
 
 export type ImportedName = {|
@@ -35,21 +43,19 @@ export type ExportedName = {|
 
 export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string | T, Object]>;
 
-export type InnerModule = {|
-  +index: number,
-  +type: string,
-  +data: Data,
-  +map?: ?Object
-|};
-
-export type NotResolvedDep = {|
-  +request: string,
-  +inner?: ?InnerModule,
+export type NotResolvedDep = {
   +loc?: ?Loc,
   +async?: ?boolean
-|};
+};
 
-export type Dep = {|
+export type InnerDep = {
+  +type: string,
+  +data: Data,
+  +loc?: ?Loc,
+  +async?: ?boolean
+};
+
+export type ResolvedDep = {|
   +path: string,
   +request: string,
   +loc?: ?Loc,
@@ -66,27 +72,41 @@ export type ModuleDep = {|
   +inherit: boolean
 |};
 
+export type PublicModuleDep = {|
+  +path: string,
+  +request: string,
+  +loc?: ?Loc,
+  +async?: ?boolean,
+  +splitPoint: boolean,
+  +required: PublicModule,
+  +inherit: boolean
+|};
+
 export type DepsInfo = {|
-  +dependencies: $ReadOnlyArray<NotResolvedDep>,
+  +dependencies: Map<string, ?NotResolvedDep>,
+  +innerDependencies: Map<string, InnerDep>,
   +importedNames: $ReadOnlyArray<ImportedName>,
   +exportedNames: $ReadOnlyArray<ExportedName>
 |};
 
 export type FinalAsset = {
+  module: PublicModule,
   id: string,
   path: string,
   type: string,
-  index: number,
+  innerId: ?string,
   normalized: string,
   dest: string,
   relative: string,
   isEntry: boolean,
-  srcs: string[]
+  srcs: PublicModule[],
+  inlineAssets: FinalAsset[]
 };
 
 export type FinalAssets = {
+  modules: Map<string, PublicModule>;
   files: FinalAsset[],
-  moduleToAssets: Map<string, FinalAsset[]>
+  moduleToAssets: Map<PublicModule, FinalAsset[]>
 };
 
 export type ToWrite = {|
@@ -115,17 +135,21 @@ export type Output = {
 
 type ThingOrPromise<T> = T | Promise<T>;
 
-export type Loader = ( string, ModuleUtils ) => ThingOrPromise<?Data>;
+export type Loader = ( string, ModuleUtilsWithFS ) => ThingOrPromise<?Data>;
 
-export type Transformer = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
+export type Parser = ( string, ModuleUtils ) => ThingOrPromise<?Object>;
 
-export type DepExtractor = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?DepsInfo>;
+export type AstTransformer = ( Object, ModuleUtilsWithFS ) => ThingOrPromise<?Object>;
 
-export type Resolver = ( string, ModuleUtils ) => ThingOrPromise<?string | false>;
+export type BufferTransformer = ( Buffer, ModuleUtilsWithFS ) => ThingOrPromise<?Buffer>;
 
-export type Checker = Builder => ThingOrPromise<void>;
+export type DepExtractor = ( Object, ModuleUtils ) => ThingOrPromise<?DepsInfo>;
 
-export type TypeTransformer = ( TransformOutput, ModuleUtils ) => ThingOrPromise<?TransformOutput>;
+export type Resolver = ( string, ModuleUtilsWithFS ) => ThingOrPromise<?string | false>;
+
+export type Checker = ( Graph, Builder ) => ThingOrPromise<void>;
+
+export type TypeTransformer = ( TransformOutput, ModuleUtilsWithFS ) => ThingOrPromise<?LoadOutput>;
 
 export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
 
@@ -137,7 +161,9 @@ export type Plugin = {
   +name?: ?string,
   +getType?: ?( string ) => ?string,
   +load?: ?Loader,
-  +transform?: ?{ [key: string]: ?Transformer },
+  +parse?: ?{ [key: string]: ?Parser },
+  +transformAst?: ?{ [key: string]: ?AstTransformer },
+  +transformBuffer?: ?{ [key: string]: ?BufferTransformer },
   +dependencies?: ?{ [key: string]: ?DepExtractor },
   +resolve?: ?{ [key: string]: ?Resolver },
   +isSplitPoint?: ?( ModuleUtils, ModuleUtils ) => ?boolean,
@@ -167,6 +193,11 @@ export type Options = {
   dest: string,
   cwd: string,
   publicPath: string,
+  runtime: {
+    browser: boolean,
+    node: boolean,
+    worker: boolean
+  },
   warn: Function,
   fs: MinimalFS,
   cli: Object,

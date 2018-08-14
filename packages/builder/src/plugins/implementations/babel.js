@@ -1,7 +1,7 @@
 // @flow
 import { addNamed } from "@babel/helper-module-imports";
-import { buildExternalHelpers, transformSync, transformFromAstSync } from "@babel/core";
-import type ModuleUtils from "../../module-utils";
+import { parseAsync, buildExternalHelpers, transformFromAstAsync } from "@babel/core";
+import type { ModuleUtils } from "../../modules/utils";
 import type { Plugin } from "../../types";
 
 const HELPERS = "babel_helpers.js";
@@ -33,14 +33,29 @@ export default function babelPlugin( options: Object ): Plugin {
       }
     },
     resolve: {
-      js( importee: string, importerUtils: ModuleUtils ) {
+      js( importee, importerUtils ) {
         if ( importee === HELPERS ) {
           return importerUtils.createFakePath( HELPERS );
         }
       }
     },
-    transform: {
-      js( { data, ast: prevAst, map }, module: ModuleUtils ) {
+    parse: {
+      js( data, module: ModuleUtils ) {
+        return parseAsync( data, Object.assign( {
+          sourceType: "module",
+          parserOpts: {
+            sourceType: "module",
+            plugins: [
+              "dynamicImport"
+            ]
+          },
+          filename: module.normalized,
+          filenameRelative: module.path
+        }, options ) );
+      }
+    },
+    transformAst: {
+      async js( ast, module ) {
 
         if ( module.path === module.createFakePath( HELPERS ) ) {
           return;
@@ -57,13 +72,8 @@ export default function babelPlugin( options: Object ): Plugin {
 
         babelOpts.plugins = ( babelOpts.plugins || [] ).concat( importHelperPlugin );
 
-        const { ast } = prevAst ? transformFromAstSync( prevAst, data.toString(), babelOpts ) : transformSync( data.toString(), babelOpts );
-
-        return {
-          data,
-          ast,
-          map
-        };
+        const { ast: newAst } = await transformFromAstAsync( ast, "", babelOpts );
+        return newAst;
       }
     }
   };

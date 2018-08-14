@@ -7,7 +7,15 @@ const {
 function countNewLines( string ) {
   let c = 0;
   for ( let i = 0; i < string.length; i++ ) {
-    if ( string.charCodeAt( i ) === 10 ) c++;
+    const code = string.charCodeAt( i );
+    if ( code === 10 ) {
+      c++;
+    } else if ( code === 13 ) {
+      c++;
+      if ( string.charCodeAt( i + 1 ) === 10 ) {
+        i++;
+      }
+    }
   }
   return c;
 }

@@ -15,8 +15,10 @@ module.exports = {
         },
         transformType: {
           ts: {
-            js( obj ) {
-              return obj;
+            js( ast ) {
+              return {
+                data: `export default 10;\n`
+              };
             }
           }
         }

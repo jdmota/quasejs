@@ -68,6 +68,22 @@ export const schema = {
     type: "string",
     default: ""
   },
+  runtime: t.object( {
+    properties: {
+      browser: {
+        type: "boolean",
+        default: true
+      },
+      node: {
+        type: "boolean",
+        default: true
+      },
+      worker: {
+        type: "boolean",
+        default: true
+      }
+    }
+  } ),
   fs: t.object( {
     properties: {
       writeFile: {
