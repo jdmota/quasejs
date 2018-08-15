@@ -14,7 +14,11 @@ const schema = {
   } ),
   files: t.array( {
     itemType: "string",
-    optional: true,
+    description: "Glob patterns of files to include"
+  } ),
+  ignore: t.array( {
+    itemType: "string",
+    description: "Glob patterns of files to ignore"
   } ),
   match: t.union( {
     types: [ "string", t.array( { itemType: "string" } ) ],

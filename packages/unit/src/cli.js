@@ -2,7 +2,7 @@ import validateOptions from "./core/validate-options";
 import NodeReporter from "./reporters/node";
 
 const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
-const findFilesObservable = require( "@quase/find-files" ).findFilesObservable;
+const globby = require( "globby" );
 const FileSystem = require( "@quase/cacheable-fs" ).default;
 const { printError } = require( "@quase/config" );
 const { beautify: beautifyStack } = require( "@quase/error" );
@@ -447,36 +447,33 @@ export default function cli( { input, options, configLocation } ) {
 
   turbocolor.enabled = options.color;
 
+  NodeReporter.showOptions( options );
+
   const spinner = ora( "Looking for files..." ).start();
 
-  const files = new Set();
-  const observable = findFilesObservable( options.files );
+  return globby( options.files, {
+    ignore: options.ignore,
+    absolute: true,
+    gitignore: true
+  } ).then( files => {
 
-  observable.subscribe( {
-    next( file ) {
-      files.add( file );
-    },
-    complete() {
-      spinner.stop();
+    spinner.stop();
 
-      if ( files.size === 0 ) {
-        return NodeReporter.fatalError( "Zero files found." );
-      }
-
-      NodeReporter.showFilesCount( files.size );
-
-      const Reporter = options.reporter;
-      const runner = new NodeRunner( options, Array.from( files ) );
-
-      new Reporter( runner ); // eslint-disable-line no-new
-
-      runner.start( { options, configLocation } );
-
-    },
-    error( err ) {
-      spinner.stop();
-      NodeReporter.fatalError( err );
+    if ( files.length === 0 ) {
+      return NodeReporter.fatalError( "Zero files found." );
     }
-  } );
 
+    NodeReporter.showFilesCount( files.length );
+
+    const Reporter = options.reporter;
+    const runner = new NodeRunner( options, files );
+
+    new Reporter( runner ); // eslint-disable-line no-new
+
+    runner.start( { options, configLocation } );
+
+  } ).catch( err => {
+    spinner.stop();
+    NodeReporter.fatalError( err );
+  } );
 }
