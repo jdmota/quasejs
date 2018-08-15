@@ -23,6 +23,10 @@ export type SourceMapInfoWithMap = {
 };
 
 export type Original = {
+  source: ?string,
+  line: number,
+  column: ?number,
+  name: ?string,
   originalFile: string,
   originalCode: ?string
 };
