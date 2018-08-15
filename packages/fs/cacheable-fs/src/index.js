@@ -44,18 +44,6 @@ export default class FileSystem {
     return this.getObjFile( dir ).readdir();
   }
 
-  statSync( file: string ) {
-    return this.getObjFile( file ).statSync();
-  }
-
-  readFileSync( file: string, encoding: ?string ) {
-    return this.getObjFile( file ).readFileSync( encoding );
-  }
-
-  readdirSync( dir: string ) {
-    return this.getObjFile( dir ).readdirSync();
-  }
-
   putFile( obj: File ): boolean {
     const overwrite = this.data.has( obj.location );
     this.data.set( obj.location, obj );
@@ -64,14 +52,18 @@ export default class FileSystem {
 
   _purge( file: string, level: number ) {
     const parent = dirname( file );
+    const fileObj = this.data.get( file );
 
     // Remove cached contents
     if ( level > 0 ) {
-      this.data.delete( file );
+      if ( fileObj ) {
+        fileObj.purgeContent();
+      }
     }
 
-    // Remove cached readdir of the parent
+    // Remove file and cached readdir of the parent
     if ( level > 1 ) {
+      this.data.delete( file );
       this.data.delete( parent );
 
       const set = this.directChilds.get( parent );
