@@ -24,6 +24,7 @@
       "<rootDir>/packages/builder/test/",
       "<rootDir>/packages/cli/test/",
       "<rootDir>/packages/config/test/",
+      "<rootDir>/packages/error/test/",
       "<rootDir>/packages/fs/find-files/test/",
       "<rootDir>/packages/package-manager/test/",
       "<rootDir>/packages/pathname/test/",

@@ -1,0 +1,92 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`beautify with title: dont ignore 1`] = `
+"Error: title
+    Object.<anonymous>.it (packages/error/test/index.js:35:17)
+    Object.asyncFn (node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    resolve (node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    mapper (node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    promise.then (node_modules/jest-jasmine2/build/queue_runner.js:87:41)"
+`;
+
+exports[`beautify with title: ignore node_modules 1`] = `
+"Error: title
+    Object.<anonymous>.it (packages/error/test/index.js:35:17)"
+`;
+
+exports[`beautify: dont ignore 1`] = `
+"Error
+    Object.<anonymous>.it (packages/error/test/index.js:25:17)
+    Object.asyncFn (node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    resolve (node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    mapper (node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    promise.then (node_modules/jest-jasmine2/build/queue_runner.js:87:41)"
+`;
+
+exports[`beautify: ignore node_modules 1`] = `
+"Error
+    Object.<anonymous>.it (packages/error/test/index.js:25:17)"
+`;
+
+exports[`getStack: -1 1`] = `
+"Error
+    at Object.<anonymous>.it (/packages/error/test/index.js:15:18)
+    at Object.asyncFn (/node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
+
+exports[`getStack: 0 1`] = `
+"Error
+    at Object.<anonymous>.it (/packages/error/test/index.js:16:18)
+    at Object.asyncFn (/node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
+
+exports[`getStack: 1 1`] = `
+"Error
+    at Object.<anonymous>.it (/packages/error/test/index.js:17:18)
+    at Object.asyncFn (/node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
+
+exports[`getStack: 2 1`] = `
+"Error
+    at Object.asyncFn (/node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
+
+exports[`getStack: 3 1`] = `
+"Error
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
+
+exports[`getStack: undefined 1`] = `
+"Error
+    at Object.<anonymous>.it (/packages/error/test/index.js:14:18)
+    at Object.asyncFn (/node_modules/jest-jasmine2/build/jasmine_async.js:108:37)
+    at resolve (/node_modules/jest-jasmine2/build/queue_runner.js:56:12)
+    at new Promise (<anonymous>)
+    at mapper (/node_modules/jest-jasmine2/build/queue_runner.js:43:19)
+    at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
+    at process._tickCallback (internal/process/next_tick.js:68:7)"
+`;
