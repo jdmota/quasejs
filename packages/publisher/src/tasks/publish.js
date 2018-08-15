@@ -1,4 +1,4 @@
-import { exec } from "./util";
+import { exec } from "../util";
 
 // Adapted from https://github.com/sindresorhus/np
 

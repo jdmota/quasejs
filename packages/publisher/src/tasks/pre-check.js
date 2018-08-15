@@ -1,10 +1,10 @@
-import { l, error } from "./util";
+import { l, error } from "../util";
 
 // Adapted from https://github.com/sindresorhus/np
 
 const execa = require( "execa" );
 const pTimeout = require( "p-timeout" );
-const version = require( "./version" );
+const version = require( "../version" );
 
 export default function( opts ) {
   const pkg = opts.pkg;

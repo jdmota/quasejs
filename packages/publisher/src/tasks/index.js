@@ -1,6 +1,6 @@
-import { exec, error } from "./util";
-import gitTasks from "./git";
-import prerequisiteTasks from "./prerequisite";
+import { exec, error } from "../util";
+import gitTasks from "./git-check";
+import preTasks from "./pre-check";
 import publishTask from "./publish";
 
 const { throwError } = require( "rxjs" );
@@ -45,7 +45,7 @@ export function preCheck( opts ) {
   return {
     title: "Prerequisite check",
     enabled: () => opts.publish,
-    task: () => prerequisiteTasks( opts )
+    task: () => preTasks( opts )
   };
 }
 
@@ -67,7 +67,7 @@ export function cleanup( opts ) {
       enabled: () => opts.yarn === true,
       task() {
         if ( !hasYarn( opts.folder ) ) {
-          Promise.reject( error( "Cannot use Yarn without yarn.lock file" ) );
+          return Promise.reject( error( "Cannot use Yarn without yarn.lock file" ) );
         }
         return exec( "yarn", [ "install", "--frozen-lockfile", "--production=false" ], {
           cwd: opts.folder

@@ -1,4 +1,4 @@
-import { l, error } from "./util";
+import { l, error } from "../util";
 
 // Adapted from https://github.com/sindresorhus/np
 
