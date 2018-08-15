@@ -51,12 +51,13 @@ export default class NodeReporter {
   static showOptions( options ) {
     logEol();
     log( turbocolor.bold.green( "Patterns: " ) + options.files.join( " " ) + "\n" );
-    log( turbocolor.bold.green( "Ignore patterns: " ) + options.ignore.join( " " ) );
+    if ( options.ignore.length > 0 ) {
+      log( turbocolor.bold.green( "Ignore patterns: " ) + options.ignore.join( " " ) + "\n" );
+    }
     logEol();
   }
 
   static showFilesCount( count ) {
-    logEol();
     log( turbocolor.bold.green( "Files count: " ) + count + "\n" );
     logEol();
   }
