@@ -8,63 +8,59 @@ The purpose of QuaseJS is to include various packages, smaller ones or bigger on
 
 ## Features and available modules
 
-**[builder](packages/builder)** - *WIP*
+**[builder](packages/builder)**
 
 It's a bundler with easy configuration, good performance and support for javascript + html + css.
 
-**[cli](packages/cli)** - **0.3.0**
+**[cli](packages/cli)**
 
 Allows you to create a command line interface very easily.
 
-**[config](packages/config)** - **0.1.0**
+**[config](packages/config)**
 
 Utilities to get configuration, apply defaults and validate options.
 
-**[error](packages/error)** - *WIP*
+**[error](packages/error)**
 
 Some tools to work with Error objects and their stack.
 
-**[eslint-config-quase](packages/eslint-config-quase)** - **0.3.0**
+**[eslint-config-quase](packages/eslint-config-quase)**
 
 The Eslint configuration that I use.
 
-**[fs/cacheable-fs](packages/fs/cacheable-fs)** - *WIP*
+**[fs/cacheable-fs](packages/fs/cacheable-fs)**
 
 A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
 
-**[fs/find-files](packages/fs/find-files)** - *WIP*
-
-Find all files that match some patterns. Outputs results with an observable.
-
-**[package-manager](packages/package-manager)** - *WIP*
+**[package-manager](packages/package-manager)**
 
 An experimental package manager that uses a global store and a combination of hard/soft links.
 
-**[path-url](packages/path-url)** - **0.1.0**
+**[path-url](packages/path-url)**
 
 Utilities to handle paths and urls.
 
-**[pathname](packages/pathname)** - *WIP*
+**[pathname](packages/pathname)**
 
 Allows you to resolve, normalize and match pathnames.
 
-**[publisher](packages/publisher)** - *WIP*
+**[publisher](packages/publisher)**
 
 A package publisher heavily inspired by [np](https://github.com/sindresorhus/np).
 
-**[source-map](packages/source-map)** - **0.1.0**
+**[source-map](packages/source-map)**
 
 Tools to work with source maps.
 
-**[unit](packages/unit)** - *WIP*
+**[unit](packages/unit)**
 
 A unit testing library.
 
-**[util/get-plugins](packages/util/get-plugins)** - *WIP*
+**[util/get-plugins](packages/util/get-plugins)**
 
 Utility to help you get all the requested plugins.
 
-**[view](packages/view)** - *WIP*
+**[view](packages/view)**
 
 - Create declarative user interfaces with JSX.
 - Makes use of the Custom Elements and Shadow Root specs.
