@@ -40,33 +40,9 @@ export default class DependableFileSystem extends FileSystem {
     return this.getObjFile( file, sub, "readdir" ).readdir();
   }
 
-  statSync( file: string, sub: IComputation ) {
-    return this.getObjFile( file, sub, "stat" ).statSync();
-  }
-
-  readFileSync( file: string, sub: IComputation, encoding: ?string ) {
-    return this.getObjFile( file, sub, "readFile" ).readFileSync( encoding );
-  }
-
-  readdirSync( file: string, sub: IComputation ) {
-    return this.getObjFile( file, sub, "readdir" ).readdirSync();
-  }
-
   async isFile( file: string, sub: IComputation ) {
     try {
       const s = await this.stat( file, sub );
-      return s.isFile() || s.isFIFO();
-    } catch ( err ) {
-      if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
-        return false;
-      }
-      throw err;
-    }
-  }
-
-  isFileSync( file: string, sub: IComputation ) {
-    try {
-      const s = this.statSync( file, sub );
       return s.isFile() || s.isFIFO();
     } catch ( err ) {
       if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {

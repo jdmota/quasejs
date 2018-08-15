@@ -389,7 +389,7 @@ Could not resolve ./stuff. See index.js:1:18
 > 1 | import stuff from './stuff';
 
 Build failed.
-Watching 12 files...
+Watching 13 files...
 
 --------
 
