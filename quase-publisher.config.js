@@ -1,6 +1,6 @@
 const fs = require( "fs-extra" );
 const path = require( "path" );
-const { exec } = require( "./packages/publisher" );
+const { execObservable } = require( "./packages/publisher" );
 
 module.exports = {
   yarn: true,
@@ -15,12 +15,14 @@ module.exports = {
   build( opts ) {
     return {
       title: "Build",
-      async task() {
+      async task( history ) {
         const src = path.join( opts.folder, "src" );
         if ( await fs.pathExists( src ) ) {
           const dist = path.join( opts.folder, "dist" );
           await fs.emptyDir( dist );
-          return exec( "babel", [ src, "--out-dir", dist, "--copy-files" ] );
+          return execObservable( "babel", [ src, "--out-dir", dist, "--copy-files" ], {
+            history
+          } );
         }
       }
     };

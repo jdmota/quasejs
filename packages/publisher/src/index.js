@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { exec, l, error, linkifyIssues, linkifyCommit, linkifyCompare } from "./util";
+import { execPromise, execObservable, l, error, linkifyIssues, linkifyCommit, linkifyCompare } from "./util";
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
 import { isValidVersion } from "./version";
@@ -57,7 +57,7 @@ function getRepositoryUrl( { repository } ) {
   return githubUrlFromGit( url, { extraBaseUrls: [ "gitlab.com" ] } );
 }
 
-export { exec, tasks };
+export { execPromise, execObservable, tasks };
 
 export async function publish( opts ) {
 
