@@ -40,10 +40,6 @@ An experimental package manager that uses a global store and a combination of ha
 
 Utilities to handle paths and urls.
 
-**[pathname](packages/pathname)**
-
-Allows you to resolve, normalize and match pathnames.
-
 **[publisher](packages/publisher)**
 
 A package publisher heavily inspired by [np](https://github.com/sindresorhus/np).
