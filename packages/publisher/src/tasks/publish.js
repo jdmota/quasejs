@@ -1,14 +1,13 @@
-import { exec } from "../util";
+import { execPromise, execObservable } from "../util";
 
 // Adapted from https://github.com/sindresorhus/np
 
-const execa = require( "execa" );
 const listrInput = require( "listr-input" );
 const { throwError, from } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
 const turbocolor = require( "turbocolor" );
 
-const npmPublish = opts => {
+const npmPublish = ( history, opts ) => {
   const args = [ "publish" ];
 
   if ( opts.tag ) {
@@ -19,12 +18,13 @@ const npmPublish = opts => {
     args.push( "--otp", opts.otp );
   }
 
-  return execa( "npm", args, {
-    cwd: opts.folder
+  return execPromise( "npm", args, {
+    cwd: opts.folder,
+    history
   } );
 };
 
-const handleError = ( task, err, opts, message ) => {
+const handleError = ( history, task, opts, err, message ) => {
   if ( err.stderr.indexOf( "one-time pass" ) !== -1 ) {
     const title = task.title;
     task.title = `${title} ${turbocolor.yellow( "(waiting for input…)" )}`;
@@ -33,17 +33,17 @@ const handleError = ( task, err, opts, message ) => {
       done: otp => {
         task.title = title;
 
-        return npmPublish( { folder: opts.folder, tag: opts.tag, otp } );
+        return npmPublish( history, { folder: opts.folder, tag: opts.tag, otp } );
       }
     } ).pipe(
-      catchError( err => handleError( task, err, opts, "OTP was incorrect, try again:" ) )
+      catchError( err => handleError( history, task, opts, err, "OTP was incorrect, try again:" ) )
     );
   }
 
   return throwError( err );
 };
 
-export default function( task, opts ) {
+export default function( history, task, opts ) {
   if ( opts.yarn ) {
     // This will not run "version" again
     // https://github.com/yarnpkg/yarn/pull/3103
@@ -57,11 +57,12 @@ export default function( task, opts ) {
       args.push( "--access", opts.access );
     }
 
-    return exec( "yarn", args, {
-      cwd: opts.folder
+    return execObservable( "yarn", args, {
+      cwd: opts.folder,
+      history
     } );
   }
-  return from( npmPublish( { folder: opts.folder, tag: opts.tag } ) ).pipe(
-    catchError( err => handleError( task, err, opts ) )
+  return from( npmPublish( history, { folder: opts.folder, tag: opts.tag } ) ).pipe(
+    catchError( err => handleError( history, task, opts, err ) )
   );
 }

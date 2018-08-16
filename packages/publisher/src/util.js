@@ -8,8 +8,27 @@ const Listr = require( "listr" );
 const issueRegex = require( "issue-regex" );
 const terminalLink = require( "terminal-link" );
 
-export function exec( cmd, args, opts ) {
+export function execPromise( cmd, args, opts ) {
+  const { history } = opts;
   const cp = execa( cmd, args, opts );
+
+  if ( history ) {
+    const operation = `${cmd} ${args.join( " " )}`;
+    history.start( operation );
+    return cp.then( () => history.end( operation ) );
+  }
+  return cp;
+}
+
+export function execObservable( cmd, args, opts ) {
+  const { history } = opts;
+  const cp = execa( cmd, args, opts );
+
+  if ( history ) {
+    const operation = `${cmd} ${args.join( " " )}`;
+    history.start( operation );
+    cp.then( () => history.end( operation ) );
+  }
 
   return merge(
     streamToObservable( cp.stdout.pipe( split() ), { await: cp } ),

@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
+import { exec, l, error, linkifyIssues, linkifyCommit, linkifyCompare } from "./util";
 import tasks from "./tasks";
 import additionalQuestions from "./additional-questions";
 import { isValidVersion } from "./version";
-import { exec, l, error, linkifyIssues, linkifyCommit, linkifyCompare } from "./util";
+import History from "./history";
 
 const path = require( "path" );
 const execa = require( "execa" );
@@ -200,7 +201,15 @@ export async function publish( opts ) {
     }
   }
 
-  await tasks.run();
+  const history = new History();
+
+  try {
+    await tasks.run( history );
+  } catch ( err ) {
+    console.error( "An error occurred. You might need to undo some operations:" );
+    history.show();
+    throw err;
+  }
 
   if ( opts.preview ) {
     return;

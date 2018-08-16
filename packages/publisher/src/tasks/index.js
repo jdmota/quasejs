@@ -1,4 +1,4 @@
-import { exec, error } from "../util";
+import { execPromise, execObservable, error } from "../util";
 import gitTasks from "./git-check";
 import preTasks from "./pre-check";
 import publishTask from "./publish";
@@ -16,7 +16,9 @@ const ban = path.join( __dirname, "ban.js" );
 export function checkSensitiveData( opts ) {
   return {
     title: "Checking if there is sensitive data",
-    task: () => exec( process.execPath, [ ban ], ( opts.git && opts.git.root ) || opts.folder )
+    task: () => execObservable( process.execPath, [ ban ], {
+      cwd: ( opts.git && opts.git.root ) || opts.folder
+    } )
   };
 }
 
@@ -60,17 +62,22 @@ export function cleanup( opts ) {
   return [
     {
       title: "Cleanup",
-      task: () => del( opts.pkgNodeModules )
+      task: async history => {
+        history.start( "Delete node_modules" );
+        await del( opts.pkgNodeModules );
+        history.end( "Delete node_modules" );
+      }
     },
     {
       title: "Installing dependencies using Yarn",
       enabled: () => opts.yarn === true,
-      task() {
+      task( history ) {
         if ( !hasYarn( opts.folder ) ) {
           return Promise.reject( error( "Cannot use Yarn without yarn.lock file" ) );
         }
-        return exec( "yarn", [ "install", "--frozen-lockfile", "--production=false" ], {
-          cwd: opts.folder
+        return execObservable( "yarn", [ "install", "--frozen-lockfile", "--production=false" ], {
+          cwd: opts.folder,
+          history
         } ).pipe(
           catchError( err => {
             if ( err.stderr.startsWith( "error Your lockfile needs to be updated" ) ) {
@@ -88,8 +95,9 @@ export function cleanup( opts ) {
     {
       title: "Installing dependencies using npm",
       enabled: () => opts.yarn === false,
-      task: () => exec( "npm", [ "install", "--no-package-lock", "--no-production" ], {
-        cwd: opts.folder
+      task: history => execObservable( "npm", [ "install", "--no-package-lock", "--no-production" ], {
+        cwd: opts.folder,
+        history
       } )
     }
   ];
@@ -100,8 +108,9 @@ export function test( opts ) {
   if ( opts.yarn ) {
     return {
       title: "Running tests using Yarn",
-      task: () => exec( "yarn", [ "test" ], {
-        cwd: opts.folder
+      task: history => execObservable( "yarn", [ "test" ], {
+        cwd: opts.folder,
+        history
       } ).pipe(
         catchError( err => {
           if ( err.message.includes( 'Command "test" not found' ) ) {
@@ -114,8 +123,9 @@ export function test( opts ) {
   }
   return {
     title: "Running tests using npm",
-    task: () => exec( "npm", [ "test" ], {
-      cwd: opts.folder
+    task: history => execObservable( "npm", [ "test" ], {
+      cwd: opts.folder,
+      history
     } )
   };
 }
@@ -125,8 +135,9 @@ function buildRootLifecycle( arr, opts ) {
     return {
       title: `Executing root's ${name} script using ${opts.yarn ? "Yarn" : "npm"}`,
       enabled: () => !!( opts.rootPkg && opts.rootPkg.scripts && opts.rootPkg.scripts[ name ] ),
-      task: () => exec( opts.yarn ? "yarn" : "npm", [ opts.yarn ? "run" : "run-script", name ], {
-        cwd: opts.cwd
+      task: history => execObservable( opts.yarn ? "yarn" : "npm", [ opts.yarn ? "run" : "run-script", name ], {
+        cwd: opts.cwd,
+        history
       } )
     };
   } );
@@ -140,16 +151,18 @@ export function bumpVersion( opts ) {
   if ( opts.yarn ) {
     return {
       title: "Bumping version using Yarn",
-      task: () => exec( "yarn", [ "version", "--new-version", opts.version, "--no-git-tag-version" ], {
-        cwd: opts.folder
+      task: history => execObservable( "yarn", [ "version", "--new-version", opts.version, "--no-git-tag-version" ], {
+        cwd: opts.folder,
+        history
       } )
     };
   }
 
   return {
     title: "Bumping version using npm",
-    task: () => exec( "npm", [ "version", opts.version, "--no-git-tag-version" ], {
-      cwd: opts.folder
+    task: history => execObservable( "npm", [ "version", opts.version, "--no-git-tag-version" ], {
+      cwd: opts.folder,
+      history
     } )
   };
 }
@@ -158,7 +171,7 @@ export function commitAndTag( opts ) {
   return {
     title: "Commit and tag",
     skip: () => !( opts.git && opts.git.commitAndTag && opts.git.message ),
-    task: async() => {
+    task: async history => {
       const commitArgs = [ "commit" ];
       if ( opts.git.signCommit ) {
         commitArgs.push( "-S" );
@@ -169,10 +182,10 @@ export function commitAndTag( opts ) {
         commitArgs.push( "--no-verify" );
       }
 
-      await execa( "git", [ "add", opts.pkgRelativePath ] );
-      await execa( "git", commitArgs );
+      await execPromise( "git", [ "add", opts.pkgRelativePath ], { history } );
+      await execPromise( "git", commitArgs, { history } );
       if ( opts.git.tagPrefix ) {
-        await execa( "git", [ "tag", opts.git.tagPrefix + opts.version, opts.git.signTag ? "-sm" : "-am", opts.git.message ] );
+        await execPromise( "git", [ "tag", opts.git.tagPrefix + opts.version, opts.git.signTag ? "-sm" : "-am", opts.git.message ], { history } );
       }
     }
   };
@@ -189,7 +202,7 @@ export function rootBeforePublish( opts ) {
 export function publish( opts ) {
   return {
     title: `Publishing package using ${opts.yarn ? "Yarn" : "npm"}`,
-    task: ( ctx, task ) => publishTask( task, opts ),
+    task: ( history, task ) => publishTask( history, task, opts ),
     skip() {
       if ( opts.pkg.private ) {
         return "Private package: not publishing to npm.";
@@ -205,7 +218,7 @@ export function rootAfterPublish( opts ) {
 export function gitPush( opts ) {
   return {
     title: "Pushing commit and tags",
-    task: () => exec( "git", [ "push", "--follow-tags" ].concat( opts.git.pushHooks ? [] : [ "--no-verify" ] ) )
+    task: history => execObservable( "git", [ "push", "--follow-tags" ].concat( opts.git.pushHooks ? [] : [ "--no-verify" ] ), { history } )
   };
 }
 
