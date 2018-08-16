@@ -187,6 +187,7 @@ export async function publish( opts ) {
     opts.test,
     opts.rootBeforeVersion,
     opts.bumpVersion,
+    opts.changelog,
     opts.commitAndTag,
     opts.rootAfterVersion,
     opts.rootBeforePublish,

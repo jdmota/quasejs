@@ -101,10 +101,17 @@ const schema = {
   preCheck: boolOrFn(),
   gitCheck: boolOrFn(),
   cleanup: boolOrFn( "Cleanup of node_modules" ),
-  build: boolOrFn(),
+  build: {
+    type: "function",
+    optional: true
+  },
   test: boolOrFn(),
   rootBeforeVersion: boolOrFn(),
   bumpVersion: boolOrFn(),
+  changelog: {
+    type: "function",
+    optional: true
+  },
   commitAndTag: boolOrFn(),
   rootAfterVersion: boolOrFn(),
   rootBeforePublish: boolOrFn(),
