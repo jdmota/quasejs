@@ -79,6 +79,12 @@ const schema = {
     optional: true,
     description: ""
   },
+  contents: {
+    type: "string",
+    optional: true,
+    description: "Subdirectory (relative to --folder) to publish",
+    example: "dist"
+  },
   yarn: {
     type: "boolean",
     default: false,

@@ -10,6 +10,10 @@ const turbocolor = require( "turbocolor" );
 const npmPublish = ( history, opts ) => {
   const args = [ "publish" ];
 
+  if ( opts.contents ) {
+    args.push( opts.contents );
+  }
+
   if ( opts.tag ) {
     args.push( "--tag", opts.tag );
   }
@@ -33,7 +37,12 @@ const handleError = ( history, task, opts, err, message ) => {
       done: otp => {
         task.title = title;
 
-        return npmPublish( history, { folder: opts.folder, tag: opts.tag, otp } );
+        return npmPublish( history, {
+          folder: opts.folder,
+          tag: opts.tag,
+          contents: opts.contents,
+          otp
+        } );
       }
     } ).pipe(
       catchError( err => handleError( history, task, opts, err, "OTP was incorrect, try again:" ) )
@@ -45,9 +54,15 @@ const handleError = ( history, task, opts, err, message ) => {
 
 export default function( history, task, opts ) {
   if ( opts.yarn ) {
+    const args = [ "publish" ];
+
+    if ( opts.contents ) {
+      args.push( opts.contents );
+    }
+
     // This will not run "version" again
     // https://github.com/yarnpkg/yarn/pull/3103
-    const args = [ "publish", "--new-version", opts.version ];
+    args.push( "--new-version", opts.version );
 
     if ( opts.tag ) {
       args.push( "--tag", opts.tag );
@@ -62,7 +77,11 @@ export default function( history, task, opts ) {
       history
     } );
   }
-  return from( npmPublish( history, { folder: opts.folder, tag: opts.tag } ) ).pipe(
+  return from( npmPublish( history, {
+    folder: opts.folder,
+    tag: opts.tag,
+    contents: opts.contents
+  } ) ).pipe(
     catchError( err => handleError( history, task, opts, err ) )
   );
 }
