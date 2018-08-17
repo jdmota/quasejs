@@ -1,7 +1,9 @@
 // @flow
 import hash from "./utils/hash";
-import createRuntime, { type RuntimeArg } from "./runtime/create-runtime";
+import { type RuntimeInfo, createRuntime, createRuntimeManifest } from "./runtime/create-runtime";
 import Module, { type ModuleArg } from "./modules/index";
+import difference from "./utils/difference";
+import PluginsRunner from "./plugins/runner";
 import type {
   FinalAsset, FinalAssets,
   PerformanceOpts, MinimalFS, ToWrite,
@@ -11,7 +13,6 @@ import { resolvePath, relative } from "./id";
 import { Graph, processGraph } from "./graph";
 import FileSystem from "./filesystem";
 import Reporter from "./reporter";
-import PluginsRunner from "./plugins/runner";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
@@ -34,7 +35,7 @@ export default class Builder {
   +warn: Function;
   +fileSystem: FileSystem;
   +fs: MinimalFS;
-  +cli: Object;
+  +codeFrame: Object;
   +reporter: { +plugin: Function, +options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
@@ -46,6 +47,15 @@ export default class Builder {
   +modules: Map<string, Module>;
   +promises: Promise<*>[];
   buildId: number;
+  hmrOptions: ?{
+    hostname: string,
+    port: number
+  };
+  prevFiles: ( {
+    id: string,
+    relative: string,
+    hash: string | null
+  } )[];
 
   constructor( options: Options, warn: Function ) {
 
@@ -61,7 +71,7 @@ export default class Builder {
     this.sourceMaps = options.optimization.sourceMaps;
     this.hashing = options.optimization.hashing;
     this.cleanBeforeBuild = options.optimization.cleanup;
-    this.cli = options.cli;
+    this.codeFrame = options.codeFrame;
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
     this.performance = options.performance;
@@ -83,6 +93,9 @@ export default class Builder {
 
     this.promises = [];
     this.buildId = 0;
+
+    this.hmrOptions = null;
+    this.prevFiles = [];
   }
 
   createFakePath( key: string ): string {
@@ -137,26 +150,20 @@ export default class Builder {
     return m;
   }
 
-  createRuntime( obj: RuntimeArg ) {
-    return createRuntime( obj );
+  createRuntime( info: RuntimeInfo ) {
+    return createRuntime( {
+      hmr: this.hmrOptions,
+      browser: this.options.runtime.browser,
+      node: this.options.runtime.node,
+      worker: this.options.runtime.worker
+    }, info );
   }
 
   async write( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
 
-    let h;
-    if ( this.hashing && !asset.isEntry ) {
-      h = hash( data );
-      asset.dest = addHash( asset.dest, h );
-      asset.relative = addHash( asset.relative, h );
-      if ( map ) {
-        map.file = addHash( map.file, h );
-      }
-    }
-
     const fs = this.fs;
     const inlineMap = this.sourceMaps === "inline";
-    const destPath = asset.dest;
-    const directory = path.dirname( destPath );
+    const directory = path.dirname( asset.dest );
 
     if ( map ) {
       map.sources = map.sources.map(
@@ -164,23 +171,49 @@ export default class Builder {
       );
     }
 
-    await fs.mkdirp( path.dirname( destPath ) );
+    if ( map && typeof data === "string" ) {
+      if ( inlineMap ) {
+        map.file = undefined;
+        data += `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}`;
+      } else {
+        data += `\n//# ${SOURCE_MAP_URL}=`;
+      }
+    }
+
+    let h = null;
+    if ( this.hashing && !asset.isEntry ) {
+      h = hash( data );
+      asset.dest = addHash( asset.dest, h );
+      asset.relative = addHash( asset.relative, h );
+      if ( map && !inlineMap ) {
+        map.file = addHash( map.file, h );
+      }
+    }
+
+    if ( h == null && this.options.hmr ) {
+      h = hash( data );
+    }
+
+    asset.hash = h;
+
+    await fs.mkdirp( directory );
 
     if ( map && typeof data === "string" ) {
       if ( inlineMap ) {
-        await fs.writeFile( destPath, data + `\n//# ${SOURCE_MAP_URL}=${map.toUrl()}` );
+        await fs.writeFile( asset.dest, data );
       } else {
-        const p1 = fs.writeFile( destPath, data + `\n//# ${SOURCE_MAP_URL}=${path.basename( destPath )}.map` );
-        const p2 = fs.writeFile( destPath + ".map", map.toString() );
+        const p1 = fs.writeFile( asset.dest, data + `${path.basename( asset.dest )}.map` );
+        const p2 = fs.writeFile( asset.dest + ".map", map.toString() );
         await p1;
         await p2;
       }
     } else {
-      await fs.writeFile( destPath, data );
+      await fs.writeFile( asset.dest, data );
     }
 
     return {
       file: asset.dest,
+      hash: h,
       size: data.length,
       isEntry: asset.isEntry
     };
@@ -263,22 +296,44 @@ export default class Builder {
 
     const filesInfo = await this.callRenderers( finalAssets );
 
-    if ( this.serviceWorker.filename ) {
+    const swFile = this.serviceWorker.filename;
+
+    if ( swFile ) {
       const swPrecache = require( "sw-precache" );
       const serviceWorkerCode = await swPrecache.generate( this.serviceWorker );
 
-      await fs.outputFile( this.serviceWorker.filename, serviceWorkerCode );
+      await fs.outputFile( swFile, serviceWorkerCode );
 
       filesInfo.push( {
-        file: this.serviceWorker.filename,
+        file: swFile,
+        hash: null,
         size: serviceWorkerCode.length,
         isEntry: false
       } );
     }
 
+    let update;
+
+    if ( this.options.hmr ) {
+      const newFiles = finalAssets.files.map( ( { id, relative, hash } ) => ( { id, relative, hash } ) );
+
+      const filesDifference = difference( this.prevFiles, newFiles, ( a, b ) => {
+        return a.id === b.id && a.relative === b.relative && a.hash === b.hash;
+      } );
+
+      this.prevFiles = newFiles;
+
+      update = {
+        manifest: createRuntimeManifest( finalAssets ),
+        ids: filesDifference.map( ( { id } ) => id ),
+        files: filesDifference.map( ( { relative } ) => relative )
+      };
+    }
+
     const out = {
       filesInfo,
-      time: Date.now() - startTime
+      time: Date.now() - startTime,
+      update
     };
 
     await this.pluginsRunner.afterBuild( out );

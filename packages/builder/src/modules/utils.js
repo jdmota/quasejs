@@ -9,6 +9,7 @@ export class ModuleUtils {
   +_module: Module;
   +id: string;
   +path: string;
+  +relative: string;
   +normalized: string;
   +type: string;
   +innerId: ?string;
@@ -18,6 +19,7 @@ export class ModuleUtils {
     this._module = module;
     this.id = module.id;
     this.path = module.path;
+    this.relative = module.relative;
     this.normalized = module.normalized;
     this.type = module.type;
     this.innerId = module.innerId;

@@ -260,7 +260,8 @@ export default function jsPlugin( options: Object ): Plugin {
           parserOpts: {
             sourceType: "module",
             plugins: [
-              "dynamicImport"
+              "dynamicImport",
+              "importMeta"
             ]
           },
           filename: module.normalized,
@@ -286,7 +287,8 @@ export default function jsPlugin( options: Object ): Plugin {
           parserOpts: {
             sourceType: "module",
             plugins: [
-              "dynamicImport"
+              "dynamicImport",
+              "importMeta"
             ]
           },
           filename: module.normalized,
@@ -296,6 +298,7 @@ export default function jsPlugin( options: Object ): Plugin {
           sourceMaps: false,
           plugins: [
             [ babelPluginModules, {
+              hmr: module.builderOptions().hmr,
               varsUsed,
               extractor: extractor.bind( null, deps ),
               extractModuleSource( stringLiteral ) {
@@ -371,7 +374,6 @@ export default function jsPlugin( options: Object ): Plugin {
             context: builder.context,
             fullPath: asset.path,
             publicPath: builder.publicPath,
-            runtime: builder.options.runtime,
             finalAssets
           } );
           build.append( runtime.replace( /;?$/, `(${builder.wrapInJsString( entryModule.hashId )});` ) );

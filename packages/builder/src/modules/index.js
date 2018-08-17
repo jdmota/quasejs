@@ -97,14 +97,14 @@ export default class Module {
         id: this.id,
         code: originalData == null ? null : originalData.toString(),
         loc
-      } );
+      }, this.builder.codeFrame );
 
     } else {
 
       error( message, {
         id: this.id,
         loc
-      } );
+      }, this.builder.codeFrame );
     }
   }
 

@@ -148,7 +148,6 @@ class HtmlRenderer {
           context: builder.context,
           fullPath: asset.path,
           publicPath: builder.publicPath,
-          runtime: builder.options.runtime,
           finalAssets
         } ) ),
         firstScriptDep.node

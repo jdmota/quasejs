@@ -2,11 +2,15 @@
 
 ## Features
 
+- Automatic code splitting when using `import()`
+- Customizable code splitting
+- Hot Module Replacement support
+- Automatic service worker creation support
 - Supports any file type or language, even images, not just JavaScript
 - Supports any file types as entries, like HTML
 - Thanks to the plugin architecture, inlined JavaScript in HTML is possible
 - `load` and `error` events are emitted for script tags, replicating the `<script type="module">` behaviour
-- The runtime is small (2kB or less) and is able to fecth the necessary scripts for each module in parallel
+- The runtime is small (2kB or less) and is able to fetch the necessary scripts for each module in parallel
 - Errors have code frames to help pinpoint to the problem
 
 ## Config example
@@ -31,9 +35,14 @@ module.exports = {
     navigateFallback: "index.html"
   },
   plugins: [
+    () => ( {
+      name: "custom",
+      isSplitPoint( requirer, required ) {
+        return true;
+      }
+    } ),
     "quase-builder-plugin",
-    [ "quase-builder-plugin-2", { /* options */ } ],
-    () => ( {} )
+    [ "quase-builder-plugin-2", { /* options */ } ]
   ]
 };
 ```

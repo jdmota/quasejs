@@ -2,16 +2,13 @@ import Builder from "../src/builder";
 import { relative } from "../src/id";
 import transformConfig from "./transform-config";
 
-function isRegExp( obj ) {
-  return obj != null && typeof obj.test === "function";
-}
+const stripAnsi = require( "strip-ansi" );
+const fs = require( "fs-extra" );
+const path = require( "path" );
 
 /* eslint no-console: 0, no-new-func: 0 */
 
 describe( "builder", () => {
-
-  const fs = require( "fs-extra" );
-  const path = require( "path" );
 
   const FIXTURES = path.resolve( "packages/builder/test/fixtures" );
   const folders = fs.readdirSync( FIXTURES );
@@ -99,19 +96,7 @@ describe( "builder", () => {
         if ( expectedOut || !expectedError ) {
           throw err;
         } else {
-          if ( isRegExp( expectedError ) ) {
-            if ( expectedError.test( err.message ) ) {
-              expect( true ).toBe( true );
-            } else {
-              expect( err.stack ).toBe( expectedError );
-            }
-          } else {
-            if ( err.message === expectedError ) {
-              expect( err.message ).toBe( expectedError );
-            } else {
-              expect( err.stack ).toBe( expectedError );
-            }
-          }
+          expect( stripAnsi( err.message ).replace( process.cwd() + path.sep, "" ) ).toMatchSnapshot( "error" );
           expect( assetsNum ).toBe( 0 );
         }
         end();
@@ -119,7 +104,7 @@ describe( "builder", () => {
 
       function end() {
         if ( expectedWarn ) {
-          expect( warnings.join( "|" ) ).toBe( expectedWarn );
+          expect( warnings.join( "|" ) ).toMatchSnapshot( "warnings" );
         } else {
           expect( warnings ).toHaveLength( 0 );
         }

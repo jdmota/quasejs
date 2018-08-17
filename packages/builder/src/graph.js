@@ -72,7 +72,7 @@ export class Graph {
 
     for ( const module of this.modules.values() ) {
       for ( const { required, splitPoint } of module.deps.values() ) {
-        if ( splitPoint ) {
+        if ( splitPoint || builder.options.hmr ) {
           this.splitPoints.add( required );
         } else if ( required.type !== module.type ) {
           this.inline.set( required, module );
@@ -193,6 +193,7 @@ export function processGraph( graph: Graph ) {
         normalized: m.normalized,
         dest: m.dest,
         relative: m.relative,
+        hash: null,
         isEntry: graph.moduleEntries.has( m ),
         inlineAssets: [],
         srcs

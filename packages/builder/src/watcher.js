@@ -35,7 +35,7 @@ export default class Watcher extends EventEmitter {
     this.nextJob( () => {
       this.emit( "build-start" );
       return this.builder.build().then(
-        o => this.emit( "build", o ),
+        o => this.emit( "build-success", o ),
         e => this.emit( "build-error", e )
       ).then( () => this.finishBuild() );
     } );

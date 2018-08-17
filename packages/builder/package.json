@@ -31,7 +31,9 @@
     "pretty-bytes": "^5.1.0",
     "resolve": "^1.8.1",
     "slash": "^2.0.0",
-    "watchpack": "^1.6.0"
+    "strip-ansi": "^4.0.0",
+    "watchpack": "^1.6.0",
+    "ws": "^6.0.0"
   },
   "devDependencies": {
     "@babel/plugin-external-helpers": "^7.0.0-rc.1",

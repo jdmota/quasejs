@@ -1,10 +1,10 @@
 import Builder from "./builder";
 import Watcher from "./watcher";
+import HMRServer from "./hmr-server";
 
-const { printError } = require( "@quase/config" );
 const EventEmitter = require( "events" );
 
-function run( options ) {
+export default function( options ) {
   let reporter, emitter;
 
   const builder = new Builder(
@@ -17,25 +17,27 @@ function run( options ) {
   if ( builder.watch ) {
     emitter = new Watcher( builder );
     reporter = new Reporter( reporterOpts, builder, emitter );
-    emitter.start();
+
+    const hmrServer = builder.options.hmr ? new HMRServer( emitter ) : null;
+    if ( hmrServer ) {
+      hmrServer.start().then( hmrOptions => {
+        builder.hmrOptions = hmrOptions;
+        emitter.start();
+      } );
+    } else {
+      emitter.start();
+    }
   } else {
     emitter = new EventEmitter();
     reporter = new Reporter( reporterOpts, builder, emitter );
+
     emitter.emit( "build-start" );
     builder.build().then(
-      o => emitter.emit( "build", o ),
+      o => emitter.emit( "build-success", o ),
       e => emitter.emit( "build-error", e )
     );
   }
   return reporter;
-}
-
-export default function( options ) {
-  try {
-    return run( options );
-  } catch ( e ) {
-    printError( e );
-  }
 }
 
 export { Builder, Watcher };

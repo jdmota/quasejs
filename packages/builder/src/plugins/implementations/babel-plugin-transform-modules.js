@@ -9,7 +9,8 @@ const vars = {
   require: "$r",
   import: "$i",
   export: "$g",
-  exportAll: "$a"
+  exportAll: "$a",
+  meta: "$m"
 };
 
 const templates = {
@@ -24,6 +25,22 @@ const templates = {
 
 const THIS_BREAK_KEYS = [ "FunctionExpression", "FunctionDeclaration", "ClassProperty", "ClassMethod", "ObjectMethod" ];
 
+function isImportMetaHot( node ) {
+  if ( node.type === "MemberExpression" ) {
+
+    const meta = node.object;
+    const property = node.property;
+
+    if (
+      meta.type === "MetaProperty" && meta.meta.name === "import" && meta.property.name === "meta" &&
+      property.type === "Identifier" && property.name === "hot"
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export default ( { types: t }, options ) => {
 
   const REQUIRES = Symbol();
@@ -32,6 +49,7 @@ export default ( { types: t }, options ) => {
   const resolveModuleSource = options.resolveModuleSource || ( x => x );
   const extractModuleSource = options.extractModuleSource || ( () => {} );
   const varsUsed = options.varsUsed || {};
+  const hmr = options.hmr;
 
   function getVar( name ) {
     varsUsed[ vars[ name ] ] = true;
@@ -248,6 +266,14 @@ export default ( { types: t }, options ) => {
         exit: exitContext
       },
 
+      MetaProperty( path ) {
+        const { node } = path;
+        if ( node.meta.name === "import" && node.property.name === "meta" ) {
+          varsUsed[ vars.meta ] = true;
+          path.replaceWith( t.identifier( vars.meta ) );
+        }
+      },
+
       ImportDeclaration( path ) {
         extractor( path.node );
 
@@ -449,8 +475,21 @@ export default ( { types: t }, options ) => {
             }
           }
 
-        }
+        } else if ( node.callee.type === "MemberExpression" ) {
 
+          const arg = node.arguments[ 0 ];
+
+          if ( arg && arg.type === "StringLiteral" ) {
+
+            const property = node.callee.property;
+
+            if ( property.type === "Identifier" && property.name === "onDependencyChange" ) {
+              if ( isImportMetaHot( node.callee.object ) ) {
+                extractModuleSource( arg );
+              }
+            }
+          }
+        }
       },
 
       MemberExpression( path ) {
@@ -469,6 +508,10 @@ export default ( { types: t }, options ) => {
           newNode.loc = node.loc;
           extractor( node, { commonjs: true } );
           path.replaceWith( newNode );
+        } else if ( !hmr ) {
+          if ( isImportMetaHot( node ) ) {
+            path.replaceWith( t.nullLiteral() );
+          }
         }
       },
 

@@ -98,6 +98,7 @@ export type FinalAsset = {
   normalized: string,
   dest: string,
   relative: string,
+  hash: string | null,
   isEntry: boolean,
   srcs: PublicModule[],
   inlineAssets: FinalAsset[]
@@ -126,11 +127,24 @@ export type MinimalFS = {
   mkdirp( string ): Promise<void>
 };
 
-export type Info = { file: string, size: number, isEntry: boolean };
+export type Info = {
+  file: string,
+  hash: string | null,
+  size: number,
+  isEntry: boolean
+};
 
 export type Output = {
   filesInfo: Info[],
-  time: number
+  time: number,
+  update: ?{
+    manifest: {
+      files: string[],
+      moduleToFiles: { [key: string]: number[] },
+    },
+    ids: string[],
+    files: string[]
+  }
 };
 
 type ThingOrPromise<T> = T | Promise<T>;
@@ -200,10 +214,11 @@ export type Options = {
   },
   warn: Function,
   fs: MinimalFS,
-  cli: Object,
+  codeFrame: Object,
   reporter: ProvidedPluginsArr<Function>,
   watch: boolean,
   watchOptions: Object,
+  hmr: boolean,
   plugins: ProvidedPluginsArr<Object => Plugin>,
   performance: PerformanceOpts,
   optimization: OptimizationOptions,

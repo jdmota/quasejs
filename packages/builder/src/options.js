@@ -96,7 +96,7 @@ export const schema = {
       }
     }
   } ),
-  cli: t.object( {
+  codeFrame: t.object( {
     additionalProperties: true
   } ),
   reporter: t.union( {
@@ -122,6 +122,10 @@ export const schema = {
   watchOptions: t.object( {
     additionalProperties: true
   } ),
+  hmr: {
+    type: "boolean",
+    description: "Enable hot module replacement"
+  },
   plugins: t.array( {
     itemType: "any",
     merge: "concat"
