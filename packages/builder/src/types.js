@@ -100,6 +100,11 @@ export type FinalAsset = {
   relative: string,
   hash: string | null,
   isEntry: boolean,
+  runtime: ?{
+    dest: string,
+    relative: string,
+    code: string
+  },
   srcs: PublicModule[],
   inlineAssets: FinalAsset[]
 };
@@ -169,7 +174,7 @@ export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
 
 export type AssetRenderer = ( FinalAsset, FinalAssets, Builder ) => ThingOrPromise<?ToWrite>;
 
-export type AfterBuild = ( Output, Builder ) => ThingOrPromise<void>;
+export type AfterBuild = ( FinalAssets, Output, Builder ) => ThingOrPromise<void>;
 
 export type Plugin = {
   +name?: ?string,

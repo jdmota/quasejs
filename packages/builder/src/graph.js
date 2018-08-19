@@ -195,6 +195,7 @@ export function processGraph( graph: Graph ) {
         relative: m.relative,
         hash: null,
         isEntry: graph.moduleEntries.has( m ),
+        runtime: null,
         inlineAssets: [],
         srcs
       };

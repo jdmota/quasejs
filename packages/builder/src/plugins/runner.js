@@ -395,11 +395,11 @@ export default class PluginsRunner {
     throw new Error( `Asset "${asset.id}" could not be rendered. Probably there is some plugin missing.` );
   }
 
-  async afterBuild( output: Output ): Promise<void> {
+  async afterBuild( finalAssets: FinalAssets, output: Output ): Promise<void> {
     for ( const { plugin } of this.plugins ) {
       const fn = plugin.afterBuild;
       if ( fn ) {
-        await fn( output, this.builder );
+        await fn( finalAssets, output, this.builder );
       }
     }
   }

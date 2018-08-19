@@ -159,7 +159,7 @@ export default class Builder {
     }, info );
   }
 
-  async write( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
+  async writeAsset( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
 
     const fs = this.fs;
     const inlineMap = this.sourceMaps === "inline";
@@ -219,6 +219,17 @@ export default class Builder {
     };
   }
 
+  async writeCode( asset: { dest: string, code: string } ): Promise<Info> {
+    await this.fs.mkdirp( path.dirname( asset.dest ) );
+    await this.fs.writeFile( asset.dest, asset.code );
+    return {
+      file: asset.dest,
+      hash: null,
+      size: asset.code.length,
+      isEntry: false
+    };
+  }
+
   joinSourceMaps( maps: ( ?Object )[] ) {
     return joinSourceMaps( maps );
   }
@@ -238,9 +249,26 @@ export default class Builder {
   async callRenderers( finalAssets: FinalAssets ): Promise<Info[]> {
     const writes = [];
     for ( const asset of finalAssets.files ) {
+      let runtime;
+      if ( asset.isEntry ) {
+        runtime = asset.runtime = {
+          dest: `${asset.dest}.runtime.js`,
+          relative: `${asset.relative}.runtime.js`,
+          code: await this.createRuntime( {
+            context: this.dest,
+            fullPath: asset.dest,
+            publicPath: this.publicPath,
+            finalAssets
+          } )
+        };
+      }
+
       const out = await this.pluginsRunner.renderAsset( asset, finalAssets );
       if ( out ) {
-        writes.push( this.write( asset, out ) );
+        writes.push( this.writeAsset( asset, out ) );
+        if ( runtime && this.options.hmr ) {
+          writes.push( this.writeCode( runtime ) );
+        }
         continue;
       }
       throw new Error( `Could not build asset ${asset.normalized}` );
@@ -336,7 +364,7 @@ export default class Builder {
       update
     };
 
-    await this.pluginsRunner.afterBuild( out );
+    await this.pluginsRunner.afterBuild( finalAssets, out );
 
     return out;
   }

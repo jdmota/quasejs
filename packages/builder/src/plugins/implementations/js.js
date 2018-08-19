@@ -369,14 +369,9 @@ export default function jsPlugin( options: Object ): Plugin {
 
         build.append( "});" );
 
-        if ( asset.isEntry ) {
-          const runtime = await builder.createRuntime( {
-            context: builder.context,
-            fullPath: asset.path,
-            publicPath: builder.publicPath,
-            finalAssets
-          } );
-          build.append( runtime.replace( /;?$/, `(${builder.wrapInJsString( entryModule.hashId )});` ) );
+        const runtime = asset.runtime;
+        if ( runtime ) {
+          build.append( runtime.code.replace( /;?$/, `(${builder.wrapInJsString( entryModule.hashId )});` ) );
         }
 
         return {

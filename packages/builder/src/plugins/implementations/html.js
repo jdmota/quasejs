@@ -106,12 +106,12 @@ class HtmlRenderer {
     return script;
   }
 
-  createSrcScript( src: string ) {
+  createSrcScript( src: string, noDefer: ?boolean ) {
     return this.treeAdapter.createElement( "script", NAMESPACE, [
       { name: "type", value: "text/javascript" },
-      { name: "defer", value: "" },
-      { name: "src", value: src }
-    ] );
+      { name: "src", value: src },
+      noDefer ? null : { name: "defer", value: "" }
+    ].filter( Boolean ) );
   }
 
   createHrefCss( href: string ) {
@@ -141,17 +141,20 @@ class HtmlRenderer {
     } );
 
     const firstScriptDep = deps.find( d => d.importType === "js" );
+    const runtime = asset.runtime;
 
-    if ( asset.isEntry && firstScriptDep ) {
-      this.insertBefore(
-        this.createTextScript( await builder.createRuntime( {
-          context: builder.context,
-          fullPath: asset.path,
-          publicPath: builder.publicPath,
-          finalAssets
-        } ) ),
-        firstScriptDep.node
-      );
+    if ( runtime && firstScriptDep ) {
+      if ( builder.options.hmr ) {
+        this.insertBefore(
+          this.createSrcScript( builder.publicPath + runtime.relative, true ),
+          firstScriptDep.node
+        );
+      } else {
+        this.insertBefore(
+          this.createTextScript( runtime.code ),
+          firstScriptDep.node
+        );
+      }
     }
 
     for ( const { node, request, async, importType } of deps ) {
