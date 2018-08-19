@@ -1,9 +1,6 @@
 // @flow
 import type { RuntimeOptions } from "./create-runtime";
 
-// TODO also support asking for each reload?
-// TODO error overlay
-
 function createHotRuntime( hmr ) {
   return `
   const hmrApis = new Map();
@@ -167,12 +164,38 @@ function createHotRuntime( hmr ) {
     }
   }
 
-  function createErrorOverlay() {
-    // TODO
+  const OVERLAY_ID = "__quase_builder_error_overlay__";
+  let overlay = null;
+
+  // Adapted from https://github.com/parcel-bundler/parcel
+  function createErrorOverlay( error ) {
+    if ( !overlay ) {
+      overlay = document.createElement( "div" );
+      overlay.id = OVERLAY_ID;
+      document.body.appendChild( overlay );
+    }
+
+    // html encode message and stack trace
+    const message = document.createElement( "div" );
+    const stackTrace = document.createElement( "pre" );
+    message.innerText = error.message;
+    stackTrace.innerText = error.stack;
+
+    overlay.innerHTML = (
+      '<div style="background: black; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; opacity: 0.85; font-family: Menlo, Consolas, monospace; z-index: 9999;">' +
+        '<span style="background: red; padding: 2px 4px; border-radius: 2px;">ERROR</span>' +
+        '<span style="top: 2px; margin-left: 5px; position: relative;">🚨</span>' +
+        '<div style="font-size: 18px; font-weight: bold; margin-top: 20px; white-space: pre;">' + message.innerHTML + '</div>' +
+        '<pre>' + stackTrace.innerHTML + '</pre>' +
+      '</div>'
+    );
   }
 
   function removeErrorOverlay() {
-    // TODO
+    if ( overlay ) {
+      overlay.remove();
+      overlay = null;
+    }
   }
 
   function hmrInit() {
@@ -190,8 +213,8 @@ function createHotRuntime( hmr ) {
           } );
           break;
         case "error":
-          console.error( "[quase-builder] error:" + data.error.message + "\\n" + data.error.stack );
-          createErrorOverlay( data );
+          console.error( "[quase-builder] error:", data.error.message + "\\n" + data.error.stack );
+          createErrorOverlay( data.error );
           break;
       }
     };
