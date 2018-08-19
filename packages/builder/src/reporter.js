@@ -16,11 +16,12 @@ export default class Reporter {
     emitter.on( "watching", this.onWatching.bind( this ) );
     emitter.on( "update", this.onUpdate.bind( this ) );
     emitter.on( "build-error", this.onBuildError.bind( this ) );
-    emitter.on( "watch-close", this.onWatchClose.bind( this ) );
     emitter.on( "warning", this.onWarning.bind( this ) );
     emitter.on( "hmr-starting", this.onHmrStarting.bind( this ) );
     emitter.on( "hmr-started", this.onHmrStarted.bind( this ) );
     emitter.on( "hmr-error", this.onHmrError.bind( this ) );
+    emitter.on( "sigint", this.onSigint.bind( this ) );
+    emitter.on( "closed", this.onClosed.bind( this ) );
   }
 
   onWarning( w ) {
@@ -91,7 +92,11 @@ export default class Reporter {
     this.log( "Build failed.\n" );
   }
 
-  onWatchClose() {
+  onSigint() {
+    this.log( "Closing...\n" );
+  }
+
+  onClosed() {
     this.log( "Closed.\n" );
   }
 

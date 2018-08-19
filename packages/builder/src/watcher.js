@@ -79,9 +79,6 @@ export default class Watcher extends EventEmitter {
     if ( this.watcher ) {
       this.watcher.close();
       this.watcher = null;
-      this.nextJob( () => {
-        this.emit( "watch-close" );
-      } );
       return this.job;
     }
   }

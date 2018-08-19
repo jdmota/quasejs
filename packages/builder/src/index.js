@@ -27,6 +27,14 @@ export default function( options ) {
     } else {
       emitter.start();
     }
+
+    process.on( "SIGINT", function() {
+      emitter.emit( "sigint" );
+      emitter.stop();
+      if ( hmrServer ) {
+        hmrServer.stop();
+      }
+    } );
   } else {
     emitter = new EventEmitter();
     reporter = new Reporter( reporterOpts, builder, emitter );
