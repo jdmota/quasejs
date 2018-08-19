@@ -264,9 +264,10 @@
     container.__templateInstance = instance;
 
     const fragment = instance.createNode();
-    instance.update( result.values );
-
     container.appendChild( fragment );
+
+    // Update after custom elements upgrade
+    instance.update( result.values );
   }
 
   class QuaseView extends win.HTMLElement {
