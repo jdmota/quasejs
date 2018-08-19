@@ -148,7 +148,8 @@ export type Output = {
       moduleToFiles: { [key: string]: number[] },
     },
     ids: string[],
-    files: string[]
+    files: string[],
+    reloadApp: boolean
   }
 };
 

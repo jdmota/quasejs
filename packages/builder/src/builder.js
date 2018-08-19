@@ -343,10 +343,10 @@ export default class Builder {
     let update;
 
     if ( this.options.hmr ) {
-      const newFiles = finalAssets.files.map( ( { id, relative, hash } ) => ( { id, relative, hash } ) );
+      const newFiles = finalAssets.files.map( ( { id, relative, hash, isEntry } ) => ( { id, relative, hash, isEntry } ) );
 
       const filesDifference = difference( this.prevFiles, newFiles, ( a, b ) => {
-        return a.id === b.id && a.relative === b.relative && a.hash === b.hash;
+        return a.id === b.id && a.relative === b.relative && a.hash === b.hash && a.isEntry === b.isEntry;
       } );
 
       this.prevFiles = newFiles;
@@ -354,7 +354,8 @@ export default class Builder {
       update = {
         manifest: createRuntimeManifest( finalAssets ),
         ids: filesDifference.map( ( { id } ) => id ),
-        files: filesDifference.map( ( { relative } ) => relative )
+        files: filesDifference.map( ( { relative } ) => relative ),
+        reloadApp: filesDifference.some( ( { isEntry } ) => isEntry )
       };
     }
 

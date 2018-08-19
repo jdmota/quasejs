@@ -103,8 +103,8 @@ function createHotRuntime( hmr ) {
 
   let lastHotUpdate = Promise.resolve();
 
-  function hmrReloadApp() {
-    console.log( "[quase-builder] app reload?" );
+  function hmrReloadApp( reason ) {
+    console.log( "[quase-builder] App reload? Reason: " + reason );
     /* ws.close();
     ws.onclose = function() {
       location.reload();
@@ -114,6 +114,7 @@ function createHotRuntime( hmr ) {
   async function hmrUpdate( update ) {
     const seen = new Set();
     let queue = [];
+    let shouldReloadApp = update.reloadApp;
 
     files = update.manifest.files;
     moduleToFiles = update.manifest.moduleToFiles;
@@ -154,10 +155,15 @@ function createHotRuntime( hmr ) {
           seen.add( api );
           queue.push( api.reload() );
         } else {
-          hmrReloadApp();
-          return;
+          shouldReloadApp = true;
         }
       }
+    }
+
+    if ( shouldReloadApp ) {
+      hmrReloadApp(
+        update.reloadApp ? "Entry changed" : "Immediate entry dependency requested reload"
+      );
     }
   }
 
@@ -193,7 +199,7 @@ function createHotRuntime( hmr ) {
       console.error( "[quase-builder] socket error", event );
     };
     ws.onopen = function() {
-      console.log( "[quase-builder] HMR connection open" );
+      console.log( "[quase-builder] HMR connection open on port " + ${JSON.stringify( hmr.port )} );
     };
   }
 
