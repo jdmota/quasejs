@@ -76,10 +76,7 @@ export default class HMRServer {
     // Store the most recent error so we can notify new connections
     this.lastErrorEvent = {
       type: "error",
-      error: {
-        message: stripAnsi( err.message ),
-        stack: err.__fromBuilder ? "" : stripAnsi( err.stack )
-      }
+      error: stripAnsi( err.__fromBuilder ? err.message : err.stack || err.message )
     };
 
     this.broadcast( this.lastErrorEvent );
