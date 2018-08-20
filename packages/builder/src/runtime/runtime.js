@@ -105,12 +105,12 @@ function createHotRuntime( hmr ) {
     let queue = [];
     let shouldReloadApp = update.reloadApp;
 
-    files = update.manifest.files;
+    files = update.manifest.files.map( p => publicPath + p );
     moduleToFiles = update.manifest.moduleToFiles;
 
     for ( const file of update.files ) {
-      fileImports[ file ] = UNDEFINED;
-      fetches[ file ] = UNDEFINED;
+      fileImports[ publicPath + file ] = UNDEFINED;
+      fetches[ publicPath + file ] = UNDEFINED;
     }
 
     for ( const id of update.ids ) {

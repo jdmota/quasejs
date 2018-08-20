@@ -64,7 +64,7 @@ export default class Builder {
     this.context = resolvePath( options.context, this.cwd );
     this.dest = resolvePath( options.dest, this.cwd );
     this.entries = options.entries.map( e => resolvePath( e, this.context ) );
-    this.publicPath = ( options.publicPath || "/" ).replace( /\/+$/, "" ) + "/";
+    this.publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "";
     this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
     this.fs = options.fs;
     this.optimization = options.optimization;
@@ -285,6 +285,7 @@ export default class Builder {
     const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
     const moduleEntries = new Set();
 
+    this.promises.length = 0;
     this.buildId++;
 
     for ( const path of this.entries ) {
@@ -297,9 +298,13 @@ export default class Builder {
       );
     }
 
-    let promise;
-    while ( promise = this.promises.pop() ) {
-      await promise;
+    try {
+      let promise;
+      while ( promise = this.promises.pop() ) {
+        await promise;
+      }
+    } finally {
+      this.promises.length = 0;
     }
 
     const remove = [];
