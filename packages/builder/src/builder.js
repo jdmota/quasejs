@@ -35,7 +35,7 @@ export default class Builder {
   +warn: Function;
   +fileSystem: FileSystem;
   +fs: MinimalFS;
-  +codeFrame: Object;
+  +codeFrameOptions: Object;
   +reporter: { +plugin: Function, +options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
@@ -71,7 +71,7 @@ export default class Builder {
     this.sourceMaps = options.optimization.sourceMaps;
     this.hashing = options.optimization.hashing;
     this.cleanBeforeBuild = options.optimization.cleanup;
-    this.codeFrame = options.codeFrame;
+    this.codeFrameOptions = options.codeFrameOptions;
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
     this.performance = options.performance;

@@ -220,7 +220,7 @@ export type Options = {
   },
   warn: Function,
   fs: MinimalFS,
-  codeFrame: Object,
+  codeFrameOptions: Object,
   reporter: ProvidedPluginsArr<Function>,
   watch: boolean,
   watchOptions: Object,

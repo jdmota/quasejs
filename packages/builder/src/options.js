@@ -96,7 +96,7 @@ export const schema = {
       }
     }
   } ),
-  codeFrame: t.object( {
+  codeFrameOptions: t.object( {
     additionalProperties: true
   } ),
   reporter: t.union( {
