@@ -100,14 +100,6 @@ function createHotRuntime( hmr ) {
 
   let lastHotUpdate = Promise.resolve();
 
-  function hmrReloadApp( reason ) {
-    console.log( "[quase-builder] App reload? Reason: " + reason );
-    /* ws.close();
-    ws.onclose = function() {
-      location.reload();
-    }; */
-  }
-
   async function hmrUpdate( update ) {
     const seen = new Set();
     let queue = [];
@@ -164,6 +156,42 @@ function createHotRuntime( hmr ) {
     }
   }
 
+  let reloadApp;
+  let state = {
+    success: true,
+    reload: false
+  };
+
+  function hmrReloadApp( reason ) {
+    console.log( "[quase-builder] App reload? Reason: " + reason );
+    state.reload = true;
+    updateUI();
+  }
+
+  const UI_ID = "__quase_builder_ui__";
+  let ui = null;
+
+  function updateUI() {
+    if ( !ui ) {
+      ui = document.createElement( "div" );
+      ui.id = UI_ID;
+      document.body.appendChild( ui );
+    }
+
+    const success = state.success;
+    const reload = state.reload;
+
+    ui.innerHTML = (
+      '<div style="z-index:99999;color:white;position:fixed;top:0;' +
+        'right: 50px;line-height:30px;font-family: Menlo, Consolas, monospace;">' +
+        '<div style="font-size:18px;padding:10px;background:yellow;color:black;float:left;cursor:pointer;' + ( reload ? 'display:block;' : 'display:none;' ) + '">🗘</div>' +
+        '<div style="float:left;background:' + ( success ? 'green' : 'red' ) + ';padding:10px;">Build: ' + ( success ? 'Success' : 'Error' ) + '</div>' +
+      '</div>'
+    );
+
+    ui.getElementsByTagName( "div" )[ 1 ].onclick = reloadApp;
+  }
+
   const OVERLAY_ID = "__quase_builder_error_overlay__";
   let overlay = null;
 
@@ -207,12 +235,16 @@ function createHotRuntime( hmr ) {
         case "update":
           lastHotUpdate = lastHotUpdate.then( () => {
             console.log( "[quase-builder] update", data.update );
+            state.success = true;
+            updateUI();
             removeErrorOverlay();
             return hmrUpdate( data.update );
           } );
           break;
         case "error":
           console.error( "[quase-builder] error:", data.error );
+          state.success = false;
+          updateUI();
           createErrorOverlay( data.error );
           break;
       }
@@ -222,6 +254,13 @@ function createHotRuntime( hmr ) {
     };
     ws.onopen = function() {
       console.log( "[quase-builder] HMR connection open on port " + ${JSON.stringify( hmr.port )} );
+    };
+
+    reloadApp = function() {
+      ws.close();
+      ws.onclose = function() {
+        location.reload();
+      };
     };
   }
 
