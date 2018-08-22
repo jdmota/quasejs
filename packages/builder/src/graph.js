@@ -3,7 +3,7 @@ import type Module from "./modules/index";
 import PublicModule from "./modules/public";
 import { hashName } from "./utils/hash";
 import type { FinalAsset } from "./types";
-import type Builder from "./builder";
+import type Builder, { Build } from "./builder";
 import { reExt } from "./id";
 
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
@@ -19,7 +19,7 @@ export class Graph {
   splitPoints: Set<PublicModule>;
   inline: Map<PublicModule, PublicModule>;
 
-  constructor( builder: Builder, moduleEntries: Set<Module> ) {
+  constructor( build: Build, moduleEntries: Set<Module> ) {
     this.modules = new Map();
     this.moduleEntries = new Set();
     this.incs = new Map();
@@ -27,7 +27,7 @@ export class Graph {
     this.splitPoints = new Set();
     this.inline = new Map();
 
-    for ( const module of builder.modules.values() ) {
+    for ( const module of build.modules.values() ) {
       this.modules.set( module.id, new PublicModule( module ) );
     }
 

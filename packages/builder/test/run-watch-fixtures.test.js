@@ -1,5 +1,13 @@
 import index from "../src";
+import Reporter from "../src/reporter";
 import transformConfig from "./transform-config";
+
+class TestReporter extends Reporter {
+  constructor( options, builder, emitter ) {
+    super( options, builder, emitter );
+    this.log = options.log;
+  }
+}
 
 describe( "watcher", () => {
 
@@ -37,7 +45,6 @@ describe( "watcher", () => {
       config.entries = config.entries || [ "index.js" ];
       config.context = config.context || "working";
       config.dest = config.dest || "atual";
-      config.reporter = [ "default", { hideDates: true } ];
       config.watch = true;
       config.watchOptions = {
         aggregateTimeout: 1
@@ -50,15 +57,22 @@ describe( "watcher", () => {
           assets[ path.relative( fixturePath, file ).replace( /\\/g, "/" ) ] = content;
         }
       };
-      config = transformConfig( config, fixturePath );
 
       let output = "";
 
-      const reporter = index( config );
+      config.reporter = [
+        TestReporter,
+        {
+          hideDates: true,
+          log( str ) {
+            output += str;
+          }
+        }
+      ];
 
-      reporter.log = str => {
-        output += str;
-      };
+      config = transformConfig( config, fixturePath );
+
+      const reporter = index( config );
 
       const b = reporter.emitter;
       b.watcher = {
@@ -91,7 +105,8 @@ describe( "watcher", () => {
       async function next() {
 
         if ( i >= operations.length ) {
-          b.stop().then( resolve );
+          b.stop();
+          resolve();
           return;
         }
 
@@ -132,16 +147,10 @@ describe( "watcher", () => {
         }
 
         i++;
-
-        b.nextJob( () => {
-          setTimeout( next, 100 );
-        } );
-
+        b.currentBuild.then( next );
       }
 
-      b.nextJob( () => {
-        setTimeout( next, 100 );
-      } );
+      b.currentBuild.then( next );
 
       await promise;
 

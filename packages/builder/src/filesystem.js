@@ -1,5 +1,5 @@
 // @flow
-import { Producer, type IComputation } from "./utils/data-dependencies";
+import { Producer, type ComputationApi } from "./utils/data-dependencies";
 
 const { default: FileSystem } = require( "@quase/cacheable-fs" );
 
@@ -16,31 +16,35 @@ export default class DependableFileSystem extends FileSystem {
     this.producersByFile = new Map();
   }
 
-  getObjFile( file: string, sub: IComputation, op: FSOperation ) {
+  watchedFiles(): string[] {
+    return Array.from( this.producersByFile.keys() );
+  }
+
+  getObjFile( file: string, computation: ComputationApi, op: FSOperation ) {
     const obj = super.getObjFile( file );
     const producers = this.producersByFile.get( obj.location ) || {
       stat: new Producer(),
       readFile: new Producer(),
       readdir: new Producer()
     };
+    computation.subscribeTo( producers[ op ] );
     this.producersByFile.set( obj.location, producers );
-    producers[ op ].subscribe( sub );
     return obj;
   }
 
-  async stat( file: string, sub: IComputation ) {
+  async stat( file: string, sub: ComputationApi ) {
     return this.getObjFile( file, sub, "stat" ).stat();
   }
 
-  async readFile( file: string, sub: IComputation, enconding: ?string ) {
+  async readFile( file: string, sub: ComputationApi, enconding: ?string ) {
     return this.getObjFile( file, sub, "readFile" ).readFile( enconding );
   }
 
-  async readdir( file: string, sub: IComputation ) {
+  async readdir( file: string, sub: ComputationApi ) {
     return this.getObjFile( file, sub, "readdir" ).readdir();
   }
 
-  async isFile( file: string, sub: IComputation ) {
+  async isFile( file: string, sub: ComputationApi ) {
     try {
       const s = await this.stat( file, sub );
       return s.isFile() || s.isFIFO();
@@ -52,13 +56,13 @@ export default class DependableFileSystem extends FileSystem {
     }
   }
 
-  _notify( what: string, statToo: boolean ) {
+  _invalidate( what: string, statToo: boolean ) {
     const producers = this.producersByFile.get( what );
     if ( producers ) {
-      producers.readFile.notify();
-      producers.readdir.notify();
+      producers.readFile.invalidate();
+      producers.readdir.invalidate();
       if ( statToo ) {
-        producers.stat.notify();
+        producers.stat.invalidate();
         this.producersByFile.delete( what );
       }
     }
@@ -66,19 +70,19 @@ export default class DependableFileSystem extends FileSystem {
 
   // React to "file changed"
   purgeContent( what: string ) {
-    this._notify( what, false );
+    this._invalidate( what, false );
     super.purgeContent( what );
   }
 
   // React to "file added" or "file removed"
   purge( what: string ) {
-    this._notify( what, true );
+    this._invalidate( what, true );
     super.purge( what );
   }
 
   // React to "folder added" or "folder removed"
   purgeNested( what: string ) {
-    this._notify( what, true );
+    this._invalidate( what, true );
     super.purgeNested( what );
   }
 

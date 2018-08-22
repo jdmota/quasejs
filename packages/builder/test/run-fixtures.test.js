@@ -111,7 +111,7 @@ describe( "builder", () => {
       }
 
       try {
-        await builder.build();
+        await builder.runBuild();
       } catch ( err ) {
         return failure( err );
       }

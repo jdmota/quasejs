@@ -2,6 +2,7 @@
 import hash from "./utils/hash";
 import { type RuntimeInfo, createRuntime, createRuntimeManifest } from "./runtime/create-runtime";
 import Module, { type ModuleArg } from "./modules/index";
+import { ComputationCancelled } from "./utils/data-dependencies";
 import difference from "./utils/difference";
 import PluginsRunner from "./plugins/runner";
 import type {
@@ -22,6 +23,120 @@ const { joinSourceMaps } = require( "@quase/source-map" );
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
 
+export class Build {
+
+  +builder: Builder; // eslint-disable-line no-use-before-define
+  +modules: Map<string, Module>;
+  +promises: Promise<*>[];
+  +buildId: number;
+  cancelled: boolean;
+  prevFiles: ( {
+    id: string,
+    relative: string,
+    hash: string | null
+  } )[];
+
+  constructor( prevBuild: ?Build, builder: Builder ) {
+    this.builder = builder;
+    this.modules = new Map();
+    this.promises = [];
+    this.cancelled = false;
+
+    if ( prevBuild ) {
+      for ( const [ id, module ] of prevBuild.modules ) {
+        this.modules.set( id, module );
+      }
+
+      this.buildId = prevBuild.buildId + 1;
+      this.prevFiles = prevBuild.prevFiles;
+    } else {
+      this.buildId = 0;
+      this.prevFiles = [];
+    }
+  }
+
+  removeOrphans() {
+    const removed = [];
+
+    for ( const [ id, module ] of this.modules ) {
+      if ( module.buildId !== this.buildId ) {
+        module.unref();
+        removed.push( id );
+      }
+    }
+
+    for ( const id of removed ) {
+      this.modules.delete( id );
+    }
+  }
+
+  addModule( arg: ModuleArg ): Module {
+    if ( this.cancelled ) {
+      throw new ComputationCancelled();
+    }
+
+    const id = this.builder.makeId( arg );
+    let m = this.modules.get( id );
+
+    if ( !m ) {
+      m = new Module( id, arg );
+      this.modules.set( id, m );
+    }
+
+    this.promises.push( m.process( this ) );
+    return m;
+  }
+
+  process( module: Module ) {
+    if ( this.cancelled ) {
+      throw new ComputationCancelled();
+    }
+
+    this.promises.push( module.process( this ) );
+  }
+
+  addModuleAndTransform( arg: ModuleArg, importer: ?Module ): Module {
+    return this.transformModuleType( this.addModule( arg ), importer );
+  }
+
+  transformModuleType( startModule: Module, importer: ?Module ): Module {
+
+    let m = startModule;
+    const generation = this.builder.pluginsRunner.getTypeTransforms( m.utils, importer && importer.utils );
+
+    for ( let i = 0; i < generation.length; i++ ) {
+      if ( m.type === generation[ i ] ) {
+        continue;
+      }
+      m = m.newModuleType( this, generation[ i ] );
+    }
+
+    return m;
+  }
+
+  async wait() {
+    let promise;
+    while ( promise = this.promises.pop() ) {
+      await promise;
+    }
+
+    this.removeOrphans();
+  }
+
+  cancel() {
+    this.cancelled = true;
+  }
+
+  isActive(): boolean {
+    return !this.cancelled;
+  }
+
+  isCancelled(): boolean {
+    return this.cancelled;
+  }
+
+}
+
 export default class Builder {
 
   +options: Options;
@@ -33,29 +148,22 @@ export default class Builder {
   +hashing: boolean;
   +publicPath: string;
   +warn: Function;
-  +fileSystem: FileSystem;
   +fs: MinimalFS;
   +codeFrameOptions: Object;
   +reporter: { +plugin: Function, +options: Object };
   +watch: boolean;
   +watchOptions: ?Object;
-  +pluginsRunner: PluginsRunner;
   +optimization: OptimizationOptions;
   +performance: PerformanceOpts;
   +serviceWorker: Object;
   +cleanBeforeBuild: boolean;
-  +modules: Map<string, Module>;
-  +promises: Promise<*>[];
-  buildId: number;
+  +fileSystem: FileSystem;
+  +pluginsRunner: PluginsRunner;
   hmrOptions: ?{
     hostname: string,
     port: number
   };
-  prevFiles: ( {
-    id: string,
-    relative: string,
-    hash: string | null
-  } )[];
+  build: Build;
 
   constructor( options: Options, warn: Function ) {
 
@@ -75,27 +183,24 @@ export default class Builder {
     this.watch = options.watch;
     this.watchOptions = options.watchOptions;
     this.performance = options.performance;
-    this.fileSystem = new FileSystem();
     this.warn = warn;
-
-    if ( this.watch ) {
-      this.optimization.hashId = false;
-    }
-
-    this.pluginsRunner = new PluginsRunner( this, options.plugins );
 
     this.serviceWorker = options.serviceWorker;
     this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
     this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
     this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
 
-    this.modules = new Map();
+    if ( this.watch ) {
+      this.optimization.hashId = false;
+    }
 
-    this.promises = [];
-    this.buildId = 0;
+    this.fileSystem = new FileSystem();
+
+    this.pluginsRunner = new PluginsRunner( this, options.plugins );
 
     this.hmrOptions = null;
-    this.prevFiles = [];
+
+    this.build = new Build( null, this );
   }
 
   createFakePath( key: string ): string {
@@ -116,38 +221,6 @@ export default class Builder {
       return `${r}|${innerId || ""}|${type}`;
     }
     return r;
-  }
-
-  addModule( arg: ModuleArg ): Module {
-    const id = this.makeId( arg );
-    let m = this.modules.get( id );
-
-    if ( !m ) {
-      m = new Module( id, arg );
-      this.modules.set( id, m );
-    }
-
-    this.promises.push( m.process() );
-    return m;
-  }
-
-  addModuleAndTransform( arg: ModuleArg, importer: ?Module ): Module {
-    return this.transformModuleType( this.addModule( arg ), importer );
-  }
-
-  transformModuleType( startModule: Module, importer: ?Module ): Module {
-
-    let m = startModule;
-    const generation = this.pluginsRunner.getTypeTransforms( m.utils, importer && importer.utils );
-
-    for ( let i = 0; i < generation.length; i++ ) {
-      if ( m.type === generation[ i ] ) {
-        continue;
-      }
-      m = m.newModuleType( generation[ i ] );
-    }
-
-    return m;
   }
 
   createRuntime( info: RuntimeInfo ) {
@@ -276,21 +349,19 @@ export default class Builder {
     return Promise.all( writes );
   }
 
-  removeModule( m: Module ) {
-    this.modules.delete( m.id );
-  }
+  async runBuild() {
 
-  async build() {
+    this.build.cancel();
+    const prevFiles = this.build.prevFiles;
+    const build = this.build = new Build( this.build, this );
+
     const startTime = Date.now();
     const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
     const moduleEntries = new Set();
 
-    this.promises.length = 0;
-    this.buildId++;
-
     for ( const path of this.entries ) {
       moduleEntries.add(
-        this.addModuleAndTransform( {
+        build.addModuleAndTransform( {
           path,
           type: this.pluginsRunner.getType( path ),
           builder: this
@@ -298,27 +369,9 @@ export default class Builder {
       );
     }
 
-    try {
-      let promise;
-      while ( promise = this.promises.pop() ) {
-        await promise;
-      }
-    } finally {
-      this.promises.length = 0;
-    }
+    await build.wait();
 
-    const remove = [];
-    for ( const module of this.modules.values() ) {
-      if ( module.buildId !== this.buildId ) {
-        remove.push( module );
-      }
-    }
-
-    for ( const module of remove ) {
-      this.removeModule( module );
-    }
-
-    const graph = new Graph( this, moduleEntries );
+    const graph = new Graph( build, moduleEntries );
     await graph.init( this );
 
     await this.pluginsRunner.check( graph );
@@ -350,11 +403,11 @@ export default class Builder {
     if ( this.options.hmr ) {
       const newFiles = finalAssets.files.map( ( { id, relative, hash, isEntry } ) => ( { id, relative, hash, isEntry } ) );
 
-      const filesDifference = difference( this.prevFiles, newFiles, ( a, b ) => {
+      const filesDifference = difference( prevFiles, newFiles, ( a, b ) => {
         return a.id === b.id && a.relative === b.relative && a.hash === b.hash && a.isEntry === b.isEntry;
       } );
 
-      this.prevFiles = newFiles;
+      build.prevFiles = newFiles;
 
       update = {
         manifest: createRuntimeManifest( finalAssets ),

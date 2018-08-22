@@ -1,5 +1,5 @@
 // @flow
-import { type IComputation } from "../utils/data-dependencies";
+import { type ComputationApi } from "../utils/data-dependencies";
 import type Builder from "../builder";
 import type Module from "./index";
 
@@ -37,9 +37,9 @@ export class ModuleUtils {
 
 export class ModuleUtilsWithFS extends ModuleUtils {
 
-  _computation: IComputation;
+  _computation: ComputationApi;
 
-  constructor( module: Module, computation: IComputation ) {
+  constructor( module: Module, computation: ComputationApi ) {
     super( module );
     this._computation = computation;
   }

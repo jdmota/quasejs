@@ -1,7 +1,7 @@
 // @flow
-import { Computation, type IComputation } from "../utils/data-dependencies";
+import { Computation, type ComputationApi } from "../utils/data-dependencies";
 import error from "../utils/error";
-import type Builder from "../builder";
+import type Builder, { Build } from "../builder";
 import type {
   Data, Loc, LoadOutput, TransformOutput, DepsInfo, NotResolvedDep, ResolvedDep, ModuleDep
 } from "../types";
@@ -71,7 +71,14 @@ export default class Module {
     this.load = new Computation( c => this._load( c ) );
     this.transform = new Computation( c => this._transform( c ) );
     this.getDeps = new Computation( c => this._getDeps( c ) );
-    this.resolveDeps = new Computation( c => this._resolveDeps( c ) );
+    this.resolveDeps = new Computation( ( c, b ) => this._resolveDeps( c, b ) );
+  }
+
+  unref() {
+    this.load.invalidate();
+    this.transform.invalidate();
+    this.getDeps.invalidate();
+    this.resolveDeps.invalidate();
   }
 
   moduleError( message: string ) {
@@ -108,7 +115,7 @@ export default class Module {
     }
   }
 
-  async _load( computation: IComputation ): Promise<LoadOutput> {
+  async _load( computation: ComputationApi ): Promise<LoadOutput> {
     try {
 
       let data, map;
@@ -123,7 +130,7 @@ export default class Module {
           throw new Error( `Internal: missing innerId - ${this.id}` );
         }
 
-        const parentDeps = await parentInner.getDeps.get( computation );
+        const parentDeps = await computation.get( parentInner.getDeps );
         const result = parentDeps.innerDependencies.get( innerId );
 
         if ( !result ) {
@@ -131,7 +138,7 @@ export default class Module {
         }
 
         if ( this.builder.optimization.sourceMaps ) {
-          const parentLoad = await parentInner.load.get( computation );
+          const parentLoad = await computation.get( parentInner.load );
           data = result.data;
           map = joinSourceMaps( [ parentLoad.map ] ); // FIXME result.map should be created by us
         } else {
@@ -145,7 +152,7 @@ export default class Module {
 
         // For modules generated from other module in different type
         if ( parentGenerator ) {
-          const parentTransform = await parentGenerator.transform.get( computation );
+          const parentTransform = await computation.get( parentGenerator.transform );
           const result = await this.builder.pluginsRunner.transformType(
             parentTransform,
             new ModuleUtilsWithFS( this, computation ),
@@ -153,7 +160,7 @@ export default class Module {
           );
 
           if ( this.builder.optimization.sourceMaps ) {
-            const parentLoad = await parentGenerator.load.get( computation );
+            const parentLoad = await computation.get( parentGenerator.load );
             data = result.data;
             map = joinSourceMaps( [ parentLoad.map, result.map ] );
           } else {
@@ -183,8 +190,8 @@ export default class Module {
     }
   }
 
-  async _transform( computation: IComputation ): Promise<TransformOutput> {
-    const { data } = await this.load.get( computation );
+  async _transform( computation: ComputationApi ): Promise<TransformOutput> {
+    const { data } = await computation.get( this.load );
     const ast = await this.builder.pluginsRunner.parse( data, this.utils );
 
     let result, finalAst, finalBuffer;
@@ -211,8 +218,8 @@ export default class Module {
     return result;
   }
 
-  async _getDeps( computation: IComputation ): Promise<DepsInfo> {
-    const ast = await this.transform.get( computation );
+  async _getDeps( computation: ComputationApi ): Promise<DepsInfo> {
+    const ast = await computation.get( this.transform );
     return this.builder.pluginsRunner.dependencies( ast, this.utils );
   }
 
@@ -250,14 +257,14 @@ export default class Module {
     };
   }
 
-  async _resolveDeps( computation: IComputation ): Promise<Map<string, ModuleDep>> {
+  async _resolveDeps( computation: ComputationApi, build: Build ): Promise<Map<string, ModuleDep>> {
 
     const moduleDeps = new Map();
     const utils = new ModuleUtilsWithFS( this, computation );
-    const depsInfo = await this.getDeps.get( computation );
+    const depsInfo = await computation.get( this.getDeps );
 
     const parent = this.parentGenerator;
-    const parentModuleDeps = parent ? await parent.resolveDeps.get( computation ) : new Map();
+    const parentModuleDeps = parent ? await computation.get( parent.resolveDeps ) : new Map();
 
     const p = [];
     for ( const [ request, dep ] of depsInfo.dependencies ) {
@@ -271,7 +278,7 @@ export default class Module {
     // Handle normal dependencies
     for ( const { path, request, loc, async } of deps ) {
 
-      const required = this.builder.addModuleAndTransform( {
+      const required = build.addModuleAndTransform( {
         builder: this.builder,
         path,
         type: this.builder.pluginsRunner.getType( path )
@@ -303,7 +310,7 @@ export default class Module {
       const path = this.path;
       const { type, loc, async } = dep;
 
-      const required = this.builder.addModuleAndTransform( {
+      const required = build.addModuleAndTransform( {
         builder: this.builder,
         path,
         type,
@@ -331,7 +338,7 @@ export default class Module {
 
     for ( const { path, request, loc, async, splitPoint, required: originalRequired } of parentModuleDeps.values() ) {
 
-      const required = this.builder.transformModuleType( originalRequired, this );
+      const required = build.transformModuleType( originalRequired, this );
 
       moduleDeps.set( request, {
         path,
@@ -347,25 +354,25 @@ export default class Module {
     return moduleDeps;
   }
 
-  async process(): Promise<void> {
-    if ( this.buildId === this.builder.buildId ) {
+  async process( build: Build ): Promise<void> {
+    if ( this.buildId === build.buildId ) {
       return;
     }
-    this.buildId = this.builder.buildId;
+    this.buildId = build.buildId;
 
     const parent = this.parentGenerator;
     if ( parent ) {
-      this.builder.promises.push( parent.process() );
+      build.process( parent );
     }
 
-    const moduleDeps = await this.resolveDeps.get();
+    const moduleDeps = await this.resolveDeps.get( build );
     for ( const { required } of moduleDeps.values() ) {
-      this.builder.promises.push( required.process() );
+      build.process( required );
     }
   }
 
-  newModuleType( newType: string ): Module {
-    return this.builder.addModule( {
+  newModuleType( build: Build, newType: string ): Module {
+    return build.addModule( {
       builder: this.builder,
       path: this.path,
       innerId: this.innerId,

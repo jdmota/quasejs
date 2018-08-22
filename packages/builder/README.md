@@ -12,6 +12,7 @@
 - `load` and `error` events are emitted for script tags, replicating the `<script type="module">` behaviour
 - The runtime is small (2kB or less) and is able to fetch the necessary scripts for each module in parallel
 - Errors have code frames to help pinpoint to the problem
+- In watch mode, if you change a file, the build is restarted without waiting for the previous build to finish
 
 ## Config example
 

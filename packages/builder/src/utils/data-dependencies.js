@@ -1,7 +1,7 @@
 // @flow
 
 export interface IComputation {
-  _depChanged(): void,
+  invalidate(): void,
   _addDep( Producer<any> ): void // eslint-disable-line no-use-before-define
 }
 
@@ -22,13 +22,13 @@ export class Producer<T> {
     sub._addDep( this );
   }
 
-  notify() {
+  invalidate() {
     // Clear the subscriptions
     const subscribers = this.subscribers;
     this.subscribers = new Set();
 
     for ( const sub of subscribers ) {
-      sub._depChanged();
+      sub.invalidate();
     }
 
     return subscribers.size;
@@ -40,48 +40,93 @@ export class Producer<T> {
 
 }
 
+export class ComputationCancelled extends Error {
+
+}
+
+export class ComputationApi {
+
+  parent: ?Computation<any>; // eslint-disable-line no-use-before-define
+
+  constructor( parent: Computation<any> ) {
+    this.parent = parent;
+  }
+
+  invalidate() {
+    const parent = this.parent;
+    if ( parent ) {
+      this.parent = null;
+      parent.invalidate();
+    }
+    throw new ComputationCancelled();
+  }
+
+  subscribeTo( dep: Producer<any> ) {
+    const parent = this.parent;
+    if ( parent ) {
+      dep.subscribe( parent );
+    } else {
+      throw new ComputationCancelled();
+    }
+  }
+
+  get<T>( dep: Producer<T> ): Promise<T> {
+    this.subscribeTo( dep );
+    return dep.get();
+  }
+
+}
+
 export class Computation<T> extends Producer<T> implements IComputation {
 
-  +fn: IComputation => Promise<T>;
+  +fn: ( ComputationApi, any ) => Promise<T>;
   running: Promise<T> | null;
   dependencies: Set<Producer<any>>;
+  version: ComputationApi;
 
-  constructor( fn: IComputation => Promise<T> ) {
+  constructor( fn: ( ComputationApi, any ) => Promise<T> ) {
     super();
     this.fn = fn;
     this.running = null;
     this.dependencies = new Set();
+    this.version = new ComputationApi( this );
   }
 
   _addDep( producer: Producer<any> ) {
     this.dependencies.add( producer );
   }
 
-  _depChanged() {
-    this.running = null;
+  invalidate() {
+    if ( this.running ) {
+      this.version.parent = null;
+      this.version = new ComputationApi( this );
+      this.running = null;
 
-    const deps = this.dependencies;
-    this.dependencies = new Set();
+      const deps = this.dependencies;
+      this.dependencies = new Set();
 
-    for ( const dep of deps ) {
-      dep.unsubscribe( this );
+      for ( const dep of deps ) {
+        dep.unsubscribe( this );
+      }
+
+      super.invalidate();
     }
-
-    this.notify();
   }
 
-  get( sub: ?IComputation ): Promise<T> {
-    if ( sub ) {
-      this.subscribe( sub );
-    }
-
+  get( arg: any ): Promise<T> {
     const running = this.running;
     if ( running ) {
       return running;
     }
 
     const fn = this.fn;
-    return ( this.running = fn( this ) );
+    const version = this.version;
+    return ( this.running = fn( version, arg ).catch( err => {
+      if ( err instanceof ComputationCancelled ) {
+        version.invalidate();
+      }
+      throw err;
+    } ) );
   }
 
 }

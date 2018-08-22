@@ -3,6 +3,7 @@ import Watcher from "./watcher";
 import HMRServer from "./hmr-server";
 
 const EventEmitter = require( "events" );
+let listeningSIGINT = false;
 
 export default function( options ) {
   let reporter, emitter;
@@ -28,19 +29,22 @@ export default function( options ) {
       emitter.start();
     }
 
-    process.on( "SIGINT", function() {
-      emitter.emit( "sigint" );
-      emitter.stop();
-      if ( hmrServer ) {
-        hmrServer.stop();
-      }
-    } );
+    if ( !listeningSIGINT ) {
+      listeningSIGINT = true;
+      process.once( "SIGINT", function() {
+        emitter.emit( "sigint" );
+        emitter.stop();
+        if ( hmrServer ) {
+          hmrServer.stop();
+        }
+      } );
+    }
   } else {
     emitter = new EventEmitter();
     reporter = new Reporter( reporterOpts, builder, emitter );
 
     emitter.emit( "build-start" );
-    builder.build().then(
+    builder.runBuild().then(
       o => emitter.emit( "build-success", o ),
       e => emitter.emit( "build-error", e )
     );

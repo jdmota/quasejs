@@ -83,8 +83,8 @@ export default class Reporter {
     this.log( "\n--------\n\n" );
   }
 
-  onUpdate( { id, type } ) {
-    this.log( `File ${relative( id, this.builder.cwd )} was ${type}.\n` );
+  onUpdate( { path, type } ) {
+    this.log( `File ${relative( path, this.builder.cwd )} was ${type}.\n` );
   }
 
   onBuildError( error ) {
