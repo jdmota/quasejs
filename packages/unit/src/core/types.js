@@ -11,7 +11,6 @@ export type GroupMetadata = {
   +exclusive: boolean,
   +strict: boolean,
   +status: "" | "skipped" | "todo" | "failing",
-  +bail: boolean,
   +allowNoPlan: boolean
 };
 

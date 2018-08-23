@@ -9,9 +9,10 @@ describe( "unit", () => {
       const runner = Runner.init( {
         strict: true
       } );
+      const test = runner.test;
 
       expect( () => {
-        runner.test[ type ]( () => {} );
+        test[ type ]( () => {} );
       } ).toThrow( /modifiers are not allowed in strict mode/ );
 
     } );
@@ -23,12 +24,13 @@ describe( "unit", () => {
     it( type + " not allowed in strict mode (using strict modifier)", () => {
 
       const runner = Runner.init();
+      const test = runner.test;
       let fineHere = false;
 
       expect( () => {
-        runner.test.skip( () => {} );
+        test.skip( () => {} );
         fineHere = true;
-        runner.group.strict( () => {
+        test.group.strict( () => {
           runner.test[ type ]( () => {} );
         } );
       } ).toThrow( /modifiers are not allowed in strict mode/ );

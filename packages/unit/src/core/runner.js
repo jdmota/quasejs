@@ -1,5 +1,5 @@
 import { GroupPlaceholder } from "./placeholders";
-import addChain from "./add-chain";
+import { createTestChain } from "./chain";
 import validateOptions from "./validate-options";
 
 const { EventEmitter } = require( "events" );
@@ -43,6 +43,8 @@ class Runner extends EventEmitter {
       },
       true
     );
+
+    this.test = createTestChain( this );
 
     this._current = this.root;
     this.suite = null;
@@ -192,7 +194,5 @@ class Runner extends EventEmitter {
   }
 
 }
-
-addChain( Runner );
 
 export default Runner;

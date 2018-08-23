@@ -13,13 +13,13 @@ describe( "unit", () => {
     const actual = [];
 
     const t2 = test.before;
-    const t3 = t2.after;
+    const t3 = test.after;
 
     t3( "after", () => {
       actual.push( "after" );
     } );
 
-    t2.test( "test", () => {
+    test( "test", () => {
       actual.push( "test" );
     } );
 

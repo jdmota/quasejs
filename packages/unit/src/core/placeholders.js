@@ -6,7 +6,7 @@ import { type InTestSequence } from "./sequence";
 import Test, { Runnable } from "./test";
 import TestCollection from "./test-collection";
 import Suite from "./suite";
-import addChain from "./add-chain";
+import { extendWithChain } from "./chain";
 import { type TestMetadata, type GroupMetadata } from "./types";
 
 const { getStack } = require( "@quase/error" );
@@ -47,7 +47,7 @@ class GroupApi {
   }
 }
 
-addChain( GroupApi );
+extendWithChain( GroupApi );
 
 type NumOrVoid = number | void;
 
