@@ -113,6 +113,7 @@ export function encode( snapshots: Snapshots ): Buffer {
   }
 
   const compressed = zlib.gzipSync( buffer.toBuffer() );
+  compressed[ 9 ] = 0x03; // Override the GZip header containing the OS to always be Linux
   const md5sum = crypto.createHash( "md5" ).update( compressed ).digest();
 
   const finalBuffer = new WritableBuffer();

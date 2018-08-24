@@ -1,4 +1,4 @@
-# Quase-unit Snapshot Report for `packages/unit/ui-tests/snapshots.js`
+# Quase-unit Snapshot Report for `packages/unit/examples/basic/snapshots.js`
 
 ## anonymous key (4:5)
 
