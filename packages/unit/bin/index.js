@@ -183,7 +183,7 @@ const schema = {
 
 cli( {
   usage,
-  configFiles: "quase-unit-config.js",
+  configFiles: "quase-unit.config.js",
   configKey: "quase-unit",
   schema
 } ).then( o => {
