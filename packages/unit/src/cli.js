@@ -59,6 +59,12 @@ function concat( original, array ) {
   return original;
 }
 
+function setExitCode( code ) {
+  if ( !process.exitCode ) {
+    process.exitCode = code;
+  }
+}
+
 class RunnerProcess {
 
   constructor( runner, files, cli, args, env, execArgv ) {
@@ -83,6 +89,8 @@ class RunnerProcess {
 
     this.onExit = ( code, signal ) => {
       if ( !this.killed && code !== 0 ) {
+        setExitCode( 1 );
+
         const e = new Error( `Child process exited with code ${code} and signal ${signal}.` );
         runner.emit( "otherError", e );
       }
@@ -180,6 +188,8 @@ class NodeRunner extends EventEmitter {
 
     this.sentSigint = 0;
     this.onSigint = () => {
+      setExitCode( 1 );
+
       this.sentSigint++;
       if ( this.sentSigint > 2 ) {
         process.removeListener( "SIGINT", this.onSigint );
@@ -238,6 +248,13 @@ class NodeRunner extends EventEmitter {
     } else {
       this.runEndArg.status = "passed";
     }
+
+    if ( runStartNotEmitted || this.runEndArg.interrupted || this.pendingTests.size > 0 ) {
+      setExitCode( 1 );
+    }
+
+    const { failed, total } = this.runEndArg.testCounts;
+    setExitCode( failed || !total ? 1 : 0 );
 
     this.emit( "runEnd", this.runEndArg );
   }
@@ -304,6 +321,8 @@ class NodeRunner extends EventEmitter {
           this.runEnd();
         }
       } else if ( eventType === "otherError" ) {
+        setExitCode( 1 );
+
         this.emit( eventType, arg );
         if ( !forkProcess.started ) {
           forkProcess.disconnect();

@@ -34,7 +34,6 @@ export default class NodeReporter {
       await this.logOtherErrors();
 
       if ( this.interrupted ) {
-        process.exitCode = 1;
         log( `\n${turbocolor.bold.red( "Interrupted." )}\n\n` );
       }
 
@@ -122,8 +121,6 @@ export default class NodeReporter {
     this.otherErrors = [];
 
     if ( otherErrors.length > 0 ) {
-      process.exitCode = 1;
-
       this.afterRun();
       for ( let i = 0; i < otherErrors.length; i++ ) {
         await this.logError( otherErrors[ i ] ); // eslint-disable-line no-await-in-loop
@@ -181,8 +178,6 @@ export default class NodeReporter {
       // If we had pending tests, don't trust the stats
       if ( t.runStartNotEmitted || hasPending ) {
 
-        process.exitCode = 1;
-
         if ( t.runStartNotEmitted ) {
           log( `\n${turbocolor.bold.red( `${t.runStartNotEmitted} forks did not emit "runStart" event.` )}\n` );
         }
@@ -198,8 +193,6 @@ export default class NodeReporter {
       } else {
 
         const { passed, skipped, todo, failed, total } = t.testCounts;
-
-        process.exitCode = failed || !total || this.otherErrors.length ? 1 : 0;
 
         let lines;
 
