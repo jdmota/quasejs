@@ -1,4 +1,4 @@
-const test = require( "../dist" );
+const test = require( "../../dist" );
 
 test( "Test 1", t => {
   t.plan( 1 );

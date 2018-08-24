@@ -1,4 +1,4 @@
-const test = require( "../dist" );
+const test = require( "../../dist" );
 
 test( t => {
   t.incCount();
