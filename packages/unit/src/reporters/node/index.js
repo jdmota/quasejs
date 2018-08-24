@@ -60,6 +60,16 @@ export default class NodeReporter {
       }
       log( `\nStopping tests... (${_try} try)\n` );
     } );
+
+    runner.on( "why-is-running", async why => {
+      log( `\n${turbocolor.bold.red( "Resources still running in child process..." )}\n` );
+
+      for ( const { type, stack } of why ) {
+        log( `\n${type}\n` );
+        await this.logDefaultByStack( stack );
+      }
+      logEol();
+    } );
   }
 
   static showOptions( options ) {
@@ -320,6 +330,9 @@ export default class NodeReporter {
     const { file, code, line, column } = source;
 
     if ( !file || !code ) {
+      if ( file ) {
+        return `${turbocolor.gray( `${prettify( file )}:${line}:${column}` )}\n`;
+      }
       return "";
     }
 

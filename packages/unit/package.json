@@ -12,7 +12,7 @@
     "quase-unit": "bin/index.js"
   },
   "engines": {
-		"node": ">=8"
+		"node": ">=8.1"
 	},
   "dependencies": {
     "@quase/cli": "0.4.0-0",

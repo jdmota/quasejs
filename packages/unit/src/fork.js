@@ -1,6 +1,7 @@
 import defer from "./core/util/defer";
 import { processError } from "./core/process-error";
 import SnapshotsManager from "./snapshots";
+import whyIsNodeRunning, { enable as enableAsyncHooks } from "./why-is-node-running";
 
 const importFresh = require( "import-fresh" );
 const CircularJSON = require( "circular-json" );
@@ -141,6 +142,8 @@ function start( cli, files ) {
     }
   } );
 
+  enableAsyncHooks();
+
   for ( const file of files ) {
     try {
       importFresh( file );
@@ -170,6 +173,11 @@ process.on( "message", ( { type, cli, files } ) => {
       send( "otherError", err );
     }
   } else if ( type === "quase-unit-exit" ) {
+    process.send( {
+      type: "quase-unit-why-is-running",
+      why: whyIsNodeRunning()
+    } );
+
     process.channel.unref();
   }
 } );

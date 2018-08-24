@@ -33,6 +33,8 @@ export default class Suite implements IRunnable {
   placeholder: GroupPlaceholder;
   collection: TestCollection;
   sequence: BeforeTestsAfterSequence;
+  suiteStartInfo: ?Object;
+  suiteEndInfo: ?Object;
 
   constructor( placeholder: GroupPlaceholder, parent: ?Suite ) {
 
@@ -74,6 +76,9 @@ export default class Suite implements IRunnable {
 
     this.collection = placeholder.collection;
     this.sequence = this.collection.build( this );
+
+    this.suiteStartInfo = null;
+    this.suiteEndInfo = null;
 
     const _this: any = this;
     _this.run = this.run.bind( this );

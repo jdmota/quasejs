@@ -102,8 +102,8 @@ class Runner extends EventEmitter {
     this.emit( "runStart", {
       name: this.suite.name,
       fullname: this.suite.fullname,
-      tests: this.suite.tests,
-      childSuites: this.suite.childSuites,
+      tests: this.suite.tests.map( t => this._normalizeTestStart( t ) ),
+      childSuites: this.suite.childSuites.map( t => this._normalizeSuiteStart( t ) ),
       testCounts: {
         passed: undefined,
         failed: undefined,
@@ -118,6 +118,8 @@ class Runner extends EventEmitter {
     this.emit( "runEnd", {
       name: this.suite.name,
       fullname: this.suite.fullname,
+      tests: this.suite.tests.map( t => this._normalizeTestEnd( t ) ),
+      childSuites: this.suite.childSuites.map( t => this._normalizeSuiteEnd( t ) ),
       status: this.suite.status,
       runtime: this.suite.runtime,
       testCounts: Object.assign( {}, this.suite.testCounts ),
@@ -125,51 +127,62 @@ class Runner extends EventEmitter {
     } );
   }
 
+  _normalizeSuiteStart( suite ) {
+    suite.suiteStartInfo = suite.suiteStartInfo || {
+      name: suite.name,
+      fullname: suite.fullname,
+      tests: suite.tests.map( t => this._normalizeTestStart( t ) ),
+      childSuites: suite.childSuites.map( t => this._normalizeSuiteStart( t ) ),
+      defaultStack: suite.placeholder.defaultStack,
+      testCounts: {
+        passed: undefined,
+        failed: undefined,
+        skipped: undefined,
+        todo: undefined,
+        total: suite.testCounts.total
+      }
+    };
+    return suite.suiteStartInfo;
+  }
+
+  _normalizeSuiteEnd( suite ) {
+    suite.suiteEndInfo = suite.suiteEndInfo || {
+      name: suite.name,
+      fullname: suite.fullname,
+      tests: suite.tests.map( t => this._normalizeTestEnd( t ) ),
+      childSuites: suite.childSuites.map( t => this._normalizeSuiteEnd( t ) ),
+      status: suite.status,
+      runtime: suite.runtime,
+      defaultStack: suite.placeholder.defaultStack,
+      testCounts: Object.assign( {}, suite.testCounts )
+    };
+    return suite.suiteEndInfo;
+  }
+
   suiteStart( suite ) {
     if ( suite.name ) {
-      this.emit( "suiteStart", {
-        name: suite.name,
-        fullname: suite.fullname,
-        tests: suite.tests,
-        childSuites: suite.childSuites,
-        defaultStack: suite.placeholder.defaultStack,
-        testCounts: {
-          passed: undefined,
-          failed: undefined,
-          skipped: undefined,
-          todo: undefined,
-          total: suite.testCounts.total
-        }
-      } );
+      this.emit( "suiteStart", this._normalizeSuiteStart( suite ) );
     }
   }
 
   suiteEnd( suite ) {
     if ( suite.name ) {
-      this.emit( "suiteEnd", {
-        name: suite.name,
-        fullname: suite.fullname,
-        tests: suite.tests,
-        childSuites: suite.childSuites,
-        status: suite.status,
-        runtime: suite.runtime,
-        defaultStack: suite.placeholder.defaultStack,
-        testCounts: Object.assign( {}, suite.testCounts )
-      } );
+      this.emit( "suiteEnd", this._normalizeSuiteEnd( suite ) );
     }
   }
 
-  testStart( test ) {
-    this.emit( "testStart", {
+  _normalizeTestStart( test ) {
+    test.testStartInfo = test.testStartInfo || {
       name: test.name,
       suiteName: test.suiteName,
       fullname: test.fullname,
       defaultStack: test.placeholder.defaultStack
-    } );
+    };
+    return test.testStartInfo;
   }
 
-  testEnd( test ) {
-    this.emit( "testEnd", {
+  _normalizeTestEnd( test ) {
+    test.testEndInfo = test.testEndInfo || {
       name: test.name,
       fullname: test.fullname,
       suiteName: test.suiteName,
@@ -182,7 +195,16 @@ class Runner extends EventEmitter {
       assertions: test.assertions,
       defaultStack: test.placeholder.defaultStack,
       memoryUsage: test.memoryUsage
-    } );
+    };
+    return test.testEndInfo;
+  }
+
+  testStart( test ) {
+    this.emit( "testStart", this._normalizeTestStart( test ) );
+  }
+
+  testEnd( test ) {
+    this.emit( "testEnd", this._normalizeTestEnd( test ) );
 
     if ( test.status === "failed" ) {
       this.failedOnce = true;

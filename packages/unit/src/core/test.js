@@ -468,6 +468,9 @@ export default class Test implements ITestResult, IRunnable {
   reruns: number;
   rerunDelayValue: number;
 
+  testStartInfo: ?Object;
+  testEndInfo: ?Object;
+
   constructor( placeholder: TestPlaceholder, runnable: Runnable | InTestSequence, parent: Suite ) {
 
     this.name = placeholder.name;
@@ -507,6 +510,9 @@ export default class Test implements ITestResult, IRunnable {
     this.currentRerun = 0;
     this.reruns = 0; // Gets defined after the first run
     this.rerunDelayValue = 0; // Gets defined after the first run
+
+    this.testStartInfo = null;
+    this.testEndInfo = null;
 
     const _this: any = this;
     _this.run = this.run.bind( this );

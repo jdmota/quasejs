@@ -69,7 +69,9 @@ class RunnerProcess {
 
   constructor( runner, files, cli, args, env, execArgv ) {
     this.started = false;
+    this.finished = false;
     this.killed = false;
+    this.whyIsRunning = null;
 
     this.process = childProcess.fork(
       path.resolve( __dirname, "fork.js" ),
@@ -88,6 +90,8 @@ class RunnerProcess {
     };
 
     this.onExit = ( code, signal ) => {
+      this.finished = true;
+      runner.finishedFork( this );
       if ( !this.killed && code !== 0 ) {
         setExitCode( 1 );
 
@@ -127,10 +131,14 @@ class RunnerProcess {
     return this.process.stderr;
   }
 
-  kill( signal ) {
-    this.killed = true;
-    this.removeAllListeners();
-    this.process.kill( signal );
+  kill() {
+    if ( !this.killed ) {
+      this.killed = true;
+      this.whyIsRunning = null;
+      this.removeAllListeners();
+      this.process.kill( "SIGINT" );
+      setExitCode( 1 );
+    }
   }
 
 }
@@ -186,6 +194,9 @@ class NodeRunner extends EventEmitter {
     this.pendingTests = new Set();
     this.failedOnce = false;
 
+    this.detectFinishedTimeout = 0;
+    this.finishedForks = 0;
+
     this.sentSigint = 0;
     this.onSigint = () => {
       setExitCode( 1 );
@@ -193,7 +204,7 @@ class NodeRunner extends EventEmitter {
       this.sentSigint++;
       if ( this.sentSigint > 2 ) {
         process.removeListener( "SIGINT", this.onSigint );
-        this.runEnd( "SIGINT" );
+        this.runEnd( true );
       } else {
         this.emit( "sigint", this.sentSigint );
 
@@ -214,8 +225,25 @@ class NodeRunner extends EventEmitter {
     } );
   }
 
-  runEnd( signal ) {
+  finishedFork() {
+    this.finishedForks++;
+    if ( this.finishedForks === this.forks.length ) {
+      clearTimeout( this.detectFinishedTimeout );
+    }
+  }
+
+  killAllForks() {
+    for ( const fork of this.forks ) {
+      fork.kill();
+    }
+    clearTimeout( this.detectFinishedTimeout );
+  }
+
+  runEnd( force ) {
     if ( this.runEndEmmited ) {
+      if ( force ) {
+        this.killAllForks();
+      }
       return;
     }
     this.runEndEmmited = true;
@@ -223,8 +251,8 @@ class NodeRunner extends EventEmitter {
     let runStartNotEmitted = 0;
 
     for ( const fork of this.forks ) {
-      if ( signal ) {
-        fork.kill( signal );
+      if ( force ) {
+        fork.kill();
       } else {
         fork.send( {
           type: "quase-unit-exit"
@@ -257,6 +285,16 @@ class NodeRunner extends EventEmitter {
     setExitCode( failed || !total ? 1 : 0 );
 
     this.emit( "runEnd", this.runEndArg );
+
+    if ( !force ) {
+      this.detectFinishedTimeout = setTimeout( () => {
+        for ( const fork of this.forks ) {
+          if ( fork.whyIsRunning ) {
+            this.emit( "why-is-running", fork.whyIsRunning );
+          }
+        }
+      }, 2000 );
+    }
   }
 
   testFailure() {
@@ -357,6 +395,8 @@ class NodeRunner extends EventEmitter {
           source
         } );
       } );
+    } else if ( msg.type === "quase-unit-why-is-running" ) {
+      forkProcess.whyIsRunning = msg.why;
     }
   }
 
