@@ -130,7 +130,7 @@ export default class TestCollection {
       return test.build( test.buildRunnable( suite ), suite );
     }
 
-    const seq = new InTestSequence( suite.level, test.metadata, test.buildRunnable( suite ) );
+    const seq = new InTestSequence( this.runner, suite.level, test.metadata, test.buildRunnable( suite ) );
 
     const beforeEachHooks = getBeforeEach( suite );
     for ( let i = beforeEachHooks.length - 1; i >= 0; i-- ) {

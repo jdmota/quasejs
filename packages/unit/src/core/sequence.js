@@ -71,6 +71,10 @@ class SequenceImpl<R: IRunnableResult, T: GenericRunnable<R>> implements IRunnab
     return this.runner.shouldBail();
   }
 
+  shouldInterrupt(): boolean {
+    return this.runner.shouldInterrupt();
+  }
+
   // $FlowIgnore
   getResult(): SequenceImpl<R, T> {
     this.status = this.failTest ? "failed" : this.skipTest ? "skipped" : "passed";
@@ -172,6 +176,9 @@ export class Sequence extends SequenceImpl<IRunnableResult, IRunnable> implement
     if ( seq.shouldBail() ) {
       return t.runSkip( skipReasons.bailed );
     }
+    if ( seq.shouldInterrupt() ) {
+      return t.runSkip( skipReasons.interrupted );
+    }
     return t.run( context.copy() );
   }
 
@@ -199,8 +206,8 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
   middleRunnable: Runnable;
   middleRunnableProxy: ClonableProxy;
 
-  constructor( level: number, metadata: TestMetadata, middleRunnable: Runnable ) {
-    super( false, false, level );
+  constructor( runner: Runner, level: number, metadata: TestMetadata, middleRunnable: Runnable ) {
+    super( runner, false, level );
     this.errors = [];
     this.assertions = [];
     this.logs = [];
@@ -219,11 +226,17 @@ export class InTestSequence extends SequenceImpl<ITestResult, ITest> implements 
     if ( seq.skipTest ) {
       return t.runSkip( seq.skipReason );
     }
+    if ( seq.shouldBail() ) {
+      return t.runSkip( skipReasons.bailed );
+    }
+    if ( seq.shouldInterrupt() ) {
+      return t.runSkip( skipReasons.interrupted );
+    }
     return t.run( context );
   }
 
   clone() {
-    const seq = new InTestSequence( this.level, this.metadata, this.middleRunnable.clone() );
+    const seq = new InTestSequence( this.runner, this.level, this.metadata, this.middleRunnable.clone() );
     this.tests.forEach( t => {
       if ( t === this.middleRunnableProxy ) {
         seq.pushMiddle();
@@ -279,11 +292,14 @@ export class BeforeTestsAfterSequence extends SequenceImpl<IRunnableResult, IRun
     if ( seq.bailTestBecauseOfHook ) {
       return t.runSkip( skipReasons.hookFailed );
     }
+    if ( seq.skipTest ) {
+      return t.runSkip( seq.skipReason );
+    }
     if ( seq.shouldBail() ) {
       return t.runSkip( skipReasons.bailed );
     }
-    if ( seq.skipTest ) {
-      return t.runSkip( seq.skipReason );
+    if ( seq.shouldInterrupt() ) {
+      return t.runSkip( skipReasons.interrupted );
     }
     return t.run( context.copy() );
   }

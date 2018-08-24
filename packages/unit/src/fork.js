@@ -136,6 +136,8 @@ function start( cli, files ) {
       deferred.resolve( source );
     } else if ( type === "quase-unit-bail" ) {
       runner.failedOnce = true;
+    } else if ( type === "quase-unit-sigint" ) {
+      runner.sentSigint = true;
     }
   } );
 
@@ -170,4 +172,8 @@ process.on( "message", ( { type, cli, files } ) => {
   } else if ( type === "quase-unit-exit" ) {
     process.channel.unref();
   }
+} );
+
+process.on( "SIGINT", () => {
+  // Catch
 } );

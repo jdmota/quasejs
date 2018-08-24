@@ -11,6 +11,8 @@
 - Global variables detection.
 - Error stacks are cleaned and point to the original file and location (if a sourcemap is found).
 - Let's you know about errors that happened after tests have finished.
+- Ctrl+C lets you interrupt tests, and after hooks are still called.
+- After calling Ctrl+C 3 times, child processes will be killed, and pending tests will be reported.
 - `--debug` mode on Node.
 - `--inspect` and `--inspect-brk` work too (but force concurrency `1`).
 - `--random [seed]` support.

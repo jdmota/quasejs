@@ -19,6 +19,7 @@ class Runner extends EventEmitter {
     this.assertions = Object.assign( {}, ...this.options.assertions );
 
     this.failedOnce = false;
+    this.sentSigint = false;
     this.onlyCount = 0;
     this.promises = [];
 
@@ -91,6 +92,10 @@ class Runner extends EventEmitter {
 
   shouldBail() {
     return this.failedOnce && this.options.bail;
+  }
+
+  shouldInterrupt() {
+    return this.sentSigint;
   }
 
   runStart() {

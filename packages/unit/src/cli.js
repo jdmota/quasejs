@@ -63,6 +63,7 @@ class RunnerProcess {
 
   constructor( runner, files, cli, args, env, execArgv ) {
     this.started = false;
+    this.killed = false;
 
     this.process = childProcess.fork(
       path.resolve( __dirname, "fork.js" ),
@@ -81,12 +82,17 @@ class RunnerProcess {
     };
 
     this.onExit = ( code, signal ) => {
-      if ( code !== 0 ) {
+      if ( !this.killed && code !== 0 ) {
         const e = new Error( `Child process exited with code ${code} and signal ${signal}.` );
         runner.emit( "otherError", e );
       }
     };
 
+    this.process.on( "error", error => {
+      if ( error.code !== "EPIPE" ) {
+        throw error;
+      }
+    } );
     this.process.on( "message", this.onMessage );
     this.process.on( "exit", this.onExit );
   }
@@ -96,7 +102,9 @@ class RunnerProcess {
   }
 
   send( msg ) {
-    this.process.send( msg );
+    if ( this.process.connected ) {
+      this.process.send( msg );
+    }
   }
 
   disconnect() {
@@ -112,6 +120,7 @@ class RunnerProcess {
   }
 
   kill( signal ) {
+    this.killed = true;
     this.removeAllListeners();
     this.process.kill( signal );
   }
@@ -169,7 +178,26 @@ class NodeRunner extends EventEmitter {
     this.pendingTests = new Set();
     this.failedOnce = false;
 
+    this.sentSigint = 0;
+    this.onSigint = () => {
+      this.sentSigint++;
+      if ( this.sentSigint > 2 ) {
+        process.removeListener( "SIGINT", this.onSigint );
+        this.runEnd( "SIGINT" );
+      } else {
+        this.emit( "sigint", this.sentSigint );
+
+        for ( const fork of this.forks ) {
+          fork.send( {
+            type: "quase-unit-sigint"
+          } );
+        }
+      }
+    };
+
     this.extractor = new SourceMapExtractor( new FileSystem() );
+
+    process.on( "SIGINT", this.onSigint );
 
     process.once( "beforeExit", async() => {
       this.emit( "exit", {} );
@@ -199,6 +227,7 @@ class NodeRunner extends EventEmitter {
 
     this.runEndArg.pendingTests = this.pendingTests;
     this.runEndArg.runStartNotEmitted = runStartNotEmitted;
+    this.runEndArg.interrupted = !!this.sentSigint;
 
     if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
       this.runEndArg.status = "skipped";
@@ -421,11 +450,6 @@ class NodeRunner extends EventEmitter {
     }
 
     this.emit( "start" );
-
-    process.once( "SIGINT", () => {
-      this.runEnd( "SIGINT" );
-    } );
-
     return this;
   }
 

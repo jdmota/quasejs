@@ -17,6 +17,7 @@ export default class NodeReporter {
     this.otherErrors = [];
     this.ended = false;
     this.didAfterRun = false;
+    this.interrupted = false;
     runner.on( "runStart", this.runStart.bind( this ) );
     runner.on( "testStart", this.testStart.bind( this ) );
     runner.on( "testEnd", this.testEnd.bind( this ) );
@@ -32,6 +33,11 @@ export default class NodeReporter {
 
       await this.logOtherErrors();
 
+      if ( this.interrupted ) {
+        process.exitCode = 1;
+        log( `\n${turbocolor.bold.red( "Interrupted." )}\n\n` );
+      }
+
       if ( process.exitCode ) {
         log( turbocolor.bold.red( "Exit code: " + process.exitCode ) );
       } else {
@@ -45,6 +51,15 @@ export default class NodeReporter {
       NodeReporter.showDebuggers( runner );
 
       this.spinner = ora( `Waiting for "runStart"...` ).start();
+    } );
+
+    runner.on( "sigint", _try => {
+      this.interrupted = true;
+
+      if ( this.spinner ) {
+        this.spinner.stop();
+      }
+      log( `\nStopping tests... (${_try} try)\n` );
     } );
   }
 
@@ -215,11 +230,11 @@ export default class NodeReporter {
           this.showSnapshotStats( lines, t.snapshotStats );
         }
 
-        process.stdout.write( lines.join( "" ) );
+        process.stdout.write( lines.join( "" ) + "\n" );
 
       }
 
-      log( `\n\n${turbocolor.gray( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
+      log( `\n${turbocolor.gray( `[${new Date().toLocaleTimeString()}]` )}\n\n` );
 
       await this.logOtherErrors();
 
@@ -376,7 +391,10 @@ export default class NodeReporter {
       if ( status === "passed" && !slow ) {
         return;
       }
-      if ( skipReason === skipReasons.bailed && !slow ) {
+      if ( skipReason === skipReasons.bailed ) {
+        return;
+      }
+      if ( skipReason === skipReasons.interrupted ) {
         return;
       }
     }
