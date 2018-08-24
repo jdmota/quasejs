@@ -4,7 +4,7 @@ import { log, log as printLog, logEol, indentString } from "./log";
 const turbocolor = require( "turbocolor" );
 const logSymbols = require( "log-symbols" );
 const ora = require( "ora" );
-const codeFrameColumns = require( "babel-code-frame" ).codeFrameColumns;
+const codeFrameColumns = require( "@babel/code-frame" ).codeFrameColumns;
 const { prettify } = require( "@quase/path-url" );
 
 export default class NodeReporter {
@@ -315,8 +315,10 @@ export default class NodeReporter {
       return "";
     }
 
-    const codeFrameOptions = this.runner.options.codeFrame;
-    const frame = codeFrameOptions === false ? "" : codeFrameColumns( code, { start: { line } }, codeFrameOptions ) + "\n\n";
+    const codeFrameOptions = this.runner.options.codeFrameOptions;
+    const frame = this.runner.options.codeFrame ?
+      codeFrameColumns( code, { start: { line } }, codeFrameOptions ) + "\n\n" :
+      "";
 
     return `${turbocolor.gray( `${prettify( file )}:${line}:${column}` )}\n\n${frame}`;
   }

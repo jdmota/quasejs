@@ -128,6 +128,10 @@ const schema = {
     default: true,
     description: "Enable/disable code frame"
   },
+  codeFrameOptions: t.object( {
+    additionalProperties: true,
+    description: "Code frame options"
+  } ),
   color: {
     type: "boolean",
     optional: true,
