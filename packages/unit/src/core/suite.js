@@ -77,6 +77,8 @@ export default class Suite implements IRunnable {
     this.collection = placeholder.collection;
     this.sequence = this.collection.build( this );
 
+    this.testCounts.total = this.getTestsCount();
+
     this.suiteStartInfo = null;
     this.suiteEndInfo = null;
 
@@ -153,13 +155,12 @@ export default class Suite implements IRunnable {
   getTestsCount() {
     let total = this.tests.length;
     this.childSuites.forEach( t => {
-      total += t.getTestsCount();
+      total += t.testCounts.total;
     } );
     return total;
   }
 
   start() {
-    this.testCounts.total = this.getTestsCount();
     this.runner.suiteStart( this );
   }
 

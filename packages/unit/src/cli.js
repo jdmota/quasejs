@@ -1,7 +1,7 @@
 import validateOptions from "./core/validate-options";
 import NodeReporter from "./reporters/node";
 
-const SourceMapExtractor = require( require.resolve( "@quase/source-map" ).replace( "index.js", "extractor.js" ) ).default;
+const { SourceMapExtractor } = require( "@quase/source-map" );
 const globby = require( "globby" );
 const FileSystem = require( "@quase/cacheable-fs" ).default;
 const { printError } = require( "@quase/config" );
@@ -68,9 +68,9 @@ function setExitCode( code ) {
 class RunnerProcess {
 
   constructor( runner, files, cli, args, env, execArgv ) {
+    this.runner = runner;
     this.started = false;
     this.finished = false;
-    this.killed = false;
     this.whyIsRunning = null;
 
     this.process = childProcess.fork(
@@ -90,13 +90,14 @@ class RunnerProcess {
     };
 
     this.onExit = ( code, signal ) => {
-      this.finished = true;
-      runner.finishedFork( this );
-      if ( !this.killed && code !== 0 ) {
-        setExitCode( 1 );
+      if ( !this.finished ) {
+        this.cleanup();
 
-        const e = new Error( `Child process exited with code ${code} and signal ${signal}.` );
-        runner.emit( "otherError", e );
+        if ( code !== 0 ) {
+          setExitCode( 1 );
+          const e = new Error( `Child process exited with code ${code} and signal ${signal}.` );
+          runner.emit( "otherError", e );
+        }
       }
     };
 
@@ -119,10 +120,6 @@ class RunnerProcess {
     }
   }
 
-  disconnect() {
-    this.process.disconnect();
-  }
-
   get stdout() {
     return this.process.stdout;
   }
@@ -131,12 +128,19 @@ class RunnerProcess {
     return this.process.stderr;
   }
 
-  kill() {
-    if ( !this.killed ) {
-      this.killed = true;
+  cleanup() {
+    if ( !this.finished ) {
+      this.finished = true;
       this.whyIsRunning = null;
       this.removeAllListeners();
-      this.process.kill( "SIGINT" );
+      this.runner.finishedFork( this );
+    }
+  }
+
+  kill() {
+    if ( !this.finished ) {
+      this.cleanup();
+      this.process.kill();
       setExitCode( 1 );
     }
   }
@@ -202,9 +206,9 @@ class NodeRunner extends EventEmitter {
       setExitCode( 1 );
 
       this.sentSigint++;
-      if ( this.sentSigint > 2 ) {
+      if ( this.runEndEmmited || this.sentSigint > 2 ) {
         process.removeListener( "SIGINT", this.onSigint );
-        this.runEnd( true );
+        this.killAllForks();
       } else {
         this.emit( "sigint", this.sentSigint );
 
@@ -229,21 +233,28 @@ class NodeRunner extends EventEmitter {
     this.finishedForks++;
     if ( this.finishedForks === this.forks.length ) {
       clearTimeout( this.detectFinishedTimeout );
+      this.runEnd();
     }
+  }
+
+  forksRunning() {
+    let running = 0;
+    for ( const fork of this.forks ) {
+      if ( !fork.finished ) {
+        running++;
+      }
+    }
+    return running;
   }
 
   killAllForks() {
     for ( const fork of this.forks ) {
       fork.kill();
     }
-    clearTimeout( this.detectFinishedTimeout );
   }
 
-  runEnd( force ) {
+  runEnd() {
     if ( this.runEndEmmited ) {
-      if ( force ) {
-        this.killAllForks();
-      }
       return;
     }
     this.runEndEmmited = true;
@@ -251,13 +262,6 @@ class NodeRunner extends EventEmitter {
     let runStartNotEmitted = 0;
 
     for ( const fork of this.forks ) {
-      if ( force ) {
-        fork.kill();
-      } else {
-        fork.send( {
-          type: "quase-unit-exit"
-        } );
-      }
       if ( !fork.started ) {
         runStartNotEmitted++;
       }
@@ -286,7 +290,7 @@ class NodeRunner extends EventEmitter {
 
     this.emit( "runEnd", this.runEndArg );
 
-    if ( !force ) {
+    if ( this.forksRunning() ) {
       this.detectFinishedTimeout = setTimeout( () => {
         for ( const fork of this.forks ) {
           if ( fork.whyIsRunning ) {
@@ -352,6 +356,8 @@ class NodeRunner extends EventEmitter {
 
         this.runEndArg.onlyCount += arg.onlyCount;
 
+        forkProcess.whyIsRunning = arg.whyIsRunning;
+
         if ( ++this.runEnds === this.forks.length ) {
           if ( this.timeStart ) {
             this.runEndArg.runtime = Date.now() - this.timeStart;
@@ -363,7 +369,7 @@ class NodeRunner extends EventEmitter {
 
         this.emit( eventType, arg );
         if ( !forkProcess.started ) {
-          forkProcess.disconnect();
+          forkProcess.kill();
         }
       } else {
 
@@ -533,6 +539,7 @@ export default function cli( { input, options, configLocation } ) {
   NodeReporter.showOptions( options );
 
   const spinner = ora( "Looking for files..." ).start();
+  const fileSearchTime = Date.now();
 
   return globby( options.files, {
     ignore: options.ignore,
@@ -540,13 +547,15 @@ export default function cli( { input, options, configLocation } ) {
     gitignore: true
   } ).then( files => {
 
+    files = files.filter( f => !/\.(md|snap)$/.test( f ) );
+
     spinner.stop();
 
     if ( files.length === 0 ) {
       return NodeReporter.fatalError( "Zero files found." );
     }
 
-    NodeReporter.showFilesCount( files.length );
+    NodeReporter.showFilesCount( files.length, Date.now() - fileSearchTime );
 
     const Reporter = options.reporter;
     const runner = new NodeRunner( options, files );

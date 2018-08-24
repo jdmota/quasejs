@@ -62,6 +62,9 @@ class Runner extends EventEmitter {
   }
 
   otherError( err ) {
+    if ( !( err instanceof Error ) ) {
+      err = new Error( err );
+    }
     this.emit( "otherError", err );
   }
 
@@ -87,6 +90,9 @@ class Runner extends EventEmitter {
       return Promise.resolve( this.suite.run() ).then( () => {
         this.runEnd();
       } );
+    }, err => {
+      this.otherError( err );
+      throw err;
     } );
   }
 

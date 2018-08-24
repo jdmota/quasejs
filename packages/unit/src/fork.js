@@ -80,7 +80,10 @@ function start( cli, files ) {
       if ( eventType === "runEnd" ) {
         saveSnapshots( snapshotManagers ).then( stats => {
           arg.snapshotStats = stats;
+          arg.whyIsRunning = whyIsNodeRunning();
           send( eventType, arg );
+
+          process.channel.unref();
         } );
       } else {
         send( eventType, arg );
@@ -153,12 +156,12 @@ function start( cli, files ) {
   }
 
   process.on( "uncaughtException", arg => {
-    send( "otherError", arg );
+    runner.otherError( arg );
   } );
 
   runner.once( "runStart", () => {
     for ( const err of firstErrors ) {
-      send( "otherError", err );
+      runner.otherError( err );
     }
   } );
 
@@ -172,13 +175,6 @@ process.on( "message", ( { type, cli, files } ) => {
     } catch ( err ) {
       send( "otherError", err );
     }
-  } else if ( type === "quase-unit-exit" ) {
-    process.send( {
-      type: "quase-unit-why-is-running",
-      why: whyIsNodeRunning()
-    } );
-
-    process.channel.unref();
   }
 } );
 

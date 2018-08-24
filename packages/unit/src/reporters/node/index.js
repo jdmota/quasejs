@@ -81,8 +81,8 @@ export default class NodeReporter {
     logEol();
   }
 
-  static showFilesCount( count ) {
-    log( turbocolor.bold.green( "Files count: " ) + count + "\n" );
+  static showFilesCount( count, time ) {
+    log( `${turbocolor.bold.green( `Found ${count} files` )} in ${time} ms\n` );
     logEol();
   }
 
