@@ -416,7 +416,8 @@ class NodeRunner extends EventEmitter {
   }
 
   async beautifyStack( stack ) {
-    return beautifyStack( stack, this.extractor, {
+    return beautifyStack( stack, {
+      extractor: this.extractor,
       ignore: this.options.stackIgnore
     } );
   }
