@@ -8,7 +8,9 @@ export async function beautify( originalStack, extractor, options ) {
 
   const ignore = options && options.ignore;
 
-  const originalFrames = stackParser.parse( { stack: originalStack } );
+  const originalFrames =
+    stackParser.parse( { stack: originalStack } ).filter( ( { fileName } ) => !!fileName );
+
   const frames = originalFrames.filter( ( { fileName, functionName } ) => {
     const file = slash( fileName );
     if ( ignore && ignore.test( file ) ) {
@@ -24,8 +26,10 @@ export async function beautify( originalStack, extractor, options ) {
     return !ignoreFileRe.test( file ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
-  if ( frames.length === 0 && originalFrames.length > 0 ) {
-    frames.push( originalFrames[ 0 ] );
+  const originalFirst = originalFrames[ 0 ];
+
+  if ( frames.length === 0 && originalFirst ) {
+    frames.push( originalFirst );
   }
 
   const promises = frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
@@ -61,9 +65,12 @@ export async function beautify( originalStack, extractor, options ) {
   const cleaned = await Promise.all( promises );
   const cleanedText = cleaned.map( ( { textLine, file, line, column } ) => ( `${textLine} (${prettify( file )}:${line}:${column})` ) );
 
-  const title = originalStack.split( "\n" ).shift();
+  const title = originalFirst ?
+    originalStack.split( originalFirst.source ).shift() :
+    originalStack;
+
   const lines = cleanedText.map( x => `    ${x}` ).join( "\n" );
-  const stack = `${title}\n${lines}`;
+  const stack = `${title}${lines}`;
 
   const first = cleaned[ 0 ];
 

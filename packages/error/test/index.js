@@ -40,6 +40,24 @@ it( "beautify with title", async() => {
 
 } );
 
+it( "handle multine error message correctly", async() => {
+
+  const stack = new Error( "multine\nerror\nmessage" ).stack;
+  const extractor = new SourceMapExtractor( fs );
+
+  expect( ( await beautify( stack, extractor, { ignore: /node_modules/ } ) ).stack ).toMatchSnapshot();
+
+} );
+
+it( "handle just the title fine", async() => {
+
+  const stack = "multine\nerror\nmessage";
+  const extractor = new SourceMapExtractor( fs );
+
+  expect( ( await beautify( stack, extractor, { ignore: /node_modules/ } ) ).stack ).toMatchSnapshot();
+
+} );
+
 it( "keep at least one stack line", async() => {
 
   const stack = getStack( 2 );

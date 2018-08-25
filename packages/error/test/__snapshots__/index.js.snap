@@ -91,6 +91,19 @@ exports[`getStack: undefined 1`] = `
     at process._tickCallback (internal/process/next_tick.js:68:7)"
 `;
 
+exports[`handle just the title fine 1`] = `
+"multine
+error
+message"
+`;
+
+exports[`handle multine error message correctly 1`] = `
+"Error: multine
+error
+message
+    Object.<anonymous>.it (packages/error/test/index.js:45:17)"
+`;
+
 exports[`keep at least one stack line 1`] = `
 "Error
     Object.asyncFn (node_modules/jest-jasmine2/build/jasmine_async.js:108:37)"
