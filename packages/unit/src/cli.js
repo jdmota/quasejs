@@ -72,6 +72,7 @@ class RunnerProcess {
     this.started = false;
     this.finished = false;
     this.whyIsRunning = null;
+    this.notifiedWhy = false;
 
     this.process = childProcess.fork(
       path.resolve( __dirname, "fork.js" ),
@@ -110,8 +111,19 @@ class RunnerProcess {
     this.process.on( "exit", this.onExit );
   }
 
-  removeAllListeners() {
-    this.process.removeAllListeners();
+  ping() {
+    if ( !this.finished && !this.whyIsRunning ) {
+      this.send( {
+        type: "quase-unit-ping"
+      } );
+    }
+  }
+
+  notifyWhyIsRunning() {
+    if ( !this.finished && !this.notifiedWhy && this.whyIsRunning ) {
+      this.notifiedWhy = true;
+      this.runner.emit( "why-is-running", this.whyIsRunning );
+    }
   }
 
   send( msg ) {
@@ -131,8 +143,7 @@ class RunnerProcess {
   cleanup() {
     if ( !this.finished ) {
       this.finished = true;
-      this.whyIsRunning = null;
-      this.removeAllListeners();
+      this.process.removeAllListeners();
       this.runner.finishedFork( this );
     }
   }
@@ -198,6 +209,9 @@ class NodeRunner extends EventEmitter {
     this.pendingTests = new Set();
     this.failedOnce = false;
 
+    this.extractor = new SourceMapExtractor( new FileSystem() );
+
+    this.globalTimeoutId = 0;
     this.detectFinishedTimeout = 0;
     this.finishedForks = 0;
 
@@ -219,20 +233,13 @@ class NodeRunner extends EventEmitter {
         }
       }
     };
-
-    this.extractor = new SourceMapExtractor( new FileSystem() );
-
-    process.on( "SIGINT", this.onSigint );
-
-    process.once( "beforeExit", async() => {
-      this.emit( "exit", {} );
-    } );
   }
 
   finishedFork() {
     this.finishedForks++;
     if ( this.finishedForks === this.forks.length ) {
       clearTimeout( this.detectFinishedTimeout );
+      clearTimeout( this.globalTimeoutId );
       this.runEnd();
     }
   }
@@ -249,10 +256,14 @@ class NodeRunner extends EventEmitter {
 
   killAllForks() {
     for ( const fork of this.forks ) {
+      fork.notifyWhyIsRunning();
       fork.kill();
     }
   }
 
+  // This might be called in two situations:
+  // - All forks sent "runEnd" (that does not mean that they finished)
+  // - All forks have finished
   runEnd() {
     if ( this.runEndEmmited ) {
       return;
@@ -293,9 +304,7 @@ class NodeRunner extends EventEmitter {
     if ( this.forksRunning() ) {
       this.detectFinishedTimeout = setTimeout( () => {
         for ( const fork of this.forks ) {
-          if ( fork.whyIsRunning ) {
-            this.emit( "why-is-running", fork.whyIsRunning );
-          }
+          fork.notifyWhyIsRunning();
         }
       }, 2000 );
     }
@@ -402,7 +411,7 @@ class NodeRunner extends EventEmitter {
         } );
       } );
     } else if ( msg.type === "quase-unit-why-is-running" ) {
-      forkProcess.whyIsRunning = msg.why;
+      forkProcess.whyIsRunning = msg.whyIsRunning;
     }
   }
 
@@ -512,6 +521,24 @@ class NodeRunner extends EventEmitter {
           this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
         }
       }
+    }
+
+    process.on( "SIGINT", this.onSigint );
+
+    process.once( "beforeExit", async() => {
+      this.emit( "exit", {} );
+    } );
+
+    if ( this.options.globalTimeout ) {
+      this.globalTimeoutId = setTimeout( () => {
+        this.emit( "global-timeout" );
+
+        for ( const fork of this.forks ) {
+          fork.ping();
+        }
+
+        setTimeout( () => this.killAllForks(), 1000 );
+      }, this.options.globalTimeout );
     }
 
     this.emit( "start" );

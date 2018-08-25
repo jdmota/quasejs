@@ -83,7 +83,9 @@ function start( cli, files ) {
           arg.whyIsRunning = whyIsNodeRunning();
           send( eventType, arg );
 
-          process.channel.unref();
+          if ( arg.whyIsRunning.length === 0 ) {
+            process.channel.unref();
+          }
         } );
       } else {
         send( eventType, arg );
@@ -142,6 +144,11 @@ function start( cli, files ) {
       runner.failedOnce = true;
     } else if ( type === "quase-unit-sigint" ) {
       runner.sentSigint = true;
+    } else if ( type === "quase-unit-ping" ) {
+      process.send( {
+        type: "quase-unit-why-is-running",
+        whyIsRunning: whyIsNodeRunning()
+      } );
     }
   } );
 

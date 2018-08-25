@@ -47,12 +47,14 @@ export default function( options ) {
 
   if ( options.debug ) {
     options.timeouts = false;
+    options.globalTimeout = 0;
+  } else if ( options.globalTimeout != null ) {
+    assertTimeout( options.globalTimeout, "global timeout" );
   }
 
   if ( options.timeout == null ) {
     options.timeout = 0;
   } else {
-    checkType( "timeout", getType( options.timeout ), "number" );
     assertTimeout( options.timeout );
   }
 

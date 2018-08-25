@@ -10,13 +10,13 @@ export function assertNumber( n ) {
   }
 }
 
-export function assertTimeout( n ) {
+export function assertTimeout( n, text = "timeout" ) {
   assertNumber( n );
   if ( n > 2 ** 31 ) {
-    throw error( `${n} is too big of a timeout value` );
+    throw error( `${n} is too big of a ${text} value` );
   }
   if ( n < 0 ) {
-    throw error( `${n} is too small of a timeout value` );
+    throw error( `${n} is too small of a ${text} value` );
   }
 }
 

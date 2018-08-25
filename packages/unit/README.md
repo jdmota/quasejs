@@ -14,6 +14,7 @@
 - Ctrl+C lets you interrupt tests, and after hooks are still called.
 - After calling Ctrl+C 3 times, child processes will be killed, and pending tests will be reported.
 - If tests finish, but their processes don't, resources that were left open are reported.
+- After the global timeout time, processes are pinged (if possible) to know what is running, and then killed.
 - `--debug` mode on Node.
 - `--inspect` and `--inspect-brk` work too (but force concurrency `1`).
 - `--random [seed]` support.

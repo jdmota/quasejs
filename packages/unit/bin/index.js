@@ -140,7 +140,12 @@ const schema = {
   timeouts: {
     type: "boolean",
     default: true,
-    description: "Enable/disable timeouts. Disabled by default with --debug"
+    description: "Enable/disable test timeouts. Disabled by default with --debug"
+  },
+  globalTimeout: {
+    type: "number",
+    default: 20000,
+    description: "Global timeout. Zero to disable. Disabled by default with --debug"
   },
   verbose: {
     type: "boolean",

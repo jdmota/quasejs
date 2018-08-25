@@ -28,7 +28,16 @@ export default class NodeReporter {
         this.logOtherErrors();
       }
     } );
+
+    runner.on( "global-timeout", () => {
+      this.spinner.stop();
+
+      log( `\n${turbocolor.bold.red( "Global timeout!" )}\n\n` );
+    } );
+
     runner.on( "exit", async() => {
+      this.spinner.stop();
+
       NodeReporter.showSeed( runner );
 
       await this.logOtherErrors();
