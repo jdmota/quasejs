@@ -14,6 +14,13 @@ export async function beautify( originalStack, extractor, options ) {
     if ( ignore && ignore.test( file ) ) {
       return false;
     }
+    // Electron
+    if (
+      file.includes( ".app/Contents/Resources/electron.asar" ) ||
+      file.includes( ".app/Contents/Resources/default_app.asar" )
+    ) {
+      return false;
+    }
     return !ignoreFileRe.test( file ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
