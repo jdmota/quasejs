@@ -39,3 +39,12 @@ it( "beautify with title", async() => {
   expect( ( await beautify( stack, extractor, { ignore: /node_modules/ } ) ).stack ).toMatchSnapshot( "ignore node_modules" );
 
 } );
+
+it( "keep at least one stack line", async() => {
+
+  const stack = getStack( 2 );
+  const extractor = new SourceMapExtractor( fs );
+
+  expect( ( await beautify( stack, extractor, { ignore: /node_modules/ } ) ).stack ).toMatchSnapshot();
+
+} );

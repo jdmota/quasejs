@@ -8,13 +8,18 @@ export async function beautify( originalStack, extractor, options ) {
 
   const ignore = options && options.ignore;
 
-  const frames = stackParser.parse( { stack: originalStack } ).filter( ( { fileName, functionName } ) => {
+  const originalFrames = stackParser.parse( { stack: originalStack } );
+  const frames = originalFrames.filter( ( { fileName, functionName } ) => {
     const file = slash( fileName );
     if ( ignore && ignore.test( file ) ) {
       return false;
     }
     return !ignoreFileRe.test( file ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
+
+  if ( frames.length === 0 && originalFrames.length > 0 ) {
+    frames.push( originalFrames[ 0 ] );
+  }
 
   const promises = frames.map( async( { fileName, functionName, args, lineNumber, columnNumber } ) => {
 

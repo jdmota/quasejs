@@ -90,3 +90,8 @@ exports[`getStack: undefined 1`] = `
     at promise.then (/node_modules/jest-jasmine2/build/queue_runner.js:87:41)
     at process._tickCallback (internal/process/next_tick.js:68:7)"
 `;
+
+exports[`keep at least one stack line 1`] = `
+"Error
+    Object.asyncFn (node_modules/jest-jasmine2/build/jasmine_async.js:108:37)"
+`;
