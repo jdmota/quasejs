@@ -4,8 +4,9 @@ const { slash, prettify } = require( "@quase/path-url" );
 export const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
 export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
-export async function beautify( originalStack, extractor, options ) {
+export async function beautify( originalStack, options ) {
 
+  const extractor = options && options.extractor;
   const ignore = options && options.ignore;
 
   const originalFrames =
@@ -43,19 +44,24 @@ export async function beautify( originalStack, extractor, options ) {
       column: columnNumber
     };
 
-    try {
-      const pos = await extractor.getOriginalLocation( stackLine.file, { line: stackLine.line, column: stackLine.column } );
-      if ( pos.line == null ) {
-        stackLine.code = pos.code;
-      } else {
-        stackLine.file = pos.originalFile;
-        stackLine.code = pos.originalCode;
-        stackLine.name = pos.name || stackLine.name;
-        stackLine.line = pos.line;
-        stackLine.column = pos.column;
+    if ( extractor ) {
+      try {
+        const pos = await extractor.getOriginalLocation(
+          stackLine.file,
+          { line: stackLine.line, column: stackLine.column }
+        );
+        if ( pos.line == null ) {
+          stackLine.code = pos.code;
+        } else {
+          stackLine.file = pos.originalFile;
+          stackLine.code = pos.originalCode;
+          stackLine.name = pos.name || stackLine.name;
+          stackLine.line = pos.line;
+          stackLine.column = pos.column;
+        }
+      } catch ( e ) {
+        // Ignore
       }
-    } catch ( e ) {
-      // Ignore
     }
 
     stackLine.textLine = `${stackLine.name}${args ? `(${args.join( ", " )})` : ""}`;
