@@ -1,5 +1,4 @@
 import defer from "./core/util/defer";
-import { processError } from "./core/process-error";
 import SnapshotsManager from "./snapshots";
 import whyIsNodeRunning, { enable as enableAsyncHooks } from "./why-is-node-running";
 
@@ -129,7 +128,7 @@ function start( cli, files ) {
         something
       );
     } catch ( e ) {
-      error = processError( e, stack, options.concordanceOptions );
+      error = runner.processError( e, stack );
     }
 
     deferred.resolve( error );

@@ -61,11 +61,34 @@ class Runner extends EventEmitter {
     return concordance.format( value, this.concordanceOptions );
   }
 
-  otherError( err ) {
-    if ( !( err instanceof Error ) ) {
-      err = new Error( err );
+  processStack( err, stack ) {
+    if ( stack && err.message ) {
+      return stack.replace( /^Error.*\n/, `Error: ${err.message}\n` );
     }
-    this.emit( "otherError", err );
+    return stack || err.stack;
+  }
+
+  processError( e, stack ) {
+    const err = e instanceof Error ? e : new Error( e );
+    err.stack = this.processStack( err, stack );
+    if ( err.actual !== undefined || err.expected !== undefined ) {
+      err.diff = concordance.diff(
+        err.actual,
+        err.expected,
+        this.concordanceOptions
+      );
+    } else if ( err.actualDescribe !== undefined && err.expectedDescribe !== undefined ) {
+      err.diff = concordance.diffDescriptors(
+        err.actualDescribe,
+        err.expectedDescribe,
+        this.concordanceOptions
+      );
+    }
+    return err;
+  }
+
+  otherError( err ) {
+    this.emit( "otherError", err instanceof Error ? err : new Error( err ) );
   }
 
   delaySetup( promise ) {

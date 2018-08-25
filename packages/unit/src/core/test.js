@@ -5,14 +5,12 @@ import isPromise from "./util/is-promise";
 import observableToPromise from "./util/observable-to-promise";
 import SkipError from "./util/skip-error";
 import { assertTimeout, assertNumber, assertDelay } from "./util/assert-args";
-import AssertionError from "./assertion-error";
 import GlobalEnv from "./global-env";
 import type { Status, IRunnable, ITest, ITestResult, IDeferred, IRunReturn, TestMetadata } from "./types";
 import type Runner from "./runner";
 import type Suite from "./suite";
 import type { TestPlaceholder } from "./placeholders";
 import { InTestSequence } from "./sequence";
-import { processError } from "./process-error";
 import { type ContextRef, EMPTY_REF } from "./context";
 
 const { getStack } = require( "@quase/error" );
@@ -154,9 +152,11 @@ export class Runnable implements ITestResult, ITest {
 
   log( ...args: mixed[] ) {
     if ( args.length > 0 ) {
-      this.logs.push( args.map( value => {
-        return typeof value === "string" ? value : this.runner.format( value );
-      } ).join( " " ) );
+      this.logs.push(
+        args.map(
+          value => ( typeof value === "string" ? value : this.runner.format( value ) )
+        ).join( " " )
+      );
     }
   }
 
@@ -269,7 +269,7 @@ export class Runnable implements ITestResult, ITest {
   }
 
   addError( e: Object, stack: ?string ) {
-    const err = processError( e, stack, this.runner.concordanceOptions );
+    const err = this.runner.processError( e, stack );
     if ( this.finished ) {
       if ( this.status !== "failed" ) {
         this.runner.otherError( err );
@@ -290,12 +290,12 @@ export class Runnable implements ITestResult, ITest {
     }
     if ( this.didPlan && this.planned !== this.assertionCount ) {
       this.addError(
-        new AssertionError( "Planned " + this.planned + " but " + this.assertionCount + " assertions were run." ),
+        new Error( "Planned " + this.planned + " but " + this.assertionCount + " assertions were run." ),
         this.planStack
       );
     } else if ( !this.didPlan && this.assertionCount === 0 && !this.metadata.allowNoPlan && this.metadata.type === "test" ) {
       this.addError(
-        new AssertionError( "No assertions were run." ),
+        new Error( "No assertions were run." ),
         this.placeholder.defaultStack
       );
     }
@@ -547,10 +547,9 @@ export default class Test implements ITestResult, IRunnable {
       } else if ( this.status === "passed" ) {
         this.status = "failed";
         this.errors.push(
-          processError(
-            new AssertionError( "Test was expected to fail, but succeeded, you should stop marking the test as failing." ),
-            this.placeholder.defaultStack,
-            this.runner.concordanceOptions
+          this.runner.processError(
+            new Error( "Test was expected to fail, but succeeded, you should stop marking the test as failing." ),
+            this.placeholder.defaultStack
           )
         );
       }
