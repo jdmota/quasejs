@@ -96,7 +96,9 @@ export function handleArgs( opts ) {
     yargsOpts.configuration[ "populate--" ] = true;
   }
 
-  fillYargsOptions( schema, yargsOpts, allAlias );
+  const booleans = new Set();
+
+  fillYargsOptions( schema, yargsOpts, allAlias, booleans );
 
   const yargsResult = yargsParser.detailed( argv, yargsOpts );
   const error = yargsResult.error;
@@ -113,6 +115,16 @@ export function handleArgs( opts ) {
   delete argv._;
 
   clearAlias( argv, [], allAlias );
+
+  for ( const key in argv ) {
+    if ( booleans.has( key ) ) {
+      if ( argv[ key ] === "" || argv[ key ] === "true" ) {
+        argv[ key ] = true;
+      } else if ( argv[ key ] === "false" ) {
+        argv[ key ] = false;
+      }
+    }
+  }
 
   const flags = camelcaseKeys( argv, { exclude: [ "--", /^\w$/ ], deep: true } );
 

@@ -124,6 +124,38 @@ describe( "cli", () => {
 
   } );
 
+  it( "boolean interpretation", async() => {
+
+    const TYPE = t.union( {
+      types: [ "boolean", "string" ],
+      optional: true
+    } );
+
+    const { options } = await cli( {
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1"
+      },
+      argv: [ "--foo=true", "--bar", "--baz=false", "--other=abc" ],
+      schema: {
+        foo: TYPE,
+        bar: TYPE,
+        baz: TYPE,
+        other: TYPE
+      },
+      notifier: false
+    } );
+
+    expect( options ).toEqual( {
+      foo: true,
+      bar: true,
+      baz: false,
+      other: "abc"
+    } );
+
+  } );
+
   it( "generate help", async() => {
 
     const { generateHelp } = await cli( {

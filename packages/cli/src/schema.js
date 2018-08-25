@@ -55,7 +55,7 @@ export function flattenSchema( schema ) {
   return newSchema;
 }
 
-export function fillYargsOptions( schema, yargsOpts, allAlias, chain = [] ) {
+export function fillYargsOptions( schema, yargsOpts, allAlias, booleans, chain = [] ) {
   for ( const k in schema ) {
     chain.push( decamelize( k, "-" ) );
 
@@ -69,13 +69,18 @@ export function fillYargsOptions( schema, yargsOpts, allAlias, chain = [] ) {
 
       for ( const t of acceptedTypes ) {
         if ( t instanceof types.Object ) {
-          fillYargsOptions( t.properties, yargsOpts, allAlias, chain );
+          fillYargsOptions( t.properties, yargsOpts, allAlias, booleans, chain );
         } else if ( t instanceof types.Tuple ) {
-          fillYargsOptions( t.items, yargsOpts, allAlias, chain );
+          fillYargsOptions( t.items, yargsOpts, allAlias, booleans, chain );
         } else {
-          const arr = yargsOpts[ argType || typeToString( t ) ];
-          if ( Array.isArray( arr ) ) {
-            arr.push( key );
+          const type = argType || typeToString( t );
+          if ( type === "boolean" ) {
+            booleans.add( key );
+          } else {
+            const arr = yargsOpts[ type ];
+            if ( Array.isArray( arr ) ) {
+              arr.push( key );
+            }
           }
         }
       }
