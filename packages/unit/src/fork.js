@@ -159,6 +159,10 @@ function start( cli, files ) {
     } catch ( err ) {
       firstErrors.push( err );
     }
+    process.send( {
+      type: "quase-unit-file-imported",
+      file
+    } );
   }
 
   process.on( "uncaughtException", arg => {

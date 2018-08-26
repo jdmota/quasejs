@@ -192,13 +192,29 @@ export default class NodeReporter {
         await this.logTestEnd( sortedTests[ i ] ); // eslint-disable-line no-await-in-loop
       }
 
+      const notStartedForks = t.notStartedForks;
       const hasPending = t.pendingTests && t.pendingTests.size > 0;
 
       // If we had pending tests, don't trust the stats
-      if ( t.runStartNotEmitted || hasPending ) {
+      if ( notStartedForks.length > 0 || hasPending ) {
 
-        if ( t.runStartNotEmitted ) {
-          log( `\n${turbocolor.bold.red( `${t.runStartNotEmitted} forks did not emit "runStart" event.` )}\n` );
+        if ( notStartedForks.length > 0 ) {
+          log( `\n${turbocolor.bold.red(
+            `${notStartedForks.length} child ${notStartedForks.length === 1 ? "process" : "processes"}` +
+            ` did not emit "runStart" event.`
+          )}\n` );
+          log( `\nPossible causes:\n` );
+
+          for ( const notImportedFiles of notStartedForks ) {
+            if ( notImportedFiles.size > 0 ) {
+              for ( const file of notImportedFiles ) {
+                log( `  - Infinite loop in ${prettify( file )}\n` );
+                break; // Only show the first one, since files are imported by order
+              }
+            } else {
+              log( `  - Some error during setup. See below.\n` );
+            }
+          }
         }
 
         if ( hasPending ) {

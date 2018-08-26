@@ -69,6 +69,11 @@ class RunnerProcess {
 
   constructor( runner, files, cli, args, env, execArgv ) {
     this.runner = runner;
+
+    this.files = files;
+    this.notImportedFiles = new Set( files );
+    this.importedFiles = new Set();
+
     this.started = false;
     this.finished = false;
     this.whyIsRunning = null;
@@ -109,6 +114,11 @@ class RunnerProcess {
     } );
     this.process.on( "message", this.onMessage );
     this.process.on( "exit", this.onExit );
+  }
+
+  fileImported( file ) {
+    this.notImportedFiles.delete( file );
+    this.importedFiles.add( file );
   }
 
   ping() {
@@ -270,16 +280,16 @@ class NodeRunner extends EventEmitter {
     }
     this.runEndEmmited = true;
 
-    let runStartNotEmitted = 0;
+    const notStartedForks = [];
 
     for ( const fork of this.forks ) {
       if ( !fork.started ) {
-        runStartNotEmitted++;
+        notStartedForks.push( fork.notImportedFiles );
       }
     }
 
     this.runEndArg.pendingTests = this.pendingTests;
-    this.runEndArg.runStartNotEmitted = runStartNotEmitted;
+    this.runEndArg.notStartedForks = notStartedForks;
     this.runEndArg.interrupted = !!this.sentSigint;
 
     if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
@@ -292,7 +302,7 @@ class NodeRunner extends EventEmitter {
       this.runEndArg.status = "passed";
     }
 
-    if ( runStartNotEmitted || this.runEndArg.interrupted || this.pendingTests.size > 0 ) {
+    if ( notStartedForks.length > 0 || this.runEndArg.interrupted || this.pendingTests.size > 0 ) {
       setExitCode( 1 );
     }
 
@@ -412,6 +422,8 @@ class NodeRunner extends EventEmitter {
       } );
     } else if ( msg.type === "quase-unit-why-is-running" ) {
       forkProcess.whyIsRunning = msg.whyIsRunning;
+    } else if ( msg.type === "quase-unit-file-imported" ) {
+      forkProcess.fileImported( msg.file );
     }
   }
 
