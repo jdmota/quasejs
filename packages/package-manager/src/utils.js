@@ -4,6 +4,12 @@ const crypto = require( "crypto" );
 const fs = require( "fs-extra" );
 const klaw = require( "klaw" );
 
+export function error( message: string ) {
+  const e: Object = new Error( message );
+  e.__fromManager = true;
+  throw e;
+}
+
 export function isObject( obj: mixed ): boolean {
   return obj != null && typeof obj === "object";
 }

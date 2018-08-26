@@ -29,8 +29,8 @@ export class BaseReporter {
     this.spinner = ora( this.initialMsg ).start();
   }
 
-  error( error: Error ) {
-    this.spinner.fail( error.message );
+  error( error: Object ) {
+    this.spinner.fail( error.__fromManager ? error.message : error.stack );
     process.exitCode = 1;
   }
 

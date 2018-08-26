@@ -2,9 +2,9 @@
 /* eslint-disable no-console */
 import check from "./commands/check";
 import installer from "./commands/installer";
+import normalizePkg from "./commands/normalize-pkg";
 import type { Options } from "./types";
 import Store from "./store";
-import { read as readPkg, write as writePkg } from "./pkg";
 
 const path = require( "path" );
 
@@ -12,10 +12,9 @@ function showDone() {
   console.log( `\nDone!\n` );
 }
 
-function showError( e: Error ) {
-  console.error( `\n${e.message}\n` );
+function showError( e: Object ) {
+  console.error( `\n${e.__fromManager ? e.message : e.stack}\n` );
   process.exitCode = 1;
-  return e;
 }
 
 function handleOptions( _opts: Object ): Options {
@@ -36,23 +35,16 @@ export function run( command: string, _opts: Object ) {
   const options = handleOptions( _opts );
   const { folder } = options;
 
-  // $FlowIgnore
-  if ( options.cliTest ) {
-    console.log( command, options );
-    return;
-  }
-
   switch ( command ) {
 
     case "install":
       return installer( options );
 
     case "upgrade":
-      options.update = true;
-      return installer( options );
+      return installer( options, true );
 
     case "normalizePkg":
-      return readPkg( folder ).then( pkg => writePkg( folder, pkg ) ).then( showDone, showError );
+      return normalizePkg( folder ).then( showDone, showError );
 
     case "check":
       return check( folder );

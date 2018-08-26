@@ -214,7 +214,7 @@ export default class Store {
     const depFolder = pathJoin( folder, "node_modules", res.data.name );
 
     const p1 = linkBins( {
-      pkg: await readPkg( filesFolder ),
+      pkg: await readPkg( filesFolder, true ),
       pkgPath: filesFolder,
       binPath,
       usedCmds,

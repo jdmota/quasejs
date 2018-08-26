@@ -2,7 +2,7 @@
 import reporter from "../reporters/installer";
 import type { Name, Resolved, Options, Warning } from "../types";
 import { mapGet } from "../utils";
-import { read as readPkg, validate as validatePkg } from "../pkg";
+import { read as readPkg } from "../pkg";
 import {
   type Lockfile,
   shouldReuse as shouldReuseLockfile,
@@ -101,14 +101,12 @@ export class Installer extends EventEmitter {
     await writeLockfile( this.opts.folder, newLockfile );
   }
 
-  async install() {
+  async install( forceUpdate: ?boolean ) {
 
     const { opts } = this;
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
 
-    validatePkg( pkg );
-
-    const reuseLockfile = this.reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
+    const reuseLockfile = this.reuseLockfile = !forceUpdate && shouldReuseLockfile( lockfile );
 
     this.emit( "folder", { folder: opts.folder } );
     this.emit( "lockfile", { reusing: reuseLockfile } );
@@ -125,10 +123,10 @@ export class Installer extends EventEmitter {
 
 }
 
-export default function( opts: Options ) {
+export default function( opts: Options, forceUpdate: ?boolean ) {
   const installer = new Installer( opts );
   reporter( installer );
-  return installer.install().then( () => {
+  return installer.install( forceUpdate ).then( () => {
     installer.emit( "done" );
   }, err => {
     installer.emit( "error", err );

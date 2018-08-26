@@ -1,4 +1,5 @@
 // @flow
+import { error } from "./utils";
 
 const readPkg = require( "read-pkg" );
 const writePkg = require( "write-pkg" );
@@ -7,12 +8,15 @@ const semver = require( "semver" );
 type DependenciesType = "dependencies" | "devDependencies" | "optionalDependencies";
 const dependenciesTypes: DependenciesType[] = [ "dependencies", "devDependencies", "optionalDependencies" ];
 
-export async function read( folder: string ): Promise<Object> {
+export async function read( folder: string, ignoreValidation: ?boolean ): Promise<Object> {
   const x = await readPkg( { cwd: folder, normalize: true } );
   for ( const type of dependenciesTypes ) {
     if ( x[ type ] == null ) {
       x[ type ] = {};
     }
+  }
+  if ( !ignoreValidation ) {
+    validate( x );
   }
   return x;
 }
@@ -29,12 +33,12 @@ export function validate( pkg: Object ) {
 
   for ( const dep of dependencies ) {
     if ( dep === name && semver.satisfies( version, pkg.dependencies[ dep ] ) ) {
-      throw new Error( `${dep} cannot depend on himself. See dependencies` );
+      throw error( `${dep} cannot depend on himself. See dependencies` );
     }
     if ( pkg.devDependencies[ dep ] != null ) {
-      throw new Error( `${dep} appears in both dependencies and devDependencies` );
+      throw error( `${dep} appears in both dependencies and devDependencies` );
     } else if ( pkg.optionalDependencies[ dep ] != null ) {
-      throw new Error( `${dep} appears in both dependencies and optionalDependencies` );
+      throw error( `${dep} appears in both dependencies and optionalDependencies` );
     }
   }
 
@@ -42,10 +46,10 @@ export function validate( pkg: Object ) {
 
   for ( const dep of devDependencies ) {
     if ( dep === name && semver.satisfies( version, pkg.devDependencies[ dep ] ) ) {
-      throw new Error( `${dep} cannot depend on himself. See devDependencies` );
+      throw error( `${dep} cannot depend on himself. See devDependencies` );
     }
     if ( pkg.optionalDependencies[ dep ] != null ) {
-      throw new Error( `${dep} appears in both devDependencies and optionalDependencies` );
+      throw error( `${dep} appears in both devDependencies and optionalDependencies` );
     }
   }
 
@@ -53,7 +57,7 @@ export function validate( pkg: Object ) {
 
   for ( const dep of optionalDependencies ) {
     if ( dep === name && semver.satisfies( version, pkg.optionalDependencies[ dep ] ) ) {
-      throw new Error( `${dep} cannot depend on himself. See optionalDependencies` );
+      throw error( `${dep} cannot depend on himself. See optionalDependencies` );
     }
   }
 
@@ -75,21 +79,22 @@ export function add(
 ): { packageJson: Object, mutated: boolean } {
   let mutated = false;
 
-  packageSpecs.forEach( dependency => {
+  for ( const dependency of packageSpecs ) {
 
     const type = saveType || guessDependencyType( dependency.name, packageJson );
 
     if ( packageJson[ type ] ) {
       if ( packageJson[ type ][ dependency.name ] === dependency.spec ) {
-        return;
+        continue;
       }
     } else {
       packageJson[ type ] = {};
     }
+
     packageJson[ type ][ dependency.name ] = dependency.spec;
     mutated = true;
 
-  } );
+  }
 
   return {
     packageJson,
@@ -105,15 +110,15 @@ export function remove(
   const types = saveType ? [ saveType ] : dependenciesTypes;
   let mutated = false;
 
-  types.forEach( deptype => {
+  for ( const deptype of types ) {
     if ( packageJson[ deptype ] ) {
-      removedPackages.forEach( name => {
+      for ( const name of removedPackages ) {
         if ( delete packageJson[ deptype ][ name ] ) {
           mutated = true;
         }
-      } );
+      }
     }
-  } );
+  }
 
   return {
     packageJson,

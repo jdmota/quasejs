@@ -1,6 +1,7 @@
 // @flow
 import type { Installer } from "./commands/installer";
 import type { Name, Version, ExactVersion, ResolvedObj, Options, DepType } from "./types";
+import { error } from "./utils";
 import type { Resolution } from "./resolution";
 import { toStr } from "./types";
 import type { Lockfile } from "./lockfile";
@@ -138,7 +139,7 @@ export class Resolver {
     const tuple = this.lockfile.resolutions[ index ];
 
     if ( !tuple ) {
-      throw new Error( `Corrupt lockfile. Expected resolution at index ${index}` );
+      throw error( `Corrupt lockfile. Expected resolution at index ${index}` );
     }
 
     const [ name, version, resolved, integrity ] = tuple;

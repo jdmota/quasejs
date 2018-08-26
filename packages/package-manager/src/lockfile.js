@@ -1,6 +1,6 @@
 // @flow
 import type { Name, Version, ExactVersion, Resolved, Integrity } from "./types";
-import { isObject } from "./utils";
+import { error, isObject } from "./utils";
 
 const path = require( "path" );
 const loadJsonFile = require( "load-json-file" );
@@ -31,13 +31,13 @@ export type Lockfile = {|
 
 function checkSameVersion( v: string ) {
   if ( LOCK_VERSION !== v ) {
-    throw new Error( `Found a lockfile with version ${v}. Expected it to be ${LOCK_VERSION}` );
+    throw error( `Found a lockfile with version ${v}. Expected it to be ${LOCK_VERSION}` );
   }
 }
 
 function invariant( bool: boolean ) {
   if ( !bool ) {
-    throw new Error( "Invalid lockfile." );
+    throw error( "Invalid lockfile." );
   }
 }
 

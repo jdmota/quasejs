@@ -43,8 +43,7 @@ export type Options = {
   offline?: ?boolean,
   preferOffline?: ?boolean,
   preferOnline?: ?boolean,
-  flat?: ?boolean,
-  update?: ?boolean
+  flat?: ?boolean
 };
 
 export type Warning = {

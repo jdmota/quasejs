@@ -1,8 +1,8 @@
 // @flow
 import reporter from "../reporters/check";
 import { type Name, toStr } from "../types";
-import { readJSON } from "../utils";
-import { read as readPkg, validate as validatePkg } from "../pkg";
+import { error, readJSON } from "../utils";
+import { read as readPkg } from "../pkg";
 import { shouldReuse as shouldReuseLockfile, read as readLockfile } from "../lockfile";
 
 const path = require( "path" );
@@ -15,10 +15,10 @@ function compare( a, b, type ) {
     const name: Name = nameStr;
 
     if ( !b[ name ] ) {
-      throw new Error( `Package.json has ${nameStr} but lockfile has not (on ${type}).` );
+      throw error( `Package.json has ${nameStr} but lockfile has not (on ${type}).` );
     }
     if ( a[ name ] !== b[ name ].savedVersion ) {
-      throw new Error(
+      throw error(
         `Package.json has ${nameStr} with version ${a[ name ]} but lockfile has version ${toStr( b[ name ].savedVersion )} (on ${type}).`
       );
     }
@@ -29,7 +29,7 @@ function compare( a, b, type ) {
     const name: Name = nameStr;
 
     if ( !a[ name ] ) {
-      throw new Error( `Lockfile has ${nameStr} but package.json has not (on ${type}).` );
+      throw error( `Lockfile has ${nameStr} but package.json has not (on ${type}).` );
     }
   }
 
@@ -71,11 +71,11 @@ async function integrity( folder, lockfile ) {
       );
 
       if ( integrity === undefined ) {
-        throw new Error( `It seems that ${pkg} is not installed.` );
+        throw error( `It seems that ${pkg} is not installed.` );
       }
 
       if ( integrity !== hash ) {
-        throw new Error(
+        throw error(
           `Expected integrity ${toStr( hash )} but found ${integrity} for ${pkg}.`
         );
       }
@@ -91,8 +91,6 @@ export class Checker extends EventEmitter {
     this.emit( "start" );
 
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
-
-    validatePkg( pkg );
 
     if ( !shouldReuseLockfile( lockfile ) ) {
       this.emit( "warning", {

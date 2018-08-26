@@ -35,10 +35,6 @@ const installSchema = {
     type: "boolean",
     description: "",
     optional: true
-  },
-  cliTest: {
-    type: "boolean",
-    optional: true
   }
 };
 
@@ -61,7 +57,7 @@ require( "@quase/cli" ).default( {
       }
     },
     check: {
-      description: "Verifies that versions of the dependencies in the package.json file match the lockfile.",
+      description: "Validates package.json and checks consistency between it and the lockfile.",
       schema: {
         folder: installSchema.folder
       }
