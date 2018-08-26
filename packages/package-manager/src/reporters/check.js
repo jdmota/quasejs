@@ -5,7 +5,7 @@ import { BaseReporter } from "./base";
 class CheckReporter extends BaseReporter {
 
   constructor() {
-    super( "Looking for lockfile..." );
+    super( "Starting checks..." );
   }
 
   listen( checker: Checker ) {

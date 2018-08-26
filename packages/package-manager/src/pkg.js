@@ -1,31 +1,51 @@
 // @flow
-// Adapted from pnpm/supi
 
 const readPkg = require( "read-pkg" );
 const writePkg = require( "write-pkg" );
-const normalize = require( "normalize-package-data" );
 
 type DependenciesType = "dependencies" | "devDependencies" | "optionalDependencies";
 const dependenciesTypes: DependenciesType[] = [ "dependencies", "devDependencies", "optionalDependencies" ];
 
-/* function getSaveType( opts ): DependenciesType | void {
-  if ( opts.saveDev ) return "devDependencies";
-  if ( opts.saveOptional ) return "optionalDependencies";
-  if ( opts.saveProd ) return "dependencies";
-} */
-
-function guessDependencyType( name: string, pkg: Object ): DependenciesType {
-  return dependenciesTypes.find( type => Boolean( pkg[ type ] && pkg[ type ][ name ] ) ) || "dependencies";
-}
-
 export async function read( folder: string ): Promise<Object> {
-  const x = await readPkg( { cwd: folder, normalize: false } );
-  normalize( x );
+  const x = await readPkg( { cwd: folder, normalize: true } );
+  for ( const type of dependenciesTypes ) {
+    if ( x[ type ] == null ) {
+      x[ type ] = {};
+    }
+  }
   return x;
 }
 
 export async function write( folder: string, json: Object ) {
   return writePkg( folder, json );
+}
+
+export function validate( pkg: Object ) {
+
+  const dependencies = Object.keys( pkg.dependencies );
+
+  for ( const dep of dependencies ) {
+    if ( pkg.devDependencies[ dep ] != null ) {
+      throw new Error( `${dep} appears in both dependencies and devDependencies` );
+    } else if ( pkg.optionalDependencies[ dep ] != null ) {
+      throw new Error( `${dep} appears in both dependencies and optionalDependencies` );
+    }
+  }
+
+  const devDependencies = Object.keys( pkg.devDependencies );
+
+  for ( const dep of devDependencies ) {
+    if ( pkg.optionalDependencies[ dep ] != null ) {
+      throw new Error( `${dep} appears in both devDependencies and optionalDependencies` );
+    }
+  }
+
+}
+
+// Adapted from pnpm/supi
+
+function guessDependencyType( name: string, pkg: Object ): DependenciesType {
+  return dependenciesTypes.find( type => Boolean( pkg[ type ] && pkg[ type ][ name ] ) ) || "dependencies";
 }
 
 export function add(

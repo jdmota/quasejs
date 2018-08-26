@@ -218,16 +218,16 @@ exports[`installer basic 2`] = `
 		],
 		[
 			\\"semver\\",
-			\\"5.5.0\\",
-			\\"https://registry.npmjs.org/semver/-/semver-5.5.0.tgz\\",
-			\\"sha512-4SJ3dm0WAwWy/NVeioZh5AntkdJoWKxHxcmyP622fOkgHa4z3R0TdBJICINyaSDE6uNwVc8gZr+ZinwZAH4xIA==\\",
+			\\"5.5.1\\",
+			\\"https://registry.npmjs.org/semver/-/semver-5.5.1.tgz\\",
+			\\"sha512-PqpAxfrEhlSUWge8dwIp4tZnQ25DIOthpiaHNIthsjEFQD6EvqUKUDM7L8O2rShkFccYo1VjJR0coWfNkCubRw==\\",
 			[]
 		],
 		[
 			\\"validate-npm-package-license\\",
-			\\"3.0.3\\",
-			\\"https://registry.npmjs.org/validate-npm-package-license/-/validate-npm-package-license-3.0.3.tgz\\",
-			\\"sha512-63ZOUnL4SIXj4L0NixR3L1lcjO38crAbgrTpl28t8jjrfuiOBL5Iygm+60qPs/KsZGzPNg6Smnc/oY16QTjF0g==\\",
+			\\"3.0.4\\",
+			\\"https://registry.npmjs.org/validate-npm-package-license/-/validate-npm-package-license-3.0.4.tgz\\",
+			\\"sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==\\",
 			[
 				20,
 				21

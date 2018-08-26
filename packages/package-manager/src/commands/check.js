@@ -2,7 +2,7 @@
 import reporter from "../reporters/check";
 import { type Name, toStr } from "../types";
 import { readJSON } from "../utils";
-import { read as readPkg } from "../pkg";
+import { read as readPkg, validate as validatePkg } from "../pkg";
 import { shouldReuse as shouldReuseLockfile, read as readLockfile } from "../lockfile";
 
 const path = require( "path" );
@@ -92,8 +92,14 @@ export class Checker extends EventEmitter {
 
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
 
+    validatePkg( pkg );
+
     if ( !shouldReuseLockfile( lockfile ) ) {
-      throw new Error( "Lockfile not found." );
+      this.emit( "warning", {
+        code: "LOCKFILE_NOT_FOUND",
+        message: "Lockfile not found."
+      } );
+      return;
     }
 
     const dependencies = pkg.dependencies || {};

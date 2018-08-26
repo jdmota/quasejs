@@ -2,7 +2,7 @@
 import reporter from "../reporters/installer";
 import type { Name, Resolved, Options, Warning } from "../types";
 import { mapGet } from "../utils";
-import { read as readPkg } from "../pkg";
+import { read as readPkg, validate as validatePkg } from "../pkg";
 import {
   type Lockfile,
   shouldReuse as shouldReuseLockfile,
@@ -105,6 +105,8 @@ export class Installer extends EventEmitter {
 
     const { opts } = this;
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
+
+    validatePkg( pkg );
 
     const reuseLockfile = this.reuseLockfile = !opts.update && shouldReuseLockfile( lockfile );
 
