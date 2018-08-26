@@ -43,7 +43,8 @@ export type Options = {
   offline?: ?boolean,
   preferOffline?: ?boolean,
   preferOnline?: ?boolean,
-  flat?: ?boolean
+  flat?: ?boolean,
+  type?: ?( "prod" | "dev" | "optional" )
 };
 
 export type Warning = {

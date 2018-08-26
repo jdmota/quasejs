@@ -11,7 +11,7 @@ class InstallReporter extends BaseReporter {
   phase: string;
 
   constructor() {
-    super( "Starting..." );
+    super( "Installing..." );
     this.jobsTotal = 0;
     this.jobsDone = 0;
     this.phase = "";

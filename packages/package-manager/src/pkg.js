@@ -66,62 +66,73 @@ export function validate( pkg: Object ) {
 // Adapted from pnpm/supi
 
 function guessDependencyType( name: string, pkg: Object ): DependenciesType {
-  return dependenciesTypes.find( type => Boolean( pkg[ type ] && pkg[ type ][ name ] ) ) || "dependencies";
+  return dependenciesTypes.find( type => pkg[ type ] && pkg[ type ][ name ] ) || "dependencies";
+}
+
+const typeMap = {
+  prod: "dependencies",
+  dev: "devDependencies",
+  optional: "optionalDependencies"
+};
+
+export function normalizeType( type: ?( "prod" | "dev" | "optional" ) ) {
+  if ( type ) {
+    return typeMap[ type ];
+  }
 }
 
 export function add(
   packageJson: Object,
   packageSpecs: ( {
     name: string,
-    spec: string
+    version: string
   } )[],
   saveType: ?DependenciesType
-): { packageJson: Object, mutated: boolean } {
-  let mutated = false;
+): { name: string, version: string }[] {
+  const added = [];
 
   for ( const dependency of packageSpecs ) {
 
     const type = saveType || guessDependencyType( dependency.name, packageJson );
 
     if ( packageJson[ type ] ) {
-      if ( packageJson[ type ][ dependency.name ] === dependency.spec ) {
+      if ( packageJson[ type ][ dependency.name ] === dependency.version ) {
         continue;
       }
     } else {
       packageJson[ type ] = {};
     }
 
-    packageJson[ type ][ dependency.name ] = dependency.spec;
-    mutated = true;
+    packageJson[ type ][ dependency.name ] = dependency.version;
+    added.push( dependency );
 
   }
 
-  return {
-    packageJson,
-    mutated
-  };
+  return added;
 }
 
 export function remove(
   packageJson: Object,
   removedPackages: string[],
   saveType: ?DependenciesType
-): { packageJson: Object, mutated: boolean } {
+): { name: string, version: string }[] {
   const types = saveType ? [ saveType ] : dependenciesTypes;
-  let mutated = false;
+  const removed = [];
 
   for ( const deptype of types ) {
     if ( packageJson[ deptype ] ) {
       for ( const name of removedPackages ) {
-        if ( delete packageJson[ deptype ][ name ] ) {
-          mutated = true;
+        const version = packageJson[ deptype ][ name ];
+        if ( version != null ) {
+          delete packageJson[ deptype ][ name ];
+          removed.push( {
+            name,
+            version
+          } );
         }
       }
     }
   }
 
-  return {
-    packageJson,
-    mutated
-  };
+  return removed;
 }

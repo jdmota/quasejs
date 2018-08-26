@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 import check from "./commands/check";
 import installer from "./commands/installer";
+import add from "./commands/add";
+import remove from "./commands/remove";
 import normalizePkg from "./commands/normalize-pkg";
 import type { Options } from "./types";
 import Store from "./store";
@@ -30,7 +32,7 @@ function handleOptions( _opts: Object ): Options {
   return opts;
 }
 
-export function run( command: string, _opts: Object ) {
+export function run( command: string, _opts: Object, input: string[] ) {
 
   const options = handleOptions( _opts );
   const { folder } = options;
@@ -42,6 +44,12 @@ export function run( command: string, _opts: Object ) {
 
     case "upgrade":
       return installer( options, true );
+
+    case "add":
+      return add( options, input ).catch( showError );
+
+    case "remove":
+      return remove( options, input ).catch( showError );
 
     case "normalizePkg":
       return normalizePkg( folder ).then( showDone, showError );

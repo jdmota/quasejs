@@ -16,6 +16,7 @@
     "@zkochan/cmd-shim": "^3.1.0",
     "fs-extra": "^7.0.0",
     "klaw": "^3.0.0",
+    "latest-version": "^4.0.0",
     "load-json-file": "^5.0.0",
     "npm-package-arg": "^6.1.0",
     "ora": "^3.0.0",

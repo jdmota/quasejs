@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const { cli, t } = require( "@quase/cli" );
+
 const installSchema = {
   folder: {
     type: "string",
@@ -38,7 +40,18 @@ const installSchema = {
   }
 };
 
-require( "@quase/cli" ).default( {
+const addRemoveSchema = {
+  type: t.choices( {
+    values: [ "prod", "dev", "optional" ],
+    optional: true
+  } )
+};
+
+function spread( a, b ) {
+  return Object.assign( {}, a, b );
+}
+
+cli( {
   usage: "$ qpm <command> [options]",
   defaultCommand: "install",
   commands: {
@@ -49,6 +62,14 @@ require( "@quase/cli" ).default( {
     upgrade: {
       description: "Upgrades all the dependencies in the package.json.",
       schema: installSchema
+    },
+    add: {
+      description: "Add and install one or more packages.",
+      schema: spread( installSchema, addRemoveSchema )
+    },
+    remove: {
+      description: "Remove and uninstall one or more packages.",
+      schema: spread( installSchema, addRemoveSchema )
     },
     normalizePkg: {
       description: "Normalize package.json file.",
@@ -63,6 +84,6 @@ require( "@quase/cli" ).default( {
       }
     }
   }
-} ).then( ( { command, options } ) => {
-  require( ".." ).run( command, options );
+} ).then( ( { command, options, input } ) => {
+  require( ".." ).run( command, options, input );
 } );
