@@ -1,3 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`dependency on itself in package.json 1`] = `"quase-package-manager cannot depend on himself. See dependencies"`;
+
 exports[`duplicate dependencies in package.json 1`] = `"read-pkg appears in both dependencies and devDependencies"`;

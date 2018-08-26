@@ -1,0 +1,7 @@
+{
+  "name": "quase-package-manager",
+  "version": "0.1.0",
+  "dependencies": {
+    "quase-package-manager": "^0.1.0"
+  }
+}

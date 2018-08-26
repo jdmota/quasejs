@@ -2,6 +2,7 @@
 
 const readPkg = require( "read-pkg" );
 const writePkg = require( "write-pkg" );
+const semver = require( "semver" );
 
 type DependenciesType = "dependencies" | "devDependencies" | "optionalDependencies";
 const dependenciesTypes: DependenciesType[] = [ "dependencies", "devDependencies", "optionalDependencies" ];
@@ -22,9 +23,14 @@ export async function write( folder: string, json: Object ) {
 
 export function validate( pkg: Object ) {
 
+  const { name, version } = pkg;
+
   const dependencies = Object.keys( pkg.dependencies );
 
   for ( const dep of dependencies ) {
+    if ( dep === name && semver.satisfies( version, pkg.dependencies[ dep ] ) ) {
+      throw new Error( `${dep} cannot depend on himself. See dependencies` );
+    }
     if ( pkg.devDependencies[ dep ] != null ) {
       throw new Error( `${dep} appears in both dependencies and devDependencies` );
     } else if ( pkg.optionalDependencies[ dep ] != null ) {
@@ -35,8 +41,19 @@ export function validate( pkg: Object ) {
   const devDependencies = Object.keys( pkg.devDependencies );
 
   for ( const dep of devDependencies ) {
+    if ( dep === name && semver.satisfies( version, pkg.devDependencies[ dep ] ) ) {
+      throw new Error( `${dep} cannot depend on himself. See devDependencies` );
+    }
     if ( pkg.optionalDependencies[ dep ] != null ) {
       throw new Error( `${dep} appears in both devDependencies and optionalDependencies` );
+    }
+  }
+
+  const optionalDependencies = Object.keys( pkg.optionalDependencies );
+
+  for ( const dep of optionalDependencies ) {
+    if ( dep === name && semver.satisfies( version, pkg.optionalDependencies[ dep ] ) ) {
+      throw new Error( `${dep} cannot depend on himself. See optionalDependencies` );
     }
   }
 
