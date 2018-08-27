@@ -1,10 +1,11 @@
 // @flow
-import type { Installer } from "../commands/installer";
 import { BaseReporter } from "./base";
 
 /* eslint-disable no-console */
 
-class InstallReporter extends BaseReporter {
+const logSymbols = require( "log-symbols" );
+
+export class InstallReporter extends BaseReporter {
 
   jobsTotal: number;
   jobsDone: number;
@@ -17,34 +18,63 @@ class InstallReporter extends BaseReporter {
     this.phase = "";
   }
 
-  listen( installer: Installer ) {
-    super.listen( installer );
-    installer.on( "folder", this.folder.bind( this ) );
-    installer.on( "lockfile", this.lockfile.bind( this ) );
-    installer.on( "resolutionStart", this.jobStart.bind( this, "Resolution" ) );
-    installer.on( "resolutionMore", this.jobMore.bind( this ) );
-    installer.on( "resolutionUpdate", this.jobUpdate.bind( this ) );
-    installer.on( "extractionStart", this.jobStart.bind( this, "Extraction" ) );
-    installer.on( "extractionMore", this.jobMore.bind( this ) );
-    installer.on( "extractionUpdate", this.jobUpdate.bind( this ) );
-    installer.on( "linkingStart", this.jobStart.bind( this, "Linking" ) );
-    installer.on( "linkingMore", this.jobMore.bind( this ) );
-    installer.on( "linkingUpdate", this.jobUpdate.bind( this ) );
-    installer.on( "localLinkingStart", this.jobStart.bind( this, "Local linking" ) );
-    installer.on( "localLinkingMore", this.jobMore.bind( this ) );
-    installer.on( "localLinkingUpdate", this.jobUpdate.bind( this ) );
-    installer.on( "updateLockfile", this.updateLockfile.bind( this ) );
+  resolutionStart( count: ?number ) {
+    this.jobStart( "Resolution", count );
   }
 
-  folder( { folder } ) {
-    console.log( `Project folder: ${folder}` );
+  resolutionMore( count: ?number ) {
+    this.jobMore( count );
   }
 
-  lockfile( { reusing } ) {
+  resolutionUpdate() {
+    this.jobUpdate();
+  }
+
+  extractionStart( count: ?number ) {
+    this.jobStart( "Extraction", count );
+  }
+
+  extractionMore( count: ?number ) {
+    this.jobMore( count );
+  }
+
+  extractionUpdate() {
+    this.jobUpdate();
+  }
+
+  linkingStart( count: ?number ) {
+    this.jobStart( "Linking", count );
+  }
+
+  linkingMore( count: ?number ) {
+    this.jobMore( count );
+  }
+
+  linkingUpdate() {
+    this.jobUpdate();
+  }
+
+  localLinkingStart( count: ?number ) {
+    this.jobStart( "Local linking", count );
+  }
+
+  localLinkingMore( count: ?number ) {
+    this.jobMore( count );
+  }
+
+  localLinkingUpdate() {
+    this.jobUpdate();
+  }
+
+  folder( { folder }: { folder: string } ) {
+    console.log( `${logSymbols.info} Project folder: ${folder}` );
+  }
+
+  lockfile( { reusing }: { reusing: boolean } ) {
     if ( reusing ) {
-      console.log( `Will reuse lockfile.` );
+      console.log( `${logSymbols.info} Will reuse lockfile.` );
     } else {
-      console.log( `Will generate new lockfile.` );
+      console.log( `${logSymbols.info} Will generate new lockfile.` );
     }
   }
 
@@ -69,8 +99,4 @@ class InstallReporter extends BaseReporter {
     this.spinner.text = `Updating lockfile...`;
   }
 
-}
-
-export default function( installer: Installer ) {
-  new InstallReporter().listen( installer );
 }

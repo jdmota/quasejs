@@ -10,13 +10,14 @@ import type { Options } from "./types";
 import Store from "./store";
 
 const path = require( "path" );
+const logSymbols = require( "log-symbols" );
 
 function showDone() {
-  console.log( `\nDone!\n` );
+  console.log( `\n${logSymbols.success} Done!\n` );
 }
 
 function showError( e: Object ) {
-  console.error( `\n${e.__fromManager ? e.message : e.stack}\n` );
+  console.error( `\n${logSymbols.error} ${e.__fromManager ? e.message : e.stack}\n` );
   process.exitCode = 1;
 }
 

@@ -6,6 +6,7 @@ import installer from "./installer";
 
 // $FlowIgnore
 const latestVersion = require( "latest-version" );
+const logSymbols = require( "log-symbols" );
 const semver = require( "semver" );
 
 async function inputMapper( required: string ): Promise<{ name: string, version: string }> {
@@ -44,9 +45,9 @@ export default async function( options: Options, input: string[] ) {
   if ( added.length > 0 ) {
     await write( options.folder, pkg );
 
-    console.log( "Adding:" );
+    console.log( `${logSymbols.info} Adding:` );
     for ( const { name, version } of added ) {
-      console.log( `  ${name}@${version}` );
+      console.log( `  - ${name}@${version}` );
     }
     console.log( "" );
   } else {

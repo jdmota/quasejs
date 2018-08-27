@@ -4,6 +4,7 @@ import type { Warning } from "../types";
 /* eslint-disable no-console */
 
 const ora = require( "ora" );
+const logSymbols = require( "log-symbols" );
 
 export class BaseReporter {
 
@@ -29,6 +30,16 @@ export class BaseReporter {
     this.spinner = ora( this.initialMsg ).start();
   }
 
+  log( text: string ) {
+    if ( this.spinner ) {
+      this.spinner.stop();
+    }
+    console.log( `\n${logSymbols.info} ${text}\n` );
+    if ( this.spinner ) {
+      this.spinner.start();
+    }
+  }
+
   error( error: Object ) {
     if ( !this.spinner ) {
       this.spinner = ora( this.initialMsg );
@@ -41,7 +52,7 @@ export class BaseReporter {
     if ( this.spinner ) {
       this.spinner.stop();
     }
-    console.warn( `\nWarning: ${warning.message}\n` );
+    console.warn( `\n${logSymbols.warning} ${warning.message}\n` );
     if ( this.spinner ) {
       this.spinner.start();
     }

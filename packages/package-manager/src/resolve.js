@@ -98,7 +98,7 @@ export class Resolver {
       job: resolve( name, version, this.installer.opts )
     } );
 
-    this.installer.emit( "resolutionMore" );
+    this.installer.reporter.resolutionMore();
   }
 
   handleNew( obj: ResolvedObj, where: Requester ) {
@@ -209,7 +209,7 @@ export class Resolver {
       for ( const queuedList of queueMap.values() ) {
         for ( const { name, job } of queuedList ) {
           this.addResult( name, await job );
-          this.installer.emit( "resolutionUpdate" );
+          this.installer.reporter.resolutionMore();
         }
       }
 

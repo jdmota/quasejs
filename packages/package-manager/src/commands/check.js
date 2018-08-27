@@ -1,12 +1,11 @@
 // @flow
-import reporter from "../reporters/check";
+import { CheckReporter } from "../reporters/check";
 import { type Name, toStr } from "../types";
 import { error, readJSON } from "../utils";
 import { read as readPkg } from "../pkg";
 import { shouldReuse as shouldReuseLockfile, read as readLockfile } from "../lockfile";
 
 const path = require( "path" );
-const { EventEmitter } = require( "events" );
 
 function compare( a, b, type ) {
 
@@ -84,16 +83,22 @@ async function integrity( folder, lockfile ) {
   );
 }
 
-export class Checker extends EventEmitter {
+export class Checker {
+
+  +reporter: CheckReporter;
+
+  constructor( reporter: CheckReporter ) {
+    this.reporter = reporter;
+  }
 
   async check( folder: string ) {
 
-    this.emit( "start" );
+    this.reporter.start();
 
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( folder ), readLockfile( folder ) ] );
 
     if ( !shouldReuseLockfile( lockfile ) ) {
-      this.emit( "warning", {
+      this.reporter.warning( {
         code: "LOCKFILE_NOT_FOUND",
         message: "Lockfile not found."
       } );
@@ -103,15 +108,15 @@ export class Checker extends EventEmitter {
     const dependencies = pkg.dependencies || {};
     const devDependencies = pkg.devDependencies || {};
 
-    this.emit( "comparing", "dependencies" );
+    this.reporter.comparing( "dependencies" );
 
     compare( dependencies, lockfile.deps, "dependencies" );
 
-    this.emit( "comparing", "devDependencies" );
+    this.reporter.comparing( "devDependencies" );
 
     compare( devDependencies, lockfile.devDeps, "devDependencies" );
 
-    this.emit( "integrity" );
+    this.reporter.integrity();
 
     await integrity( folder, lockfile );
   }
@@ -119,11 +124,11 @@ export class Checker extends EventEmitter {
 }
 
 export default function( folder: string ) {
-  const checker = new Checker();
-  reporter( checker );
+  const reporter = new CheckReporter();
+  const checker = new Checker( reporter );
   return checker.check( folder ).then( () => {
-    checker.emit( "done" );
+    reporter.done();
   }, err => {
-    checker.emit( "error", err );
+    reporter.error( err );
   } );
 }

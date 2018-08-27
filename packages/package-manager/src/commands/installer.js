@@ -1,5 +1,5 @@
 // @flow
-import reporter from "../reporters/installer";
+import { InstallReporter } from "../reporters/installer";
 import type { Name, Resolved, Options, Warning } from "../types";
 import { error, mapGet } from "../utils";
 import { read as readPkg, readGlobal as readGlobalPkg } from "../pkg";
@@ -14,32 +14,32 @@ import { ResolutionSet, Tree } from "../resolution";
 import Store from "../store";
 import { Resolver } from "../resolve";
 
-const { EventEmitter } = require( "events" );
 const path = require( "path" );
 
-export class Installer extends EventEmitter {
+export class Installer {
 
-  +tree: Tree;
-  +rootDeps: ResolutionSet;
   +store: Store;
   +opts: Options;
+  +reporter: InstallReporter;
+  +tree: Tree;
+  +rootDeps: ResolutionSet;
   +warn: Warning => void;
   reuseLockfile: boolean;
 
-  constructor( opts: Options ) {
-    super();
+  constructor( opts: Options, reporter: InstallReporter ) {
     this.opts = opts;
+    this.reporter = reporter;
     this.warn = ( warning: Warning ) => {
-      this.emit( "warning", warning );
+      this.reporter.warning( warning );
     };
-    this.store = new Store( opts, this.warn );
+    this.store = new Store( opts, this );
     this.tree = new Tree();
     this.rootDeps = new ResolutionSet();
     this.reuseLockfile = false;
   }
 
   async resolution( pkg: Object, lockfile: Lockfile, newLockfile: Lockfile ) {
-    this.emit( "resolutionStart" );
+    this.reporter.resolutionStart();
     const resolver = new Resolver( this, pkg, lockfile, newLockfile );
     await resolver.start();
   }
@@ -48,10 +48,10 @@ export class Installer extends EventEmitter {
 
     const extractions = [];
     this.tree.forEach( resolution => {
-      extractions.push( this.store.extract( resolution ).then( () => this.emit( "extractionUpdate" ) ) );
+      extractions.push( this.store.extract( resolution ).then( () => this.reporter.extractionUpdate() ) );
     } );
 
-    this.emit( "extractionStart", extractions.length );
+    this.reporter.extractionStart( extractions.length );
 
     for ( const p of extractions ) {
       await p;
@@ -62,10 +62,10 @@ export class Installer extends EventEmitter {
 
     const links = [];
     this.tree.forEach( resolution => {
-      links.push( this.store.linkResolutionDeps( resolution ).then( () => this.emit( "linkingUpdate" ) ) );
+      links.push( this.store.linkResolutionDeps( resolution ).then( () => this.reporter.linkingUpdate() ) );
     } );
 
-    this.emit( "linkingStart", links.length );
+    this.reporter.linkingStart( links.length );
 
     for ( const p of links ) {
       await p;
@@ -73,14 +73,14 @@ export class Installer extends EventEmitter {
   }
 
   async localLinking() {
-    this.emit( "localLinkingStart", 1 );
+    this.reporter.localLinkingStart( 1 );
     await this.store.linkNodeModules( this.opts.folder, this.rootDeps );
-    this.emit( "localLinkingUpdate" );
+    this.reporter.localLinkingUpdate();
   }
 
   async updateLockfile( newLockfile: Lockfile ) {
 
-    this.emit( "updateLockfile" );
+    this.reporter.updateLockfile();
 
     const map: Map<Resolved, number> = new Map();
     this.tree.generate( newLockfile.resolutions, map );
@@ -121,9 +121,9 @@ export class Installer extends EventEmitter {
       throw error( "Lockfile not found." );
     }
 
-    this.emit( "folder", { folder: opts.folder } );
-    this.emit( "lockfile", { reusing: reuseLockfile } );
-    this.emit( "start" );
+    this.reporter.folder( { folder: opts.folder } );
+    this.reporter.lockfile( { reusing: reuseLockfile } );
+    this.reporter.start();
 
     const newLockfile = createLockfile();
 
@@ -140,7 +140,7 @@ export class Installer extends EventEmitter {
       const PATH = ( process.env.PATH || "" ).split( path.delimiter );
       const bin = path.resolve( opts.folder, "node_modules", ".bin" );
       if ( !PATH.includes( bin ) ) {
-        this.emit( "warning", {
+        this.reporter.warning( {
           code: "NOT_IN_PATH",
           message: `${bin} does not seem to be in PATH. Please add it manually.`
         } );
@@ -151,11 +151,11 @@ export class Installer extends EventEmitter {
 }
 
 export default function( opts: Options, forceUpdate: ?boolean ) {
-  const installer = new Installer( opts );
-  reporter( installer );
+  const reporter = new InstallReporter();
+  const installer = new Installer( opts, reporter );
   return installer.install( forceUpdate ).then( () => {
-    installer.emit( "done" );
+    reporter.done();
   }, err => {
-    installer.emit( "error", err );
+    reporter.error( err );
   } );
 }

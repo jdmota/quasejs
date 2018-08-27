@@ -6,6 +6,7 @@ import pacoteOptions from "./pacote-options";
 import linkBins from "./link-bins";
 import { read as readPkg } from "./pkg";
 import type { Resolution, ResolutionSet } from "./resolution";
+import type { Installer } from "./commands/installer";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
@@ -49,10 +50,10 @@ export default class Store {
   +opts: Options;
   +warn: Warning => void;
 
-  constructor( opts: Options, warn: Warning => void ) {
+  constructor( opts: Options, installer: Installer ) {
     this.store = path.resolve( opts.store, STORE_VERSION );
     this.opts = opts;
-    this.warn = warn;
+    this.warn = installer.warn;
   }
 
   // Make sure package is in the store

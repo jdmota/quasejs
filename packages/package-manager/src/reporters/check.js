@@ -1,17 +1,10 @@
 // @flow
-import type { Checker } from "../commands/check";
 import { BaseReporter } from "./base";
 
-class CheckReporter extends BaseReporter {
+export class CheckReporter extends BaseReporter {
 
   constructor() {
     super( "Starting checks..." );
-  }
-
-  listen( checker: Checker ) {
-    super.listen( checker );
-    checker.on( "comparing", this.comparing.bind( this ) );
-    checker.on( "integrity", this.integrity.bind( this ) );
   }
 
   comparing( type: string ) {
@@ -22,8 +15,4 @@ class CheckReporter extends BaseReporter {
     this.spinner.text = `Checking integrity...`;
   }
 
-}
-
-export default function( checker: Checker ) {
-  new CheckReporter().listen( checker );
 }
