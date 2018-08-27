@@ -2,7 +2,7 @@
 import reporter from "../reporters/installer";
 import type { Name, Resolved, Options, Warning } from "../types";
 import { error, mapGet } from "../utils";
-import { read as readPkg } from "../pkg";
+import { read as readPkg, readGlobal as readGlobalPkg } from "../pkg";
 import {
   type Lockfile,
   shouldReuse as shouldReuseLockfile,
@@ -15,6 +15,7 @@ import Store from "../store";
 import { Resolver } from "../resolve";
 
 const { EventEmitter } = require( "events" );
+const path = require( "path" );
 
 export class Installer extends EventEmitter {
 
@@ -104,7 +105,11 @@ export class Installer extends EventEmitter {
   async install( forceUpdate: ?boolean ) {
 
     const { opts } = this;
-    const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
+
+    const [ pkg, lockfile ] = await Promise.all( [
+      opts.global ? readGlobalPkg( opts.folder ) : readPkg( opts.folder ),
+      readLockfile( opts.folder )
+    ] );
 
     if ( this.opts.frozenLockfile && forceUpdate ) {
       throw error( "Cannot use --frozen-lockfile and upgrade at the same time" );
@@ -129,6 +134,17 @@ export class Installer extends EventEmitter {
 
     if ( !this.opts.frozenLockfile ) {
       await this.updateLockfile( newLockfile );
+    }
+
+    if ( opts.global ) {
+      const PATH = ( process.env.PATH || "" ).split( path.delimiter );
+      const bin = path.resolve( opts.folder, "node_modules", ".bin" );
+      if ( !PATH.includes( bin ) ) {
+        this.emit( "warning", {
+          code: "NOT_IN_PATH",
+          message: `${bin} does not seem to be in PATH. Please add it manually.`
+        } );
+      }
     }
   }
 

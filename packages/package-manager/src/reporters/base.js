@@ -38,7 +38,13 @@ export class BaseReporter {
   }
 
   warning( warning: Warning ) {
-    console.warn( `WARN: ${warning.message}` );
+    if ( this.spinner ) {
+      this.spinner.stop();
+    }
+    console.warn( `\nWarning: ${warning.message}\n` );
+    if ( this.spinner ) {
+      this.spinner.start();
+    }
   }
 
   done() {

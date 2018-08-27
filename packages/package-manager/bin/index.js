@@ -39,9 +39,14 @@ const installSchema = {
   },
   production: {
     type: "boolean",
-    description: "If true, it won't install devDependencies. Default: NODE_ENV=='production'",
+    description: "If true, it will not install devDependencies. Default: NODE_ENV=='production'",
     alias: "prod",
     optional: true
+  },
+  global: {
+    type: "boolean",
+    description: "Global installation",
+    alias: "g"
   }
 };
 

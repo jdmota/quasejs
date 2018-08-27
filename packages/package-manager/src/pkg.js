@@ -21,6 +21,28 @@ export async function read( folder: string, ignoreValidation: ?boolean ): Promis
   return x;
 }
 
+export async function readGlobal( folder: string ): Promise<Object> {
+  try {
+    return await readPkg( { cwd: folder, normalize: false } );
+  } catch ( err ) {
+    if ( err.code === "ENOENT" ) {
+      const GLOBAL_PKG = {
+        private: true,
+        name: "qpm_global",
+        version: "0.1.0"
+      };
+      // It also makes sure the folder exists
+      await writePkg( folder, GLOBAL_PKG, {
+        normalize: false,
+        detectIndent: false,
+        indent: "  "
+      } );
+      return GLOBAL_PKG;
+    }
+    throw err;
+  }
+}
+
 export async function write( folder: string, json: Object ) {
   return writePkg( folder, json );
 }

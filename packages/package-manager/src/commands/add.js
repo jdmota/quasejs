@@ -1,7 +1,7 @@
 // @flow
 import type { Options } from "../types";
 import { error } from "../utils";
-import { read, write, add, normalizeType } from "../pkg";
+import { read, readGlobal, write, add, normalizeType } from "../pkg";
 import installer from "./installer";
 
 // $FlowIgnore
@@ -38,7 +38,7 @@ async function inputMapper( required: string ): Promise<{ name: string, version:
 /* eslint-disable no-console */
 
 export default async function( options: Options, input: string[] ) {
-  const pkg = await read( options.folder );
+  const pkg = options.global ? await readGlobal( options.folder ) : await read( options.folder );
   const packages = await Promise.all( input.map( inputMapper ) );
   const added = add( pkg, packages, normalizeType( options.type ) );
   if ( added.length > 0 ) {

@@ -5,6 +5,7 @@ import installer from "./commands/installer";
 import add from "./commands/add";
 import remove from "./commands/remove";
 import normalizePkg from "./commands/normalize-pkg";
+import { error } from "./utils";
 import type { Options } from "./types";
 import Store from "./store";
 
@@ -28,8 +29,19 @@ function handleOptions( _opts: Object ): Options {
     opts.preferOffline = true;
   }
   opts.cache = opts.cache || path.join( opts.store, "cache" );
-  opts.folder = _opts.folder ? path.resolve( _opts.folder ) : process.cwd();
   opts.production = opts.production == null ? process.env.NODE_ENV === "production" : opts.production;
+
+  if ( opts.global ) {
+    if ( opts.folder ) {
+      throw error( "Cannot use --global and --folder at the same time" );
+    }
+    if ( opts.type ) {
+      throw error( "Cannot use --global and --type at the same time" );
+    }
+    opts.folder = path.resolve( opts.store, "global" );
+  } else {
+    opts.folder = _opts.folder ? path.resolve( _opts.folder ) : process.cwd();
+  }
   return opts;
 }
 
