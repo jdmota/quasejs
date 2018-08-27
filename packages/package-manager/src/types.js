@@ -44,6 +44,7 @@ export type Options = {
   preferOffline: ?boolean,
   preferOnline: ?boolean,
   frozenLockfile: boolean,
+  production: ?boolean,
   type: ?( "prod" | "dev" | "optional" )
 };
 

@@ -29,6 +29,7 @@ function handleOptions( _opts: Object ): Options {
   }
   opts.cache = opts.cache || path.join( opts.store, "cache" );
   opts.folder = _opts.folder ? path.resolve( _opts.folder ) : process.cwd();
+  opts.production = opts.production == null ? process.env.NODE_ENV === "production" : opts.production;
   return opts;
 }
 

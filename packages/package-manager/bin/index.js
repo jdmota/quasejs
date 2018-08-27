@@ -36,6 +36,12 @@ const installSchema = {
   frozenLockfile: {
     type: "boolean",
     description: "Don't generate a lockfile and fail if an update is needed."
+  },
+  production: {
+    type: "boolean",
+    description: "If true, it won't install devDependencies. Default: NODE_ENV=='production'",
+    alias: "prod",
+    optional: true
   }
 };
 

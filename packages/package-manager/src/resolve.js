@@ -190,8 +190,10 @@ export class Resolver {
       this.handleRootDeps( name, this.pkg.dependencies[ name ], "deps" );
     }
 
-    for ( const name in this.pkg.devDependencies ) {
-      this.handleRootDeps( name, this.pkg.devDependencies[ name ], "devDeps" );
+    if ( !this.installer.opts.production ) {
+      for ( const name in this.pkg.devDependencies ) {
+        this.handleRootDeps( name, this.pkg.devDependencies[ name ], "devDeps" );
+      }
     }
 
     for ( const name in this.pkg.optionalDependencies ) {
