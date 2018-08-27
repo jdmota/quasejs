@@ -33,10 +33,9 @@ const installSchema = {
     description: "",
     optional: true
   },
-  flat: {
+  frozenLockfile: {
     type: "boolean",
-    description: "",
-    optional: true
+    description: "Don't generate a lockfile and fail if an update is needed."
   }
 };
 

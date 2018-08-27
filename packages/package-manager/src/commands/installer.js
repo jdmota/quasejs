@@ -1,7 +1,7 @@
 // @flow
 import reporter from "../reporters/installer";
 import type { Name, Resolved, Options, Warning } from "../types";
-import { mapGet } from "../utils";
+import { error, mapGet } from "../utils";
 import { read as readPkg } from "../pkg";
 import {
   type Lockfile,
@@ -106,7 +106,15 @@ export class Installer extends EventEmitter {
     const { opts } = this;
     const [ pkg, lockfile ] = await Promise.all( [ readPkg( opts.folder ), readLockfile( opts.folder ) ] );
 
+    if ( this.opts.frozenLockfile && forceUpdate ) {
+      throw error( "Cannot use --frozen-lockfile and upgrade at the same time" );
+    }
+
     const reuseLockfile = this.reuseLockfile = !forceUpdate && shouldReuseLockfile( lockfile );
+
+    if ( this.opts.frozenLockfile && !reuseLockfile ) {
+      throw error( "Lockfile not found." );
+    }
 
     this.emit( "folder", { folder: opts.folder } );
     this.emit( "lockfile", { reusing: reuseLockfile } );
@@ -118,7 +126,10 @@ export class Installer extends EventEmitter {
     await this.extraction();
     await this.linking();
     await this.localLinking();
-    await this.updateLockfile( newLockfile );
+
+    if ( !this.opts.frozenLockfile ) {
+      await this.updateLockfile( newLockfile );
+    }
   }
 
 }

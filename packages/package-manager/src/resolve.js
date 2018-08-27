@@ -29,6 +29,7 @@ export class Resolver {
   +lockfile: Object;
   +newLockfile: Object;
   +reuseLockfile: boolean;
+  +frozenLockfile: boolean;
   +sortedLockfile: Map<Name, { version: ExactVersion, index: number }[]>;
   +results: Map<Name, ResolvedObj[]>;
   queueMap: Map<Name, Queued[]>;
@@ -39,6 +40,7 @@ export class Resolver {
     this.lockfile = lockfile;
     this.newLockfile = newLockfile;
     this.reuseLockfile = installer.reuseLockfile;
+    this.frozenLockfile = installer.opts.frozenLockfile;
     this.sortedLockfile = this.reuseLockfile ? sortLockfile( lockfile ) : new Map();
     this.results = new Map();
     // This queue saves information about new resolve operations that were necessary
@@ -172,6 +174,10 @@ export class Resolver {
         // it's because the user wants to update it.
         // Don't reuse lockfile
       }
+    }
+
+    if ( this.frozenLockfile ) {
+      throw error( "This installation requires an update." );
     }
 
     // We have no results yet since we are still handling the dependencies in pkg

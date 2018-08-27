@@ -30,6 +30,9 @@ export class BaseReporter {
   }
 
   error( error: Object ) {
+    if ( !this.spinner ) {
+      this.spinner = ora( this.initialMsg );
+    }
     this.spinner.fail( error.__fromManager ? error.message : error.stack );
     process.exitCode = 1;
   }

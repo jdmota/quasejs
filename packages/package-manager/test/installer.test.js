@@ -41,13 +41,14 @@ describe( "installer", () => {
 
     let outputs = null;
 
-    async function install() {
+    async function install( moreOpts = {} ) {
       await fs.remove( path.resolve( __dirname, "test-folders/package/node_modules" ) );
       await new Installer( {
         preferOffline: true,
         folder: path.resolve( __dirname, "test-folders/package" ),
         cache: path.join( store, "cache" ),
-        store
+        store,
+        ...moreOpts
       } ).install();
 
       const processOutput = await testProcess( path.resolve( __dirname, "test-folders/package/index.js" ) );
@@ -75,7 +76,7 @@ describe( "installer", () => {
 
     await install(); // Install without cache and without lockfile
 
-    await install(); // Install with cache and lockfile
+    await install( { frozenLockfile: true } ); // Install with cache and lockfile
 
     await fs.remove( path.resolve( __dirname, "test-folders/package/qpm-lockfile.json" ) );
 

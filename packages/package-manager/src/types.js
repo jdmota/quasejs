@@ -40,11 +40,11 @@ export type Options = {
   folder: string,
   store: string,
   cache: string,
-  offline?: ?boolean,
-  preferOffline?: ?boolean,
-  preferOnline?: ?boolean,
-  flat?: ?boolean,
-  type?: ?( "prod" | "dev" | "optional" )
+  offline: ?boolean,
+  preferOffline: ?boolean,
+  preferOnline: ?boolean,
+  frozenLockfile: boolean,
+  type: ?( "prod" | "dev" | "optional" )
 };
 
 export type Warning = {
