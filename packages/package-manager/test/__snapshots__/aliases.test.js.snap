@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`installer basic 1`] = `
+exports[`aliases basic 1`] = `
 "{ [Function] sync: [Function] }
 { [Function] sync: [Function] }
 { name: 'read-pkg',
@@ -66,7 +66,7 @@ exports[`installer basic 1`] = `
 child process exited with code 0"
 `;
 
-exports[`installer basic 2`] = `
+exports[`aliases basic 2`] = `
 "{
 	\\"v\\": \\"1\\",
 	\\"resolutions\\": [
@@ -363,7 +363,7 @@ exports[`installer basic 2`] = `
 "
 `;
 
-exports[`installer basic 3`] = `
+exports[`aliases basic 3`] = `
 Array [
   "lock",
   "lock.cmd",

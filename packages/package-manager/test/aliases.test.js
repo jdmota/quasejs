@@ -8,7 +8,7 @@ const path = require( "path" );
 // $FlowIgnore
 jest.setTimeout( 30000 );
 
-describe( "installer", () => {
+describe( "aliases", () => {
 
   it( "basic", async() => {
 
