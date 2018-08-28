@@ -1,9 +1,10 @@
 import { Installer } from "../src/commands/installer";
 import { InstallReporterNoop } from "../src/reporters/installer";
-import { testProcess, store } from "./utils";
+import { testProcess, createStore } from "./utils";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
+const store = createStore( "aliases" );
 
 // $FlowIgnore
 jest.setTimeout( 30000 );

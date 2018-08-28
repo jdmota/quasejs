@@ -27,4 +27,8 @@ export async function testProcess( file ) {
   return str;
 }
 
-export const store = path.resolve( require( "os" ).homedir(), ".qpm-store-test" );
+const homedir = require( "os" ).homedir();
+
+export function createStore( key ) {
+  return path.resolve( homedir, ".qpm-store-test", key );
+}
