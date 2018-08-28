@@ -1,0 +1,263 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`add: added - dev 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "3.0.0",
+  },
+  Object {
+    "alias": "write",
+    "spec": "npm:write-pkg@3.0.0",
+  },
+  Object {
+    "alias": "load-json-file",
+    "spec": "^5.0.0",
+  },
+  Object {
+    "alias": "w",
+    "spec": "npm:write-json-file@^3.0.0",
+  },
+  Object {
+    "alias": "write-pkg",
+    "spec": "^3.2.0",
+  },
+]
+`;
+
+exports[`add: added - null 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "3.0.0",
+  },
+  Object {
+    "alias": "write",
+    "spec": "npm:write-pkg@3.0.0",
+  },
+  Object {
+    "alias": "load-json-file",
+    "spec": "^5.0.0",
+  },
+  Object {
+    "alias": "w",
+    "spec": "npm:write-json-file@^3.0.0",
+  },
+  Object {
+    "alias": "write-pkg",
+    "spec": "^3.2.0",
+  },
+]
+`;
+
+exports[`add: added - optional 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "3.0.0",
+  },
+  Object {
+    "alias": "write",
+    "spec": "npm:write-pkg@3.0.0",
+  },
+  Object {
+    "alias": "load-json-file",
+    "spec": "^5.0.0",
+  },
+  Object {
+    "alias": "w",
+    "spec": "npm:write-json-file@^3.0.0",
+  },
+  Object {
+    "alias": "write-pkg",
+    "spec": "^3.2.0",
+  },
+]
+`;
+
+exports[`add: added - prod 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "3.0.0",
+  },
+  Object {
+    "alias": "write",
+    "spec": "npm:write-pkg@3.0.0",
+  },
+  Object {
+    "alias": "load-json-file",
+    "spec": "^5.0.0",
+  },
+  Object {
+    "alias": "w",
+    "spec": "npm:write-json-file@^3.0.0",
+  },
+  Object {
+    "alias": "write-pkg",
+    "spec": "^3.2.0",
+  },
+]
+`;
+
+exports[`add: pkg - dev 1`] = `
+Object {
+  "dependencies": Object {},
+  "devDependencies": Object {
+    "load-json-file": "^5.0.0",
+    "read-pkg": "3.0.0",
+    "w": "npm:write-json-file@^3.0.0",
+    "write": "npm:write-pkg@3.0.0",
+    "write-pkg": "^3.2.0",
+  },
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`add: pkg - null 1`] = `
+Object {
+  "dependencies": Object {
+    "load-json-file": "^5.0.0",
+    "read-pkg": "3.0.0",
+    "w": "npm:write-json-file@^3.0.0",
+    "write": "npm:write-pkg@3.0.0",
+  },
+  "devDependencies": Object {
+    "write-pkg": "^3.2.0",
+  },
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`add: pkg - optional 1`] = `
+Object {
+  "dependencies": Object {},
+  "devDependencies": Object {},
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {
+    "load-json-file": "^5.0.0",
+    "read-pkg": "3.0.0",
+    "w": "npm:write-json-file@^3.0.0",
+    "write": "npm:write-pkg@3.0.0",
+    "write-pkg": "^3.2.0",
+  },
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`add: pkg - prod 1`] = `
+Object {
+  "dependencies": Object {
+    "load-json-file": "^5.0.0",
+    "read-pkg": "3.0.0",
+    "w": "npm:write-json-file@^3.0.0",
+    "write": "npm:write-pkg@3.0.0",
+    "write-pkg": "^3.2.0",
+  },
+  "devDependencies": Object {},
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`remove: pkg - dev 1`] = `
+Object {
+  "dependencies": Object {
+    "read-pkg": "^3.0.0",
+  },
+  "devDependencies": Object {},
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`remove: pkg - null 1`] = `
+Object {
+  "dependencies": Object {},
+  "devDependencies": Object {},
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`remove: pkg - optional 1`] = `
+Object {
+  "dependencies": Object {
+    "read-pkg": "^3.0.0",
+  },
+  "devDependencies": Object {
+    "write-pkg": "^2.0.0",
+  },
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`remove: pkg - prod 1`] = `
+Object {
+  "dependencies": Object {},
+  "devDependencies": Object {
+    "write-pkg": "^2.0.0",
+  },
+  "main": "index.js",
+  "name": "test",
+  "optionalDependencies": Object {},
+  "private": true,
+  "version": "0.18.0",
+}
+`;
+
+exports[`remove: removed - dev 1`] = `
+Array [
+  Object {
+    "alias": "write-pkg",
+    "spec": "^2.0.0",
+  },
+]
+`;
+
+exports[`remove: removed - null 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "^3.0.0",
+  },
+  Object {
+    "alias": "write-pkg",
+    "spec": "^2.0.0",
+  },
+]
+`;
+
+exports[`remove: removed - optional 1`] = `Array []`;
+
+exports[`remove: removed - prod 1`] = `
+Array [
+  Object {
+    "alias": "read-pkg",
+    "spec": "^3.0.0",
+  },
+]
+`;

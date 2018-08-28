@@ -6,12 +6,30 @@ import { parse, type Parsed } from "./resolve";
 const readPkg = require( "read-pkg" );
 const writePkg = require( "write-pkg" );
 const semver = require( "semver" );
+const { fixer } = require( "normalize-package-data" );
+
+const mustFix = [ "fixNameField", "fixVersionField", "fixDependencies" ];
+
+const thingsToFix = [
+  "fixDescriptionField", "fixRepositoryField", "fixModulesField",
+  "fixScriptsField", "fixFilesField", "fixBinField", "fixManField",
+  "fixBugsField", "fixKeywordsField", "fixHomepageField",
+  "fixLicenseField", "fixPeople", "fixTypos"
+];
 
 type DependenciesType = "dependencies" | "devDependencies" | "optionalDependencies";
 const dependenciesTypes: DependenciesType[] = [ "dependencies", "devDependencies", "optionalDependencies" ];
 
-export async function read( folder: string, ignoreValidation: ?boolean ): Promise<Object> {
-  const x = await readPkg( { cwd: folder, normalize: true } );
+export async function read(
+  folder: string,
+  ignoreValidation: ?boolean,
+  normalize: ?boolean
+): Promise<Object> {
+  const x = await readPkg( { cwd: folder, normalize: false } );
+  mustFix.forEach( f => fixer[ f ]( x, false ) );
+  if ( normalize ) {
+    thingsToFix.forEach( f => fixer[ f ]( x, false ) );
+  }
   for ( const type of dependenciesTypes ) {
     if ( x[ type ] == null ) {
       x[ type ] = {};
@@ -94,7 +112,7 @@ export function validate( pkg: Object ) {
 
 // Adapted from pnpm/supi
 
-function guessDependencyType( name: AliasName, pkg: Object ): DependenciesType {
+function guessDependencyType( name: string, pkg: Object ): DependenciesType {
   return dependenciesTypes.find( type => pkg[ type ] && pkg[ type ][ name ] ) || "dependencies";
 }
 

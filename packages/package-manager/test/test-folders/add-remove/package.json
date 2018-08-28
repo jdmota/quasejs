@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "name": "test",
+  "main": "index.js",
+  "version": "0.18.0",
+  "dependencies": {
+    "read-pkg": "^3.0.0"
+  },
+  "devDependencies": {
+    "write-pkg": "^2.0.0"
+  }
+}

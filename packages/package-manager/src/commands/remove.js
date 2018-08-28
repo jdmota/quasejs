@@ -8,9 +8,17 @@ import installer from "./installer";
 
 const logSymbols = require( "log-symbols" );
 
-export default async function( options: Options, input: string[] ) {
+export async function removeHelper( options: Options, input: string[] ) {
   const pkg = options.global ? await readGlobal( options.folder ) : await read( options.folder );
   const removed = remove( pkg, input, normalizeType( options.type ) );
+  return {
+    pkg,
+    removed
+  };
+}
+
+export default async function( options: Options, input: string[] ) {
+  const { pkg, removed } = await removeHelper( options, input );
   if ( removed.length > 0 ) {
     await write( options.folder, pkg );
 

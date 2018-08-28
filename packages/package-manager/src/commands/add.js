@@ -39,10 +39,18 @@ async function inputMapper( required: string ): Promise<{
 
 /* eslint-disable no-console */
 
-export default async function( options: Options, input: string[] ) {
+export async function addHelper( options: Options, input: string[] ) {
   const pkg = options.global ? await readGlobal( options.folder ) : await read( options.folder );
   const packages = await Promise.all( input.map( inputMapper ) );
   const added = add( pkg, packages, normalizeType( options.type ) );
+  return {
+    pkg,
+    added
+  };
+}
+
+export default async function( options: Options, input: string[] ) {
+  const { pkg, added } = await addHelper( options, input );
   if ( added.length > 0 ) {
     await write( options.folder, pkg );
 

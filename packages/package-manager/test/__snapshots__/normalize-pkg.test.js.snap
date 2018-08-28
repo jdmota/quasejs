@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`normalize package.json 1`] = `
+"{
+  \\"private\\": true,
+  \\"name\\": \\"test\\",
+  \\"version\\": \\"0.1.0\\",
+  \\"bin\\": {
+    \\"test\\": \\"./bin/index.js\\"
+  },
+  \\"dependencies\\": {},
+  \\"devDependencies\\": {
+    \\"write-pkg\\": \\"^3.2.0\\",
+    \\"read-pkg\\": \\"^4.0.1\\"
+  },
+  \\"optionalDependencies\\": {}
+}"
+`;
