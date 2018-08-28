@@ -1,5 +1,7 @@
 // @flow
+import { toStr } from "./types";
 import { error } from "./utils";
+import { parse, type Parsed } from "./resolve";
 
 const readPkg = require( "read-pkg" );
 const writePkg = require( "write-pkg" );
@@ -47,14 +49,21 @@ export async function write( folder: string, json: Object ) {
   return writePkg( folder, json );
 }
 
+export function iterate( obj: ?Object, cb: Parsed => void ) {
+  if ( obj ) {
+    for ( const alias in obj ) {
+      cb( parse( alias, obj[ alias ] ) );
+    }
+  }
+}
+
 export function validate( pkg: Object ) {
 
   const { name, version } = pkg;
 
-  const dependencies = Object.keys( pkg.dependencies );
-
-  for ( const dep of dependencies ) {
-    if ( dep === name && semver.satisfies( version, pkg.dependencies[ dep ] ) ) {
+  iterate( pkg.dependencies, parsed => {
+    const dep = toStr( parsed.alias );
+    if ( dep === name ) {
       throw error( `${dep} cannot depend on himself. See dependencies` );
     }
     if ( pkg.devDependencies[ dep ] != null ) {
@@ -62,32 +71,30 @@ export function validate( pkg: Object ) {
     } else if ( pkg.optionalDependencies[ dep ] != null ) {
       throw error( `${dep} appears in both dependencies and optionalDependencies` );
     }
-  }
+  } );
 
-  const devDependencies = Object.keys( pkg.devDependencies );
-
-  for ( const dep of devDependencies ) {
-    if ( dep === name && semver.satisfies( version, pkg.devDependencies[ dep ] ) ) {
+  iterate( pkg.devDependencies, parsed => {
+    const dep = toStr( parsed.alias );
+    if ( dep === name && semver.satisfies( version, parsed.version ) ) {
       throw error( `${dep} cannot depend on himself. See devDependencies` );
     }
     if ( pkg.optionalDependencies[ dep ] != null ) {
       throw error( `${dep} appears in both devDependencies and optionalDependencies` );
     }
-  }
+  } );
 
-  const optionalDependencies = Object.keys( pkg.optionalDependencies );
-
-  for ( const dep of optionalDependencies ) {
-    if ( dep === name && semver.satisfies( version, pkg.optionalDependencies[ dep ] ) ) {
+  iterate( pkg.optionalDependencies, parsed => {
+    const dep = toStr( parsed.alias );
+    if ( dep === name ) {
       throw error( `${dep} cannot depend on himself. See optionalDependencies` );
     }
-  }
+  } );
 
 }
 
 // Adapted from pnpm/supi
 
-function guessDependencyType( name: string, pkg: Object ): DependenciesType {
+function guessDependencyType( name: AliasName, pkg: Object ): DependenciesType {
   return dependenciesTypes.find( type => pkg[ type ] && pkg[ type ][ name ] ) || "dependencies";
 }
 
@@ -105,29 +112,32 @@ export function normalizeType( type: ?( "prod" | "dev" | "optional" ) ) {
 
 export function add(
   packageJson: Object,
-  packageSpecs: ( {
-    name: string,
-    version: string
-  } )[],
+  packageSpecs: $ReadOnlyArray<{ +alias: string, +spec: string }>,
   saveType: ?DependenciesType
-): { name: string, version: string }[] {
+): $ReadOnlyArray<{ +alias: string, +spec: string }> {
   const added = [];
 
   for ( const dependency of packageSpecs ) {
 
-    const type = saveType || guessDependencyType( dependency.name, packageJson );
+    const type = saveType || guessDependencyType( dependency.alias, packageJson );
 
     if ( packageJson[ type ] ) {
-      if ( packageJson[ type ][ dependency.name ] === dependency.version ) {
+      if ( packageJson[ type ][ dependency.alias ] === dependency.spec ) {
         continue;
       }
     } else {
       packageJson[ type ] = {};
     }
 
-    packageJson[ type ][ dependency.name ] = dependency.version;
-    added.push( dependency );
+    for ( const t of dependenciesTypes ) {
+      if ( t === type ) {
+        packageJson[ type ][ dependency.alias ] = dependency.spec;
+      } else {
+        delete packageJson[ t ][ dependency.alias ];
+      }
+    }
 
+    added.push( dependency );
   }
 
   return added;
@@ -137,19 +147,19 @@ export function remove(
   packageJson: Object,
   removedPackages: string[],
   saveType: ?DependenciesType
-): { name: string, version: string }[] {
+): $ReadOnlyArray<{ +alias: string, +spec: string }> {
   const types = saveType ? [ saveType ] : dependenciesTypes;
   const removed = [];
 
   for ( const deptype of types ) {
     if ( packageJson[ deptype ] ) {
-      for ( const name of removedPackages ) {
-        const version = packageJson[ deptype ][ name ];
-        if ( version != null ) {
-          delete packageJson[ deptype ][ name ];
+      for ( const alias of removedPackages ) {
+        const spec = packageJson[ deptype ][ alias ];
+        if ( spec != null ) {
+          delete packageJson[ deptype ][ alias ];
           removed.push( {
-            name,
-            version
+            alias,
+            spec
           } );
         }
       }

@@ -1,6 +1,6 @@
 // @flow
 import { InstallReporter } from "../reporters/installer";
-import type { Name, Resolved, Options, Warning } from "../types";
+import type { AliasName, Resolved, Options, Warning } from "../types";
 import { error, mapGet } from "../utils";
 import { read as readPkg, readGlobal as readGlobalPkg } from "../pkg";
 import {
@@ -10,7 +10,7 @@ import {
   read as readLockfile,
   write as writeLockfile
 } from "../lockfile";
-import { ResolutionSet, Tree } from "../resolution";
+import { Tree, Resolution } from "../resolution";
 import Store from "../store";
 import { Resolver } from "../resolve";
 
@@ -22,7 +22,7 @@ export class Installer {
   +opts: Options;
   +reporter: InstallReporter;
   +tree: Tree;
-  +rootDeps: ResolutionSet;
+  +rootDeps: Map<AliasName, Resolution>;
   +warn: Warning => void;
   reuseLockfile: boolean;
 
@@ -34,7 +34,7 @@ export class Installer {
     };
     this.store = new Store( opts, this );
     this.tree = new Tree();
-    this.rootDeps = new ResolutionSet();
+    this.rootDeps = new Map();
     this.reuseLockfile = false;
   }
 

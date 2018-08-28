@@ -1,11 +1,11 @@
 // @flow
 import { hash, read, readJSON, crawl } from "./utils";
-import type { Name, Resolved, Integrity, Options, Warning } from "./types";
+import type { AliasName, Resolved, Integrity, Options, Warning } from "./types";
 import { toStr, pathJoin } from "./types";
 import pacoteOptions from "./pacote-options";
 import linkBins from "./link-bins";
 import { read as readPkg } from "./pkg";
-import type { Resolution, ResolutionSet } from "./resolution";
+import type { Resolution } from "./resolution";
 import type { Installer } from "./commands/installer";
 
 const fs = require( "fs-extra" );
@@ -168,13 +168,13 @@ export default class Store {
 
     const promises = [];
 
-    resolution.set.forEach( depRes => {
+    resolution.forEach( ( alias, depRes ) => {
       promises.push( ( () => {
-        if ( resolution.data.name !== depRes.data.name ) {
+        if ( alias !== resolution.data.name ) {
           if ( !depRes.resFolder ) {
             throw new Error( "Assertion: missing resFolder in dependency" );
           }
-          return symlinkDir( depRes.resFolder, pathJoin( resFolder, "..", depRes.data.name ) );
+          return symlinkDir( depRes.resFolder, pathJoin( resFolder, "..", alias ) );
         }
       } )() );
     } );
@@ -182,14 +182,14 @@ export default class Store {
     await Promise.all( promises );
   }
 
-  async removeExcess( folder: string, set: ResolutionSet ) {
+  async removeExcess( folder: string, map: Map<AliasName, Resolution> ) {
 
     const promises = [];
 
     for ( const nameStr of await fs.readdir( folder ) ) {
-      const name: Name = nameStr;
+      const name: AliasName = nameStr;
 
-      if ( name !== ".bin" && !set.has( name ) ) {
+      if ( name !== ".bin" && !map.has( name ) ) {
         promises.push( fs.remove( path.join( folder, nameStr ) ) );
       }
     }
@@ -209,10 +209,10 @@ export default class Store {
     return binsFolder;
   }
 
-  async linkOneNodeModule( folder: string, res: Resolution, binOpts: Object ) {
+  async linkOneNodeModule( folder: string, alias: AliasName, res: Resolution, binOpts: Object ) {
     const { resFolder, filesFolder } = res;
     const { binPath, usedCmds } = binOpts;
-    const depFolder = pathJoin( folder, "node_modules", res.data.name );
+    const depFolder = pathJoin( folder, "node_modules", alias );
 
     const p1 = linkBins( {
       pkg: await readPkg( filesFolder, true ),
@@ -227,20 +227,20 @@ export default class Store {
     await Promise.all( [ p1, p2 ] );
   }
 
-  async linkNodeModules( folder: string, set: ResolutionSet ) {
+  async linkNodeModules( folder: string, map: Map<AliasName, Resolution> ) {
     const promises = [];
     const nodeModulesFolder = await this.ensureNodeModulesFolder( folder );
 
-    promises.push( this.removeExcess( nodeModulesFolder, set ) );
+    promises.push( this.removeExcess( nodeModulesFolder, map ) );
 
     const binOpts = {
       binPath: await this.ensureBinsFolder( folder ),
       usedCmds: {}
     };
 
-    set.forEach( res => {
-      promises.push( this.linkOneNodeModule( folder, res, binOpts ) );
-    } );
+    for ( const [ alias, res ] of map ) {
+      promises.push( this.linkOneNodeModule( folder, alias, res, binOpts ) );
+    }
 
     await Promise.all( promises );
   }

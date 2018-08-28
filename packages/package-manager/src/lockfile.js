@@ -1,5 +1,5 @@
 // @flow
-import type { Name, Version, ExactVersion, Resolved, Integrity } from "./types";
+import type { AliasName, ActualName, Spec, ExactVersion, Resolved, Integrity } from "./types";
 import { error, isObject } from "./utils";
 
 const path = require( "path" );
@@ -11,14 +11,14 @@ const FILENAME = "qpm-lockfile.json";
 const LOCK_VERSION = "1";
 
 export type Deps = {
-  [name: Name]: {|
-    savedVersion: Version,
+  [name: AliasName]: {|
+    spec: Spec,
     resolved: Resolved,
     i: number
   |}
 };
 
-export type Entry = [Name, ExactVersion, Resolved, Integrity, number[]];
+export type Entry = [ActualName, ExactVersion, Resolved, Integrity, { [alias: AliasName]: number }];
 
 export type Lockfile = {|
   v: string,
@@ -48,7 +48,7 @@ function validateEntry( entry: Object ): boolean {
   invariant( typeof entry[ 1 ] === "string" );
   invariant( typeof entry[ 2 ] === "string" );
   invariant( typeof entry[ 3 ] === "string" );
-  invariant( Array.isArray( entry[ 4 ] ) );
+  invariant( entry[ 4 ] != null && typeof entry[ 4 ] === "object" );
   return true;
 }
 

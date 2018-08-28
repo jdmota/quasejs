@@ -1,7 +1,7 @@
 // @flow
 import { hash } from "./utils";
 import { toStr } from "./types";
-import type { Name, Resolved, PartialResolvedObj } from "./types";
+import type { AliasName, Resolved, PartialResolvedObj } from "./types";
 import type { Entry } from "./lockfile";
 
 const VERSION = 1;
@@ -10,7 +10,8 @@ const VERSION = 1;
 export class Resolution {
 
   +data: PartialResolvedObj;
-  +set: ResolutionSet; // eslint-disable-line no-use-before-define
+  +deps: Map<AliasName, Resolution>;
+  +depsAlias: AliasName[];
   filesFolder: string;
   resFolder: string;
   _hashCode: ?string;
@@ -19,25 +20,28 @@ export class Resolution {
   static compare( curr: Resolution, next: Resolution ) {
     if ( curr === next ) return 0;
     // $FlowIgnore
-    const currData: { name: string, version: string, resolved: string } = curr.data;
+    const currData: { resolved: string } = curr.data;
     // $FlowIgnore
-    const nextData: { name: string, version: string, resolved: string } = next.data;
-
-    let c = currData.name.localeCompare( nextData.name );
-    if ( c !== 0 ) return c;
-    c = currData.version.localeCompare( nextData.version );
-    if ( c !== 0 ) return c;
-    c = currData.resolved.localeCompare( nextData.resolved );
-    return c;
+    const nextData: { resolved: string } = next.data;
+    return currData.resolved.localeCompare( nextData.resolved );
   }
 
   constructor( data: PartialResolvedObj ) {
     this.data = data;
-    this.set = new ResolutionSet();
+    this.deps = new Map();
+    this.depsAlias = [];
     this.filesFolder = "";
     this.resFolder = "";
     this._hashCode = null;
     this._string = null;
+  }
+
+  addDep( alias: AliasName, resolution: Resolution ) {
+    if ( this.deps.has( alias ) ) {
+      throw new Error( `${toStr( alias )} already exists in ${toStr( this.data.resolved )}` );
+    }
+    this.deps.set( alias, resolution );
+    this.depsAlias.push( alias );
   }
 
   hashCode() {
@@ -51,7 +55,9 @@ export class Resolution {
     if ( this._string == null ) {
       const arr = [];
       this.buildFlat( arr );
-      this._string = VERSION + "\n" + arr.map( ( [ , , resolved, integrity, deps ] ) => `${toStr( resolved )},${toStr( integrity )},${deps.join( "," )}` ).join( "\n" );
+      this._string = VERSION + "\n" + arr.map(
+        ( [ , , resolved, integrity, deps ] ) => JSON.stringify( [ resolved, integrity, deps ] )
+      ).join( "\n" );
     }
     return this._string;
   }
@@ -67,17 +73,33 @@ export class Resolution {
       return currIdx;
     }
 
-    const deps = [];
-    const entry: Entry = [ this.data.name, this.data.version, resolved, this.data.integrity, deps ];
+    const deps = {};
+    const entry: Entry = [
+      this.data.name,
+      this.data.version,
+      resolved,
+      this.data.integrity,
+      deps
+    ];
 
     const idx = arr.push( entry ) - 1;
     map.set( resolved, idx );
 
-    this.set.forEach( resolution => {
-      deps.push( resolution.buildFlat( arr, map ) );
+    this.forEach( ( alias, resolution ) => {
+      deps[ toStr( alias ) ] = resolution.buildFlat( arr, map );
     } );
 
     return idx;
+  }
+
+  forEach( cb: ( AliasName, Resolution ) => void ) {
+    const allAlias = this.depsAlias.sort();
+
+    for ( const alias of allAlias ) {
+      // $FlowIgnore
+      const resolution: Resolution = this.deps.get( alias );
+      cb( alias, resolution );
+    }
   }
 
 }
@@ -91,12 +113,10 @@ type Node = {
 // A set of sorted resolutions
 export class ResolutionSet {
 
-  +names: Set<Name>;
   size: number;
   _root: ?Node;
 
   constructor() {
-    this.names = new Set();
     this.size = 0;
     this._root = null;
   }
@@ -132,12 +152,7 @@ export class ResolutionSet {
     }
   }
 
-  has( name: Name ): boolean {
-    return this.names.has( name );
-  }
-
   _node( value: Resolution ): Node {
-    this.names.add( value.data.name );
     this.size++;
     return {
       value: value,

@@ -1,11 +1,15 @@
 // @flow
 import type { Installer } from "./commands/installer";
-import type { Name, Version, ExactVersion, ResolvedObj, Options, DepType } from "./types";
+import type {
+  AliasName, ActualName, Spec, RangeVersion, ExactVersion,
+  ResolvedObj, Options, DepType
+} from "./types";
 import { error } from "./utils";
-import type { Resolution } from "./resolution";
+import { type Resolution } from "./resolution";
 import { toStr } from "./types";
 import type { Lockfile } from "./lockfile";
 import pacoteOptions from "./pacote-options";
+import { iterate as iteratePkg } from "./pkg";
 
 const npa = require( "npm-package-arg" );
 const pacote = require( "pacote" );
@@ -13,9 +17,15 @@ const semver = require( "semver" );
 
 type Requester = Resolution | DepType;
 
+export type Parsed = {
+  alias: AliasName,
+  name: ActualName,
+  version: RangeVersion,
+  spec: Spec
+};
+
 type Queued = {|
-  +name: Name,
-  +version: Version,
+  +parsed: Parsed;
   +where: Requester,
   +job: Promise<ResolvedObj>
 |};
@@ -30,9 +40,9 @@ export class Resolver {
   +newLockfile: Object;
   +reuseLockfile: boolean;
   +frozenLockfile: boolean;
-  +sortedLockfile: Map<Name, { version: ExactVersion, index: number }[]>;
-  +results: Map<Name, ResolvedObj[]>;
-  queueMap: Map<Name, Queued[]>;
+  +sortedLockfile: Map<ActualName, { version: ExactVersion, index: number }[]>;
+  +results: Map<ActualName, ResolvedObj[]>;
+  queueMap: Map<ActualName, Queued[]>;
 
   constructor( installer: Installer, pkg: Object, lockfile: Lockfile, newLockfile: Lockfile ) {
     this.installer = installer;
@@ -49,91 +59,92 @@ export class Resolver {
     this.queueMap = new Map();
   }
 
-  findInLockfile( name: Name, version: Version ): ?number {
+  findInLockfile( parsed: Parsed ): ?number {
     if ( this.reuseLockfile ) {
-      const resolves = this.sortedLockfile.get( name );
+      const resolves = this.sortedLockfile.get( parsed.name );
       if ( !resolves ) {
         return;
       }
       for ( const obj of resolves ) {
-        if ( semver.satisfies( obj.version, version ) ) {
+        if ( semver.satisfies( obj.version, parsed.version ) ) {
           return obj.index;
         }
       }
     }
   }
 
-  findInResults( name: Name, version: Version ): ?ResolvedObj {
-    const resolves = this.results.get( name );
+  findInResults( parsed: Parsed ): ?ResolvedObj {
+    const resolves = this.results.get( parsed.name );
     if ( !resolves ) {
       return;
     }
     for ( const obj of resolves ) {
-      if ( semver.satisfies( obj.version, version ) ) {
+      if ( semver.satisfies( obj.version, parsed.version ) ) {
         return obj;
       }
     }
   }
 
-  addResult( name: Name, result: ResolvedObj ) {
-    let arr = this.results.get( name );
+  addResult( parsed: Parsed, result: ResolvedObj ) {
+    let arr = this.results.get( parsed.name );
     if ( !arr ) {
       arr = [];
-      this.results.set( name, arr );
+      this.results.set( parsed.name, arr );
     }
     arr.push( result );
   }
 
-  queueResolve( name: Name, version: Version, where: Requester ) {
-    let arr = this.queueMap.get( name );
+  queueResolve( parsed: Parsed, where: Requester ) {
+    let arr = this.queueMap.get( parsed.name );
     if ( !arr ) {
       arr = [];
-      this.queueMap.set( name, arr );
+      this.queueMap.set( parsed.name, arr );
     }
 
     arr.push( {
-      name,
-      version,
+      parsed,
       where,
-      job: resolve( name, version, this.installer.opts )
+      job: resolve( parsed, this.installer.opts )
     } );
 
     this.installer.reporter.resolutionMore();
   }
 
-  handleNew( obj: ResolvedObj, where: Requester ) {
-    const { name, version, savedVersion, resolved, integrity, deps } = obj;
-    const { isNew, resolution } = this.installer.tree.createResolution( { name, version, resolved, integrity } );
+  handleNew( obj: ResolvedObj, where: Requester, parsed: Parsed ) {
+    const { name, version, resolved, integrity, deps } = obj;
+    const { isNew, resolution } = this.installer.tree.createResolution( {
+      name,
+      version,
+      resolved,
+      integrity
+    } );
 
     if ( isNew ) {
-      for ( const nameStr in deps ) {
-        // $FlowIgnore
-        const name: Name = nameStr;
-        const savedVersion = deps[ name ];
-        const possibleIdx = this.findInLockfile( name, savedVersion );
+      iteratePkg( deps, parsed => {
+        const possibleIdx = this.findInLockfile( parsed );
 
         if ( possibleIdx == null ) {
-          const obj = this.findInResults( name, savedVersion );
+          const obj = this.findInResults( parsed );
           if ( obj ) {
-            this.handleNew( obj, resolution );
+            this.handleNew( obj, resolution, parsed );
           } else {
-            this.queueResolve( name, savedVersion, resolution );
+            this.queueResolve( parsed, resolution );
           }
         } else {
-          resolution.set.add( this.handleFromLock( possibleIdx ) );
+          resolution.addDep( parsed.alias, this.handleFromLock( possibleIdx ) );
         }
-      }
+      } );
     }
 
     if ( typeof where === "string" ) {
-      this.installer.rootDeps.add( resolution );
-      this.newLockfile[ where ][ name ] = {
-        savedVersion,
+      this.installer.rootDeps.set( parsed.alias, resolution );
+      this.newLockfile[ where ][ parsed.alias ] = {
+        spec: parsed.spec,
         resolved,
         i: -1
       };
     } else {
-      where.set.add( resolution );
+      where.addDep( parsed.alias, resolution );
     }
   }
 
@@ -145,29 +156,34 @@ export class Resolver {
     }
 
     const [ name, version, resolved, integrity ] = tuple;
-    const { isNew, resolution } = this.installer.tree.createResolution( { name, version, resolved, integrity } );
+    const { isNew, resolution } = this.installer.tree.createResolution( {
+      name,
+      version,
+      resolved,
+      integrity
+    } );
 
     if ( isNew ) {
-      const indexes = this.lockfile.resolutions[ index ][ 4 ];
-      for ( const i of indexes ) {
-        resolution.set.add( this.handleFromLock( i ) );
+      const deps = this.lockfile.resolutions[ index ][ 4 ];
+      for ( const aliasStr in deps ) {
+        // $FlowIgnore
+        const alias: AliasName = aliasStr;
+        resolution.addDep( alias, this.handleFromLock( deps[ alias ] ) );
       }
     }
 
     return resolution;
   }
 
-  handleRootDeps( nameStr: string, version: Version, where: Requester ) {
-    // $FlowIgnore
-    const name: Name = nameStr;
+  handleRootDeps( parsed: Parsed, type: DepType ) {
 
     if ( this.reuseLockfile ) {
-      const dep = this.lockfile[ where ][ name ];
+      const dep = this.lockfile[ type ][ parsed.alias ];
       if ( dep ) {
-        const { savedVersion, i } = dep;
-        if ( savedVersion === version ) {
-          this.installer.rootDeps.add( this.handleFromLock( i ) );
-          this.newLockfile[ where ][ name ] = dep;
+        const { spec, i } = dep;
+        if ( spec === parsed.spec ) {
+          this.installer.rootDeps.set( parsed.alias, this.handleFromLock( i ) );
+          this.newLockfile[ type ][ parsed.alias ] = dep;
           return;
         }
         // Usually, if a version in package.json is different than before,
@@ -181,24 +197,24 @@ export class Resolver {
     }
 
     // We have no results yet since we are still handling the dependencies in pkg
-    this.queueResolve( name, version, where );
+    this.queueResolve( parsed, type );
   }
 
   async start() {
 
-    for ( const name in this.pkg.dependencies ) {
-      this.handleRootDeps( name, this.pkg.dependencies[ name ], "deps" );
-    }
+    iteratePkg( this.pkg.dependencies, parsed => {
+      this.handleRootDeps( parsed, "deps" );
+    } );
 
     if ( !this.installer.opts.production ) {
-      for ( const name in this.pkg.devDependencies ) {
-        this.handleRootDeps( name, this.pkg.devDependencies[ name ], "devDeps" );
-      }
+      iteratePkg( this.pkg.devDependencies, parsed => {
+        this.handleRootDeps( parsed, "devDeps" );
+      } );
     }
 
-    for ( const name in this.pkg.optionalDependencies ) {
-      this.handleRootDeps( name, this.pkg.optionalDependencies[ name ], "optionalDeps" );
-    }
+    iteratePkg( this.pkg.optionalDependencies, parsed => {
+      this.handleRootDeps( parsed, "optionalDeps" );
+    } );
 
     while ( this.queueMap.size > 0 ) {
 
@@ -207,8 +223,8 @@ export class Resolver {
 
       // Cache resolve results
       for ( const queuedList of queueMap.values() ) {
-        for ( const { name, job } of queuedList ) {
-          this.addResult( name, await job );
+        for ( const { parsed, job } of queuedList ) {
+          this.addResult( parsed, await job );
           this.installer.reporter.resolutionMore();
         }
       }
@@ -220,10 +236,10 @@ export class Resolver {
 
       for ( const queuedList of queueMap.values() ) {
         for ( const queued of queuedList ) {
-          const { name, version, where } = queued;
-          const obj = this.findInResults( name, version );
+          const { parsed, where } = queued;
+          const obj = this.findInResults( parsed );
           if ( obj ) {
-            this.handleNew( obj, where );
+            this.handleNew( obj, where, parsed );
           } else {
             throw new Error( "Assertion" );
           }
@@ -236,35 +252,87 @@ export class Resolver {
 
 }
 
-async function resolve( name: Name, version: Version, opts: Options ): Promise<ResolvedObj> {
+export function parseSpec( spec: string ): { name: string, version: ?string } {
+  const i = spec.lastIndexOf( "@" );
 
-  if ( !name ) {
-    throw new Error( "Missing name" );
+  if ( i <= 0 ) {
+    const name = spec.trim();
+
+    return {
+      name,
+      version: null
+    };
   }
 
-  if ( !version ) {
-    throw new Error( `Missing version for name '${toStr( name )}'` );
+  const name = spec.slice( 0, i ).trim();
+  const version = spec.slice( i + 1 ).trim();
+
+  const validatedRange = semver.validRange( version );
+
+  if ( validatedRange == null ) {
+    throw error( `Invalid version/range for ${name}` );
   }
 
-  const spec = npa.resolve( name, version );
+  return {
+    name,
+    version: validatedRange
+  };
+}
+
+export function parseLoose( alias: string, spec: string ): {
+  alias: string,
+  name: string,
+  version: ?string,
+  spec: string
+} {
+  if ( spec.startsWith( "npm:" ) ) {
+    const { name, version } = parseSpec( spec.replace( /^npm:/, "" ) );
+    return {
+      alias,
+      name,
+      version,
+      spec
+    };
+  }
+  return {
+    alias,
+    name: alias,
+    version: spec,
+    spec
+  };
+}
+
+export function parse( alias: string, spec: string ): Parsed {
+  const parsed = parseLoose( alias, spec );
+  if ( parsed.version == null ) {
+    throw error(
+      `No version provided in ${JSON.stringify( parsed.alias )}: ${JSON.stringify( parsed.spec )}`
+    );
+  }
+  // $FlowIgnore
+  return parsed;
+}
+
+async function resolve( parsed: Parsed, opts: Options ): Promise<ResolvedObj> {
+
+  const spec = npa.resolve( parsed.name, parsed.version );
 
   const pkg = await pacote.manifest( spec, pacoteOptions( opts ) );
 
-  if ( pkg.name !== name ) {
-    throw new Error( `Name '${toStr( name )}' does not match the name in the manifest: ${pkg.name} (version: ${pkg.version})` );
+  if ( pkg.name !== parsed.name ) {
+    throw new Error( `Name '${toStr( parsed.name )}' does not match the name in the manifest: ${pkg.name} (version: ${pkg.version})` );
   }
 
   return {
     name: pkg.name,
     version: pkg.version,
-    savedVersion: version,
     resolved: pkg._resolved,
     integrity: pkg._integrity + "",
     deps: pkg.dependencies
   };
 }
 
-function sortLockfile( lockfile: Lockfile ): Map<Name, { version: ExactVersion, index: number }[]> {
+function sortLockfile( lockfile: Lockfile ): Map<ActualName, { version: ExactVersion, index: number }[]> {
   const map = new Map();
   const { resolutions } = lockfile;
   for ( let i = 0; i < resolutions.length; i++ ) {

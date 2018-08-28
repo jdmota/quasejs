@@ -1,38 +1,39 @@
 // @flow
 import type { Options } from "../types";
 import { error } from "../utils";
+import { parseLoose } from "../resolve";
 import { read, readGlobal, write, add, normalizeType } from "../pkg";
 import installer from "./installer";
 
 // $FlowIgnore
 const latestVersion = require( "latest-version" );
 const logSymbols = require( "log-symbols" );
-const semver = require( "semver" );
 
-async function inputMapper( required: string ): Promise<{ name: string, version: string }> {
-  const i = required.lastIndexOf( "@" );
+async function inputMapper( required: string ): Promise<{
+  alias: string,
+  spec: string
+}> {
 
-  if ( i <= 0 ) {
-    const name = required.trim();
+  // Starting from 1 to skip the @ that marks scope
+  const versionDelimiter = required.indexOf( "@", 1 );
 
+  if ( versionDelimiter === -1 ) {
     return {
-      name,
-      version: await latestVersion( name )
+      alias: required,
+      spec: `^${await latestVersion( required )}`
     };
   }
 
-  const name = required.slice( 0, i ).trim();
-  const version = required.slice( i + 1 ).trim();
+  const alias = required.substr( 0, versionDelimiter );
+  const spec = required.substr( versionDelimiter + 1 );
 
-  const validatedRange = semver.validRange( version );
-
-  if ( validatedRange == null ) {
-    throw error( `Invalid version/range for ${name}` );
-  }
+  const parsed = parseLoose( alias, spec );
 
   return {
-    name,
-    version: validatedRange
+    alias: parsed.alias,
+    spec: parsed.version ?
+      parsed.spec :
+      `${parsed.spec}@^${await latestVersion( parsed.name )}`
   };
 }
 
@@ -46,8 +47,8 @@ export default async function( options: Options, input: string[] ) {
     await write( options.folder, pkg );
 
     console.log( `${logSymbols.info} Adding:` );
-    for ( const { name, version } of added ) {
-      console.log( `  - ${name}@${version}` );
+    for ( const { alias, spec } of added ) {
+      console.log( `  - ${alias}@${spec}` );
     }
     console.log( "" );
   } else {

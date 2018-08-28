@@ -1,4 +1,5 @@
 // @flow
+import { type Warning } from "../types";
 import { BaseReporter } from "./base";
 
 /* eslint-disable no-console */
@@ -99,4 +100,31 @@ export class InstallReporter extends BaseReporter {
     this.spinner.text = `Updating lockfile...`;
   }
 
+}
+
+export class InstallReporterNoop extends InstallReporter {
+  start() {}
+  log( _: string ) {}
+  error( _: Object ) {}
+  warning( _: Warning ) {}
+  done() {}
+
+  resolutionStart( _: ?number ) {}
+  resolutionMore( _: ?number ) {}
+  resolutionUpdate() {}
+  extractionStart( _: ?number ) {}
+  extractionMore( _: ?number ) { }
+  extractionUpdate() {}
+  linkingStart( _: ?number ) {}
+  linkingMore( _: ?number ) {}
+  linkingUpdate() {}
+  localLinkingStart( _: ?number ) {}
+  localLinkingMore( _: ?number ) {}
+  localLinkingUpdate() {}
+  folder( _: { folder: string } ) {}
+  lockfile( _: { reusing: boolean } ) {}
+  jobStart( _: string, __: ?number ) {}
+  jobMore( _: ?number ) {}
+  jobUpdate() {}
+  updateLockfile() {}
 }

@@ -2,37 +2,38 @@
 
 const path = require( "path" );
 
-opaque type Name = string;
-opaque type Version = string;
+opaque type AliasName = string;
+opaque type ActualName = string;
+opaque type Spec = string;
 opaque type ExactVersion = string;
+opaque type RangeVersion = string;
 opaque type Resolved = string;
 opaque type Integrity = string;
 
-type DepType = "deps" | "devDeps" | "optionalDeps";
+export type DepType = "deps" | "devDeps" | "optionalDeps";
 
-type ResolvedObj = {
-  name: Name,
-  version: ExactVersion,
-  savedVersion: Version,
-  resolved: Resolved,
-  integrity: Integrity,
-  deps: { [name: Name]: Version }
-};
-
-type PartialResolvedObj = {
-  name: Name,
+export type PartialResolvedObj = {
+  name: ActualName,
   version: ExactVersion,
   resolved: Resolved,
   integrity: Integrity
 };
 
-export type { Name, Version, ExactVersion, Resolved, Integrity, PartialResolvedObj, ResolvedObj, DepType };
+export type ResolvedObj = PartialResolvedObj & {
+  deps: { [name: AliasName]: Spec }
+};
 
-export function toStr( str: Name | Version | ExactVersion | Resolved | Integrity ): string {
+export type {
+  AliasName, ActualName, Spec, ExactVersion, RangeVersion, Resolved, Integrity
+};
+
+export function toStr(
+  str: AliasName | ActualName | Spec | ExactVersion | RangeVersion | Resolved | Integrity
+): string {
   return str;
 }
 
-export function pathJoin( a: string, b: string, c: Name ) {
+export function pathJoin( a: string, b: string, c: AliasName ) {
   return path.join( a, b, c );
 }
 

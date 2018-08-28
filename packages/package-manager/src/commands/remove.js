@@ -15,8 +15,8 @@ export default async function( options: Options, input: string[] ) {
     await write( options.folder, pkg );
 
     console.log( `${logSymbols.info} Removing:` );
-    for ( const { name, version } of removed ) {
-      console.log( `  - ${name}@${version}` );
+    for ( const { alias, spec } of removed ) {
+      console.log( `  - ${alias}@${spec}` );
     }
     console.log( "" );
   } else {
