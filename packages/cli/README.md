@@ -86,7 +86,7 @@ cli( {
   options, // Flags, config, and defaults all applied
   flags, // The flags only (without defaults applied yet)
   config, // The config object only
-  configLocation, // The absolute path of the config file found or "pkg"
+  configLocation, // The absolute path of the config/package.json file found
   pkg, // The package.json object
   generateHelp, // Function that returns the help text used with --help
   showHelp, // showHelp([code=2]) - Show the help text and exit with code

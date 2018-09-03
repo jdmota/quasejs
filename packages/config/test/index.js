@@ -735,7 +735,8 @@ it( "get config", async() => {
   } );
 
   expect( result.config.configFromPkg ).toBe( "yes" );
-  expect( result.location ).toBe( "pkg" );
+  expect( typeof result.location ).toBe( "string" );
+  expect( result.location.endsWith( "package.json" ) ).toBe( true );
 
   result = await getConfig( {
     cwd: __dirname,
@@ -745,8 +746,7 @@ it( "get config", async() => {
 
   expect( result.config.iAmTheConfigFile2 ).toBe( "yes" );
   expect( result.config.configFromPkg ).toBe( undefined );
-  expect( typeof result.location ).toBe( "string" );
-  expect( result.location ).not.toBe( "pkg" );
+  expect( result.location.endsWith( "quase-config-2.js" ) ).toBe( true );
 
   await expect(
     getConfig( {
@@ -773,7 +773,6 @@ it( "get config", async() => {
 
   expect( result.config.fromFunction ).toBe( "yes" );
   expect( result.config.arg ).toBe( 10 );
-  expect( typeof result.location ).toBe( "string" );
-  expect( result.location ).not.toBe( "pkg" );
+  expect( result.location.endsWith( "quase-config-3.js" ) ).toBe( true );
 
 } );

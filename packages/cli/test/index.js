@@ -616,7 +616,7 @@ describe( "cli", () => {
     } );
 
     expect( config.configFromPkg ).toBe( "yes" );
-    expect( configLocation ).toBe( "pkg" );
+    expect( configLocation.endsWith( "package.json" ) ).toBe( true );
 
   } );
 
@@ -644,7 +644,7 @@ describe( "cli", () => {
     expect( options.iAmTheConfigFile2 ).toBe( "yes" );
     expect( options.configFromPkg ).toBe( undefined );
     expect( typeof configLocation ).toBe( "string" );
-    expect( configLocation ).not.toBe( "pkg" );
+    expect( configLocation.endsWith( "package.json" ) ).toBe( false );
 
   } );
 

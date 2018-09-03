@@ -10,7 +10,7 @@ export function validate( schema: Schema, config: ?Object ) {
 }
 
 export { apply } from "./defaults";
-export { getConfig } from "./get-config";
+export { loadConfigFrom, getConfig } from "./get-config";
 export { printWarning, printError } from "./print";
 
 export { t, types, toType, getType, ValidationError, checkType };

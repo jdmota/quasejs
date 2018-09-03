@@ -1,31 +1,40 @@
 const findUp = require( "find-up" );
 const pkgConf = require( "pkg-conf" );
 
+export function loadConfigFrom( location, arg ) {
+  const e = require( location );
+  const x = e && e.__esModule ? e.default : e;
+  return typeof x === "function" ? x( arg ) : x;
+}
+
 export async function getConfig( opts ) {
 
   const { cwd, configFiles, arg, configKey, failIfNotFound } = opts || {};
-  const result = {
-    config: undefined,
-    location: undefined
-  };
+  let config, location;
 
   if ( configFiles && configFiles.length ) {
-    const location = await findUp( configFiles, { cwd } );
+    const loc = await findUp( configFiles, { cwd } );
 
-    if ( location ) {
-      const e = require( location );
-      const x = e && e.__esModule ? e.default : e;
-      result.config = typeof x === "function" ? await x( arg ) : x;
-      result.location = location;
+    if ( loc ) {
+      config = await loadConfigFrom( loc, arg );
+      location = loc;
     } else if ( failIfNotFound ) {
       throw new Error( `Config file was not found: ${configFiles.toString()}` );
     }
   }
 
-  if ( !result.config && configKey ) {
-    result.config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
-    result.location = "pkg";
+  if ( !config && configKey ) {
+    config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
+    location = pkgConf.filepath( config );
+
+    if ( location == null ) {
+      config = undefined;
+      location = undefined;
+    }
   }
 
-  return result;
+  return {
+    config,
+    location
+  };
 }
