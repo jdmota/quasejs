@@ -1,15 +1,15 @@
 // @flow
-
 const _resolveFrom = require( "resolve-from" );
 
 export function requireRelative( m: string, cwd: ?string ) {
-  // $FlowFixMe
+  // $FlowIgnore
   return require( _resolveFrom( cwd || process.cwd(), m ) );
 }
 
 type Plugin = {
   plugin: any,
   name: ?string,
+  key: ?string,
   options: Object
 };
 
@@ -17,18 +17,30 @@ type ProvidedPlugin = string | Function | [string | Function, ?Object];
 
 type ProvidedPlugins = $ReadOnlyArray<?ProvidedPlugin>;
 
+const regexp = /^([^]+)\[([^[\]]+)\]$/;
+
 export function getOnePlugin( p: ProvidedPlugin, requireFn: ?Function ): Plugin {
-  let plugin, name, opts;
+  let plugin, name, key, options;
 
   if ( Array.isArray( p ) ) {
     plugin = p[ 0 ];
-    opts = p[ 1 ];
+    options = Object.assign( {}, p[ 1 ] );
   } else {
     plugin = p;
+    options = {};
   }
 
   if ( typeof plugin === "string" ) {
-    name = plugin;
+    const m = plugin.match( regexp );
+
+    if ( m ) {
+      name = m[ 1 ];
+      key = m[ 2 ].trim();
+    } else {
+      name = plugin;
+      key = "default";
+    }
+
     plugin = requireFn && requireFn( name );
 
     if ( typeof plugin === "string" ) {
@@ -38,15 +50,20 @@ export function getOnePlugin( p: ProvidedPlugin, requireFn: ?Function ): Plugin 
       plugin = requireRelative( name );
     }
 
-    if ( plugin.default ) {
-      plugin = plugin.default;
+    if ( plugin ) {
+      if ( key === "default" ) {
+        plugin = plugin.__esModule ? plugin.default : plugin;
+      } else {
+        plugin = plugin[ key ];
+      }
     }
   }
 
   return {
     plugin,
     name,
-    options: Object.assign( {}, opts )
+    key,
+    options
   };
 }
 

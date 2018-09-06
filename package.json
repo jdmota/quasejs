@@ -30,6 +30,7 @@
       "<rootDir>/packages/pathname/test/",
       "<rootDir>/packages/source-map/test/",
       "<rootDir>/packages/unit/test/",
+      "<rootDir>/packages/util/get-plugins/test/",
       "<rootDir>/packages/view/test/"
     ],
     "modulePathIgnorePatterns": [
