@@ -15,14 +15,14 @@
 		"node": ">=8.1"
 	},
   "dependencies": {
-    "@babel/code-frame": "^7.0.0-rc.1",
-    "@babel/core": "^7.0.0-rc.1",
-    "@babel/generator": "^7.0.0-rc.1",
-    "@babel/helpers": "^7.0.0-rc.1",
-    "@babel/plugin-transform-template-literals": "^7.0.0-rc.1",
-    "@babel/plugin-transform-arrow-functions": "^7.0.0-rc.1",
-    "@babel/plugin-transform-block-scoping": "^7.0.0-rc.1",
-    "@babel/template": "^7.0.0-rc.1",
+    "@babel/code-frame": "^7.0.0",
+    "@babel/core": "^7.0.1",
+    "@babel/generator": "^7.0.0",
+    "@babel/helpers": "^7.0.0",
+    "@babel/plugin-transform-template-literals": "^7.0.0",
+    "@babel/plugin-transform-arrow-functions": "^7.0.0",
+    "@babel/plugin-transform-block-scoping": "^7.0.0",
+    "@babel/template": "^7.0.0",
     "@quase/cacheable-fs": "0.1.0-0",
     "@quase/cli": "0.4.0-0",
     "@quase/config": "0.2.0-0",
@@ -36,12 +36,11 @@
     "resolve": "^1.8.1",
     "slash": "^2.0.0",
     "strip-ansi": "^4.0.0",
-    "typeson-registry": "^1.0.0-alpha.21",
     "ws": "^6.0.0"
   },
   "devDependencies": {
-    "@babel/plugin-external-helpers": "^7.0.0-rc.1",
-    "@babel/plugin-transform-runtime": "^7.0.0-rc.1",
+    "@babel/plugin-external-helpers": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
     "sw-precache": "^5.2.1"
   }
 }

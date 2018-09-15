@@ -36,12 +36,6 @@ module.exports = {
     navigateFallback: "index.html"
   },
   plugins: [
-    () => ( {
-      name: "custom",
-      isSplitPoint( requirer, required ) {
-        return true;
-      }
-    } ),
     "quase-builder-plugin",
     [ "quase-builder-plugin-2", { /* options */ } ]
   ]
@@ -85,7 +79,7 @@ The default is the extension of the file.
 
 ### load
 
-A (maybe asynchronous) function that accepts `( path: string, m: ModuleUtils )` and returns `null` or `Buffer | string`.
+A (maybe asynchronous) function that accepts `( path: string, m: ModuleContext )` and returns `null` or `Buffer | string`.
 
 Returning `null` defers to other `load` functions.
 
@@ -93,7 +87,7 @@ The default is to load from the file system.
 
 ### parse
 
-A (maybe asynchronous) function that accepts `( data: string, m: ModuleUtils )` and returns `null` or an object (the AST).
+A (maybe asynchronous) function that accepts `( data: string, m: ModuleContext )` and returns `null` or an object (the AST).
 
 Returning `null` defers to other `parse` functions.
 
@@ -103,7 +97,7 @@ If no AST is produced, the module contents will be a buffer and `transformBuffer
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( ast, ModuleUtils )` and returns `null` or a new AST.
+The function can be asynchronous and accepts `( ast, ModuleContext )` and returns `null` or a new AST.
 
 Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
 
@@ -113,7 +107,7 @@ The builder will use the last output from the last transformer.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( buffer, ModuleUtils )` and returns `null` or a new buffer.
+The function can be asynchronous and accepts `( buffer, ModuleContext )` and returns `null` or a new buffer.
 
 Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
 
@@ -123,7 +117,7 @@ The builder will use the last output from the last transformer.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( ast, ModuleUtils )` and returns `null` or:
+The function can be asynchronous and accepts `( ast, ModuleContext )` and returns `null` or:
 
 ```
 {
@@ -147,13 +141,13 @@ The function can be asynchronous and accepts `( ast, ModuleUtils )` and returns 
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( importee: string, importer: ModuleUtils )` and returns `null`, `false` or a path to the resolved file.
+The function can be asynchronous and accepts `( importee: string, importer: ModuleContext )` and returns `null`, `false` or a path to the resolved file.
 
 Returning `null` defers to other `resolve` functions. Returning `false` means the resolution should stop because the dependency was not found.
 
 ### isSplitPoint
 
-A synchronous function that accepts `( importee: ModuleUtils, importer: ModuleUtils )` and returns `null` or a boolean.
+A synchronous function that accepts `( importee: ModuleContext, importer: ModuleContext )` and returns `null` or a boolean.
 
 Returning `null` defers to other `isSplitPoint` functions.
 
@@ -161,7 +155,7 @@ This function is used to decide if in the final result a importee module should 
 
 ## getTypeTransforms
 
-A synchronous function that accepts `( importee: ModuleUtils, importer: ?ModuleUtils )` and returns `null` or an array of strings.
+A synchronous function that accepts `( importee: ModuleContext, importer: ?ModuleContext )` and returns `null` or an array of strings.
 
 Returning `null` defers to other `getTypeTransforms` functions.
 
@@ -239,29 +233,34 @@ The last graph produced will be used.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( FinalAsset, FinalAssets, Builder )` and returns `null` or `ToWrite`.
+The function can be asynchronous and accepts `( FinalAsset, FinalAssets, BuilderContext )` and returns `null` or `ToWrite`.
 
 Returning `null` defers to other `renderAsset` functions.
 
-## ModuleUtils
+## ModuleContext
 
-Information that each module provides:
+### id
 
-- `id`: an unique id of the module
-- `type`: type of the module
-- `path`: string path of the file
-- `normalized`: string path relative to the `context` provided in the options
+An unique id of the module.
 
-Some useful functions you can find:
+### type
 
-### builderOptions()
+Type of the module.
 
-Returns the options passed to the builder.
+### path
+
+String path of the file.
+
+### normalized
+
+String path relative to the `context` provided in the options.
+
+### builderOptions
 
 Useful to know if source map generation was requested, for example.
 
 ```js
-moduleUtils.builderOptions().optimization.sourceMaps // boolean | "inline"
+moduleUtils.builderOptions.optimization.sourceMaps // boolean | "inline"
 ```
 
 ### isFakePath( path: string ): boolean
@@ -289,3 +288,7 @@ You should use this instead of the native `fs.readFile` to tell the builder that
 Same as the `fs.readdir` but returns a promise.
 
 You should use this instead of the native `fs.readdir` to tell the builder that it should watch the folder in `path` for changes.
+
+### async isFile( path: string )
+
+Checks if `path` is a file.
