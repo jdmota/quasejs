@@ -257,10 +257,14 @@ function createHotRuntime( hmr ) {
     };
 
     reloadApp = function() {
-      ws.close();
-      ws.onclose = function() {
+      if ( ws.readyState === 3 ) {
         location.reload();
-      };
+      } else {
+        ws.close();
+        ws.onclose = function() {
+          location.reload();
+        };
+      }
     };
   }
 

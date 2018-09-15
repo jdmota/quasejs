@@ -2,26 +2,28 @@
 import hash from "./utils/hash";
 import { type RuntimeInfo, createRuntime, createRuntimeManifest } from "./runtime/create-runtime";
 import Module, { type ModuleArg } from "./modules/index";
-import { ComputationCancelled } from "./utils/data-dependencies";
+import type { PluginsRunnerInWorker, PluginsRunner } from "./plugins/runner";
+import { type ComputationApi, ComputationCancelled } from "./utils/data-dependencies";
 import difference from "./utils/difference";
-import PluginsRunner from "./plugins/runner";
-import type {
-  FinalAsset, FinalAssets,
-  PerformanceOpts, MinimalFS, ToWrite,
-  Info, OptimizationOptions, Options
-} from "./types";
-import { resolvePath, relative } from "./id";
+import { resolvePath, relative } from "./utils/path";
+import { BuilderContext } from "./plugins/context";
+import type { WatchedFiles, FinalAsset, FinalAssets, ToWrite, Info, Options } from "./types";
 import { Graph, processGraph } from "./graph";
-import FileSystem from "./filesystem";
 import Reporter from "./reporter";
+import { Farm } from "./workers/farm";
+import Watcher from "./watcher";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
 const { getOnePlugin } = require( "@quase/get-plugins" );
-const { joinSourceMaps } = require( "@quase/source-map" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
+
+function addHash( file: string, h: string ): string {
+  const fn = m => ( m ? `.${h}` + m : `-${h}` );
+  return file.replace( rehash, fn );
+}
 
 export class Build {
 
@@ -32,7 +34,7 @@ export class Build {
   cancelled: boolean;
   prevFiles: ( {
     id: string,
-    relative: string,
+    relativeDest: string,
     hash: string | null
   } )[];
 
@@ -56,6 +58,10 @@ export class Build {
   }
 
   removeOrphans() {
+    if ( this.cancelled ) {
+      throw new ComputationCancelled();
+    }
+
     const removed = [];
 
     for ( const [ id, module ] of this.modules ) {
@@ -102,7 +108,7 @@ export class Build {
   transformModuleType( startModule: Module, importer: ?Module ): Module {
 
     let m = startModule;
-    const generation = this.builder.pluginsRunner.getTypeTransforms( m.utils, importer && importer.utils );
+    const generation = this.builder.pluginsRunner.getTypeTransforms( m.ctx, importer && importer.ctx );
 
     for ( let i = 0; i < generation.length; i++ ) {
       if ( m.type === generation[ i ] ) {
@@ -140,25 +146,13 @@ export class Build {
 export default class Builder {
 
   +options: Options;
-  +entries: string[];
-  +context: string;
-  +dest: string;
-  +cwd: string;
-  +sourceMaps: boolean | "inline";
-  +hashing: boolean;
-  +publicPath: string;
   +warn: Function;
-  +fs: MinimalFS;
-  +codeFrameOptions: Object;
   +reporter: { +plugin: Function, +options: Object };
-  +watch: boolean;
-  +watchOptions: ?Object;
-  +optimization: OptimizationOptions;
-  +performance: PerformanceOpts;
-  +serviceWorker: Object;
-  +cleanBeforeBuild: boolean;
-  +fileSystem: FileSystem;
+  +context: BuilderContext;
+  +farm: Farm;
   +pluginsRunner: PluginsRunner;
+  +watcher: ?Watcher;
+  worker: PluginsRunnerInWorker;
   hmrOptions: ?{
     hostname: string,
     port: number
@@ -167,60 +161,57 @@ export default class Builder {
 
   constructor( options: Options, warn: Function ) {
 
-    this.options = options;
-    this.cwd = path.resolve( options.cwd );
-    this.context = resolvePath( options.context, this.cwd );
-    this.dest = resolvePath( options.dest, this.cwd );
-    this.entries = options.entries.map( e => resolvePath( e, this.context ) );
-    this.publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "";
-    this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
-    this.fs = options.fs;
-    this.optimization = options.optimization;
-    this.sourceMaps = options.optimization.sourceMaps;
-    this.hashing = options.optimization.hashing;
-    this.cleanBeforeBuild = options.optimization.cleanup;
-    this.codeFrameOptions = options.codeFrameOptions;
-    this.watch = options.watch;
-    this.watchOptions = options.watchOptions;
-    this.performance = options.performance;
+    const cwd = path.resolve( options.cwd ),
+        context = resolvePath( options.context, cwd ),
+        dest = resolvePath( options.dest, cwd ),
+        entries = options.entries.map( e => resolvePath( e, context ) ),
+        publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "",
+        { watch, optimization, serviceWorker } = options;
+
+    this.options = {
+      ...options,
+      ...{
+        cwd,
+        context,
+        dest,
+        entries,
+        publicPath
+      }
+    };
+
+    if ( watch ) {
+      optimization.hashId = false;
+    }
+
+    serviceWorker.staticFileGlobs = serviceWorker.staticFileGlobs.map( p => path.join( dest, p ) );
+    serviceWorker.stripPrefixMulti[ `${dest}${path.sep}`.replace( /\\/g, "/" ) ] = publicPath;
+    serviceWorker.filename = serviceWorker.filename ? resolvePath( serviceWorker.filename, dest ) : "";
+
     this.warn = warn;
-
-    this.serviceWorker = options.serviceWorker;
-    this.serviceWorker.staticFileGlobs = this.serviceWorker.staticFileGlobs.map( p => path.join( this.dest, p ) );
-    this.serviceWorker.stripPrefixMulti[ `${this.dest}${path.sep}`.replace( /\\/g, "/" ) ] = this.publicPath;
-    this.serviceWorker.filename = this.serviceWorker.filename ? resolvePath( this.serviceWorker.filename, this.dest ) : "";
-
-    if ( this.watch ) {
-      this.optimization.hashId = false;
-    }
-
-    this.fileSystem = new FileSystem();
-
-    this.pluginsRunner = new PluginsRunner( this, options.plugins );
-
+    this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
+    this.context = new BuilderContext( this.options );
+    this.farm = new Farm( this.options );
+    this.pluginsRunner = this.farm.localPluginsRunner;
     this.hmrOptions = null;
-
     this.build = new Build( null, this );
-  }
 
-  createFakePath( key: string ): string {
-    return resolvePath( `_quase_builder_/${key}`, this.context );
-  }
-
-  isFakePath( path: string ): boolean {
-    return path.startsWith( resolvePath( "_quase_builder_", this.context ) );
-  }
-
-  isDest( id: string ): boolean {
-    return id.indexOf( this.dest ) === 0;
-  }
-
-  makeId( { path, type, innerId }: ModuleArg ) {
-    const r = relative( path, this.context );
-    if ( innerId || !path.endsWith( `.${type}` ) || /\|/.test( r ) ) {
-      return `${r}|${innerId || ""}|${type}`;
+    if ( watch ) {
+      this.watcher = new Watcher( this );
     }
-    return r;
+  }
+
+  registerFiles( files: WatchedFiles, computation: ComputationApi ) {
+    const { watcher } = this;
+
+    if ( watcher ) {
+      for ( const [ file, info ] of files ) {
+        watcher.registerFile( file, info, computation );
+      }
+    }
+  }
+
+  makeId( { prevId, path, type, innerId }: ModuleArg ) {
+    return prevId ? `${prevId}|${innerId ? `(${innerId},${type})` : type}` : relative( path, this.options.context );
   }
 
   createRuntime( info: RuntimeInfo ) {
@@ -234,13 +225,14 @@ export default class Builder {
 
   async writeAsset( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
 
-    const fs = this.fs;
-    const inlineMap = this.sourceMaps === "inline";
-    const directory = path.dirname( asset.dest );
+    let dest = path.join( this.options.dest, asset.relativeDest );
+    const fs = this.options.fs;
+    const inlineMap = this.options.optimization.sourceMaps === "inline";
+    const directory = path.dirname( dest );
 
     if ( map ) {
       map.sources = map.sources.map(
-        source => relative( resolvePath( source, this.cwd ), directory )
+        source => relative( resolvePath( source, this.options.cwd ), directory )
       );
     }
 
@@ -254,10 +246,10 @@ export default class Builder {
     }
 
     let h = null;
-    if ( this.hashing && !asset.isEntry ) {
+    if ( this.options.optimization.hashing && !asset.isEntry ) {
       h = hash( data );
-      asset.dest = addHash( asset.dest, h );
-      asset.relative = addHash( asset.relative, h );
+      asset.relativeDest = addHash( asset.relativeDest, h );
+      dest = path.join( this.options.dest, asset.relativeDest );
       if ( map && !inlineMap ) {
         map.file = addHash( map.file, h );
       }
@@ -273,50 +265,35 @@ export default class Builder {
 
     if ( map && typeof data === "string" ) {
       if ( inlineMap ) {
-        await fs.writeFile( asset.dest, data );
+        await fs.writeFile( dest, data );
       } else {
-        const p1 = fs.writeFile( asset.dest, data + `${path.basename( asset.dest )}.map` );
-        const p2 = fs.writeFile( asset.dest + ".map", map.toString() );
+        const p1 = fs.writeFile( dest, data + `${path.basename( dest )}.map` );
+        const p2 = fs.writeFile( dest + ".map", map.toString() );
         await p1;
         await p2;
       }
     } else {
-      await fs.writeFile( asset.dest, data );
+      await fs.writeFile( dest, data );
     }
 
     return {
-      file: asset.dest,
+      file: dest,
       hash: h,
       size: data.length,
       isEntry: asset.isEntry
     };
   }
 
-  async writeCode( asset: { dest: string, code: string } ): Promise<Info> {
-    await this.fs.mkdirp( path.dirname( asset.dest ) );
-    await this.fs.writeFile( asset.dest, asset.code );
+  async writeCode( asset: { relativeDest: string, code: string } ): Promise<Info> {
+    const dest = path.join( this.options.dest, asset.relativeDest );
+    await this.options.fs.mkdirp( path.dirname( dest ) );
+    await this.options.fs.writeFile( dest, asset.code );
     return {
-      file: asset.dest,
+      file: dest,
       hash: null,
       size: asset.code.length,
       isEntry: false
     };
-  }
-
-  joinSourceMaps( maps: ( ?Object )[] ) {
-    return joinSourceMaps( maps );
-  }
-
-  wrapInJsPropKey( string: string ): string {
-    return /^[$_a-zA-Z][$_a-zA-Z0-9]*$/.test( string ) ? string : JSON.stringify( string );
-  }
-
-  wrapInJsString( string: string ): string {
-    return /("|'|\\)/.test( string ) ? JSON.stringify( string ) : `'${string}'`;
-  }
-
-  renderAsset( asset: FinalAsset, finalAssets: FinalAssets ): Promise<ToWrite> {
-    return this.pluginsRunner.renderAsset( asset, finalAssets );
   }
 
   async callRenderers( finalAssets: FinalAssets ): Promise<Info[]> {
@@ -325,18 +302,17 @@ export default class Builder {
       let runtime;
       if ( asset.isEntry ) {
         runtime = asset.runtime = {
-          dest: `${asset.dest}.runtime.js`,
-          relative: `${asset.relative}.runtime.js`,
+          relativeDest: `${asset.relativeDest}.runtime.js`,
           code: await this.createRuntime( {
-            context: this.dest,
-            fullPath: asset.dest,
-            publicPath: this.publicPath,
+            context: this.options.dest,
+            fullPath: path.join( this.options.dest, asset.relativeDest ),
+            publicPath: this.options.publicPath,
             finalAssets
           } )
         };
       }
 
-      const out = await this.pluginsRunner.renderAsset( asset, finalAssets );
+      const out = await this.pluginsRunner.renderAsset( asset, finalAssets, new BuilderContext( this.options ) );
       if ( out ) {
         writes.push( this.writeAsset( asset, out ) );
         if ( runtime && this.options.hmr ) {
@@ -349,20 +325,28 @@ export default class Builder {
     return Promise.all( writes );
   }
 
-  async runBuild() {
+  stop() {
+    this.farm.stop();
+  }
 
+  async runBuild() {
     this.build.cancel();
     const prevFiles = this.build.prevFiles;
     const build = this.build = new Build( this.build, this );
 
+    if ( !this.worker ) {
+      this.worker = await this.farm.setup();
+    }
+
     const startTime = Date.now();
-    const emptyDirPromise = this.cleanBeforeBuild ? fs.emptyDir( this.dest ) : Promise.resolve();
+    const emptyDirPromise = this.options.optimization.cleanup ? fs.emptyDir( this.options.dest ) : Promise.resolve();
     const moduleEntries = new Set();
 
-    for ( const path of this.entries ) {
+    for ( const path of this.options.entries ) {
       moduleEntries.add(
         build.addModuleAndTransform( {
           path,
+          prevId: null,
           type: this.pluginsRunner.getType( path ),
           builder: this
         }, null )
@@ -382,11 +366,11 @@ export default class Builder {
 
     const filesInfo = await this.callRenderers( finalAssets );
 
-    const swFile = this.serviceWorker.filename;
+    const swFile = this.options.serviceWorker.filename;
 
     if ( swFile ) {
       const swPrecache = require( "sw-precache" );
-      const serviceWorkerCode = await swPrecache.generate( this.serviceWorker );
+      const serviceWorkerCode = await swPrecache.generate( this.options.serviceWorker );
 
       await fs.outputFile( swFile, serviceWorkerCode );
 
@@ -401,10 +385,10 @@ export default class Builder {
     let update;
 
     if ( this.options.hmr ) {
-      const newFiles = finalAssets.files.map( ( { id, relative, hash, isEntry } ) => ( { id, relative, hash, isEntry } ) );
+      const newFiles = finalAssets.files.map( ( { id, relativeDest, hash, isEntry } ) => ( { id, relativeDest, hash, isEntry } ) );
 
       const filesDifference = difference( prevFiles, newFiles, ( a, b ) => {
-        return a.id === b.id && a.relative === b.relative && a.hash === b.hash && a.isEntry === b.isEntry;
+        return a.id === b.id && a.relativeDest === b.relativeDest && a.hash === b.hash && a.isEntry === b.isEntry;
       } );
 
       build.prevFiles = newFiles;
@@ -412,25 +396,16 @@ export default class Builder {
       update = {
         manifest: createRuntimeManifest( finalAssets ),
         ids: filesDifference.map( ( { id } ) => id ),
-        files: filesDifference.map( ( { relative } ) => relative ),
+        files: filesDifference.map( ( { relativeDest } ) => relativeDest ),
         reloadApp: filesDifference.some( ( { isEntry } ) => isEntry )
       };
     }
 
-    const out = {
+    return {
       filesInfo,
       time: Date.now() - startTime,
       update
     };
-
-    await this.pluginsRunner.afterBuild( finalAssets, out );
-
-    return out;
   }
 
-}
-
-function addHash( file: string, h: string ): string {
-  const fn = m => ( m ? `.${h}` + m : `-${h}` );
-  return file.replace( rehash, fn );
 }

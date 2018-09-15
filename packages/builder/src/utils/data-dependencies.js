@@ -1,4 +1,5 @@
 // @flow
+import type { Build } from "../builder";
 
 export interface IComputation {
   invalidate(): void,
@@ -34,7 +35,7 @@ export class Producer<T> {
     return subscribers.size;
   }
 
-  get(): Promise<T> {
+  get( _: Build ): Promise<T> {
     throw new Error( "Abstract" );
   }
 
@@ -44,52 +45,90 @@ export class ComputationCancelled extends Error {
 
 }
 
+async function run( api: ComputationApi, fn: ( ComputationApi, Build ) => Promise<any>, build: Build ) {
+  try {
+    const result = await fn( api, build );
+    const { computation } = api;
+    if ( computation ) {
+      computation.nestedComputations = api.nestedComputations;
+    }
+    return result;
+  } catch ( err ) {
+    if ( err instanceof ComputationCancelled ) {
+      api.invalidate();
+    }
+    api.didThrow = true;
+    throw err;
+  }
+}
+
 export class ComputationApi {
 
-  parent: ?Computation<any>; // eslint-disable-line no-use-before-define
+  +id: number;
+  +running: Promise<any>;
+  computation: ?Computation<any>; // eslint-disable-line no-use-before-define
+  nestedComputations: Map<string, Computation<any>>; // eslint-disable-line no-use-before-define
+  didThrow: boolean;
 
-  constructor( parent: Computation<any> ) {
-    this.parent = parent;
+  constructor( computation: Computation<any>, fn: ( ComputationApi, Build ) => Promise<any>, build: Build ) {
+    this.id = build.buildId;
+    this.computation = computation;
+    this.nestedComputations = new Map();
+    this.didThrow = false;
+    this.running = run( this, fn, build );
   }
 
   invalidate() {
-    const parent = this.parent;
-    if ( parent ) {
-      this.parent = null;
-      parent.invalidate();
+    const { computation } = this;
+    if ( computation ) {
+      this.computation = null;
+      computation.invalidate();
     }
     throw new ComputationCancelled();
   }
 
   subscribeTo( dep: Producer<any> ) {
-    const parent = this.parent;
-    if ( parent ) {
-      dep.subscribe( parent );
+    const computation = this.computation;
+    if ( computation ) {
+      dep.subscribe( computation );
     } else {
       throw new ComputationCancelled();
     }
   }
 
-  get<T>( dep: Producer<T> ): Promise<T> {
+  get<T>( dep: Producer<T>, build: Build ): Promise<T> {
     this.subscribeTo( dep );
-    return dep.get();
+    return dep.get( build );
+  }
+
+  newComputation<E>( key: string, fn: ( ComputationApi, Build ) => Promise<E>, build: Build ): Promise<E> {
+    const { computation } = this;
+    if ( computation ) {
+      const currNested = this.nestedComputations.get( key );
+      const nested = currNested || computation.nestedComputations.get( key ) || new Computation( fn );
+      if ( !currNested ) {
+        this.nestedComputations.set( key, nested );
+      }
+      return this.get( nested, build );
+    }
+    throw new ComputationCancelled();
   }
 
 }
 
 export class Computation<T> extends Producer<T> implements IComputation {
 
-  +fn: ( ComputationApi, any ) => Promise<T>;
-  running: Promise<T> | null;
+  +fn: ( ComputationApi, Build ) => Promise<T>;
+  nestedComputations: Map<string, Computation<any>>;
   dependencies: Set<Producer<any>>;
-  version: ComputationApi;
+  version: ?ComputationApi;
 
-  constructor( fn: ( ComputationApi, any ) => Promise<T> ) {
+  constructor( fn: ( ComputationApi, Build ) => Promise<T> ) {
     super();
     this.fn = fn;
-    this.running = null;
+    this.version = null;
     this.dependencies = new Set();
-    this.version = new ComputationApi( this );
+    this.nestedComputations = new Map();
   }
 
   _addDep( producer: Producer<any> ) {
@@ -97,10 +136,11 @@ export class Computation<T> extends Producer<T> implements IComputation {
   }
 
   invalidate() {
-    if ( this.running ) {
-      this.version.parent = null;
-      this.version = new ComputationApi( this );
-      this.running = null;
+    const { version } = this;
+
+    if ( version ) {
+      version.computation = null;
+      this.version = null;
 
       const deps = this.dependencies;
       this.dependencies = new Set();
@@ -113,20 +153,18 @@ export class Computation<T> extends Producer<T> implements IComputation {
     }
   }
 
-  get( arg: any ): Promise<T> {
-    const running = this.running;
-    if ( running ) {
-      return running;
+  get( build: Build ): Promise<T> {
+    let { version } = this;
+
+    if ( version ) {
+      if ( !version.didThrow || version.id === build.buildId ) {
+        return version.running;
+      }
     }
 
-    const fn = this.fn;
-    const version = this.version;
-    return ( this.running = fn( version, arg ).catch( err => {
-      if ( err instanceof ComputationCancelled ) {
-        version.invalidate();
-      }
-      throw err;
-    } ) );
+    this.invalidate();
+    version = this.version = new ComputationApi( this, this.fn, build );
+    return version.running;
   }
 
 }

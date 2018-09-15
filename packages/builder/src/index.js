@@ -1,11 +1,9 @@
 import Builder from "./builder";
-import Watcher from "./watcher";
 import HMRServer from "./hmr-server";
 
 const EventEmitter = require( "events" );
-let listeningSIGINT = false;
 
-export default function( options ) {
+export default function( options, dontListenSigint ) {
   let reporter, emitter;
 
   const builder = new Builder(
@@ -15,8 +13,8 @@ export default function( options ) {
 
   const { plugin: Reporter, options: reporterOpts } = builder.reporter;
 
-  if ( builder.watch ) {
-    emitter = new Watcher( builder );
+  if ( builder.watcher ) {
+    emitter = builder.watcher;
     reporter = new Reporter( reporterOpts, builder, emitter );
 
     const hmrServer = builder.options.hmr ? new HMRServer( emitter ) : null;
@@ -29,8 +27,7 @@ export default function( options ) {
       emitter.start();
     }
 
-    if ( !listeningSIGINT ) {
-      listeningSIGINT = true;
+    if ( !dontListenSigint ) {
       process.once( "SIGINT", function() {
         emitter.emit( "sigint" );
         emitter.stop();
@@ -47,11 +44,13 @@ export default function( options ) {
     builder.runBuild().then(
       o => emitter.emit( "build-success", o ),
       e => emitter.emit( "build-error", e )
-    );
+    ).then( () => {
+      builder.stop();
+    } );
   }
   return reporter;
 }
 
-export { Builder, Watcher };
+export { Builder };
 
 export { schema } from "./options";

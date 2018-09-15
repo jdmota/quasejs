@@ -16,15 +16,28 @@ exports[`watcher Fixture: watch-fixtures/basic 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Assets:
 
 [entry] atual/index.js | 2.21 kB
 
 Done building.
-Watching 8 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
+../package.json
 "
 `;
 
@@ -49,6 +62,10 @@ exports[`watcher Fixture: watch-fixtures/custom-code-frame 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
@@ -59,11 +76,30 @@ Could not resolve ./a. See index.js:1:14
   6 | 
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
+../package.json
 
 --------
 
 File working/a.js was added.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -77,11 +113,30 @@ File working/a.js was added.
   6 | 
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
+../package.json
 
 --------
 
 File working/a.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -90,11 +145,30 @@ Assets:
 [entry] atual/index.js | 2.33 kB
 
 Done building.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
+../package.json
 
 --------
 
 File working/a.js was removed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -108,10 +182,22 @@ Could not resolve ./a. See index.js:1:14
   6 | 
 
 Build failed.
-Watching 11 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
+../package.json
 "
 `;
 
@@ -136,16 +222,30 @@ exports[`watcher Fixture: watch-fixtures/performance-hints 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Assets:
 
 atual/index.js | 260 B > 100 B [performance!]
 [entry] atual/index.html | 2.2 kB > 10 B [performance!]
 
 Done building.
-Watching 9 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.html
+working/index.js
+working/package.json
 "
 `;
 
@@ -154,14 +254,14 @@ Object {
   "atual/index.html": "<!DOCTYPE html><html><head></head>
   <body>
     <script>(function(a,b){function c(){return Object.create(p)}function d(a){return a&&(u?r(a):t&&b(a)),p}function e(a){for(var b in a)x[b]===o&&(x[b]=a[b])}function f(a,b,c){Object.defineProperty(a,b,{enumerable:!0,get:c})}function g(a,b){Object.keys(b).forEach(function(c){\\"default\\"===c||\\"__esModule\\"===c||Object.defineProperty(a,c,{configurable:!0,enumerable:!0,get:function(){return b[c]}})})}function h(a){return w[a]||x[a]}function j(a){if(w[a])return w[a];var b=x[a];if(x[a]=p,b){var d={};return Object.defineProperty(d,\\"__esModule\\",{writable:!0,value:!0}),w[a]=d,b(d,k,l,f,g,{}),d}var c=new Error(\\"Cannot find module \\"+a);throw c.code=\\"MODULE_NOT_FOUND\\",c}function k(a){return h(a)||(C[a]||[]).forEach(m),j(a)}function l(a){return q.all(h(a)?[]:(C[a]||[]).map(n)).then(function(){return j(a)})}function m(a){var b=B[a];return y[b]===o&&(y[b]=d(b)),y[b]}function n(a){var b=B[a];if(y[b]!==o)return q.resolve(y[b]);if(z[b])return z[b];var c=[o,o],e=new q(function(a,d){c[0]=function(c){z[b]=o,a(y[b]=c)},c[1]=function(a){z[b]=o,d(a)}});if(z[b]=e,v){function a(a){clearTimeout(g),f.onerror=f.onload=o,c[a?1:0](a||p)}function d(){a(new Error(\\"Fetching \\"+b+\\" failed\\"))}var f=s.createElement(\\"script\\");f.type=\\"text/javascript\\",f.charset=\\"utf-8\\",f.async=!0,f.timeout=12e4,f.src=b;var g=setTimeout(d,12e4);f.onload=function(){a()},f.onerror=d,s.head.appendChild(f)}else q.resolve(b).then(d).then(c[0],c[1]);return e}var o=void 0,p=null,q=a.Promise,r=a.importScripts,s=a.document,t=!!b,u=!!r,v=a.window===a,w=c(),x=c(),y=c(),z=c(),A=t?\\"./\\":\\"\\",B=[\\"index.html\\"].map(function(a){return A+a}),C={\\"index.html\\":[0]};k.r=function(a){var b=k(a);return!1===b.__esModule?b.default:b};var D=a.__quase_builder__;if(!D)D=a.__quase_builder__={r:k,i:l,q:{push:e}};else if(Array.isArray(D.q)){for(var E=0;E<D.q.length;E++)e(D.q[E]);D.r=k,D.i=l,D.q={push:e}}return D.r})(\\"undefined\\"==typeof self?Function(\\"return this\\")():self,\\"undefined\\"!=typeof require&&require);</script><script defer=\\"\\">\\"use strict\\";({g:\\"undefined\\"==typeof self?Function(\\"return this\\")():self,p(m){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push(m)}}).p({
-\\"index.html|0|js\\":function($e,$r){var _a = $r(\\"a.js\\");
+\\"index.html|(0,js)\\":function($e,$r){var _a = $r(\\"a.js\\");
 },
 \\"a.js\\":function($e,$r,$i,$g){$g($e, \\"a\\", function () {
   return a;
 });
 const a = 10;
 }});
-__quase_builder__.r('index.html|0|js');</script>
+__quase_builder__.r('index.html|(0,js)');</script>
     <script></script>
   
 
@@ -173,14 +273,33 @@ exports[`watcher Fixture: watch-fixtures/script-inline-in-html 2`] = `
 "
 --------
 
-Could not resolve ./a.js. See index.html|0|js:2:24
+Starting new build...
+
+--------
+
+Could not resolve ./a.js. See index.html|(0,js):2:24
 
   1 | 
 > 2 |       import { a } from \\"./a.js\\";
   3 |     
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a.js
+working/a.js.js
+working/a.js/index
+working/a.js/index.js
+working/a.js/package.json
+working/index.html
+working/package.json
 
 --------
 
@@ -188,18 +307,41 @@ File working/a.js was added.
 
 --------
 
-./a.js exports nothing. Looking for a. See index.html|0|js:2:15
+Starting new build...
+
+--------
+
+./a.js exports nothing. Looking for a. See index.html|(0,js):2:15
 
   1 | 
 > 2 |       import { a } from \\"./a.js\\";
   3 |     
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a.js
+working/a.js.js
+working/a.js/index
+working/a.js/index.js
+working/a.js/package.json
+working/index.html
+working/package.json
 
 --------
 
 File working/a.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -208,10 +350,22 @@ Assets:
 [entry] atual/index.html | 2.41 kB
 
 Done building.
-Watching 11 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a.js
+working/a.js.js
+working/a.js/index
+working/a.js/index.js
+working/a.js/package.json
+working/index.html
+working/package.json
 "
 `;
 
@@ -229,14 +383,27 @@ exports[`watcher Fixture: watch-fixtures/watches-missing-entry 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Could not find index.js
 
 Build failed.
-Watching 1 files...
+
+--------
+
+Watching:
+
+working/index.js
 
 --------
 
 File working/index.js was added.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -245,10 +412,12 @@ Assets:
 [entry] atual/index.js | 2.15 kB
 
 Done building.
-Watching 1 files...
 
 --------
 
+Watching:
+
+working/index.js
 "
 `;
 
@@ -268,17 +437,40 @@ exports[`watcher Fixture: watch-fixtures/watches-missing-file 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Could not resolve ./a. See index.js:1:14
 
 > 1 | import a from \\"./a\\";
   2 | 
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
 
 --------
 
 File working/a.js was added.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -288,11 +480,30 @@ File working/a.js was added.
   2 | 
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
 
 --------
 
 File working/a.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -301,11 +512,30 @@ Assets:
 [entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
 
 --------
 
 File working/a.js was removed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -315,10 +545,22 @@ Could not resolve ./a. See index.js:1:14
   2 | 
 
 Build failed.
-Watching 11 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
 "
 `;
 
@@ -338,16 +580,36 @@ exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Assets:
 
 [entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 8 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
 
 --------
 
 File working/index.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -356,7 +618,24 @@ Could not resolve ./stuff. See index.js:1:18
 > 1 | import stuff from './stuff';
 
 Build failed.
-Watching 13 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
+working/stuff
+working/stuff.js
+working/stuff/index
+working/stuff/index.js
+working/stuff/package.json
 
 --------
 
@@ -364,16 +643,41 @@ File working/a.js was changed.
 
 --------
 
+Starting new build...
+
+--------
+
 Could not resolve ./stuff. See index.js:1:18
 
 > 1 | import stuff from './stuff';
 
 Build failed.
-Watching 13 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
+working/stuff
+working/stuff.js
+working/stuff/index
+working/stuff/index.js
+working/stuff/package.json
 
 --------
 
 File working/index.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -382,10 +686,24 @@ Assets:
 [entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 13 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
+working/stuff
+working/stuff.js
+working/stuff/index
+working/stuff/index.js
+working/stuff/package.json
 "
 `;
 
@@ -405,16 +723,37 @@ exports[`watcher Fixture: watch-fixtures/watches-other-extensions 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Assets:
 
-[entry] atual/index.js | 2.23 kB
+[entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 9 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a.ts
+working/index.js
+working/package.json
 
 --------
 
 File working/a.js was added.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -423,10 +762,20 @@ Assets:
 [entry] atual/index.js | 2.21 kB
 
 Done building.
-Watching 9 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a.ts
+working/index.js
+working/package.json
 "
 `;
 
@@ -446,16 +795,36 @@ exports[`watcher Fixture: watch-fixtures/watches-rename 2`] = `
 "
 --------
 
+Starting new build...
+
+--------
+
 Assets:
 
 [entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 8 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/index.js
+working/package.json
 
 --------
 
 File working/a.js was removed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -465,11 +834,30 @@ Could not resolve ./a. See index.js:1:14
   2 | 
 
 Build failed.
-Watching 11 files...
+
+--------
+
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/index.js
+working/package.json
 
 --------
 
 File working/index.js was changed.
+
+--------
+
+Starting new build...
 
 --------
 
@@ -478,9 +866,23 @@ Assets:
 [entry] atual/index.js | 2.22 kB
 
 Done building.
-Watching 13 files...
 
 --------
 
+Watching:
+
+../../../package.json
+../../package.json
+../package.json
+package.json
+working/a
+working/a.js
+working/a/index
+working/a/index.js
+working/a/package.json
+working/b
+working/b.js
+working/index.js
+working/package.json
 "
 `;

@@ -179,6 +179,10 @@ export class Checker {
 }
 
 export function check( graph: Graph ) {
+  /* TODO enable if we start reusing PublicModules
+  for ( const [ , module ] of graph.modules ) {
+    module.checker.reset();
+  }*/
   for ( const [ , module ] of graph.modules ) {
     module.checker.checkImportsExports();
   }

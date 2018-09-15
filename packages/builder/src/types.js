@@ -1,8 +1,7 @@
 // @flow
 import type Module from "./modules/index";
 import type PublicModule from "./modules/public";
-import type { ModuleUtils, ModuleUtilsWithFS } from "./modules/utils";
-import type Builder from "./builder";
+import type { BuilderContext, ModuleContext } from "./plugins/context";
 import type { Graph } from "./graph";
 
 export type Data = Buffer | string;
@@ -41,7 +40,9 @@ export type ExportedName = {|
   +loc?: ?Loc
 |};
 
-export type ProvidedPluginsArr<T> = $ReadOnlyArray<void | string | T | [string | T, Object]>;
+export type ProvidedPlugin<T> = void | string | T | [string | T, Object];
+
+export type ProvidedPluginsArr<T> = $ReadOnlyArray<ProvidedPlugin<T>>;
 
 export type NotResolvedDep = {
   +loc?: ?Loc,
@@ -89,6 +90,14 @@ export type DepsInfo = {|
   +exportedNames: $ReadOnlyArray<ExportedName>
 |};
 
+export type WatchedFileInfo = { +time: number, onlyExistance: ?boolean };
+export type WatchedFiles = Map<string, WatchedFileInfo>;
+
+export type PipelineResult = {
+  +depsInfo: DepsInfo,
+  +content: TransformOutput
+};
+
 export type FinalAsset = {
   module: PublicModule,
   id: string,
@@ -96,13 +105,12 @@ export type FinalAsset = {
   type: string,
   innerId: ?string,
   normalized: string,
-  dest: string,
-  relative: string,
+  relativePath: string,
+  relativeDest: string,
   hash: string | null,
   isEntry: boolean,
   runtime: ?{
-    dest: string,
-    relative: string,
+    relativeDest: string,
     code: string
   },
   srcs: PublicModule[],
@@ -155,27 +163,25 @@ export type Output = {
 
 type ThingOrPromise<T> = T | Promise<T>;
 
-export type Loader = ( string, ModuleUtilsWithFS ) => ThingOrPromise<?Data>;
+export type Loader = ( string, ModuleContext ) => ThingOrPromise<?Data>;
 
-export type Parser = ( string, ModuleUtils ) => ThingOrPromise<?Object>;
+export type Parser = ( string, ModuleContext ) => ThingOrPromise<?Object>;
 
-export type AstTransformer = ( Object, ModuleUtilsWithFS ) => ThingOrPromise<?Object>;
+export type AstTransformer = ( Object, ModuleContext ) => ThingOrPromise<?Object>;
 
-export type BufferTransformer = ( Buffer, ModuleUtilsWithFS ) => ThingOrPromise<?Buffer>;
+export type BufferTransformer = ( Buffer, ModuleContext ) => ThingOrPromise<?Buffer>;
 
-export type DepExtractor = ( Object, ModuleUtils ) => ThingOrPromise<?DepsInfo>;
+export type DepExtractor = ( Object, ModuleContext ) => ThingOrPromise<?DepsInfo>;
 
-export type Resolver = ( string, ModuleUtilsWithFS ) => ThingOrPromise<?string | false>;
+export type Resolver = ( string, ModuleContext ) => ThingOrPromise<?string | false>;
 
-export type Checker = ( Graph, Builder ) => ThingOrPromise<void>;
+export type Checker = Graph => ThingOrPromise<void>;
 
-export type TypeTransformer = ( TransformOutput, ModuleUtilsWithFS ) => ThingOrPromise<?LoadOutput>;
+export type TypeTransformer = ( TransformOutput, ModuleContext ) => ThingOrPromise<?LoadOutput>;
 
 export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
 
-export type AssetRenderer = ( FinalAsset, FinalAssets, Builder ) => ThingOrPromise<?ToWrite>;
-
-export type AfterBuild = ( FinalAssets, Output, Builder ) => ThingOrPromise<void>;
+export type AssetRenderer = ( FinalAsset, FinalAssets, Map<FinalAsset, ToWrite>, BuilderContext ) => ThingOrPromise<?ToWrite>;
 
 export type Plugin = {
   +name?: ?string,
@@ -186,14 +192,13 @@ export type Plugin = {
   +transformBuffer?: ?{ [key: string]: ?BufferTransformer },
   +dependencies?: ?{ [key: string]: ?DepExtractor },
   +resolve?: ?{ [key: string]: ?Resolver },
-  +isSplitPoint?: ?( ModuleUtils, ModuleUtils ) => ?boolean,
-  +getTypeTransforms?: ?( ModuleUtils, ?ModuleUtils ) => ?$ReadOnlyArray<string>,
+  +isSplitPoint?: ?( ModuleContext, ModuleContext ) => ?boolean,
+  +getTypeTransforms?: ?( ModuleContext, ?ModuleContext ) => ?$ReadOnlyArray<string>,
   +isExternal?: ?( string ) => ThingOrPromise<?boolean>,
   +transformType?: ?{ [key: string]: ?{ [key: string]: ?TypeTransformer } },
   +check?: ?Checker,
   +graphTransform?: ?GraphTransformer,
-  +renderAsset?: ?{ [key: string]: ?AssetRenderer },
-  +afterBuild?: ?AfterBuild
+  +renderAsset?: ?{ [key: string]: ?AssetRenderer }
 };
 
 export type OptimizationOptions = {
@@ -218,14 +223,13 @@ export type Options = {
     node: boolean,
     worker: boolean
   },
-  warn: Function,
   fs: MinimalFS,
+  reporter: ProvidedPlugin<Function>,
   codeFrameOptions: Object,
-  reporter: ProvidedPluginsArr<Function>,
   watch: boolean,
   watchOptions: Object,
   hmr: boolean,
-  plugins: ProvidedPluginsArr<Object => Plugin>,
+  plugins: ProvidedPluginsArr<string>,
   performance: PerformanceOpts,
   optimization: OptimizationOptions,
   serviceWorker: Object

@@ -1,20 +1,31 @@
 // @flow
 import { Computation, type ComputationApi } from "../utils/data-dependencies";
+import { relative, lowerPath } from "../utils/path";
 import error from "../utils/error";
 import type Builder, { Build } from "../builder";
 import type {
-  Data, Loc, LoadOutput, TransformOutput, DepsInfo, NotResolvedDep, ResolvedDep, ModuleDep
+  Data, Loc, LoadOutput, PipelineResult, NotResolvedDep, ModuleDep
 } from "../types";
-import { relative, resolvePath, lowerPath } from "../id";
-import { ModuleUtils, ModuleUtilsWithFS } from "./utils";
+import { ModuleContext, ModuleContextWithoutFS } from "../plugins/context";
 
 /* eslint-disable no-use-before-define */
 
 const { isAbsolute } = require( "path" );
 const { joinSourceMaps } = require( "@quase/source-map" );
 
+export type ModuleInfo = {
+  +id: string;
+  +type: string;
+  +innerId: ?string;
+  +path: string;
+  +relativePath: string;
+  +relativeDest: string;
+  +normalized: string;
+};
+
 export type ModuleArg = {
   +builder: Builder,
+  +prevId: ?string,
   +path: string,
   +type: string,
   +loc?: ?Loc,
@@ -23,61 +34,97 @@ export type ModuleArg = {
   +parentGenerator?: ?Module
 };
 
+async function resolve( m: Module, request: string, loc: ?Loc, computation: ComputationApi ) {
+  const ctx = new ModuleContext( m.builder.options, m );
+
+  if ( !request ) {
+    throw m.error( "Empty import", loc );
+  }
+
+  let path;
+
+  try {
+    path = await m.builder.pluginsRunner.resolve( request, ctx );
+  } finally {
+    // Register before sending an error
+    m.builder.registerFiles( ctx.files, computation );
+  }
+
+  if ( !path || typeof path !== "string" ) {
+    throw m.error( `Could not resolve ${request}`, loc );
+  }
+
+  if ( !isAbsolute( path ) ) {
+    throw m.error( `Resolution returned a non absolute path: ${path}`, loc );
+  }
+
+  path = lowerPath( path );
+
+  if ( path === m.path ) {
+    throw m.error( "A module cannot import itself", loc );
+  }
+
+  if ( m.ctx.isDest( path ) ) {
+    throw m.error( "Don't import the destination file", loc );
+  }
+
+  return path;
+}
+
 export default class Module {
 
   +id: string;
   +path: string;
   +type: string;
   +innerId: ?string;
-  +relative: string;
-  +dest: string;
+  +relativePath: string;
+  +relativeDest: string;
   +normalized: string;
   +builder: Builder;
   +parentInner: ?Module;
   +parentGenerator: ?Module;
-  +utils: ModuleUtils;
+  +ctx: ModuleContextWithoutFS;
   buildId: number;
   locOffset: ?Loc;
   originalData: ?Data;
   originalMap: ?Object;
-  result: ?TransformOutput;
+  wasParsed: boolean;
   +load: Computation<LoadOutput>;
-  +transform: Computation<TransformOutput>;
-  +getDeps: Computation<DepsInfo>;
+  +pipeline: Computation<PipelineResult>;
   +resolveDeps: Computation<Map<string, ModuleDep>>;
 
   constructor( id: string, { builder, path, type, loc, innerId, parentInner, parentGenerator }: ModuleArg ) {
     this.id = id;
-    this.path = path;
     this.type = type;
     this.innerId = innerId;
-    this.relative = relative( path, builder.context );
-    this.dest = resolvePath( this.relative, builder.dest );
-    this.normalized = this.relative;
+    this.path = path;
+    this.relativePath = relative( path, builder.options.context );
+    this.relativeDest =
+      parentInner ? `${parentInner.relativeDest}.${innerId || ""}.${type}` :
+        parentGenerator ? `${parentGenerator.relativeDest}.${type}` : this.relativeDest;
+    this.normalized = this.relativePath;
     this.builder = builder;
 
     this.locOffset = loc;
     this.originalData = null;
     this.originalMap = null;
-    this.result = null;
+    this.wasParsed = false;
 
-    this.utils = new ModuleUtils( this );
+    this.ctx = new ModuleContextWithoutFS( builder.options, this );
 
     this.parentInner = parentInner;
     this.parentGenerator = parentGenerator;
 
     this.buildId = 0;
 
-    this.load = new Computation( c => this._load( c ) );
-    this.transform = new Computation( c => this._transform( c ) );
-    this.getDeps = new Computation( c => this._getDeps( c ) );
+    this.load = new Computation( ( c, b ) => this._load( c, b ) );
+    this.pipeline = new Computation( ( c, b ) => this._pipeline( c, b ) );
     this.resolveDeps = new Computation( ( c, b ) => this._resolveDeps( c, b ) );
   }
 
   unref() {
     this.load.invalidate();
-    this.transform.invalidate();
-    this.getDeps.invalidate();
+    this.pipeline.invalidate();
     this.resolveDeps.invalidate();
   }
 
@@ -86,9 +133,7 @@ export default class Module {
   }
 
   error( message: string, loc: ?Loc ) {
-    const result = this.result;
-
-    if ( result && result.ast ) {
+    if ( this.wasParsed ) {
 
       const { originalData } = this;
       /* const locOffset = this.locOffset;
@@ -104,18 +149,20 @@ export default class Module {
         id: this.id,
         code: originalData == null ? null : originalData.toString(),
         loc
-      }, this.builder.codeFrameOptions );
+      }, this.builder.options.codeFrameOptions );
 
     } else {
 
       error( message, {
         id: this.id,
         loc
-      }, this.builder.codeFrameOptions );
+      }, this.builder.options.codeFrameOptions );
     }
   }
 
-  async _load( computation: ComputationApi ): Promise<LoadOutput> {
+  async _load( computation: ComputationApi, build: Build ): Promise<LoadOutput> {
+    const ctx = new ModuleContext( this.builder.options, this );
+
     try {
 
       let data, map;
@@ -130,15 +177,15 @@ export default class Module {
           throw new Error( `Internal: missing innerId - ${this.id}` );
         }
 
-        const parentDeps = await computation.get( parentInner.getDeps );
+        const { depsInfo: parentDeps } = await computation.get( parentInner.pipeline, build );
         const result = parentDeps.innerDependencies.get( innerId );
 
         if ( !result ) {
           throw new Error( `Internal: Could not get inner dependency content - ${this.id}` );
         }
 
-        if ( this.builder.optimization.sourceMaps ) {
-          const parentLoad = await computation.get( parentInner.load );
+        if ( this.builder.options.optimization.sourceMaps ) {
+          const parentLoad = await computation.get( parentInner.load, build );
           data = result.data;
           map = joinSourceMaps( [ parentLoad.map ] ); // FIXME result.map should be created by us
         } else {
@@ -152,15 +199,15 @@ export default class Module {
 
         // For modules generated from other module in different type
         if ( parentGenerator ) {
-          const parentTransform = await computation.get( parentGenerator.transform );
+          const { content: parentTransform } = await computation.get( parentGenerator.pipeline, build );
           const result = await this.builder.pluginsRunner.transformType(
             parentTransform,
-            new ModuleUtilsWithFS( this, computation ),
-            parentGenerator.utils
+            ctx,
+            parentGenerator.ctx
           );
 
-          if ( this.builder.optimization.sourceMaps ) {
-            const parentLoad = await computation.get( parentGenerator.load );
+          if ( this.builder.options.optimization.sourceMaps ) {
+            const parentLoad = await computation.get( parentGenerator.load, build );
             data = result.data;
             map = joinSourceMaps( [ parentLoad.map, result.map ] );
           } else {
@@ -171,7 +218,7 @@ export default class Module {
 
         // Original module from disk
         } else {
-          data = await this.builder.pluginsRunner.load( this.path, new ModuleUtilsWithFS( this, computation ) );
+          data = await this.builder.pluginsRunner.load( this.path, ctx );
         }
       }
 
@@ -187,118 +234,78 @@ export default class Module {
         throw error( `Could not find ${this.normalized}` );
       }
       throw err;
+    } finally {
+      this.builder.registerFiles( ctx.files, computation );
     }
   }
 
-  async _transform( computation: ComputationApi ): Promise<TransformOutput> {
-    const { data } = await computation.get( this.load );
-    const ast = await this.builder.pluginsRunner.parse( data, this.utils );
+  async _pipeline( computation: ComputationApi, build: Build ): Promise<PipelineResult> {
 
-    let result, finalAst, finalBuffer;
+    const { data } = await computation.get( this.load, build );
 
-    if ( ast ) {
-      finalAst = await this.builder.pluginsRunner.transformAst( ast, new ModuleUtilsWithFS( this, computation ) );
-      result = {
-        ast: finalAst,
-        buffer: null
-      };
-    } else {
-      if ( typeof data === "string" ) {
-        throw new Error( "Internal: expected buffer" );
-      }
+    const ctx = new ModuleContext( this.builder.options, this );
 
-      finalBuffer = await this.builder.pluginsRunner.transformBuffer( data, new ModuleUtilsWithFS( this, computation ) );
-      result = {
-        ast: null,
-        buffer: finalBuffer
-      };
-    }
+    const { depsInfo, content, files } = await this.builder.worker.pipeline( data, ctx );
 
-    this.result = result;
-    return result;
+    this.builder.registerFiles( files, computation );
+
+    this.wasParsed = !!content.ast;
+
+    return {
+      depsInfo,
+      content
+    };
   }
 
-  async _getDeps( computation: ComputationApi ): Promise<DepsInfo> {
-    const ast = await computation.get( this.transform );
-    return this.builder.pluginsRunner.dependencies( ast, this.utils );
-  }
+  async _handleDep(
+    request: string,
+    { loc, async }: NotResolvedDep,
+    computation: ComputationApi,
+    build: Build
+  ): Promise<ModuleDep> {
+    const path = await computation.newComputation(
+      request,
+      computation => resolve( this, request, loc, computation ),
+      build
+    );
 
-  async _handleDep( request: string, { loc, async }: NotResolvedDep, utils: ModuleUtilsWithFS ): Promise<ResolvedDep> {
+    const required = build.addModuleAndTransform( {
+      builder: this.builder,
+      prevId: null,
+      path,
+      type: this.builder.pluginsRunner.getType( path )
+    }, this );
 
-    if ( !request ) {
-      throw this.error( "Empty import", loc );
-    }
+    let splitPoint = this.builder.pluginsRunner.isSplitPoint( this.ctx, required.ctx );
 
-    let path = await this.builder.pluginsRunner.resolve( request, utils );
-
-    if ( !path || typeof path !== "string" ) {
-      throw this.error( `Could not resolve ${request}`, loc );
-    }
-
-    if ( !isAbsolute( path ) ) {
-      throw this.error( `Resolution returned a non absolute path: ${path}`, loc );
-    }
-
-    path = lowerPath( path );
-
-    if ( path === this.path ) {
-      throw this.error( "A module cannot import itself", loc );
-    }
-
-    if ( this.builder.isDest( path ) ) {
-      throw this.error( "Don't import the destination file", loc );
+    if ( splitPoint == null ) {
+      splitPoint = !!async || required.type !== this.type;
     }
 
     return {
       path,
       request,
       loc,
-      async
+      async,
+      splitPoint,
+      required,
+      inherit: false
     };
   }
 
   async _resolveDeps( computation: ComputationApi, build: Build ): Promise<Map<string, ModuleDep>> {
 
     const moduleDeps = new Map();
-    const utils = new ModuleUtilsWithFS( this, computation );
-    const depsInfo = await computation.get( this.getDeps );
+    const { depsInfo } = await computation.get( this.pipeline, build );
 
     const parent = this.parentGenerator;
-    const parentModuleDeps = parent ? await computation.get( parent.resolveDeps ) : new Map();
+    const parentModuleDeps = parent ? await computation.get( parent.resolveDeps, build ) : new Map();
 
     const p = [];
     for ( const [ request, dep ] of depsInfo.dependencies ) {
       if ( !parentModuleDeps.has( request ) ) {
-        p.push( this._handleDep( request, dep || {}, utils ) );
+        p.push( this._handleDep( request, dep || {}, computation, build ) );
       }
-    }
-
-    const deps = await Promise.all( p );
-
-    // Handle normal dependencies
-    for ( const { path, request, loc, async } of deps ) {
-
-      const required = build.addModuleAndTransform( {
-        builder: this.builder,
-        path,
-        type: this.builder.pluginsRunner.getType( path )
-      }, this );
-
-      let splitPoint = this.builder.pluginsRunner.isSplitPoint( this.utils, required.utils );
-
-      if ( splitPoint == null ) {
-        splitPoint = !!async || required.type !== this.type;
-      }
-
-      moduleDeps.set( request, {
-        path,
-        request,
-        loc,
-        async,
-        splitPoint,
-        required,
-        inherit: false
-      } );
     }
 
     // Handle inner dependencies
@@ -312,6 +319,7 @@ export default class Module {
 
       const required = build.addModuleAndTransform( {
         builder: this.builder,
+        prevId: this.id,
         path,
         type,
         loc,
@@ -319,7 +327,7 @@ export default class Module {
         parentInner: this
       }, this );
 
-      let splitPoint = this.builder.pluginsRunner.isSplitPoint( this.utils, required.utils );
+      let splitPoint = this.builder.pluginsRunner.isSplitPoint( this.ctx, required.ctx );
 
       if ( splitPoint == null ) {
         splitPoint = !!async;
@@ -351,6 +359,11 @@ export default class Module {
       } );
     }
 
+    // Handle normal dependencies
+    for ( const dep of await Promise.all( p ) ) {
+      moduleDeps.set( dep.request, dep );
+    }
+
     return moduleDeps;
   }
 
@@ -374,8 +387,8 @@ export default class Module {
   newModuleType( build: Build, newType: string ): Module {
     return build.addModule( {
       builder: this.builder,
+      prevId: this.id,
       path: this.path,
-      innerId: this.innerId,
       type: newType,
       loc: this.locOffset,
       parentGenerator: this

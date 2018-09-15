@@ -1,6 +1,6 @@
-import { schema } from "../src/options";
-import jsPlugin from "../src/plugins/implementations/js";
-import babelPlugin from "../src/plugins/implementations/babel";
+import { schema } from "../dist/options";
+
+const path = require( "path" );
 
 const BABEL_OPTS = {
   babelrc: false,
@@ -24,6 +24,9 @@ const BABEL_OPTS = {
 };
 
 const { apply } = require( "@quase/config" );
+
+const jsPlugin = path.join( __dirname, "../dist/plugins/implementations/js" );
+const babelPlugin = path.join( __dirname, "../dist/plugins/implementations/babel" );
 
 export default function( config, fixturePath ) {
   config.mode = "development";

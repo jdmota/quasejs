@@ -1,7 +1,6 @@
 // @flow
 import { addNamed } from "@babel/helper-module-imports";
 import { parseAsync, buildExternalHelpers, transformFromAstAsync } from "@babel/core";
-import type { ModuleUtils } from "../../modules/utils";
 import type { Plugin } from "../../types";
 
 const HELPERS = "babel_helpers.js";
@@ -40,7 +39,7 @@ export default function babelPlugin( options: Object ): Plugin {
       }
     },
     parse: {
-      js( data, module: ModuleUtils ) {
+      js( data, module ) {
         return parseAsync( data, Object.assign( {
           sourceType: "module",
           parserOpts: {

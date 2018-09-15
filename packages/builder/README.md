@@ -63,7 +63,6 @@ module.exports = {
 - Plugin: check
 - Plugin: graphTransform's
 - Plugin: renderAsset
-- Plugin: afterBuild
 
 ## Plugins
 
@@ -243,10 +242,6 @@ An object where the key is a module type, and the value a function.
 The function can be asynchronous and accepts `( FinalAsset, FinalAssets, Builder )` and returns `null` or `ToWrite`.
 
 Returning `null` defers to other `renderAsset` functions.
-
-### afterBuild
-
-A (maybe asynchronous) function that is called after the build was done and the files were wrote to the file system.
 
 ## ModuleUtils
 

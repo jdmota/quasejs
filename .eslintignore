@@ -5,5 +5,4 @@ node_modules
 flow-typed
 packages/builder/test/fixtures/**
 packages/builder/test/watch-fixtures/**
-packages/builder/test/babel-plugin-transform-modules/fixtures/**
-packages/builder/src/runtime/runtime.min.js
+packages/builder/test/babel-modules-fixtures/**

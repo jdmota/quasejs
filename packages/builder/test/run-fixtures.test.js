@@ -1,5 +1,5 @@
-import Builder from "../src/builder";
-import { relative } from "../src/id";
+import { relative } from "../dist/utils/path";
+import Builder from "../dist/builder";
 import transformConfig from "./transform-config";
 
 const stripAnsi = require( "strip-ansi" );
@@ -21,7 +21,7 @@ describe( "builder", () => {
 
     it( `Fixture: ${folder}`, async() => {
 
-      jest.setTimeout( 20000 );
+      jest.setTimeout( 120000 );
 
       let builder;
       let assetsNum = 0;
@@ -45,7 +45,7 @@ describe( "builder", () => {
         writeFile: ( file, content ) => {
           expect( path.isAbsolute( file ) ).toBe( true );
 
-          const f = relative( file, builder.cwd );
+          const f = relative( file, builder.options.cwd );
           if ( assets[ f ] ) {
             throw new Error( `Overriding ${f}` );
           }
@@ -76,7 +76,7 @@ describe( "builder", () => {
 
           if ( expectedOut ) {
             config.entries.forEach( ( entry, i ) => {
-              const dest = relative( path.resolve( builder.dest, entry ), builder.cwd );
+              const dest = relative( path.resolve( builder.options.dest, entry ), builder.options.cwd );
               expect( typeof assets[ dest ] ).toBe( "string" );
 
               console.log = jest.fn();
@@ -114,6 +114,8 @@ describe( "builder", () => {
         await builder.runBuild();
       } catch ( err ) {
         return failure( err );
+      } finally {
+        builder.stop();
       }
 
       return success();

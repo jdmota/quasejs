@@ -1,5 +1,5 @@
 // @flow
-import type { Loc, Data, LoadOutput, TransformOutput, DepsInfo, ModuleDep, PublicModuleDep } from "../types";
+import type { Loc, Data, LoadOutput, TransformOutput, PipelineResult, DepsInfo, ModuleDep, PublicModuleDep } from "../types";
 import { Checker } from "../checker";
 import Module from "./index";
 
@@ -10,14 +10,13 @@ export default class PublicModule {
   +path: string;
   +type: string;
   +innerId: ?string;
-  +relative: string;
-  +dest: string;
+  +relativePath: string;
+  +relativeDest: string;
   +normalized: string;
   +originalData: ?Data;
   +checker: Checker;
   +load: Promise<LoadOutput>;
-  +transform: Promise<TransformOutput>;
-  +getDeps: Promise<DepsInfo>;
+  +pipeline: Promise<PipelineResult>;
   +resolveDeps: Promise<Map<string, ModuleDep>>;
   +deps: Map<string, PublicModuleDep>;
   hashId: string;
@@ -28,18 +27,17 @@ export default class PublicModule {
   constructor( m: Module ) {
     this._module = m;
     this.id = m.id;
-    this.path = m.path;
     this.type = m.type;
     this.innerId = m.innerId;
-    this.relative = m.relative;
-    this.dest = m.dest;
+    this.path = m.path;
+    this.relativePath = m.relativePath;
+    this.relativeDest = m.relativeDest;
     this.normalized = m.normalized;
     this.originalData = m.originalData;
     this.checker = new Checker( this, m.builder );
-    this.load = m.load.get();
-    this.transform = m.transform.get();
-    this.getDeps = m.getDeps.get();
-    this.resolveDeps = m.resolveDeps.get();
+    this.load = m.load.get( m.builder.build );
+    this.pipeline = m.pipeline.get( m.builder.build );
+    this.resolveDeps = m.resolveDeps.get( m.builder.build );
     this.deps = new Map(); // Fill later
     // this.hashId - Fill later
     // this.loadResult - Fill later

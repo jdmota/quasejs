@@ -1,6 +1,6 @@
 // @flow
 import type { FinalAsset, FinalAssets, ToWrite, Plugin } from "../../types";
-import type Builder from "../../builder";
+import type { BuilderContext } from "../context";
 import cloneAst from "./clone-ast";
 
 const parse5 = require( "parse5" );
@@ -20,7 +20,37 @@ function TreeAdapter() {
 
 Object.assign( TreeAdapter.prototype, defaultTreeAdapter );
 
-TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
+TreeAdapter.prototype.getAttr = function( element, attrName ) {
+  const a = element.attrs.find( ( { name } ) => name === attrName ) || {};
+  return a.value;
+};
+
+TreeAdapter.prototype.setAttr = function( element, attrName, value ) {
+  const a = element.attrs.find( ( { name } ) => name === attrName );
+  if ( a ) {
+    a.value = value;
+  } else {
+    element.attrs.push( {
+      name: attrName,
+      value
+    } );
+  }
+};
+
+TreeAdapter.prototype.removeAttr = function( element, attrName ) {
+  const index = element.attrs.findIndex( ( { name } ) => name === attrName );
+  if ( index > -1 ) {
+    element.attrs.splice( index, 1 );
+  }
+};
+
+function TreeAdapterProxy() {
+  this.__deps = [];
+}
+
+Object.assign( TreeAdapterProxy.prototype, TreeAdapter.prototype );
+
+TreeAdapterProxy.prototype.createElement = function( tagName, namespaceURI, attrs ) {
   const node = defaultTreeAdapter.createElement( tagName, namespaceURI, attrs );
 
   if ( tagName === "script" ) {
@@ -64,40 +94,18 @@ TreeAdapter.prototype.createElement = function( tagName, namespaceURI, attrs ) {
   return node;
 };
 
-TreeAdapter.prototype.getAttr = function( element, attrName ) {
-  const a = element.attrs.find( ( { name } ) => name === attrName ) || {};
-  return a.value;
-};
-
-TreeAdapter.prototype.setAttr = function( element, attrName, value ) {
-  const a = element.attrs.find( ( { name } ) => name === attrName );
-  if ( a ) {
-    a.value = value;
-  } else {
-    element.attrs.push( {
-      name: attrName,
-      value
-    } );
-  }
-};
-
-TreeAdapter.prototype.removeAttr = function( element, attrName ) {
-  const index = element.attrs.findIndex( ( { name } ) => name === attrName );
-  if ( index > -1 ) {
-    element.attrs.splice( index, 1 );
-  }
-};
-
 const NAMESPACE = "http://www.w3.org/1999/xhtml";
 
 class HtmlRenderer {
 
   +document: Object;
+  +depsExtraInfo: Object;
   +treeAdapter: TreeAdapter;
 
   constructor( ast: Object ) {
     this.document = ast;
-    this.treeAdapter = ast._treeAdapter;
+    this.depsExtraInfo = ast._depsExtraInfo;
+    this.treeAdapter = new TreeAdapter();
   }
 
   createTextScript( text: string ) {
@@ -129,14 +137,14 @@ class HtmlRenderer {
     this.treeAdapter.detachNode( node );
   }
 
-  async render( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ): Promise<ToWrite> {
+  async render( asset: FinalAsset, finalAssets: FinalAssets, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ): Promise<ToWrite> {
 
     // TODO preload
 
     const cloneStack = new Map();
     const document = cloneAst( this.document, cloneStack );
 
-    const deps = this.treeAdapter.__deps.map( d => {
+    const deps = this.depsExtraInfo.map( d => {
       return Object.assign( {}, d, { node: cloneStack.get( d.node ) } );
     } );
 
@@ -144,9 +152,9 @@ class HtmlRenderer {
     const runtime = asset.runtime;
 
     if ( runtime && firstScriptDep ) {
-      if ( builder.options.hmr ) {
+      if ( ctx.builderOptions.hmr ) {
         this.insertBefore(
-          this.createSrcScript( builder.publicPath + runtime.relative, true ),
+          this.createSrcScript( ctx.builderOptions.publicPath + runtime.relativeDest, true ),
           firstScriptDep.node
         );
       } else {
@@ -169,11 +177,11 @@ class HtmlRenderer {
       if ( importType === "css" ) {
 
         for ( let i = 0; i < neededAssets.length; i++ ) {
-          const { relative } = neededAssets[ i ];
+          const { relativeDest } = neededAssets[ i ];
           if ( i === neededAssets.length - 1 ) {
-            this.treeAdapter.setAttr( node, "href", builder.publicPath + relative );
+            this.treeAdapter.setAttr( node, "href", ctx.builderOptions.publicPath + relativeDest );
           } else {
-            this.insertBefore( this.createHrefCss( builder.publicPath + relative ), node );
+            this.insertBefore( this.createHrefCss( ctx.builderOptions.publicPath + relativeDest ), node );
           }
         }
 
@@ -189,7 +197,8 @@ class HtmlRenderer {
 
         if ( inlineAsset ) {
 
-          const { data } = await builder.renderAsset( inlineAsset, finalAssets );
+          // $FlowIgnore
+          const { data } = inlineAssets.get( inlineAsset );
 
           if ( async ) {
 
@@ -199,13 +208,13 @@ class HtmlRenderer {
 
             this.treeAdapter.setAttr( node, "defer", "" );
 
-            for ( const { relative } of neededAssets ) {
-              this.insertBefore( this.createSrcScript( builder.publicPath + relative ), node );
+            for ( const { relativeDest } of neededAssets ) {
+              this.insertBefore( this.createSrcScript( ctx.builderOptions.publicPath + relativeDest ), node );
             }
 
           }
 
-          this.treeAdapter.insertText( node, `${data.toString()}\n__quase_builder__.r(${builder.wrapInJsString( module.hashId )});` );
+          this.treeAdapter.insertText( node, `${data.toString()}\n__quase_builder__.r(${ctx.wrapInJsString( module.hashId )});` );
 
         } else {
 
@@ -214,7 +223,7 @@ class HtmlRenderer {
             this.treeAdapter.insertText( node, `
                 (function(){
                   var s=document.currentScript;
-                  __quase_builder__.i(${builder.wrapInJsString( module.hashId )}).then(function(){
+                  __quase_builder__.i(${ctx.wrapInJsString( module.hashId )}).then(function(){
                     s.dispatchEvent(new Event('load'));
                   },function(){
                     s.dispatchEvent(new Event('error'));
@@ -225,10 +234,10 @@ class HtmlRenderer {
           } else {
 
             this.treeAdapter.setAttr( node, "defer", "" );
-            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r(${builder.wrapInJsString( module.hashId )});` );
+            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r(${ctx.wrapInJsString( module.hashId )});` );
 
-            for ( const { relative } of neededAssets ) {
-              this.insertBefore( this.createSrcScript( builder.publicPath + relative ), node );
+            for ( const { relativeDest } of neededAssets ) {
+              this.insertBefore( this.createSrcScript( ctx.builderOptions.publicPath + relativeDest ), node );
             }
 
           }
@@ -255,7 +264,7 @@ export default function htmlPlugin(): Plugin {
     name: PLUGIN_NAME,
     parse: {
       html( data ) {
-        const treeAdapter = new TreeAdapter();
+        const treeAdapter = new TreeAdapterProxy();
         const deps = {
           dependencies: new Map(),
           innerDependencies: new Map(),
@@ -268,7 +277,7 @@ export default function htmlPlugin(): Plugin {
           sourceCodeLocationInfo: true
         } );
 
-        ast._treeAdapter = treeAdapter;
+        ast._depsExtraInfo = treeAdapter.__deps;
         ast._deps = deps;
 
         return ast;
@@ -277,14 +286,14 @@ export default function htmlPlugin(): Plugin {
     transformAst: {
       async html( ast ) {
 
-        const treeAdapter = ast._treeAdapter;
+        const depsExtraInfo = ast._depsExtraInfo;
         const deps = ast._deps;
 
-        if ( !treeAdapter || !deps ) {
+        if ( !depsExtraInfo || !deps ) {
           throw new Error( `${PLUGIN_NAME}: Could not metadata. Did another plugin change the AST?` );
         }
 
-        treeAdapter.__deps.forEach( s => {
+        depsExtraInfo.forEach( s => {
           if ( s.inner ) {
             if ( s.node.childNodes.length === 0 ) {
               return;
@@ -327,7 +336,7 @@ export default function htmlPlugin(): Plugin {
       }
     },
     renderAsset: {
-      html( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ) {
+      html( asset: FinalAsset, finalAssets: FinalAssets, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ) {
 
         if ( asset.srcs.length !== 1 ) {
           throw new Error( `${PLUGIN_NAME}: Asset "${asset.id}" to be generated can only have 1 source.` );
@@ -337,7 +346,7 @@ export default function htmlPlugin(): Plugin {
 
         if ( ast ) {
           const renderer = new HtmlRenderer( ast );
-          return renderer.render( asset, finalAssets, builder );
+          return renderer.render( asset, finalAssets, inlineAssets, ctx );
         }
 
         throw new Error( `${PLUGIN_NAME}: Could not find AST` );

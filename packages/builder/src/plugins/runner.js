@@ -1,12 +1,11 @@
 // @flow
 import _error from "../utils/error";
-import type { ModuleUtils, ModuleUtilsWithFS } from "../modules/utils";
-import type {
-  ProvidedPluginsArr, Plugin, Data, LoadOutput, TransformOutput,
-  DepsInfo, FinalAsset, FinalAssets, ToWrite, Output
-} from "../types";
+import { ModuleContext, BuilderContext } from "../plugins/context";
 import type { Graph } from "../graph";
-import type Builder from "../builder";
+import type {
+  Options, Plugin, Data, LoadOutput, TransformOutput, WatchedFiles,
+  PipelineResult, DepsInfo, FinalAsset, FinalAssets, ToWrite
+} from "../types";
 import jsPlugin from "./implementations/js";
 import htmlPlugin from "./implementations/html";
 import defaultPlugin from "./implementations/default";
@@ -28,14 +27,20 @@ function error( hook: $Keys<Plugin>, expected: string, actual: ?string, name: ?s
   );
 }
 
-export default class PluginsRunner {
+export interface PluginsRunnerInWorker {
+  pipeline( Data, ModuleContext ): Promise<PipelineResult & {+files: WatchedFiles}>
+}
 
-  +builder: Builder;
-  +plugins: { +name: ?string, +plugin: Plugin }[];
+export class PluginsRunner {
 
-  constructor( builder: Builder, plugins: ProvidedPluginsArr<Object => Plugin> ) {
-    this.builder = builder;
-    this.plugins = getPlugins( plugins.concat( defaultPlugins ) ).map(
+  options: Options;
+  plugins: { +name: ?string, +plugin: Plugin }[];
+
+  static workerMethods = [ "pipeline" ];
+
+  async init( options: Options ) {
+    this.options = options;
+    this.plugins = getPlugins( options.plugins.concat( defaultPlugins ) ).map(
       ( { name, plugin, options } ) => {
         if ( typeof plugin !== "function" ) {
           throw new ValidationError(
@@ -43,7 +48,7 @@ export default class PluginsRunner {
           );
         }
         const p = plugin( options );
-        if ( p == null || typeof p !== "object" ) {
+        if ( !isObject( p ) ) {
           throw new ValidationError(
             `Expected ${name ? name + " " : ""}plugin function to return an object not ${p == null ? p : typeof p}`
           );
@@ -95,7 +100,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  getTypeTransforms( a: ModuleUtils, b: ?ModuleUtils ): $ReadOnlyArray<string> {
+  getTypeTransforms( a: ModuleContext, b: ?ModuleContext ): $ReadOnlyArray<string> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.getTypeTransforms;
       if ( fn ) {
@@ -115,7 +120,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async load( path: string, module: ModuleUtilsWithFS ): Promise<Data> {
+  async load( path: string, module: ModuleContext ): Promise<Data> {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.load;
       if ( fn ) {
@@ -128,6 +133,39 @@ export default class PluginsRunner {
     throw new Error( `Unable to load ${path}` );
   }
 
+  async pipeline( data: Data, ctx: ModuleContext ): Promise<PipelineResult & {+files: WatchedFiles}> {
+
+    const ast = await this.parse( data, ctx );
+
+    let content, finalAst, finalBuffer;
+
+    if ( ast ) {
+      finalAst = await this.transformAst( ast, ctx );
+      content = {
+        ast: finalAst,
+        buffer: null
+      };
+    } else {
+      if ( typeof data === "string" ) {
+        throw new Error( "Internal: expected buffer" );
+      }
+
+      finalBuffer = await this.transformBuffer( data, ctx );
+      content = {
+        ast: null,
+        buffer: finalBuffer
+      };
+    }
+
+    const depsInfo = await this.dependencies( content, ctx );
+
+    return {
+      depsInfo,
+      content,
+      files: ctx.files
+    };
+  }
+
   validateParse( actual: Object, name: ?string ): Object {
     if ( !isObject( actual ) ) {
       error( "parse", "object", typeof actual, name );
@@ -135,7 +173,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async parse( data: Data, module: ModuleUtils ): Promise<?Object> {
+  async parse( data: Data, module: ModuleContext ): Promise<?Object> {
     const wasString = typeof data === "string";
     let string = null;
     for ( const { name, plugin } of this.plugins ) {
@@ -163,7 +201,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async transformAst( ast: Object, module: ModuleUtilsWithFS ): Promise<Object> {
+  async transformAst( ast: Object, module: ModuleContext ): Promise<Object> {
     let result = ast;
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.transformAst || EMPTY_OBJ;
@@ -185,7 +223,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async transformBuffer( buffer: Buffer, module: ModuleUtilsWithFS ): Promise<Buffer> {
+  async transformBuffer( buffer: Buffer, module: ModuleContext ): Promise<Buffer> {
     let result = buffer;
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.transformAst || EMPTY_OBJ;
@@ -212,7 +250,7 @@ export default class PluginsRunner {
     };
   }
 
-  async dependencies( output: TransformOutput, module: ModuleUtils ): Promise<DepsInfo> {
+  async dependencies( output: TransformOutput, module: ModuleContext ): Promise<DepsInfo> {
     if ( output.ast != null ) {
       for ( const { name, plugin } of this.plugins ) {
         const map = plugin.dependencies || EMPTY_OBJ;
@@ -243,7 +281,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async resolve( imported: string, module: ModuleUtilsWithFS ): Promise<string | false> {
+  async resolve( imported: string, module: ModuleContext ): Promise<string | false> {
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.resolve || EMPTY_OBJ;
       const fn = map[ module.type ] || map[ "*" ];
@@ -264,7 +302,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  async transformType( output: TransformOutput, module: ModuleUtilsWithFS, parent: ModuleUtils ): Promise<LoadOutput> {
+  async transformType( output: TransformOutput, module: ModuleContext, parent: ModuleContext ): Promise<LoadOutput> {
     const newType = module.type;
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.transformType || EMPTY_OBJ;
@@ -289,7 +327,7 @@ export default class PluginsRunner {
     return actual;
   }
 
-  isSplitPoint( a: ModuleUtils, b: ModuleUtils ): ?boolean {
+  isSplitPoint( a: ModuleContext, b: ModuleContext ): ?boolean {
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.isSplitPoint;
       if ( fn ) {
@@ -325,7 +363,7 @@ export default class PluginsRunner {
     for ( const { plugin } of this.plugins ) {
       const fn = plugin.check;
       if ( fn ) {
-        await fn( graph, this.builder );
+        await fn( graph );
       }
     }
   }
@@ -355,7 +393,7 @@ export default class PluginsRunner {
     if ( !isObject( actual ) ) {
       error( "renderAsset", "object", typeof actual, name );
     }
-    if ( this.builder.optimization.sourceMaps ) {
+    if ( this.options.optimization.sourceMaps ) {
       return {
         data: actual.data,
         map: actual.map
@@ -367,12 +405,19 @@ export default class PluginsRunner {
     };
   }
 
-  async renderAsset( asset: FinalAsset, assets: FinalAssets ): Promise<ToWrite> {
+  async renderAsset( asset: FinalAsset, assets: FinalAssets, ctx: BuilderContext ): Promise<ToWrite> {
+    const inlines = new Map();
+
+    await Promise.all( asset.inlineAssets.map( async a => {
+      const toWrite = await this.renderAsset( a, assets, ctx );
+      inlines.set( a, toWrite );
+    } ) );
+
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.renderAsset || EMPTY_OBJ;
       const fn = map[ asset.type ];
       if ( fn ) {
-        const result = await fn( asset, assets, this.builder );
+        const result = await fn( asset, assets, inlines, ctx );
         if ( result != null ) {
           return this.validateRenderAsset( result, name );
         }
@@ -393,15 +438,6 @@ export default class PluginsRunner {
     }
 
     throw new Error( `Asset "${asset.id}" could not be rendered. Probably there is some plugin missing.` );
-  }
-
-  async afterBuild( finalAssets: FinalAssets, output: Output ): Promise<void> {
-    for ( const { plugin } of this.plugins ) {
-      const fn = plugin.afterBuild;
-      if ( fn ) {
-        await fn( finalAssets, output, this.builder );
-      }
-    }
   }
 
 }

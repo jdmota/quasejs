@@ -1,7 +1,5 @@
 // @flow
 import arrayConcat from "../../utils/array-concat";
-import type Builder from "../../builder";
-import type { ModuleUtils, ModuleUtilsWithFS } from "../../modules/utils";
 import type PublicModule from "../../modules/public";
 import type {
   Plugin, NotResolvedDep, ImportedName, ExportedName,
@@ -9,6 +7,7 @@ import type {
 } from "../../types";
 import StringBuilder from "../../string-builder";
 import { chunkInit, moduleArgs } from "../../runtime/create-runtime";
+import type { BuilderContext } from "../context";
 import babelPluginModules from "./babel-plugin-transform-modules";
 import extractNames from "./ast-extract-names";
 
@@ -28,7 +27,15 @@ function getLoc( node ) {
 }
 
 function addDep( deps, source, async ) {
-  if ( !deps.dependencies.has( source.value ) ) {
+  const curr = deps.dependencies.get( source.value );
+  if ( curr ) {
+    if ( !async && curr.async ) {
+      deps.dependencies.set( source.value, {
+        loc: getLoc( source ),
+        async
+      } );
+    }
+  } else {
     deps.dependencies.set( source.value, {
       loc: getLoc( source ),
       async
@@ -153,9 +160,9 @@ function extractor( deps: MutableDepsInfo, node: Object, opts: Object = {} ) {
 }
 
 const PLUGIN_NAME = "quase_builder_js_plugin";
-const CACHE_KEY = Symbol();
+const METADATA_KEY = "quase_builder_js_plugin_metadata";
 
-async function render( module: PublicModule, builder: Builder ) {
+async function render( module: PublicModule, ctx: BuilderContext ) {
   const { data, map } = module.getLoadResult();
   const { ast } = module.getTransformResult();
   let regenerate = false;
@@ -164,7 +171,11 @@ async function render( module: PublicModule, builder: Builder ) {
     throw new Error( `${PLUGIN_NAME}: No AST?` );
   }
 
-  const cache = ast[ CACHE_KEY ] || {};
+  const cache = ast[ METADATA_KEY ];
+
+  if ( !cache ) {
+    throw new Error( `${PLUGIN_NAME}: No metadata in AST?` );
+  }
 
   for ( const { source, stringLiteral } of cache.imports ) {
     const m = module.getModuleByRequest( source );
@@ -179,7 +190,7 @@ async function render( module: PublicModule, builder: Builder ) {
     return cache.render;
   }
 
-  const optimization = builder.options.optimization;
+  const optimization = ctx.builderOptions.optimization;
 
   const opts = {
     filename: module.normalized,
@@ -193,11 +204,11 @@ async function render( module: PublicModule, builder: Builder ) {
 
   cache.render = {
     code: generateResult.code,
-    map: optimization.sourceMaps && builder.joinSourceMaps( [ map, generateResult.map ] ),
+    map: optimization.sourceMaps && ctx.joinSourceMaps( [ map, generateResult.map ] ),
     varsUsed: cache.varsUsed
   };
 
-  ast[ CACHE_KEY ] = cache;
+  ast[ METADATA_KEY ] = cache;
 
   return cache.render;
 }
@@ -206,7 +217,7 @@ export default function jsPlugin( options: Object ): Plugin {
   return {
     name: PLUGIN_NAME,
     resolve: {
-      async js( importee: string, importerUtils: ModuleUtilsWithFS ): Promise<?string | false> {
+      async js( importee: string, importerUtils ): Promise<?string | false> {
         const resolveOpts = options.resolve || {};
         const { extensions, pathFilter, paths, moduleDirectory } = resolveOpts;
         const opts = {
@@ -252,7 +263,7 @@ export default function jsPlugin( options: Object ): Plugin {
       }
     },
     parse: {
-      js( data, module: ModuleUtils ) {
+      js( data, module ) {
         return babel.parseAsync( data, {
           babelrc: false,
           configFile: false,
@@ -270,7 +281,7 @@ export default function jsPlugin( options: Object ): Plugin {
       }
     },
     transformAst: {
-      async js( ast, module: ModuleUtils ) {
+      async js( ast, module ) {
 
         const varsUsed = {};
         const imports = [];
@@ -298,7 +309,7 @@ export default function jsPlugin( options: Object ): Plugin {
           sourceMaps: false,
           plugins: [
             [ babelPluginModules, {
-              hmr: module.builderOptions().hmr,
+              hmr: module.builderOptions.hmr,
               varsUsed,
               extractor: extractor.bind( null, deps ),
               extractModuleSource( stringLiteral ) {
@@ -313,7 +324,7 @@ export default function jsPlugin( options: Object ): Plugin {
 
         const { ast: newAst } = await babel.transformFromAstAsync( ast, "", opts );
 
-        newAst[ CACHE_KEY ] = {
+        newAst[ METADATA_KEY ] = {
           varsUsed,
           imports,
           deps
@@ -324,23 +335,23 @@ export default function jsPlugin( options: Object ): Plugin {
     },
     dependencies: {
       js( ast ) {
-        if ( !ast[ CACHE_KEY ] ) {
+        if ( !ast[ METADATA_KEY ] ) {
           throw new Error( `${PLUGIN_NAME}: Could not find metadata. Did another plugin change the AST?` );
         }
 
-        const cache = ast[ CACHE_KEY ];
+        const cache = ast[ METADATA_KEY ];
         return cache && cache.deps;
       }
     },
     renderAsset: {
-      async js( asset: FinalAsset, finalAssets: FinalAssets, builder: Builder ) {
+      async js( asset: FinalAsset, finalAssets: FinalAssets, _, ctx: BuilderContext ) {
 
-        const { module: entryModule, dest } = asset;
+        const { module: entryModule, relativeDest } = asset;
 
         const build = new StringBuilder( {
-          sourceMap: builder.sourceMaps,
-          cwd: builder.cwd,
-          file: path.basename( dest )
+          sourceMap: ctx.builderOptions.optimization.sourceMaps,
+          cwd: ctx.builderOptions.cwd,
+          file: path.basename( relativeDest )
         } );
 
         build.append( `${chunkInit}.p({` );
@@ -353,15 +364,15 @@ export default function jsPlugin( options: Object ): Plugin {
             throw new Error( `Module ${module.normalized} is not of type 'js'` );
           }
 
-          const { code, map, varsUsed } = await render( module, builder );
+          const { code, map, varsUsed } = await render( module, ctx );
 
           const args = moduleArgs.slice();
           while ( args.length > 0 && !varsUsed[ args[ args.length - 1 ] ] ) {
             args.pop();
           }
 
-          build.append( `${first ? "" : ","}\n${builder.wrapInJsPropKey( module.hashId )}:function(${args.join( "," )}){` );
-          build.append( code, builder.isFakePath( module.path ) ? null : map );
+          build.append( `${first ? "" : ","}\n${ctx.wrapInJsPropKey( module.hashId )}:function(${args.join( "," )}){` );
+          build.append( code, ctx.isFakePath( module.path ) ? null : map );
           build.append( "\n}" );
 
           first = false;
@@ -371,7 +382,7 @@ export default function jsPlugin( options: Object ): Plugin {
 
         const runtime = asset.runtime;
         if ( runtime ) {
-          build.append( runtime.code.replace( /;?$/, `(${builder.wrapInJsString( entryModule.hashId )});` ) );
+          build.append( runtime.code.replace( /;?$/, `(${ctx.wrapInJsString( entryModule.hashId )});` ) );
         }
 
         return {

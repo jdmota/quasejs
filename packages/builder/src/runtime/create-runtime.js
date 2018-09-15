@@ -72,13 +72,13 @@ export function createRuntimeManifest( { files, moduleToAssets }: FinalAssets ) 
 
   const fileToIdx = {};
   const $files = files.map( ( f, i ) => {
-    fileToIdx[ f.relative ] = i;
-    return f.relative;
+    fileToIdx[ f.relativeDest ] = i;
+    return f.relativeDest;
   } );
 
   const $idToFiles = {};
   for ( const [ module, files ] of moduleToAssets ) {
-    $idToFiles[ module.hashId ] = files.map( f => fileToIdx[ f.relative ] );
+    $idToFiles[ module.hashId ] = files.map( f => fileToIdx[ f.relativeDest ] );
   }
 
   return {

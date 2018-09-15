@@ -25,3 +25,7 @@ export function getType( id: string ): string {
   const match = id.match( reExt );
   return match ? match[ 1 ] : "";
 }
+
+export function makeAbsolute( file: string ) {
+  return lowerPath( path.resolve( process.cwd(), file ) );
+}

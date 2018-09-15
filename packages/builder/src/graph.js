@@ -2,9 +2,9 @@
 import type Module from "./modules/index";
 import PublicModule from "./modules/public";
 import { hashName } from "./utils/hash";
+import { reExt } from "./utils/path";
 import type { FinalAsset } from "./types";
 import type Builder, { Build } from "./builder";
-import { reExt } from "./id";
 
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
@@ -51,10 +51,11 @@ export class Graph {
     const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
 
     for ( const module of modulesList ) {
-      module.hashId = builder.optimization.hashId ? hashName( module.id, usedIds, 5 ) : module.id;
+      module.hashId = builder.options.optimization.hashId ? hashName( module.id, usedIds, 5 ) : module.id;
       module.loadResult = await module.load;
-      module.transformResult = await module.transform;
-      module.depsInfo = await module.getDeps;
+      const { content, depsInfo } = await module.pipeline;
+      module.transformResult = content;
+      module.depsInfo = depsInfo;
 
       const deps = await module.resolveDeps;
       for ( const dep of deps.values() ) {
@@ -72,9 +73,9 @@ export class Graph {
 
     for ( const module of this.modules.values() ) {
       for ( const { required, splitPoint } of module.deps.values() ) {
-        if ( splitPoint || builder.options.hmr ) {
+        if ( splitPoint ) {
           this.splitPoints.add( required );
-        } else if ( required.type !== module.type ) {
+        } else if ( required.innerId || required.type !== module.type ) {
           this.inline.set( required, module );
         }
         const l = this.incs.get( required );
@@ -191,8 +192,8 @@ export function processGraph( graph: Graph ) {
         type: m.type,
         innerId: m.innerId,
         normalized: m.normalized,
-        dest: m.dest,
-        relative: m.relative,
+        relativePath: m.relativePath,
+        relativeDest: m.relativeDest,
         hash: null,
         isEntry: graph.moduleEntries.has( m ),
         runtime: null,
@@ -224,7 +225,7 @@ export function processGraph( graph: Graph ) {
   }
 
   for ( const f of files ) {
-    const possibleDest = f.dest.replace( reExt, `.${f.type}` );
+    const possibleDest = f.relativePath.replace( reExt, `.${f.type}` );
     const arr = filesByPath.get( possibleDest ) || [];
     arr.push( f );
     filesByPath.set( possibleDest, arr );
@@ -232,19 +233,7 @@ export function processGraph( graph: Graph ) {
 
   for ( const [ possibleDest, files ] of filesByPath ) {
     if ( files.length === 1 ) {
-      const f = files[ 0 ];
-      f.dest = possibleDest;
-      f.relative = f.relative.replace( reExt, `.${f.type}` );
-    } else {
-      for ( const f of files ) {
-        if ( f.innerId ) {
-          f.dest = `${f.dest}.${f.innerId}.${f.type}`;
-          f.relative = `${f.relative}.${f.innerId}.${f.type}`;
-        } else {
-          f.dest = `${f.dest}.${f.type}`;
-          f.relative = `${f.relative}.${f.type}`;
-        }
-      }
+      files[ 0 ].relativeDest = possibleDest;
     }
   }
 

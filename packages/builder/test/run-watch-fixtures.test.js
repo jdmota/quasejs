@@ -1,21 +1,24 @@
-import index from "../src";
-import Reporter from "../src/reporter";
+import index from "../dist";
+import Reporter from "../dist/reporter";
 import transformConfig from "./transform-config";
+
+const fs = require( "fs-extra" );
+const path = require( "path" );
+
+const FIXTURES = path.resolve( "packages/builder/test/watch-fixtures" );
+const folders = fs.readdirSync( FIXTURES );
 
 class TestReporter extends Reporter {
   constructor( options, builder, emitter ) {
     super( options, builder, emitter );
     this.log = options.log;
   }
+  onWatching( files ) {
+    this.onWatchingAll( files );
+  }
 }
 
 describe( "watcher", () => {
-
-  const fs = require( "fs-extra" );
-  const path = require( "path" );
-
-  const FIXTURES = path.resolve( "packages/builder/test/watch-fixtures" );
-  const folders = fs.readdirSync( FIXTURES );
 
   folders.forEach( folder => {
 
@@ -72,23 +75,15 @@ describe( "watcher", () => {
 
       config = transformConfig( config, fixturePath );
 
-      const reporter = index( config );
+      const reporter = index( config, true );
 
-      const b = reporter.emitter;
-      b.watcher = {
-        _files: null,
-        _dirs: null,
-        watch( files, dirs ) {
-          this._files = files;
-          this._dirs = dirs;
-        },
-        close() {}
-      };
+      const watcher = reporter.emitter;
+      watcher.watcher.close();
 
       function update( file, type ) {
         file = path.sep === "\\" ? file.toLowerCase() : file;
-        if ( b.watcher._files && b.watcher._files.indexOf( file ) > -1 ) {
-          b.onUpdate( file, type );
+        if ( watcher.watcher.watchedPaths.has( file ) ) {
+          watcher._onUpdate( file, type );
           return true;
         }
         return false;
@@ -105,7 +100,7 @@ describe( "watcher", () => {
       async function next() {
 
         if ( i >= operations.length ) {
-          b.stop();
+          watcher.stop();
           resolve();
           return;
         }
@@ -117,13 +112,13 @@ describe( "watcher", () => {
           case "newFile":
             await fs.writeFile( arg1, arg2 );
             if ( update( arg1, "added" ) ) {
-              b.queueBuild();
+              watcher.queueBuild();
             }
             break;
           case "writeFile":
             await fs.writeFile( arg1, arg2 );
             if ( update( arg1, "changed" ) ) {
-              b.queueBuild();
+              watcher.queueBuild();
             }
             break;
           case "ensureDir":
@@ -133,13 +128,13 @@ describe( "watcher", () => {
             arg2 = path.resolve( workingPath, arg2 );
             await fs.rename( arg1, arg2 );
             if ( update( arg1, "removed" ) || update( arg2, "added" ) ) {
-              b.queueBuild();
+              watcher.queueBuild();
             }
             break;
           case "remove":
             await fs.remove( arg1 );
             if ( update( arg1, "removed" ) ) {
-              b.queueBuild();
+              watcher.queueBuild();
             }
             break;
           default:
@@ -147,10 +142,10 @@ describe( "watcher", () => {
         }
 
         i++;
-        b.currentBuild.then( next );
+        watcher.currentBuild.then( next );
       }
 
-      b.currentBuild.then( next );
+      watcher.currentBuild.then( next );
 
       await promise;
 
