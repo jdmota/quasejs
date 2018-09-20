@@ -1,7 +1,7 @@
 // @flow
 import { resolvePath, makeAbsolute } from "../utils/path";
 import isFile from "../utils/is-file";
-import type { ModuleInfo } from "../modules/index";
+import type { ModuleInfo } from "../module";
 import type { WatchedFiles } from "../types";
 
 const fs = require( "fs-extra" );

@@ -77,8 +77,7 @@ export default class Reporter {
     if ( this.hideDates ) {
       this.log( "Done building.\n" );
     } else {
-      const now = new Date();
-      this.log( `Done building in ${time}ms. ${now.toLocaleString()}\n` );
+      this.log( `Done building in ${time}ms.\n` );
     }
   }
 

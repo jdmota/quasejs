@@ -1,6 +1,6 @@
 // @flow
 import arrayConcat from "../../utils/array-concat";
-import type PublicModule from "../../modules/public";
+import type Module from "../../module";
 import type {
   Plugin, NotResolvedDep, ImportedName, ExportedName,
   FinalAsset, FinalAssets
@@ -162,7 +162,7 @@ function extractor( deps: MutableDepsInfo, node: Object, opts: Object = {} ) {
 const PLUGIN_NAME = "quase_builder_js_plugin";
 const METADATA_KEY = "quase_builder_js_plugin_metadata";
 
-async function render( module: PublicModule, ctx: BuilderContext ) {
+async function render( module: Module, ctx: BuilderContext ) {
   const { data, map } = module.getLoadResult();
   const { ast } = module.getTransformResult();
   let regenerate = false;

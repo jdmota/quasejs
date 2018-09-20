@@ -1,10 +1,9 @@
 // @flow
-import type Module from "./modules/index";
-import PublicModule from "./modules/public";
+import type Module from "./module";
 import { hashName } from "./utils/hash";
 import { reExt } from "./utils/path";
 import type { FinalAsset } from "./types";
-import type Builder, { Build } from "./builder";
+import type Builder from "./builder";
 
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
@@ -12,69 +11,44 @@ const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 export class Graph {
 
-  modules: Map<string, PublicModule>;
-  moduleEntries: Set<PublicModule>;
-  incs: Map<PublicModule, PublicModule[]>;
-  entrypoints: Set<PublicModule>;
-  splitPoints: Set<PublicModule>;
-  inline: Map<PublicModule, PublicModule>;
+  modules: Map<string, Module>;
+  moduleEntries: Set<Module>;
+  entrypoints: Set<Module>;
+  incs: Map<Module, Module[]>;
+  inline: Map<Module, Module>;
 
-  constructor( build: Build, moduleEntries: Set<Module> ) {
+  constructor() {
     this.modules = new Map();
     this.moduleEntries = new Set();
-    this.incs = new Map();
     this.entrypoints = new Set();
-    this.splitPoints = new Set();
+    this.incs = new Map();
     this.inline = new Map();
-
-    for ( const module of build.modules.values() ) {
-      this.modules.set( module.id, new PublicModule( module ) );
-    }
-
-    for ( const { id } of moduleEntries ) {
-      const m = this.get( id );
-      this.moduleEntries.add( m );
-      this.entrypoints.add( m );
-    }
   }
 
-  get( id: string ): PublicModule {
-    const m = this.modules.get( id );
-    if ( m ) {
-      return m;
-    }
-    throw new Error( `Internal: can't get ${id}` );
+  add( module: Module ) {
+    this.modules.set( module.id, module );
+    this.incs.set( module, [] );
   }
 
-  async init( builder: Builder ) {
-    const usedIds = new Set();
-    const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
+  remove( module: Module ) {
+    this.modules.delete( module.id );
+    this.incs.delete( module );
+    module.unref();
+  }
 
-    for ( const module of modulesList ) {
-      module.hashId = builder.options.optimization.hashId ? hashName( module.id, usedIds, 5 ) : module.id;
-      module.loadResult = await module.load;
-      const { content, depsInfo } = await module.pipeline;
-      module.transformResult = content;
-      module.depsInfo = depsInfo;
+  addEntry( module: Module ) {
+    this.moduleEntries.add( module );
+    this.entrypoints.add( module );
+  }
 
-      const deps = await module.resolveDeps;
-      for ( const dep of deps.values() ) {
-        // $FlowIgnore
-        module.deps.set( dep.request, {
-          ...dep,
-          required: this.get( dep.required.id )
-        } );
-      }
-    }
+  init( builder: Builder ) {
 
-    for ( const module of this.modules.values() ) {
-      this.incs.set( module, [] );
-    }
+    const splitPoints = new Set();
 
     for ( const module of this.modules.values() ) {
       for ( const { required, splitPoint } of module.deps.values() ) {
         if ( splitPoint ) {
-          this.splitPoints.add( required );
+          splitPoints.add( required );
         } else if ( required.innerId || required.type !== module.type ) {
           this.inline.set( required, module );
         }
@@ -85,7 +59,7 @@ export class Graph {
       }
     }
 
-    for ( const split of this.splitPoints ) {
+    for ( const split of splitPoints ) {
       this.entrypoints.add( split );
       this.inline.delete( split );
     }
@@ -100,9 +74,18 @@ export class Graph {
     }
 
     this.incs.forEach( value => value.sort( modulesSorter ) );
+
+    if ( builder.options.optimization.hashId ) {
+      const usedIds = new Set();
+      const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
+
+      for ( const module of modulesList ) {
+        module.hashId = hashName( module.id, usedIds, 5 );
+      }
+    }
   }
 
-  syncDeps( module: PublicModule, set: Set<PublicModule> = new Set() ) {
+  syncDeps( module: Module, set: Set<Module> = new Set() ) {
     for ( const { required, async } of this.requires( module ).values() ) {
       if ( !async && !set.has( required ) ) {
         set.add( required );
@@ -112,18 +95,21 @@ export class Graph {
     return set;
   }
 
-  requires( module: PublicModule ) {
+  requires( module: Module ) {
     return module.deps;
   }
 
-  requiredBy( module: PublicModule ) {
+  requiredBy( module: Module ) {
     return this.incs.get( module ) || [];
   }
 }
 
 export function processGraph( graph: Graph ) {
-  // walk over graph and set (1<<n) for all demands
-  const hashes: Map<PublicModule, number> = new Map();
+  // every bit at 1 says that the module belongs to a certain group
+  // for example
+  // 1010 is for the module that is reached from entrypoint index 1 and 3
+  // 1010 == ( 1 << 1 ) || ( 1 << 3 )
+  const hashes: Map<Module, number> = new Map();
 
   let n = 0;
   for ( const entrypoint of graph.entrypoints ) {
@@ -138,7 +124,7 @@ export function processGraph( graph: Graph ) {
   }
 
   // find all files in the same module
-  const grow = ( from: PublicModule ): ?PublicModule[] => {
+  const grow = ( from: Module ): ?Module[] => {
     const hash = hashes.get( from );
     const wouldSplitSrc = src => {
       // entrypoints are always their own starting point
@@ -180,7 +166,7 @@ export function processGraph( graph: Graph ) {
   const files = [];
   const inlineAssets = [];
   const filesByPath = new Map();
-  const moduleToFile: Map<PublicModule, FinalAsset> = new Map();
+  const moduleToFile: Map<Module, FinalAsset> = new Map();
 
   hashes.forEach( ( hash, m ) => {
     const srcs = grow( m );
@@ -237,7 +223,7 @@ export function processGraph( graph: Graph ) {
     }
   }
 
-  const moduleToAssets: Map<PublicModule, FinalAsset[]> = new Map();
+  const moduleToAssets: Map<Module, FinalAsset[]> = new Map();
   for ( const [ module, file ] of moduleToFile ) {
 
     const set: Set<FinalAsset> = new Set( [ file ] );

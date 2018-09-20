@@ -4,7 +4,6 @@ import { makeAbsolute } from "./utils/path";
 import type { WatchedFileInfo } from "./types";
 import type Builder from "./builder";
 
-// const fs = require( "fs-extra" );
 const path = require( "path" );
 const EventEmitter = require( "events" );
 // $FlowIgnore
@@ -56,8 +55,6 @@ class FSWatcher extends _FSWatcher {
   }
 
 }
-
-// const fsStats = Object.create( null );
 
 export default class Watcher extends EventEmitter {
 
@@ -124,22 +121,6 @@ export default class Watcher extends EventEmitter {
       computation.subscribeTo( producers.changed );
     }
     this.producersByFile.set( path, producers );
-
-    /* TODO if ( !fsStats[ path ] ) {
-      fsStats[ path ] = fs.stat( path );
-    }
-
-    fsStats[ path ].then( stats => {
-      if ( !stats.birthtimeMs || stats.birthtimeMs === stats.ctimeMs || stats.birthtimeMs >= info.time ) {
-        this.onUpdate( path, "added" );
-      } else if ( stats.mtimeMs >= info.time ) {
-        this.onUpdate( path, "changed" );
-      }
-      fsStats[ path ] = null;
-    }, () => {
-      this.onUpdate( path, "removed" );
-      fsStats[ path ] = null;
-    } );*/
   }
 
   _invalidate( what: string, existance: boolean ) {
@@ -170,8 +151,6 @@ export default class Watcher extends EventEmitter {
     let update;
     while ( update = this.updates.pop() ) {
       if ( update.type === "added" || update.type === "removed" ) {
-        // If a folder was removed, no need to purgeNested,
-        // since if we depended on those files, they will be purged as well.
         this.addedOrRemoved( update.path );
       } else {
         this.changed( update.path );

@@ -109,13 +109,18 @@ export class Farm {
   }
 
   startChild() {
+    // https://github.com/nodejs/node/issues/14325
+    const execArgv = process.execArgv.filter(
+      v => !/^--(debug|inspect)/.test( v )
+    );
+
     const options = {
+      execArgv,
       env: process.env,
       cwd: process.cwd()
     };
 
     const child = childProcess.fork( path.join( __dirname, "fork.js" ), options );
-    child.on( "error", () => {} );
 
     const c: Child = {
       child,
@@ -269,6 +274,10 @@ export class Farm {
   }
 
   onExit( child: Child ) {
+    if ( this.ended ) {
+      return;
+    }
+
     this.children.delete( child );
     setTimeout( () => {
       for ( const call of child.calls ) {

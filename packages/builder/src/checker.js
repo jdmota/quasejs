@@ -3,7 +3,7 @@ import blank from "./utils/blank";
 import error from "./utils/error";
 import isEmpty from "./utils/is-empty";
 import { locToString } from "./utils/loc";
-import type PublicModule from "./modules/public";
+import type Module from "./module";
 import type { Loc } from "./types";
 import type { Graph } from "./graph";
 import type Builder from "./builder";
@@ -12,7 +12,7 @@ const isExportAll = e => e.request && e.name === "*" && e.imported === "*";
 
 export class Checker {
 
-  +module: PublicModule;
+  +module: Module;
   +builder: Builder;
   +id: string;
   +normalized: string;
@@ -21,7 +21,7 @@ export class Checker {
   _exportsSingle: ?{ [key: string]: boolean };
   _exportsAllFrom: ?{ [key: string]: boolean };
 
-  constructor( module: PublicModule, builder: Builder ) {
+  constructor( module: Module, builder: Builder ) {
     this.module = module;
     this.builder = builder;
     this.id = module.id;
@@ -36,7 +36,7 @@ export class Checker {
     this.module.error( msg, loc );
   }
 
-  getModule( request: string ): PublicModule {
+  getModule( request: string ): Module {
     const m = this.module.getModuleByRequest( request );
     if ( !m ) {
       throw new Error( `Internal: dependency for ${JSON.stringify( request )} not found.` );
@@ -78,7 +78,7 @@ export class Checker {
     return exports;
   }
 
-  getAllFromExports( stack: Set<PublicModule> = new Set() ) {
+  getAllFromExports( stack: Set<Module> = new Set() ) {
     if ( this._exportsAllFrom ) {
       return this._exportsAllFrom;
     }
@@ -140,7 +140,7 @@ export class Checker {
     return exportsAllFrom;
   }
 
-  getExports( stack: Set<PublicModule> | void ) {
+  getExports( stack: Set<Module> | void ) {
     return this._exports || ( this._exports = {
       ...this.getSingleExports(),
       ...this.getAllFromExports( stack )
@@ -170,20 +170,23 @@ export class Checker {
   }
 
   reset() {
-    if ( !isEmpty( this._exportsAllFrom ) ) {
+    /* TODO if ( !isEmpty( this._exportsAllFrom ) ) {
       this._exports = null;
       this._exportsAllFrom = null;
-    }
+    }*/
+    this._imports = null;
+    this._exports = null;
+    this._exportsSingle = null;
+    this._exportsAllFrom = null;
   }
 
 }
 
 export function check( graph: Graph ) {
-  /* TODO enable if we start reusing PublicModules
-  for ( const [ , module ] of graph.modules ) {
+  for ( const module of graph.modules.values() ) {
     module.checker.reset();
-  }*/
-  for ( const [ , module ] of graph.modules ) {
+  }
+  for ( const module of graph.modules.values() ) {
     module.checker.checkImportsExports();
   }
 }

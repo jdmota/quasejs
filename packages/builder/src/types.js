@@ -1,6 +1,5 @@
 // @flow
-import type Module from "./modules/index";
-import type PublicModule from "./modules/public";
+import type Module from "./module";
 import type { BuilderContext, ModuleContext } from "./plugins/context";
 import type { Graph } from "./graph";
 
@@ -73,16 +72,6 @@ export type ModuleDep = {|
   +inherit: boolean
 |};
 
-export type PublicModuleDep = {|
-  +path: string,
-  +request: string,
-  +loc?: ?Loc,
-  +async?: ?boolean,
-  +splitPoint: boolean,
-  +required: PublicModule,
-  +inherit: boolean
-|};
-
 export type DepsInfo = {|
   +dependencies: Map<string, ?NotResolvedDep>,
   +innerDependencies: Map<string, InnerDep>,
@@ -99,7 +88,7 @@ export type PipelineResult = {
 };
 
 export type FinalAsset = {
-  module: PublicModule,
+  module: Module,
   id: string,
   path: string,
   type: string,
@@ -113,14 +102,14 @@ export type FinalAsset = {
     relativeDest: string,
     code: string
   },
-  srcs: PublicModule[],
+  srcs: Module[],
   inlineAssets: FinalAsset[]
 };
 
 export type FinalAssets = {
-  modules: Map<string, PublicModule>;
+  modules: Map<string, Module>;
   files: FinalAsset[],
-  moduleToAssets: Map<PublicModule, FinalAsset[]>
+  moduleToAssets: Map<Module, FinalAsset[]>
 };
 
 export type ToWrite = {|

@@ -1,7 +1,7 @@
 // @flow
 import hash from "./utils/hash";
 import { type RuntimeInfo, createRuntime, createRuntimeManifest } from "./runtime/create-runtime";
-import Module, { type ModuleArg } from "./modules/index";
+import Module, { type ModuleArg } from "./module";
 import type { PluginsRunnerInWorker, PluginsRunner } from "./plugins/runner";
 import { type ComputationApi, ComputationCancelled } from "./utils/data-dependencies";
 import difference from "./utils/difference";
@@ -28,9 +28,9 @@ function addHash( file: string, h: string ): string {
 export class Build {
 
   +builder: Builder; // eslint-disable-line no-use-before-define
-  +modules: Map<string, Module>;
   +promises: Promise<*>[];
   +buildId: number;
+  +graph: Graph;
   cancelled: boolean;
   prevFiles: ( {
     id: string,
@@ -40,13 +40,13 @@ export class Build {
 
   constructor( prevBuild: ?Build, builder: Builder ) {
     this.builder = builder;
-    this.modules = new Map();
     this.promises = [];
+    this.graph = new Graph();
     this.cancelled = false;
 
     if ( prevBuild ) {
-      for ( const [ id, module ] of prevBuild.modules ) {
-        this.modules.set( id, module );
+      for ( const module of prevBuild.graph.modules.values() ) {
+        this.graph.add( module );
       }
 
       this.buildId = prevBuild.buildId + 1;
@@ -64,15 +64,14 @@ export class Build {
 
     const removed = [];
 
-    for ( const [ id, module ] of this.modules ) {
+    for ( const module of this.graph.modules.values() ) {
       if ( module.buildId !== this.buildId ) {
-        module.unref();
-        removed.push( id );
+        removed.push( module );
       }
     }
 
-    for ( const id of removed ) {
-      this.modules.delete( id );
+    for ( const module of removed ) {
+      this.graph.remove( module );
     }
   }
 
@@ -82,11 +81,11 @@ export class Build {
     }
 
     const id = this.builder.makeId( arg );
-    let m = this.modules.get( id );
+    let m = this.graph.modules.get( id );
 
     if ( !m ) {
       m = new Module( id, arg );
-      this.modules.set( id, m );
+      this.graph.add( m );
     }
 
     this.promises.push( m.process( this ) );
@@ -340,10 +339,9 @@ export default class Builder {
 
     const startTime = Date.now();
     const emptyDirPromise = this.options.optimization.cleanup ? fs.emptyDir( this.options.dest ) : Promise.resolve();
-    const moduleEntries = new Set();
 
     for ( const path of this.options.entries ) {
-      moduleEntries.add(
+      build.graph.addEntry(
         build.addModuleAndTransform( {
           path,
           prevId: null,
@@ -355,12 +353,11 @@ export default class Builder {
 
     await build.wait();
 
-    const graph = new Graph( build, moduleEntries );
-    await graph.init( this );
+    build.graph.init( this );
 
-    await this.pluginsRunner.check( graph );
+    await this.pluginsRunner.check( build.graph );
 
-    const finalAssets = await this.pluginsRunner.graphTransform( processGraph( graph ) );
+    const finalAssets = await this.pluginsRunner.graphTransform( processGraph( build.graph ) );
 
     await emptyDirPromise;
 

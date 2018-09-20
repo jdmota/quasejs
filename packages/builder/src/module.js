@@ -1,12 +1,13 @@
 // @flow
-import { Computation, type ComputationApi } from "../utils/data-dependencies";
-import { relative, lowerPath } from "../utils/path";
-import error from "../utils/error";
-import type Builder, { Build } from "../builder";
+import { Computation, type ComputationApi } from "./utils/data-dependencies";
+import { relative, lowerPath } from "./utils/path";
+import error from "./utils/error";
 import type {
-  Data, Loc, LoadOutput, PipelineResult, NotResolvedDep, ModuleDep
-} from "../types";
-import { ModuleContext, ModuleContextWithoutFS } from "../plugins/context";
+  Data, Loc, LoadOutput, TransformOutput, PipelineResult, NotResolvedDep, DepsInfo, ModuleDep
+} from "./types";
+import type Builder, { Build } from "./builder";
+import { ModuleContext, ModuleContextWithoutFS } from "./plugins/context";
+import { Checker } from "./checker";
 
 /* eslint-disable no-use-before-define */
 
@@ -84,14 +85,20 @@ export default class Module {
   +parentInner: ?Module;
   +parentGenerator: ?Module;
   +ctx: ModuleContextWithoutFS;
+  +load: Computation<LoadOutput>;
+  +pipeline: Computation<PipelineResult>;
+  +resolveDeps: Computation<Map<string, ModuleDep>>;
   buildId: number;
   locOffset: ?Loc;
   originalData: ?Data;
   originalMap: ?Object;
   wasParsed: boolean;
-  +load: Computation<LoadOutput>;
-  +pipeline: Computation<PipelineResult>;
-  +resolveDeps: Computation<Map<string, ModuleDep>>;
+  checker: Checker;
+  hashId: string;
+  loadResult: LoadOutput;
+  transformResult: TransformOutput;
+  depsInfo: DepsInfo;
+  deps: Map<string, ModuleDep>;
 
   constructor( id: string, { builder, path, type, loc, innerId, parentInner, parentGenerator }: ModuleArg ) {
     this.id = id;
@@ -105,21 +112,28 @@ export default class Module {
     this.normalized = this.relativePath;
     this.builder = builder;
 
-    this.locOffset = loc;
-    this.originalData = null;
-    this.originalMap = null;
-    this.wasParsed = false;
-
     this.ctx = new ModuleContextWithoutFS( builder.options, this );
 
     this.parentInner = parentInner;
     this.parentGenerator = parentGenerator;
 
-    this.buildId = 0;
-
     this.load = new Computation( ( c, b ) => this._load( c, b ) );
     this.pipeline = new Computation( ( c, b ) => this._pipeline( c, b ) );
     this.resolveDeps = new Computation( ( c, b ) => this._resolveDeps( c, b ) );
+
+    this.buildId = 0;
+
+    this.locOffset = loc;
+    this.originalData = null;
+    this.originalMap = null;
+    this.wasParsed = false;
+    this.checker = new Checker( this, builder );
+    this.hashId = id;
+    // this.hashId - Refill later if necessary
+    // this.loadResult - Fill later
+    // this.transformResult - Fill later
+    // this.depsInfo - Fill later
+    // this.deps - Fill later
   }
 
   unref() {
@@ -225,10 +239,10 @@ export default class Module {
       this.originalData = data;
       this.originalMap = map;
 
-      return {
+      return ( this.loadResult = {
         data,
         map
-      };
+      } );
     } catch ( err ) {
       if ( err.code === "ENOENT" ) {
         throw error( `Could not find ${this.normalized}` );
@@ -251,6 +265,8 @@ export default class Module {
 
     this.wasParsed = !!content.ast;
 
+    this.transformResult = content;
+    this.depsInfo = depsInfo;
     return {
       depsInfo,
       content
@@ -364,6 +380,7 @@ export default class Module {
       moduleDeps.set( dep.request, dep );
     }
 
+    this.deps = moduleDeps;
     return moduleDeps;
   }
 
@@ -393,6 +410,27 @@ export default class Module {
       loc: this.locOffset,
       parentGenerator: this
     } );
+  }
+
+  getLoadResult(): LoadOutput {
+    return this.loadResult;
+  }
+
+  getTransformResult(): TransformOutput {
+    return this.transformResult;
+  }
+
+  getModuleByRequest( request: string ): Module {
+    // $FlowIgnore
+    return this.deps.get( request ).required;
+  }
+
+  getImportedNames() {
+    return this.depsInfo.importedNames;
+  }
+
+  getExportedNames() {
+    return this.depsInfo.exportedNames;
   }
 
 }
