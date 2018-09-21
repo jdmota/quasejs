@@ -1,12 +1,10 @@
 # QuaseJS
 
-<!--[Documentation](/docs) | [Install](#installation)-->
-
 The purpose of QuaseJS is to include various packages, smaller ones or bigger ones, that are useful for different tasks and that make the lives of JavaScript developers easier.
 
-## :construction: This is a work in progress :construction:
+As of now, this is just an experiment. A lot of what is here is intended to investigate new tools/patterns or adapt ones that already exist, making them work in JavaScript, and maybe in a future programming language, that would provide them out of the box.
 
-## Features and available modules
+## Work in progress
 
 **[builder](packages/builder)**
 
@@ -26,7 +24,7 @@ Some tools to work with Error objects and their stack.
 
 **[eslint-config-quase](packages/eslint-config-quase)**
 
-The Eslint configuration that I use.
+The Eslint configuration that we use.
 
 **[fs/cacheable-fs](packages/fs/cacheable-fs)**
 
@@ -34,7 +32,7 @@ A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
 
 **[package-manager](packages/package-manager)**
 
-An experimental package manager that uses a global store and a combination of hard/soft links.
+An experimental package manager that removes the need for having a huge `node_modules` folder.
 
 **[path-url](packages/path-url)**
 
@@ -63,28 +61,8 @@ Utility to help you get all the requested plugins.
 - Implements one-way data flow.
 - Has a compiler that removes the need for a diffing algorithm.
 
-## Installation
-
-````
-npm install @quase/PACKAGE
-````
-
 ## FAQ
 
 **What name is that?**
 
-`Quase` means `almost` in portuguese. The idea came because I wanted this to include "almost everything" :smile:
-
-**One more framework?!**
-
-I would not call this a framework.
-
-This is just a project with many modules that end up being reused in various places, so I thought it would be easier to have them in just one repository.
-
-**Why implement things that already exist?**
-
-I'm building this to learn and also to use it personally. I also imagined that this could be in some way useful for other people.
-
-Sometimes I want something a little different, so I ended up doing my own implementation.
-
-I will try to keep this project modular and reuse other modules that already exist as much as possible.
+`Quase` means `almost` in portuguese. The idea came because we wanted this to include "almost everything".
