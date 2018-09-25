@@ -1,16 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`compile and runtime test 0 1`] = `
-"
-render = function render() {
-  return new QuaseView.r(new QuaseView.t([1, 1, 1, 1, 0, 11, 13, 19], [\\"someProp\\", \\"a-nother\\", \\"multiParts\\", \\"a\\", \\"a\\", \\"aThing\\"], \\"<div>\\\\n      <p><!----></p>\\\\n      <div><!----></div>\\\\n    </div>\\"), [
+"const _render2 = new QuaseView.t([7], [], \\"<span><!----></span>\\");const _render = new QuaseView.t([1, 1, 1, 1, 0, 11, 13, 19, 27], [\\"someProp\\", \\"a-nother\\", \\"multiParts\\", \\"a\\", \\"a\\", \\"aThing\\"], \\"<div>\\\\n      <p><!----></p>\\\\n      <div><!----></div>\\\\n      <i>Italic: <!----></i>\\\\n    </div>\\");
+render = function render({ text }) {
+  return new QuaseView.r(_render, [
   1,
   2,
   \`\${3} \${4}\`,
   5,
   6,
   7,
-  8, [9, new QuaseView.r(new QuaseView.t([7], [], \\"<span><!----></span>\\"), [10]), 11]]);
+  8, [9, new QuaseView.r(_render2, [10]), 11],
+  text]);
 
 };"
 `;
@@ -19,5 +20,16 @@ exports[`compile and runtime test 0 2`] = `
 "<div a=\\"6\\">
       <p>7</p>
       <div>9<span>10</span>11<!----></div>
+      <i>Italic: text</i>
     </div>"
 `;
+
+exports[`compile and runtime test 1 1`] = `
+"const _render = new QuaseView.t([7], [], \\"<i>Italic: <!----></i>\\");
+// Fragment at root
+render = function render({ text }) {
+  return new QuaseView.r(_render, [text]);
+};"
+`;
+
+exports[`compile and runtime test 1 2`] = `"<i>Italic: text</i>"`;

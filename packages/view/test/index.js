@@ -6,7 +6,7 @@ const { JSDOM } = jsdom;
 
 const fixtures = [
   `
-  render = function render() {
+  render = function render({text}) {
     return <div
       someProp={1}
       a-nother={2}
@@ -15,7 +15,14 @@ const fixtures = [
       a$={6}>
       <p>{7}</p>
       <div aThing={8}>{[9,<span>{10}</span>,11]}</div>
+      <><i>Italic: {text}</i></>
     </div>;
+  };
+  `,
+  `
+  // Fragment at root
+  render = function render({text}) {
+    return <><i>Italic: {text}</i></>;
   };
   `
 ];
@@ -45,7 +52,7 @@ describe( "compile and runtime", () => {
 
       let render;
       eval( finalCode ); // eslint-disable-line no-eval
-      QuaseView.render( render(), container );
+      QuaseView.render( render( { text: "text" } ), container );
 
       expect( container.innerHTML ).toMatchSnapshot();
 

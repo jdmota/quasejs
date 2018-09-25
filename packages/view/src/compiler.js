@@ -45,8 +45,14 @@ type JSXOpeningElement = {
 
 type JSXElement = {
   openingElement: JSXOpeningElement,
-  children: ( JSXElement | JSXText | JSXExpressionContainer )[]
+  children: JSXChildren[]
 };
+
+type JSXFragment = {
+  children: JSXChildren[]
+};
+
+type JSXChildren = JSXElement | JSXFragment | JSXText | JSXExpressionContainer;
 */
 
 const escapeHTML = require( "he" ).encode;
@@ -99,6 +105,9 @@ const visitor = {
           case "JSXElement":
             visitor.JSXElement( result, t, child );
             break;
+          case "JSXFragment":
+            visitor.JSXFragment( result, t, child );
+            break;
           case "JSXText":
             result.html.push( escapeHTML( child.value ) );
             break;
@@ -111,6 +120,28 @@ const visitor = {
       }
 
       result.html.push( `</${openingElement.name.name}>` );
+    }
+
+  },
+  JSXFragment( result, t, { children } ) {
+
+    for ( const child of children ) {
+      switch ( child.type ) {
+        case "JSXElement":
+          visitor.JSXElement( result, t, child );
+          break;
+        case "JSXFragment":
+          visitor.JSXFragment( result, t, child );
+          break;
+        case "JSXText":
+          result.html.push( escapeHTML( child.value ) );
+          break;
+        case "JSXExpressionContainer":
+          visitor.JSXExpressionContainer( result, t, child );
+          break;
+        default:
+          throw new Error( `Unknown child of type ${child.type}` );
+      }
     }
 
   },
@@ -153,45 +184,61 @@ const visitor = {
   }
 };
 
+function mainVisitor( t, fn, path ) {
+
+  const { node } = path;
+
+  const quaseViewTemplate = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE ) );
+  const quaseViewTemplateResult = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE_RESULT ) );
+
+  const result = {
+    html: [],
+    parts: [],
+    strings: [],
+    expressions: [],
+    index: 0
+  };
+
+  fn( result, t, node );
+
+  const program = path.scope.getProgramParent().path;
+
+  const templateUID = program.scope.generateUidIdentifier( "render" );
+
+  const templateDeclaration = t.variableDeclaration( "const", [
+    t.variableDeclarator(
+      templateUID,
+      t.newExpression(
+        quaseViewTemplate,
+        [
+          t.arrayExpression( result.parts ),
+          t.arrayExpression( result.strings ),
+          t.stringLiteral( result.html.join( "" ) )
+        ]
+      )
+    )
+  ] );
+
+  program.unshiftContainer( "body", templateDeclaration );
+
+  path.replaceWith(
+    t.newExpression(
+      quaseViewTemplateResult,
+      [
+        templateUID,
+        t.arrayExpression( result.expressions )
+      ]
+    )
+  );
+
+}
+
 export default function( { types: t } ) {
   return {
     inherits: jsx,
     visitor: {
-      JSXElement( path ) {
-
-        const { node } = path;
-
-        const quaseViewTemplate = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE ) );
-        const quaseViewTemplateResult = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE_RESULT ) );
-
-        const result = {
-          html: [],
-          parts: [],
-          strings: [],
-          expressions: [],
-          index: 0
-        };
-
-        visitor.JSXElement( result, t, node );
-
-        path.replaceWith(
-          t.newExpression(
-            quaseViewTemplateResult,
-            [
-              t.newExpression(
-                quaseViewTemplate,
-                [
-                  t.arrayExpression( result.parts ),
-                  t.arrayExpression( result.strings ),
-                  t.stringLiteral( result.html.join( "" ) )
-                ]
-              ),
-              t.arrayExpression( result.expressions )
-            ]
-          )
-        );
-
-      }
+      JSXElement: path => mainVisitor( t, visitor.JSXElement, path ),
+      JSXFragment: path => mainVisitor( t, visitor.JSXFragment, path )
     }
   };
 }

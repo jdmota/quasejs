@@ -252,8 +252,10 @@
 
   }
 
+  const nodeToInstance = new WeakMap();
+
   function render( result, container ) {
-    let instance = container.__templateInstance;
+    let instance = nodeToInstance.get( container );
 
     if ( instance != null && instance.template === result.template ) {
       instance.update( result.values );
@@ -261,7 +263,7 @@
     }
 
     instance = new TemplateInstance( result.template );
-    container.__templateInstance = instance;
+    nodeToInstance.set( container, instance );
 
     const fragment = instance.createNode();
     container.appendChild( fragment );
