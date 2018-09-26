@@ -28,7 +28,7 @@ Files folder: STORE/VERSION/<pkgId>/files
 Package info: STORE/VERSION/<pkgId>/files/.qpm
 
 A resolution set folder: STORE/VERSION/<pkgId>/res/<resolutionId>
-Resolution set converted to string: STORE/VERSION/<pkgId>/res/<resolutionId>.qpm-res
+Resolution set converted to string: STORE/VERSION/<pkgId>/res/<resolutionId>/.qpm-res
 
 STORE/VERSION/<pkgId>/res/<resolutionId>/node_modules/<name> has links to:
 - STORE/VERSION/<pkgId>/files [hard link]
@@ -37,6 +37,10 @@ STORE/VERSION/<pkgId>/res/<resolutionId>/node_modules/<name> has links to:
 .qpm and .qpm-res files also serve to tell that the job was done
 
 */
+
+function optimizeHash( h: string ) {
+  return `${h.slice( 0, 2 )}/${h}`;
+}
 
 function buildId( resolved: Resolved, integrity: Integrity ): string {
   return hash( `${toStr( resolved )}/${toStr( integrity )}` );
@@ -65,13 +69,13 @@ export default class Store {
   async extract1( resolution: Resolution ): Promise<void> {
 
     const { resolved, integrity } = resolution.data;
-    const hash = buildId( resolved, integrity );
+    const hash = optimizeHash( buildId( resolved, integrity ) );
     let collisionIdx = 0;
 
     while ( true ) {
 
-      const id = `${hash}-${collisionIdx}`;
-      const folder = path.join( this.store, id, "files" );
+      const uniqueHash = `${hash}-${collisionIdx}`;
+      const folder = path.join( this.store, uniqueHash, "files" );
       const idFile = path.join( folder, ".qpm" );
       const currentID = await readJSON( idFile );
 
@@ -109,14 +113,14 @@ export default class Store {
     }
 
     const resFolders = path.resolve( filesFolder, "../res" );
-    const hash = resolution.hashCode(); // The hash includes the Resolution format version
+    const hash = optimizeHash( resolution.hashCode() ); // The hash includes the Resolution format version
     let collisionIdx = 0;
 
     while ( true ) {
 
       const uniqueHash = `${hash}-${collisionIdx}`;
       const resFolder = path.join( resFolders, uniqueHash, "node_modules", toStr( resolution.data.name ) );
-      const resFile = path.join( resFolders, `${uniqueHash}.qpm-res` );
+      const resFile = path.join( resFolders, uniqueHash, ".qpm-res" );
 
       const currentStr = await read( resFile );
 
