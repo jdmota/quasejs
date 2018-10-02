@@ -26,15 +26,15 @@ export function checkDeps( opts ) {
   return {
     title: "Checking for vulnerable dependencies",
     task( ctx, task ) {
-      if ( opts.yarn === true ) {
-        task.skip( "Yarn does not support audit yet" );
-        return;
-      }
-      return execa.stdout( "npm", [ "audit" ], {
+      return execa.stdout( opts.yarn ? "yarn" : "npm", [ "audit" ], {
         cwd: opts.folder
       } ).catch( err => {
-        if ( /Did you mean/.test( err.stdout ) ) {
+        if ( /(Did you mean|npm <command>)/.test( err.stdout ) ) {
           task.skip( "This version of npm does not support audit. Upgrade to npm>=6" );
+          return;
+        }
+        if ( /Command "audit" not found/.test( err.stderr ) ) {
+          task.skip( "This version of yarn does not support audit. Upgrade to yarn>=1.12" );
           return;
         }
         throw err;
