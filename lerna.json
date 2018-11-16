@@ -9,6 +9,8 @@
     "packages/error",
     "packages/fs/cacheable-fs",
     "packages/fs/find-files",
+    "packages/languages/parser",
+    "packages/languages/quase-lang",
     "packages/package-manager",
     "packages/path-url",
     "packages/pathname",

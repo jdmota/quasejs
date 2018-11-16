@@ -1,0 +1,5764 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser: assig1: assig1 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: null
+      right: NumericLiteral (1:4-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig2: assig2 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(+)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig3: assig3 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(-)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig4: assig4 1`] = `
+"Program (1:0-1:10)
+  body
+    AssignmentExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(>>>)
+      right: NumericLiteral (1:7-1:9)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig5: assig5 1`] = `
+"Program (1:0-1:9)
+  body
+    AssignmentExpression (1:0-1:9)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(>>)
+      right: NumericLiteral (1:6-1:8)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig6: assig6 1`] = `
+"Program (1:0-1:9)
+  body
+    AssignmentExpression (1:0-1:9)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(<<)
+      right: NumericLiteral (1:6-1:8)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig7: assig7 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(*)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig8: assig8 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(/)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig9: assig9 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(%)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig10: assig10 1`] = `
+"Program (1:0-1:9)
+  body
+    AssignmentExpression (1:0-1:9)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(**)
+      right: NumericLiteral (1:6-1:8)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(10)"
+`;
+
+exports[`parser: assig11: assig11 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(&)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)"
+`;
+
+exports[`parser: assig12: assig12 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(|)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)"
+`;
+
+exports[`parser: assig13: assig13 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(^)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)"
+`;
+
+exports[`parser: basic: basic 1`] = `
+"Program (1:0-1:11)
+  body
+    VariableDeclaration (1:0-1:11)
+      declarations
+        VariableDeclarator (1:4-1:10)
+          id: Identifier (1:4-1:5)
+            idType: S(definition)
+            name: S(a)
+            typeAnnotation: null
+          init: NumericLiteral (1:8-1:10)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(10)
+      kind: S(val)"
+`;
+
+exports[`parser: debugger1: debugger1 1`] = `
+"Program (1:0-1:9)
+  body
+    Debugger (1:0-1:9)"
+`;
+
+exports[`parser: debugger2: debugger2 1`] = `
+"Program (1:0-1:17)
+  body
+    SequenceExpression (1:0-1:17)
+      expressions
+        Debugger (1:2-1:10)
+        NumericLiteral (1:12-1:14)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(10)"
+`;
+
+exports[`parser: decl1: decl1 1`] = `
+"Program (1:0-1:11)
+  body
+    VariableDeclaration (1:0-1:11)
+      declarations
+        VariableDeclarator (1:4-1:10)
+          id: Identifier (1:4-1:5)
+            idType: S(definition)
+            name: S(a)
+            typeAnnotation: null
+          init: NumericLiteral (1:8-1:10)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(10)
+      kind: S(val)"
+`;
+
+exports[`parser: decl2: decl2 1`] = `
+"Program (1:0-1:28)
+  body
+    VariableDeclaration (1:0-1:28)
+      declarations
+        VariableDeclarator (1:4-1:27)
+          id: ArrayPattern (1:4-1:12)
+            elements
+              Identifier (1:6-1:7)
+                idType: S(definition)
+                mutable: null
+                name: S(a)
+                typeAnnotation: null
+              Identifier (1:9-1:10)
+                idType: S(definition)
+                mutable: null
+                name: S(b)
+                typeAnnotation: null
+            typeAnnotation: null
+          init: ArrayExpression (1:15-1:27)
+            elements
+              NumericLiteral (1:21-1:22)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(0)
+              NumericLiteral (1:24-1:25)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+      kind: S(val)"
+`;
+
+exports[`parser: decl3: decl3 1`] = `
+"Program (1:0-1:38)
+  body
+    VariableDeclaration (1:0-1:38)
+      declarations
+        VariableDeclarator (1:4-1:37)
+          id: ObjectPattern (1:4-1:15)
+            properties
+              ObjectProperty (1:6-1:7)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(x)
+                value: Identifier (1:6-1:7)
+                  idType: S(definition)
+                  name: S(x)
+              RestElement (1:9-1:13)
+                argument: Identifier (1:12-1:13)
+                  idType: S(definition)
+                  name: S(y)
+                  typeAnnotation: null
+                typeAnnotation: null
+            typeAnnotation: null
+          init: ObjectExpression (1:18-1:37)
+            properties
+              ObjectProperty (1:24-1:29)
+                key: Identifier (1:24-1:25)
+                  idType: S(propKey)
+                  name: S(a)
+                value: NumericLiteral (1:27-1:29)
+                  value: Object
+                    bigint: false
+                    float: false
+                    integer: true
+                    label: S(number)
+                    radix: N(10)
+                    raw: S(10)
+              SpreadElement (1:31-1:35)
+                argument: Identifier (1:34-1:35)
+                  idType: S(reference)
+                  name: S(b)
+      kind: S(val)"
+`;
+
+exports[`parser: decl4: decl4 1`] = `
+"Program (1:0-1:31)
+  body
+    VariableDeclaration (1:0-1:31)
+      declarations
+        VariableDeclarator (1:4-1:30)
+          id: ArrayPattern (1:4-1:15)
+            elements
+              Identifier (1:6-1:7)
+                idType: S(definition)
+                mutable: null
+                name: S(a)
+                typeAnnotation: null
+              RestElement (1:9-1:13)
+                argument: Identifier (1:12-1:13)
+                  idType: S(definition)
+                  name: S(b)
+                  typeAnnotation: null
+                mutable: null
+                typeAnnotation: null
+            typeAnnotation: null
+          init: ArrayExpression (1:18-1:30)
+            elements
+              NumericLiteral (1:24-1:25)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(0)
+              NumericLiteral (1:27-1:28)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+      kind: S(val)"
+`;
+
+exports[`parser: decl5: decl5 1`] = `
+"Program (1:0-1:27)
+  body
+    VariableDeclaration (1:0-1:27)
+      declarations
+        VariableDeclarator (1:4-1:26)
+          id: ObjectPattern (1:4-1:22)
+            properties
+              ObjectProperty (1:6-1:7)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: Identifier (1:6-1:7)
+                  idType: S(definition)
+                  name: S(a)
+              ObjectProperty (1:9-1:20)
+                key: Identifier (1:9-1:10)
+                  idType: S(propKey)
+                  name: S(b)
+                value: ArrayPattern (1:12-1:20)
+                  elements
+                    Identifier (1:14-1:15)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(b)
+                      typeAnnotation: null
+                    Identifier (1:17-1:18)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(c)
+                      typeAnnotation: null
+                  typeAnnotation: null
+            typeAnnotation: null
+          init: Identifier (1:25-1:26)
+            idType: S(reference)
+            name: S(o)
+      kind: S(val)"
+`;
+
+exports[`parser: decl6: decl6 1`] = `
+"Program (1:0-1:31)
+  body
+    VariableDeclaration (1:0-1:31)
+      declarations
+        VariableDeclarator (1:4-1:30)
+          id: ObjectPattern (1:4-1:26)
+            properties
+              ObjectProperty (1:6-1:7)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: Identifier (1:6-1:7)
+                  idType: S(definition)
+                  name: S(a)
+              ObjectProperty (1:9-1:24)
+                key: Identifier (1:9-1:10)
+                  idType: S(propKey)
+                  name: S(b)
+                value: ArrayPattern (1:12-1:24)
+                  elements
+                    Identifier (1:14-1:15)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(b)
+                      typeAnnotation: null
+                    AssignmentPattern (1:17-1:22)
+                      left: Identifier (1:17-1:18)
+                        idType: S(definition)
+                        mutable: null
+                        name: S(c)
+                        typeAnnotation: null
+                      right: NumericLiteral (1:21-1:22)
+                        value: Object
+                          bigint: false
+                          float: false
+                          integer: true
+                          label: S(number)
+                          radix: N(10)
+                          raw: S(0)
+                  typeAnnotation: null
+            typeAnnotation: null
+          init: Identifier (1:29-1:30)
+            idType: S(reference)
+            name: S(o)
+      kind: S(val)"
+`;
+
+exports[`parser: decl7: decl7 1`] = `
+"Program (1:0-1:31)
+  body
+    VariableDeclaration (1:0-1:31)
+      declarations
+        VariableDeclarator (1:4-1:30)
+          id: ObjectPattern (1:4-1:26)
+            properties
+              ObjectProperty (1:6-1:11)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: AssignmentPattern (1:6-1:11)
+                  left: Identifier (1:6-1:7)
+                    idType: S(propKey)
+                    name: S(a)
+                  right: NumericLiteral (1:10-1:11)
+                    value: Object
+                      bigint: false
+                      float: false
+                      integer: true
+                      label: S(number)
+                      radix: N(10)
+                      raw: S(0)
+              ObjectProperty (1:13-1:24)
+                key: Identifier (1:13-1:14)
+                  idType: S(propKey)
+                  name: S(b)
+                value: ArrayPattern (1:16-1:24)
+                  elements
+                    Identifier (1:18-1:19)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(b)
+                      typeAnnotation: null
+                    Identifier (1:21-1:22)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(c)
+                      typeAnnotation: null
+                  typeAnnotation: null
+            typeAnnotation: null
+          init: Identifier (1:29-1:30)
+            idType: S(reference)
+            name: S(o)
+      kind: S(val)"
+`;
+
+exports[`parser: decl8: decl8 1`] = `
+"Program (1:0-1:30)
+  body
+    VariableDeclaration (1:0-1:30)
+      declarations
+        VariableDeclarator (1:4-1:29)
+          id: ObjectPattern (1:4-1:25)
+            properties
+              ObjectProperty (1:6-1:10)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: Identifier (1:9-1:10)
+                  idType: S(definition)
+                  name: S(x)
+                  typeAnnotation: null
+              ObjectProperty (1:12-1:23)
+                key: Identifier (1:12-1:13)
+                  idType: S(propKey)
+                  name: S(b)
+                value: ArrayPattern (1:15-1:23)
+                  elements
+                    Identifier (1:17-1:18)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(b)
+                      typeAnnotation: null
+                    Identifier (1:20-1:21)
+                      idType: S(definition)
+                      mutable: null
+                      name: S(c)
+                      typeAnnotation: null
+                  typeAnnotation: null
+            typeAnnotation: null
+          init: Identifier (1:28-1:29)
+            idType: S(reference)
+            name: S(o)
+      kind: S(val)"
+`;
+
+exports[`parser: decl9: decl9 1`] = `
+"Program (1:0-1:11)
+  body
+    FunctionExpression (1:0-1:11)
+      body: Block (1:8-1:10)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+      returnType: null"
+`;
+
+exports[`parser: decl10: decl10 1`] = `
+"Program (1:0-1:41)
+  body
+    FunctionExpression (1:0-1:41)
+      body: Block (1:38-1:40)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+        Identifier (1:7-1:8)
+          idType: S(definition)
+          mutable: false
+          name: S(a)
+          typeAnnotation: null
+        ObjectPattern (1:10-1:15)
+          mutable: false
+          properties
+            ObjectProperty (1:12-1:13)
+              key: Identifier (1:12-1:13)
+                idType: S(propKey)
+                name: S(b)
+              value: Identifier (1:12-1:13)
+                idType: S(definition)
+                name: S(b)
+          typeAnnotation: null
+        ArrayPattern (1:17-1:22)
+          elements
+            Identifier (1:19-1:20)
+              idType: S(definition)
+              mutable: null
+              name: S(c)
+              typeAnnotation: null
+          mutable: false
+          typeAnnotation: null
+        AssignmentPattern (1:24-1:29)
+          left: Identifier (1:24-1:25)
+            idType: S(definition)
+            mutable: false
+            name: S(d)
+            typeAnnotation: null
+          right: NumericLiteral (1:28-1:29)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(0)
+        RestElement (1:31-1:35)
+          argument: Identifier (1:34-1:35)
+            idType: S(definition)
+            name: S(e)
+            typeAnnotation: null
+          mutable: false
+          typeAnnotation: null
+      returnType: null"
+`;
+
+exports[`parser: decl11: decl11 1`] = `
+"Program (1:0-1:29)
+  body
+    FunctionExpression (1:0-1:29)
+      body: Block (1:14-1:28)
+        body
+          VariableDeclaration (1:16-1:26)
+            declarations
+              VariableDeclarator (1:20-1:25)
+                id: Identifier (1:20-1:21)
+                  idType: S(definition)
+                  name: S(a)
+                  typeAnnotation: null
+                init: NumericLiteral (1:24-1:25)
+                  value: Object
+                    bigint: false
+                    float: false
+                    integer: true
+                    label: S(number)
+                    radix: N(10)
+                    raw: S(0)
+            kind: S(val)
+      id: Identifier (1:10-1:11)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+        async: true
+      params
+      returnType: null"
+`;
+
+exports[`parser: decl12: decl12 1`] = `
+"Program (1:0-1:21)
+  body
+    FunctionExpression (1:0-1:21)
+      body: Block (1:12-1:20)
+        body
+          CallExpression (1:14-1:18)
+            arguments
+            callee: Identifier (1:14-1:15)
+              idType: S(reference)
+              name: S(a)
+            optional: false
+      id: Identifier (1:8-1:9)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+        rec: true
+      params
+      returnType: null"
+`;
+
+exports[`parser: decl13: decl13 1`] = `
+"Program (1:0-1:35)
+  body
+    VariableDeclaration (1:0-1:35)
+      declarations
+        VariableDeclarator (1:4-1:34)
+          id: ObjectPattern (1:4-1:9)
+            properties
+              ObjectProperty (1:6-1:7)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: Identifier (1:6-1:7)
+                  idType: S(definition)
+                  name: S(a)
+            typeAnnotation: null
+          init: CallExpression (1:12-1:34)
+            arguments
+            callee: SequenceExpression (1:12-1:32)
+              expressions
+                FunctionExpression (1:13-1:31)
+                  body: ObjectExpression (1:21-1:31)
+                    properties
+                      ObjectProperty (1:26-1:30)
+                        key: Identifier (1:26-1:27)
+                          idType: S(propKey)
+                          name: S(a)
+                        value: NumericLiteral (1:28-1:30)
+                          value: Object
+                            bigint: false
+                            float: false
+                            integer: true
+                            label: S(number)
+                            radix: N(10)
+                            raw: S(10)
+                  id: null
+                  modifiers: Object
+                  params
+                  returnType: null
+            optional: false
+      kind: S(val)"
+`;
+
+exports[`parser: decl14: decl14 1`] = `
+"Program (1:0-1:41)
+  body
+    VariableDeclaration (1:0-1:41)
+      declarations
+        VariableDeclarator (1:4-1:40)
+          id: ObjectPattern (1:4-1:9)
+            properties
+              ObjectProperty (1:6-1:7)
+                key: Identifier (1:6-1:7)
+                  idType: S(propKey)
+                  name: S(a)
+                value: Identifier (1:6-1:7)
+                  idType: S(definition)
+                  name: S(a)
+            typeAnnotation: null
+          init: CallExpression (1:12-1:40)
+            arguments
+            callee: SequenceExpression (1:12-1:38)
+              expressions
+                FunctionExpression (1:13-1:37)
+                  body: ObjectExpression (1:27-1:37)
+                    properties
+                      ObjectProperty (1:32-1:36)
+                        key: Identifier (1:32-1:33)
+                          idType: S(propKey)
+                          name: S(a)
+                        value: NumericLiteral (1:34-1:36)
+                          value: Object
+                            bigint: false
+                            float: false
+                            integer: true
+                            label: S(number)
+                            radix: N(10)
+                            raw: S(10)
+                  id: null
+                  modifiers: Object
+                    async: true
+                  params
+                  returnType: null
+            optional: false
+      kind: S(val)"
+`;
+
+exports[`parser: decl15: decl15 1`] = `
+"Program (1:0-12:4)
+  body
+    ClassExpression (1:0-12:4)
+      body: ClassBody (1:8-12:3)
+        body
+          VariableDeclaration (2:4-2:21)
+            declarations
+              VariableDeclarator (2:8-2:13)
+                id: Identifier (2:8-2:9)
+                  idType: S(definition)
+                  name: S(x)
+                  typeAnnotation: null
+                init: NumericLiteral (2:12-2:13)
+                  value: Object
+                    bigint: false
+                    float: false
+                    integer: true
+                    label: S(number)
+                    radix: N(10)
+                    raw: S(0)
+                modifiers: Object
+              VariableDeclarator (2:15-2:20)
+                id: Identifier (2:15-2:16)
+                  idType: S(definition)
+                  name: S(y)
+                  typeAnnotation: null
+                init: NumericLiteral (2:19-2:20)
+                  value: Object
+                    bigint: false
+                    float: false
+                    integer: true
+                    label: S(number)
+                    radix: N(10)
+                    raw: S(1)
+                modifiers: Object
+            decorators: null
+            kind: S(val)
+          VariableDeclaration (3:4-3:10)
+            declarations
+              VariableDeclarator (3:8-3:9)
+                id: Identifier (3:8-3:9)
+                  idType: S(definition)
+                  name: S(z)
+                  typeAnnotation: null
+                init: null
+                modifiers: Object
+            decorators: null
+            kind: S(var)
+          FunctionExpression (4:4-7:5)
+            body: Block (4:15-7:5)
+              body
+                AssignmentExpression (5:6-5:17)
+                  left: MemberExpression (5:6-5:12)
+                    computed: false
+                    object: ThisExpression (5:6-5:10)
+                      label: null
+                    optional: false
+                    property: Identifier (5:11-5:12)
+                      idType: S(propKey)
+                      name: S(x)
+                  operator: null
+                  right: NumericLiteral (5:15-5:16)
+                    value: Object
+                      bigint: false
+                      float: false
+                      integer: true
+                      label: S(number)
+                      radix: N(10)
+                      raw: S(1)
+                UpdateExpression (6:6-6:10)
+                  argument: Identifier (6:6-6:7)
+                    idType: S(reference)
+                    name: S(y)
+                  operator: S(++)
+                  prefix: false
+            decorators: null
+            id: Identifier (4:8-4:12)
+              idType: S(definition)
+              name: S(init)
+              typeAnnotation: null
+            modifiers: Object
+            params
+            returnType: null
+          FunctionExpression (8:4-8:10)
+            body: Block (8:8-8:10)
+              body
+            decorators: null
+            id: Identifier (8:4-8:5)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            modifiers: Object
+            params
+            returnType: null
+          FunctionExpression (9:4-9:16)
+            body: Block (9:14-9:16)
+              body
+            decorators: null
+            id: Identifier (9:10-9:11)
+              idType: S(definition)
+              name: S(b)
+              typeAnnotation: null
+            modifiers: Object
+              async: true
+            params
+            returnType: null
+          FunctionExpression (10:4-10:24)
+            body: Block (10:22-10:24)
+              body
+            decorators: null
+            id: Identifier (10:18-10:19)
+              idType: S(definition)
+              name: S(c)
+              typeAnnotation: null
+            modifiers: Object
+              abstract: true
+              open: true
+            params
+            returnType: null
+          FunctionExpression (11:4-11:19)
+            body: Block (11:17-11:19)
+              body
+            decorators: null
+            id: Identifier (11:13-11:14)
+              idType: S(definition)
+              name: S(d)
+              typeAnnotation: null
+            modifiers: Object
+              override: true
+            params
+            returnType: null
+      decorators: null
+      extends
+      generics
+      id: Identifier (1:6-1:7)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object"
+`;
+
+exports[`parser: decl16: decl16 1`] = `
+"Program (1:0-4:4)
+  body
+    ClassExpression (1:16-4:4)
+      body: ClassBody (1:36-4:3)
+        body
+          FunctionExpression (3:4-3:19)
+            body: Block (3:17-3:19)
+              body
+            decorators
+              Decorator (2:4-2:14)
+                expression: Identifier (2:5-2:14)
+                  idType: S(reference)
+                  name: S(decrepted)
+            id: Identifier (3:13-3:14)
+              idType: S(definition)
+              name: S(d)
+              typeAnnotation: null
+            modifiers: Object
+              override: true
+            params
+            returnType: null
+      decorators
+        Decorator (1:0-1:15)
+          expression: Identifier (1:1-1:15)
+            idType: S(reference)
+            name: S(classDecorator)
+      extends
+        Identifier (1:31-1:32)
+          idType: S(reference)
+          name: S(B)
+        Identifier (1:34-1:35)
+          idType: S(reference)
+          name: S(C)
+      generics
+      id: Identifier (1:27-1:28)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object
+        open: true"
+`;
+
+exports[`parser: decl17: decl17 1`] = `
+"Program (1:0-3:4)
+  body
+    ClassExpression (1:0-3:4)
+      body: ClassBody (1:30-3:3)
+        body
+          FunctionExpression (2:4-2:35)
+            body: Block (2:33-2:35)
+              body
+            decorators: null
+            id: Identifier (2:29-2:30)
+              idType: S(definition)
+              name: S(d)
+              typeAnnotation: null
+            modifiers: Object
+              async: true
+              final: true
+              override: true
+              rec: true
+            params
+            returnType: null
+      decorators: null
+      extends
+        Identifier (1:25-1:26)
+          idType: S(reference)
+          name: S(B)
+        Identifier (1:28-1:29)
+          idType: S(reference)
+          name: S(C)
+      generics
+      id: Identifier (1:15-1:16)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object
+        abstract: true"
+`;
+
+exports[`parser: decl18: decl18 1`] = `
+"Program (1:0-3:4)
+  body
+    ClassExpression (1:0-3:4)
+      body: ClassBody (1:38-3:3)
+        body
+          FunctionExpression (2:4-2:27)
+            body: Block (2:25-2:27)
+              body
+            decorators: null
+            id: Identifier (2:4-2:10)
+              idType: S(definition)
+              name: S(method)
+              typeAnnotation: null
+            modifiers: Object
+            params
+              Identifier (2:12-2:16)
+                idType: S(definition)
+                mutable: false
+                name: S(x)
+                typeAnnotation: Identifier (2:15-2:16)
+                  idType: S(reference)
+                  name: S(T)
+              Identifier (2:18-2:22)
+                idType: S(definition)
+                mutable: false
+                name: S(y)
+                typeAnnotation: Identifier (2:21-2:22)
+                  idType: S(reference)
+                  name: S(E)
+            returnType: null
+      decorators: null
+      extends
+        Identifier (1:33-1:34)
+          idType: S(reference)
+          name: S(B)
+        Identifier (1:36-1:37)
+          idType: S(reference)
+          name: S(C)
+      generics
+        Identifier (1:18-1:19)
+          idType: S(definition)
+          mutable: false
+          name: S(T)
+          typeAnnotation: null
+        Identifier (1:21-1:22)
+          idType: S(definition)
+          mutable: false
+          name: S(E)
+          typeAnnotation: null
+      id: Identifier (1:15-1:16)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object
+        abstract: true"
+`;
+
+exports[`parser: decl19: decl19 1`] = `
+"Program (1:0-7:4)
+  body
+    ClassExpression (1:0-7:4)
+      body: ClassBody (1:8-7:3)
+        body
+          FunctionExpression (2:4-2:15)
+            body: Block (2:13-2:15)
+              body
+            decorators: null
+            id: Identifier (2:4-2:10)
+              idType: S(definition)
+              name: S(method)
+              typeAnnotation: null
+            modifiers: Object
+            params
+            returnType: null
+          ClassExpression (3:20-6:5)
+            body: ClassBody (3:40-6:5)
+              body
+                FunctionExpression (5:6-5:21)
+                  body: Block (5:19-5:21)
+                    body
+                  decorators
+                    Decorator (4:6-4:16)
+                      expression: Identifier (4:7-4:16)
+                        idType: S(reference)
+                        name: S(decrepted)
+                  id: Identifier (5:15-5:16)
+                    idType: S(definition)
+                    name: S(d)
+                    typeAnnotation: null
+                  modifiers: Object
+                    override: true
+                  params
+                  returnType: null
+            decorators
+              Decorator (3:4-3:19)
+                expression: Identifier (3:5-3:19)
+                  idType: S(reference)
+                  name: S(classDecorator)
+            extends
+              Identifier (3:35-3:36)
+                idType: S(reference)
+                name: S(B)
+              Identifier (3:38-3:39)
+                idType: S(reference)
+                name: S(C)
+            generics
+            id: Identifier (3:31-3:32)
+              idType: S(definition)
+              name: S(A)
+              typeAnnotation: null
+            modifiers: Object
+              open: true
+      decorators: null
+      extends
+      generics
+      id: Identifier (1:6-1:7)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object"
+`;
+
+exports[`parser: decl20: decl20 1`] = `
+"Program (1:0-1:56)
+  body
+    FunctionExpression (1:0-1:56)
+      body: Block (1:53-1:55)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+        Identifier (1:7-1:11)
+          idType: S(definition)
+          mutable: false
+          name: S(a)
+          typeAnnotation: Identifier (1:10-1:11)
+            idType: S(reference)
+            name: S(A)
+        ObjectPattern (1:13-1:21)
+          mutable: false
+          properties
+            ObjectProperty (1:15-1:16)
+              key: Identifier (1:15-1:16)
+                idType: S(propKey)
+                name: S(b)
+              value: Identifier (1:15-1:16)
+                idType: S(definition)
+                name: S(b)
+          typeAnnotation: Identifier (1:20-1:21)
+            idType: S(reference)
+            name: S(B)
+        ArrayPattern (1:23-1:31)
+          elements
+            Identifier (1:25-1:26)
+              idType: S(definition)
+              mutable: null
+              name: S(c)
+              typeAnnotation: null
+          mutable: false
+          typeAnnotation: Identifier (1:30-1:31)
+            idType: S(reference)
+            name: S(C)
+        AssignmentPattern (1:33-1:41)
+          left: Identifier (1:33-1:37)
+            idType: S(definition)
+            mutable: false
+            name: S(d)
+            typeAnnotation: Identifier (1:36-1:37)
+              idType: S(reference)
+              name: S(D)
+          right: NumericLiteral (1:40-1:41)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(0)
+        RestElement (1:43-1:50)
+          argument: Identifier (1:46-1:47)
+            idType: S(definition)
+            name: S(e)
+            typeAnnotation: null
+          mutable: false
+          typeAnnotation: Identifier (1:49-1:50)
+            idType: S(reference)
+            name: S(E)
+      returnType: null"
+`;
+
+exports[`parser: decl21: decl21 1`] = `
+"Program (1:0-1:76)
+  body
+    FunctionExpression (1:0-1:76)
+      body: Block (1:73-1:75)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+        Identifier (1:11-1:15)
+          idType: S(definition)
+          mutable: true
+          name: S(a)
+          typeAnnotation: Identifier (1:14-1:15)
+            idType: S(reference)
+            name: S(A)
+        ObjectPattern (1:21-1:29)
+          mutable: false
+          properties
+            ObjectProperty (1:23-1:24)
+              key: Identifier (1:23-1:24)
+                idType: S(propKey)
+                name: S(b)
+              value: Identifier (1:23-1:24)
+                idType: S(definition)
+                name: S(b)
+          typeAnnotation: Identifier (1:28-1:29)
+            idType: S(reference)
+            name: S(B)
+        ArrayPattern (1:35-1:43)
+          elements
+            Identifier (1:37-1:38)
+              idType: S(definition)
+              mutable: null
+              name: S(c)
+              typeAnnotation: null
+          mutable: true
+          typeAnnotation: Identifier (1:42-1:43)
+            idType: S(reference)
+            name: S(C)
+        AssignmentPattern (1:49-1:57)
+          left: Identifier (1:49-1:53)
+            idType: S(definition)
+            mutable: false
+            name: S(d)
+            typeAnnotation: Identifier (1:52-1:53)
+              idType: S(reference)
+              name: S(D)
+          right: NumericLiteral (1:56-1:57)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(0)
+        RestElement (1:63-1:70)
+          argument: Identifier (1:66-1:67)
+            idType: S(definition)
+            name: S(e)
+            typeAnnotation: null
+          mutable: true
+          typeAnnotation: Identifier (1:69-1:70)
+            idType: S(reference)
+            name: S(E)
+      returnType: null"
+`;
+
+exports[`parser: decl22: decl22 1`] = `
+"Program (1:0-6:4)
+  body
+    ClassExpression (1:0-6:4)
+      body: ClassBody (1:18-6:3)
+        body
+          FunctionExpression (2:4-2:21)
+            body: CallExpression (2:13-2:20)
+              arguments
+              callee: Super (2:13-2:18)
+              optional: false
+            decorators: null
+            id: Identifier (2:4-2:8)
+              idType: S(definition)
+              name: S(init)
+              typeAnnotation: null
+            modifiers: Object
+            params
+            returnType: null
+          FunctionExpression (3:4-5:5)
+            body: Block (3:17-5:5)
+              body
+                CallExpression (4:6-4:16)
+                  arguments
+                  callee: MemberExpression (4:6-4:13)
+                    computed: false
+                    object: Super (4:6-4:11)
+                    optional: false
+                    property: Identifier (4:12-4:13)
+                      idType: S(propKey)
+                      name: S(a)
+                  optional: false
+            decorators: null
+            id: Identifier (3:13-3:14)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            modifiers: Object
+              override: true
+            params
+            returnType: null
+      decorators: null
+      extends
+        Identifier (1:16-1:17)
+          idType: S(reference)
+          name: S(B)
+      generics
+      id: Identifier (1:6-1:7)
+        idType: S(definition)
+        name: S(A)
+        typeAnnotation: null
+      modifiers: Object"
+`;
+
+exports[`parser: decl23: decl23 1`] = `
+"Program (1:0-8:4)
+  body
+    FunctionExpression (1:0-8:4)
+      body: Block (1:18-8:3)
+        body
+          YieldExpression (2:4-2:16)
+            argument: BinaryExpression (2:10-2:15)
+              left: NumericLiteral (2:10-2:11)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (2:14-2:15)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+            delegate: false
+          AwaitExpression (3:4-3:16)
+            argument: BinaryExpression (3:10-3:15)
+              left: NumericLiteral (3:10-3:11)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (3:14-3:15)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+            delegate: false
+          YieldExpression (4:4-4:17)
+            argument: BinaryExpression (4:11-4:16)
+              left: NumericLiteral (4:11-4:12)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (4:15-4:16)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+            delegate: true
+          AwaitExpression (5:4-5:17)
+            argument: BinaryExpression (5:11-5:16)
+              left: NumericLiteral (5:11-5:12)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (5:15-5:16)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+            delegate: true
+          ThrowExpression (6:4-6:16)
+            argument: BinaryExpression (6:10-6:15)
+              left: NumericLiteral (6:10-6:11)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (6:14-6:15)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+          ReturnExpression (7:4-7:17)
+            argument: BinaryExpression (7:11-7:16)
+              left: NumericLiteral (7:11-7:12)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(+)
+              right: NumericLiteral (7:15-7:16)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(2)
+      id: Identifier (1:14-1:15)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+        async: true
+        gen: true
+      params
+      returnType: null"
+`;
+
+exports[`parser: decl24: decl24 1`] = `
+"Program (1:0-1:16)
+  body
+    FunctionExpression (1:0-1:16)
+      body: Block (1:13-1:15)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+      returnType: Identifier (1:9-1:10)
+        idType: S(reference)
+        name: S(T)"
+`;
+
+exports[`parser: decl25: decl25 1`] = `
+"Program (1:0-1:14)
+  body
+    FunctionExpression (1:0-1:14)
+      body: Block (1:11-1:13)
+        body
+      id: Identifier (1:4-1:5)
+        idType: S(definition)
+        name: S(a)
+        typeAnnotation: null
+      modifiers: Object
+      params
+      returnType: Identifier (1:9-1:10)
+        idType: S(reference)
+        name: S(T)"
+`;
+
+exports[`parser: error expon1: error expon1 1`] = `[Error: An unary expression is not allowed in the left-hand side of an exponentiation expression. Consider enclosing the expression in parentheses. (at 1:1)]`;
+
+exports[`parser: error expon2: error expon2 1`] = `[Error: An unary expression is not allowed in the left-hand side of an exponentiation expression. Consider enclosing the expression in parentheses. (at 1:2)]`;
+
+exports[`parser: error exported1: error exported1 1`] = `[Error: Missing name in exported declaration. (at 1:7)]`;
+
+exports[`parser: error exported2: error exported2 1`] = `[Error: Missing name in exported declaration. (at 1:7)]`;
+
+exports[`parser: exp1: exp1 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(+)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp2: exp2 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(-)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp3: exp3 1`] = `
+"Program (1:0-1:9)
+  body
+    BinaryExpression (1:0-1:9)
+      left: TemplateLiteral (1:0-1:3)
+        expressions
+        quasis
+          TemplateElement (1:1-1:2)
+            tail: true
+            value: Object
+              label: S(template)
+              raw: S(a)
+      operator: S(+)
+      right: NumericLiteral (1:6-1:8)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(42)"
+`;
+
+exports[`parser: exp4: exp4 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: null
+      right: NumericLiteral (1:4-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(40)"
+`;
+
+exports[`parser: exp5: exp5 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(*)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(30)"
+`;
+
+exports[`parser: exp6: exp6 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(/)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(15)"
+`;
+
+exports[`parser: exp7: exp7 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(%)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(15)"
+`;
+
+exports[`parser: exp8: exp8 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(+)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(40)"
+`;
+
+exports[`parser: exp9: exp9 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(-)
+      right: NumericLiteral (1:5-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(40)"
+`;
+
+exports[`parser: exp10: exp10 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(<<)
+      right: NumericLiteral (1:6-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)"
+`;
+
+exports[`parser: exp11: exp11 1`] = `
+"Program (1:0-1:8)
+  body
+    AssignmentExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>>)
+      right: NumericLiteral (1:6-1:7)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(4)"
+`;
+
+exports[`parser: exp12: exp12 1`] = `
+"Program (1:0-1:9)
+  body
+    AssignmentExpression (1:0-1:9)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>>>)
+      right: NumericLiteral (1:7-1:8)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(8)"
+`;
+
+exports[`parser: exp13: exp13 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(&)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)"
+`;
+
+exports[`parser: exp14: exp14 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(^)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(4)"
+`;
+
+exports[`parser: exp15: exp15 1`] = `
+"Program (1:0-1:7)
+  body
+    AssignmentExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(|)
+      right: NumericLiteral (1:5-1:6)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(8)"
+`;
+
+exports[`parser: exp16: exp16 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(&)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp17: exp17 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(^)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp18: exp18 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(|)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp19: exp19 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(||)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp20: exp20 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(&&)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp21: exp21 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: BinaryExpression (1:0-1:6)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(||)
+        right: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)
+      operator: S(||)
+      right: Identifier (1:10-1:11)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp22: exp22 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: BinaryExpression (1:0-1:6)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(&&)
+        right: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)
+      operator: S(&&)
+      right: Identifier (1:10-1:11)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp23: exp23 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(||)
+      right: BinaryExpression (1:5-1:11)
+        left: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)
+        operator: S(&&)
+        right: Identifier (1:10-1:11)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp24: exp24 1`] = `
+"Program (1:0-1:11)
+  body
+    BinaryExpression (1:0-1:11)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(||)
+      right: BinaryExpression (1:5-1:10)
+        left: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)
+        operator: S(^)
+        right: Identifier (1:9-1:10)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp25: exp25 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(+)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(+)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp26: exp26 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(-)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(+)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp27: exp27 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(+)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(-)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp28: exp28 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(-)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(-)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp29: exp29 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(+)
+      right: BinaryExpression (1:4-1:9)
+        left: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+        operator: S(*)
+        right: Identifier (1:8-1:9)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp30: exp30 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(+)
+      right: BinaryExpression (1:4-1:9)
+        left: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+        operator: S(/)
+        right: Identifier (1:8-1:9)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp31: exp31 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(-)
+      right: BinaryExpression (1:4-1:9)
+        left: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+        operator: S(%)
+        right: Identifier (1:8-1:9)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp32: exp32 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(*)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(*)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp33: exp33 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(*)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(/)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp34: exp34 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(*)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(%)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp35: exp35 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(%)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(*)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp36: exp36 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: BinaryExpression (1:0-1:6)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(<<)
+        right: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)
+      operator: S(<<)
+      right: Identifier (1:10-1:11)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp37: exp37 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(|)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(|)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp38: exp38 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(&)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(&)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp39: exp39 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(^)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(^)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp40: exp40 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(&)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(|)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp41: exp41 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(|)
+      right: BinaryExpression (1:4-1:9)
+        left: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+        operator: S(^)
+        right: Identifier (1:8-1:9)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp42: exp42 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(|)
+      right: BinaryExpression (1:4-1:9)
+        left: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+        operator: S(&)
+        right: Identifier (1:8-1:9)
+          idType: S(reference)
+          name: S(z)"
+`;
+
+exports[`parser: exp43: exp43 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(<<)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp44: exp44 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>>)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp45: exp45 1`] = `
+"Program (1:0-1:8)
+  body
+    BinaryExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>>>)
+      right: Identifier (1:6-1:7)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp46: exp46 1`] = `
+"Program (1:0-1:47)
+  body
+    BinaryExpression (1:0-1:47)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)
+      operator: S(||)
+      right: BinaryExpression (1:5-1:46)
+        left: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(b)
+        operator: S(&&)
+        right: BinaryExpression (1:10-1:46)
+          left: Identifier (1:10-1:11)
+            idType: S(reference)
+            name: S(c)
+          operator: S(|)
+          right: BinaryExpression (1:14-1:46)
+            left: Identifier (1:14-1:15)
+              idType: S(reference)
+              name: S(d)
+            operator: S(^)
+            right: BinaryExpression (1:18-1:46)
+              left: Identifier (1:18-1:19)
+                idType: S(reference)
+                name: S(e)
+              operator: S(&)
+              right: BinaryExpression (1:22-1:46)
+                left: Identifier (1:22-1:23)
+                  idType: S(reference)
+                  name: S(f)
+                operator: S(==)
+                right: BinaryExpression (1:27-1:46)
+                  left: Identifier (1:27-1:28)
+                    idType: S(reference)
+                    name: S(g)
+                  operator: S(<)
+                  right: BinaryExpression (1:31-1:46)
+                    left: Identifier (1:31-1:32)
+                      idType: S(reference)
+                      name: S(h)
+                    operator: S(>>>)
+                    right: BinaryExpression (1:37-1:46)
+                      left: Identifier (1:37-1:38)
+                        idType: S(reference)
+                        name: S(i)
+                      operator: S(+)
+                      right: BinaryExpression (1:41-1:46)
+                        left: Identifier (1:41-1:42)
+                          idType: S(reference)
+                          name: S(j)
+                        operator: S(*)
+                        right: Identifier (1:45-1:46)
+                          idType: S(reference)
+                          name: S(k)"
+`;
+
+exports[`parser: exp47: exp47 1`] = `
+"Program (1:0-1:10)
+  body
+    ConditionalExpression (1:0-1:10)
+      alternate: NumericLiteral (1:8-1:9)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)
+      consequent: NumericLiteral (1:4-1:5)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      test: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp48: exp48 1`] = `
+"Program (1:0-1:15)
+  body
+    ConditionalExpression (1:0-1:15)
+      alternate: NumericLiteral (1:13-1:14)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)
+      consequent: NumericLiteral (1:9-1:10)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      test: BinaryExpression (1:0-1:6)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(&&)
+        right: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(y)"
+`;
+
+exports[`parser: exp49: exp49 1`] = `
+"Program (1:0-1:16)
+  body
+    AssignmentExpression (1:0-1:16)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: null
+      right: ConditionalExpression (1:4-1:15)
+        alternate: NumericLiteral (1:14-1:15)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        consequent: NumericLiteral (1:10-1:11)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(1)
+        test: SequenceExpression (1:4-1:7)
+          expressions
+            NumericLiteral (1:5-1:6)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)"
+`;
+
+exports[`parser: exp50: exp50 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(==)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp51: exp51 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(!=)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp52: exp52 1`] = `
+"Program (1:0-1:8)
+  body
+    BinaryExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(===)
+      right: Identifier (1:6-1:7)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp53: exp53 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(!=)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp54: exp54 1`] = `
+"Program (1:0-1:16)
+  body
+    BinaryExpression (1:0-1:16)
+      left: BinaryExpression (1:0-1:11)
+        left: SequenceExpression (1:0-1:3)
+          expressions
+            NumericLiteral (1:1-1:2)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(1)
+        operator: S(+)
+        right: SequenceExpression (1:6-1:11)
+          expressions
+            NumericLiteral (1:7-1:8)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(2)
+      operator: S(+)
+      right: NumericLiteral (1:14-1:15)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(3)"
+`;
+
+exports[`parser: exp55: exp55 1`] = `
+"Program (1:0-1:13)
+  body
+    BinaryExpression (1:0-1:13)
+      left: BinaryExpression (1:0-1:5)
+        left: NumericLiteral (1:0-1:1)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(4)
+        operator: S(+)
+        right: NumericLiteral (1:4-1:5)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(5)
+      operator: S(<<)
+      right: SequenceExpression (1:9-1:12)
+        expressions
+          NumericLiteral (1:10-1:11)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(6)"
+`;
+
+exports[`parser: exp56: exp56 1`] = `
+"Program (1:0-1:6)
+  body
+    CallExpression (1:0-1:6)
+      arguments
+      callee: Identifier (1:0-1:3)
+        idType: S(reference)
+        name: S(foo)
+      optional: false"
+`;
+
+exports[`parser: exp57: exp57 1`] = `
+"Program (1:0-1:12)
+  body
+    CallExpression (1:0-1:12)
+      arguments
+      callee: MemberExpression (1:0-1:9)
+        computed: false
+        object: CallExpression (1:0-1:5)
+          arguments
+          callee: Identifier (1:0-1:3)
+            idType: S(reference)
+            name: S(foo)
+          optional: false
+        optional: false
+        property: Identifier (1:6-1:9)
+          idType: S(propKey)
+          name: S(bar)
+      optional: false"
+`;
+
+exports[`parser: exp58: exp58 1`] = `
+"Program (1:0-1:11)
+  body
+    MemberExpression (1:0-1:11)
+      computed: true
+      object: CallExpression (1:0-1:5)
+        arguments
+        callee: Identifier (1:0-1:3)
+          idType: S(reference)
+          name: S(foo)
+        optional: false
+      optional: false
+      property: Identifier (1:6-1:9)
+        idType: S(reference)
+        name: S(bar)"
+`;
+
+exports[`parser: exp59: exp59 1`] = `
+"Program (1:0-1:10)
+  body
+    CallExpression (1:0-1:10)
+      arguments
+      callee: MemberExpression (1:0-1:7)
+        computed: false
+        object: Identifier (1:0-1:3)
+          idType: S(reference)
+          name: S(foo)
+        optional: false
+        property: Identifier (1:4-1:7)
+          idType: S(propKey)
+          name: S(bar)
+      optional: false"
+`;
+
+exports[`parser: exp60: exp60 1`] = `
+"Program (1:0-1:14)
+  body
+    CallExpression (1:0-1:14)
+      arguments
+      callee: MemberExpression (1:0-1:11)
+        computed: false
+        object: SequenceExpression (1:0-1:7)
+          expressions
+            CallExpression (1:1-1:6)
+              arguments
+              callee: Identifier (1:1-1:4)
+                idType: S(reference)
+                name: S(foo)
+              optional: false
+        optional: false
+        property: Identifier (1:8-1:11)
+          idType: S(propKey)
+          name: S(bar)
+      optional: false"
+`;
+
+exports[`parser: exp61: exp61 1`] = `
+"Program (1:0-1:16)
+  body
+    CallExpression (1:0-1:16)
+      arguments
+        Identifier (1:5-1:8)
+          idType: S(reference)
+          name: S(bar)
+        Identifier (1:10-1:13)
+          idType: S(reference)
+          name: S(baz)
+      callee: Identifier (1:0-1:3)
+        idType: S(reference)
+        name: S(foo)
+      optional: false"
+`;
+
+exports[`parser: exp62: exp62 1`] = `
+"Program (1:0-1:12)
+  body
+    CallExpression (1:0-1:12)
+      arguments
+      callee: SequenceExpression (1:0-1:9)
+        expressions
+          Identifier (1:2-1:5)
+            idType: S(reference)
+            name: S(foo)
+      optional: false"
+`;
+
+exports[`parser: exp63: exp63 1`] = `
+"Program (1:0-1:8)
+  body
+    MemberExpression (1:0-1:8)
+      computed: false
+      object: Identifier (1:0-1:3)
+        idType: S(reference)
+        name: S(abc)
+      optional: false
+      property: Identifier (1:4-1:7)
+        idType: S(propKey)
+        name: S(cba)"
+`;
+
+exports[`parser: exp64: exp64 1`] = `
+"Program (1:0-1:12)
+  body
+    MemberExpression (1:0-1:12)
+      computed: false
+      object: MemberExpression (1:0-1:7)
+        computed: false
+        object: Identifier (1:0-1:3)
+          idType: S(reference)
+          name: S(foo)
+        optional: false
+        property: Identifier (1:4-1:7)
+          idType: S(propKey)
+          name: S(bar)
+      optional: false
+      property: Identifier (1:8-1:11)
+        idType: S(propKey)
+        name: S(baz)"
+`;
+
+exports[`parser: exp65: exp65 1`] = `
+"Program (1:0-1:8)
+  body
+    MemberExpression (1:0-1:8)
+      computed: false
+      object: MemberExpression (1:0-1:5)
+        computed: false
+        object: MemberExpression (1:0-1:3)
+          computed: false
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(x)
+          optional: false
+          property: Identifier (1:2-1:3)
+            idType: S(propKey)
+            name: S(y)
+        optional: false
+        property: Identifier (1:4-1:5)
+          idType: S(propKey)
+          name: S(z)
+      optional: false
+      property: Identifier (1:6-1:7)
+        idType: S(propKey)
+        name: S(w)"
+`;
+
+exports[`parser: exp66: exp66 1`] = `
+"Program (1:0-1:9)
+  body
+    MemberExpression (1:0-1:9)
+      computed: true
+      object: Identifier (1:0-1:3)
+        idType: S(reference)
+        name: S(foo)
+      optional: false
+      property: Identifier (1:4-1:7)
+        idType: S(reference)
+        name: S(bar)"
+`;
+
+exports[`parser: exp67: exp67 1`] = `
+"Program (1:0-1:12)
+  body
+    MemberExpression (1:0-1:12)
+      computed: false
+      object: MemberExpression (1:0-1:7)
+        computed: true
+        object: Identifier (1:0-1:3)
+          idType: S(reference)
+          name: S(foo)
+        optional: false
+        property: NumericLiteral (1:4-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(42)
+      optional: false
+      property: Identifier (1:8-1:11)
+        idType: S(propKey)
+        name: S(bar)"
+`;
+
+exports[`parser: exp68: exp68 1`] = `
+"Program (1:0-1:22)
+  body
+    MemberExpression (1:0-1:22)
+      computed: false
+      object: CallExpression (1:0-1:12)
+        arguments
+          NumericLiteral (1:9-1:11)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(42)
+        callee: Identifier (1:0-1:8)
+          idType: S(reference)
+          name: S(universe)
+        optional: false
+      optional: false
+      property: Identifier (1:13-1:21)
+        idType: S(propKey)
+        name: S(galaxies)"
+`;
+
+exports[`parser: exp69: exp69 1`] = `
+"Program (1:0-1:42)
+  body
+    MemberExpression (1:0-1:42)
+      computed: false
+      object: CallExpression (1:0-1:32)
+        arguments
+          NumericLiteral (1:22-1:24)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(14)
+          NumericLiteral (1:26-1:27)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(3)
+          NumericLiteral (1:29-1:31)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(77)
+        callee: MemberExpression (1:0-1:21)
+          computed: false
+          object: CallExpression (1:0-1:12)
+            arguments
+              NumericLiteral (1:9-1:11)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(42)
+            callee: Identifier (1:0-1:8)
+              idType: S(reference)
+              name: S(universe)
+            optional: false
+          optional: false
+          property: Identifier (1:13-1:21)
+            idType: S(propKey)
+            name: S(galaxies)
+        optional: false
+      optional: false
+      property: Identifier (1:33-1:41)
+        idType: S(propKey)
+        name: S(milkyway)"
+`;
+
+exports[`parser: exp70: exp70 1`] = `
+"Program (1:0-1:46)
+  body
+    CallExpression (1:0-1:46)
+      arguments
+        NumericLiteral (1:40-1:44)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2014)
+      callee: MemberExpression (1:0-1:39)
+        computed: false
+        object: MemberExpression (1:0-1:20)
+          computed: false
+          object: MemberExpression (1:0-1:10)
+            computed: false
+            object: Identifier (1:0-1:5)
+              idType: S(reference)
+              name: S(earth)
+            optional: false
+            property: Identifier (1:6-1:10)
+              idType: S(propKey)
+              name: S(asia)
+          optional: false
+          property: Identifier (1:11-1:20)
+            idType: S(propKey)
+            name: S(Indonesia)
+        optional: false
+        property: Identifier (1:21-1:39)
+          idType: S(propKey)
+          name: S(prepareForElection)
+      optional: false"
+`;
+
+exports[`parser: exp71: exp71 1`] = `
+"Program (1:0-1:12)
+  body
+    MemberExpression (1:0-1:12)
+      computed: false
+      object: Identifier (1:0-1:8)
+        idType: S(reference)
+        name: S(universe)
+      optional: false
+      property: Identifier (1:9-1:11)
+        idType: S(propKey)
+        name: S(if)"
+`;
+
+exports[`parser: exp72: exp72 1`] = `
+"Program (1:0-1:14)
+  body
+    MemberExpression (1:0-1:14)
+      computed: false
+      object: Identifier (1:0-1:8)
+        idType: S(reference)
+        name: S(universe)
+      optional: false
+      property: Identifier (1:9-1:13)
+        idType: S(propKey)
+        name: S(true)"
+`;
+
+exports[`parser: exp73: exp73 1`] = `
+"Program (1:0-1:15)
+  body
+    MemberExpression (1:0-1:15)
+      computed: false
+      object: Identifier (1:0-1:8)
+        idType: S(reference)
+        name: S(universe)
+      optional: false
+      property: Identifier (1:9-1:14)
+        idType: S(propKey)
+        name: S(false)"
+`;
+
+exports[`parser: exp74: exp74 1`] = `
+"Program (1:0-1:14)
+  body
+    MemberExpression (1:0-1:14)
+      computed: false
+      object: Identifier (1:0-1:8)
+        idType: S(reference)
+        name: S(universe)
+      optional: false
+      property: Identifier (1:9-1:13)
+        idType: S(propKey)
+        name: S(null)"
+`;
+
+exports[`parser: exp75: exp75 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(*)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp76: exp76 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(/)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp77: exp77 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(%)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp78: exp78 1`] = `
+"Program (1:0-1:4)
+  body
+    UpdateExpression (1:0-1:4)
+      argument: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(++)
+      prefix: false"
+`;
+
+exports[`parser: exp79: exp79 1`] = `
+"Program (1:0-1:4)
+  body
+    UpdateExpression (1:0-1:4)
+      argument: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(--)
+      prefix: false"
+`;
+
+exports[`parser: exp80: exp80 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(<)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp81: exp81 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>)
+      right: Identifier (1:4-1:5)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp82: exp82 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(<=)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp83: exp83 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(>=)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp84: exp84 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(in)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp85: exp85 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(is)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp86: exp86 1`] = `
+"Program (1:0-1:8)
+  body
+    BinaryExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(!in)
+      right: Identifier (1:6-1:7)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp87: exp87 1`] = `
+"Program (1:0-1:8)
+  body
+    BinaryExpression (1:0-1:8)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(!is)
+      right: Identifier (1:6-1:7)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp88: exp88 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: BinaryExpression (1:0-1:5)
+        left: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(x)
+        operator: S(<)
+        right: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(y)
+      operator: S(<)
+      right: Identifier (1:8-1:9)
+        idType: S(reference)
+        name: S(z)"
+`;
+
+exports[`parser: exp89: exp89 1`] = `
+"Program (1:0-1:4)
+  body
+    UpdateExpression (1:0-1:4)
+      argument: Identifier (1:2-1:3)
+        idType: S(reference)
+        name: S(x)
+      operator: S(++)
+      prefix: true"
+`;
+
+exports[`parser: exp90: exp90 1`] = `
+"Program (1:0-1:4)
+  body
+    UpdateExpression (1:0-1:4)
+      argument: Identifier (1:2-1:3)
+        idType: S(reference)
+        name: S(x)
+      operator: S(--)
+      prefix: true"
+`;
+
+exports[`parser: exp91: exp91 1`] = `
+"Program (1:0-1:3)
+  body
+    UnaryExpression (1:0-1:3)
+      argument: Identifier (1:1-1:2)
+        idType: S(reference)
+        name: S(x)
+      operator: S(+)
+      prefix: true"
+`;
+
+exports[`parser: exp92: exp92 1`] = `
+"Program (1:0-1:3)
+  body
+    UnaryExpression (1:0-1:3)
+      argument: Identifier (1:1-1:2)
+        idType: S(reference)
+        name: S(x)
+      operator: S(-)
+      prefix: true"
+`;
+
+exports[`parser: exp93: exp93 1`] = `
+"Program (1:0-1:3)
+  body
+    UnaryExpression (1:0-1:3)
+      argument: Identifier (1:1-1:2)
+        idType: S(reference)
+        name: S(x)
+      operator: S(~)
+      prefix: true"
+`;
+
+exports[`parser: exp94: exp94 1`] = `
+"Program (1:0-1:3)
+  body
+    UnaryExpression (1:0-1:3)
+      argument: Identifier (1:1-1:2)
+        idType: S(reference)
+        name: S(x)
+      operator: S(!)
+      prefix: true"
+`;
+
+exports[`parser: exp95: exp95 1`] = `
+"Program (1:0-1:9)
+  body
+    UnaryExpression (1:0-1:9)
+      argument: Identifier (1:7-1:8)
+        idType: S(reference)
+        name: S(x)
+      operator: S(typeof)
+      prefix: true"
+`;
+
+exports[`parser: exp96: exp96 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(x)
+      operator: S(**)
+      right: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(y)"
+`;
+
+exports[`parser: exp97: exp97 1`] = `
+"Program (1:0-1:10)
+  body
+    UnaryExpression (1:0-1:10)
+      argument: SequenceExpression (1:1-1:9)
+        expressions
+          BinaryExpression (1:2-1:8)
+            left: NumericLiteral (1:2-1:3)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(5)
+            operator: S(**)
+            right: NumericLiteral (1:7-1:8)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(6)
+      operator: S(-)
+      prefix: true"
+`;
+
+exports[`parser: exp98: exp98 1`] = `
+"Program (1:0-1:14)
+  body
+    BinaryExpression (1:0-1:14)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)
+      operator: S(**)
+      right: SequenceExpression (1:5-1:13)
+        expressions
+          BinaryExpression (1:6-1:12)
+            left: NumericLiteral (1:6-1:7)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(3)
+            operator: S(**)
+            right: NumericLiteral (1:11-1:12)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(2)"
+`;
+
+exports[`parser: exp99: exp99 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)
+      operator: S(**)
+      right: BinaryExpression (1:5-1:11)
+        left: NumericLiteral (1:5-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(3)
+        operator: S(**)
+        right: NumericLiteral (1:10-1:11)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)"
+`;
+
+exports[`parser: exp100: exp100 1`] = `
+"Program (1:0-1:14)
+  body
+    BinaryExpression (1:0-1:14)
+      left: SequenceExpression (1:0-1:9)
+        expressions
+          BinaryExpression (1:1-1:8)
+            left: NumericLiteral (1:1-1:2)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(2)
+            operator: S(**)
+            right: UnaryExpression (1:6-1:8)
+              argument: NumericLiteral (1:7-1:8)
+                value: Object
+                  bigint: false
+                  float: false
+                  integer: true
+                  label: S(number)
+                  radix: N(10)
+                  raw: S(1)
+              operator: S(-)
+              prefix: true
+      operator: S(*)
+      right: NumericLiteral (1:12-1:13)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)"
+`;
+
+exports[`parser: exp101: exp101 1`] = `
+"Program (1:0-1:12)
+  body
+    BinaryExpression (1:0-1:12)
+      left: BinaryExpression (1:0-1:7)
+        left: NumericLiteral (1:0-1:1)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        operator: S(**)
+        right: UnaryExpression (1:5-1:7)
+          argument: NumericLiteral (1:6-1:7)
+            value: Object
+              bigint: false
+              float: false
+              integer: true
+              label: S(number)
+              radix: N(10)
+              raw: S(1)
+          operator: S(-)
+          prefix: true
+      operator: S(*)
+      right: NumericLiteral (1:10-1:11)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)"
+`;
+
+exports[`parser: exp102: exp102 1`] = `
+"Program (1:0-1:10)
+  body
+    BinaryExpression (1:0-1:10)
+      left: SequenceExpression (1:0-1:4)
+        expressions
+          UnaryExpression (1:1-1:3)
+            argument: NumericLiteral (1:2-1:3)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(5)
+            operator: S(-)
+            prefix: true
+      operator: S(**)
+      right: NumericLiteral (1:8-1:9)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(6)"
+`;
+
+exports[`parser: exp103: exp103 1`] = `
+"Program (1:0-1:7)
+  body
+    MemberExpression (1:0-1:7)
+      computed: false
+      object: MemberExpression (1:0-1:4)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: true
+        property: Identifier (1:3-1:4)
+          idType: S(propKey)
+          name: S(b)
+      optional: false
+      property: Identifier (1:5-1:6)
+        idType: S(propKey)
+        name: S(c)"
+`;
+
+exports[`parser: exp104: exp104 1`] = `
+"Program (1:0-1:7)
+  body
+    MemberExpression (1:0-1:7)
+      computed: false
+      object: MemberExpression (1:0-1:3)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: false
+        property: Identifier (1:2-1:3)
+          idType: S(propKey)
+          name: S(b)
+      optional: true
+      property: Identifier (1:5-1:6)
+        idType: S(propKey)
+        name: S(c)"
+`;
+
+exports[`parser: exp105: exp105 1`] = `
+"Program (1:0-1:14)
+  body
+    MemberExpression (1:0-1:14)
+      computed: false
+      object: MemberExpression (1:0-1:10)
+        computed: false
+        object: MemberExpression (1:0-1:8)
+          computed: false
+          object: MemberExpression (1:0-1:6)
+            computed: false
+            object: MemberExpression (1:0-1:4)
+              computed: false
+              object: Identifier (1:0-1:1)
+                idType: S(reference)
+                name: S(a)
+              optional: true
+              property: Identifier (1:3-1:4)
+                idType: S(propKey)
+                name: S(b)
+            optional: false
+            property: Identifier (1:5-1:6)
+              idType: S(propKey)
+              name: S(c)
+          optional: false
+          property: Identifier (1:7-1:8)
+            idType: S(propKey)
+            name: S(d)
+        optional: false
+        property: Identifier (1:9-1:10)
+          idType: S(propKey)
+          name: S(e)
+      optional: true
+      property: Identifier (1:12-1:13)
+        idType: S(propKey)
+        name: S(f)"
+`;
+
+exports[`parser: exp106: exp106 1`] = `
+"Program (1:0-1:13)
+  body
+    MemberExpression (1:0-1:13)
+      computed: false
+      object: MemberExpression (1:0-1:10)
+        computed: false
+        object: MemberExpression (1:0-1:8)
+          computed: false
+          object: MemberExpression (1:0-1:5)
+            computed: false
+            object: MemberExpression (1:0-1:3)
+              computed: false
+              object: Identifier (1:0-1:1)
+                idType: S(reference)
+                name: S(a)
+              optional: false
+              property: Identifier (1:2-1:3)
+                idType: S(propKey)
+                name: S(b)
+            optional: false
+            property: Identifier (1:4-1:5)
+              idType: S(propKey)
+              name: S(c)
+          optional: true
+          property: Identifier (1:7-1:8)
+            idType: S(propKey)
+            name: S(d)
+        optional: false
+        property: Identifier (1:9-1:10)
+          idType: S(propKey)
+          name: S(e)
+      optional: false
+      property: Identifier (1:11-1:12)
+        idType: S(propKey)
+        name: S(f)"
+`;
+
+exports[`parser: exp107: exp107 1`] = `
+"Program (1:0-1:8)
+  body
+    CallExpression (1:0-1:8)
+      arguments
+        Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(c)
+      callee: MemberExpression (1:0-1:3)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: false
+        property: Identifier (1:2-1:3)
+          idType: S(propKey)
+          name: S(b)
+      optional: true"
+`;
+
+exports[`parser: exp108: exp108 1`] = `
+"Program (1:0-1:8)
+  body
+    MemberExpression (1:0-1:8)
+      computed: true
+      object: MemberExpression (1:0-1:3)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: false
+        property: Identifier (1:2-1:3)
+          idType: S(propKey)
+          name: S(b)
+      optional: true
+      property: Identifier (1:5-1:6)
+        idType: S(reference)
+        name: S(c)"
+`;
+
+exports[`parser: exp109: exp109 1`] = `
+"Program (1:0-1:11)
+  body
+    MemberExpression (1:0-1:11)
+      computed: false
+      object: CallExpression (1:0-1:7)
+        arguments
+          Identifier (1:5-1:6)
+            idType: S(reference)
+            name: S(c)
+        callee: MemberExpression (1:0-1:3)
+          computed: false
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+          property: Identifier (1:2-1:3)
+            idType: S(propKey)
+            name: S(b)
+        optional: true
+      optional: true
+      property: Identifier (1:9-1:10)
+        idType: S(propKey)
+        name: S(d)"
+`;
+
+exports[`parser: exp110: exp110 1`] = `
+"Program (1:0-1:11)
+  body
+    MemberExpression (1:0-1:11)
+      computed: false
+      object: MemberExpression (1:0-1:7)
+        computed: true
+        object: MemberExpression (1:0-1:3)
+          computed: false
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+          property: Identifier (1:2-1:3)
+            idType: S(propKey)
+            name: S(b)
+        optional: true
+        property: Identifier (1:5-1:6)
+          idType: S(reference)
+          name: S(c)
+      optional: true
+      property: Identifier (1:9-1:10)
+        idType: S(propKey)
+        name: S(d)"
+`;
+
+exports[`parser: exp111: exp111 1`] = `
+"Program (1:0-1:3)
+  body
+    NonNullExpression (1:0-1:3)
+      expression: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)"
+`;
+
+exports[`parser: exp112: exp112 1`] = `
+"Program (1:0-1:14)
+  body
+    MemberExpression (1:0-1:14)
+      computed: false
+      object: NonNullExpression (1:0-1:11)
+        expression: MemberExpression (1:0-1:10)
+          computed: false
+          object: MemberExpression (1:0-1:8)
+            computed: false
+            object: MemberExpression (1:0-1:6)
+              computed: false
+              object: MemberExpression (1:0-1:4)
+                computed: false
+                object: NonNullExpression (1:0-1:2)
+                  expression: Identifier (1:0-1:1)
+                    idType: S(reference)
+                    name: S(a)
+                optional: false
+                property: Identifier (1:3-1:4)
+                  idType: S(propKey)
+                  name: S(b)
+              optional: false
+              property: Identifier (1:5-1:6)
+                idType: S(propKey)
+                name: S(c)
+            optional: false
+            property: Identifier (1:7-1:8)
+              idType: S(propKey)
+              name: S(d)
+          optional: false
+          property: Identifier (1:9-1:10)
+            idType: S(propKey)
+            name: S(e)
+      optional: false
+      property: Identifier (1:12-1:13)
+        idType: S(propKey)
+        name: S(f)"
+`;
+
+exports[`parser: exp113: exp113 1`] = `
+"Program (1:0-1:13)
+  body
+    MemberExpression (1:0-1:13)
+      computed: false
+      object: MemberExpression (1:0-1:10)
+        computed: false
+        object: MemberExpression (1:0-1:8)
+          computed: false
+          object: NonNullExpression (1:0-1:6)
+            expression: MemberExpression (1:0-1:5)
+              computed: false
+              object: MemberExpression (1:0-1:3)
+                computed: false
+                object: Identifier (1:0-1:1)
+                  idType: S(reference)
+                  name: S(a)
+                optional: false
+                property: Identifier (1:2-1:3)
+                  idType: S(propKey)
+                  name: S(b)
+              optional: false
+              property: Identifier (1:4-1:5)
+                idType: S(propKey)
+                name: S(c)
+          optional: false
+          property: Identifier (1:7-1:8)
+            idType: S(propKey)
+            name: S(d)
+        optional: false
+        property: Identifier (1:9-1:10)
+          idType: S(propKey)
+          name: S(e)
+      optional: false
+      property: Identifier (1:11-1:12)
+        idType: S(propKey)
+        name: S(f)"
+`;
+
+exports[`parser: exp114: exp114 1`] = `
+"Program (1:0-1:5)
+  body
+    BindExpression (1:0-1:5)
+      callee: Identifier (1:3-1:4)
+        idType: S(reference)
+        name: S(b)
+      object: Identifier (1:0-1:1)
+        idType: S(reference)
+        name: S(a)"
+`;
+
+exports[`parser: exp115: exp115 1`] = `
+"Program (1:0-1:8)
+  body
+    BindExpression (1:0-1:8)
+      callee: Identifier (1:6-1:7)
+        idType: S(reference)
+        name: S(c)
+      object: BindExpression (1:0-1:4)
+        callee: Identifier (1:3-1:4)
+          idType: S(reference)
+          name: S(b)
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)"
+`;
+
+exports[`parser: exp116: exp116 1`] = `
+"Program (1:0-1:7)
+  body
+    CallExpression (1:0-1:7)
+      arguments
+      callee: BindExpression (1:0-1:4)
+        callee: Identifier (1:3-1:4)
+          idType: S(reference)
+          name: S(b)
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+      optional: false"
+`;
+
+exports[`parser: exp117: exp117 1`] = `
+"Program (1:0-1:10)
+  body
+    CallExpression (1:0-1:10)
+      arguments
+      callee: BindExpression (1:0-1:7)
+        callee: Identifier (1:6-1:7)
+          idType: S(reference)
+          name: S(c)
+        object: BindExpression (1:0-1:4)
+          callee: Identifier (1:3-1:4)
+            idType: S(reference)
+            name: S(b)
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+      optional: false"
+`;
+
+exports[`parser: exp118: exp118 1`] = `
+"Program (1:0-1:8)
+  body
+    CallExpression (1:0-1:8)
+      arguments
+      callee: BindExpression (1:0-1:5)
+        callee: Identifier (1:4-1:5)
+          idType: S(reference)
+          name: S(b)
+        object: NonNullExpression (1:0-1:2)
+          expression: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+      optional: false"
+`;
+
+exports[`parser: exp119: exp119 1`] = `
+"Program (1:0-1:11)
+  body
+    CallExpression (1:0-1:11)
+      arguments
+      callee: BindExpression (1:0-1:8)
+        callee: Identifier (1:7-1:8)
+          idType: S(reference)
+          name: S(c)
+        object: BindExpression (1:0-1:5)
+          callee: Identifier (1:4-1:5)
+            idType: S(reference)
+            name: S(b)
+          object: NonNullExpression (1:0-1:2)
+            expression: Identifier (1:0-1:1)
+              idType: S(reference)
+              name: S(a)
+      optional: false"
+`;
+
+exports[`parser: exp120: exp120 1`] = `
+"Program (1:0-1:10)
+  body
+    CallExpression (1:0-1:10)
+      arguments
+      callee: BindExpression (1:0-1:7)
+        callee: Identifier (1:6-1:7)
+          idType: S(reference)
+          name: S(c)
+        object: MemberExpression (1:0-1:4)
+          computed: false
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+          optional: true
+          property: Identifier (1:3-1:4)
+            idType: S(propKey)
+            name: S(b)
+      optional: false"
+`;
+
+exports[`parser: exp121: exp121 1`] = `
+"Program (1:0-1:6)
+  body
+    MemberExpression (1:0-1:6)
+      computed: false
+      object: MemberExpression (1:0-1:3)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: false
+        property: Identifier (1:2-1:3)
+          idType: S(propKey)
+          name: S(0)
+      optional: false
+      property: Identifier (1:4-1:5)
+        idType: S(propKey)
+        name: S(1)"
+`;
+
+exports[`parser: exp122: exp122 1`] = `
+"Program (1:0-1:7)
+  body
+    MemberExpression (1:0-1:7)
+      computed: false
+      object: MemberExpression (1:0-1:3)
+        computed: false
+        object: Identifier (1:0-1:1)
+          idType: S(reference)
+          name: S(a)
+        optional: false
+        property: Identifier (1:2-1:3)
+          idType: S(propKey)
+          name: S(0)
+      optional: true
+      property: Identifier (1:5-1:6)
+        idType: S(propKey)
+        name: S(1)"
+`;
+
+exports[`parser: exp123: exp123 1`] = `
+"Program (1:0-1:7)
+  body
+    MemberExpression (1:0-1:7)
+      computed: false
+      object: NonNullExpression (1:0-1:4)
+        expression: MemberExpression (1:0-1:3)
+          computed: false
+          object: Identifier (1:0-1:1)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+          property: Identifier (1:2-1:3)
+            idType: S(propKey)
+            name: S(0)
+      optional: false
+      property: Identifier (1:5-1:6)
+        idType: S(propKey)
+        name: S(1)"
+`;
+
+exports[`parser: exp124: exp124 1`] = `
+"Program (1:0-1:12)
+  body
+    MemberExpression (1:0-1:12)
+      computed: false
+      object: MemberExpression (1:0-1:9)
+        computed: false
+        object: MemberExpression (1:0-1:7)
+          computed: false
+          object: MemberExpression (1:0-1:5)
+            computed: false
+            object: MemberExpression (1:0-1:3)
+              computed: false
+              object: Identifier (1:0-1:1)
+                idType: S(reference)
+                name: S(a)
+              optional: false
+              property: Identifier (1:2-1:3)
+                idType: S(propKey)
+                name: S(0)
+            optional: false
+            property: Identifier (1:4-1:5)
+              idType: S(propKey)
+              name: S(0)
+          optional: false
+          property: Identifier (1:6-1:7)
+            idType: S(propKey)
+            name: S(0)
+        optional: false
+        property: Identifier (1:8-1:9)
+          idType: S(propKey)
+          name: S(0)
+      optional: false
+      property: Identifier (1:10-1:11)
+        idType: S(propKey)
+        name: S(0)"
+`;
+
+exports[`parser: exp125: exp125 1`] = `
+"Program (1:0-1:16)
+  body
+    MemberExpression (1:0-1:16)
+      computed: false
+      object: CallExpression (1:0-1:13)
+        arguments
+        callee: MemberExpression (1:0-1:11)
+          computed: false
+          object: MemberExpression (1:0-1:9)
+            computed: false
+            object: MemberExpression (1:0-1:7)
+              computed: false
+              object: MemberExpression (1:0-1:5)
+                computed: false
+                object: MemberExpression (1:0-1:3)
+                  computed: false
+                  object: Identifier (1:0-1:1)
+                    idType: S(reference)
+                    name: S(a)
+                  optional: false
+                  property: Identifier (1:2-1:3)
+                    idType: S(propKey)
+                    name: S(0)
+                optional: false
+                property: Identifier (1:4-1:5)
+                  idType: S(propKey)
+                  name: S(0)
+              optional: false
+              property: Identifier (1:6-1:7)
+                idType: S(propKey)
+                name: S(0)
+            optional: false
+            property: Identifier (1:8-1:9)
+              idType: S(propKey)
+              name: S(0)
+          optional: false
+          property: Identifier (1:10-1:11)
+            idType: S(propKey)
+            name: S(0)
+        optional: false
+      optional: false
+      property: Identifier (1:14-1:15)
+        idType: S(propKey)
+        name: S(0)"
+`;
+
+exports[`parser: exp126: exp126 1`] = `
+"Program (1:0-1:6)
+  body
+    BinaryExpression (1:0-1:6)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      operator: S(-)
+      right: NumericLiteral (1:4-1:5)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(2)"
+`;
+
+exports[`parser: exp127: exp127 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      operator: S(-)
+      right: UnaryExpression (1:4-1:6)
+        argument: NumericLiteral (1:5-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        operator: S(-)
+        prefix: true"
+`;
+
+exports[`parser: exp128: exp128 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      operator: S(-)
+      right: UnaryExpression (1:4-1:6)
+        argument: NumericLiteral (1:5-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        operator: S(+)
+        prefix: true"
+`;
+
+exports[`parser: exp129: exp129 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      operator: S(+)
+      right: UnaryExpression (1:4-1:6)
+        argument: NumericLiteral (1:5-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        operator: S(-)
+        prefix: true"
+`;
+
+exports[`parser: exp130: exp130 1`] = `
+"Program (1:0-1:7)
+  body
+    BinaryExpression (1:0-1:7)
+      left: NumericLiteral (1:0-1:1)
+        value: Object
+          bigint: false
+          float: false
+          integer: true
+          label: S(number)
+          radix: N(10)
+          raw: S(1)
+      operator: S(+)
+      right: UnaryExpression (1:4-1:6)
+        argument: NumericLiteral (1:5-1:6)
+          value: Object
+            bigint: false
+            float: false
+            integer: true
+            label: S(number)
+            radix: N(10)
+            raw: S(2)
+        operator: S(+)
+        prefix: true"
+`;
+
+exports[`parser: flow1: flow1 1`] = `
+"Program (1:0-1:15)
+  body
+    If (1:0-1:15)
+      alternate: null
+      consequent: Block (1:12-1:14)
+        body
+      test: SequenceExpression (1:3-1:11)
+        expressions
+          BooleanLiteral (1:5-1:9)
+            value: true"
+`;
+
+exports[`parser: flow2: flow2 1`] = `
+"Program (1:0-1:11)
+  body
+    If (1:0-1:11)
+      alternate: null
+      consequent: Block (1:8-1:10)
+        body
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow3: flow3 1`] = `
+"Program (1:0-1:23)
+  body
+    If (1:0-1:23)
+      alternate: null
+      consequent: CallExpression (1:9-1:22)
+        arguments
+        callee: MemberExpression (1:9-1:20)
+          computed: false
+          object: Identifier (1:9-1:16)
+            idType: S(reference)
+            name: S(console)
+          optional: false
+          property: Identifier (1:17-1:20)
+            idType: S(propKey)
+            name: S(log)
+        optional: false
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow4: flow4 1`] = `
+"Program (1:0-1:26)
+  body
+    If (1:0-1:26)
+      alternate: null
+      consequent: CallExpression (1:12-1:25)
+        arguments
+        callee: MemberExpression (1:12-1:23)
+          computed: false
+          object: Identifier (1:12-1:19)
+            idType: S(reference)
+            name: S(console)
+          optional: false
+          property: Identifier (1:20-1:23)
+            idType: S(propKey)
+            name: S(log)
+        optional: false
+      test: SequenceExpression (1:3-1:11)
+        expressions
+          BooleanLiteral (1:5-1:9)
+            value: true"
+`;
+
+exports[`parser: flow5: flow5 1`] = `
+"Program (1:0-1:27)
+  body
+    If (1:0-1:27)
+      alternate: null
+      consequent: CallExpression (1:13-1:26)
+        arguments
+        callee: MemberExpression (1:13-1:24)
+          computed: false
+          object: Identifier (1:13-1:20)
+            idType: S(reference)
+            name: S(console)
+          optional: false
+          property: Identifier (1:21-1:24)
+            idType: S(propKey)
+            name: S(log)
+        optional: false
+      test: SequenceExpression (1:3-1:11)
+        expressions
+          BooleanLiteral (1:5-1:9)
+            value: true"
+`;
+
+exports[`parser: flow6: flow6 1`] = `
+"Program (1:0-1:19)
+  body
+    If (1:0-1:19)
+      alternate: Block (1:16-1:18)
+        body
+      consequent: Block (1:8-1:10)
+        body
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow7: flow7 1`] = `
+"Program (1:0-1:27)
+  body
+    If (1:0-1:27)
+      alternate: If (1:16-1:26)
+        alternate: null
+        consequent: Block (1:24-1:26)
+          body
+        test: BooleanLiteral (1:19-1:23)
+          value: true
+      consequent: Block (1:8-1:10)
+        body
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow8: flow8 1`] = `
+"Program (1:0-1:35)
+  body
+    If (1:0-1:35)
+      alternate: If (1:16-1:34)
+        alternate: Block (1:32-1:34)
+          body
+        consequent: Block (1:24-1:26)
+          body
+        test: BooleanLiteral (1:19-1:23)
+          value: true
+      consequent: Block (1:8-1:10)
+        body
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow9: flow9 1`] = `
+"Program (1:0-1:46)
+  body
+    If (1:0-1:46)
+      alternate: If (1:20-1:45)
+        alternate: CallExpression (1:40-1:45)
+          arguments
+          callee: Identifier (1:40-1:43)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        consequent: CallExpression (1:29-1:34)
+          arguments
+          callee: Identifier (1:29-1:32)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        test: BooleanLiteral (1:23-1:27)
+          value: true
+      consequent: CallExpression (1:9-1:14)
+        arguments
+        callee: Identifier (1:9-1:12)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow10: flow10 1`] = `
+"Program (1:0-1:47)
+  body
+    If (1:0-1:47)
+      alternate: If (1:20-1:46)
+        alternate: CallExpression (1:41-1:46)
+          arguments
+          callee: Identifier (1:41-1:44)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        consequent: CallExpression (1:29-1:34)
+          arguments
+          callee: Identifier (1:29-1:32)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        test: BooleanLiteral (1:23-1:27)
+          value: true
+      consequent: CallExpression (1:9-1:14)
+        arguments
+        callee: Identifier (1:9-1:12)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow11: flow11 1`] = `
+"Program (1:0-1:38)
+  body
+    If (1:0-1:38)
+      alternate: If (1:17-1:37)
+        alternate: Block (1:35-1:37)
+          body
+        consequent: Block (1:26-1:28)
+          body
+        test: BooleanLiteral (1:20-1:24)
+          value: true
+      consequent: Block (1:9-1:11)
+        body
+      test: BooleanLiteral (1:3-1:7)
+        value: true"
+`;
+
+exports[`parser: flow12: flow12 1`] = `
+"Program (1:0-1:14)
+  body
+    While (1:0-1:14)
+      block: Block (1:11-1:13)
+        body
+      test: BooleanLiteral (1:6-1:10)
+        value: true"
+`;
+
+exports[`parser: flow13: flow13 1`] = `
+"Program (1:0-1:18)
+  body
+    While (1:0-1:18)
+      block: Block (1:15-1:17)
+        body
+      test: SequenceExpression (1:6-1:14)
+        expressions
+          BooleanLiteral (1:8-1:12)
+            value: true"
+`;
+
+exports[`parser: flow14: flow14 1`] = `
+"Program (1:0-1:18)
+  body
+    While (1:0-1:18)
+      block: CallExpression (1:12-1:17)
+        arguments
+        callee: Identifier (1:12-1:15)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      test: BooleanLiteral (1:6-1:10)
+        value: true"
+`;
+
+exports[`parser: flow15: flow15 1`] = `
+"Program (1:0-1:23)
+  body
+    While (1:0-1:23)
+      block: Block (1:12-1:22)
+        body
+          CallExpression (1:14-1:20)
+            arguments
+            callee: Identifier (1:14-1:17)
+              idType: S(reference)
+              name: S(log)
+            optional: false
+      test: BooleanLiteral (1:6-1:10)
+        value: true"
+`;
+
+exports[`parser: flow16: flow16 1`] = `
+"Program (1:0-1:17)
+  body
+    DoWhile (1:0-1:17)
+      body: Block (1:3-1:5)
+        body
+      test: BooleanLiteral (1:12-1:16)
+        value: true"
+`;
+
+exports[`parser: flow17: flow17 1`] = `
+"Program (1:0-1:21)
+  body
+    DoWhile (1:0-1:21)
+      body: Block (1:3-1:5)
+        body
+      test: SequenceExpression (1:12-1:20)
+        expressions
+          BooleanLiteral (1:14-1:18)
+            value: true"
+`;
+
+exports[`parser: flow18: flow18 1`] = `
+"Program (1:0-1:20)
+  body
+    DoWhile (1:0-1:20)
+      body: CallExpression (1:3-1:8)
+        arguments
+        callee: Identifier (1:3-1:6)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      test: BooleanLiteral (1:15-1:19)
+        value: true"
+`;
+
+exports[`parser: flow19: flow19 1`] = `
+"Program (1:0-1:21)
+  body
+    DoWhile (1:0-1:21)
+      body: CallExpression (1:4-1:9)
+        arguments
+        callee: Identifier (1:4-1:7)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      test: BooleanLiteral (1:16-1:20)
+        value: true"
+`;
+
+exports[`parser: flow20: flow20 1`] = `
+"Program (1:0-1:25)
+  body
+    DoWhile (1:0-1:25)
+      body: Block (1:3-1:13)
+        body
+          CallExpression (1:5-1:11)
+            arguments
+            callee: Identifier (1:5-1:8)
+              idType: S(reference)
+              name: S(log)
+            optional: false
+      test: BooleanLiteral (1:20-1:24)
+        value: true"
+`;
+
+exports[`parser: flow21: flow21 1`] = `
+"Program (1:0-1:7)
+  body
+    Try (1:0-1:7)
+      body: Block (1:4-1:6)
+        body"
+`;
+
+exports[`parser: flow22: flow22 1`] = `
+"Program (1:0-1:11)
+  body
+    Try (1:0-1:11)
+      body: CallExpression (1:5-1:10)
+        arguments
+        callee: Identifier (1:5-1:8)
+          idType: S(reference)
+          name: S(log)
+        optional: false"
+`;
+
+exports[`parser: flow23: flow23 1`] = `
+"Program (1:0-1:10)
+  body
+    Try (1:0-1:10)
+      body: CallExpression (1:4-1:9)
+        arguments
+        callee: Identifier (1:4-1:7)
+          idType: S(reference)
+          name: S(log)
+        optional: false"
+`;
+
+exports[`parser: flow24: flow24 1`] = `
+"Program (1:0-1:16)
+  body
+    Try (1:0-1:16)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:15)
+        body: Block (1:13-1:15)
+          body"
+`;
+
+exports[`parser: flow25: flow25 1`] = `
+"Program (1:0-1:20)
+  body
+    Try (1:0-1:20)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:19)
+        body: CallExpression (1:14-1:19)
+          arguments
+          callee: Identifier (1:14-1:17)
+            idType: S(reference)
+            name: S(log)
+          optional: false"
+`;
+
+exports[`parser: flow26: flow26 1`] = `
+"Program (1:0-1:19)
+  body
+    Try (1:0-1:19)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:18)
+        body: CallExpression (1:13-1:18)
+          arguments
+          callee: Identifier (1:13-1:16)
+            idType: S(reference)
+            name: S(log)
+          optional: false"
+`;
+
+exports[`parser: flow27: flow27 1`] = `
+"Program (1:0-1:27)
+  body
+    Try (1:0-1:27)
+      body: Block (1:4-1:6)
+        body
+      finalizer: Block (1:24-1:26)
+        body
+      handler: CatchClause (1:7-1:15)
+        body: Block (1:13-1:15)
+          body"
+`;
+
+exports[`parser: flow28: flow28 1`] = `
+"Program (1:0-1:31)
+  body
+    Try (1:0-1:31)
+      body: Block (1:4-1:6)
+        body
+      finalizer: CallExpression (1:25-1:30)
+        arguments
+        callee: Identifier (1:25-1:28)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      handler: CatchClause (1:7-1:15)
+        body: Block (1:13-1:15)
+          body"
+`;
+
+exports[`parser: flow29: flow29 1`] = `
+"Program (1:0-1:30)
+  body
+    Try (1:0-1:30)
+      body: Block (1:4-1:6)
+        body
+      finalizer: CallExpression (1:24-1:29)
+        arguments
+        callee: Identifier (1:24-1:27)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      handler: CatchClause (1:7-1:15)
+        body: Block (1:13-1:15)
+          body"
+`;
+
+exports[`parser: flow30: flow30 1`] = `
+"Program (1:0-1:18)
+  body
+    Try (1:0-1:18)
+      body: Block (1:4-1:6)
+        body
+      finalizer: Block (1:15-1:17)
+        body"
+`;
+
+exports[`parser: flow31: flow31 1`] = `
+"Program (1:0-1:22)
+  body
+    Try (1:0-1:22)
+      body: Block (1:4-1:6)
+        body
+      finalizer: CallExpression (1:16-1:21)
+        arguments
+        callee: Identifier (1:16-1:19)
+          idType: S(reference)
+          name: S(log)
+        optional: false"
+`;
+
+exports[`parser: flow32: flow32 1`] = `
+"Program (1:0-1:21)
+  body
+    Try (1:0-1:21)
+      body: Block (1:4-1:6)
+        body
+      finalizer: CallExpression (1:15-1:20)
+        arguments
+        callee: Identifier (1:15-1:18)
+          idType: S(reference)
+          name: S(log)
+        optional: false"
+`;
+
+exports[`parser: flow33: flow33 1`] = `
+"Program (1:0-1:22)
+  body
+    Try (1:0-1:22)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:21)
+        body: Block (1:19-1:21)
+          body
+        param: Identifier (1:15-1:16)
+          idType: S(definition)
+          name: S(e)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow34: flow34 1`] = `
+"Program (1:0-1:26)
+  body
+    Try (1:0-1:26)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:25)
+        body: CallExpression (1:20-1:25)
+          arguments
+          callee: Identifier (1:20-1:23)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        param: Identifier (1:15-1:16)
+          idType: S(definition)
+          name: S(e)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow35: flow35 1`] = `
+"Program (1:0-1:25)
+  body
+    Try (1:0-1:25)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:24)
+        body: CallExpression (1:19-1:24)
+          arguments
+          callee: Identifier (1:19-1:22)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        param: Identifier (1:15-1:16)
+          idType: S(definition)
+          name: S(e)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow36: flow36 1`] = `
+"Program (1:0-1:30)
+  body
+    Try (1:0-1:30)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:29)
+        body: Block (1:27-1:29)
+          body
+        param: ObjectPattern (1:15-1:24)
+          properties
+            ObjectProperty (1:17-1:22)
+              key: Identifier (1:17-1:22)
+                idType: S(propKey)
+                name: S(stack)
+              value: Identifier (1:17-1:22)
+                idType: S(definition)
+                name: S(stack)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow37: flow37 1`] = `
+"Program (1:0-1:34)
+  body
+    Try (1:0-1:34)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:33)
+        body: CallExpression (1:28-1:33)
+          arguments
+          callee: Identifier (1:28-1:31)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        param: ObjectPattern (1:15-1:24)
+          properties
+            ObjectProperty (1:17-1:22)
+              key: Identifier (1:17-1:22)
+                idType: S(propKey)
+                name: S(stack)
+              value: Identifier (1:17-1:22)
+                idType: S(definition)
+                name: S(stack)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow38: flow38 1`] = `
+"Program (1:0-1:33)
+  body
+    Try (1:0-1:33)
+      body: Block (1:4-1:6)
+        body
+      handler: CatchClause (1:7-1:32)
+        body: CallExpression (1:27-1:32)
+          arguments
+          callee: Identifier (1:27-1:30)
+            idType: S(reference)
+            name: S(log)
+          optional: false
+        param: ObjectPattern (1:15-1:24)
+          properties
+            ObjectProperty (1:17-1:22)
+              key: Identifier (1:17-1:22)
+                idType: S(propKey)
+                name: S(stack)
+              value: Identifier (1:17-1:22)
+                idType: S(definition)
+                name: S(stack)
+          typeAnnotation: null"
+`;
+
+exports[`parser: flow39: flow39 1`] = `
+"Program (1:0-1:10)
+  body
+    For (1:0-1:10)
+      await: false
+      block: Block (1:7-1:9)
+        body
+      init: null
+      test: null
+      update: null
+      usedParen: false"
+`;
+
+exports[`parser: flow40: flow40 1`] = `
+"Program (1:0-1:15)
+  body
+    For (1:0-1:15)
+      await: false
+      block: CallExpression (1:9-1:14)
+        arguments
+        callee: Identifier (1:9-1:12)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: null
+      test: null
+      update: null
+      usedParen: false"
+`;
+
+exports[`parser: flow41: flow41 1`] = `
+"Program (1:0-1:15)
+  body
+    For (1:0-1:15)
+      await: false
+      block: CallExpression (1:9-1:14)
+        arguments
+        callee: Identifier (1:9-1:12)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: null
+      test: null
+      update: null
+      usedParen: true"
+`;
+
+exports[`parser: flow42: flow42 1`] = `
+"Program (1:0-1:22)
+  body
+    For (1:0-1:22)
+      await: false
+      block: Block (1:19-1:21)
+        body
+      in: Identifier (1:17-1:18)
+        idType: S(reference)
+        name: S(o)
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: ObjectPattern (1:8-1:13)
+              properties
+                ObjectProperty (1:10-1:11)
+                  key: Identifier (1:10-1:11)
+                    idType: S(propKey)
+                    name: S(a)
+                  value: Identifier (1:10-1:11)
+                    idType: S(definition)
+                    name: S(a)
+              typeAnnotation: null
+            init: null
+        kind: S(val)
+      usedParen: false"
+`;
+
+exports[`parser: flow43: flow43 1`] = `
+"Program (1:0-1:27)
+  body
+    For (1:0-1:27)
+      await: false
+      block: CallExpression (1:21-1:26)
+        arguments
+        callee: Identifier (1:21-1:24)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      in: Identifier (1:17-1:18)
+        idType: S(reference)
+        name: S(o)
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: ObjectPattern (1:8-1:13)
+              properties
+                ObjectProperty (1:10-1:11)
+                  key: Identifier (1:10-1:11)
+                    idType: S(propKey)
+                    name: S(a)
+                  value: Identifier (1:10-1:11)
+                    idType: S(definition)
+                    name: S(a)
+              typeAnnotation: null
+            init: null
+        kind: S(val)
+      usedParen: false"
+`;
+
+exports[`parser: flow44: flow44 1`] = `
+"Program (1:0-1:29)
+  body
+    For (1:0-1:29)
+      await: false
+      block: CallExpression (1:23-1:28)
+        arguments
+        callee: Identifier (1:23-1:26)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      in: Identifier (1:19-1:20)
+        idType: S(reference)
+        name: S(o)
+      init: VariableDeclaration (1:6-1:15)
+        declarations
+          VariableDeclarator (1:10-1:15)
+            id: ObjectPattern (1:10-1:15)
+              properties
+                ObjectProperty (1:12-1:13)
+                  key: Identifier (1:12-1:13)
+                    idType: S(propKey)
+                    name: S(a)
+                  value: Identifier (1:12-1:13)
+                    idType: S(definition)
+                    name: S(a)
+              typeAnnotation: null
+            init: null
+        kind: S(val)
+      usedParen: true"
+`;
+
+exports[`parser: flow45: flow45 1`] = `
+"Program (1:0-1:28)
+  body
+    For (1:0-1:28)
+      await: false
+      block: Block (1:25-1:27)
+        body
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: Identifier (1:8-1:9)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:12-1:13)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: BooleanLiteral (1:15-1:19)
+        value: true
+      update: UpdateExpression (1:21-1:24)
+        argument: Identifier (1:21-1:22)
+          idType: S(reference)
+          name: S(a)
+        operator: S(++)
+        prefix: false
+      usedParen: false"
+`;
+
+exports[`parser: flow46: flow46 1`] = `
+"Program (1:0-1:33)
+  body
+    For (1:0-1:33)
+      await: false
+      block: CallExpression (1:27-1:32)
+        arguments
+        callee: Identifier (1:27-1:30)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: Identifier (1:8-1:9)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:12-1:13)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: BooleanLiteral (1:15-1:19)
+        value: true
+      update: UpdateExpression (1:21-1:24)
+        argument: Identifier (1:21-1:22)
+          idType: S(reference)
+          name: S(a)
+        operator: S(++)
+        prefix: false
+      usedParen: false"
+`;
+
+exports[`parser: flow47: flow47 1`] = `
+"Program (1:0-1:24)
+  body
+    For (1:0-1:24)
+      await: false
+      block: CallExpression (1:18-1:23)
+        arguments
+        callee: Identifier (1:18-1:21)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: Identifier (1:8-1:9)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:12-1:13)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: null
+      usedParen: false"
+`;
+
+exports[`parser: flow48: flow48 1`] = `
+"Program (1:0-1:28)
+  body
+    For (1:0-1:28)
+      await: false
+      block: CallExpression (1:22-1:27)
+        arguments
+        callee: Identifier (1:22-1:25)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:4-1:13)
+        declarations
+          VariableDeclarator (1:8-1:13)
+            id: Identifier (1:8-1:9)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:12-1:13)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: UpdateExpression (1:16-1:19)
+        argument: Identifier (1:16-1:17)
+          idType: S(reference)
+          name: S(a)
+        operator: S(++)
+        prefix: false
+      usedParen: false"
+`;
+
+exports[`parser: flow49: flow49 1`] = `
+"Program (1:0-1:26)
+  body
+    For (1:0-1:26)
+      await: false
+      block: CallExpression (1:20-1:25)
+        arguments
+        callee: Identifier (1:20-1:23)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:6-1:15)
+        declarations
+          VariableDeclarator (1:10-1:15)
+            id: Identifier (1:10-1:11)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:14-1:15)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: null
+      usedParen: true"
+`;
+
+exports[`parser: flow50: flow50 1`] = `
+"Program (1:0-1:30)
+  body
+    For (1:0-1:30)
+      await: false
+      block: CallExpression (1:24-1:29)
+        arguments
+        callee: Identifier (1:24-1:27)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:6-1:15)
+        declarations
+          VariableDeclarator (1:10-1:15)
+            id: Identifier (1:10-1:11)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:14-1:15)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: UpdateExpression (1:18-1:21)
+        argument: Identifier (1:18-1:19)
+          idType: S(reference)
+          name: S(a)
+        operator: S(++)
+        prefix: false
+      usedParen: true"
+`;
+
+exports[`parser: flow51: flow51 1`] = `
+"Program (1:0-1:28)
+  body
+    For (1:0-1:28)
+      await: true
+      block: Block (1:25-1:27)
+        body
+      in: Identifier (1:23-1:24)
+        idType: S(reference)
+        name: S(o)
+      init: VariableDeclaration (1:10-1:19)
+        declarations
+          VariableDeclarator (1:14-1:19)
+            id: ObjectPattern (1:14-1:19)
+              properties
+                ObjectProperty (1:16-1:17)
+                  key: Identifier (1:16-1:17)
+                    idType: S(propKey)
+                    name: S(a)
+                  value: Identifier (1:16-1:17)
+                    idType: S(definition)
+                    name: S(a)
+              typeAnnotation: null
+            init: null
+        kind: S(val)
+      usedParen: false"
+`;
+
+exports[`parser: flow52: flow52 1`] = `
+"Program (1:0-1:35)
+  body
+    For (1:0-1:35)
+      await: true
+      block: CallExpression (1:29-1:34)
+        arguments
+        callee: Identifier (1:29-1:32)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      in: Identifier (1:25-1:26)
+        idType: S(reference)
+        name: S(o)
+      init: VariableDeclaration (1:12-1:21)
+        declarations
+          VariableDeclarator (1:16-1:21)
+            id: ObjectPattern (1:16-1:21)
+              properties
+                ObjectProperty (1:18-1:19)
+                  key: Identifier (1:18-1:19)
+                    idType: S(propKey)
+                    name: S(a)
+                  value: Identifier (1:18-1:19)
+                    idType: S(definition)
+                    name: S(a)
+              typeAnnotation: null
+            init: null
+        kind: S(val)
+      usedParen: true"
+`;
+
+exports[`parser: flow53: flow53 1`] = `
+"Program (1:0-1:25)
+  body
+    For (1:0-1:25)
+      await: true
+      block: Block (1:22-1:24)
+        body
+      init: VariableDeclaration (1:10-1:19)
+        declarations
+          VariableDeclarator (1:14-1:19)
+            id: Identifier (1:14-1:15)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:18-1:19)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: null
+      usedParen: false"
+`;
+
+exports[`parser: flow54: flow54 1`] = `
+"Program (1:0-1:32)
+  body
+    For (1:0-1:32)
+      await: true
+      block: CallExpression (1:26-1:31)
+        arguments
+        callee: Identifier (1:26-1:29)
+          idType: S(reference)
+          name: S(log)
+        optional: false
+      init: VariableDeclaration (1:12-1:21)
+        declarations
+          VariableDeclarator (1:16-1:21)
+            id: Identifier (1:16-1:17)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:20-1:21)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)
+        kind: S(var)
+      test: null
+      update: null
+      usedParen: true"
+`;
+
+exports[`parser: flow55: flow55 1`] = `
+"Program (1:0-1:21)
+  body
+    While (1:0-1:21)
+      block: Break (1:15-1:20)
+        label: null
+      test: SequenceExpression (1:6-1:14)
+        expressions
+          BooleanLiteral (1:8-1:12)
+            value: true"
+`;
+
+exports[`parser: flow56: flow56 1`] = `
+"Program (1:0-1:24)
+  body
+    While (1:0-1:24)
+      block: Continue (1:15-1:23)
+        label: null
+      test: SequenceExpression (1:6-1:14)
+        expressions
+          BooleanLiteral (1:8-1:12)
+            value: true"
+`;
+
+exports[`parser: flow57: flow57 1`] = `
+"Program (1:0-1:29)
+  body
+    Labeled (1:0-1:29)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: While (1:4-1:28)
+        block: Break (1:19-1:28)
+          label: Identifier (1:25-1:28)
+            idType: S(labelReference)
+            name: S(foo)
+        test: SequenceExpression (1:10-1:18)
+          expressions
+            BooleanLiteral (1:12-1:16)
+              value: true"
+`;
+
+exports[`parser: flow58: flow58 1`] = `
+"Program (1:0-1:32)
+  body
+    Labeled (1:0-1:32)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: While (1:4-1:31)
+        block: Continue (1:19-1:31)
+          label: Identifier (1:28-1:31)
+            idType: S(labelReference)
+            name: S(foo)
+        test: SequenceExpression (1:10-1:18)
+          expressions
+            BooleanLiteral (1:12-1:16)
+              value: true"
+`;
+
+exports[`parser: flow59: flow59 1`] = `
+"Program (1:0-1:29)
+  body
+    Labeled (1:0-1:29)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: For (1:4-1:28)
+        await: false
+        block: Break (1:19-1:28)
+          label: Identifier (1:25-1:28)
+            idType: S(labelReference)
+            name: S(foo)
+        init: null
+        test: BooleanLiteral (1:11-1:15)
+          value: true
+        update: null
+        usedParen: true"
+`;
+
+exports[`parser: flow60: flow60 1`] = `
+"Program (1:0-1:32)
+  body
+    Labeled (1:0-1:32)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: For (1:4-1:31)
+        await: false
+        block: Continue (1:19-1:31)
+          label: Identifier (1:28-1:31)
+            idType: S(labelReference)
+            name: S(foo)
+        init: null
+        test: BooleanLiteral (1:11-1:15)
+          value: true
+        update: null
+        usedParen: true"
+`;
+
+exports[`parser: flow61: flow61 1`] = `
+"Program (1:0-1:28)
+  body
+    Labeled (1:0-1:28)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: DoWhile (1:4-1:27)
+        body: Break (1:7-1:16)
+          label: Identifier (1:13-1:16)
+            idType: S(labelReference)
+            name: S(foo)
+        test: BooleanLiteral (1:23-1:27)
+          value: true"
+`;
+
+exports[`parser: flow62: flow62 1`] = `
+"Program (1:0-1:31)
+  body
+    Labeled (1:0-1:31)
+      label: Identifier (1:0-1:3)
+        idType: S(labelDefinition)
+        name: S(foo)
+      loop: DoWhile (1:4-1:30)
+        body: Continue (1:7-1:19)
+          label: Identifier (1:16-1:19)
+            idType: S(labelReference)
+            name: S(foo)
+        test: BooleanLiteral (1:26-1:30)
+          value: true"
+`;
+
+exports[`parser: import1: import1 1`] = `
+"Program (1:0-1:19)
+  body
+    CallExpression (1:0-1:19)
+      arguments
+        TemplateLiteral (1:8-1:16)
+          expressions
+          quasis
+            TemplateElement (1:9-1:15)
+              tail: true
+              value: Object
+                label: S(template)
+                raw: S(abc.js)
+      callee: Import (1:0-1:6)
+      optional: false"
+`;
+
+exports[`parser: import2: import2 1`] = `
+"Program (1:0-1:24)
+  body
+    ImportDeclaration (1:0-1:24)
+      from: TemplateLiteral (1:15-1:23)
+        expressions
+        quasis
+          TemplateElement (1:16-1:22)
+            tail: true
+            value: Object
+              label: S(template)
+              raw: S(abc.js)
+      pattern: ObjectPattern (1:7-1:9)
+        properties
+        typeAnnotation: null"
+`;
+
+exports[`parser: import3: import3 1`] = `
+"Program (1:0-1:56)
+  body
+    ImportDeclaration (1:0-1:56)
+      from: TemplateLiteral (1:47-1:55)
+        expressions
+        quasis
+          TemplateElement (1:48-1:54)
+            tail: true
+            value: Object
+              label: S(template)
+              raw: S(abc.js)
+      pattern: ObjectPattern (1:7-1:41)
+        properties
+          ObjectProperty (1:9-1:10)
+            key: Identifier (1:9-1:10)
+              idType: S(propKey)
+              name: S(a)
+            value: Identifier (1:9-1:10)
+              idType: S(definition)
+              name: S(a)
+          ObjectProperty (1:12-1:20)
+            key: Identifier (1:12-1:13)
+              idType: S(propKey)
+              name: S(b)
+            value: ArrayPattern (1:15-1:20)
+              elements
+                Identifier (1:17-1:18)
+                  idType: S(definition)
+                  mutable: null
+                  name: S(c)
+                  typeAnnotation: null
+              typeAnnotation: null
+          ObjectProperty (1:22-1:33)
+            key: Identifier (1:22-1:23)
+              idType: S(propKey)
+              name: S(d)
+            value: ObjectPattern (1:25-1:33)
+              properties
+                ObjectProperty (1:27-1:31)
+                  key: Identifier (1:27-1:28)
+                    idType: S(propKey)
+                    name: S(e)
+                  value: Identifier (1:30-1:31)
+                    idType: S(definition)
+                    name: S(f)
+                    typeAnnotation: null
+              typeAnnotation: null
+          RestElement (1:35-1:39)
+            argument: Identifier (1:38-1:39)
+              idType: S(definition)
+              name: S(i)
+              typeAnnotation: null
+            typeAnnotation: null
+        typeAnnotation: null"
+`;
+
+exports[`parser: import4: import4 1`] = `
+"Program (1:0-1:16)
+  body
+    ExportDeclaration (1:0-1:16)
+      object: ObjectExpression (1:7-1:15)
+        properties
+          ObjectProperty (1:9-1:13)
+            key: Identifier (1:9-1:10)
+              idType: S(propKey)
+              name: S(a)
+            value: NumericLiteral (1:12-1:13)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(0)"
+`;
+
+exports[`parser: import5: import5 1`] = `
+"Program (1:0-1:18)
+  body
+    ExportDeclaration (1:0-1:18)
+      declaration: VariableDeclaration (1:7-1:18)
+        declarations
+          VariableDeclarator (1:11-1:17)
+            id: Identifier (1:11-1:12)
+              idType: S(definition)
+              name: S(a)
+              typeAnnotation: null
+            init: NumericLiteral (1:15-1:17)
+              value: Object
+                bigint: false
+                float: false
+                integer: true
+                label: S(number)
+                radix: N(10)
+                raw: S(10)
+        kind: S(val)"
+`;
+
+exports[`parser: import6: import6 1`] = `
+"Program (1:0-1:17)
+  body
+    ExportDeclaration (1:0-1:17)
+      declaration: FunctionExpression (1:7-1:17)
+        body: Block (1:15-1:17)
+          body
+        id: Identifier (1:11-1:12)
+          idType: S(definition)
+          name: S(a)
+          typeAnnotation: null
+        modifiers: Object
+        params
+        returnType: null"
+`;
+
+exports[`parser: import7: import7 1`] = `
+"Program (1:0-1:17)
+  body
+    ExportDeclaration (1:0-1:17)
+      declaration: ClassExpression (1:7-1:17)
+        body: ClassBody (1:15-1:17)
+          body
+        extends
+        generics
+        id: Identifier (1:13-1:14)
+          idType: S(definition)
+          name: S(a)
+          typeAnnotation: null
+        modifiers: Object"
+`;
+
+exports[`parser: import8: import8 1`] = `
+"Program (1:0-1:23)
+  body
+    ExportDeclaration (1:0-1:23)
+      declaration: FunctionExpression (1:7-1:23)
+        body: Block (1:21-1:23)
+          body
+        id: Identifier (1:17-1:18)
+          idType: S(definition)
+          name: S(a)
+          typeAnnotation: null
+        modifiers: Object
+          async: true
+        params
+        returnType: null"
+`;
+
+exports[`parser: import9: import9 1`] = `
+"Program (1:0-1:24)
+  body
+    ExportDeclaration (1:0-1:24)
+      declaration: ClassExpression (1:7-1:24)
+        body: ClassBody (1:22-1:24)
+          body
+        extends
+        generics
+        id: Identifier (1:20-1:21)
+          idType: S(definition)
+          name: S(a)
+          typeAnnotation: null
+        modifiers: Object
+          sealed: true"
+`;
+
+exports[`parser: literal1: literal1 1`] = `
+"Program (1:0-1:8)
+  body
+    RegExpLiteral (1:0-1:8)
+      value: Object
+        flags: S()
+        label: S(regexp)
+        pattern: S(a[a])
+        raw: S(#/a[a]/)"
+`;
+
+exports[`parser: literal2: literal2 1`] = `
+"Program (1:0-1:3)
+  body
+    NumericLiteral (1:0-1:3)
+      value: Object
+        bigint: false
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(10)
+        raw: S(10)"
+`;
+
+exports[`parser: literal3: literal3 1`] = `
+"Program (1:0-1:4)
+  body
+    NumericLiteral (1:0-1:4)
+      value: Object
+        bigint: true
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(10)
+        raw: S(10n)"
+`;
+
+exports[`parser: literal4: literal4 1`] = `
+"Program (1:0-1:4)
+  body
+    CharLiteral (1:0-1:4)
+      value: Object
+        label: S(char)
+        raw: S('a')
+        value: S(a)"
+`;
+
+exports[`parser: literal5: literal5 1`] = `
+"Program (1:0-1:5)
+  body
+    NullLiteral (1:0-1:5)"
+`;
+
+exports[`parser: literal6: literal6 1`] = `
+"Program (1:0-1:5)
+  body
+    BooleanLiteral (1:0-1:5)
+      value: true"
+`;
+
+exports[`parser: literal7: literal7 1`] = `
+"Program (1:0-1:6)
+  body
+    BooleanLiteral (1:0-1:6)
+      value: false"
+`;
+
+exports[`parser: literal8: literal8 1`] = `
+"Program (1:0-1:9)
+  body
+    TemplateLiteral (1:0-1:9)
+      expressions
+        CallExpression (1:3-1:6)
+          arguments
+          callee: Identifier (1:3-1:4)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+      quasis
+        TemplateElement (1:1-1:1)
+          tail: false
+          value: Object
+            label: S(template)
+            raw: S()
+        TemplateElement (1:7-1:7)
+          tail: true
+          value: Object
+            label: S(template)
+            raw: S()"
+`;
+
+exports[`parser: literal9: literal9 1`] = `
+"Program (1:0-1:12)
+  body
+    TemplateLiteral (1:0-1:12)
+      expressions
+        CallExpression (1:6-1:9)
+          arguments
+          callee: Identifier (1:6-1:7)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+      quasis
+        TemplateElement (1:1-1:4)
+          tail: false
+          value: Object
+            label: S(template)
+            raw: S(foo)
+        TemplateElement (1:10-1:10)
+          tail: true
+          value: Object
+            label: S(template)
+            raw: S()"
+`;
+
+exports[`parser: literal10: literal10 1`] = `
+"Program (1:0-1:15)
+  body
+    TemplateLiteral (1:0-1:15)
+      expressions
+        CallExpression (1:6-1:9)
+          arguments
+          callee: Identifier (1:6-1:7)
+            idType: S(reference)
+            name: S(a)
+          optional: false
+      quasis
+        TemplateElement (1:1-1:4)
+          tail: false
+          value: Object
+            label: S(template)
+            raw: S(foo)
+        TemplateElement (1:10-1:13)
+          tail: true
+          value: Object
+            label: S(template)
+            raw: S(bar)"
+`;
+
+exports[`parser: literal11: literal11 1`] = `
+"Program (1:0-1:7)
+  body
+    NumericLiteral (1:0-1:7)
+      value: Object
+        bigint: false
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(10)
+        raw: S(10_0_0)"
+`;
+
+exports[`parser: literal12: literal12 1`] = `
+"Program (1:0-1:5)
+  body
+    NumericLiteral (1:0-1:5)
+      value: Object
+        bigint: false
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(2)
+        raw: S(0b11)"
+`;
+
+exports[`parser: literal13: literal13 1`] = `
+"Program (1:0-1:5)
+  body
+    NumericLiteral (1:0-1:5)
+      value: Object
+        bigint: false
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(8)
+        raw: S(0o11)"
+`;
+
+exports[`parser: literal14: literal14 1`] = `
+"Program (1:0-1:5)
+  body
+    NumericLiteral (1:0-1:5)
+      value: Object
+        bigint: false
+        float: false
+        integer: true
+        label: S(number)
+        radix: N(16)
+        raw: S(0x11)"
+`;
+
+exports[`parser: literal15: literal15 1`] = `
+"Program (1:0-1:9)
+  body
+    TemplateLiteral (1:0-1:9)
+      expressions
+      quasis
+        TemplateElement (1:1-1:7)
+          tail: true
+          value: Object
+            label: S(template)
+            raw: S(abc.js)"
+`;
+
+exports[`parser: meta1: meta1 1`] = `
+"Program (1:0-1:21)
+  body
+    MetaProperty (1:0-1:21)
+      meta: Identifier (1:0-1:6)
+        idType: S(reserved)
+        name: S(import)
+      property: Identifier (1:7-1:20)
+        idType: S(propKey)
+        name: S(currentScript)"
+`;
+
+exports[`parser: meta2: meta2 1`] = `
+"Program (1:0-1:9)
+  body
+    MetaProperty (1:0-1:9)
+      meta: Identifier (1:0-1:3)
+        idType: S(reserved)
+        name: S(fun)
+      property: Identifier (1:4-1:8)
+        idType: S(propKey)
+        name: S(sent)"
+`;

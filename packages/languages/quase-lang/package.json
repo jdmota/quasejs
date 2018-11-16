@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "@quase/lang",
+  "version": "0.1.0-0",
+  "description": "Programming language",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/languages/quase-lang",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "bin": {
+    "quase-lang": "bin/index.js"
+  },
+  "dependencies": {
+    "@quase/parser": "0.1.0-0"
+  }
+}

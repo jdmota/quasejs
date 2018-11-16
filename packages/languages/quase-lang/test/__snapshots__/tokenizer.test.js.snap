@@ -1,0 +1,797 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`babel/babylon/issues/622 1`] = `
+Array [
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "binop": 7,
+    "label": "other",
+    "value": "<",
+  },
+  Object {
+    "label": "other",
+    "postfix": true,
+    "prefix": true,
+    "value": "!",
+  },
+  Object {
+    "label": "other",
+    "postfix": true,
+    "prefix": true,
+    "value": "--",
+  },
+  Object {
+    "label": "identifier",
+    "value": "b",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`basic 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 10,
+    "raw": "10",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`basic 2`] = `
+Array [
+  Object {
+    "loc": Object {
+      "end": Object {
+        "column": 17,
+        "line": 1,
+        "pos": 17,
+      },
+      "start": Object {
+        "column": 11,
+        "line": 1,
+        "pos": 11,
+      },
+    },
+    "type": "CommentLine",
+    "value": " abc",
+  },
+]
+`;
+
+exports[`char constant 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "char",
+    "raw": "'a'",
+    "value": "a",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`char constant empty 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "char",
+    "raw": "''",
+    "value": "",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`char constant with escape 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "char",
+    "raw": "'\\\\n'",
+    "value": "
+",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`dont confuse with !in 1`] = `
+Array [
+  Object {
+    "label": "other",
+    "postfix": true,
+    "prefix": true,
+    "value": "!",
+  },
+  Object {
+    "label": "identifier",
+    "value": "ina",
+  },
+  Object {
+    "label": "other",
+    "value": ";",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`dont confuse with !is 1`] = `
+Array [
+  Object {
+    "label": "other",
+    "postfix": true,
+    "prefix": true,
+    "value": "!",
+  },
+  Object {
+    "label": "identifier",
+    "value": "isa",
+  },
+  Object {
+    "label": "other",
+    "value": ";",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`numbers 1`] = `
+Array [
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "label": "other",
+    "value": "(",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 10,
+    "raw": "0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": true,
+    "integer": false,
+    "label": "number",
+    "radix": 10,
+    "raw": "0.0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 2,
+    "raw": "0b0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 2,
+    "raw": "0b1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 2,
+    "raw": "0B0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 2,
+    "raw": "0B1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 16,
+    "raw": "0x0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 16,
+    "raw": "0x1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 16,
+    "raw": "0X0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 16,
+    "raw": "0X1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 8,
+    "raw": "0o0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 8,
+    "raw": "0o1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 8,
+    "raw": "0O0",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 8,
+    "raw": "0O1",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": true,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 10,
+    "raw": "0n",
+  },
+  Object {
+    "label": "other",
+    "value": ",",
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 10,
+    "raw": "0_0_0",
+  },
+  Object {
+    "label": "other",
+    "value": ")",
+  },
+  Object {
+    "label": "other",
+    "value": ";",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`regexp 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "flags": "g",
+    "label": "regexp",
+    "pattern": "[/]",
+    "raw": "#/[/]/g",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`skip hashbang 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "bigint": false,
+    "float": false,
+    "integer": true,
+    "label": "number",
+    "radix": 10,
+    "raw": "10",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`skip hashbang 2`] = `
+Array [
+  Object {
+    "loc": Object {
+      "end": Object {
+        "column": 6,
+        "line": 1,
+        "pos": 6,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 1,
+        "pos": 0,
+      },
+    },
+    "type": "CommentLine",
+    "value": " abc",
+  },
+  Object {
+    "loc": Object {
+      "end": Object {
+        "column": 17,
+        "line": 2,
+        "pos": 24,
+      },
+      "start": Object {
+        "column": 11,
+        "line": 2,
+        "pos": 18,
+      },
+    },
+    "type": "CommentLine",
+    "value": " abc",
+  },
+]
+`;
+
+exports[`string constant 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "aaaa",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string constant with escape 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "a\\"aa",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string constant with new line 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "a
+aa",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string template 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "",
+  },
+  Object {
+    "label": "other",
+    "value": "\${",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "label": "other",
+    "value": "}",
+  },
+  Object {
+    "label": "template",
+    "raw": "",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string template back quote 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\`",
+  },
+  Object {
+    "label": "template",
+    "raw": "\\"",
+  },
+  Object {
+    "label": "other",
+    "value": "\`",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string template with spaces 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\`",
+  },
+  Object {
+    "label": "template",
+    "raw": " \\" ",
+  },
+  Object {
+    "label": "other",
+    "value": "\`",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;
+
+exports[`string template with string inside 1`] = `
+Array [
+  Object {
+    "keyword": true,
+    "label": "identifier",
+    "value": "val",
+  },
+  Object {
+    "label": "identifier",
+    "value": "a",
+  },
+  Object {
+    "isAssign": true,
+    "label": "_=",
+    "op": null,
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "",
+  },
+  Object {
+    "label": "other",
+    "value": "\${",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "template",
+    "raw": "a",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "other",
+    "value": "}",
+  },
+  Object {
+    "label": "template",
+    "raw": "",
+  },
+  Object {
+    "label": "other",
+    "value": "\\"",
+  },
+  Object {
+    "label": "eof",
+  },
+]
+`;

@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@quase/parser",
+  "version": "0.1.0-0",
+  "description": "Abstract parser",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/languages/parser",
+  "main": "dist/index.js",
+  "module": "src/index.js",
+  "dependencies": {
+    "regexp-tree": "^0.0.85"
+  }
+}
