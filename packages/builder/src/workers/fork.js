@@ -1,19 +1,23 @@
 import { PluginsRunner } from "../plugins/runner";
-import typeson from "./typeson";
+import { encapsulate, revive } from "./serialization";
+
+const {
+  isMainThread, parentPort, workerData
+} = require( "worker_threads" ); // eslint-disable-line
 
 async function handle( runner, { id, method, args: _args } ) {
   const fn = runner[ method ];
-  const args = _args.map( x => typeson.revive( x ) );
+  const args = _args.map( x => revive( x ) );
 
   if ( fn ) {
     try {
       const result = await runner[ method ]( ...args );
-      process.send( {
+      parentPort.postMessage( {
         id,
-        result: typeson.encapsulate( result )
+        result: encapsulate( result )
       } );
     } catch ( error ) {
-      process.send( {
+      parentPort.postMessage( {
         id,
         error: {
           message: error.message,
@@ -22,7 +26,7 @@ async function handle( runner, { id, method, args: _args } ) {
       } );
     }
   } else {
-    process.send( {
+    parentPort.postMessage( {
       id,
       error: {
         message: `Worker: No method ${method}`,
@@ -32,15 +36,15 @@ async function handle( runner, { id, method, args: _args } ) {
   }
 }
 
-if ( process.send ) {
+if ( !isMainThread ) {
   const runner = new PluginsRunner();
+  runner.init( workerData );
 
-  process.on( "message", data => {
+  parentPort.on( "message", data => {
     if ( data === "die" ) {
-      process.removeAllListeners();
-      process.channel.unref();
-      return;
+      parentPort.removeAllListeners();
+    } else {
+      handle( runner, data );
     }
-    handle( runner, data );
   } );
 }

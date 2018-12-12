@@ -3,7 +3,7 @@ import type Module from "./module";
 import type { BuilderContext, ModuleContext } from "./plugins/context";
 import type { Graph } from "./graph";
 
-export type Data = Buffer | string;
+export type Data = Buffer | string | Uint8Array;
 
 export type DataType = "buffer" | "string";
 

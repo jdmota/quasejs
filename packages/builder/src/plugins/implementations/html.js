@@ -214,7 +214,7 @@ class HtmlRenderer {
 
           }
 
-          this.treeAdapter.insertText( node, `${data.toString()}\n__quase_builder__.r(${ctx.wrapInJsString( module.hashId )});` );
+          this.treeAdapter.insertText( node, `${ctx.dataToString( data )}\n__quase_builder__.r(${ctx.wrapInJsString( module.hashId )});` );
 
         } else {
 

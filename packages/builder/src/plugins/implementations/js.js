@@ -200,7 +200,7 @@ async function render( module: Module, ctx: BuilderContext ) {
     minified: optimization.minify
   };
 
-  const generateResult = generate( ast, opts, data.toString() );
+  const generateResult = generate( ast, opts, ctx.dataToString( data ) );
 
   cache.render = {
     code: generateResult.code,

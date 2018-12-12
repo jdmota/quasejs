@@ -3,7 +3,7 @@ import _error from "../utils/error";
 import { ModuleContext, BuilderContext } from "../plugins/context";
 import type { Graph } from "../graph";
 import type {
-  Options, Plugin, Data, LoadOutput, TransformOutput, WatchedFiles,
+  Plugin, Data, LoadOutput, TransformOutput, WatchedFiles,
   PipelineResult, DepsInfo, FinalAsset, FinalAssets, ToWrite
 } from "../types";
 import jsPlugin from "./implementations/js";
@@ -11,7 +11,7 @@ import htmlPlugin from "./implementations/html";
 import defaultPlugin from "./implementations/default";
 
 const { ValidationError } = require( "@quase/config" );
-const { getPlugins } = require( "@quase/get-plugins" );
+const { getPlugins, requireRelative } = require( "@quase/get-plugins" );
 
 const defaultPlugins = [ jsPlugin, htmlPlugin, defaultPlugin ];
 
@@ -33,14 +33,17 @@ export interface PluginsRunnerInWorker {
 
 export class PluginsRunner {
 
-  options: Options;
+  optimization: any;
   plugins: { +name: ?string, +plugin: Plugin }[];
 
   static workerMethods = [ "pipeline" ];
 
-  async init( options: Options ) {
-    this.options = options;
-    this.plugins = getPlugins( options.plugins.concat( defaultPlugins ) ).map(
+  async init( options: { cwd: string, optimization: any, plugins: any } ) {
+    this.optimization = options.optimization;
+    this.plugins = getPlugins(
+      options.plugins.concat( defaultPlugins ),
+      name => requireRelative( name, options.cwd )
+    ).map(
       ( { name, plugin, options } ) => {
         if ( typeof plugin !== "function" ) {
           throw new ValidationError(
@@ -181,7 +184,7 @@ export class PluginsRunner {
       const fn = map[ module.type ];
       if ( fn ) {
         if ( string == null ) {
-          string = data.toString();
+          string = module.dataToString( data );
         }
         const res = await fn( string, module );
         if ( res != null ) {
@@ -393,7 +396,7 @@ export class PluginsRunner {
     if ( !isObject( actual ) ) {
       error( "renderAsset", "object", typeof actual, name );
     }
-    if ( this.options.optimization.sourceMaps ) {
+    if ( this.optimization.sourceMaps ) {
       return {
         data: actual.data,
         map: actual.map

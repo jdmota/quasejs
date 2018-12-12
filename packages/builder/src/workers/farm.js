@@ -1,10 +1,12 @@
 // @flow
 import { type PluginsRunnerInWorker, PluginsRunner } from "../plugins/runner";
 import type { Options } from "../types";
-import typeson from "./typeson";
+import { encapsulate, revive } from "./serialization";
 
-const childProcess = require( "child_process" );
 const path = require( "path" );
+const {
+  Worker
+} = require( "worker_threads" ); // eslint-disable-line
 
 const maxConcurrentWorkers = Math.max( require( "os" ).cpus().length, 1 );
 const maxConcurrentCallsPerWorker = 5;
@@ -61,15 +63,14 @@ export class Farm {
 
   +children: Set<Child>;
   +calls: Map<number, Call>;
-  +initOptions: Options;
-  +encapsulatedOptions: Object;
+  +initOptions: Object;
   +localPluginsRunner: PluginsRunner;
   callUUID: number;
   pending: PendingCall[];
   useWorkers: boolean;
   ended: boolean;
 
-  constructor( initOptions: Options ) {
+  constructor( initOptions: Object ) {
     this.children = new Set();
     this.calls = new Map();
     this.initOptions = initOptions;
@@ -78,7 +79,6 @@ export class Farm {
     this.pending = [];
     this.useWorkers = false;
     this.ended = false;
-    this.encapsulatedOptions = typeson.encapsulate( this.initOptions );
   }
 
   mkhandle( method: string ) {
@@ -93,9 +93,7 @@ export class Farm {
   async setup(): Promise<PluginsRunnerInWorker> {
     const iface = {};
     for ( const m of PluginsRunner.workerMethods ) {
-      if ( m !== "init" ) {
-        iface[ m ] = this.mkhandle( m );
-      }
+      iface[ m ] = this.mkhandle( m );
     }
 
     while ( this.children.size < maxConcurrentWorkers ) {
@@ -109,18 +107,10 @@ export class Farm {
   }
 
   startChild() {
-    // https://github.com/nodejs/node/issues/14325
-    const execArgv = process.execArgv.filter(
-      v => !/^--(debug|inspect)/.test( v )
-    );
 
-    const options = {
-      execArgv,
-      env: process.env,
-      cwd: process.cwd()
-    };
-
-    const child = childProcess.fork( path.join( __dirname, "fork.js" ), options );
+    const child = new Worker( path.join( __dirname, "fork.js" ), {
+      workerData: this.initOptions
+    } );
 
     const c: Child = {
       child,
@@ -129,12 +119,13 @@ export class Farm {
       exitTimeout: null
     };
 
-    child.on( "message", this.receive.bind( this ) );
-    child.on( "error", error => {
-      if ( error.code === "ERR_IPC_CHANNEL_CLOSED" ) {
-        this.stopChild( c );
-      }
+    child.on( "online", () => {
+      c.ready = true;
+      this.useWorkers = true;
     } );
+
+    child.on( "message", msg => this.receive( msg ) );
+    child.on( "error", () => this.stopChild( c ) );
     child.once( "exit", () => {
       if ( c.exitTimeout ) {
         clearTimeout( c.exitTimeout );
@@ -142,25 +133,8 @@ export class Farm {
       this.onExit( c );
     } );
 
+
     this.children.add( c );
-
-    const defer = createDefer();
-
-    this.send( c, {
-      method: "init",
-      args: [ this.encapsulatedOptions ],
-      defer,
-      retry: 0
-    } );
-
-    return defer.promise.then( () => {
-      c.ready = true;
-      this.useWorkers = true;
-    }, error => {
-      console.error( error ); // eslint-disable-line no-console
-      this.stopChild( c );
-      throw error;
-    } );
   }
 
   findChild(): ?Child {
@@ -197,7 +171,7 @@ export class Farm {
 
     this.pending.push( {
       method,
-      args: args.map( x => typeson.encapsulate( x ) ),
+      args: args.map( encapsulate ),
       defer,
       retry: 0
     } );
@@ -215,7 +189,7 @@ export class Farm {
       error = new Error( message );
       error.stack = stack;
     } else {
-      result = typeson.revive( _result );
+      result = revive( _result );
     }
 
     const call = this.calls.get( id );
@@ -251,7 +225,7 @@ export class Farm {
     this.calls.set( id, call );
     child.calls.add( call );
 
-    child.child.send( {
+    child.child.postMessage( {
       id,
       method,
       args
@@ -283,17 +257,15 @@ export class Farm {
       for ( const call of child.calls ) {
         this.calls.delete( call.id );
 
-        if ( call.method !== "init" ) {
-          if ( call.retry > 2 ) {
-            call.defer.reject( new Error( "Exceeded retries" ) );
-          } else {
-            this.pending.push( {
-              method: call.method,
-              args: call.args,
-              defer: call.defer,
-              retry: call.retry + 1
-            } );
-          }
+        if ( call.retry > 2 ) {
+          call.defer.reject( new Error( "Exceeded retries" ) );
+        } else {
+          this.pending.push( {
+            method: call.method,
+            args: call.args,
+            defer: call.defer,
+            retry: call.retry + 1
+          } );
         }
       }
       this.processPending();
@@ -302,9 +274,9 @@ export class Farm {
 
   stopChild( child: Child ) {
     if ( this.children.delete( child ) ) {
-      child.child.send( "die" );
+      child.child.postMessage( "die" );
       child.exitTimeout = setTimeout( () => {
-        child.child.kill( "SIGKILL" );
+        child.child.terminate();
       }, 100 );
     }
   }

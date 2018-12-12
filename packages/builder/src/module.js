@@ -161,7 +161,7 @@ export default class Module {
 
       error( message, {
         id: this.id,
-        code: originalData == null ? null : originalData.toString(),
+        code: originalData == null ? null : this.ctx.dataToString( originalData ),
         loc
       }, this.builder.options.codeFrameOptions );
 

@@ -189,7 +189,11 @@ export default class Builder {
     this.warn = warn;
     this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
     this.context = new BuilderContext( this.options );
-    this.farm = new Farm( this.options );
+    this.farm = new Farm( {
+      cwd: this.options.cwd,
+      plugins: this.options.plugins,
+      optimization: this.options.optimization
+    } );
     this.pluginsRunner = this.farm.localPluginsRunner;
     this.hmrOptions = null;
     this.build = new Build( null, this );

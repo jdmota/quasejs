@@ -233,7 +233,7 @@ The last graph produced will be used.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( FinalAsset, FinalAssets, BuilderContext )` and returns `null` or `ToWrite`.
+The function can be asynchronous and accepts `( FinalAsset, FinalAssets, inlines: Map<FinalAsset, ToWrite>, BuilderContext )` and returns `null` or `ToWrite`.
 
 Returning `null` defers to other `renderAsset` functions.
 

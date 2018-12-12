@@ -2,7 +2,7 @@
   "name": "quase",
   "private": true,
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-worker ./node_modules/jest/bin/jest.js",
     "build": "node scripts/build.js",
     "babel-node": "babel-node",
     "n": "node scripts/node",

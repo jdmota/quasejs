@@ -14,7 +14,21 @@ export class BuilderContext {
   +files: WatchedFiles;
 
   constructor( builderOptions: Object, files: ?WatchedFiles ) {
-    this.builderOptions = builderOptions;
+    const {
+      mode, context, entries, dest, cwd,
+      publicPath, runtime, hmr, optimization
+    } = builderOptions;
+    this.builderOptions = {
+      mode,
+      context,
+      entries,
+      dest,
+      cwd,
+      publicPath,
+      runtime,
+      hmr,
+      optimization
+    };
     this.files = files || new Map();
   }
 
@@ -74,6 +88,13 @@ export class BuilderContext {
   async isFile( file: string ) {
     this.registerFile( file, ONLY_EXISTANCE );
     return isFile( fs, file );
+  }
+
+  dataToString( data ) {
+    if ( data instanceof Uint8Array ) {
+      return Buffer.from( data ).toString();
+    }
+    return data.toString();
   }
 
 }
