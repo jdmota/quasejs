@@ -165,7 +165,7 @@ export default class Builder {
         dest = resolvePath( options.dest, cwd ),
         entries = options.entries.map( e => resolvePath( e, context ) ),
         publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "",
-        { watch, optimization, serviceWorker } = options;
+        { watch, optimization, reporter, serviceWorker } = options;
 
     this.options = {
       ...options,
@@ -187,7 +187,7 @@ export default class Builder {
     serviceWorker.filename = serviceWorker.filename ? resolvePath( serviceWorker.filename, dest ) : "";
 
     this.warn = warn;
-    this.reporter = getOnePlugin( options.reporter, x => ( x === "default" ? Reporter : x ) );
+    this.reporter = !reporter || reporter === "default" ? Reporter : getOnePlugin( options.reporter );
     this.context = new BuilderContext( this.options );
     this.farm = new Farm( {
       cwd: this.options.cwd,

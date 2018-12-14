@@ -11,7 +11,7 @@ import htmlPlugin from "./implementations/html";
 import defaultPlugin from "./implementations/default";
 
 const { ValidationError } = require( "@quase/config" );
-const { getPlugins, requireRelative } = require( "@quase/get-plugins" );
+const { getPlugins } = require( "@quase/get-plugins" );
 
 const defaultPlugins = [ jsPlugin, htmlPlugin, defaultPlugin ];
 
@@ -42,7 +42,7 @@ export class PluginsRunner {
     this.optimization = options.optimization;
     this.plugins = getPlugins(
       options.plugins.concat( defaultPlugins ),
-      name => requireRelative( name, options.cwd )
+      options.cwd
     ).map(
       ( { name, plugin, options } ) => {
         if ( typeof plugin !== "function" ) {

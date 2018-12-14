@@ -4,17 +4,17 @@ it( "getPlugins", () => {
 
   expect( getPlugins(
     [
-      [ "./packages/util/get-plugins/test/fixtures/export-default", { optKey: 10 } ],
-      "./packages/util/get-plugins/test/fixtures/get-by-key[customKey]",
-      "./packages/util/get-plugins/test/fixtures/module-exports",
-      [ "map me", { optKey: 20 } ]
+      [ "./export-default", { optKey: 10 } ],
+      "./get-by-key[customKey]",
+      "./module-exports",
+      [ "./module-exports", { optKey: 20 } ]
     ],
-    n => ( n === "map me" ? "./packages/util/get-plugins/test/fixtures/module-exports" : n )
+    "./packages/util/get-plugins/test/fixtures"
   ) ).toEqual( [
-    { name: "./packages/util/get-plugins/test/fixtures/export-default", key: "default", plugin: { a: 10 }, options: { optKey: 10 } },
-    { name: "./packages/util/get-plugins/test/fixtures/get-by-key", key: "customKey", plugin: { a: 10 }, options: {} },
-    { name: "./packages/util/get-plugins/test/fixtures/module-exports", key: "default", plugin: { a: 10 }, options: {} },
-    { name: "./packages/util/get-plugins/test/fixtures/module-exports", key: "default", plugin: { a: 10 }, options: { optKey: 20 } }
+    { name: "./export-default", key: "default", plugin: { a: 10 }, options: { optKey: 10 } },
+    { name: "./get-by-key", key: "customKey", plugin: { a: 10 }, options: {} },
+    { name: "./module-exports", key: "default", plugin: { a: 10 }, options: {} },
+    { name: "./module-exports", key: "default", plugin: { a: 10 }, options: { optKey: 20 } }
   ] );
 
 } );
