@@ -15,6 +15,7 @@ declare module "@quase/error" { declare module.exports: any; }
 declare module "@quase/find-files" { declare module.exports: any; }
 declare module "@quase/get-plugins" { declare module.exports: any; }
 declare module "@quase/memory-fs" { declare module.exports: any; }
+declare module "@quase/parser" { declare module.exports: any; }
 declare module "@quase/path-url" { declare module.exports: any; }
 declare module "@quase/source-map" { declare module.exports: any; }
 declare module "@zkochan/cmd-shim" { declare module.exports: any; }
