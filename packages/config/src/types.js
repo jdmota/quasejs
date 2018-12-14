@@ -40,13 +40,13 @@ export class Type {
   }
   merge( path: Path, objValue: any, srcValue: any ) { // eslint-disable-line
     if ( Array.isArray( objValue ) && Array.isArray( srcValue ) ) {
-      if ( merge === "merge" ) {
+      if ( this.extra.merge === "merge" ) {
         for ( let i = 0; i < srcValue.length; i++ ) {
           merge( path, anyType, objValue, srcValue, i ); // eslint-disable-line no-use-before-define
         }
-      } else if ( merge === "concat" ) {
+      } else if ( this.extra.merge === "concat" ) {
         return srcValue.concat( objValue );
-      } else if ( merge === "spreadMeansConcat" && objValue[ 0 ] === "..." ) {
+      } else if ( this.extra.merge === "spreadMeansConcat" && objValue[ 0 ] === "..." ) {
         return srcValue.concat( objValue.slice( 1 ) );
       }
     } else if ( isPlainObject( objValue ) && isPlainObject( srcValue ) ) {
