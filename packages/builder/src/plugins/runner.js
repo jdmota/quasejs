@@ -72,13 +72,13 @@ export class PluginsRunner {
     this.plugins = Array.from( pluginsMap.values() );
   }
 
-  validateGetType( actual: string, name: ?string ): string {
+  validateGetType( actual: mixed, name: ?string ): string {
     if ( typeof actual !== "string" ) {
-      error( "getType", "string", typeof actual, name );
+      throw error( "getType", "string", typeof actual, name );
     }
     const result = actual.trim();
     if ( result.length === 0 ) {
-      error( "getType", "valid string", JSON.stringify( actual ), name );
+      throw error( "getType", "valid string", JSON.stringify( actual ), name );
     }
     return result;
   }
@@ -96,9 +96,9 @@ export class PluginsRunner {
     throw new Error( `Unable to get type of ${path}` );
   }
 
-  validateGetTypeTransforms( actual: $ReadOnlyArray<string>, name: ?string ): $ReadOnlyArray<string> {
+  validateGetTypeTransforms( actual: any, name: ?string ): $ReadOnlyArray<string> {
     if ( !Array.isArray( actual ) ) {
-      error( "getTypeTransforms", "array", typeof actual, name );
+      throw error( "getTypeTransforms", "array", typeof actual, name );
     }
     return actual;
   }
@@ -116,11 +116,11 @@ export class PluginsRunner {
     return [];
   }
 
-  validateLoad( actual: Data, name: ?string ): Data {
-    if ( typeof actual !== "string" && !Buffer.isBuffer( actual ) ) {
-      error( "load", "Buffer | string", typeof actual, name );
+  validateLoad( actual: any, name: ?string ): any {
+    if ( typeof actual === "string" || actual instanceof Uint8Array || Buffer.isBuffer( actual ) ) {
+      return actual;
     }
-    return actual;
+    throw error( "load", "string | Buffer | Uint8Array", typeof actual, name );
   }
 
   async load( path: string, module: ModuleContext ): Promise<Data> {
@@ -169,9 +169,9 @@ export class PluginsRunner {
     };
   }
 
-  validateParse( actual: Object, name: ?string ): Object {
+  validateParse( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "parse", "object", typeof actual, name );
+      throw error( "parse", "object", typeof actual, name );
     }
     return actual;
   }
@@ -197,9 +197,9 @@ export class PluginsRunner {
     }
   }
 
-  validateTransformAst( actual: Object, name: ?string ): Object {
+  validateTransformAst( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "transformAst", "object", typeof actual, name );
+      throw error( "transformAst", "object", typeof actual, name );
     }
     return actual;
   }
@@ -219,14 +219,14 @@ export class PluginsRunner {
     return result;
   }
 
-  validateTransformBuffer( actual: Buffer, name: ?string ): Object {
-    if ( !Buffer.isBuffer( actual ) ) {
-      error( "transformBuffer", "Buffer", typeof actual, name );
+  validateTransformBuffer( actual: any, name: ?string ): any {
+    if ( actual instanceof Uint8Array || Buffer.isBuffer( actual ) ) {
+      return actual;
     }
-    return actual;
+    throw error( "transformBuffer", "Buffer | Uint8Array", typeof actual, name );
   }
 
-  async transformBuffer( buffer: Buffer, module: ModuleContext ): Promise<Buffer> {
+  async transformBuffer( buffer: Buffer | Uint8Array, module: ModuleContext ): Promise<Buffer | Uint8Array> {
     let result = buffer;
     for ( const { name, plugin } of this.plugins ) {
       const map = plugin.transformAst || EMPTY_OBJ;
@@ -241,9 +241,9 @@ export class PluginsRunner {
     return result;
   }
 
-  validateDependencies( actual: DepsInfo, name: ?string ): DepsInfo {
+  validateDependencies( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "dependencies", "object", typeof actual, name );
+      throw error( "dependencies", "object", typeof actual, name );
     }
     return {
       dependencies: actual.dependencies || new Map(),
@@ -274,12 +274,12 @@ export class PluginsRunner {
     };
   }
 
-  validateResolve( actual: string | false, name: ?string ): string | false {
+  validateResolve( actual: mixed, name: ?string ): string | false {
     if ( actual === true ) {
-      error( "resolve", "string | false", "true", name );
+      throw error( "resolve", "string | false", "true", name );
     }
     if ( typeof actual !== "string" && actual !== false ) {
-      error( "resolve", "string | false", typeof actual, name );
+      throw error( "resolve", "string | false", typeof actual, name );
     }
     return actual;
   }
@@ -298,9 +298,9 @@ export class PluginsRunner {
     return false;
   }
 
-  validateTransformType( actual: LoadOutput, name: ?string ): LoadOutput {
+  validateTransformType( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "transformType", "object", typeof actual, name );
+      throw error( "transformType", "object", typeof actual, name );
     }
     return actual;
   }
@@ -323,9 +323,9 @@ export class PluginsRunner {
     );
   }
 
-  validateIsSplitPoint( actual: boolean, name: ?string ): boolean {
+  validateIsSplitPoint( actual: mixed, name: ?string ): boolean {
     if ( typeof actual !== "boolean" ) {
-      error( "isSplitPoint", "boolean", typeof actual, name );
+      throw error( "isSplitPoint", "boolean", typeof actual, name );
     }
     return actual;
   }
@@ -342,9 +342,9 @@ export class PluginsRunner {
     }
   }
 
-  validateIsExternal( actual: boolean, name: ?string ): boolean {
+  validateIsExternal( actual: mixed, name: ?string ): boolean {
     if ( typeof actual !== "boolean" ) {
-      error( "isExternal", "boolean", typeof actual, name );
+      throw error( "isExternal", "boolean", typeof actual, name );
     }
     return actual;
   }
@@ -371,9 +371,9 @@ export class PluginsRunner {
     }
   }
 
-  validateGraphTransform( actual: FinalAssets, name: ?string ): FinalAssets {
+  validateGraphTransform( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "graphTransform", "object", typeof actual, name );
+      throw error( "graphTransform", "object", typeof actual, name );
     }
     return actual;
   }
@@ -392,9 +392,9 @@ export class PluginsRunner {
     return result;
   }
 
-  validateRenderAsset( actual: ToWrite, name: ?string ): ToWrite {
+  validateRenderAsset( actual: any, name: ?string ): any {
     if ( !isObject( actual ) ) {
-      error( "renderAsset", "object", typeof actual, name );
+      throw error( "renderAsset", "object", typeof actual, name );
     }
     if ( this.optimization.sourceMaps ) {
       return {

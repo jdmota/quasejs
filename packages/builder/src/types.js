@@ -18,11 +18,8 @@ export type LoadOutput = {|
 |};
 
 export type TransformOutput = {|
-  +ast: Object,
-  +buffer: ?void
-|} | {|
-  +ast: ?void,
-  +buffer: Buffer
+  +ast: any,
+  +buffer: ?Buffer | Uint8Array
 |};
 
 export type ImportedName = {|
@@ -158,7 +155,7 @@ export type Parser = ( string, ModuleContext ) => ThingOrPromise<?Object>;
 
 export type AstTransformer = ( Object, ModuleContext ) => ThingOrPromise<?Object>;
 
-export type BufferTransformer = ( Buffer, ModuleContext ) => ThingOrPromise<?Buffer>;
+export type BufferTransformer = ( Buffer | Uint8Array, ModuleContext ) => ThingOrPromise<?Buffer | Uint8Array>;
 
 export type DepExtractor = ( Object, ModuleContext ) => ThingOrPromise<?DepsInfo>;
 

@@ -90,7 +90,7 @@ export class BuilderContext {
     return isFile( fs, file );
   }
 
-  dataToString( data ) {
+  dataToString( data: string | Buffer | Uint8Array ) {
     if ( data instanceof Uint8Array ) {
       return Buffer.from( data ).toString();
     }

@@ -71,7 +71,7 @@ export async function createRuntime(
 export function createRuntimeManifest( { files, moduleToAssets }: FinalAssets ) {
 
   const fileToIdx = {};
-  const $files = files.map( ( f, i ) => {
+  const $files: string[] = files.map( ( f, i ) => {
     fileToIdx[ f.relativeDest ] = i;
     return f.relativeDest;
   } );

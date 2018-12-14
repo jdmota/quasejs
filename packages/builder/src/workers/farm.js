@@ -1,12 +1,10 @@
 // @flow
 import { type PluginsRunnerInWorker, PluginsRunner } from "../plugins/runner";
-import type { Options } from "../types";
 import { encapsulate, revive } from "./serialization";
 
 const path = require( "path" );
-const {
-  Worker
-} = require( "worker_threads" ); // eslint-disable-line
+// $FlowIgnore
+const { Worker } = require( "worker_threads" ); // eslint-disable-line
 
 const maxConcurrentWorkers = Math.max( require( "os" ).cpus().length, 1 );
 const maxConcurrentCallsPerWorker = 5;

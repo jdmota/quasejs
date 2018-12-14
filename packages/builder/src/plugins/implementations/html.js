@@ -98,11 +98,11 @@ const NAMESPACE = "http://www.w3.org/1999/xhtml";
 
 class HtmlRenderer {
 
-  +document: Object;
-  +depsExtraInfo: Object;
-  +treeAdapter: TreeAdapter;
+  +document: any;
+  +depsExtraInfo: any;
+  +treeAdapter: any;
 
-  constructor( ast: Object ) {
+  constructor( ast: any ) {
     this.document = ast;
     this.depsExtraInfo = ast._depsExtraInfo;
     this.treeAdapter = new TreeAdapter();
