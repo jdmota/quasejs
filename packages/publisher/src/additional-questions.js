@@ -4,6 +4,7 @@ const prettyVersionDiff = require( "pretty-version-diff" );
 const execa = require( "execa" );
 const inquirer = require( "inquirer" );
 const turbocolor = require( "turbocolor" );
+const npmName = require( "npm-name" );
 
 // Adapted from https://github.com/sindresorhus/np
 
@@ -23,6 +24,7 @@ export default function( opts ) {
       name: "version",
       message: "Select semver increment or specify new version",
       filter,
+      when: () => !opts.version,
       pageSize: version.SEMVER_INCREMENTS.length + 2,
       choices: version.SEMVER_INCREMENTS
         .map( inc => ( {
@@ -42,7 +44,7 @@ export default function( opts ) {
       name: "version",
       message: "Version",
       filter,
-      when: answers => !answers.version,
+      when: answers => !opts.version && !answers.version,
       validate: input => {
         if ( !version.isValidVersionInput( input ) ) {
           return "Please specify a valid semver, for example, `1.2.3`. See http://semver.org";
@@ -59,7 +61,7 @@ export default function( opts ) {
       type: "list",
       name: "tag",
       message: "How should this pre-release version be tagged in npm?",
-      when: answers => !pkg.private && version.isPrereleaseVersion( answers.version ) && !opts.tag,
+      when: answers => !pkg.private && version.isPrereleaseVersion( answers.version || opts.version ) && !opts.tag,
       choices: () => execa.stdout( "npm", [ "view", "--json", pkg.name, "dist-tags" ] )
         .then( stdout => {
           const existingPrereleaseTags = Object.keys( JSON.parse( stdout ) )
@@ -83,7 +85,7 @@ export default function( opts ) {
       type: "input",
       name: "tag",
       message: "Tag",
-      when: answers => !pkg.private && version.isPrereleaseVersion( answers.version ) && !opts.tag && !answers.tag,
+      when: answers => !pkg.private && version.isPrereleaseVersion( answers.version || opts.version ) && !opts.tag && !answers.tag,
       validate: input => {
         if ( input.length === 0 ) {
           return "Please specify a tag, for example, `next`.";
@@ -95,6 +97,22 @@ export default function( opts ) {
 
         return true;
       }
+    },
+    {
+      type: "list",
+      name: "access",
+      message: "This scoped repo was not published. What should be its access?",
+      when: async() => !opts.access && !pkg.private && /^@/.test( pkg.name ) && !( await npmName( pkg.name ) ),
+      choices: () => [
+        {
+          name: "Restricted",
+          value: "restricted"
+        },
+        {
+          name: "Public",
+          value: "public"
+        }
+      ]
     },
     {
       type: "confirm",
@@ -111,8 +129,9 @@ export default function( opts ) {
   /* eslint-disable no-process-exit */
   return inquirer.prompt( prompts ).then( answers => {
     if ( answers.confirm ) {
-      opts.version = answers.version;
-      opts.tag = answers.tag;
+      opts.version = answers.version || opts.version;
+      opts.tag = answers.tag || opts.tag;
+      opts.access = answers.access || opts.access;
     } else {
       process.exit( 0 );
     }

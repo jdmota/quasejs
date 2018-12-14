@@ -149,9 +149,7 @@ export async function publish( opts ) {
     }
   }
 
-  if ( !opts.version ) {
-    await additionalQuestions( opts );
-  }
+  await additionalQuestions( opts );
 
   if ( opts.git ) {
     opts.git.message = replace( opts.git.message, opts );

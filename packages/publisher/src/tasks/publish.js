@@ -18,6 +18,10 @@ const npmPublish = ( history, opts ) => {
     args.push( "--tag", opts.tag );
   }
 
+  if ( opts.access ) {
+    args.push( "--access", opts.access );
+  }
+
   if ( opts.otp ) {
     args.push( "--otp", opts.otp );
   }
@@ -40,6 +44,7 @@ const handleError = ( history, task, opts, err, message ) => {
         return npmPublish( history, {
           folder: opts.folder,
           tag: opts.tag,
+          access: opts.access,
           contents: opts.contents,
           otp
         } );
@@ -80,6 +85,7 @@ export default function( history, task, opts ) {
   return from( npmPublish( history, {
     folder: opts.folder,
     tag: opts.tag,
+    access: opts.access,
     contents: opts.contents
   } ) ).pipe(
     catchError( err => handleError( history, task, opts, err ) )

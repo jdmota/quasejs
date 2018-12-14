@@ -22,6 +22,7 @@
     "has-yarn": "^1.0.0",
     "inquirer": "^6.0.0",
     "issue-regex": "^2.0.0",
+    "npm-name": "^5.0.1",
     "p-timeout": "^2.0.1",
     "pretty-version-diff": "^1.0.0",
     "listr": "^0.14.1",
