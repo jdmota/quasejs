@@ -11,11 +11,11 @@ const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
 export class Graph {
 
-  modules: Map<string, Module>;
-  moduleEntries: Set<Module>;
-  entrypoints: Set<Module>;
-  incs: Map<Module, Module[]>;
-  inline: Map<Module, Module>;
+  +modules: Map<string, Module>;
+  +moduleEntries: Set<Module>;
+  +entrypoints: Set<Module>;
+  +incs: Map<Module, Module[]>;
+  +inline: Map<Module, Module>;
 
   constructor() {
     this.modules = new Map();
@@ -59,11 +59,15 @@ export class Graph {
       }
     }
 
+    // If a module was splitted from some other module,
+    // make sure it's not inlined and make it an entrypoint.
     for ( const split of splitPoints ) {
       this.entrypoints.add( split );
       this.inline.delete( split );
     }
 
+    // If a module is required in more than one module,
+    // don't inline it. Otherwise, make it an entrypoint.
     for ( const inline of this.inline.keys() ) {
       const r = this.requiredBy( inline );
       if ( r.length === 1 ) {
@@ -73,9 +77,14 @@ export class Graph {
       }
     }
 
+    // Sort...
     this.incs.forEach( value => value.sort( modulesSorter ) );
 
     if ( builder.options.optimization.hashId ) {
+      // Give hash names to each module
+      // To have deterministic results in the presence of conflicts
+      // Sort all the modules by their original id
+
       const usedIds = new Set();
       const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
 
@@ -85,6 +94,7 @@ export class Graph {
     }
   }
 
+  // Get all the sync dependencies of a module
   syncDeps( module: Module, set: Set<Module> = new Set() ) {
     for ( const { required, async } of this.requires( module ).values() ) {
       if ( !async && !set.has( required ) ) {
@@ -109,13 +119,13 @@ export function processGraph( graph: Graph ) {
   // for example
   // 1010 is for the module that is reached from entrypoint index 1 and 3
   // 1010 == ( 1 << 1 ) || ( 1 << 3 )
-  const hashes: Map<Module, number> = new Map();
+  const groups: Map<Module, number> = new Map();
 
   let n = 0;
   for ( const entrypoint of graph.entrypoints ) {
     const pending = new Set( [ entrypoint ] );
     for ( const next of pending ) {
-      hashes.set( next, ( hashes.get( next ) || 0 ) | ( 1 << n ) );
+      groups.set( next, ( groups.get( next ) || 0 ) | ( 1 << n ) );
       for ( const { required } of graph.requires( next ).values() ) {
         pending.add( required );
       }
@@ -123,23 +133,25 @@ export function processGraph( graph: Graph ) {
     n++;
   }
 
-  // find all files in the same module
+  // Find all modules that will be in the file
+  // with entrypoint "from"
   const grow = ( from: Module ): ?Module[] => {
-    const hash = hashes.get( from );
+    const group = groups.get( from );
     const wouldSplitSrc = src => {
-      // entrypoints are always their own starting point
+      // Entrypoints are always their own starting point
       if ( graph.entrypoints.has( src ) ) {
         return true;
       }
-      // checks that the src is the given hash, AND has inputs only matching that hash
-      if ( hashes.get( src ) !== hash ) {
+      // Split if "src" belongs to a different group
+      if ( groups.get( src ) !== group ) {
         return true;
       }
+      // Split if "src" has an input from other group
       const all = graph.requiredBy( src );
-      return all.some( other => hashes.get( other ) !== hash );
+      return all.some( other => groups.get( other ) !== group );
     };
 
-    // not a module entrypoint
+    // Not a module entrypoint
     if ( !wouldSplitSrc( from ) ) {
       return null;
     }
@@ -168,7 +180,7 @@ export function processGraph( graph: Graph ) {
   const filesByPath = new Map();
   const moduleToFile: Map<Module, FinalAsset> = new Map();
 
-  hashes.forEach( ( hash, m ) => {
+  groups.forEach( ( _, m ) => {
     const srcs = grow( m );
     if ( srcs ) {
       const f = {
@@ -187,29 +199,27 @@ export function processGraph( graph: Graph ) {
         srcs
       };
 
+      // If "m" is a module that will be inline
       if ( graph.inline.has( m ) ) {
         inlineAssets.push( f );
       } else {
         files.push( f );
       }
 
+      // For each module, what file it belongs to
       for ( const src of srcs ) {
         moduleToFile.set( src, f );
       }
     }
   } );
 
+  // Save inline assets in each respective asset that required it
   for ( const inlineAsset of inlineAssets ) {
     const requiredBy = get( graph.inline, inlineAsset.module );
     get( moduleToFile, requiredBy ).inlineAssets.push( inlineAsset );
   }
 
-  for ( const [ module, file ] of moduleToFile ) {
-    if ( graph.inline.has( file.module ) ) {
-      moduleToFile.delete( module );
-    }
-  }
-
+  // Attempt to have simpler unique file names
   for ( const f of files ) {
     const possibleDest = f.relativePath.replace( reExt, `.${f.type}` );
     const arr = filesByPath.get( possibleDest ) || [];
@@ -217,12 +227,22 @@ export function processGraph( graph: Graph ) {
     filesByPath.set( possibleDest, arr );
   }
 
+  // Only assign the new file name, if it conflicts with no other file
   for ( const [ possibleDest, files ] of filesByPath ) {
     if ( files.length === 1 ) {
       files[ 0 ].relativeDest = possibleDest;
     }
   }
 
+  // Now remove modules from inline assets for the next step
+  for ( const [ module, file ] of moduleToFile ) {
+    if ( graph.inline.has( file.module ) ) {
+      moduleToFile.delete( module );
+    }
+  }
+
+  // Produce the "module" -> "asset" mapping necessary for the runtime
+  // It tells for each module, which files it needs to fetch
   const moduleToAssets: Map<Module, FinalAsset[]> = new Map();
   for ( const [ module, file ] of moduleToFile ) {
 
@@ -235,12 +255,13 @@ export function processGraph( graph: Graph ) {
       }
     }
 
+    // Sort to get deterministic results
     moduleToAssets.set( module, Array.from( set ).sort( modulesSorter ) );
   }
 
   return {
     modules: graph.modules,
-    files: sortFilesByEntry( files ),
+    files: sortFilesByEntry( files ), // Leave entries last
     moduleToAssets
   };
 }
