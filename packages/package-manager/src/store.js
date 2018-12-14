@@ -193,7 +193,7 @@ export default class Store {
     for ( const nameStr of await fs.readdir( folder ) ) {
       const name: AliasName = nameStr;
 
-      if ( name !== ".bin" && !map.has( name ) ) {
+      if ( toStr( name ) !== ".bin" && !map.has( name ) ) {
         promises.push( fs.remove( path.join( folder, nameStr ) ) );
       }
     }
