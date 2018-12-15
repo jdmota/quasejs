@@ -112,6 +112,31 @@ export class Graph {
   requiredBy( module: Module ) {
     return this.incs.get( module ) || [];
   }
+
+  async dumpDotGraph( file: string ) {
+    // $FlowIgnore
+    const graphviz = require( "graphviz" );
+    const fs = require( "fs-extra" );
+    const g = graphviz.digraph( "G" );
+
+    const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
+
+    for ( const module of modulesList ) {
+      const n = g.addNode( module.id );
+      n.set( "color", "gray" );
+      n.set( "shape", "box" );
+      n.set( "style", "filled" );
+    }
+
+    for ( const module of modulesList ) {
+      for ( const { required } of module.deps.values() ) {
+        g.addEdge( module.id, required.id );
+      }
+    }
+
+    await fs.outputFile( file, g.to_dot() );
+  }
+
 }
 
 export function processGraph( graph: Graph ) {

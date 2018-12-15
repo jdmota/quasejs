@@ -365,6 +365,11 @@ export default class Builder {
 
     await emptyDirPromise;
 
+    const { dotGraph } = this.options;
+    if ( dotGraph ) {
+      await build.graph.dumpDotGraph( path.resolve( this.options.dest, dotGraph ) );
+    }
+
     const filesInfo = await this.callRenderers( finalAssets );
 
     const swFile = this.options.serviceWorker.filename;

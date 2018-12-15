@@ -204,6 +204,7 @@ export type Options = {
   dest: string,
   cwd: string,
   publicPath: string,
+  dotGraph: ?string,
   runtime: {
     browser: boolean,
     node: boolean,

@@ -68,6 +68,10 @@ export const schema = {
     type: "string",
     default: ""
   },
+  dotGraph: {
+    type: "string",
+    optional: true
+  },
   runtime: t.object( {
     properties: {
       browser: {
