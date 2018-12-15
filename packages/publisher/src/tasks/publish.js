@@ -1,4 +1,4 @@
-import { execPromise, execObservable } from "../util";
+import { execPromise } from "../util";
 
 // Adapted from https://github.com/sindresorhus/np
 
@@ -7,11 +7,17 @@ const { throwError, from } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
 const turbocolor = require( "turbocolor" );
 
-const npmPublish = ( history, opts ) => {
+const publish = ( history, opts ) => {
   const args = [ "publish" ];
 
   if ( opts.contents ) {
     args.push( opts.contents );
+  }
+
+  if ( opts.yarn ) {
+    // This will not run "version" again
+    // https://github.com/yarnpkg/yarn/pull/3103
+    args.push( "--new-version", opts.version );
   }
 
   if ( opts.tag ) {
@@ -26,14 +32,14 @@ const npmPublish = ( history, opts ) => {
     args.push( "--otp", opts.otp );
   }
 
-  return execPromise( "npm", args, {
+  return execPromise( opts.yarn ? "yarn" : "npm", args, {
     cwd: opts.folder,
     history
   } );
 };
 
 const handleError = ( history, task, opts, err, message ) => {
-  if ( err.stderr.indexOf( "one-time pass" ) !== -1 ) {
+  if ( err.stderr.includes( "one-time pass" ) || err.message.includes( "user TTY" ) ) {
     const title = task.title;
     task.title = `${title} ${turbocolor.yellow( "(waiting for input…)" )}`;
 
@@ -41,7 +47,8 @@ const handleError = ( history, task, opts, err, message ) => {
       done: otp => {
         task.title = title;
 
-        return npmPublish( history, {
+        return publish( history, {
+          yarn: opts.yarn,
           folder: opts.folder,
           tag: opts.tag,
           access: opts.access,
@@ -58,31 +65,8 @@ const handleError = ( history, task, opts, err, message ) => {
 };
 
 export default function( history, task, opts ) {
-  if ( opts.yarn ) {
-    const args = [ "publish" ];
-
-    if ( opts.contents ) {
-      args.push( opts.contents );
-    }
-
-    // This will not run "version" again
-    // https://github.com/yarnpkg/yarn/pull/3103
-    args.push( "--new-version", opts.version );
-
-    if ( opts.tag ) {
-      args.push( "--tag", opts.tag );
-    }
-
-    if ( opts.access ) {
-      args.push( "--access", opts.access );
-    }
-
-    return execObservable( "yarn", args, {
-      cwd: opts.folder,
-      history
-    } );
-  }
-  return from( npmPublish( history, {
+  return from( publish( history, {
+    yarn: opts.yarn,
     folder: opts.folder,
     tag: opts.tag,
     access: opts.access,
