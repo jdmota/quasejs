@@ -1,47 +1,70 @@
-import Grammar from "../src/generator";
+import Grammar from "../src/generator/grammar";
 
-const grammar = new Grammar(
-  {
-    FUN: "fun",
-    END: "end",
-    COMMA: ",",
-    ARROW: "->",
-    ID: /(i|d)(i|d|0|1|2)*/,
-    NUM: /(0|1|2)+/,
-    // EMPTY: /a?/,
-    // ID: /[$_a-z][$_a-z0-9]*/i,
-    // NUM: /[0-9]+/i
-  },
-  {
-    START: "FUN ( params:ID ( comma:COMMA params:ID )* )? ARROW body:EXP END",
-    EXP: "( stuff:NUM | stuff2:NUM* | ID )"
-  }
-);
-
-let generation = grammar.generate();
-
-console.log( generation );
-console.log();
-console.log( grammar.toString() );
-console.log();
-console.log( grammar.reportConflicts() );
-console.log();
-
-function test() {
+function runParser( generation, text ) {
+  let result;
+  /* eslint no-eval: 0 */
   eval( `
     ${generation.replace( "@quase/parser", "../src" )}\n
     ${`
-      let text="fun id1, id2 -> 10000 end";
-      console.log(text);
-      console.log();
-      console.log(new Parser(text).parse());
-      console.log();
+      try {
+        result = new Parser(${JSON.stringify( text )}).parse();
+      } catch ( err ) {
+        result = err.message;
+      }
     `}`
   );
+  return result;
 }
 
-test();
+it( "basic", () => {
 
-// yarn n packages/languages/parser/test
+  const grammar = new Grammar(
+    {
+      FUN: "fun",
+      END: "end",
+      COMMA: ",",
+      ARROW: "->",
+      ID: /(i|d)(i|d|0|1|2)*/,
+      NUM: /(0|1|2)+/,
+      // EMPTY: /a?/,
+      // ID: /[$_a-z][$_a-z0-9]*/i,
+      // NUM: /[0-9]+/i
+    },
+    {
+      START: "FUN ( params:ID ( COMMA params:ID )* )? ARROW body:EXP END",
+      EXP: "( stuff:NUM | stuff:ID )"
+    }
+  );
 
-/* eslint no-eval: 0, no-console: 0 */
+  const generation = grammar.generate();
+  const conflicts = grammar.reportConflicts();
+
+  expect( generation ).toMatchSnapshot( "generation" );
+  expect( conflicts ).toMatchSnapshot( "conflicts" );
+
+  expect( runParser( generation, "fun id1, id2 -> 10000 end" ) ).toMatchSnapshot( "ast" );
+  expect( runParser( generation, "fun id1 -> id1 end" ) ).toMatchSnapshot( "ast" );
+  expect( runParser( generation, "fun id1 -> id1" ) ).toMatchSnapshot( "ast" );
+
+} );
+
+it( "check conflicts on repetitions", () => {
+
+  const grammar = new Grammar(
+    {
+      A: "A",
+      B: "B",
+    },
+    {
+      RULE1: "A* A RULE2",
+      RULE2: "B+ B"
+    }
+  );
+
+  const generation = grammar.generate();
+  const conflicts = grammar.reportConflicts();
+
+  expect( generation ).toMatchSnapshot( "generation" );
+  expect( conflicts ).toMatchSnapshot( "conflicts" );
+
+} );

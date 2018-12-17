@@ -48,94 +48,86 @@ class Generator {
     }
   }
 
+  genOptionsCode( choices ) {
+    let fun = `switch(this.token.label){`;
+
+    for ( const [ look, options ] of choices.lookToNodes ) {
+      if ( look != null ) {
+        fun += `case ${JSON.stringify( look )}:${this.genCall( options[ 0 ] )}break;`;
+      }
+    }
+
+    const emptyOptions = choices.lookToNodes.get( null );
+    if ( emptyOptions ) {
+      fun += `default:${this.genCall( emptyOptions[ 0 ] )}`;
+    } else {
+      fun += `default:this.unexpected();`;
+    }
+
+    fun += "}";
+    return fun;
+  }
+
+  genDecisionCode( choices, node, inLoop ) {
+    let code = `switch(this.token.label){`;
+
+    for ( const look of choices.nodeToLooks.get( node ) ) {
+      if ( look != null ) {
+        code += `case ${JSON.stringify( look )}:`;
+      }
+    }
+
+    const canBeEmpty = choices.nodeToLooks.get( node ).includes( null );
+    if ( canBeEmpty ) {
+      code += `default:${this.genCall( node )}`;
+    } else {
+      code += `${this.genCall( node )}break;`;
+      if ( inLoop ) {
+        code += `default:break loop;`;
+      }
+    }
+
+    code += "}";
+    return code;
+  }
+
   genCode( node ) {
-    let fun = "";
     switch ( node.type ) {
       case "Rule":
-        fun += this.genCode( node.rule );
-        if ( node === this.grammar.firstRule ) {
-          fun += `this.expect("eof");`;
-        }
-        break;
+        return `${this.genCode( node.rule )}${
+          node === this.grammar.firstRule ? `this.expect("eof");` : ""
+        }`;
+      case "Concat":
+        return node.body.map( n => this.genCall( n ) ).join( "" );
       case "Options": {
-        const conflict = this.grammar.createConflictHandler( node );
-        const empties = [];
-
-        fun += `switch(this.token.label){`;
+        const choices = this.grammar.createChoicesHandler( node );
         for ( const option of node.options ) {
-          for ( const look of this.grammar.lookahead( option ) ) {
-            fun += `case ${JSON.stringify( look )}:`;
-            conflict.set( look, option );
-          }
-          fun += `${this.genCall( option )}break;`;
-
-          if ( this.grammar.first( option ).canBeEmpty ) {
-            empties.push( option );
-          }
+          choices.analyseSingleOption( option );
         }
-        if ( empties.length === 0 ) {
-          fun += `default:throw new Error("");`;
-        } else {
-          fun += `default:${this.genCall( empties[ 0 ] )}`;
-          for ( const option of empties ) {
-            conflict.set( null, option );
-          }
-        }
-        fun += "}";
-        break;
-      }
-      case "Concat": {
-        for ( const n of node.body ) {
-          fun += this.genCall( n );
-        }
-        break;
+        return this.genOptionsCode( choices );
       }
       case "Optional": {
-        const conflict = this.grammar.createConflictHandler( node );
-
-        fun += "switch(this.token.label){";
-        for ( const look of this.grammar.lookahead( node.item ) ) {
-          fun += `case ${JSON.stringify( look )}:`;
-          conflict.set( look, node.item );
-        }
-        fun += `${this.genCall( node.item )}break;}`;
-        break;
+        const choices = this.grammar.createChoicesHandler( node );
+        choices.analyseOptionOrEmpty( node );
+        return this.genDecisionCode( choices, node.item, false );
       }
       case "ZeroOrMore": {
-        const conflict = this.grammar.createConflictHandler( node );
-
-        let choice = "switch(this.token.label){";
-        for ( const look of this.grammar.lookahead( node.item ) ) {
-          choice += `case ${JSON.stringify( look )}:`;
-          conflict.set( look, node.item );
-        }
-        choice += `break;`;
-        choice += `default:break loop;}`;
-
-        fun += `loop:while(true){${choice}${this.genCall( node.item )}}`;
-        break;
+        const choices = this.grammar.createChoicesHandler( node );
+        choices.analyseOptionOrEmpty( node );
+        return `loop:while(true){${
+          this.genDecisionCode( choices, node.item, true )
+        }}`;
       }
       case "OneOrMore": {
-        const conflict = this.grammar.createConflictHandler( node );
-
-        let choice = "switch(this.token.label){";
-        for ( const look of this.grammar.lookahead( node.item ) ) {
-          choice += `case ${JSON.stringify( look )}:`;
-          conflict.set( look, node.item );
-        }
-        choice += `break;`;
-        choice += `default:break loop;}`;
-
-        fun += `while(true){${this.genCall( node.item )}${choice}}`;
-        break;
+        const choices = this.grammar.createChoicesHandler( node );
+        choices.analyseOptionOrEmpty( node );
+        return `${this.genCall( node.item )}loop:while(true){${
+          this.genDecisionCode( choices, node.item, true )
+        }}`;
       }
-      case "Id":
-      case "Named":
-        throw new Error( `Assertion error: ${node.type}` );
       default:
-        throw new Error( `Unexpected node: ${node.type}` );
+        throw new Error( `Assertion error: ${node.type}` );
     }
-    return fun;
   }
 
   gen( node ) {

@@ -1,0 +1,171 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic: ast 1`] = `
+Object {
+  "body": Object {
+    "stuff": Object {
+      "image": "10000",
+      "label": "NUM",
+    },
+    "type": "EXP",
+  },
+  "params": Array [
+    Object {
+      "image": "id1",
+      "label": "ID",
+    },
+    Object {
+      "image": "id2",
+      "label": "ID",
+    },
+  ],
+  "type": "START",
+}
+`;
+
+exports[`basic: ast 2`] = `
+Object {
+  "body": Object {
+    "stuff": Object {
+      "image": "id1",
+      "label": "ID",
+    },
+    "type": "EXP",
+  },
+  "params": Array [
+    Object {
+      "image": "id1",
+      "label": "ID",
+    },
+  ],
+  "type": "START",
+}
+`;
+
+exports[`basic: ast 3`] = `"Unexpected token eof, expected END (at 1:14)"`;
+
+exports[`basic: conflicts 1`] = `Array []`;
+
+exports[`basic: generation 1`] = `
+"const Q=require(\\"@quase/parser\\");
+
+  class Tokenizer extends Q.Tokenizer{
+    constructor(input){
+      super(input);
+      this.table=[null,{\\"44\\":9,\\"45\\":10,\\"48\\":12,\\"49\\":12,\\"50\\":12,\\"100\\":8,\\"101\\":5,\\"102\\":2,\\"105\\":8},{\\"117\\":3},{\\"110\\":4},{},{\\"110\\":6},{\\"100\\":7},{},{\\"48\\":8,\\"49\\":8,\\"50\\":8,\\"100\\":8,\\"105\\":8},{},{\\"62\\":11},{},{\\"48\\":12,\\"49\\":12,\\"50\\":12}];
+      this.finals={\\"4\\":\\"FUN\\",\\"7\\":\\"END\\",\\"8\\":\\"ID\\",\\"9\\":\\"COMMA\\",\\"11\\":\\"ARROW\\",\\"12\\":\\"NUM\\"};
+    }
+    initial(){return{label:\\"initial\\"};}
+    eof(){return{label:\\"eof\\"};}
+    readToken() {
+  const { input, table, finals } = this;
+  const length = input.length;
+  const prevPos = this.pos;
+
+  let state = 1;
+  let i = this.pos;
+
+  while ( i < length ) {
+    const char = input.charCodeAt( i );
+    const nextState = table[ state ][ char ];
+    if ( nextState ) {
+      state = nextState;
+      i++;
+    } else {
+      break;
+    }
+  }
+
+  const label = finals[ state ];
+  if ( label ) {
+    const image=input.slice(prevPos,i);
+    const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+    const newLines=splitted.length-1;
+    this.pos=i;
+    if (newLines>0) {
+      this._lineStart=this.pos-splitted[newLines].length;
+      this._curLine+=newLines;
+    }
+    return {
+      label,
+      image
+    };
+  }
+  return this.unexpectedChar();
+}
+  }
+class Parser extends Q.Parser{
+constructor(text){super(new Tokenizer(text));}
+f5(s){this.expect(\\"COMMA\\");s.params.push(this.expect(\\"ID\\"));}
+f4(s){loop:while(true){switch(this.token.label){case \\"COMMA\\":this.f5(s);break;default:break loop;}}}
+f3(s){s.params.push(this.expect(\\"ID\\"));this.f4(s);}
+f2(s){switch(this.token.label){case \\"ID\\":this.f3(s);break;}}
+f7(s){switch(this.token.label){case \\"NUM\\":s.stuff=this.expect(\\"NUM\\");break;case \\"ID\\":s.stuff=this.expect(\\"ID\\");break;default:this.unexpected();}}
+f6(){let s={type:\\"EXP\\",stuff:null};this.f7(s);return s;}
+f1(){let s={type:\\"START\\",params:[],body:null};this.expect(\\"FUN\\");this.f2(s);this.expect(\\"ARROW\\");s.body=this.f6();this.expect(\\"END\\");this.expect(\\"eof\\");return s;}
+parse(){return this.f1();}}"
+`;
+
+exports[`check conflicts on repetitions: conflicts 1`] = `
+Array [
+  "In ZeroOrMore(1:0-1:2), when finding A, choice conflicts: Id(1:0-1:1)[A] | Empty(1:0-1:2)",
+  "In OneOrMore(1:0-1:2), when finding B, choice conflicts: Id(1:0-1:1)[B] | Empty(1:0-1:2)",
+]
+`;
+
+exports[`check conflicts on repetitions: generation 1`] = `
+"const Q=require(\\"@quase/parser\\");
+
+  class Tokenizer extends Q.Tokenizer{
+    constructor(input){
+      super(input);
+      this.table=[null,{\\"65\\":2,\\"66\\":3},{},{}];
+      this.finals={\\"2\\":\\"A\\",\\"3\\":\\"B\\"};
+    }
+    initial(){return{label:\\"initial\\"};}
+    eof(){return{label:\\"eof\\"};}
+    readToken() {
+  const { input, table, finals } = this;
+  const length = input.length;
+  const prevPos = this.pos;
+
+  let state = 1;
+  let i = this.pos;
+
+  while ( i < length ) {
+    const char = input.charCodeAt( i );
+    const nextState = table[ state ][ char ];
+    if ( nextState ) {
+      state = nextState;
+      i++;
+    } else {
+      break;
+    }
+  }
+
+  const label = finals[ state ];
+  if ( label ) {
+    const image=input.slice(prevPos,i);
+    const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+    const newLines=splitted.length-1;
+    this.pos=i;
+    if (newLines>0) {
+      this._lineStart=this.pos-splitted[newLines].length;
+      this._curLine+=newLines;
+    }
+    return {
+      label,
+      image
+    };
+  }
+  return this.unexpectedChar();
+}
+  }
+class Parser extends Q.Parser{
+constructor(text){super(new Tokenizer(text));}
+f2(s){loop:while(true){switch(this.token.label){case \\"A\\":this.expect(\\"A\\");break;default:break loop;}}}
+f4(s){this.expect(\\"B\\");loop:while(true){switch(this.token.label){case \\"B\\":this.expect(\\"B\\");break;default:break loop;}}}
+f3(){let s={type:\\"RULE2\\",};this.f4(s);this.expect(\\"B\\");return s;}
+f1(){let s={type:\\"RULE1\\",};this.f2(s);this.expect(\\"A\\");this.f3();this.expect(\\"eof\\");return s;}
+parse(){return this.f1();}}"
+`;

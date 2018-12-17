@@ -9,8 +9,7 @@ export function nfaToDfa( { states: oldStates, alphabet, start, acceptingSet: pr
   function getClosure( state ) {
     let closure = closures.get( state );
     if ( !closure ) {
-      closure = new Set();
-      closure.add( state );
+      closure = new Set( [ state ] );
       closures.set( state, closure );
 
       const destinationStates = oldStates[ state ].get( EPSILON );

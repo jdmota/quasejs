@@ -1,5 +1,5 @@
 import GrammarParser from "./grammar-parser";
-import ConflictsHandler from "./conflicts-handler";
+import ChoicesHandler from "./choices-handler";
 import generateParser from "./generate-parser";
 import { reservedLabels } from "./generate-tokenizer";
 
@@ -10,7 +10,7 @@ export default class Grammar {
     this.rules = new Map();
     this.ids = new Map();
     this.asString = "";
-    this.conflictHandlers = [];
+    this.choiceHandlers = [];
 
     for ( const name of Object.keys( terminals ) ) {
       if ( reservedLabels.has( name ) ) {
@@ -49,15 +49,15 @@ export default class Grammar {
     return this.rules.get( name ) || ( () => { throw new Error( `No rule named ${name} was found` ); } )();
   }
 
-  createConflictHandler( parentNode ) {
-    const c = new ConflictsHandler( parentNode );
-    this.conflictHandlers.push( c );
+  createChoicesHandler( parentNode ) {
+    const c = new ChoicesHandler( this, parentNode );
+    this.choiceHandlers.push( c );
     return c;
   }
 
   reportConflicts() {
     const reports = [];
-    for ( const handler of this.conflictHandlers ) {
+    for ( const handler of this.choiceHandlers ) {
       const report = handler.report();
       if ( report ) {
         reports.push( report );

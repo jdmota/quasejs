@@ -74,11 +74,21 @@ function connectAstNodes( node, parent, scope, hasMultiplicity, nextSibling ) {
       node.names = {};
       connectAstNodes( node.rule, node, node, false, null );
       break;
-    case "Options":
+    case "Options": {
+      const originalNames = scope.names;
+      const names = { ...originalNames };
       for ( const opt of node.options ) {
+        scope.names = { ...originalNames };
         connectAstNodes( opt, node, scope, hasMultiplicity, nextSibling );
+        for ( const key in scope.names ) {
+          if ( names[ key ] !== "array" ) {
+            names[ key ] = scope.names[ key ];
+          }
+        }
       }
+      scope.names = names;
       break;
+    }
     case "Concat": {
       const lastIndex = node.body.length - 1;
       for ( let i = 0; i < lastIndex; i++ ) {
