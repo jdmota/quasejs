@@ -1,5 +1,6 @@
 // @flow
-import type { FinalAsset, FinalAssets, ToWrite, Plugin } from "../../types";
+import type { FinalAsset, ToWrite, Plugin } from "../../types";
+import { chunkInit } from "../../runtime/create-runtime";
 import type { BuilderContext } from "../context";
 import cloneAst from "./clone-ast";
 
@@ -137,7 +138,7 @@ class HtmlRenderer {
     this.treeAdapter.detachNode( node );
   }
 
-  async render( asset: FinalAsset, finalAssets: FinalAssets, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ): Promise<ToWrite> {
+  async render( asset: FinalAsset, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ): Promise<ToWrite> {
 
     // TODO preload
 
@@ -149,20 +150,22 @@ class HtmlRenderer {
     } );
 
     const firstScriptDep = deps.find( d => d.importType === "js" );
-    const runtime = asset.runtime;
+    const runtimeCode = asset.runtime.code;
 
-    if ( runtime && firstScriptDep ) {
-      if ( ctx.builderOptions.hmr ) {
-        this.insertBefore(
-          this.createSrcScript( ctx.builderOptions.publicPath + runtime.relativeDest, true ),
-          firstScriptDep.node
-        );
-      } else {
-        this.insertBefore(
-          this.createTextScript( runtime.code ),
-          firstScriptDep.node
-        );
-      }
+    if ( runtimeCode && firstScriptDep ) {
+      this.insertBefore(
+        this.createTextScript( runtimeCode ),
+        firstScriptDep.node
+      );
+    }
+
+    // Runtime info
+    if ( asset.runtime.manifest ) {
+      const code = `${chunkInit}.p({},${JSON.stringify( asset.runtime.manifest )})`;
+      this.insertBefore(
+        this.createTextScript( code ),
+        firstScriptDep.node
+      );
     }
 
     for ( const { node, request, async, importType } of deps ) {
@@ -172,7 +175,7 @@ class HtmlRenderer {
         throw new Error( `Internal: missing module by request ${request} in ${asset.id}` );
       }
 
-      const neededAssets = finalAssets.moduleToAssets.get( module ) || [];
+      const neededAssets = asset.manifest.moduleToAssets.get( module ) || [];
 
       if ( importType === "css" ) {
 
@@ -336,9 +339,9 @@ export default function htmlPlugin(): Plugin {
       }
     },
     renderAsset: {
-      html( asset: FinalAsset, finalAssets: FinalAssets, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ) {
+      html( asset: FinalAsset, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext ) {
 
-        if ( asset.srcs.length !== 1 ) {
+        if ( asset.srcs.size !== 1 ) {
           throw new Error( `${PLUGIN_NAME}: Asset "${asset.id}" to be generated can only have 1 source.` );
         }
 
@@ -346,7 +349,7 @@ export default function htmlPlugin(): Plugin {
 
         if ( ast ) {
           const renderer = new HtmlRenderer( ast );
-          return renderer.render( asset, finalAssets, inlineAssets, ctx );
+          return renderer.render( asset, inlineAssets, ctx );
         }
 
         throw new Error( `${PLUGIN_NAME}: Could not find AST` );

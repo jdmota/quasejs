@@ -9,6 +9,7 @@
 - Supports any file type or language, even images, not just JavaScript
 - Supports any file types as entries, like HTML
 - Thanks to the plugin architecture, inlined JavaScript in HTML is possible
+- Thanks to the architecture, file changes are correctly detected and only what changed is updated.
 - `load` and `error` events are emitted for script tags, replicating the `<script type="module">` behaviour
 - The runtime is small (2kB or less) and is able to fetch the necessary scripts for each module in parallel
 - Errors have code frames to help pinpoint to the problem
@@ -233,7 +234,7 @@ The last graph produced will be used.
 
 An object where the key is a module type, and the value a function.
 
-The function can be asynchronous and accepts `( FinalAsset, FinalAssets, inlines: Map<FinalAsset, ToWrite>, BuilderContext )` and returns `null` or `ToWrite`.
+The function can be asynchronous and accepts `( FinalAsset, inlines: Map<FinalAsset, ToWrite>, BuilderContext )` and returns `null` or `ToWrite`.
 
 Returning `null` defers to other `renderAsset` functions.
 

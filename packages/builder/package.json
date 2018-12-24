@@ -28,7 +28,7 @@
     "@quase/config": "0.2.0-0",
     "@quase/get-plugins": "0.1.0-0",
     "@quase/source-map": "0.2.0-0",
-    "babel-preset-minify": "^0.4.3",
+    "babel-preset-minify": "^0.5.0",
     "fs-extra": "^7.0.0",
     "fswatcher-child": "1.1.0",
     "graphviz": "^0.0.8",

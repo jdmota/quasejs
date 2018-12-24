@@ -14,7 +14,7 @@ export default class HMRServer {
     this.handleSocketError = this.handleSocketError.bind( this );
     this.firstBuild = true;
 
-    this.emitter.on( "build-success", o => this.emitUpdate( o.update ) );
+    this.emitter.on( "build-success", o => this.emitUpdate( o.updates ) );
     this.emitter.on( "build-error", e => this.emitError( e ) );
   }
 
@@ -54,7 +54,7 @@ export default class HMRServer {
     }
   }
 
-  emitUpdate( update ) {
+  emitUpdate( updates ) {
     if ( this.firstBuild ) {
       this.firstBuild = false;
       return;
@@ -64,7 +64,7 @@ export default class HMRServer {
 
     this.broadcast( {
       type: "update",
-      update
+      updates
     } );
   }
 

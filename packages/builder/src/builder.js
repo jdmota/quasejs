@@ -4,10 +4,9 @@ import { type RuntimeInfo, createRuntime, createRuntimeManifest } from "./runtim
 import Module, { type ModuleArg } from "./module";
 import type { PluginsRunnerInWorker, PluginsRunner } from "./plugins/runner";
 import { type ComputationApi, ComputationCancelled } from "./utils/data-dependencies";
-import difference from "./utils/difference";
 import { resolvePath, relative } from "./utils/path";
 import { BuilderContext } from "./plugins/context";
-import type { WatchedFiles, FinalAsset, FinalAssets, ToWrite, Info, Options } from "./types";
+import type { WatchedFiles, FinalAsset, ToWrite, Info, Options } from "./types";
 import { Graph, processGraph } from "./graph";
 import Reporter from "./reporter";
 import { Farm } from "./workers/farm";
@@ -32,29 +31,32 @@ export class Build {
   +buildId: number;
   +graph: Graph;
   cancelled: boolean;
-  prevFiles: ( {
+  summary: Map<string, {
     id: string,
-    relativeDest: string,
-    hash: string | null
-  } )[];
+    lastChangeId: number,
+    file: string,
+    fileIsEntry: boolean
+  }>;
 
   constructor( prevBuild: ?Build, builder: Builder ) {
     this.builder = builder;
     this.promises = [];
     this.graph = new Graph();
     this.cancelled = false;
+    this.summary = new Map();
 
     if ( prevBuild ) {
       for ( const module of prevBuild.graph.modules.values() ) {
         this.graph.add( module );
       }
-
       this.buildId = prevBuild.buildId + 1;
-      this.prevFiles = prevBuild.prevFiles;
     } else {
       this.buildId = 0;
-      this.prevFiles = [];
     }
+  }
+
+  exists( id: string ): boolean {
+    return this.graph.modules.has( id );
   }
 
   removeOrphans() {
@@ -258,10 +260,6 @@ export default class Builder {
       }
     }
 
-    if ( h == null && this.options.hmr ) {
-      h = hash( data );
-    }
-
     asset.hash = h;
 
     await fs.mkdirp( directory );
@@ -299,31 +297,32 @@ export default class Builder {
     };
   }
 
-  async callRenderers( finalAssets: FinalAssets ): Promise<Info[]> {
+  async callRenderers( finalAssets: FinalAsset[] ): Promise<Info[]> {
     const writes = [];
-    for ( const asset of finalAssets.files ) {
-      let runtime;
+    for ( const asset of finalAssets ) {
+      const manifest = createRuntimeManifest( asset.manifest );
+
       if ( asset.isEntry ) {
-        runtime = asset.runtime = {
-          relativeDest: `${asset.relativeDest}.runtime.js`,
-          code: await this.createRuntime( {
-            context: this.options.dest,
-            fullPath: path.join( this.options.dest, asset.relativeDest ),
-            publicPath: this.options.publicPath,
-            finalAssets
-          } )
+        const code = await this.createRuntime( {
+          context: this.options.dest,
+          fullPath: path.join( this.options.dest, asset.relativeDest ),
+          publicPath: this.options.publicPath,
+          minify: this.options.mode !== "development"
+        } );
+        asset.runtime = {
+          manifest,
+          code
         };
+      } else {
+        asset.runtime.manifest = manifest;
       }
 
-      const out = await this.pluginsRunner.renderAsset( asset, finalAssets, new BuilderContext( this.options ) );
+      const out = await this.pluginsRunner.renderAsset( asset, new BuilderContext( this.options ) );
       if ( out ) {
         writes.push( this.writeAsset( asset, out ) );
-        if ( runtime && this.options.hmr ) {
-          writes.push( this.writeCode( runtime ) );
-        }
-        continue;
+      } else {
+        throw new Error( `Could not build asset ${asset.normalized}` );
       }
-      throw new Error( `Could not build asset ${asset.normalized}` );
     }
     return Promise.all( writes );
   }
@@ -334,7 +333,7 @@ export default class Builder {
 
   async runBuild() {
     this.build.cancel();
-    const prevFiles = this.build.prevFiles;
+    const previousSummary = this.build.summary;
     const build = this.build = new Build( this.build, this );
 
     if ( !this.worker ) {
@@ -361,7 +360,7 @@ export default class Builder {
 
     await this.pluginsRunner.check( build.graph );
 
-    const finalAssets = await this.pluginsRunner.graphTransform( processGraph( build.graph ) );
+    const processedGraph = await this.pluginsRunner.graphTransform( processGraph( build.graph ) );
 
     await emptyDirPromise;
 
@@ -370,7 +369,7 @@ export default class Builder {
       await build.graph.dumpDotGraph( path.resolve( this.options.dest, dotGraph ) );
     }
 
-    const filesInfo = await this.callRenderers( finalAssets );
+    const filesInfo = await this.callRenderers( processedGraph.files );
 
     const swFile = this.options.serviceWorker.filename;
 
@@ -388,29 +387,66 @@ export default class Builder {
       } );
     }
 
-    let update;
+    let updates;
 
     if ( this.options.hmr ) {
-      const newFiles = finalAssets.files.map( ( { id, relativeDest, hash, isEntry } ) => ( { id, relativeDest, hash, isEntry } ) );
+      const newSummary = build.summary;
+      updates = [];
 
-      const filesDifference = difference( prevFiles, newFiles, ( a, b ) => {
-        return a.id === b.id && a.relativeDest === b.relativeDest && a.hash === b.hash && a.isEntry === b.isEntry;
-      } );
+      for ( const [ id, m ] of build.graph.modules ) {
+        const file = processedGraph.moduleToFile.get( m );
+        if ( !file ) throw new Error( "Assertion error" );
 
-      build.prevFiles = newFiles;
+        const requiredAssets = build.graph.requiredAssets(
+          m,
+          processedGraph.moduleToFile
+        ).map( a => a.relativeDest );
 
-      update = {
-        manifest: createRuntimeManifest( finalAssets ),
-        ids: filesDifference.map( ( { id } ) => id ),
-        files: filesDifference.map( ( { relativeDest } ) => relativeDest ),
-        reloadApp: filesDifference.some( ( { isEntry } ) => isEntry )
-      };
+        const data = {
+          id,
+          lastChangeId: m.lastChangeId,
+          file: file.relativeDest,
+          fileIsEntry: file.isEntry
+        };
+
+        newSummary.set( id, data );
+
+        const inPrevSummary = previousSummary.get( id );
+        if ( !inPrevSummary ) {
+          updates.push( {
+            id,
+            file: data.file,
+            prevFile: null,
+            reloadApp: data.fileIsEntry,
+            requiredAssets
+          } );
+        } else if ( inPrevSummary.lastChangeId !== data.lastChangeId ) {
+          updates.push( {
+            id,
+            file: data.file,
+            prevFile: inPrevSummary.file,
+            reloadApp: inPrevSummary.fileIsEntry || data.fileIsEntry,
+            requiredAssets
+          } );
+        }
+      }
+
+      for ( const [ id, inPrevSummary ] of previousSummary ) {
+        if ( !newSummary.has( id ) ) {
+          updates.push( {
+            id,
+            file: null,
+            prevFile: inPrevSummary.file,
+            reloadApp: inPrevSummary.fileIsEntry
+          } );
+        }
+      }
     }
 
     return {
       filesInfo,
       time: Date.now() - startTime,
-      update
+      updates
     };
   }
 

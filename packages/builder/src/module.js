@@ -89,6 +89,7 @@ export default class Module {
   +pipeline: Computation<PipelineResult>;
   +resolveDeps: Computation<Map<string, ModuleDep>>;
   buildId: number;
+  lastChangeId: number;
   locOffset: ?Loc;
   originalData: ?Data;
   originalMap: ?Object;
@@ -122,6 +123,7 @@ export default class Module {
     this.resolveDeps = new Computation( ( c, b ) => this._resolveDeps( c, b ) );
 
     this.buildId = 0;
+    this.lastChangeId = 0;
 
     this.locOffset = loc;
     this.originalData = null;
@@ -176,6 +178,8 @@ export default class Module {
 
   async _load( computation: ComputationApi, build: Build ): Promise<LoadOutput> {
     const ctx = new ModuleContext( this.builder.options, this );
+
+    this.lastChangeId = this.buildId;
 
     try {
 
@@ -257,6 +261,8 @@ export default class Module {
 
     const { data } = await computation.get( this.load, build );
 
+    this.lastChangeId = this.buildId;
+
     const ctx = new ModuleContext( this.builder.options, this );
 
     const { depsInfo, content, files } = await this.builder.worker.pipeline( data, ctx );
@@ -313,6 +319,8 @@ export default class Module {
 
     const moduleDeps = new Map();
     const { depsInfo } = await computation.get( this.pipeline, build );
+
+    this.lastChangeId = this.buildId;
 
     const parent = this.parentGenerator;
     const parentModuleDeps = parent ? await computation.get( parent.resolveDeps, build ) : new Map();

@@ -2,8 +2,8 @@
 import arrayConcat from "../../utils/array-concat";
 import type Module from "../../module";
 import type {
-  Plugin, NotResolvedDep, ImportedName, ExportedName,
-  FinalAsset, FinalAssets
+  NotResolvedDep, ImportedName, ExportedName,
+  Plugin, FinalAsset
 } from "../../types";
 import StringBuilder from "../../string-builder";
 import { chunkInit, moduleArgs } from "../../runtime/create-runtime";
@@ -344,7 +344,7 @@ export default function jsPlugin( options: Object ): Plugin {
       }
     },
     renderAsset: {
-      async js( asset: FinalAsset, finalAssets: FinalAssets, _, ctx: BuilderContext ) {
+      async js( asset: FinalAsset, _, ctx: BuilderContext ) {
 
         const { module: entryModule, relativeDest } = asset;
 
@@ -378,11 +378,20 @@ export default function jsPlugin( options: Object ): Plugin {
           first = false;
         }
 
-        build.append( "});" );
+        build.append( "}" );
 
-        const runtime = asset.runtime;
-        if ( runtime ) {
-          build.append( runtime.code.replace( /;?$/, `(${ctx.wrapInJsString( entryModule.hashId )});` ) );
+        // Runtime info
+        if ( asset.runtime.manifest ) {
+          build.append( `,${JSON.stringify( asset.runtime.manifest )}` );
+        }
+
+        build.append( ");" );
+
+        const runtimeCode = asset.runtime.code;
+        if ( runtimeCode ) {
+          build.append(
+            runtimeCode.replace( /;?$/, `(${ctx.wrapInJsString( entryModule.hashId )});` )
+          );
         }
 
         return {

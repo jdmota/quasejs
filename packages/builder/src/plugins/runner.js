@@ -4,7 +4,7 @@ import { ModuleContext, BuilderContext } from "../plugins/context";
 import type { Graph } from "../graph";
 import type {
   Plugin, Data, LoadOutput, TransformOutput, WatchedFiles,
-  PipelineResult, DepsInfo, FinalAsset, FinalAssets, ToWrite
+  PipelineResult, DepsInfo, FinalAsset, ProcessedGraph, ToWrite
 } from "../types";
 import jsPlugin from "./implementations/js";
 import htmlPlugin from "./implementations/html";
@@ -378,7 +378,7 @@ export class PluginsRunner {
     return actual;
   }
 
-  async graphTransform( initial: FinalAssets ): Promise<FinalAssets> {
+  async graphTransform( initial: ProcessedGraph ): Promise<ProcessedGraph> {
     let result = initial;
     for ( const { name, plugin } of this.plugins ) {
       const fn = plugin.graphTransform;
@@ -408,11 +408,11 @@ export class PluginsRunner {
     };
   }
 
-  async renderAsset( asset: FinalAsset, assets: FinalAssets, ctx: BuilderContext ): Promise<ToWrite> {
+  async renderAsset( asset: FinalAsset, ctx: BuilderContext ): Promise<ToWrite> {
     const inlines = new Map();
 
     await Promise.all( asset.inlineAssets.map( async a => {
-      const toWrite = await this.renderAsset( a, assets, ctx );
+      const toWrite = await this.renderAsset( a, ctx );
       inlines.set( a, toWrite );
     } ) );
 
@@ -420,14 +420,14 @@ export class PluginsRunner {
       const map = plugin.renderAsset || EMPTY_OBJ;
       const fn = map[ asset.type ];
       if ( fn ) {
-        const result = await fn( asset, assets, inlines, ctx );
+        const result = await fn( asset, inlines, ctx );
         if ( result != null ) {
           return this.validateRenderAsset( result, name );
         }
       }
     }
 
-    if ( asset.srcs.length !== 1 ) {
+    if ( asset.srcs.size !== 1 ) {
       throw new Error( `Asset "${asset.id}" has more than 1 source. Probably there is some plugin missing.` );
     }
 

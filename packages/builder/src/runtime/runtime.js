@@ -100,24 +100,29 @@ function createHotRuntime( hmr ) {
 
   let lastHotUpdate = Promise.resolve();
 
-  async function hmrUpdate( update ) {
+  async function hmrUpdate( updates ) {
     const seen = new Set();
     let queue = [];
-    let shouldReloadApp = update.reloadApp;
+    let shouldReloadApp = false;
 
-    files = update.manifest.files.map( p => publicPath + p );
-    moduleToFiles = update.manifest.moduleToFiles;
-
-    for ( const file of update.files ) {
-      fileImports[ publicPath + file ] = UNDEFINED;
-      fetches[ publicPath + file ] = UNDEFINED;
+    for ( const { id, file, prevFile, reloadApp, requiredAssets } of updates ) {
+      if ( file ) {
+        fileImports[ publicPath + file ] = UNDEFINED;
+        fetches[ publicPath + file ] = UNDEFINED;
+        moduleToFiles[ id ] = requiredAssets.map( f => publicPath + f );
+      }
+      if ( prevFile ) {
+        fileImports[ publicPath + prevFile ] = UNDEFINED;
+        fetches[ publicPath + prevFile ] = UNDEFINED;
+      }
+      shouldReloadApp = shouldReloadApp || reloadApp;
     }
 
-    for ( const id of update.ids ) {
+    for ( const { id, file } of updates ) {
       const api = hmrApis.get( id );
       if ( api ) {
         seen.add( api );
-        if ( moduleToFiles[ id ] ) {
+        if ( file ) {
           queue.push( api.reloadNew() );
         } else {
           api.delete();
@@ -234,11 +239,11 @@ function createHotRuntime( hmr ) {
       switch ( data.type ) {
         case "update":
           lastHotUpdate = lastHotUpdate.then( () => {
-            console.log( "[quase-builder] update", data.update );
+            console.log( "[quase-builder] update", data.updates );
             state.success = true;
             updateUI();
             removeErrorOverlay();
-            return hmrUpdate( data.update );
+            return hmrUpdate( data.updates );
           } );
           break;
         case "error":
@@ -315,8 +320,7 @@ export function createRuntimeHelper( { hmr, browser, node, worker }: RuntimeOpti
     const fetches = blank(); // Fetches
 
     const publicPath = $_PUBLIC_PATH;
-    ${hmr ? "let" : "const"} files = $_FILES;
-    ${hmr ? "let" : "const"} moduleToFiles = $_MODULE_TO_FILES;
+    const moduleToFiles = blank();
 
     ${hmr ? createHotRuntime( hmr ) : ""}
 
@@ -331,12 +335,25 @@ export function createRuntimeHelper( { hmr, browser, node, worker }: RuntimeOpti
       return NULL;
     }
 
-    function push( moreModules ) {
+    function pushInfo( moreInfo ) {
+      const files = moreInfo.f;
+      const mToFiles = moreInfo.m;
+      for ( const id in mToFiles ) {
+        moduleToFiles[ id ] = mToFiles[ id ].map( f => publicPath + files[ f ] );
+      }
+    }
+
+    function pushModules( moreModules ) {
       for ( const id in moreModules ) {
         if ( fnModules[ id ] === UNDEFINED ) {
           fnModules[ id ] = moreModules[ id ];
         }
       }
+    }
+
+    function push( arg ) {
+      if ( arg[ 1 ] ) pushInfo( arg[ 1 ] );
+      pushModules( arg[ 0 ] );
     }
 
     function exportHelper( e, name, get ) {
@@ -415,17 +432,14 @@ export function createRuntimeHelper( { hmr, browser, node, worker }: RuntimeOpti
       ).then( () => load( id ) );
     }
 
-    function importFileSync( idx ) {
-      const id = files[ idx ];
-      if ( fileImports[ id ] === UNDEFINED ) {
-        fileImports[ id ] = require( id );
+    function importFileSync( file ) {
+      if ( fileImports[ file ] === UNDEFINED ) {
+        fileImports[ file ] = require( file );
       }
-      return fileImports[ id ];
+      return fileImports[ file ];
     }
 
-    function importFileAsync( idx ) {
-      const src = files[ idx ];
-
+    function importFileAsync( src ) {
       if ( fileImports[ src ] !== UNDEFINED ) {
         return Promise.resolve( fileImports[ src ] );
       }
@@ -459,17 +473,17 @@ export function createRuntimeHelper( { hmr, browser, node, worker }: RuntimeOpti
 
         const timeout = setTimeout( onError, 120000 );
 
-        function done( err ) {
+        const done = err => {
           clearTimeout( timeout );
           script.onerror = script.onload = UNDEFINED; // Avoid memory leaks in IE
           resolution[ err ? 1 : 0 ]( err || NULL );
-        }
+        };
 
-        function onError() {
+        const onError = () => {
           done( new Error( \`Fetching \${src} failed\` ) );
-        }
+        };
 
-        script.onload = function() { done(); };
+        script.onload = () => { done(); };
         script.onerror = onError;
 
         doc.head.appendChild( script );

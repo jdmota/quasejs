@@ -84,6 +84,11 @@ export type PipelineResult = {
   +content: TransformOutput
 };
 
+export type Manifest = {
+  files: FinalAsset[], // eslint-disable-line no-use-before-define
+  moduleToAssets: Map<Module, FinalAsset[]> // eslint-disable-line no-use-before-define
+};
+
 export type FinalAsset = {
   module: Module,
   id: string,
@@ -95,18 +100,21 @@ export type FinalAsset = {
   relativeDest: string,
   hash: string | null,
   isEntry: boolean,
-  runtime: ?{
-    relativeDest: string,
-    code: string
+  runtime: {
+    code: ?string,
+    manifest: ?{
+      f: string[],
+      m: { [key: string]: number[] }
+    }
   },
-  srcs: Module[],
+  manifest: Manifest,
+  srcs: Set<Module>,
   inlineAssets: FinalAsset[]
 };
 
-export type FinalAssets = {
-  modules: Map<string, Module>;
-  files: FinalAsset[],
-  moduleToAssets: Map<Module, FinalAsset[]>
+export type ProcessedGraph = {
+  moduleToFile: Map<Module, FinalAsset>,
+  files: FinalAsset[]
 };
 
 export type ToWrite = {|
@@ -136,15 +144,13 @@ export type Info = {
 export type Output = {
   filesInfo: Info[],
   time: number,
-  update: ?{
-    manifest: {
-      files: string[],
-      moduleToFiles: { [key: string]: number[] },
-    },
-    ids: string[],
-    files: string[],
-    reloadApp: boolean
-  }
+  updates: {
+    id: string,
+    file: ?string,
+    prevFile: ?string,
+    reloadApp: boolean,
+    requiredAssets: ?string[]
+  }[]
 };
 
 type ThingOrPromise<T> = T | Promise<T>;
@@ -165,9 +171,9 @@ export type Checker = Graph => ThingOrPromise<void>;
 
 export type TypeTransformer = ( TransformOutput, ModuleContext ) => ThingOrPromise<?LoadOutput>;
 
-export type GraphTransformer = ( FinalAssets ) => ThingOrPromise<?FinalAssets>;
+export type GraphTransformer = ( ProcessedGraph ) => ThingOrPromise<?ProcessedGraph>;
 
-export type AssetRenderer = ( FinalAsset, FinalAssets, Map<FinalAsset, ToWrite>, BuilderContext ) => ThingOrPromise<?ToWrite>;
+export type AssetRenderer = ( FinalAsset, Map<FinalAsset, ToWrite>, BuilderContext ) => ThingOrPromise<?ToWrite>;
 
 export type Plugin = {
   +name?: ?string,

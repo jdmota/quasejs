@@ -1,9 +1,9 @@
 // @flow
+import type { FinalAsset, Manifest } from "./types";
+import type Builder from "./builder";
 import type Module from "./module";
 import { hashName } from "./utils/hash";
 import { reExt } from "./utils/path";
-import type { FinalAsset } from "./types";
-import type Builder from "./builder";
 
 const modulesSorter = ( { id: a }, { id: b } ) => a.localeCompare( b );
 
@@ -105,6 +105,23 @@ export class Graph {
     return set;
   }
 
+  requiredAssets( module: Module, moduleToFile: Map<Module, FinalAsset>, exclude: ?FinalAsset ) {
+    const set: Set<FinalAsset> = new Set();
+
+    const asset = moduleToFile.get( module );
+    if ( asset && asset !== exclude ) {
+      set.add( asset );
+    }
+
+    for ( const dep of this.syncDeps( module ) ) {
+      const asset = moduleToFile.get( dep );
+      if ( asset && asset !== exclude ) {
+        set.add( asset );
+      }
+    }
+    return Array.from( set );
+  }
+
   requires( module: Module ) {
     return module.deps;
   }
@@ -160,7 +177,7 @@ export function processGraph( graph: Graph ) {
 
   // Find all modules that will be in the file
   // with entrypoint "from"
-  const grow = ( from: Module ): ?Module[] => {
+  const grow = ( from: Module ): ?Set<Module> => {
     const group = groups.get( from );
     const wouldSplitSrc = src => {
       // Entrypoints are always their own starting point
@@ -197,7 +214,7 @@ export function processGraph( graph: Graph ) {
       }
     }
 
-    return include;
+    return new Set( include );
   };
 
   const files = [];
@@ -208,7 +225,7 @@ export function processGraph( graph: Graph ) {
   groups.forEach( ( _, m ) => {
     const srcs = grow( m );
     if ( srcs ) {
-      const f = {
+      const f: FinalAsset = {
         module: m,
         id: m.id,
         path: m.path,
@@ -219,9 +236,17 @@ export function processGraph( graph: Graph ) {
         relativeDest: m.relativeDest,
         hash: null,
         isEntry: graph.moduleEntries.has( m ),
-        runtime: null,
+        srcs,
         inlineAssets: [],
-        srcs
+        runtime: {
+          relativeDest: null,
+          code: null,
+          manifest: null
+        },
+        manifest: {
+          files: [],
+          moduleToAssets: new Map()
+        },
       };
 
       // If "m" is a module that will be inline
@@ -266,28 +291,50 @@ export function processGraph( graph: Graph ) {
     }
   }
 
-  // Produce the "module" -> "asset" mapping necessary for the runtime
-  // It tells for each module, which files it needs to fetch
-  const moduleToAssets: Map<Module, FinalAsset[]> = new Map();
-  for ( const [ module, file ] of moduleToFile ) {
-
-    const set: Set<FinalAsset> = new Set( [ file ] );
-
-    for ( const dep of graph.syncDeps( module ) ) {
-      const asset = moduleToFile.get( dep );
-      if ( asset ) {
-        set.add( asset );
+  // Extract the modules that are dependencies of modules in this asset
+  // Excluding modules already in this asset
+  function assetDependencies( asset: FinalAsset ) {
+    const set = new Set();
+    for ( const src of asset.srcs ) {
+      for ( const { required } of graph.requires( src ).values() ) {
+        if ( !asset.srcs.has( required ) ) {
+          set.add( required );
+        }
       }
     }
+    return set;
+  }
 
-    // Sort to get deterministic results
-    moduleToAssets.set( module, Array.from( set ).sort( modulesSorter ) );
+  // Manifest for each asset
+  function manifest( asset: FinalAsset ): Manifest {
+    // Produce the "module" -> "asset" mapping necessary for the runtime
+    // It tells for each module, which files it needs to fetch
+    const moduleToAssets: Map<Module, FinalAsset[]> = new Map();
+    const files: Set<FinalAsset> = new Set();
+
+    for ( const module of assetDependencies( asset ) ) {
+      const array = graph.requiredAssets( module, moduleToFile, asset );
+      if ( array.length > 0 ) {
+        for ( const f of array ) {
+          files.add( f );
+        }
+        // Sort to get deterministic results
+        moduleToAssets.set( module, array.sort( modulesSorter ) );
+      }
+    }
+    return {
+      files: Array.from( files ).sort( modulesSorter ),
+      moduleToAssets
+    };
+  }
+
+  for ( const f of files ) {
+    f.manifest = manifest( f );
   }
 
   return {
-    modules: graph.modules,
-    files: sortFilesByEntry( files ), // Leave entries last
-    moduleToAssets
+    moduleToFile,
+    files: sortFilesByEntry( files ) // Leave entries last
   };
 }
 

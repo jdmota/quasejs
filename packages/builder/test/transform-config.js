@@ -29,7 +29,7 @@ const jsPlugin = path.join( __dirname, "../dist/plugins/implementations/js" );
 const babelPlugin = path.join( __dirname, "../dist/plugins/implementations/babel" );
 
 export default function( config, fixturePath ) {
-  config.mode = "development";
+  config.mode = config.mode || "development";
   config.cwd = fixturePath;
   config.optimization = Object.assign( {
     hashId: true
