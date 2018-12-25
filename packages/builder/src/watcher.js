@@ -5,7 +5,6 @@ import type { WatchedFileInfo } from "./types";
 import type Builder from "./builder";
 
 const path = require( "path" );
-const EventEmitter = require( "events" );
 // $FlowIgnore
 const _FSWatcher = require( "fswatcher-child" );
 
@@ -56,7 +55,7 @@ class FSWatcher extends _FSWatcher {
 
 }
 
-export default class Watcher extends EventEmitter {
+export default class Watcher {
 
   +builder: Builder;
   +producersByFile: Map<string, FSProducers>;
@@ -66,8 +65,6 @@ export default class Watcher extends EventEmitter {
   watcher: ?FSWatcher;
 
   constructor( builder: Builder ) {
-    super();
-
     this.builder = builder;
     this.producersByFile = new Map();
     this.updates = [];
@@ -90,6 +87,10 @@ export default class Watcher extends EventEmitter {
     // .on( "error", () => {} )
     // .on( "watcherError", () => {} )
     // .on( "ready", () => {} );
+  }
+
+  emit( event: string, value: any ) {
+    this.builder.emit( event, value );
   }
 
   _onUpdate( path: string, type: "added" | "changed" | "removed" ) {
@@ -195,7 +196,6 @@ export default class Watcher extends EventEmitter {
   }
 
   stop() {
-    this.builder.stop();
     if ( this.watcher ) {
       this.watcher.close();
       this.watcher = null;

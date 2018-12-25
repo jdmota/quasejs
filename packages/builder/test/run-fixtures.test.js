@@ -1,4 +1,5 @@
 import { relative } from "../dist/utils/path";
+import { formatError } from "../dist/utils/error";
 import Builder from "../dist/builder";
 import transformConfig from "./transform-config";
 
@@ -64,7 +65,8 @@ describe( "builder", () => {
 
       config = transformConfig( config, fixturePath );
 
-      builder = new Builder( config, w => {
+      builder = new Builder( config );
+      builder.on( "warning", w => {
         warnings.push( w );
       } );
 
@@ -96,7 +98,11 @@ describe( "builder", () => {
         if ( expectedOut || !expectedError ) {
           throw err;
         } else {
-          expect( stripAnsi( err.message ).replace( process.cwd() + path.sep, "" ) ).toMatchSnapshot( "error" );
+          const { message, stack } = formatError( err );
+          expect(
+            stripAnsi( `${message}${stack && err.codeFrame ? `\n${stack}` : ""}` )
+              .replace( process.cwd() + path.sep, "" )
+          ).toMatchSnapshot( "error" );
           expect( assetsNum ).toBe( 0 );
         }
         end();

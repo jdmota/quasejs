@@ -1,4 +1,5 @@
-// Adapted from https://github.com/parcel-bundler/parcel/blob/master/src/HMRServer.js
+// Adapted from parcel-bundler's HMR server
+import { formatError } from "./utils/error";
 
 const http = require( "http" );
 const WebSocket = require( "ws" );
@@ -73,10 +74,12 @@ export default class HMRServer {
       this.firstBuild = false;
     }
 
+    const { message, stack } = formatError( err );
+
     // Store the most recent error so we can notify new connections
     this.lastErrorEvent = {
       type: "error",
-      error: stripAnsi( err.__fromBuilder ? err.message : err.stack || err.message )
+      error: stripAnsi( `${message}${stack ? `\n${stack}` : ""}` )
     };
 
     this.broadcast( this.lastErrorEvent );

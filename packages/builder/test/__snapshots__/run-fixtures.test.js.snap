@@ -2319,8 +2319,7 @@ b203b:function($e){$e.default = {
 `;
 
 exports[`builder Fixture: error-cannot-not-import-itself: error 1`] = `
-"A module cannot import itself. See index.js:1:14
-
+"index.js:1:14: A module cannot import itself
 > 1 | import a from \\".\\"; // eslint-disable-line
   2 | "
 `;
@@ -2330,50 +2329,43 @@ exports[`builder Fixture: error-circular-export-namespace: error 1`] = `"Circula
 exports[`builder Fixture: error-could-not-load-entry: error 1`] = `"Could not find index.js"`;
 
 exports[`builder Fixture: error-could-not-resolve-export: error 1`] = `
-"Could not resolve ./func. See index.js:1:18
-
+"index.js:1:18: Could not resolve ./func
 > 1 | export { a } from \\"./func\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-could-not-resolve-import: error 1`] = `
-"Could not resolve ./func. See index.js:1:14
-
+"index.js:1:14: Could not resolve ./func
 > 1 | import a from \\"./func\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-doesnt-export-default: error 1`] = `
-"./a doesn't export default. See index.js:1:7
-
+"index.js:1:7: ./a doesn't export default
 > 1 | import a from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-doesnt-export-default-export: error 1`] = `
-"./a doesn't export default. See index.js:1:7
-
+"index.js:1:7: ./a doesn't export default
 > 1 | export b from \\"./a\\";
   2 | "
 `;
 
 exports[`builder Fixture: error-doesnt-export-name-export: error 1`] = `
-"./a doesn't export b. See index.js:1:9
-
+"index.js:1:9: ./a doesn't export b
 > 1 | export { b } from \\"./a\\";
   2 | "
 `;
 
 exports[`builder Fixture: error-doesnt-export-name-import: error 1`] = `
-"./a doesn't export b. See index.js:1:9
-
+"index.js:1:9: ./a doesn't export b
 > 1 | import { b } from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-dont-import-dist: error 1`] = `
-"Don't import the destination file. See index.js:1:7
-
+"index.js:1:7: Don't import the destination file
 > 1 | import \\"./atual/dist.js\\";
   2 | "
 `;
@@ -2403,43 +2395,37 @@ exports[`builder Fixture: error-duplicate-import-namespace: error 1`] = `
 `;
 
 exports[`builder Fixture: error-empty-import: error 1`] = `
-"Empty import. See index.js:1:19
-
+"index.js:1:19: Empty import
 > 1 | import * as a from \\"\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-exports-nothing-export: error 1`] = `
-"./a exports nothing. Looking for default. See index.js:1:7
-
+"index.js:1:7: ./a exports nothing. Looking for default
 > 1 | import a from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-exports-nothing-export-namespace: error 1`] = `
-"./a exports nothing. See index.js:1:0
-
+"index.js:1:0: ./a exports nothing
 > 1 | export * from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-exports-nothing-export-namespace-as: error 1`] = `
-"./a exports nothing. See index.js:1:7
-
+"index.js:1:7: ./a exports nothing
 > 1 | export * as a from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-exports-nothing-import: error 1`] = `
-"./a exports nothing. See index.js:1:7
-
+"index.js:1:7: ./a exports nothing
 > 1 | import * as a from \\"./a\\"; // eslint-disable-line
   2 | "
 `;
 
 exports[`builder Fixture: error-shows-original-location: error 1`] = `
-"./a doesn't export default. See index.js:5:7
-
+"index.js:5:7: ./a doesn't export default
   3 | // Stuff
   4 | 
 > 5 | import b from \\"./a\\"; // eslint-disable-line

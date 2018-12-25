@@ -231,31 +231,12 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/basic 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+ [entry]  index.js  5.17 kB   
 
---------
-
-Assets:
-
-[entry] atual/index.js | 5.17 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-../package.json
+√  Built!
+Watching 8 files...
 "
 `;
 
@@ -495,145 +476,42 @@ console.log(_a.default);
 `;
 
 exports[`watcher Fixture: watch-fixtures/custom-code-frame 2`] = `
-"
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a. See index.js:1:14
-
+"Building...
+×  index.js:1:14: Could not resolve ./a
 > 1 | import a from \\"./a\\";
   2 | 
   3 | console.log( a );
   4 | 
   5 | console.log( a );
   6 | 
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-../package.json
-
---------
-
-File working/a.js was added.
-
---------
-
-Starting new build...
-
---------
-
-./a exports nothing. Looking for default. See index.js:1:7
-
+Watching 11 files...
+i  File working/a.js was added.
+Building...
+×  index.js:1:7: ./a exports nothing. Looking for default
 > 1 | import a from \\"./a\\";
   2 | 
   3 | console.log( a );
   4 | 
   5 | console.log( a );
   6 | 
+Watching 11 files...
+i  File working/a.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.js  5.28 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-../package.json
-
---------
-
-File working/a.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.28 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-../package.json
-
---------
-
-File working/a.js was removed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a. See index.js:1:14
-
+√  Built!
+Watching 11 files...
+i  File working/a.js was removed.
+Building...
+×  index.js:1:14: Could not resolve ./a
 > 1 | import a from \\"./a\\";
   2 | 
   3 | console.log( a );
   4 | 
   5 | console.log( a );
   6 | 
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-../package.json
+Watching 11 files...
 "
 `;
 
@@ -873,33 +751,13 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/performance-hints 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+          index.js      266 B   > 100 B [performance!] 
+ [entry]  index.html  5.34 kB   > 10 B [performance!]  
 
---------
-
-Assets:
-
-atual/index.js | 266 B > 100 B [performance!]
-[entry] atual/index.html | 5.34 kB > 10 B [performance!]
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.html
-working/index.js
-working/package.json
+√  Built!
+Watching 9 files...
 "
 `;
 
@@ -1134,96 +992,25 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/resolve-recovery 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+ [entry]  index.js  5.18 kB   
 
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/index.js
-working/package.json
-working/x
-working/x.js
-
---------
-
-File working/x.js was removed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./x. See index.js:1:14
-
+√  Built!
+Watching 8 files...
+i  File working/x.js was removed.
+Building...
+×  index.js:1:14: Could not resolve ./x
 > 1 | import x from \\"./x\\";
   2 | 
+Watching 11 files...
+i  File working/x/index.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.js  5.2 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/index.js
-working/package.json
-working/x
-working/x.js
-working/x/index
-working/x/index.js
-working/x/package.json
-
---------
-
-File working/x/index.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.2 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/index.js
-working/package.json
-working/x
-working/x.js
-working/x/index
-working/x/index.js
-working/x/package.json
+√  Built!
+Watching 11 files...
 "
 `;
 
@@ -1466,102 +1253,26 @@ __quase_builder__.r('index.html|(0,js)');</script>
 `;
 
 exports[`watcher Fixture: watch-fixtures/script-inline-in-html 2`] = `
-"
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a.js. See index.html|(0,js):2:24
-
+"Building...
+×  index.html|(0,js):2:24: Could not resolve ./a.js
   1 | 
 > 2 |       import { a } from \\"./a.js\\";
   3 |     
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a.js
-working/a.js.js
-working/a.js/index
-working/a.js/index.js
-working/a.js/package.json
-working/index.html
-working/package.json
-
---------
-
-File working/a.js was added.
-
---------
-
-Starting new build...
-
---------
-
-./a.js exports nothing. Looking for a. See index.html|(0,js):2:15
-
+Watching 11 files...
+i  File working/a.js was added.
+Building...
+×  index.html|(0,js):2:15: ./a.js exports nothing. Looking for a
   1 | 
 > 2 |       import { a } from \\"./a.js\\";
   3 |     
+Watching 11 files...
+i  File working/a.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.html  5.38 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a.js
-working/a.js.js
-working/a.js/index
-working/a.js/index.js
-working/a.js/package.json
-working/index.html
-working/package.json
-
---------
-
-File working/a.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.html | 5.38 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a.js
-working/a.js.js
-working/a.js/index
-working/a.js/index.js
-working/a.js/package.json
-working/index.html
-working/package.json
+√  Built!
+Watching 11 files...
 "
 `;
 
@@ -1794,44 +1505,18 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/watches-missing-entry 2`] = `
-"
---------
+"Building...
+×  Could not find index.js
+    at _default (C:\\\\Users\\\\JOTA\\\\OneDrive\\\\src\\\\quasejs\\\\packages\\\\builder\\\\dist\\\\utils\\\\error.js:16:17)
+    at Module._load (C:\\\\Users\\\\JOTA\\\\OneDrive\\\\src\\\\quasejs\\\\packages\\\\builder\\\\dist\\\\module.js:203:15)
+Watching 1 files...
+i  File working/index.js was added.
+Building...
 
-Starting new build...
+ [entry]  index.js  5.12 kB   
 
---------
-
-Could not find index.js
-
-Build failed.
-
---------
-
-Watching:
-
-working/index.js
-
---------
-
-File working/index.js was added.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.12 kB
-
-Done building.
-
---------
-
-Watching:
-
-working/index.js
+√  Built!
+Watching 1 files...
 "
 `;
 
@@ -2066,133 +1751,30 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/watches-missing-file 2`] = `
-"
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a. See index.js:1:14
-
+"Building...
+×  index.js:1:14: Could not resolve ./a
 > 1 | import a from \\"./a\\";
   2 | 
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-
---------
-
-File working/a.js was added.
-
---------
-
-Starting new build...
-
---------
-
-./a exports nothing. Looking for default. See index.js:1:7
-
+Watching 11 files...
+i  File working/a.js was added.
+Building...
+×  index.js:1:7: ./a exports nothing. Looking for default
 > 1 | import a from \\"./a\\";
   2 | 
+Watching 11 files...
+i  File working/a.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.js  5.18 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-
---------
-
-File working/a.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-
---------
-
-File working/a.js was removed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a. See index.js:1:14
-
+√  Built!
+Watching 11 files...
+i  File working/a.js was removed.
+Building...
+×  index.js:1:14: Could not resolve ./a
 > 1 | import a from \\"./a\\";
   2 | 
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
+Watching 11 files...
 "
 `;
 
@@ -2427,133 +2009,29 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/watches-modules-in-cache 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+ [entry]  index.js  5.18 kB   
 
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-
---------
-
-File working/index.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./stuff. See index.js:1:18
-
+√  Built!
+Watching 8 files...
+i  File working/index.js was changed.
+Building...
+×  index.js:1:18: Could not resolve ./stuff
 > 1 | import stuff from './stuff';
-
-Build failed.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-working/stuff
-working/stuff.js
-working/stuff/index
-working/stuff/index.js
-working/stuff/package.json
-
---------
-
-File working/a.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./stuff. See index.js:1:18
-
+Watching 13 files...
+i  File working/a.js was changed.
+Building...
+×  index.js:1:18: Could not resolve ./stuff
 > 1 | import stuff from './stuff';
+Watching 13 files...
+i  File working/index.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.js  5.18 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-working/stuff
-working/stuff.js
-working/stuff/index
-working/stuff/index.js
-working/stuff/package.json
-
---------
-
-File working/index.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-working/stuff
-working/stuff.js
-working/stuff/index
-working/stuff/index.js
-working/stuff/package.json
+√  Built!
+Watching 13 files...
 "
 `;
 
@@ -2788,62 +2266,19 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/watches-other-extensions 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+ [entry]  index.js  5.18 kB   
 
---------
+√  Built!
+Watching 9 files...
+i  File working/a.js was added.
+Building...
 
-Assets:
+ [entry]  index.js  5.17 kB   
 
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a.ts
-working/index.js
-working/package.json
-
---------
-
-File working/a.js was added.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.17 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a.ts
-working/index.js
-working/package.json
+√  Built!
+Watching 9 files...
 "
 `;
 
@@ -3078,97 +2513,24 @@ Object {
 `;
 
 exports[`watcher Fixture: watch-fixtures/watches-rename 2`] = `
-"
---------
+"Building...
 
-Starting new build...
+ [entry]  index.js  5.18 kB   
 
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/index.js
-working/package.json
-
---------
-
-File working/a.js was removed.
-
---------
-
-Starting new build...
-
---------
-
-Could not resolve ./a. See index.js:1:14
-
+√  Built!
+Watching 8 files...
+i  File working/a.js was removed.
+Building...
+×  index.js:1:14: Could not resolve ./a
 > 1 | import a from \\"./a\\";
   2 | 
+Watching 11 files...
+i  File working/index.js was changed.
+Building...
 
-Build failed.
+ [entry]  index.js  5.18 kB   
 
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/index.js
-working/package.json
-
---------
-
-File working/index.js was changed.
-
---------
-
-Starting new build...
-
---------
-
-Assets:
-
-[entry] atual/index.js | 5.18 kB
-
-Done building.
-
---------
-
-Watching:
-
-../../../package.json
-../../package.json
-../package.json
-package.json
-working/a
-working/a.js
-working/a/index
-working/a/index.js
-working/a/package.json
-working/b
-working/b.js
-working/index.js
-working/package.json
+√  Built!
+Watching 13 files...
 "
 `;

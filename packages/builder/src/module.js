@@ -164,15 +164,17 @@ export default class Module {
       error( message, {
         id: this.id,
         code: originalData == null ? null : this.ctx.dataToString( originalData ),
-        loc
-      }, this.builder.options.codeFrameOptions );
+        loc,
+        codeFrameOptions: this.builder.options.codeFrameOptions
+      } );
 
     } else {
 
       error( message, {
         id: this.id,
-        loc
-      }, this.builder.options.codeFrameOptions );
+        loc,
+        codeFrameOptions: this.builder.options.codeFrameOptions
+      } );
     }
   }
 

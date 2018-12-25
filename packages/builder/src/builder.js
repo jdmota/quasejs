@@ -14,6 +14,7 @@ import Watcher from "./watcher";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
+const EventEmitter = require( "events" );
 const { getOnePlugin } = require( "@quase/get-plugins" );
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
@@ -144,10 +145,9 @@ export class Build {
 
 }
 
-export default class Builder {
+export default class Builder extends EventEmitter {
 
   +options: Options;
-  +warn: Function;
   +reporter: { +plugin: Function, +options: Object };
   +context: BuilderContext;
   +farm: Farm;
@@ -160,7 +160,8 @@ export default class Builder {
   };
   build: Build;
 
-  constructor( options: Options, warn: Function ) {
+  constructor( options: Options ) {
+    super();
 
     const cwd = path.resolve( options.cwd ),
         context = resolvePath( options.context, cwd ),
@@ -188,7 +189,6 @@ export default class Builder {
     serviceWorker.stripPrefixMulti[ `${dest}${path.sep}`.replace( /\\/g, "/" ) ] = publicPath;
     serviceWorker.filename = serviceWorker.filename ? resolvePath( serviceWorker.filename, dest ) : "";
 
-    this.warn = warn;
     this.reporter = !reporter || reporter === "default" ? Reporter : getOnePlugin( options.reporter );
     this.context = new BuilderContext( this.options );
     this.farm = new Farm( {
@@ -203,6 +203,10 @@ export default class Builder {
     if ( watch ) {
       this.watcher = new Watcher( this );
     }
+  }
+
+  warn( warning: any ) {
+    this.emit( "warning", warning );
   }
 
   registerFiles( files: WatchedFiles, computation: ComputationApi ) {
@@ -329,6 +333,10 @@ export default class Builder {
 
   stop() {
     this.farm.stop();
+    const { watcher } = this;
+    if ( watcher ) {
+      watcher.stop();
+    }
   }
 
   async runBuild() {
@@ -375,7 +383,10 @@ export default class Builder {
 
     if ( swFile ) {
       const swPrecache = require( "sw-precache" );
-      const serviceWorkerCode = await swPrecache.generate( this.options.serviceWorker );
+      const serviceWorkerCode = await swPrecache.generate( {
+        ...this.options.serviceWorker,
+        logger: () => {}
+      } );
 
       await fs.outputFile( swFile, serviceWorkerCode );
 

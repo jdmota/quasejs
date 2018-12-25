@@ -2,7 +2,7 @@
 import blank from "./utils/blank";
 import error from "./utils/error";
 import isEmpty from "./utils/is-empty";
-import { locToString } from "./utils/loc";
+import { locToString } from "./utils/error";
 import type Module from "./module";
 import type { Loc } from "./types";
 import type { Graph } from "./graph";

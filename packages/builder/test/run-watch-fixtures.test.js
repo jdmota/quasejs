@@ -4,17 +4,18 @@ import transformConfig from "./transform-config";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
+const stripAnsi = require( "strip-ansi" );
 
 const FIXTURES = path.resolve( "packages/builder/test/watch-fixtures" );
 const folders = fs.readdirSync( FIXTURES );
 
 class TestReporter extends Reporter {
-  constructor( options, builder, emitter ) {
-    super( options, builder, emitter );
-    this.log = options.log;
+  constructor( opts, builder ) {
+    super( opts, builder );
+    this.output = "";
   }
-  onWatching( files ) {
-    this.onWatchingAll( files );
+  _log( message ) {
+    this.output += stripAnsi( message ) + "\n";
   }
 }
 
@@ -61,23 +62,20 @@ describe( "watcher", () => {
         }
       };
 
-      let output = "";
-
       config.reporter = [
         TestReporter,
         {
-          hideDates: true,
-          log( str ) {
-            output += str;
-          }
+          logLevel: 5,
+          color: false,
+          emoji: false,
+          isTest: true
         }
       ];
 
       config = transformConfig( config, fixturePath );
 
-      const reporter = index( config, true );
+      const { reporter, builder, watcher } = index( config, true );
 
-      const watcher = reporter.emitter;
       watcher.watcher.close();
 
       function update( file, type ) {
@@ -100,7 +98,7 @@ describe( "watcher", () => {
       async function next() {
 
         if ( i >= operations.length ) {
-          watcher.stop();
+          builder.stop();
           resolve();
           return;
         }
@@ -150,7 +148,7 @@ describe( "watcher", () => {
       await promise;
 
       expect( assets ).toMatchSnapshot();
-      expect( output ).toMatchSnapshot();
+      expect( reporter.output ).toMatchSnapshot();
 
     } );
 
