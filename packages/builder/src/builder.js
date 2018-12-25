@@ -44,15 +44,17 @@ export class Build {
     this.promises = [];
     this.graph = new Graph();
     this.cancelled = false;
-    this.summary = new Map();
 
     if ( prevBuild ) {
       for ( const module of prevBuild.graph.modules.values() ) {
         this.graph.add( module );
       }
       this.buildId = prevBuild.buildId + 1;
+      // If a build fails, don't lose the summary of the last successful build
+      this.summary = prevBuild.summary;
     } else {
       this.buildId = 0;
+      this.summary = new Map();
     }
   }
 
@@ -341,7 +343,6 @@ export default class Builder extends EventEmitter {
 
   async runBuild() {
     this.build.cancel();
-    const previousSummary = this.build.summary;
     const build = this.build = new Build( this.build, this );
 
     if ( !this.worker ) {
@@ -349,7 +350,8 @@ export default class Builder extends EventEmitter {
     }
 
     const startTime = Date.now();
-    const emptyDirPromise = this.options.optimization.cleanup ? fs.emptyDir( this.options.dest ) : Promise.resolve();
+    const emptyDirPromise =
+      this.options.optimization.cleanup ? fs.emptyDir( this.options.dest ) : Promise.resolve();
 
     for ( const path of this.options.entries ) {
       build.graph.addEntry(
@@ -401,7 +403,8 @@ export default class Builder extends EventEmitter {
     let updates;
 
     if ( this.options.hmr ) {
-      const newSummary = build.summary;
+      const previousSummary = build.summary;
+      const newSummary = new Map();
       updates = [];
 
       for ( const [ id, m ] of build.graph.modules ) {
@@ -452,6 +455,8 @@ export default class Builder extends EventEmitter {
           } );
         }
       }
+
+      build.summary = newSummary;
     }
 
     return {

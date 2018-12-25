@@ -104,6 +104,7 @@ function createHotRuntime( hmr ) {
     const seen = new Set();
     let queue = [];
     let shouldReloadApp = false;
+    let reloadCauseEntry = false;
 
     for ( const { id, file, prevFile, reloadApp, requiredAssets } of updates ) {
       if ( file ) {
@@ -117,6 +118,8 @@ function createHotRuntime( hmr ) {
       }
       shouldReloadApp = shouldReloadApp || reloadApp;
     }
+
+    reloadCauseEntry = shouldReloadApp;
 
     for ( const { id, file } of updates ) {
       const api = hmrApis.get( id );
@@ -156,7 +159,7 @@ function createHotRuntime( hmr ) {
 
     if ( shouldReloadApp ) {
       hmrReloadApp(
-        update.reloadApp ? "Entry changed" : "Immediate entry dependency requested reload"
+        reloadCauseEntry ? "Entry changed" : "Immediate entry dependency requested reload"
       );
     }
   }
@@ -239,7 +242,7 @@ function createHotRuntime( hmr ) {
       switch ( data.type ) {
         case "update":
           lastHotUpdate = lastHotUpdate.then( () => {
-            console.log( "[quase-builder] update", data.updates );
+            console.log( "[quase-builder] ✨", data.updates );
             state.success = true;
             updateUI();
             removeErrorOverlay();
@@ -247,7 +250,7 @@ function createHotRuntime( hmr ) {
           } );
           break;
         case "error":
-          console.error( "[quase-builder] error:", data.error );
+          console.error( "[quase-builder] 🚨", data.error );
           state.success = false;
           updateUI();
           createErrorOverlay( data.error );
