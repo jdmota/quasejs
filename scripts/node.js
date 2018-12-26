@@ -2,7 +2,9 @@ const path = require( "path" );
 const Module = require( "module" );
 const resolver = require( "./resolver" );
 
-require( "@babel/register" );
+require( "@babel/register" )( {
+  extensions: [ ".js", ".ts" ]
+} );
 
 Module._resolveFilename = function( request, parent /* isMain, options */ ) {
   const filename = resolver( request, {

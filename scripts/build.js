@@ -17,7 +17,9 @@ const dist = path.join( "packages", pkg, "dist" ).replace( /\\+/g, "/" );
 
 console.log( `Running build in ${pkg}...` );
 
-fs.emptyDir( dist ).then( () => execa( "babel", [ src, "--out-dir", dist, "--copy-files" ], {
+const babelArgs = [ src, "--out-dir", dist, "--copy-files", "--extensions", ".js,.ts" ];
+
+fs.emptyDir( dist ).then( () => execa( "babel", babelArgs, {
   stdio: "inherit"
 } ) ).catch( () => {
   process.exitCode = 1;
