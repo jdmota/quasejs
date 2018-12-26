@@ -283,7 +283,7 @@ export default class Module {
 
   async _handleDep(
     request: string,
-    { loc, async }: NotResolvedDep,
+    { loc, async, typeTransforms }: NotResolvedDep,
     computation: ComputationApi,
     build: Build
   ): Promise<ModuleDep> {
@@ -298,7 +298,7 @@ export default class Module {
       prevId: null,
       path,
       type: this.builder.pluginsRunner.getType( path )
-    }, this );
+    }, this, typeTransforms );
 
     let splitPoint = this.builder.pluginsRunner.isSplitPoint( this.ctx, required.ctx );
 

@@ -105,14 +105,16 @@ export class Build {
     this.promises.push( module.process( this ) );
   }
 
-  addModuleAndTransform( arg: ModuleArg, importer: ?Module ): Module {
-    return this.transformModuleType( this.addModule( arg ), importer );
+  addModuleAndTransform( arg: ModuleArg, importer: ?Module, typeTransforms: ?$ReadOnlyArray<string> ): Module {
+    return this.transformModuleType( this.addModule( arg ), importer, typeTransforms );
   }
 
-  transformModuleType( startModule: Module, importer: ?Module ): Module {
+  transformModuleType( startModule: Module, importer: ?Module, typeTransforms: ?$ReadOnlyArray<string> ): Module {
 
     let m = startModule;
-    const generation = this.builder.pluginsRunner.getTypeTransforms( m.ctx, importer && importer.ctx );
+    const generation =
+      typeTransforms ||
+      this.builder.pluginsRunner.getTypeTransforms( m.ctx, importer && importer.ctx );
 
     for ( let i = 0; i < generation.length; i++ ) {
       if ( m.type === generation[ i ] ) {

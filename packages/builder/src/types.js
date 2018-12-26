@@ -42,7 +42,8 @@ export type ProvidedPluginsArr<T> = $ReadOnlyArray<ProvidedPlugin<T>>;
 
 export type NotResolvedDep = {
   +loc?: ?Loc,
-  +async?: ?boolean
+  +async?: ?boolean,
+  +typeTransforms?: ?$ReadOnlyArray<string>
 };
 
 export type InnerDep = {
