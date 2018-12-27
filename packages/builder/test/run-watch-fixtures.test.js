@@ -67,14 +67,14 @@ describe( "watcher", () => {
         {
           logLevel: 5,
           color: false,
-          emoji: false,
           isTest: true
         }
       ];
 
       config = transformConfig( config, fixturePath );
 
-      const { reporter, builder, watcher } = index( config, true );
+      const { reporter, builder } = index( config, true );
+      const { watcher } = builder;
 
       watcher.watcher.close();
 
