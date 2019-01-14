@@ -1,5 +1,4 @@
-// @flow
-import { type Position } from "./tokenizer";
+import { Position } from "./tokenizer";
 
 export function positionToString( pos: Position ) {
   return `${pos.line}:${pos.column}`;
@@ -7,8 +6,8 @@ export function positionToString( pos: Position ) {
 
 class ErrorWithLocation extends Error {
 
-  +originalMessage: string;
-  +loc: Position;
+  originalMessage: string;
+  loc: Position;
 
   constructor( message: string, loc: Position ) {
     super( `${message} (at ${positionToString( loc )})` );

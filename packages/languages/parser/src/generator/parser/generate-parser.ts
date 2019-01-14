@@ -1,44 +1,45 @@
-import { printLoc } from "./utils";
-import generateTokenizer from "./generate-tokenizer";
+import generateTokenizer from "../tokenizer/generate-tokenizer";
+import { Node } from "../grammar-parser";
+import Grammar from "../grammar";
+import ChoicesHandler from "../choices-handler";
 
 class Generator {
 
-  constructor( grammar ) {
+  grammar: Grammar;
+  funcs: string[];
+  nodeToFuncId: Map<Node, number>;
+  uuid: number;
+
+  constructor( grammar: Grammar ) {
     this.grammar = grammar;
     this.funcs = [];
     this.nodeToFuncId = new Map();
     this.uuid = 1;
   }
 
-  genCall( node ) {
+  genCall( node: Node ): string {
     switch ( node.type ) {
-      case "Rule":
+      case "ParserRule":
         return `this.f${this.gen( node )}();`;
       case "Options":
-        if ( node.options.length === 1 ) {
-          return this.genCall( node.options[ 0 ] );
-        }
         return `this.f${this.gen( node )}(s);`;
       case "Concat":
-        if ( node.body.length === 1 ) {
-          return this.genCall( node.body[ 0 ] );
-        }
         return `this.f${this.gen( node )}(s);`;
       case "Optional":
       case "ZeroOrMore":
       case "OneOrMore":
         return `this.f${this.gen( node )}(s);`;
+      case "Empty":
+        return "";
+      case "LexerRule":
+      case "String":
+      case "Regexp":
+        return `this.expect(${this.grammar.nodeToId.get( node )});`;
       case "Id":
-        if ( this.grammar.isVariable( node.name ) ) {
-          return this.genCall( this.grammar.getRule( node.name ) );
-        }
-        if ( this.grammar.isTerminal( node.name ) ) {
-          return `this.expect(${JSON.stringify( node.name )});`;
-        }
-        throw new Error( `Rule or Terminal ${node.name} does not exist (${printLoc( node )})` );
+        return this.genCall( this.grammar.getRule( node.name, node ) );
       case "Named":
-        if ( node.name === "type" ) {
-          throw new Error( `Cannot have named parameter called 'type' (${printLoc( node )})` );
+        if ( node.scope == null ) {
+          throw new Error( "Assertion error" );
         }
         return node.scope.names[ node.name ] === "array" ?
           `s.${node.name}.push(${this.genCall( node.item ).slice( 0, -1 )});` :
@@ -48,7 +49,7 @@ class Generator {
     }
   }
 
-  genOptionsCode( choices ) {
+  genOptionsCode( choices: ChoicesHandler ) {
     let fun = `switch(this.token.label){`;
 
     for ( const [ look, options ] of choices.lookToNodes ) {
@@ -68,16 +69,17 @@ class Generator {
     return fun;
   }
 
-  genDecisionCode( choices, node, inLoop ) {
+  genDecisionCode( choices: ChoicesHandler, node: Node, inLoop: boolean ) {
     let code = `switch(this.token.label){`;
+    const looks = choices.nodeToLooks.get( node ) || [];
 
-    for ( const look of choices.nodeToLooks.get( node ) ) {
+    for ( const look of looks ) {
       if ( look != null ) {
         code += `case ${JSON.stringify( look )}:`;
       }
     }
 
-    const canBeEmpty = choices.nodeToLooks.get( node ).includes( null );
+    const canBeEmpty = looks.includes( null );
     if ( canBeEmpty ) {
       code += `default:${this.genCall( node )}`;
     } else {
@@ -91,9 +93,9 @@ class Generator {
     return code;
   }
 
-  genCode( node ) {
+  genCode( node: Node ): string {
     switch ( node.type ) {
-      case "Rule":
+      case "ParserRule":
         return `${this.genCode( node.rule )}${
           node === this.grammar.firstRule ? `this.expect("eof");` : ""
         }`;
@@ -126,11 +128,11 @@ class Generator {
         }}`;
       }
       default:
-        throw new Error( `Assertion error: ${node.type}` );
+        return this.genCall( node );
     }
   }
 
-  gen( node ) {
+  gen( node: Node ) {
     if ( this.nodeToFuncId.has( node ) ) {
       return this.nodeToFuncId.get( node );
     }
@@ -140,13 +142,13 @@ class Generator {
 
     const fun = this.genCode( node );
 
-    if ( node.names ) {
+    if ( node.type === "ParserRule" ) {
       const entries = Object.entries( node.names );
       const scopeObj = entries.map(
         ( [ key, value ] ) => `${key}:${value === "array" ? "[]" : "null"}`
       ).join( "," );
-      const type = node.type === "Rule" ? `type:${JSON.stringify( node.name )},` : "";
-      this.funcs.push( `f${id}(){let s={${type}${scopeObj}};${fun}return s;}` );
+      const type = `type:${JSON.stringify( node.name )},`;
+      this.funcs.push( `f${id}(){let l=this.startNode();let s={${type}${scopeObj}};${fun}s.loc=this.locNode(l);return s;}` );
     } else {
       this.funcs.push( `f${id}(s){${fun}}` );
     }
@@ -154,17 +156,30 @@ class Generator {
   }
 
   do() {
+    const tokenizer = generateTokenizer( this.grammar );
+
     this.funcs.push( `constructor(text){super(new Tokenizer(text));}` );
+    this.funcs.push( `
+    expect( t ) {
+      const token = this.eat( t );
+      if ( token == null ) {
+        const labels = this.tokenizer.labels;
+        throw this.error(
+          \`Unexpected token \${labels[this.token.label]||this.token.label}, expected \${labels[t]||t}\`
+        );
+      }
+      return token;
+    }
+    ` );
 
     const call = this.genCall( this.grammar.firstRule );
     const imports = `const Q=require("@quase/parser");`;
-    const tokenizer = generateTokenizer( this.grammar.terminals );
     const parser = `class Parser extends Q.Parser{\n${this.funcs.join( "\n" )}\nparse(){return ${call}}}`;
     return `${imports}\n${tokenizer}\n${parser}`;
   }
 
 }
 
-export default function generate( grammar ) {
+export default function generate( grammar: Grammar ) {
   return new Generator( grammar ).do();
 }

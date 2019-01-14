@@ -19,21 +19,21 @@ function runParser( generation, text ) {
 it( "basic", () => {
 
   const grammar = new Grammar(
-    {
-      FUN: "fun",
-      END: "end",
-      COMMA: ",",
-      ARROW: "->",
-      ID: /(i|d)(i|d|0|1|2)*/,
-      NUM: /(0|1|2)+/,
-      // EMPTY: /a?/,
-      // ID: /[$_a-z][$_a-z0-9]*/i,
-      // NUM: /[0-9]+/i
-    },
-    {
-      START: "FUN ( params:ID ( COMMA params:ID )* )? ARROW body:EXP END",
-      EXP: "( stuff:NUM | stuff:ID )"
-    }
+    `
+    @lexer
+    FUN: 'fun';
+    END: 'end';
+    COMMA: ',';
+    ARROW: '->';
+    fragment ID_START: /[a-zA-Z]/;
+    fragment ID_CHAR: /[a-zA-Z0-9]/;
+    ID: ID_START ID_CHAR*;
+    NUM: /[0-9]+/;
+
+    @parser
+    start PROGRAM: FUN ( params+=ID ( COMMA params+=ID )* )? ARROW body=EXP END;
+    EXP: stuff=NUM | stuff=ID;
+    `
   );
 
   const generation = grammar.generate();
@@ -48,17 +48,29 @@ it( "basic", () => {
 
 } );
 
+it( "supports empty", () => {
+
+  const grammar = new Grammar(
+    `
+    start RULE1 : 'A' | ;
+    `
+  );
+
+  const generation = grammar.generate();
+  const conflicts = grammar.reportConflicts();
+
+  expect( generation ).toMatchSnapshot( "generation" );
+  expect( conflicts ).toMatchSnapshot( "conflicts" );
+
+} );
+
 it( "check conflicts on repetitions", () => {
 
   const grammar = new Grammar(
-    {
-      A: "A",
-      B: "B",
-    },
-    {
-      RULE1: "A* A RULE2",
-      RULE2: "B+ B"
-    }
+    `
+    start RULE1 : 'A'* 'A' RULE2;
+    RULE2 : 'B'+ 'B';
+    `
   );
 
   const generation = grammar.generate();

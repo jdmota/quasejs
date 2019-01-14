@@ -39,7 +39,7 @@
       "<rootDir>/packages/package-manager/test/test-folders"
     ],
     "transform": {
-      "^.+\\.jsx?$": "<rootDir>/scripts/babel-jest"
+      "^.+\\.(j|t)s$": "<rootDir>/scripts/babel-jest"
     },
     "testRegex": "/test/(index|.+\\.test)\\.js$",
     "testEnvironment": "node"

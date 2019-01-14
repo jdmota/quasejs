@@ -1,8 +1,18 @@
 import { printLoc } from "./utils";
+import { Node, OptionalOrRepetition, Empty } from "./grammar-parser";
+import Grammar from "./grammar";
+
+type Look = number | null;
 
 export default class ChoicesHandler {
 
-  constructor( grammar, parentNode ) {
+  grammar: Grammar;
+  parentNode: Node;
+  lookToNodes: Map<Look, Node[]>;
+  nodeToLooks: Map<Node, Look[]>;
+  conflicts: Set<Look>;
+
+  constructor( grammar: Grammar, parentNode: Node ) {
     this.grammar = grammar;
     this.parentNode = parentNode;
     this.lookToNodes = new Map();
@@ -10,12 +20,12 @@ export default class ChoicesHandler {
     this.conflicts = new Set();
   }
 
-  set( look, node ) {
+  set( look: Look, node: Node ) {
     this.setLookToNode( look, node );
     this.setNodeToLook( node, look );
   }
 
-  setLookToNode( look, node ) {
+  setLookToNode( look: Look, node: Node ) {
     let arr = this.lookToNodes.get( look );
     if ( arr ) {
       arr.push( node );
@@ -26,7 +36,7 @@ export default class ChoicesHandler {
     }
   }
 
-  setNodeToLook( node, look ) {
+  setNodeToLook( node: Node, look: Look ) {
     let arr = this.nodeToLooks.get( node );
     if ( arr ) {
       arr.push( look );
@@ -36,7 +46,7 @@ export default class ChoicesHandler {
     }
   }
 
-  analyseSingleOption( node ) {
+  analyseSingleOption( node: Node ) {
     for ( const look of this.grammar.lookahead( node ) ) {
       this.set( look, node );
     }
@@ -45,8 +55,8 @@ export default class ChoicesHandler {
     }
   }
 
-  analyseOptionOrEmpty( node ) {
-    const emptyNode = {
+  analyseOptionOrEmpty( node: OptionalOrRepetition ) {
+    const emptyNode: Empty = {
       type: "Empty",
       loc: node.loc
     };
@@ -56,23 +66,21 @@ export default class ChoicesHandler {
     }
   }
 
-  printNode( node ) {
-    if ( node.type === "Concat" && node.body.length === 1 ) {
-      return this.printNode( node.body[ 0 ] );
-    }
-    if ( node.type === "Options" && node.options.length === 1 ) {
-      return this.printNode( node.options[ 0 ] );
-    }
-    return `${node.type}(${printLoc( node )})${node.type === "Id" ? `[${node.name}]` : ""}`;
+  printNode( node: Node ) {
+    const type = node.type === "Id" ? `${node.name} ` :
+      ( node.type === "String" || node.type === "Regexp" ) ? `${node.raw} ` : node.type;
+    return `${type}(${printLoc( node )})`;
   }
 
   report() {
     const reports = [];
     for ( const look of this.conflicts ) {
       const arr = this.lookToNodes.get( look );
-      const conflicts = arr.map( n => this.printNode( n ) ).join( " | " );
+      const conflicts = ( arr as Node[] ).map( n => this.printNode( n ) ).join( " | " );
+      const node = look == null ? null : this.grammar.idToNode.get( look );
+      const name = node == null ? "nothing" : node.type === "LexerRule" ? node.name : node.raw;
       reports.push(
-        `In ${this.printNode( this.parentNode )}, when finding ${look}, choice conflicts: ${conflicts}`
+        `In ${this.printNode( this.parentNode )}, when finding ${name}, choice conflicts: ${conflicts}`
       );
     }
     return reports.join( "\n" );

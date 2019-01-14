@@ -1,23 +1,22 @@
-// @flow
 import { error } from "./error";
 
 /* eslint default-case: 0, no-fallthrough: 0 */
 
 export type Position = {
-  pos: number,
-  line: number,
-  column: number
+  pos: number;
+  line: number;
+  column: number;
 };
 
 export type Location = {
-  start: Position,
-  end: Position
+  start: Position;
+  end: Position;
 };
 
 export type Comment = {
-  type: "CommentBlock" | "CommentLine",
-  value: string,
-  loc: Location
+  type: "CommentBlock" | "CommentLine";
+  value: string;
+  loc: Location;
 };
 
 export const FAKE_LOC = {
@@ -38,9 +37,9 @@ const lineBreakG = new RegExp( lineBreak.source, "g" );
 
 export class Tokenizer<Token> {
 
-  +input: string;
-  +inputLen: number;
-  +comments: Comment[];
+  input: string;
+  inputLen: number;
+  comments: Comment[];
   pos: number;
   _lineStart: number;
   _curLine: number;

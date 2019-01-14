@@ -9,6 +9,6 @@
   "main": "dist/index.js",
   "module": "src/index.js",
   "dependencies": {
-    "regexp-tree": "^0.0.85"
+    "regexp-tree": "^0.0.86"
   }
 }

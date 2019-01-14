@@ -15,7 +15,7 @@ function toLocal( path ) {
 module.exports = function( path, options ) {
   const resolved = resolve.sync( path, {
     basedir: options.basedir,
-    extensions: options.extensions,
+    extensions: [ ".js", ".ts" ],
     moduleDirectory: options.moduleDirectory,
     paths: options.paths,
     rootDir: options.rootDir,

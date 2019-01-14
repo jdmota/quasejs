@@ -1,15 +1,14 @@
-// @flow
-import { type Position, type Location, Tokenizer } from "./tokenizer";
+import { Position, Location, Tokenizer } from "./tokenizer";
 import { error } from "./error";
 
-export class Parser<Token: { +label: string }> {
+export class Parser<Token extends { label: string }> {
 
-  +tokenizer: Tokenizer<Token>;
+  tokenizer: Tokenizer<Token>;
   token: Token;
   tokenLoc: Location;
   start: Position;
   lastTokenEnd: Position;
-  lookaheadState: ?{ token: Token, loc: Location };
+  lookaheadState: { token: Token; loc: Location } | null;
 
   constructor( tokenizer: Tokenizer<Token> ) {
     this.tokenizer = tokenizer;
@@ -35,7 +34,7 @@ export class Parser<Token: { +label: string }> {
     };
   }
 
-  error( message: string, pos: ?Position ) {
+  error( message: string, pos?: Position ) {
     throw error( message, pos || this.tokenLoc.start );
   }
 
@@ -56,7 +55,7 @@ export class Parser<Token: { +label: string }> {
   }
 
   match( t: string | Token ): boolean {
-    return typeof t === "string" ? this.token.label === t : this.token === t;
+    return typeof t === "object" ? this.token === t : this.token.label === t;
   }
 
   eat( t: string | Token ): Token | null {
@@ -71,12 +70,14 @@ export class Parser<Token: { +label: string }> {
   expect( t: string | Token ): Token {
     const token = this.eat( t );
     if ( token == null ) {
-      throw this.error( `Unexpected token ${this.token.label}, expected ${typeof t === "string" ? t : t.label}` );
+      throw this.error(
+        `Unexpected token ${this.token.label}, expected ${typeof t === "object" ? t.label : t}`
+      );
     }
     return token;
   }
 
-  unexpected( t: ?Token ) {
+  unexpected( t?: Token ) {
     throw this.error( `Unexpected token ${this.token.label}${t ? `, expected ${t.label}` : ""}` );
   }
 
@@ -101,10 +102,10 @@ export class Parser<Token: { +label: string }> {
   parseList<T>(
     middle: Token,
     close: Token,
-    each: ( { stop: boolean } ) => T,
-    noEmptyList: ?boolean,
-    ignoreLastConsume: ?boolean
-  ): Array<T> {
+    each: ( _: { stop: boolean } ) => T,
+    noEmptyList?: boolean,
+    ignoreLastConsume?: boolean
+  ): T[] {
     const elts = [];
     const step = { stop: false };
     let first = true;
@@ -141,8 +142,8 @@ export class Parser<Token: { +label: string }> {
   parseListWithEmptyItems<T>(
     middle: Token,
     close: Token,
-    each: ( { stop: boolean } ) => T
-  ): Array<T | null> {
+    each: ( _: { stop: boolean } ) => T
+  ): ( T | null )[] {
     const elts = [];
     const step = { stop: false };
     let first = true;

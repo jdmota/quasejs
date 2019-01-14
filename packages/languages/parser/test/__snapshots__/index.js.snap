@@ -3,42 +3,95 @@
 exports[`basic: ast 1`] = `
 Object {
   "body": Object {
+    "loc": Object {
+      "end": Object {
+        "column": 21,
+        "line": 1,
+        "pos": 21,
+      },
+      "start": Object {
+        "column": 16,
+        "line": 1,
+        "pos": 16,
+      },
+    },
     "stuff": Object {
       "image": "10000",
-      "label": "NUM",
+      "label": 6,
+      "labelText": "NUM",
     },
     "type": "EXP",
+  },
+  "loc": Object {
+    "end": Object {
+      "column": 25,
+      "line": 1,
+      "pos": 25,
+    },
+    "start": Object {
+      "column": 0,
+      "line": 1,
+      "pos": 0,
+    },
   },
   "params": Array [
     Object {
       "image": "id1",
-      "label": "ID",
+      "label": 5,
+      "labelText": "ID",
     },
     Object {
       "image": "id2",
-      "label": "ID",
+      "label": 5,
+      "labelText": "ID",
     },
   ],
-  "type": "START",
+  "type": "PROGRAM",
 }
 `;
 
 exports[`basic: ast 2`] = `
 Object {
   "body": Object {
+    "loc": Object {
+      "end": Object {
+        "column": 14,
+        "line": 1,
+        "pos": 14,
+      },
+      "start": Object {
+        "column": 11,
+        "line": 1,
+        "pos": 11,
+      },
+    },
     "stuff": Object {
       "image": "id1",
-      "label": "ID",
+      "label": 5,
+      "labelText": "ID",
     },
     "type": "EXP",
+  },
+  "loc": Object {
+    "end": Object {
+      "column": 18,
+      "line": 1,
+      "pos": 18,
+    },
+    "start": Object {
+      "column": 0,
+      "line": 1,
+      "pos": 0,
+    },
   },
   "params": Array [
     Object {
       "image": "id1",
-      "label": "ID",
+      "label": 5,
+      "labelText": "ID",
     },
   ],
-  "type": "START",
+  "type": "PROGRAM",
 }
 `;
 
@@ -52,13 +105,30 @@ exports[`basic: generation 1`] = `
   class Tokenizer extends Q.Tokenizer{
     constructor(input){
       super(input);
-      this.table=[null,{\\"44\\":9,\\"45\\":10,\\"48\\":12,\\"49\\":12,\\"50\\":12,\\"100\\":8,\\"101\\":5,\\"102\\":2,\\"105\\":8},{\\"117\\":3},{\\"110\\":4},{},{\\"110\\":6},{\\"100\\":7},{},{\\"48\\":8,\\"49\\":8,\\"50\\":8,\\"100\\":8,\\"105\\":8},{},{\\"62\\":11},{},{\\"48\\":12,\\"49\\":12,\\"50\\":12}];
-      this.finals={\\"4\\":\\"FUN\\",\\"7\\":\\"END\\",\\"8\\":\\"ID\\",\\"9\\":\\"COMMA\\",\\"11\\":\\"ARROW\\",\\"12\\":\\"NUM\\"};
+      this.table=[null,c=>c==44?2:c==45?3:48<=c&&c<=57?5:65<=c&&c<=90?6:97<=c&&c<=100?6:c==101?7:c==102?10:103<=c&&c<=122?6:0,c=>0,c=>c==62?4:0,c=>0,c=>48<=c&&c<=57?5:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=109?6:c==110?8:111<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=99?6:c==100?9:101<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=116?6:c==117?11:118<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=109?6:c==110?12:111<=c&&c<=122?6:0,c=>48<=c&&c<=57?6:65<=c&&c<=90?6:97<=c&&c<=122?6:0];
+      this.finals={\\"2\\":3,\\"4\\":4,\\"5\\":6,\\"6\\":5,\\"7\\":5,\\"8\\":5,\\"9\\":2,\\"10\\":5,\\"11\\":5,\\"12\\":1};
+      this.labels=[null,\\"FUN\\",\\"END\\",\\"COMMA\\",\\"ARROW\\",\\"ID\\",\\"NUM\\"];
     }
     initial(){return{label:\\"initial\\"};}
     eof(){return{label:\\"eof\\"};}
-    readToken() {
-  const { input, table, finals } = this;
+    
+codePointAt(index) {
+  const first = this.input.charCodeAt(index);
+  const size = this.input.length;
+  if (
+    first >= 0xD800 && first <= 0xDBFF &&
+    size > index + 1
+  ) {
+    const second = this.input.charCodeAt(index + 1);
+    if (second >= 0xDC00 && second <= 0xDFFF) {
+      return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+    }
+  }
+  return first;
+}
+
+readToken() {
+  const { input, table, finals, labels } = this;
   const length = input.length;
   const prevPos = this.pos;
 
@@ -66,50 +136,66 @@ exports[`basic: generation 1`] = `
   let i = this.pos;
 
   while ( i < length ) {
-    const char = input.charCodeAt( i );
-    const nextState = table[ state ][ char ];
+    const char = this.codePointAt( i );
+    const nextState = table[ state ]( char );
     if ( nextState ) {
       state = nextState;
-      i++;
+      if ( char > 0xffff ) {
+        i += 2;
+      } else {
+        i++;
+      }
     } else {
       break;
     }
   }
 
-  const label = finals[ state ];
-  if ( label ) {
-    const image=input.slice(prevPos,i);
-    const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
-    const newLines=splitted.length-1;
-    this.pos=i;
-    if (newLines>0) {
-      this._lineStart=this.pos-splitted[newLines].length;
-      this._curLine+=newLines;
-    }
-    return {
-      label,
-      image
-    };
+  const id = finals[state];
+  if ( id == null ) {
+    this.unexpectedChar();
   }
-  return this.unexpectedChar();
+  const image=input.slice(prevPos,i);
+  const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+  const newLines=splitted.length-1;
+  this.pos=i;
+  if (newLines>0) {
+    this._lineStart=this.pos-splitted[newLines].length;
+    this._curLine+=newLines;
+  }
+  return {
+    label: id,
+    labelText: this.labels[id],
+    image
+  };
 }
   }
 class Parser extends Q.Parser{
 constructor(text){super(new Tokenizer(text));}
-f5(s){this.expect(\\"COMMA\\");s.params.push(this.expect(\\"ID\\"));}
-f4(s){loop:while(true){switch(this.token.label){case \\"COMMA\\":this.f5(s);break;default:break loop;}}}
-f3(s){s.params.push(this.expect(\\"ID\\"));this.f4(s);}
-f2(s){switch(this.token.label){case \\"ID\\":this.f3(s);break;}}
-f7(s){switch(this.token.label){case \\"NUM\\":s.stuff=this.expect(\\"NUM\\");break;case \\"ID\\":s.stuff=this.expect(\\"ID\\");break;default:this.unexpected();}}
-f6(){let s={type:\\"EXP\\",stuff:null};this.f7(s);return s;}
-f1(){let s={type:\\"START\\",params:[],body:null};this.expect(\\"FUN\\");this.f2(s);this.expect(\\"ARROW\\");s.body=this.f6();this.expect(\\"END\\");this.expect(\\"eof\\");return s;}
+
+    expect( t ) {
+      const token = this.eat( t );
+      if ( token == null ) {
+        const labels = this.tokenizer.labels;
+        throw this.error(
+          \`Unexpected token \${labels[this.token.label]||this.token.label}, expected \${labels[t]||t}\`
+        );
+      }
+      return token;
+    }
+    
+f5(s){this.expect(3);s.params.push(this.expect(5));}
+f4(s){loop:while(true){switch(this.token.label){case 3:this.f5(s);break;default:break loop;}}}
+f3(s){s.params.push(this.expect(5));this.f4(s);}
+f2(s){switch(this.token.label){case 5:this.f3(s);break;}}
+f6(){let l=this.startNode();let s={type:\\"EXP\\",stuff:null};switch(this.token.label){case 6:s.stuff=this.expect(6);break;case 5:s.stuff=this.expect(5);break;default:this.unexpected();}s.loc=this.locNode(l);return s;}
+f1(){let l=this.startNode();let s={type:\\"PROGRAM\\",params:[],body:null};this.expect(1);this.f2(s);this.expect(4);s.body=this.f6();this.expect(2);this.expect(\\"eof\\");s.loc=this.locNode(l);return s;}
 parse(){return this.f1();}}"
 `;
 
 exports[`check conflicts on repetitions: conflicts 1`] = `
 Array [
-  "In ZeroOrMore(1:0-1:2), when finding A, choice conflicts: Id(1:0-1:1)[A] | Empty(1:0-1:2)",
-  "In OneOrMore(1:0-1:2), when finding B, choice conflicts: Id(1:0-1:1)[B] | Empty(1:0-1:2)",
+  "In ZeroOrMore(2:18-2:22), when finding 'A', choice conflicts: 'A' (2:18-2:21) | Empty(2:18-2:22)",
+  "In OneOrMore(3:12-3:16), when finding 'B', choice conflicts: 'B' (3:12-3:15) | Empty(3:12-3:16)",
 ]
 `;
 
@@ -119,13 +205,30 @@ exports[`check conflicts on repetitions: generation 1`] = `
   class Tokenizer extends Q.Tokenizer{
     constructor(input){
       super(input);
-      this.table=[null,{\\"65\\":2,\\"66\\":3},{},{}];
-      this.finals={\\"2\\":\\"A\\",\\"3\\":\\"B\\"};
+      this.table=[null,c=>c==65?2:c==66?3:0,c=>0,c=>0];
+      this.finals={\\"2\\":1,\\"3\\":2};
+      this.labels=[null,\\"'A'\\",\\"'B'\\"];
     }
     initial(){return{label:\\"initial\\"};}
     eof(){return{label:\\"eof\\"};}
-    readToken() {
-  const { input, table, finals } = this;
+    
+codePointAt(index) {
+  const first = this.input.charCodeAt(index);
+  const size = this.input.length;
+  if (
+    first >= 0xD800 && first <= 0xDBFF &&
+    size > index + 1
+  ) {
+    const second = this.input.charCodeAt(index + 1);
+    if (second >= 0xDC00 && second <= 0xDFFF) {
+      return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+    }
+  }
+  return first;
+}
+
+readToken() {
+  const { input, table, finals, labels } = this;
   const length = input.length;
   const prevPos = this.pos;
 
@@ -133,39 +236,146 @@ exports[`check conflicts on repetitions: generation 1`] = `
   let i = this.pos;
 
   while ( i < length ) {
-    const char = input.charCodeAt( i );
-    const nextState = table[ state ][ char ];
+    const char = this.codePointAt( i );
+    const nextState = table[ state ]( char );
     if ( nextState ) {
       state = nextState;
-      i++;
+      if ( char > 0xffff ) {
+        i += 2;
+      } else {
+        i++;
+      }
     } else {
       break;
     }
   }
 
-  const label = finals[ state ];
-  if ( label ) {
-    const image=input.slice(prevPos,i);
-    const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
-    const newLines=splitted.length-1;
-    this.pos=i;
-    if (newLines>0) {
-      this._lineStart=this.pos-splitted[newLines].length;
-      this._curLine+=newLines;
-    }
-    return {
-      label,
-      image
-    };
+  const id = finals[state];
+  if ( id == null ) {
+    this.unexpectedChar();
   }
-  return this.unexpectedChar();
+  const image=input.slice(prevPos,i);
+  const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+  const newLines=splitted.length-1;
+  this.pos=i;
+  if (newLines>0) {
+    this._lineStart=this.pos-splitted[newLines].length;
+    this._curLine+=newLines;
+  }
+  return {
+    label: id,
+    labelText: this.labels[id],
+    image
+  };
 }
   }
 class Parser extends Q.Parser{
 constructor(text){super(new Tokenizer(text));}
-f2(s){loop:while(true){switch(this.token.label){case \\"A\\":this.expect(\\"A\\");break;default:break loop;}}}
-f4(s){this.expect(\\"B\\");loop:while(true){switch(this.token.label){case \\"B\\":this.expect(\\"B\\");break;default:break loop;}}}
-f3(){let s={type:\\"RULE2\\",};this.f4(s);this.expect(\\"B\\");return s;}
-f1(){let s={type:\\"RULE1\\",};this.f2(s);this.expect(\\"A\\");this.f3();this.expect(\\"eof\\");return s;}
+
+    expect( t ) {
+      const token = this.eat( t );
+      if ( token == null ) {
+        const labels = this.tokenizer.labels;
+        throw this.error(
+          \`Unexpected token \${labels[this.token.label]||this.token.label}, expected \${labels[t]||t}\`
+        );
+      }
+      return token;
+    }
+    
+f2(s){loop:while(true){switch(this.token.label){case 1:this.expect(1);break;default:break loop;}}}
+f4(s){this.expect(2);loop:while(true){switch(this.token.label){case 2:this.expect(2);break;default:break loop;}}}
+f3(){let l=this.startNode();let s={type:\\"RULE2\\",};this.f4(s);this.expect(2);s.loc=this.locNode(l);return s;}
+f1(){let l=this.startNode();let s={type:\\"RULE1\\",};this.f2(s);this.expect(1);this.f3();this.expect(\\"eof\\");s.loc=this.locNode(l);return s;}
+parse(){return this.f1();}}"
+`;
+
+exports[`supports empty: conflicts 1`] = `Array []`;
+
+exports[`supports empty: generation 1`] = `
+"const Q=require(\\"@quase/parser\\");
+
+  class Tokenizer extends Q.Tokenizer{
+    constructor(input){
+      super(input);
+      this.table=[null,c=>c==65?2:0,c=>0];
+      this.finals={\\"2\\":1};
+      this.labels=[null,\\"'A'\\"];
+    }
+    initial(){return{label:\\"initial\\"};}
+    eof(){return{label:\\"eof\\"};}
+    
+codePointAt(index) {
+  const first = this.input.charCodeAt(index);
+  const size = this.input.length;
+  if (
+    first >= 0xD800 && first <= 0xDBFF &&
+    size > index + 1
+  ) {
+    const second = this.input.charCodeAt(index + 1);
+    if (second >= 0xDC00 && second <= 0xDFFF) {
+      return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+    }
+  }
+  return first;
+}
+
+readToken() {
+  const { input, table, finals, labels } = this;
+  const length = input.length;
+  const prevPos = this.pos;
+
+  let state = 1;
+  let i = this.pos;
+
+  while ( i < length ) {
+    const char = this.codePointAt( i );
+    const nextState = table[ state ]( char );
+    if ( nextState ) {
+      state = nextState;
+      if ( char > 0xffff ) {
+        i += 2;
+      } else {
+        i++;
+      }
+    } else {
+      break;
+    }
+  }
+
+  const id = finals[state];
+  if ( id == null ) {
+    this.unexpectedChar();
+  }
+  const image=input.slice(prevPos,i);
+  const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+  const newLines=splitted.length-1;
+  this.pos=i;
+  if (newLines>0) {
+    this._lineStart=this.pos-splitted[newLines].length;
+    this._curLine+=newLines;
+  }
+  return {
+    label: id,
+    labelText: this.labels[id],
+    image
+  };
+}
+  }
+class Parser extends Q.Parser{
+constructor(text){super(new Tokenizer(text));}
+
+    expect( t ) {
+      const token = this.eat( t );
+      if ( token == null ) {
+        const labels = this.tokenizer.labels;
+        throw this.error(
+          \`Unexpected token \${labels[this.token.label]||this.token.label}, expected \${labels[t]||t}\`
+        );
+      }
+      return token;
+    }
+    
+f1(){let l=this.startNode();let s={type:\\"RULE1\\",};switch(this.token.label){case 1:this.expect(1);break;default:}this.expect(\\"eof\\");s.loc=this.locNode(l);return s;}
 parse(){return this.f1();}}"
 `;
