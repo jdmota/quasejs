@@ -175,7 +175,7 @@ class Generator {
     const call = this.genCall( this.grammar.firstRule );
     const imports = `const Q=require("@quase/parser");`;
     const parser = `class Parser extends Q.Parser{\n${this.funcs.join( "\n" )}\nparse(){return ${call}}}`;
-    return `${imports}\n${tokenizer}\n${parser}`;
+    return `/* eslint-disable */\n${imports}\n${tokenizer}\n${parser}\nmodule.exports=Parser;`;
   }
 
 }

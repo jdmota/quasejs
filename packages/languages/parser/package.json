@@ -7,8 +7,12 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/languages/parser",
   "main": "dist/index.js",
-  "module": "src/index.js",
+  "module": "src/index.ts",
+  "bin": {
+    "quase-parser-generator": "bin/index.js"
+  },
   "dependencies": {
+    "make-dir": "^1.3.0",
     "regexp-tree": "^0.0.86"
   }
 }
