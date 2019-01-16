@@ -1,5 +1,100 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`actions: generation 1`] = `
+"/* eslint-disable */
+const Q=require(\\"@quase/parser\\");
+
+
+  class Tokenizer extends Q.Tokenizer{
+    
+    constructor(input){
+      super(input);
+      this.table=[c=>0,c=>48<=c&&c<=57?2:65<=c&&c<=90?3:97<=c&&c<=122?3:0,c=>48<=c&&c<=57?2:0,c=>48<=c&&c<=57?3:65<=c&&c<=90?3:97<=c&&c<=122?3:0];
+      this.finals={\\"2\\":2,\\"3\\":1};
+      this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+    }
+    initial(){return{id:\\"initial\\",label:\\"initial\\"};}
+    eof(){return{id:\\"eof\\",label:\\"eof\\"};}
+    
+  codePointAt(index) {
+    const first = this.input.charCodeAt(index);
+    const size = this.input.length;
+    if (
+      first >= 0xD800 && first <= 0xDBFF &&
+      size > index + 1
+    ) {
+      const second = this.input.charCodeAt(index + 1);
+      if (second >= 0xDC00 && second <= 0xDFFF) {
+        return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+      }
+    }
+    return first;
+  }
+  
+    
+readToken() {
+  const { input, table, finals, labels } = this;
+  const length = input.length;
+  const prevPos = this.pos;
+
+  let state = 1;
+  let i = this.pos;
+
+  while ( i < length ) {
+    const char = this.codePointAt( i );
+    const nextState = table[ state ]( char );
+    if ( nextState ) {
+      state = nextState;
+      if ( char > 0xffff ) {
+        i += 2;
+      } else {
+        i++;
+      }
+    } else {
+      break;
+    }
+  }
+
+  const id = finals[state];
+  if ( id == null ) {
+    this.unexpectedChar();
+  }
+  const image=input.slice(prevPos,i);
+  const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+  const newLines=splitted.length-1;
+  this.pos=i;
+  if (newLines>0) {
+    this._lineStart=this.pos-splitted[newLines].length;
+    this._curLine+=newLines;
+  }
+  return {
+    id,
+    label: labels[id],
+    image
+  };
+}
+  }
+class Parser extends Q.Parser{
+constructor(text){super(new Tokenizer(text));}
+
+    expect(id) {
+      const token = this.token;
+      if ( token.id !== id ) {
+        const labels = this.tokenizer.labels;
+        throw this.error(
+          \`Unexpected token \${labels[token.id]||token.id}, expected \${labels[id]||id}\`
+        );
+      }
+      this.next();
+      return token;
+    }
+    
+/*PROGRAM*/f1(){let $loc=this.startNode();let $id=null;loop:while(true){switch(this.token.id){case 1:$id=this.expect(1); console.log(\\"\\\\n\\",$id); if(true){} break;default:break loop;}}return {type:\\"PROGRAM\\",id:$id,loc:this.locNode($loc)};}
+parse(){const r=this.f1();this.expect(\\"eof\\");return r;}}
+module.exports=Parser;
+"
+`;
+
 exports[`basic: ast 1`] = `
 Object {
   "body": Object {
@@ -188,9 +283,9 @@ constructor(text){super(new Tokenizer(text));}
       return token;
     }
     
-/*EXP*/f2(){let $l=this.startNode();let $n_stuff;switch(this.token.id){case 6:$n_stuff=this.expect(6);break;case 5:$n_stuff=this.expect(5);break;default:this.unexpected();}return {type:\\"EXP\\",stuff:$n_stuff,loc:this.locNode($l)};}
-/*PROGRAM*/f1(){let $l=this.startNode();let $n_params=[],$n_body;this.expect(1);switch(this.token.id){case 5:$n_params.push(this.expect(5));loop:while(true){switch(this.token.id){case 3:this.expect(3);$n_params.push(this.expect(5));break;default:break loop;}}break;}this.expect(4);$n_body=this.f2();this.expect(2);this.expect(\\"eof\\");return {type:\\"PROGRAM\\",params:$n_params,body:$n_body,loc:this.locNode($l)};}
-parse(){return this.f1();}}
+/*EXP*/f2(){let $loc=this.startNode();let $stuff;switch(this.token.id){case 6:$stuff=this.expect(6);break;case 5:$stuff=this.expect(5);break;default:this.unexpected();}return {type:\\"EXP\\",stuff:$stuff,loc:this.locNode($loc)};}
+/*PROGRAM*/f1(){let $loc=this.startNode();let $params=[],$body;this.expect(1);switch(this.token.id){case 5:$params.push(this.expect(5));loop:while(true){switch(this.token.id){case 3:this.expect(3);$params.push(this.expect(5));break;default:break loop;}}break;}this.expect(4);$body=this.f2();this.expect(2);return {type:\\"PROGRAM\\",params:$params,body:$body,loc:this.locNode($loc)};}
+parse(){const r=this.f1();this.expect(\\"eof\\");return r;}}
 module.exports=Parser;
 "
 `;
@@ -291,9 +386,9 @@ constructor(text){super(new Tokenizer(text));}
       return token;
     }
     
-/*RULE2*/f2(){let $l=this.startNode();this.expect(2);loop:while(true){switch(this.token.id){case 2:this.expect(2);break;default:break loop;}}this.expect(2);return {type:\\"RULE2\\",loc:this.locNode($l)};}
-/*RULE1*/f1(){let $l=this.startNode();loop:while(true){switch(this.token.id){case 1:this.expect(1);break;default:break loop;}}this.expect(1);this.f2();this.expect(\\"eof\\");return {type:\\"RULE1\\",loc:this.locNode($l)};}
-parse(){return this.f1();}}
+/*RULE2*/f2(){let $loc=this.startNode();this.expect(2);loop:while(true){switch(this.token.id){case 2:this.expect(2);break;default:break loop;}}this.expect(2);return {type:\\"RULE2\\",loc:this.locNode($loc)};}
+/*RULE1*/f1(){let $loc=this.startNode();loop:while(true){switch(this.token.id){case 1:this.expect(1);break;default:break loop;}}this.expect(1);this.f2();return {type:\\"RULE1\\",loc:this.locNode($loc)};}
+parse(){const r=this.f1();this.expect(\\"eof\\");return r;}}
 module.exports=Parser;
 "
 `;
@@ -389,8 +484,8 @@ constructor(text){super(new Tokenizer(text));}
       return token;
     }
     
-/*RULE1*/f1(){let $l=this.startNode();switch(this.token.id){case 1:this.expect(1);break;default:}this.expect(\\"eof\\");return {type:\\"RULE1\\",loc:this.locNode($l)};}
-parse(){return this.f1();}}
+/*RULE1*/f1(){let $loc=this.startNode();switch(this.token.id){case 1:this.expect(1);break;default:}return {type:\\"RULE1\\",loc:this.locNode($loc)};}
+parse(){const r=this.f1();this.expect(\\"eof\\");return r;}}
 module.exports=Parser;
 "
 `;
@@ -490,9 +585,9 @@ constructor(text:string){super(new Tokenizer(text));}
       return token;
     }
     
-/*EXP*/f2():EXP{let $l=this.startNode();let $n_stuff;switch(this.token.id){case 6:$n_stuff=this.expect(6);break;case 5:$n_stuff=this.expect(5);break;default:this.unexpected();}return {type:\\"EXP\\",stuff:$n_stuff,loc:this.locNode($l)};}
-/*PROGRAM*/f1():PROGRAM{let $l=this.startNode();let $n_params=[],$n_body;this.expect(1);switch(this.token.id){case 5:$n_params.push(this.expect(5));loop:while(true){switch(this.token.id){case 2:this.expect(2);$n_params.push(this.expect(5));break;default:break loop;}}break;}this.expect(3);$n_body=this.f2();this.expect(4);this.expect(\\"eof\\");return {type:\\"PROGRAM\\",params:$n_params,body:$n_body,loc:this.locNode($l)};}
-parse(){return this.f1();}}
+/*EXP*/f2():EXP{let $loc=this.startNode();let $stuff;switch(this.token.id){case 6:$stuff=this.expect(6);break;case 5:$stuff=this.expect(5);break;default:this.unexpected();}return {type:\\"EXP\\",stuff:$stuff,loc:this.locNode($loc)};}
+/*PROGRAM*/f1():PROGRAM{let $loc=this.startNode();let $params=[],$body;this.expect(1);switch(this.token.id){case 5:$params.push(this.expect(5));loop:while(true){switch(this.token.id){case 2:this.expect(2);$params.push(this.expect(5));break;default:break loop;}}break;}this.expect(3);$body=this.f2();this.expect(4);return {type:\\"PROGRAM\\",params:$params,body:$body,loc:this.locNode($loc)};}
+parse(){const r=this.f1();this.expect(\\"eof\\");return r;}}
 export default Parser;
 "
 `;

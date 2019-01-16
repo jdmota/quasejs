@@ -101,6 +101,7 @@ export default class Grammar {
         case "OneOrMore":
           return f( node.item );
         case "Empty":
+        case "Action":
           return true;
         case "LexerRule":
         case "String":

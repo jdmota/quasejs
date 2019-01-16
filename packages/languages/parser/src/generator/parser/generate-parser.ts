@@ -7,41 +7,22 @@ class Generator {
 
   grammar: Grammar;
   funcs: string[];
-  nodeToFuncId: Map<Node, number>;
-  uuid: number;
+  ruleToFuncId: Map<ParserRule, number>;
+  funcRuleUuid: number;
 
   constructor( grammar: Grammar ) {
     this.grammar = grammar;
     this.funcs = [];
-    this.nodeToFuncId = new Map();
-    this.uuid = 1;
+    this.ruleToFuncId = new Map();
+    this.funcRuleUuid = 1;
   }
 
   gen( node: Node ): string {
     switch ( node.type ) {
       case "ParserRule":
         return `this.f${this.genParserRule( node )}();`;
-      case "Options":
-      case "Concat":
-      case "Optional":
-      case "ZeroOrMore":
-      case "OneOrMore":
-        return this.genCode( node );
-      case "Empty":
-        return "";
-      case "LexerRule":
-      case "String":
-      case "Regexp":
-        return `this.expect(${this.grammar.nodeToId.get( node )});`;
-      case "Id":
-        return this.gen( this.grammar.getRule( node.name, node ) );
-      case "Named": {
-        return node.multiple ?
-          `$n_${node.name}.push(${this.gen( node.item ).slice( 0, -1 )});` :
-          `$n_${node.name}=${this.gen( node.item )}`;
-      }
       default:
-        throw new Error( `Unexpected node: ${node.type}` );
+        return this.genCode( node );
     }
   }
 
@@ -92,9 +73,7 @@ class Generator {
   genCode( node: Node ): string {
     switch ( node.type ) {
       case "ParserRule":
-        return `${this.genCode( node.rule )}${
-          node === this.grammar.firstRule ? `this.expect("eof");` : ""
-        }`;
+        return this.genCode( node.rule );
       case "Concat":
         return node.body.map( n => this.gen( n ) ).join( "" );
       case "Options": {
@@ -123,18 +102,32 @@ class Generator {
           this.genDecisionCode( choices, node.item, true )
         }}`;
       }
+      case "Action":
+        return node.value;
+      case "Empty":
+        return "";
+      case "LexerRule":
+      case "String":
+      case "Regexp":
+        return `this.expect(${this.grammar.nodeToId.get( node )});`;
+      case "Id":
+        return this.gen( this.grammar.getRule( node.name, node ) );
+      case "Named":
+        return node.multiple ?
+          `$${node.name}.push(${this.gen( node.item ).slice( 0, -1 )});` :
+          `$${node.name}=${this.gen( node.item )}`;
       default:
-        return this.gen( node );
+        throw new Error( `Unexpected node: ${node.type}` );
     }
   }
 
   genParserRule( node: ParserRule ) {
-    if ( this.nodeToFuncId.has( node ) ) {
-      return this.nodeToFuncId.get( node );
+    if ( this.ruleToFuncId.has( node ) ) {
+      return this.ruleToFuncId.get( node );
     }
 
-    const id = this.uuid++;
-    this.nodeToFuncId.set( node, id );
+    const id = this.funcRuleUuid++;
+    this.ruleToFuncId.set( node, id );
 
     const fun = this.genCode( node );
     const returnType = this.grammar.options.typescript ? `:${this.grammar.typecheckDefinition( node )}` : "";
@@ -143,16 +136,16 @@ class Generator {
     const keys = [ `type:${JSON.stringify( node.name )}` ];
 
     for ( const k of node.names.names.keys() ) {
-      keys.push( `${k}:$n_${k}` );
-      names.push( node.names.arrays.has( k ) ? `$n_${k}=[]` : node.names.optionals.has( k ) ? `$n_${k}=null` : `$n_${k}` );
+      keys.push( `${k}:$${k}` );
+      names.push( node.names.arrays.has( k ) ? `$${k}=[]` : node.names.optionals.has( k ) ? `$${k}=null` : `$${k}` );
     }
 
-    keys.push( `loc:this.locNode($l)` );
+    keys.push( `loc:this.locNode($loc)` );
 
     const declarations = names.length ? `let ${names.join( "," )};` : "";
 
     this.funcs.push(
-      `/*${node.name}*/f${id}()${returnType}{let $l=this.startNode();${declarations}${fun}return {${keys.join( "," )}};}`
+      `/*${node.name}*/f${id}()${returnType}{let $loc=this.startNode();${declarations}${fun}return {${keys.join( "," )}};}`
     );
     return id;
   }
@@ -190,7 +183,7 @@ class Generator {
 
     const types = this.grammar.types.join( "\n" );
     const imports = this.grammar.options.typescript ? `import Q from "@quase/parser";` : `const Q=require("@quase/parser");`;
-    const parser = `class Parser extends Q.Parser{\n${this.funcs.join( "\n" )}\nparse(){return ${call}}}`;
+    const parser = `class Parser extends Q.Parser{\n${this.funcs.join( "\n" )}\nparse(){const r=${call}this.expect("eof");return r;}}`;
     const exporting = this.grammar.options.typescript ? `export default Parser;` : `module.exports=Parser;`;
 
     return `/* eslint-disable */\n${imports}\n${types}\n${tokenizer}\n${parser}\n${exporting}\n`;

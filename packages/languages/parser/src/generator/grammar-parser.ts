@@ -34,9 +34,14 @@ type RegexpToken = {
   raw: string;
 };
 
+type ActionToken = {
+  label: "action";
+  value: string;
+};
+
 type Token = {
   label: string;
-} | IdToken | StringToken | RegexpToken;
+} | IdToken | StringToken | RegexpToken | ActionToken;
 
 class GrammarTokenizer extends Tokenizer<Token> {
 
@@ -200,6 +205,64 @@ class GrammarTokenizer extends Tokenizer<Token> {
     };
   }
 
+  readAction(): ActionToken {
+    const start = this.pos;
+    const stack: string[] = [ "action" ];
+    this.pos++;
+
+    let char;
+    while ( stack.length ) {
+      if ( this.pos >= this.inputLen ) {
+        throw this.error( "Unterminated action" );
+      }
+
+      char = this.charAt( this.pos );
+
+      switch ( char ) {
+        case "{":
+          stack.push( "{" );
+          break;
+        case "}": {
+          const top = stack.pop();
+          if ( top === "{" || top === "action" ) {
+            break;
+          }
+          throw this.unexpectedChar();
+        }
+        case "\"":
+        case "'":
+        case "`": {
+          const top = stack[ stack.length - 1 ];
+          if ( top === char ) {
+            stack.pop(); // End of string
+          } else {
+            switch ( top ) {
+              case "\"":
+              case "'":
+              case "`":
+                break; // Still in string
+              default:
+                stack.push( char ); // Start of string
+            }
+          }
+          break;
+        }
+        case "\\": {
+          this.pos++;
+          break;
+        }
+        default:
+      }
+
+      this.pos++;
+    }
+
+    return {
+      label: "action",
+      value: this.input.slice( start + 1, this.pos - 1 )
+    };
+  }
+
   readToken(): Token {
     const char = this.charAt( this.pos );
 
@@ -213,6 +276,10 @@ class GrammarTokenizer extends Tokenizer<Token> {
 
     if ( idStart.test( char ) ) {
       return this.readIdentifier();
+    }
+
+    if ( char === "{" ) {
+      return this.readAction();
     }
 
     switch ( char ) {
@@ -294,6 +361,11 @@ export type StringNode = BaseNode & {
   raw: string;
 };
 
+export type ActionNode = BaseNode & {
+  type: "Action";
+  value: string;
+};
+
 export type OptionalOrRepetition = BaseNode & {
   type: "Optional" | "ZeroOrMore" | "OneOrMore";
   item: Node;
@@ -321,10 +393,9 @@ export type Concat = BaseNode & {
 };
 
 export type Node =
-  GrammarNode | Rule | Named |
-  Id | RegexpNode | StringNode |
-  OptionalOrRepetition |
-  Options | Concat | Empty;
+  GrammarNode | Rule | Named | Empty |
+  Id | RegexpNode | StringNode | ActionNode |
+  OptionalOrRepetition | Options | Concat;
 
 class Names {
 
@@ -435,6 +506,7 @@ function connectAstNodes( node: Node, parent: Node | null, nextSibling: Node | n
     case "OneOrMore":
       names = connectAstNodes( node.item, node, nextSibling );
       break;
+    case "Action":
     case "Id":
     case "String":
     case "Regexp":
@@ -538,8 +610,18 @@ export default class GrammarParser extends Parser<Token> {
 
   parseItem(): Node {
     const start = this.startNode();
-    let item;
 
+    if ( this.match( "action" ) ) {
+      const value = ( this.token as ActionToken ).value;
+      this.next();
+      return {
+        type: "Action",
+        value,
+        loc: this.locNode( start )
+      };
+    }
+
+    let item;
     const ahead = this.lookahead();
 
     if ( this.match( "id" ) && ( ahead.label === "=" || ahead.label === "+=" ) ) {

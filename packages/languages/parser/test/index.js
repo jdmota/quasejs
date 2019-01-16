@@ -101,3 +101,20 @@ it( "typescript", () => {
   expect( grammar.generate() ).toMatchSnapshot( "generation" );
 
 } );
+
+it( "actions", () => {
+
+  const grammar = new Grammar(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+
+    @parser
+    start PROGRAM: ( id=ID { console.log("\\n",$id); if(true){} } )*;
+    `
+  );
+
+  expect( grammar.generate() ).toMatchSnapshot( "generation" );
+
+} );
