@@ -7,11 +7,10 @@ function lexer( grammar: Grammar ) {
   const dfa = nfaToDfa( nfa );
   const { states } = minimize( dfa );
 
-  const { nodeToId, transitionToNode } = nfa;
-  const labels = [];
+  const labels = [ "" ];
   const finals: { [key: number]: number } = {};
 
-  let serialized = "[null,";
+  let serialized = "[c=>0,";
 
   // Ignore last state. It has no useful info.
   for ( let state = 1; state < states.length - 1; state++ ) {
@@ -20,12 +19,12 @@ function lexer( grammar: Grammar ) {
 
     for ( const [ range, to ] of states[ state ] ) {
       if ( range.from < 0 ) {
-        const node = transitionToNode.get( range.from );
+        const node = grammar.transitionToNode.get( range.from );
         if ( node == null ) {
           throw new Error( "Assertion error" );
         }
 
-        const id = nodeToId.get( node ) as number;
+        const id = grammar.nodeToId.get( node ) as number;
         const label = node.type === "LexerRule" ? node.name : node.raw;
         labels[ id ] = label;
 
@@ -59,24 +58,7 @@ function lexer( grammar: Grammar ) {
   };
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt
-// https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
 const readToken = `
-codePointAt(index) {
-  const first = this.input.charCodeAt(index);
-  const size = this.input.length;
-  if (
-    first >= 0xD800 && first <= 0xDBFF &&
-    size > index + 1
-  ) {
-    const second = this.input.charCodeAt(index + 1);
-    if (second >= 0xDC00 && second <= 0xDFFF) {
-      return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
-    }
-  }
-  return first;
-}
-
 readToken() {
   const { input, table, finals, labels } = this;
   const length = input.length;
@@ -113,8 +95,8 @@ readToken() {
     this._curLine+=newLines;
   }
   return {
-    label: id,
-    labelText: this.labels[id],
+    id,
+    label: labels[id],
     image
   };
 }`;
@@ -122,16 +104,42 @@ readToken() {
 export default function( grammar: Grammar ) {
   const { serialized, finals, labels } = lexer( grammar );
 
+  const codeAtArgType = grammar.options.typescript ? `:number` : "";
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt
+  // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+  const codePointAt = `
+  codePointAt(index${codeAtArgType})${codeAtArgType} {
+    const first = this.input.charCodeAt(index);
+    const size = this.input.length;
+    if (
+      first >= 0xD800 && first <= 0xDBFF &&
+      size > index + 1
+    ) {
+      const second = this.input.charCodeAt(index + 1);
+      if (second >= 0xDC00 && second <= 0xDFFF) {
+        return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+      }
+    }
+    return first;
+  }
+  `;
+
+  const tokArgType = grammar.options.typescript ? `:string` : "";
+  const propTypes = grammar.options.typescript ? `table:((c:number)=>number)[];finals:{[key:number]:number};labels:string[];` : "";
+
   return `
   class Tokenizer extends Q.Tokenizer{
-    constructor(input){
+    ${propTypes}
+    constructor(input${tokArgType}){
       super(input);
       this.table=${serialized};
       this.finals=${JSON.stringify( finals )};
       this.labels=${JSON.stringify( labels )};
     }
-    initial(){return{label:"initial"};}
-    eof(){return{label:"eof"};}
+    initial(){return{id:"initial",label:"initial"};}
+    eof(){return{id:"eof",label:"eof"};}
+    ${codePointAt}
     ${readToken}
   }`;
 }

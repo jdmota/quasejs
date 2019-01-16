@@ -333,54 +333,17 @@ export default function createAutomaton( grammar: Grammar ) {
   const automaton = new Generator( grammar );
   const acceptingSet = new Set( [ automaton.end ] );
 
-  const nodeToId: Map<LexerTokens, number> = new Map();
-  const idToNode: Map<number, LexerTokens> = new Map();
-  const transitionToNode: Map<number, LexerTokens> = new Map();
-
-  const terminalRawToId = new Map();
-  let terminalUUID = 1;
-
-  for ( const node of grammar.terminals ) {
-    const currId = terminalRawToId.get( node.raw );
-    if ( currId != null ) {
-      nodeToId.set( node, currId );
-      continue;
+  for ( const [ finalTransition, node ] of grammar.transitionToNode ) {
+    if ( node.type === "LexerRule" ) {
+      automaton.addFromLexerRule( node, finalTransition );
+    } else {
+      automaton.addFromLiteral( node, finalTransition );
     }
-
-    const id = terminalUUID++;
-    const finalTransition = -id;
-
-    nodeToId.set( node, id );
-    idToNode.set( id, node );
-    transitionToNode.set( finalTransition, node );
-    terminalRawToId.set( node.raw, id );
-
-    automaton.addFromLiteral( node, finalTransition );
   }
-
-  for ( const node of grammar.lexerRules.values() ) {
-    if ( node.modifiers.fragment ) {
-      continue;
-    }
-
-    const id = terminalUUID++;
-    const finalTransition = -id;
-
-    nodeToId.set( node, id );
-    idToNode.set( id, node );
-    transitionToNode.set( finalTransition, node );
-
-    automaton.addFromLexerRule( node, finalTransition );
-  }
-
-  grammar.nodeToId = nodeToId;
-  grammar.idToNode = idToNode;
 
   return {
     states: automaton.states,
     start: automaton.start,
-    acceptingSet,
-    nodeToId,
-    transitionToNode
+    acceptingSet
   };
 }

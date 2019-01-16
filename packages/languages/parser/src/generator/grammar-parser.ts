@@ -2,7 +2,8 @@ import { Parser } from "../parser";
 import { Tokenizer, Location, Position } from "../tokenizer";
 import { printLoc } from "./utils";
 
-const idChars = /[$_0-9a-z]/i;
+const idStart = /[_a-z]/i;
+const idChars = /[_0-9a-z]/i;
 const hexDigit = /[0-9a-f]/i;
 
 const escapeToValue: { [key: string]: string } = {
@@ -210,7 +211,7 @@ class GrammarTokenizer extends Tokenizer<Token> {
       return this.readRegexp();
     }
 
-    if ( idChars.test( char ) ) {
+    if ( idStart.test( char ) ) {
       return this.readIdentifier();
     }
 
@@ -246,12 +247,7 @@ class GrammarTokenizer extends Tokenizer<Token> {
 type BaseNode = {
   loc: Location;
   parent?: Node | null;
-  scope?: ParserRule | null;
   nextSibling?: Node | null;
-};
-
-type ScopeNames = {
-  names: { [key: string]: "array" | "single" };
 };
 
 export type GrammarNode = BaseNode & {
@@ -266,13 +262,15 @@ export type LexerRule = BaseNode & {
   type: "LexerRule";
   modifiers: { [key: string]: boolean };
   name: string;
+  names: Names;
   rule: Node;
 };
 
-export type ParserRule = BaseNode & ScopeNames & {
+export type ParserRule = BaseNode & {
   type: "ParserRule";
   modifiers: { [key: string]: boolean };
   name: string;
+  names: Names;
   rule: Node;
 };
 
@@ -328,77 +326,136 @@ export type Node =
   OptionalOrRepetition |
   Options | Concat | Empty;
 
-function connectAstNodes(
-  node: Node, parent: Node | null, scope: ParserRule | null, nextSibling: Node | null
-) {
-  switch ( node.type ) {
-    case "LexerRule":
-      connectAstNodes( node.rule, node, scope, null );
-      break;
-    case "ParserRule":
-      node.names = {};
-      connectAstNodes( node.rule, node, node, null );
-      break;
-    case "Options": {
-      if ( scope == null ) {
-        throw new Error( "Assertion error" );
+class Names {
+
+  arrays: Set<string>;
+  optionals: Set<string>;
+  names: Map<string, Named[]>;
+  nodes: Named[];
+
+  constructor() {
+    this.arrays = new Set();
+    this.optionals = new Set();
+    this.names = new Map();
+    this.nodes = [];
+  }
+
+  // True if already existed
+  addNamed( node: Named ) {
+    this.nodes.push( node );
+
+    const names = this.names.get( node.name );
+    if ( names ) {
+      if ( this.arrays.has( node.name ) !== node.multiple ) {
+        throw new Error( `${node.name} is an array or a single value? (${printLoc( names[ 0 ] )} and ${printLoc( node )})` );
       }
-      const originalNames = scope.names;
-      const names = { ...originalNames };
-      for ( const opt of node.options ) {
-        scope.names = { ...originalNames };
-        connectAstNodes( opt, node, scope, nextSibling );
-        for ( const key in scope.names ) {
-          if ( names[ key ] !== "array" ) {
-            names[ key ] = scope.names[ key ];
-          }
+      names.push( node );
+      return true;
+    }
+    this.names.set( node.name, [ node ] );
+    if ( node.multiple ) {
+      this.arrays.add( node.name );
+    }
+    return false;
+  }
+
+  markAllOptional() {
+    for ( const name of this.names.keys() ) {
+      this.optionals.add( name );
+    }
+  }
+
+  importFromConcat( names: Names ) {
+    for ( const node of names.nodes ) {
+      if ( this.addNamed( node ) ) {
+        if ( !names.optionals.has( node.name ) ) {
+          this.optionals.delete( node.name );
+        }
+      } else {
+        if ( names.optionals.has( node.name ) ) {
+          this.optionals.add( node.name );
         }
       }
-      scope.names = names;
+    }
+  }
+
+  importFromOptions( names: Names ) {
+    for ( const node of names.nodes ) {
+      this.addNamed( node );
+      if ( names.optionals.has( node.name ) ) {
+        this.optionals.add( node.name );
+      }
+    }
+  }
+
+}
+
+function connectAstNodes( node: Node, parent: Node | null, nextSibling: Node | null ): Names {
+  let names;
+
+  switch ( node.type ) {
+    case "LexerRule":
+      names = connectAstNodes( node.rule, node, null );
+      break;
+    case "ParserRule":
+      names = connectAstNodes( node.rule, node, null );
+      break;
+    case "Options": {
+      names = new Names();
+      const namesCount: { [key: string]: number } = {};
+      for ( const opt of node.options ) {
+        const thisNames = connectAstNodes( opt, node, nextSibling );
+        for ( const name of thisNames.names.keys() ) {
+          namesCount[ name ] = namesCount[ name ] || 0;
+          namesCount[ name ]++;
+        }
+        names.importFromOptions( thisNames );
+      }
+      for ( const name in namesCount ) {
+        if ( namesCount[ name ] < node.options.length ) {
+          names.optionals.add( name );
+        }
+      }
       break;
     }
     case "Concat": {
+      names = new Names();
       const lastIndex = node.body.length - 1;
       for ( let i = 0; i < lastIndex; i++ ) {
-        connectAstNodes( node.body[ i ], node, scope, node.body[ i + 1 ] );
+        names.importFromConcat( connectAstNodes( node.body[ i ], node, node.body[ i + 1 ] ) );
       }
-      connectAstNodes( node.body[ lastIndex ], node, scope, nextSibling );
+      names.importFromConcat( connectAstNodes( node.body[ lastIndex ], node, nextSibling ) );
       break;
     }
     case "Optional":
-      connectAstNodes( node.item, node, scope, nextSibling );
-      break;
     case "ZeroOrMore":
+      names = connectAstNodes( node.item, node, nextSibling );
+      names.markAllOptional();
+      break;
     case "OneOrMore":
-      connectAstNodes( node.item, node, scope, nextSibling );
+      names = connectAstNodes( node.item, node, nextSibling );
       break;
     case "Id":
     case "String":
     case "Regexp":
     case "Empty":
+      names = new Names();
       break;
     case "Named": {
-      if ( scope == null ) {
-        throw new Error( "Assertion error" );
-      }
       if ( node.name === "type" || node.name === "loc" ) {
         throw new Error( `Cannot have named parameter called '${node.name}' (${printLoc( node )})` );
       }
-      const prev = scope.names[ node.name ];
-      scope.names[ node.name ] = node.multiple ? "array" : "single";
-      if ( prev && prev !== scope.names[ node.name ] ) {
-        throw new Error( `${node.name} is an array or a single value?` );
-      }
-      connectAstNodes( node.item, node, scope, nextSibling );
+      names = new Names();
+      names.addNamed( node );
+      connectAstNodes( node.item, node, nextSibling );
       break;
     }
     default:
       throw new Error( `Unexpected node: ${node.type}` );
   }
   node.parent = parent;
-  node.scope = scope;
   node.nextSibling = nextSibling;
-  return node;
+  return names;
 }
 
 export default class GrammarParser extends Parser<Token> {
@@ -624,13 +681,14 @@ export default class GrammarParser extends Parser<Token> {
       type: "LexerRule",
       modifiers,
       name,
+      names: new Names(),
       rule,
       loc: this.locNode( start )
     } : {
       type: "ParserRule",
       modifiers,
       name,
-      names: {},
+      names: new Names(),
       rule,
       loc: this.locNode( start )
     };
@@ -680,7 +738,7 @@ export default class GrammarParser extends Parser<Token> {
         }
       }
       rules.set( rule.name, rule );
-      connectAstNodes( rule, null, null, null );
+      rule.names = connectAstNodes( rule, null, null );
     }
 
     if ( !firstRule ) {

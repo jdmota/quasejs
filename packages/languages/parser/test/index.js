@@ -80,3 +80,24 @@ it( "check conflicts on repetitions", () => {
   expect( conflicts ).toMatchSnapshot( "conflicts" );
 
 } );
+
+it( "typescript", () => {
+
+  const grammar = new Grammar(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+
+    @parser
+    start PROGRAM: 'fun' ( params+=ID ( ',' params+=ID )* )? '->' body=EXP 'end';
+    EXP: stuff=NUM | stuff=ID;
+    `,
+    {
+      typescript: true
+    }
+  );
+
+  expect( grammar.generate() ).toMatchSnapshot( "generation" );
+
+} );

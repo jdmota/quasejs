@@ -16,7 +16,11 @@ export default function( args: string[] ) {
 
   const grammarText = fs.readFileSync( grammarFile, "utf8" );
 
-  const grammar = new Grammar( grammarText );
+  const options = {
+    typescript: path.extname( outputFile ) === ".ts"
+  };
+
+  const grammar = new Grammar( grammarText, options );
 
   const generation = grammar.generate();
   const conflicts = grammar.reportConflicts();
