@@ -1,5 +1,5 @@
-import { Parser } from "../parser";
-import { Tokenizer, Location, Position } from "../tokenizer";
+import { Parser } from "../../parser";
+import { Tokenizer, Location, Position } from "../../tokenizer";
 import { printLoc } from "./utils";
 
 const idStart = /[_a-z]/i;
@@ -813,7 +813,7 @@ export default class GrammarParser extends Parser<Token> {
         parserRules.set( rule.name, rule );
         if ( rule.modifiers.start ) {
           if ( firstRule ) {
-            throw new Error( `Two start rules: '${firstRule.name}' and '${name}'` );
+            throw new Error( `Two start rules: '${firstRule.name}' and '${rule.name}'` );
           } else {
             firstRule = rule as ParserRule;
           }

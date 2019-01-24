@@ -1,24 +1,18 @@
-import Grammar from "../src/generator/grammar";
+import tool from "../src/generator/tool";
 
 function runParser( generation, text ) {
   let result;
   /* eslint no-eval: 0 */
   eval( `
-    ${generation.replace( "@quase/parser", "../src" )}\n
-    ${`
-      try {
-        result = new Parser(${JSON.stringify( text )}).parse();
-      } catch ( err ) {
-        result = err.message;
-      }
-    `}`
+    ${generation.replace( "@quase/parser", "../src/generator/runtime" )}\n
+    result = new Parser(${JSON.stringify( text )}).parse();`
   );
   return result;
 }
 
 it( "basic", () => {
 
-  const grammar = new Grammar(
+  const { code, conflicts } = tool(
     `
     @lexer
     FUN: 'fun';
@@ -36,54 +30,45 @@ it( "basic", () => {
     `
   );
 
-  const generation = grammar.generate();
-  const conflicts = grammar.reportConflicts();
-
-  expect( generation ).toMatchSnapshot( "generation" );
+  expect( code ).toMatchSnapshot( "code" );
   expect( conflicts ).toMatchSnapshot( "conflicts" );
 
-  expect( runParser( generation, "fun id1, id2 -> 10000 end" ) ).toMatchSnapshot( "ast" );
-  expect( runParser( generation, "fun id1 -> id1 end" ) ).toMatchSnapshot( "ast" );
-  expect( runParser( generation, "fun id1 -> id1" ) ).toMatchSnapshot( "ast" );
+  expect( runParser( code, "fun id1, id2 -> 10000 end" ) ).toMatchSnapshot( "ast" );
+  expect( runParser( code, "fun id1 -> id1 end" ) ).toMatchSnapshot( "ast" );
+  expect( () => runParser( code, "fun id1 -> id1" ) ).toThrowErrorMatchingSnapshot( "error" );
 
 } );
 
 it( "supports empty", () => {
 
-  const grammar = new Grammar(
+  const { code, conflicts } = tool(
     `
     start RULE1 : 'A' | ;
     `
   );
 
-  const generation = grammar.generate();
-  const conflicts = grammar.reportConflicts();
-
-  expect( generation ).toMatchSnapshot( "generation" );
+  expect( code ).toMatchSnapshot( "code" );
   expect( conflicts ).toMatchSnapshot( "conflicts" );
 
 } );
 
-it( "check conflicts on repetitions", () => {
+it( "optimized repetitions and nested rule on right side", () => {
 
-  const grammar = new Grammar(
+  const { code, conflicts } = tool(
     `
     start RULE1 : 'A'* 'A' RULE2;
     RULE2 : 'B'+ 'B';
     `
   );
 
-  const generation = grammar.generate();
-  const conflicts = grammar.reportConflicts();
-
-  expect( generation ).toMatchSnapshot( "generation" );
+  expect( code ).toMatchSnapshot( "code" );
   expect( conflicts ).toMatchSnapshot( "conflicts" );
 
 } );
 
 it( "typescript", () => {
 
-  const grammar = new Grammar(
+  const { code } = tool(
     `
     @lexer
     ID: /[a-zA-Z][a-zA-Z0-9]*/;
@@ -98,13 +83,13 @@ it( "typescript", () => {
     }
   );
 
-  expect( grammar.generate() ).toMatchSnapshot( "generation" );
+  expect( code ).toMatchSnapshot( "code" );
 
 } );
 
 it( "actions", () => {
 
-  const grammar = new Grammar(
+  const { code } = tool(
     `
     @lexer
     ID: /[a-zA-Z][a-zA-Z0-9]*/;
@@ -115,6 +100,6 @@ it( "actions", () => {
     `
   );
 
-  expect( grammar.generate() ).toMatchSnapshot( "generation" );
+  expect( code ).toMatchSnapshot( "code" );
 
 } );

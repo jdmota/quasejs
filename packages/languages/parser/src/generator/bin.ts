@@ -1,4 +1,4 @@
-import Grammar from "./grammar";
+import tool from "./tool";
 
 const fs = require( "fs" );
 const path = require( "path" );
@@ -20,16 +20,13 @@ export default function( args: string[] ) {
     typescript: path.extname( outputFile ) === ".ts"
   };
 
-  const grammar = new Grammar( grammarText, options );
-
-  const generation = grammar.generate();
-  const conflicts = grammar.reportConflicts();
+  const { code, conflicts } = tool( grammarText, options );
 
   for ( const conflict of conflicts ) {
     console.log( conflict );
   }
 
   makeDir.sync( path.dirname( outputFile ) );
-  fs.writeFileSync( outputFile, generation );
+  fs.writeFileSync( outputFile, code );
   console.log( "Done!" );
 }
