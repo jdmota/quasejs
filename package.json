@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "n": "node scripts/node",
+    "i": "node --inspect-brk scripts/node",
     "test": "node --experimental-worker ./node_modules/jest/bin/jest.js",
     "build": "node scripts/build.js",
     "flow": "flow",
