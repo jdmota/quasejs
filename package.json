@@ -10,8 +10,7 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint \"**/*.js\" \"**/*.ts\"",
     "coverage": "nyc jest && nyc report --reporter=html",
-    "bootstrap": "lerna bootstrap",
-    "outdated": "npm-check --ignore eslint-config-* --ignore flow-typed --ignore @babel/* --ignore @quase/*"
+    "bootstrap": "lerna bootstrap"
   },
   "repository": {
     "type": "git",
@@ -40,7 +39,7 @@
       "<rootDir>/packages/package-manager/test/test-folders"
     ],
     "transform": {
-      "^.+\\.(j|t)s$": "<rootDir>/scripts/babel-jest"
+      "^.+\\.(j|t)s$": "babel-jest"
     },
     "testRegex": "/test/(index|.+\\.test)\\.js$",
     "testEnvironment": "node"
@@ -71,20 +70,19 @@
     "@babel/register": "^7.0.0",
     "@quase/eslint-config-base": "^0.1.0",
     "@types/node": "^10.12.18",
+    "@typescript-eslint/eslint-plugin": "^1.3.0",
+    "@typescript-eslint/parser": "^1.3.0",
     "babel-core": "^7.0.0-0",
-    "babel-jest": "^23.6.0",
+    "babel-jest": "^24.1.0",
     "eslint": "^5.10.0",
     "eslint-import-resolver-typescript": "^1.1.1",
     "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-jest": "^22.1.2",
-    "eslint-plugin-typescript": "1.0.0-rc.0",
     "execa": "^1.0.0",
     "flow-bin": "^0.88.0",
     "fs-extra": "^7.0.1",
-    "jest": "^23.6.0",
+    "jest": "^24.1.0",
     "lerna": "^3.6.0",
-    "npm-check": "^5.9.0",
-    "pluggable-babel-eslint": "^0.3.0",
     "resolve": "^1.8.1",
     "typescript": "^3.2.2"
   }
