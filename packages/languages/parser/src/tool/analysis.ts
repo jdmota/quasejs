@@ -7,7 +7,7 @@ import { MapKeyToSet } from "./utils/map-key-to-set";
 import { MapKeyToValue } from "./utils/map-key-to-value";
 import { MapRangeToValue } from "./utils/map-range-to-value";
 import { MapRangeToSet } from "./utils/map-range-to-set";
-import { Rule, ParserRule, LexerRule } from "./grammar-parser";
+import { Rule, ParserRule, LexerRule } from "./parser/grammar-parser";
 
 export class Context {
 

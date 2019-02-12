@@ -1,4 +1,4 @@
-import GrammarParser, { StringNode, RegexpNode, Id, Rule, LexerRule, ParserRule, Node } from "./grammar-parser";
+import GrammarParser, { StringNode, RegexpNode, Id, Rule, LexerRule, ParserRule, Node } from "./parser/grammar-parser";
 import { printLoc } from "./utils";
 
 export type Options = {

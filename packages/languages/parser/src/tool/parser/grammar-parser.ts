@@ -1,6 +1,6 @@
-import { Parser } from "../../parser";
-import { Tokenizer, Location, Position } from "../../tokenizer";
-import { printLoc } from "./utils";
+import { printLoc } from "../utils";
+import { Parser } from "./parser";
+import { Tokenizer, Location, Position } from "./tokenizer";
 
 const idStart = /[_a-z]/i;
 const idChars = /[_0-9a-z]/i;

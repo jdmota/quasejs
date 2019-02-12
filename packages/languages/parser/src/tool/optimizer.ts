@@ -1,7 +1,7 @@
 import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 import { State, DState } from "./state";
 import { Transition, EpsilonTransition, RuleTransition, NamedTransition } from "./transitions";
-import { Rule } from "./grammar-parser";
+import { Rule } from "./parser/grammar-parser";
 
 const EPSILON = new EpsilonTransition();
 

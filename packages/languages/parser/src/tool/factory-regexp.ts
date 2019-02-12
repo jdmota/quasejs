@@ -4,7 +4,7 @@ import {
   Alternative, Group, Backreference,
   Repetition, Expression, Assertion
 } from "regexp-tree/ast"; // eslint-disable-line import/no-unresolved
-import { RegexpNode } from "./grammar-parser";
+import { RegexpNode } from "./parser/grammar-parser";
 import { Frag, Automaton } from "./automaton";
 
 type Char2 = Char & { codePoint: number };

@@ -1,4 +1,4 @@
-import { Rule } from "./grammar-parser";
+import { Rule } from "./parser/grammar-parser";
 
 export abstract class Transition {
 

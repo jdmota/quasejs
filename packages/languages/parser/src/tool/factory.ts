@@ -1,7 +1,7 @@
 import {
   StringNode, RegexpNode, LexerRule, Id, OptionalOrRepetition,
   Options, Empty, Concat, ParserRule, ActionNode, Named
-} from "./grammar-parser";
+} from "./parser/grammar-parser";
 import { printLoc } from "./utils";
 import Grammar, { LexerTokens } from "./grammar";
 import { Automaton, Frag } from "./automaton";

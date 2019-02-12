@@ -6,7 +6,7 @@ import { DState } from "./state";
 import { DFA } from "./abstract-optimizer";
 import { Analyser, GoTo } from "./analysis";
 import Grammar, { LexerTokens } from "./grammar";
-import { ParserRule, LexerRule } from "./grammar-parser";
+import { ParserRule, LexerRule } from "./parser/grammar-parser";
 
 export class CodeGenerator {
 

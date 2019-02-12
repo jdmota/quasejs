@@ -1,10 +1,10 @@
-import tool from "../src/generator/tool";
+import tool from "../src/tool";
 
 function runParser( generation, text ) {
   let result;
   /* eslint no-eval: 0 */
   eval( `
-    ${generation.replace( "@quase/parser", "../src/generator/runtime" )}\n
+    ${generation.replace( "@quase/parser", "../src/runtime" )}\n
     result = new Parser(${JSON.stringify( text )}).parse();`
   );
   return result;
