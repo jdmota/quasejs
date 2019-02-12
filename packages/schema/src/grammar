@@ -1,0 +1,76 @@
+// yarn n packages/languages/parser/bin packages/schema/src/grammar packages/schema/src/parser.js
+
+@lexer
+
+BOOLEAN: 'true' | 'false';
+NUM: /[0-9]+/;
+STRING: /"([^\\"]|\\[^])*"/;
+JS_RAW: 'js' JS_RAW_0;
+
+fragment JS_RAW_0: '(' (
+  JS_RAW_0 |
+  JS_STRING |
+  JS_COMMENT |
+  JS_ESC |
+  /[^"'`/\\()]+/
+)* ')';
+fragment JS_STRING: /"([^\\"]|\\[^])*"/ | /'([^\\']|\\[^])*'/ | /`([^\\`]|\\[^])*`/;
+fragment JS_COMMENT: (
+  '//' /[^\n\r]*/ ( '\n' | '\r' ) |
+  '/' '*'+ /[^/*]+[^*]*[^/]*/* '*'+ '/'
+);
+fragment JS_ESC: /\\[^]/;
+
+ID: /[_a-zA-Z][_a-zA-Z0-9]*/;
+
+@parser
+
+start Schema: types+=TypeDeclaration*;
+
+TypeDeclaration:
+  'type' name=ID {$name=$name.image}
+  decorators+=Decorator* (
+    '{' properties+=TypeProperty* '}' ';'? |
+    '=' init=Type ';'
+  );
+
+TypeProperty:
+  name=ID {$name=$name.image} ':' typeSignature=Type decorators+=Decorator* ';';
+
+DecoratorArg:
+  ( t=Boolean | t=Number | t=String | t=Js ) {return $t};
+
+Decorator:
+  '@' name=ID {$name=$name.image} ( '(' ( arguments+=DecoratorArg ( ',' arguments+=DecoratorArg )* )? ')' )?;
+
+Type:
+  t=MaybeUnion {return $t};
+
+MaybeUnion:
+  t1=MaybeArrayOrOptional (
+    '|' t2=MaybeArrayOrOptional {$t1={type:"Union",type1:$t1,type2:$t2}}
+  )*
+  {return $t1};
+
+MaybeArrayOrOptional:
+  t=TypeAtom (
+    '[]' {$t={type:"Array",type1:$t}} |
+    '?' {$t={type:"Optional",type1:$t}}
+  )*
+  {return $t};
+
+TypeAtom: ( t=Identifier | t=TypeObject | t=TypeTuple | t=Number | t=String | '(' t=Type ')' ) {return $t;};
+
+TypeObject: 'type' decorators+=Decorator* '{' properties+=TypeProperty* '}';
+
+TypeTuple: '[' types+=Type ( ',' types+=Type )* ']';
+
+Identifier: name=ID {$name=$name.image};
+
+Number: raw=NUM {$raw=$raw.image};
+
+String: raw=STRING {$raw=$raw.image};
+
+Boolean: raw=BOOLEAN {$raw=$raw.image};
+
+Js: raw=JS_RAW {$raw=$raw.image.replace( /^js/, "" )};

@@ -1,0 +1,20 @@
+{
+  "name": "@quase/schema",
+  "version": "0.1.0-0",
+  "description": "Schema validation and data merging",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/schema",
+  "module": "src/index.ts",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@quase/parser": "0.1.0-0",
+    "@sindresorhus/is": "^0.15.0",
+    "decamelize": "^3.0.0",
+    "leven": "^2.1.0",
+    "turbocolor": "^2.6.1"
+  },
+  "devDependencies": {
+    "strip-ansi": "^5.1.0"
+  }
+}
