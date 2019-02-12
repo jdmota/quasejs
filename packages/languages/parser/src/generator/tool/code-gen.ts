@@ -66,6 +66,13 @@ export class CodeGenerator {
     throw new Error( "Assertion error" );
   }
 
+  getFirst<T>( thing: Iterable<T> ): T {
+    for ( const stuff of thing ) {
+      return stuff;
+    }
+    throw new Error( "Assertion error" );
+  }
+
   genMoveToState( state: DState ): string {
     /* if ( state.transitionAmount() === 0 ) {
       return "$$loop=false;\n";
@@ -153,19 +160,61 @@ export class CodeGenerator {
 
   genAutomaton( { states }: DFA<DState>, rule: ParserRule | LexerRule | null ): string {
 
-    let code = `let $$state=0,$$loop=true;${this.genMoveToState( states[ 1 ] )}while($$loop){switch($$state){\n`;
+    let code = "";
 
-    for ( const state of states ) {
-      if ( state.id < 1 ) {
-        continue;
-      }
-      code += `case ${state.id}:\n`;
-      code += this.genStateManyTransitions( state, rule );
-      code += `break;\n`;
+    // Optimize the initial states that are always reached
+    let initialState = states[ 1 ];
+    const ignore = new Set();
+    ignore.add( states[ 0 ] );
+
+    while (
+      (
+        ( initialState.id === 1 && initialState.inTransitions === 0 ) ||
+        ( initialState.id > 1 && initialState.inTransitions === 1 )
+      ) && initialState.transitionAmount() === 1
+    ) {
+      ignore.add( initialState );
+
+      const [ transition, dest ] = this.getFirst( initialState );
+      code += this.genTransition( transition );
+      initialState = dest;
     }
 
-    code += `default:throw new Error("No state " + $$state);`;
-    code += `}}`;
+    // Generate each state
+    const cases = [];
+    for ( const state of states ) {
+      if ( ignore.has( state ) ) {
+        continue;
+      }
+      cases.push( {
+        state,
+        body: this.genStateManyTransitions( state, rule )
+      } );
+    }
+
+    if ( cases.length === 1 ) {
+      const { body } = cases[ 0 ];
+
+      if ( body.replace( /\n|\s/g, "" ) !== "{$$loop=false;}" ) {
+        code += `let $$state=${initialState.id},$$loop=true;`;
+        code += `while($$loop){\n`;
+        code += body;
+        code += `}`;
+      }
+    } else {
+      code += `let $$state=${initialState.id},$$loop=true;`;
+      code += `while($$loop){switch($$state){\n`;
+
+      for ( const { state, body } of cases ) {
+        code += `case ${state.id}:\n`;
+        code += body;
+        code += `break;\n`;
+      }
+
+      code += `}`;
+      code += `}`;
+    }
+
     return code;
   }
 
@@ -260,7 +309,7 @@ export class CodeGenerator {
     }
 
     for ( const [ rule, automaton ] of parserRuleToAutomaton ) {
-      const returnType = this.grammar.options.typescript ? `:${this.grammar.typecheckDefinition( rule )}` : "";
+      const returnType = this.grammar.options.typescript ? this.grammar.typecheckDefinition( rule ) : "";
 
       const names = [];
       const keys = [ `type:${JSON.stringify( rule.name )}` ];
@@ -274,10 +323,10 @@ export class CodeGenerator {
 
       const declarations = names.length ? `let ${names.join( "," )};` : "";
 
-      funcs.push( `rule${rule.name}()${returnType}{
+      funcs.push( `rule${rule.name}(){
         let $$loc=this.startNode();${declarations}
         ${this.genAutomaton( automaton, rule )}
-        return {${keys.join( "," )}};
+        return {${keys.join( "," )}}${returnType ? ` as ${returnType}` : ""};
       }` );
     }
 
