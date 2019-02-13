@@ -23,7 +23,9 @@ this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
 this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
@@ -74,7 +76,9 @@ if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
 this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
@@ -113,16 +117,18 @@ rulePROGRAM(){
 case 1:
 if(this.current===1/*ID*/){
 $id=this.consume1(1/*ID*/);$$state=2;
-}else if(this.current===0){
+}else if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 2:
-if(this.current===1/*ID*/){
+if(this.current===1/*ID*/||this.current===0/*EOF*/){
  console.log(\\"\\\\n\\",$id); if(true){} ;$$state=1;
-}else if(this.current===0){
- console.log(\\"\\\\n\\",$id); if(true){} ;$$state=1;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"PROGRAM\\",id:$id,loc:this.locNode($$loc)};
@@ -252,9 +258,7 @@ this.consume1(44/*','*/);$$state=3;
 this.consume1(45/*'-'*/);$$state=4;
 }else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
 this.consume2(48/*'0'*/,57/*'9'*/);$$state=6;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.ruleID_START();$$state=2;
-}else if(/*'a'*/97<=this.current&&this.current<=100/*'d'*/){
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/||/*'a'*/97<=this.current&&this.current<=100/*'d'*/){
 this.ruleID_START();$$state=2;
 }else if(this.current===101/*'e'*/){
 this.consume1(101/*'e'*/);$$state=7;
@@ -262,14 +266,12 @@ this.consume1(101/*'e'*/);$$state=7;
 this.consume1(102/*'f'*/);$$state=10;
 }else if(/*'g'*/103<=this.current&&this.current<=122/*'z'*/){
 this.ruleID_START();$$state=2;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.ruleID_CHAR();$$state=2;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.ruleID_CHAR();$$state=2;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/||/*'A'*/65<=this.current&&this.current<=90/*'Z'*/||/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.ruleID_CHAR();$$state=2;
 }else {
 id=7;$$state=13;
@@ -283,7 +285,9 @@ break;
 case 4:
 if(this.current===62/*'>'*/){
 this.consume1(62/*'>'*/);$$state=5;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 5:
 {
@@ -300,12 +304,16 @@ break;
 case 7:
 if(this.current===110/*'n'*/){
 this.consume1(110/*'n'*/);$$state=8;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 8:
 if(this.current===100/*'d'*/){
 this.consume1(100/*'d'*/);$$state=9;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 9:
 {
@@ -315,12 +323,16 @@ break;
 case 10:
 if(this.current===117/*'u'*/){
 this.consume1(117/*'u'*/);$$state=11;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 11:
 if(this.current===110/*'n'*/){
 this.consume1(110/*'n'*/);$$state=12;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 12:
 {
@@ -370,16 +382,12 @@ if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
 this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-$$loop=false;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-$$loop=false;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-$$loop=false;
-}else {
+{
 $$loop=false;
 }
 break;
@@ -394,16 +402,12 @@ this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
 this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-$$loop=false;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-$$loop=false;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-$$loop=false;
-}else {
+{
 $$loop=false;
 }
 break;
@@ -411,11 +415,7 @@ break;
       }
 ruleID(){
         this.ruleID_START();let $$state=2,$$loop=true;while($$loop){
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.ruleID_CHAR();$$state=2;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.ruleID_CHAR();$$state=2;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/||/*'A'*/65<=this.current&&this.current<=90/*'Z'*/||/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.ruleID_CHAR();$$state=2;
 }else {
 $$loop=false;
@@ -448,36 +448,46 @@ if(this.current===4/*ARROW*/){
 this.consume1(4/*ARROW*/);$$state=5;
 }else if(this.current===7/*ID*/){
 $params.push(this.consume1(7/*ID*/));$$state=3;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 3:
 if(this.current===3/*COMMA*/){
 this.consume1(3/*COMMA*/);$$state=4;
 }else if(this.current===4/*ARROW*/){
 this.consume1(4/*ARROW*/);$$state=5;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 4:
 if(this.current===7/*ID*/){
 $params.push(this.consume1(7/*ID*/));$$state=3;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 5:
-if(this.current===7/*ID*/){
+if(this.current===7/*ID*/||this.current===8/*NUM*/){
 $body=this.ruleEXP();$$state=6;
-}else if(this.current===8/*NUM*/){
-$body=this.ruleEXP();$$state=6;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 6:
 if(this.current===2/*END*/){
 this.consume1(2/*END*/);$$state=7;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 7:
-if(this.current===0){
+if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"PROGRAM\\",params:$params,body:$body,loc:this.locNode($$loc)};
@@ -490,12 +500,16 @@ if(this.current===7/*ID*/){
 $stuff=this.consume1(7/*ID*/);$$state=2;
 }else if(this.current===8/*NUM*/){
 $stuff=this.consume1(8/*NUM*/);$$state=2;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 2:
 if(this.current===2/*END*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"EXP\\",stuff:$stuff,loc:this.locNode($$loc)};
@@ -537,7 +551,9 @@ if(this.current===65/*'A'*/){
 this.consume1(65/*'A'*/);$$state=2;
 }else if(this.current===66/*'B'*/){
 this.consume1(66/*'B'*/);$$state=3;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
 {
@@ -591,12 +607,16 @@ if(this.current===1/*'A'*/){
 this.consume1(1/*'A'*/);$$state=2;
 }else if(this.current===2/*'B'*/){
 this.ruleRULE2();$$state=3;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 3:
-if(this.current===0){
+if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"RULE1\\",loc:this.locNode($$loc)};
@@ -606,9 +626,11 @@ ruleRULE2(){
         this.consume1(2/*'B'*/);this.consume1(2/*'B'*/);let $$state=3,$$loop=true;while($$loop){
 if(this.current===2/*'B'*/){
 this.consume1(2/*'B'*/);$$state=3;
-}else if(this.current===0){
+}else if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 }
         return {type:\\"RULE2\\",loc:this.locNode($$loc)};
       }
@@ -667,11 +689,24 @@ class Parser extends Q.Parser{
     
 ruleRULE1(){
         let $$loc=this.startNode();
-        this.consume1(1/*'A'*/);let $$state=2,$$loop=true;while($$loop){
-if(this.current===0){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===1/*'A'*/){
+this.consume1(1/*'A'*/);$$state=2;
+}else if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
 }
+break;
+case 2:
+if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+break;
+}}
         return {type:\\"RULE1\\",loc:this.locNode($$loc)};
       }
 parse(){
@@ -728,7 +763,9 @@ this.consume1(101/*'e'*/);$$state=7;
 this.consume1(102/*'f'*/);$$state=10;
 }else if(/*'g'*/103<=this.current&&this.current<=122/*'z'*/){
 this.consume2(103/*'g'*/,122/*'z'*/);$$state=6;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
 {
@@ -738,7 +775,9 @@ break;
 case 3:
 if(this.current===62/*'>'*/){
 this.consume1(62/*'>'*/);$$state=4;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 4:
 {
@@ -876,7 +915,9 @@ if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
 this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
-}else { $$loop=false; }
+}else {
+$$loop=false;
+}
 break;
 case 2:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
@@ -917,36 +958,46 @@ if(this.current===3/*'->'*/){
 this.consume1(3/*'->'*/);$$state=5;
 }else if(this.current===5/*ID*/){
 $params.push(this.consume1(5/*ID*/));$$state=3;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 3:
 if(this.current===2/*','*/){
 this.consume1(2/*','*/);$$state=4;
 }else if(this.current===3/*'->'*/){
 this.consume1(3/*'->'*/);$$state=5;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 4:
 if(this.current===5/*ID*/){
 $params.push(this.consume1(5/*ID*/));$$state=3;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 5:
-if(this.current===5/*ID*/){
+if(this.current===5/*ID*/||this.current===6/*NUM*/){
 $body=this.ruleEXP();$$state=6;
-}else if(this.current===6/*NUM*/){
-$body=this.ruleEXP();$$state=6;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 6:
 if(this.current===4/*'end'*/){
 this.consume1(4/*'end'*/);$$state=7;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 7:
-if(this.current===0){
+if(this.current===0/*EOF*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"PROGRAM\\",params:$params,body:$body,loc:this.locNode($$loc)} as PROGRAM;
@@ -959,12 +1010,16 @@ if(this.current===5/*ID*/){
 $stuff=this.consume1(5/*ID*/);$$state=2;
 }else if(this.current===6/*NUM*/){
 $stuff=this.consume1(6/*NUM*/);$$state=2;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 case 2:
 if(this.current===4/*'end'*/){
 $$loop=false;
-}else { throw this.unexpected(); }
+}else {
+throw this.unexpected();
+}
 break;
 }}
         return {type:\\"EXP\\",stuff:$stuff,loc:this.locNode($$loc)} as EXP;

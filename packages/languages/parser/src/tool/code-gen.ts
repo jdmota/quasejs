@@ -29,7 +29,11 @@ export class CodeGenerator {
     if ( this.inLexer ) {
       comment = `/*'${String.fromCodePoint( num )}'*/`;
     } else {
-      comment = `/*${this.lexerTokenToString( this.grammar.idToNode.get( num ) as LexerTokens )}*/`;
+      if ( num === 0 ) {
+        comment = `/*EOF*/`;
+      } else {
+        comment = `/*${this.lexerTokenToString( this.grammar.idToNode.get( num ) as LexerTokens )}*/`;
+      }
     }
     return comment;
   }
@@ -74,91 +78,129 @@ export class CodeGenerator {
   }
 
   genMoveToState( state: DState ): string {
-    /* if ( state.transitionAmount() === 0 ) {
-      return "$$loop=false;\n";
-    }
-    if ( state.inTransitions < 2 && state.transitionAmount() === 1 ) {
-      let code = "";
-      let i = 0;
-
-      for ( const [ transition, dest ] of state ) {
-        if ( i > 0 ) {
-          throw new Error( "Assertion error" );
-        }
-        code += this.genTransition( transition );
-        code += this.genMoveToState( dest );
-        i++;
-      }
-      return code;
-    } */
     return `$$state=${state.id};\n`;
   }
 
-  genGoto( goto: GoTo ) {
+  genGoto( goto: GoTo | false ) {
     if ( goto ) {
       const [ transition, dest ] = goto;
       return this.genTransition( transition ) + this.genMoveToState( dest );
     }
+    if ( goto === false ) {
+      return `throw this.unexpected();\n`;
+    }
     return `$$loop=false;\n`;
+  }
+
+  genBoolExp( looks: RangeTransition[] ) {
+    return looks.reduce( ( array, look ) => {
+      const last = array[ array.length - 1 ];
+      if ( last && last.to === look.from ) {
+        last.to = look.to;
+      } else {
+        array.push( {
+          from: look.from,
+          to: look.to
+        } );
+      }
+      return array;
+    }, [] as { from: number; to: number }[] ).map( look => {
+      if ( look.from === look.to ) {
+        return `this.current===${look.from}${this.numToComment( look.from )}`;
+      }
+      return `${this.numToComment( look.from )}${look.from}<=this.current&&` +
+        `this.current<=${look.to}${this.numToComment( look.to )}`;
+    } ).join( "||" );
+  }
+
+  equalsGoto( a: GoTo | false, b: GoTo | false ): boolean {
+    if ( a === b ) {
+      return true;
+    }
+    if ( !a || !b ) {
+      return false;
+    }
+    return a[ 1 ] === b[ 1 ] && a[ 0 ].equals( b[ 0 ] );
+  }
+
+  // look === null for else cases
+  // goto === null for loop=false
+  // goto === false to throw error
+  addIf( ifs: { looks: RangeTransition[]; goto: GoTo | false }[], look: RangeTransition | null, goto: GoTo | false ) {
+    const last = ifs[ ifs.length - 1 ];
+
+    if ( last && this.equalsGoto( last.goto, goto ) ) {
+      if ( look === null ) {
+        last.looks.length = 0;
+      } else {
+        last.looks.push( look );
+      }
+    } else {
+      if ( look === null ) {
+        ifs.push( {
+          looks: [],
+          goto
+        } );
+      } else {
+        ifs.push( {
+          looks: [ look ],
+          goto
+        } );
+      }
+    }
   }
 
   genStateManyTransitions( state: DState, rule: ParserRule | LexerRule | null ) {
     const data = this.analyser.analyse( state, null );
+    const ifs: {
+      looks: RangeTransition[];
+      goto: GoTo | false;
+    }[] = [];
     let code = ``;
-    let eofData = null;
+    let eofData;
 
     for ( const [ look, set ] of data ) {
-      const array = this.analyser.testConflict( rule, state, look, set );
+      const goto = this.analyser.testConflict( rule, state, look, set );
       if ( look instanceof EOFTransition ) {
-        eofData = array;
-        continue;
-      }
-      for ( const goto of array ) {
-        if ( look instanceof RangeTransition ) {
-          if ( look.from === look.to ) {
-            code += `if(this.current===${look.from}${this.numToComment( look.from )}){\n`;
-          } else {
-            code += `if(${this.numToComment( look.from )}${look.from}<=this.current&&` +
-              `this.current<=${look.to}${this.numToComment( look.to )}){\n`;
-          }
-          code += this.genGoto( goto );
-          code += `}else `;
-        } else {
-          // TODO
-        }
-        break;
+        eofData = goto;
+      } else if ( look instanceof RangeTransition ) {
+        this.addIf( ifs, look, goto );
+      } else {
+        // TODO
       }
     }
 
-    if ( eofData ) {
+    if ( eofData === undefined ) {
       if ( this.inLexer ) {
-        for ( const goto of eofData ) {
-          code += `{\n`;
-          code += this.genGoto( goto );
-          code += `}\n`;
-          break;
-        }
+        this.addIf( ifs, null, null );
       } else {
-        for ( const goto of eofData ) {
-          code += `if(this.current===0){\n`;
-          code += this.genGoto( goto );
-          code += `}else `;
-          break;
-        }
-        code += `{ throw this.unexpected(); }\n`;
+        this.addIf( ifs, null, false );
       }
     } else {
       if ( this.inLexer ) {
-        code += `{ $$loop=false; }\n`;
+        this.addIf( ifs, null, eofData );
       } else {
-        code += `{ throw this.unexpected(); }\n`;
+        this.addIf( ifs, new RangeTransition( 0, 0 ), eofData );
+        this.addIf( ifs, null, false );
+      }
+    }
+
+    for ( const { looks, goto } of ifs ) {
+      if ( looks.length > 0 ) {
+        code += `if(${this.genBoolExp( looks )}){\n`;
+        code += this.genGoto( goto );
+        code += `}else `;
+      } else {
+        code += `{\n`;
+        code += this.genGoto( goto );
+        code += `}\n`;
       }
     }
 
     return code;
   }
 
-  genAutomaton( { states }: DFA<DState>, rule: ParserRule | LexerRule | null ): string {
+  genAutomaton( { states, acceptingSet }: DFA<DState>, rule: ParserRule | LexerRule | null ): string {
 
     let code = "";
 
@@ -171,7 +213,9 @@ export class CodeGenerator {
       (
         ( initialState.id === 1 && initialState.inTransitions === 0 ) ||
         ( initialState.id > 1 && initialState.inTransitions === 1 )
-      ) && initialState.transitionAmount() === 1
+      ) &&
+      initialState.transitionAmount() === 1 &&
+      !acceptingSet.has( initialState )
     ) {
       ignore.add( initialState );
 

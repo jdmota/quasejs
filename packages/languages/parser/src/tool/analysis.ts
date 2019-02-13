@@ -142,8 +142,10 @@ export class Analyser {
         `In ${rule ? `rule ${rule.name}` : "lexer"}, in state ${state.id}, when seeing ${look}, multiple choices: ` +
         `${arr.map( goto => ( goto ? `${goto[ 0 ]} to ${goto[ 1 ].id}` : "leave" ) ).join( "; " )}`
       );
+    } else if ( arr.length === 0 ) {
+      throw new Error( "Assertion error" );
     }
-    return arr;
+    return arr[ 0 ];
   }
 
   _analyseFinalState( state: DState, ctx: Context | null, set: LookSet ) {

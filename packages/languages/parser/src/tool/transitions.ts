@@ -99,6 +99,10 @@ export class ActionTransition extends AbstractEpsilonTransition {
     return 3;
   }
 
+  equals( other: unknown ): boolean {
+    return other instanceof ActionTransition && other.code === this.code;
+  }
+
   toString() {
     return `[Action]`;
   }
