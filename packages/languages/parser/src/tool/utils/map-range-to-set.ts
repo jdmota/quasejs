@@ -7,26 +7,37 @@ type Node<T> = {
   next: Node<T> | null;
 };
 
+type NotRangeSet = [number, number][];
+
+function rangeComparator( a: [number, number], b: [number, number] ) {
+  return a[ 0 ] - b[ 0 ];
+}
+
 export class MapRangeToSet<T> {
 
   head: Node<T> | null;
   size: number;
-  MIN: number;
-  MAX: number;
 
-  constructor( MIN: number, MAX: number ) {
+  constructor() {
     this.head = null;
     this.size = 0;
-    this.MIN = MIN;
-    this.MAX = MAX;
   }
 
-  addNotRange( from: number, to: number, value: Set<T> ) {
-    if ( this.MIN < from ) {
-      this.addRange( this.MIN, from - 1, value );
+  addNotRangeSet( set: NotRangeSet, value: Set<T>, MIN: number, MAX: number ) {
+    set = set.sort( rangeComparator );
+
+    let min = MIN;
+
+    for ( let i = 0; i < set.length; i++ ) {
+      const el = set[ i ];
+      if ( min < el[ 0 ] ) {
+        this.addRange( min, el[ 0 ] - 1, value );
+      }
+      min = Math.max( min, el[ 1 ] + 1 );
     }
-    if ( to < this.MAX ) {
-      this.addRange( to + 1, this.MAX, value );
+
+    if ( min < MAX ) {
+      this.addRange( min, MAX, value );
     }
   }
 

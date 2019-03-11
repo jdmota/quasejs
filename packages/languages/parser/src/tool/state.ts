@@ -5,7 +5,6 @@ import { MapKeyToValue } from "./utils/map-key-to-value";
 import { MapRangeToValue } from "./utils/map-range-to-value";
 
 const EPSILON = new EpsilonTransition();
-const MAX = Number.MAX_SAFE_INTEGER;
 
 export class State {
 
@@ -16,7 +15,7 @@ export class State {
   constructor( id: number ) {
     this.id = id;
     this.mapKeyToSet = new MapKeyToSet();
-    this.mapRangeToSet = new MapRangeToSet( 0, MAX );
+    this.mapRangeToSet = new MapRangeToSet();
   }
 
   addTransition( transition: Transition, dest: State ) {
@@ -36,20 +35,12 @@ export class State {
     this.mapRangeToSet.addRange( from, to, new Set( [ dest ] ) );
   }
 
-  addSet( numbers: number[], dest: State ) {
-    for ( const number of numbers ) {
-      this.mapRangeToSet.addRange( number, number, new Set( [ dest ] ) );
-    }
+  addNotRangeSet( set: [number, number][], dest: State, min: number, max: number ) {
+    this.mapRangeToSet.addNotRangeSet( set, new Set( [ dest ] ), min, max );
   }
 
-  addNotSet( numbers: number[], dest: State ) {
-    for ( const number of numbers ) {
-      this.mapRangeToSet.addNotRange( number, number, new Set( [ dest ] ) );
-    }
-  }
-
-  addWildcard( dest: State ) {
-    this.mapRangeToSet.addRange( 0, MAX, new Set( [ dest ] ) );
+  addWildcard( dest: State, min: number, max: number ) {
+    this.mapRangeToSet.addRange( min, max, new Set( [ dest ] ) );
   }
 
   * [Symbol.iterator](): It {

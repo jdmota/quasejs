@@ -530,6 +530,133 @@ Array [
 
 exports[`basic: error 1`] = `"Unexpected token EOF (at 1:14)"`;
 
+exports[`negative character class in regexp: code 1`] = `
+"/* eslint-disable */
+const Q=require(\\"@quase/parser\\");
+
+
+    class Tokenizer extends Q.Tokenizer{
+      
+      constructor(input){
+        super(input);
+        this.labels=[\\"\\",\\"STRING\\"];
+      }
+      readToken() {
+        const prevPos = this.pos;
+        let id = -1;
+
+        this.consume1(34/*'\\"'*/);let $$state=2,$$loop=true;while($$loop){switch($$state){
+case 2:
+if(/*' '*/0<=this.current&&this.current<=33/*'!'*/){
+this.consume2(0/*' '*/,33/*'!'*/);$$state=2;
+}else if(this.current===34/*'\\"'*/){
+this.consume1(34/*'\\"'*/);$$state=3;
+}else if(/*'#'*/35<=this.current&&this.current<=91/*'['*/){
+this.consume2(35/*'#'*/,91/*'['*/);$$state=2;
+}else if(this.current===92/*'\\\\'*/){
+this.consume1(92/*'\\\\'*/);$$state=4;
+}else if(/*']'*/93<=this.current&&this.current<=1114111/*'􏿿'*/){
+this.consume2(93/*']'*/,1114111/*'􏿿'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 3:
+{
+id=1;$$state=5;
+}
+break;
+case 4:
+if(/*' '*/0<=this.current&&this.current<=1114111/*'􏿿'*/){
+this.consume2(0/*' '*/,1114111/*'􏿿'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 5:
+{
+$$loop=false;
+}
+break;
+}}
+
+        if (id===-1) {
+          throw this.unexpected();
+        }
+
+        const image=this.input.slice(prevPos,this.pos);
+        const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+        const newLines=splitted.length-1;
+        if (newLines>0) {
+          this._lineStart=this.pos-splitted[newLines].length;
+          this._curLine+=newLines;
+        }
+        return {
+          id,
+          label: this.labels[id],
+          image
+        };
+      }
+      ruleSTRING(){
+        this.consume1(34/*'\\"'*/);let $$state=2,$$loop=true;while($$loop){switch($$state){
+case 2:
+if(/*' '*/0<=this.current&&this.current<=33/*'!'*/){
+this.consume2(0/*' '*/,33/*'!'*/);$$state=2;
+}else if(this.current===34/*'\\"'*/){
+this.consume1(34/*'\\"'*/);$$state=4;
+}else if(/*'#'*/35<=this.current&&this.current<=91/*'['*/){
+this.consume2(35/*'#'*/,91/*'['*/);$$state=2;
+}else if(this.current===92/*'\\\\'*/){
+this.consume1(92/*'\\\\'*/);$$state=3;
+}else if(/*']'*/93<=this.current&&this.current<=1114111/*'􏿿'*/){
+this.consume2(93/*']'*/,1114111/*'􏿿'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 3:
+if(/*' '*/0<=this.current&&this.current<=1114111/*'􏿿'*/){
+this.consume2(0/*' '*/,1114111/*'􏿿'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 4:
+{
+$$loop=false;
+}
+break;
+}}
+      }
+    }
+class Parser extends Q.Parser{
+
+    constructor(text){super(new Tokenizer(text));}
+    unexpected(id) {
+      const labels = this.tokenizer.labels;
+      super.unexpected(labels[id]||id);
+    }
+    
+ruleRULE1(){
+        let $$loc=this.startNode();
+        this.consume1(1/*STRING*/);let $$state=2,$$loop=true;while($$loop){
+if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+}
+        return {type:\\"RULE1\\",loc:this.locNode($$loc)};
+      }
+parse(){
+      const r=this.ruleRULE1();this.consume1(0);return r;
+    }}
+module.exports=Parser;
+"
+`;
+
+exports[`negative character class in regexp: conflicts 1`] = `Array []`;
+
 exports[`optimized repetitions and nested rule on right side: code 1`] = `
 "/* eslint-disable */
 const Q=require(\\"@quase/parser\\");

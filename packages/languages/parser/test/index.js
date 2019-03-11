@@ -66,6 +66,23 @@ it( "optimized repetitions and nested rule on right side", () => {
 
 } );
 
+it( "negative character class in regexp", () => {
+
+  const { code, conflicts } = tool(
+    `
+    @lexer
+    STRING: /"([^\\\\"]|\\\\[^])*"/;
+
+    @parser
+    start RULE1 : STRING;
+    `
+  );
+
+  expect( code ).toMatchSnapshot( "code" );
+  expect( conflicts ).toMatchSnapshot( "conflicts" );
+
+} );
+
 it( "typescript", () => {
 
   const { code } = tool(

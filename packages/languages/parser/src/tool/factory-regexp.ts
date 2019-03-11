@@ -8,6 +8,7 @@ import { RegexpNode } from "./parser/grammar-parser";
 import { Frag, Automaton } from "./automaton";
 
 type Char2 = Char & { codePoint: number };
+type ClassRange2 = { type: "ClassRange"; from: Char2; to: Char2 };
 
 export class FactoryRegexp {
 
@@ -29,14 +30,20 @@ export class FactoryRegexp {
 
   CharacterClass( { negative, expressions }: CharacterClass ) {
     if ( negative ) {
-      throw new Error( `Negative CharacterClass is not supported` );
+      const list = ( ( expressions || [] ) as ( Char2 | ClassRange2 )[] ).map( e => {
+        return ( e.type === "ClassRange" ? [ e.from.codePoint, e.to.codePoint ] : [ e.codePoint, e.codePoint ] ) as [number, number];
+      } );
+      const _in = this.automaton.newState();
+      const _out = this.automaton.newState();
+      _in.addNotRangeSet( list, _out, 0, 0x10ffff );
+      return { in: _in, out: _out };
     }
     const fragments = ( expressions || [] ).map( e => this.gen( e ) );
     // @ts-ignore
     return this.automaton.or( ...fragments );
   }
 
-  ClassRange( { from, to }: { from: Char2; to: Char2 } ) {
+  ClassRange( { from, to }: ClassRange2 ) {
     const _in = this.automaton.newState();
     const _out = this.automaton.newState();
     _in.addRange( from.codePoint, to.codePoint, _out );
