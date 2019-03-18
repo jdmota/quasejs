@@ -2,42 +2,10 @@
 
 ## About
 
-Provides utilities to get configuration (from a file or `package.json`), apply defaults and validate options.
+Provides utilities to get configuration (from a file or `package.json`).
 
 ```js
-import { getConfig, apply, t } from "@quase/config";
-
-const schema = {
-  foo: {
-    type: "boolean",
-    optional: true,
-    deprecated: true
-  },
-  bar: {
-    type: "boolean",
-    default: true
-  },
-  object: t.object( {
-    properties: {
-      prop: {
-        type: "number",
-        default: 10,
-        example: 10
-      }
-    }
-  } ),
-  tuple: t.tuple( {
-    items: [ "string", "string" ]
-  } ),
-  array: t.array( {
-    itemType: "number",
-    merge: "concat"
-  } ),
-  value: t.choices( {
-    values: [ 0, 1, 2 ],
-    default: 0
-  } )
-};
+import { getConfig } from "@quase/config";
 
 const { config, location } = await getConfig( {
   cwd: process.cwd(),
@@ -49,17 +17,4 @@ const { config, location } = await getConfig( {
   configKey: "",
   failIfNotFound: false
 } );
-
-// Apply defaults and validate
-// The first object passed (after schema) takes precedence
-const options = apply( schema, [ config ], [ "config" ] );
 ```
-
-### Merge mode
-
-It is used to customize how values are merged when applying defaults and merging multiple objects.
-
-- `"override"`: Just sets the value without merging.
-- `"merge"`: If they are arrays, merge them.
-- `"concat"`: If they are arrays, just concats them.
-- `"spreadMeansConcat"`: If they are arrays, concat them when the value with higher precedence has `"..."` as its first element.

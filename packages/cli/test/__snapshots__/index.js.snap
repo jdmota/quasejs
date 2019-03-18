@@ -14,7 +14,6 @@ exports[`cli basic 1`] = `
 
   Usage
     foo <input>
-      
 "
 `;
 
@@ -42,22 +41,18 @@ exports[`cli generate help 1`] = `
   Usage: $ bin something
 
   Options:
-    --                -- args [array]
     --number, -n, -n2 number description (default: 0) [number]
-    --unicorn, -u     unicorn description [string]
+    --unicorn, -u     unicorn description [string?]
     --meow            (default: \\"dog\\") [string]
     --boolean         boolean description (default: false) [boolean]
     --boolean-no      boolean no description (default: true) [boolean]
+    --object.prop     [string?]
     --object          [object]
-    --object.prop     [string]
-    --tuple           tuple [array]
+    --tuple           [[string?]]
     --array           array of strings [array]
-    --union           union [string | number | array]
-    --union.0         [string]
-    --choices1        choices1 (default: 0) [0 | 1 | 2]
-    --choices2        choices2 (default: 0) [0 | 1 | 2]
-    --camel-case      description [string]
-    --no-description 
+    --union           union (default: \\"\\") [string? | number | [string]]
+    --choices         choices (default: 0) [number | number | number]
+    --camel-case      description [string?]
 "
 `;
 
@@ -71,7 +66,7 @@ exports[`cli generate help for subcommand 1`] = `
 
   Options:
     --number, -n, -n2 number description (default: 0) [number]
-    --unicorn, -u     unicorn description [string]
+    --unicorn, -u     unicorn description [string?]
     --boolean         boolean description (default: true) [boolean]
 "
 `;
@@ -87,7 +82,7 @@ exports[`cli generate help with subcommands 1`] = `
     no-description
 
   Options:
-    --unicorn, -u unicorn description [string]
+    --unicorn, -u unicorn description [string?]
 "
 `;
 

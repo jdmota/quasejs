@@ -1,7 +1,5 @@
 import { cli } from "../src";
 
-const { t } = require( "@quase/config" ); // eslint-disable-line node/no-extraneous-require
-
 /* eslint-disable no-console */
 
 describe( "cli", () => {
@@ -11,7 +9,7 @@ describe( "cli", () => {
 
     console.error = jest.fn();
 
-    const { input, options, pkg, generateHelp, showHelp, config } = await cli( {
+    const { input, options, flags, pkg, generateHelp, showHelp, config } = await cli( {
       cwd: __dirname,
       pkg: {
         name: "@quase/eslint-config-quase",
@@ -23,20 +21,20 @@ describe( "cli", () => {
         Usage
           foo <input>
       `,
-      schema: {
-        "--": { type: "array", itemType: "string" },
-        number: { type: "number", default: 0 },
-        unicorn: { type: "string", alias: "u", optional: true },
-        meow: { type: "any", default: "dog" },
-        boolean: { type: "boolean", default: true },
-        boolean2: { type: "boolean", default: true },
-        boolean3: { type: "boolean" },
-        boolean4: { type: "boolean" },
-        boolean5: { type: "boolean" },
-        iAmTheConfigFile: { type: "string", optional: true },
-        fooBar: { type: "boolean" }
-      },
+      "populate--": true,
       inferType: true,
+      schema: `type Schema {
+        number: number @default(0);
+        unicorn: string? @alias("u");
+        meow: any @default("dog");
+        boolean: boolean @default(true);
+        boolean2: boolean @default(true);
+        boolean3: boolean @default(false);
+        boolean4: boolean @default(false);
+        boolean5: boolean @default(false);
+        iAmTheConfigFile: string?;
+        fooBar: boolean @default(false);
+      }`,
       configFiles: "quase-cli-config.js",
       notifier: {
         options: {
@@ -58,7 +56,7 @@ describe( "cli", () => {
     expect( options.number ).toBe( 10 );
     expect( options.meow ).toBe( "dog" );
     expect( options.unicorn ).toBe( "cat" );
-    expect( options[ "--" ] ).toEqual( [ "unicorn", "10" ] );
+    expect( flags[ "--" ] ).toEqual( [ "unicorn", "10" ] );
     expect( pkg.name ).toBe( "@quase/eslint-config-quase" );
     expect( pkg.version ).toBe( "0.0.1" );
     expect( generateHelp() ).toMatchSnapshot();
@@ -78,35 +76,17 @@ describe( "cli", () => {
         description: "Description"
       },
       argv: [ "--bar.prop2=1" ],
-      schema: {
-        foo: {
-          type: "boolean"
-        },
-        bar: t.object( {
-          properties: {
-            prop1: {
-              type: "number",
-              default: 0
-            },
-            prop2: {
-              type: "number",
-              default: 0
-            }
-          }
-        } ),
-        baz: t.object( {
-          properties: {
-            prop1: {
-              type: "number",
-              default: 0
-            },
-            prop2: {
-              type: "number",
-              default: 0
-            }
-          }
-        } )
-      },
+      schema: `type Schema {
+        foo: boolean @default(false);
+        bar: type {
+          prop1: number @default(0);
+          prop2: number @default(0);
+        };
+        baz: type {
+          prop1: number @default(0);
+          prop2: number @default(0);
+        };
+      }`,
       notifier: false
     } );
 
@@ -126,11 +106,6 @@ describe( "cli", () => {
 
   it( "boolean interpretation", async() => {
 
-    const TYPE = t.union( {
-      types: [ "boolean", "string" ],
-      optional: true
-    } );
-
     const { options } = await cli( {
       cwd: __dirname,
       pkg: {
@@ -138,12 +113,14 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "--foo=true", "--bar", "--baz=false", "--other=abc" ],
-      schema: {
-        foo: TYPE,
-        bar: TYPE,
-        baz: TYPE,
-        other: TYPE
-      },
+      schema: `
+      type Type = boolean? | string;
+      type Schema {
+        foo: Type;
+        bar: Type;
+        baz: Type;
+        other: Type;
+      }`,
       notifier: false
     } );
 
@@ -167,68 +144,23 @@ describe( "cli", () => {
       },
       argv: [],
       usage: "$ bin something",
-      schema: {
-        "--": t.array( { itemType: "string", description: "-- args" } ),
-        number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
-        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
-        meow: { type: "string", description: "", default: "dog" },
-        boolean: { type: "boolean", default: false, description: "boolean description" },
-        booleanNo: { type: "boolean", default: true, description: "boolean no description" },
-        object: t.object( {
-          properties: {
-            prop: {
-              type: "string",
-              description: "",
-              optional: true
-            }
-          },
-          description: ""
-        } ),
-        tuple: t.tuple( {
-          items: [],
-          description: "tuple"
-        } ),
-        array: t.array( {
-          itemType: "string",
-          description: "array of strings"
-        } ),
-        union: t.union( {
-          types: [
-            "string",
-            "number",
-            t.tuple( {
-              items: [
-                {
-                  type: "string",
-                  description: "",
-                }
-              ]
-            } )
-          ],
-          description: "union",
-          optional: true
-        } ),
-        choices1: t.choices( {
-          values: [ 0, 1, 2 ],
-          description: "choices1",
-          default: 0
-        } ),
-        choices2: t.union( {
-          types: [ 0, 1, 2 ].map( x => t.value( { value: x } ) ),
-          description: "choices2",
-          default: 0
-        } ),
-        camelCase: {
-          type: "string",
-          description: "description",
-          optional: true
-        },
-        noDescription: {
-          type: "any",
-          description: "",
-          optional: true
-        }
-      },
+      "populate--": true,
+      schema: `type Schema {
+        number: number @default(0) @alias("n","n2") @description("number description");
+        unicorn: string? @alias("u") @description("unicorn description");
+        meow: string @default("dog") @description("");
+        boolean: boolean @default(false) @description("boolean description");
+        booleanNo: boolean @default(true) @description("boolean no description");
+        object: type @description("") {
+          prop: string? @description("");
+        };
+        tuple: [ string? ] @description("");
+        array: string[] @description("array of strings");
+        union: string? | number | [ string ] @description("union") @default("");
+        choices: 0 | 1 | 2 @default(0) @description("choices");
+        camelCase: string? @description("description");
+        noDescription: any;
+      }`,
       notifier: false
     } );
 
@@ -248,12 +180,9 @@ describe( "cli", () => {
       inferType: true,
       help: "",
       notifier: false,
-      schema: {
-        prop: {
-          type: "any",
-          optional: true
-        }
-      }
+      schema: `type Schema {
+        prop: any;
+      }`
     } );
 
     expect( options ).toEqual( {
@@ -274,12 +203,9 @@ describe( "cli", () => {
       argv: [ "--prop=10", "10", "abc" ],
       help: "",
       notifier: false,
-      schema: {
-        prop: {
-          type: "any",
-          optional: true
-        }
-      }
+      schema: `type Schema {
+        prop: any;
+      }`
     } );
 
     expect( options ).toEqual( {
@@ -298,27 +224,12 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "" ],
-      schema: {
-        array: {
-          type: "array",
-          itemType: "any"
-        },
-        string: {
-          type: "string",
-          optional: true
-        },
-        number: {
-          type: "number",
-          optional: true
-        },
-        boolean: {
-          type: "boolean"
-        },
-        union: t.union( {
-          types: [ "boolean", "array" ],
-          optional: true
-        } )
-      },
+      schema: `type Schema {
+        array: any[];
+        string: string?;
+        number: number?;
+        boolean: boolean?;
+      }`,
       help: "",
       notifier: false
     } );
@@ -336,21 +247,12 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "-a", "-b" ],
-      schema: {
-        aaa: {
-          type: "boolean",
-          alias: "a"
-        },
-        foo: t.object( {
-          properties: {
-            bar: {
-              type: "boolean",
-              alias: "b"
-            }
-          },
-          optional: true,
-        } )
-      },
+      schema: `type Schema {
+        aaa: boolean @alias("a");
+        foo: type {
+          bar: boolean @alias("b");
+        };
+      }`,
       help: "",
       notifier: false
     } );
@@ -375,31 +277,16 @@ describe( "cli", () => {
       argv: [ "--obj.foo=10", "--obj.bar.baz=dog", "--obj.bar.camel-case=cat", "--no-obj.bool" ],
       help: "",
       notifier: false,
-      schema: {
-        obj: t.object( {
-          properties: {
-            foo: {
-              type: "number",
-              default: 0
-            },
-            bool: {
-              type: "boolean"
-            },
-            bar: t.object( {
-              properties: {
-                baz: {
-                  type: "string",
-                  optional: true
-                },
-                camelCase: {
-                  type: "string",
-                  optional: true
-                }
-              }
-            } )
-          }
-        } )
-      }
+      schema: `type Schema {
+        obj: type {
+          foo: number @default(0);
+          bool: boolean @default(false);
+          bar: type {
+            baz: string?;
+            camelCase: string?;
+          };
+        };
+      }`
     } );
 
     expect( options ).toEqual( {
@@ -424,17 +311,9 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "--obj={\"foo\":10}" ],
-      schema: {
-        obj: {
-          type: "object",
-          additionalProperties: true,
-          coerce( value ) {
-            return {
-              value: JSON.parse( value )
-            };
-          }
-        }
-      },
+      schema: `type Schema {
+        obj: type @additionalProperties @coerce(js(v=>({value:JSON.parse(v)}))) {};
+      }`,
       help: "",
       notifier: false
     } );
@@ -458,13 +337,9 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "-vvv" ],
-      schema: {
-        v: {
-          type: "number",
-          argType: "count",
-          optional: true
-        }
-      },
+      schema: `type Schema {
+        v: number? @count;
+      }`,
       help: "",
       notifier: false
     } );
@@ -484,24 +359,12 @@ describe( "cli", () => {
         version: "0.0.1"
       },
       argv: [ "-a", "foo", "-b", "bar", "baz" ],
-      schema: {
-        aaa: t.array( {
-          itemType: "string",
-          optional: true,
-          narg: 1,
-          alias: "a"
-        } ),
-        foo: t.object( {
-          properties: {
-            bar: t.array( {
-              itemType: "string",
-              narg: 2,
-              alias: "b"
-            } )
-          },
-          optional: true
-        } )
-      },
+      schema: `type Schema {
+        aaa: string[] @narg(1) @alias("a");
+        foo: type {
+          bar: string[] @narg(2) @alias("b");
+        };
+      }`,
       help: "",
       notifier: false
     } );
@@ -525,21 +388,12 @@ describe( "cli", () => {
           version: "0.0.1"
         },
         argv: [ "-a", "foo", "--foo.bar", "bar", "baz" ],
-        schema: {
-          aaa: {
-            type: "any",
-            narg: 1,
-            alias: "a"
-          },
-          foo: t.object( {
-            properties: {
-              bar: {
-                type: "any",
-                narg: 5
-              }
-            }
-          } )
-        },
+        schema: `type Schema {
+          aaa: any @narg(1) @alias("a");
+          foo: type {
+            bar: any @narg(5);
+          };
+        }`,
         help: "",
         notifier: false
       } )
@@ -557,12 +411,9 @@ describe( "cli", () => {
       },
       argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
-      schema: {
-        iAmTheConfigFile2: {
-          type: "string",
-          optional: true
-        }
-      },
+      schema: `type Schema {
+        iAmTheConfigFile2: string?;
+      }`,
       configFiles: "quase-cli-config.js",
       notifier: false
     } );
@@ -584,7 +435,7 @@ describe( "cli", () => {
       },
       argv: [],
       help: "",
-      schema: {},
+      schema: `type Schema {}`,
       configFiles: "non-existent-file.js",
       notifier: false
     } );
@@ -604,12 +455,9 @@ describe( "cli", () => {
       },
       argv: [ "" ],
       help: "",
-      schema: {
-        configFromPkg: {
-          type: "string",
-          optional: true
-        }
-      },
+      schema: `type Schema {
+        configFromPkg: string?;
+      }`,
       configFiles: "non-existent-file.js",
       configKey: "my-key",
       notifier: false
@@ -628,12 +476,9 @@ describe( "cli", () => {
         name: "@quase/eslint-config-quase",
         version: "0.0.1"
       },
-      schema: {
-        iAmTheConfigFile2: {
-          type: "string",
-          default: "no"
-        }
-      },
+      schema: `type Schema {
+        iAmTheConfigFile2: string @default("no");
+      }`,
       argv: [ "--config=quase-cli-config-2.js" ],
       help: "",
       configFiles: "quase-cli-config.js",
@@ -659,7 +504,7 @@ describe( "cli", () => {
         },
         argv: [ "--config=non-existante-file.js" ],
         help: "",
-        schema: {},
+        schema: `type Schema {}`,
         configFiles: [ "quase-cli-config.js" ],
         notifier: false
       } )
@@ -678,11 +523,9 @@ describe( "cli", () => {
       },
       commands: {
         fooCommand: {
-          schema: {
-            foo: {
-              type: "boolean"
-            }
-          }
+          schema: `type Schema {
+            foo: boolean;
+          }`
         }
       },
       argv: [ "foo-command", "--foo" ],
@@ -707,11 +550,9 @@ describe( "cli", () => {
         },
         commands: {
           fooCommand: {
-            schema: {
-              foo: {
-                type: "boolean"
-              }
-            }
+            schema: `type Schema {
+              foo: boolean;
+            }`
           }
         },
         argv: [ "--foo" ],
@@ -733,11 +574,9 @@ describe( "cli", () => {
         },
         commands: {
           fooCommand: {
-            schema: {
-              foo: {
-                type: "boolean"
-              }
-            }
+            schema: `type Schema {
+              foo: boolean;
+            }`
           }
         },
         argv: [ "bar-command", "--foo" ],
@@ -759,11 +598,9 @@ describe( "cli", () => {
       defaultCommand: "fooCommand",
       commands: {
         fooCommand: {
-          schema: {
-            foo: {
-              type: "boolean"
-            }
-          }
+          schema: `type Schema {
+            foo: boolean;
+          }`
         }
       },
       argv: [ "--foo" ],
@@ -790,19 +627,17 @@ describe( "cli", () => {
       commands: {
         fooCommand: {
           description: "foo command description",
-          schema: {
-            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
-            help: { type: "boolean" }
-          }
+          schema: `type Schema {
+            number: number @default(0) @alias("n","n2") @description("number description");
+          }`
         },
         noDescription: {
           description: ""
         }
       },
-      schema: {
-        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
-        help: { type: "boolean" }
-      },
+      schema: `type Schema {
+        unicorn: string? @alias("u") @description("unicorn description");
+      }`,
       autoHelp: false,
       notifier: false
     } );
@@ -826,16 +661,14 @@ describe( "cli", () => {
       commands: {
         fooCommand: {
           description: "foo command description",
-          schema: {
-            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
-            help: { type: "boolean" }
-          }
+          schema: `type Schema {
+            number: number @default(0) @alias("n","n2") @description("number description");
+          }`
         }
       },
-      schema: {
-        unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
-        help: { type: "boolean" }
-      },
+      schema: `type Schema {
+        unicorn: string? @alias("u") @description("unicorn description");
+      }`,
       autoHelp: false,
       notifier: false
     } );
@@ -858,15 +691,15 @@ describe( "cli", () => {
       commands: {
         fooCommand: {
           description: "foo command description",
-          schema: {
-            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
-            unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
-            meow: { type: "string", default: "dog" },
-            boolean: { type: "boolean", default: true, description: "boolean description" },
-          }
+          schema: `type Schema {
+            number: number @default(0) @alias("n","n2") @description("number description");
+            unicorn: string? @alias("u") @description("unicorn description");
+            meow: string @default("dog");
+            boolean: boolean @default(true) @description("boolean description");
+          }`
         }
       },
-      schema: {},
+      schema: `type Schema {}`,
       notifier: false
     } );
 
@@ -889,15 +722,15 @@ describe( "cli", () => {
         fooCommand: {
           description: "foo command description",
           help: "Custom subcommand help",
-          schema: {
-            number: { type: "number", default: 0, alias: [ "n", "n2" ], description: "number description" },
-            unicorn: { type: "string", alias: "u", optional: true, description: "unicorn description" },
-            meow: { type: "string", default: "dog" },
-            boolean: { type: "boolean", default: true, description: "boolean description" },
-          }
+          schema: `type Schema {
+            number: number @default(0) @alias("n","n2") @description("number description");
+            unicorn: string? @alias("u") @description("unicorn description");
+            meow: string @default("dog");
+            boolean: boolean @default(true) @description("boolean description");
+          }`
         }
       },
-      schema: {},
+      schema: `type Schema {}`,
       notifier: false
     } );
 

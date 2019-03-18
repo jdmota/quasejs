@@ -1,28 +1,29 @@
-import loudRejection from "./loud-rejection";
+import hardRejection from "./hard-rejection";
 import notify from "./notify";
 import { generateHelp as _generateHelp } from "./help";
 import { handleArgs } from "./args";
+import normalizePkg from "./normalize-pkg";
+import { CliOptions } from "./types";
 
 const path = require( "path" );
 const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
-const normalizePkg = require( "normalize-package-data" );
 const quaseConfig = require( "@quase/config" );
-const { getConfig, apply, t } = quaseConfig;
+const { getConfig } = quaseConfig;
 
 /* eslint no-process-exit: 0 */
 /* eslint no-console: 0 */
 
 // Prevent caching of this module so module.parent is always accurate
 delete require.cache[ __filename ];
-const filename = module.parent.filename;
-const parentDir = path.dirname( filename );
+const filename = module.parent && module.parent.filename;
+const parentDir = filename && path.dirname( filename );
 
-async function cli( _opts ) {
-  if ( importLocal( filename ) ) {
+async function cli( _opts: any ) {
+  if ( filename && importLocal( filename ) ) {
     return;
   }
-  loudRejection();
+  hardRejection();
 
   const opts = Object.assign( {
     cwd: process.cwd(),
@@ -30,7 +31,7 @@ async function cli( _opts ) {
     autoHelp: true,
     autoVersion: true,
     argv: process.argv.slice( 2 )
-  }, _opts );
+  }, _opts ) as CliOptions;
 
   opts.cwd = path.resolve( opts.cwd );
 
@@ -41,14 +42,13 @@ async function cli( _opts ) {
 
   const argsInfo = handleArgs( opts );
 
-  const pkg = ( await pkgJob ).pkg;
-  normalizePkg( pkg );
+  const pkg = normalizePkg( ( await pkgJob ).pkg );
 
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
 
   const generateHelp = () => _generateHelp( opts, pkg, argsInfo );
 
-  const showHelp = code => {
+  const showHelp = ( code?: number ) => {
     console.log( generateHelp() );
     process.exit( typeof code === "number" ? code : 2 );
   };
@@ -81,18 +81,19 @@ async function cli( _opts ) {
 
   const { config, location: configLocation } = await configJob;
 
+  const flagsCopy = { ...flags };
   if ( opts.configFiles ) {
-    delete flags.config;
+    delete flagsCopy.config;
   }
+  delete flagsCopy.help;
+  delete flagsCopy.version;
 
-  const options = apply(
-    schema,
-    [ flags, config ].filter( Boolean ),
-    [ "flags", "config" ]
-  );
+  flags[ "--" ] = argsInfo[ "--" ];
+
+  const options = schema.validateAndMerge( {}, flagsCopy, config );
 
   return {
-    command,
+    command: command.value,
     input,
     options,
     flags,
@@ -105,5 +106,5 @@ async function cli( _opts ) {
   };
 }
 
-export { cli, quaseConfig, t };
+export { cli, quaseConfig };
 export default cli;

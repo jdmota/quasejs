@@ -5,15 +5,10 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/config",
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "main": "dist/index.js",
   "dependencies": {
     "find-up": "^3.0.0",
-    "leven": "^2.1.0",
-    "pkg-conf": "^2.1.0",
-    "turbocolor": "^2.4.0"
-  },
-  "devDependencies": {
-    "strip-ansi": "^4.0.0"
+    "pkg-conf": "^3.0.0"
   }
 }
