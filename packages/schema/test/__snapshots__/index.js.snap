@@ -33,11 +33,13 @@ for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -182,11 +184,13 @@ for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -331,11 +335,13 @@ for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -480,11 +486,617 @@ for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type4={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+mergeStrategy:\\"spreadMeansConcat\\",
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type2);
+type3.validate(busy,path.add('foo'),value.foo);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.foo=type3.merge(path.add('foo'),pathValue.add('foo'),dest.foo,value.foo);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type2.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.foo=type3.defaults(path.add('foo'),value.foo);
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('obj'),value.obj);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.obj=type2.merge(path.add('obj'),pathValue.add('obj'),dest.obj,value.obj);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.obj=type2.defaults(path.add('obj'),value.obj);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[\\"obj.foo\\"],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`apply defaults - merge strategies: code 5`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['obj'];
+const keys_type2=['foo'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type4={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+mergeStrategy:\\"concat\\",
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type2);
+type3.validate(busy,path.add('foo'),value.foo);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.foo=type3.merge(path.add('foo'),pathValue.add('foo'),dest.foo,value.foo);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type2.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.foo=type3.defaults(path.add('foo'),value.foo);
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('obj'),value.obj);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.obj=type2.merge(path.add('obj'),pathValue.add('obj'),dest.obj,value.obj);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.obj=type2.defaults(path.add('obj'),value.obj);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[\\"obj.foo\\"],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`apply defaults - merge strategies: code 6`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['obj'];
+const keys_type2=['foo'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type4={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+mergeStrategy:\\"override\\",
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type2);
+type3.validate(busy,path.add('foo'),value.foo);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.foo=type3.merge(path.add('foo'),pathValue.add('foo'),dest.foo,value.foo);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type2.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.foo=type3.defaults(path.add('foo'),value.foo);
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('obj'),value.obj);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.obj=type2.merge(path.add('obj'),pathValue.add('obj'),dest.obj,value.obj);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.obj=type2.defaults(path.add('obj'),value.obj);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[\\"obj.foo\\"],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`apply defaults - merge strategies: code 7`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['obj'];
+const keys_type2=['foo'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type4={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+mergeStrategy:\\"spreadMeansConcat\\",
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type2);
+type3.validate(busy,path.add('foo'),value.foo);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.foo=type3.merge(path.add('foo'),pathValue.add('foo'),dest.foo,value.foo);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type2.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.foo=type3.defaults(path.add('foo'),value.foo);
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('obj'),value.obj);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.obj=type2.merge(path.add('obj'),pathValue.add('obj'),dest.obj,value.obj);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.obj=type2.defaults(path.add('obj'),value.obj);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[\\"obj.foo\\"],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`apply defaults - merge strategies: code 8`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['obj'];
+const keys_type2=['foo'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -604,6 +1216,14 @@ exports[`apply defaults - merge strategies: log output 3`] = `Array []`;
 
 exports[`apply defaults - merge strategies: log output 4`] = `Array []`;
 
+exports[`apply defaults - merge strategies: log output 5`] = `Array []`;
+
+exports[`apply defaults - merge strategies: log output 6`] = `Array []`;
+
+exports[`apply defaults - merge strategies: log output 7`] = `Array []`;
+
+exports[`apply defaults - merge strategies: log output 8`] = `Array []`;
+
 exports[`apply defaults - merge strategies: result 1`] = `
 Object {
   "obj": Object {
@@ -636,6 +1256,49 @@ Object {
 `;
 
 exports[`apply defaults - merge strategies: result 4`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+      1,
+      2,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge strategies: result 5`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+      1,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge strategies: result 6`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge strategies: result 7`] = `
+Object {
+  "obj": Object {
+    "foo": Array [
+      0,
+    ],
+  },
+}
+`;
+
+exports[`apply defaults - merge strategies: result 8`] = `
 Object {
   "obj": Object {
     "foo": Array [
@@ -1075,11 +1738,13 @@ for(;i<value.length;i++) _string.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -1683,11 +2348,13 @@ for(;i<value.length;i++) _string.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -4264,11 +4931,13 @@ for(;i<value.length;i++) _string.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_string.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_string.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){
@@ -4495,11 +5164,13 @@ for(;i<value.length;i++) _any.validate(busy,path.addIdx(i),value[i]);
 }
 function fun5(pathDest,pathValue,dest,value){
 if(value===undefined)return dest;
-if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy===\\"override\\")return dest;
+const first=dest===undefined;
+if(first)dest=[];
 let j=dest.length;
 if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_any.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
-if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_any.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
-if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")for(let i=1;i<value.length;i++,j++) dest.push(_any.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_any.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_any.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_any.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
 return dest;
 }
 function fun6(path,value){

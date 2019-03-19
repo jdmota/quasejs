@@ -896,12 +896,14 @@ class Compiler {
     {
       let code = "";
       code += `if(value===undefined)return dest;\n`;
-      code += `if(dest===undefined)dest=value.slice(0);else if(!this.mergeStrategy||this.mergeStrategy==="override")return dest;\n`;
+      code += `const first=dest===undefined;\n`;
+      code += `if(first)dest=[];\n`;
       code += `let j=dest.length;\n`;
       code += `if(this.mergeStrategy==="merge") for(let i=0;i<value.length;i++) dest[i]=${this.callMerge( node.type1, ctx, 0, 0 )};\n`;
-      code += `if(this.mergeStrategy==="concat") for(let i=0;i<value.length;i++,j++) dest.push(${this.callMerge( node.type1, ctx, 1, 0 )});\n`;
-      code += `if(this.mergeStrategy==="spreadMeansConcat"&&value[0]==="...")`;
-      code += `for(let i=1;i<value.length;i++,j++) dest.push(${this.callMerge( node.type1, ctx, 1, 0 )});\n`;
+      code += `else if(this.mergeStrategy==="concat") for(let i=0;i<value.length;i++,j++) dest.push(${this.callMerge( node.type1, ctx, 1, 0 )});\n`;
+      code += `else if(this.mergeStrategy==="spreadMeansConcat"&&value[0]==="...")`;
+      code += `  for(let i=1;i<value.length;i++,j++) dest.push(${this.callMerge( node.type1, ctx, 1, 0 )});\n`;
+      code += `else if(first) for(let i=0;i<value.length;i++) dest[i]=${this.callMerge( node.type1, ctx, 0, 0 )};\n`;
       code += `return dest;\n`;
       this.fnMerge( typeInfo, code );
     }

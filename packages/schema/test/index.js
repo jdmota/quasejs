@@ -575,6 +575,82 @@ it( "apply defaults - merge strategies", () => {
     }
   } );
 
+  run( `
+    type Schema {
+      obj: type {
+        foo: number[] @mergeStrategy("concat");
+      };
+    }
+  `, {
+    obj: {}
+  }, {
+    obj: {
+      foo: [ 0 ]
+    }
+  }, {
+    obj: {
+      foo: [ 1 ]
+    }
+  } );
+
+  run( `
+    type Schema {
+      obj: type {
+        foo: number[] @mergeStrategy("override");
+      };
+    }
+  `, {
+    obj: {}
+  }, {
+    obj: {
+      foo: [ 0 ]
+    }
+  }, {
+    obj: {
+      foo: [ 1 ]
+    }
+  } );
+
+  run( `
+    type Schema {
+      obj: type {
+        foo: number[] @mergeStrategy("spreadMeansConcat");
+      };
+    }
+  `, {
+    obj: {}
+  }, {
+    obj: {
+      foo: [ 0 ]
+    }
+  }, {
+    obj: {
+      foo: [ 1 ]
+    }
+  } );
+
+  run( `
+    type Schema {
+      obj: type {
+        foo: number[] @mergeStrategy("spreadMeansConcat");
+      };
+    }
+  `, {
+    obj: {}
+  }, {
+    obj: {
+      foo: [ 0 ]
+    }
+  }, {
+    obj: {
+      foo: [ "...", 1 ]
+    }
+  }, {
+    obj: {
+      foo: [ "...", 2 ]
+    }
+  } );
+
 } );
 
 it( "cli", () => {
