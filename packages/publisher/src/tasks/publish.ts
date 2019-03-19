@@ -1,13 +1,26 @@
-import { execPromise } from "../util";
+import { execPromise } from "../util/util";
+import History from "../history";
+import { Options } from "../types";
 
 // Adapted from https://github.com/sindresorhus/np
 
 const listrInput = require( "listr-input" );
 const { throwError, from } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
-const turbocolor = require( "turbocolor" );
+const colorette = require( "colorette" );
 
-const publish = ( history, opts ) => {
+type PublishOptions = {
+  history: History;
+  folder: string;
+  version: string;
+  tag: string | undefined;
+  access: string | undefined;
+  contents: string | undefined;
+  yarn: boolean | undefined;
+  otp?: string;
+};
+
+const publish = ( opts: PublishOptions ) => {
   const args = [ "publish" ];
 
   if ( opts.contents ) {
@@ -34,44 +47,52 @@ const publish = ( history, opts ) => {
 
   return execPromise( opts.yarn ? "yarn" : "npm", args, {
     cwd: opts.folder,
-    history
+    history: opts.history
   } );
 };
 
-const handleError = ( history, task, opts, err, message ) => {
+const handleError = ( task: any, opts: PublishOptions, err: Error & { stderr: string }, message?: string ) => {
   if ( err.stderr.includes( "one-time pass" ) || err.message.includes( "user TTY" ) ) {
     const title = task.title;
-    task.title = `${title} ${turbocolor.yellow( "(waiting for input…)" )}`;
+    task.title = `${title} ${colorette.yellow( "(waiting for input…)" )}`;
 
     return listrInput( message || "Enter OTP:", {
-      done: otp => {
+      done: ( otp: string ) => {
         task.title = title;
 
-        return publish( history, {
-          yarn: opts.yarn,
+        return publish( {
+          history: opts.history,
           folder: opts.folder,
           tag: opts.tag,
+          version: opts.version,
+          yarn: opts.yarn,
           access: opts.access,
           contents: opts.contents,
           otp
         } );
       }
     } ).pipe(
-      catchError( err => handleError( history, task, opts, err, "OTP was incorrect, try again:" ) )
+      catchError(
+        ( err: Error & { stderr: string } ) => handleError( task, opts, err, "OTP was incorrect, try again:" )
+      )
     );
   }
 
   return throwError( err );
 };
 
-export default function( history, task, opts ) {
-  return from( publish( history, {
-    yarn: opts.yarn,
+export default function( task: any, opts: Options ) {
+  return from( publish( {
+    history: opts.history,
     folder: opts.folder,
     tag: opts.tag,
+    version: opts.version,
+    yarn: opts.yarn,
     access: opts.access,
     contents: opts.contents
   } ) ).pipe(
-    catchError( err => handleError( history, task, opts, err ) )
+    catchError(
+      ( err: Error & { stderr: string } ) => handleError( task, opts, err )
+    )
   );
 }

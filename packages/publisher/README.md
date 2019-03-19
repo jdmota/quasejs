@@ -1,10 +1,12 @@
 # @quase/publisher
 
-Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindresorhus/np/).
+Heavily based on [https://github.com/sindresorhus/np/](https://github.com/sindresorhus/np/)!
 
 ## Options
 
 ### preview
+
+### publish
 
 ### cwd
 
@@ -20,11 +22,15 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ### git.branch
 
+### git.check
+
 ### git.commitAndTag
 
 ### git.message
 
 ### git.tagPrefix
+
+### git.push
 
 ### git.signCommit
 
@@ -36,9 +42,9 @@ Based a lot on [https://github.com/sindresorhus/np/](https://github.com/sindreso
 
 ## Tasks
 
-### checkDeps
+### checkVersions
 
-### checkSensitiveData
+### checkDeps
 
 ### preCheck
 

@@ -1,124 +1,33 @@
 #!/usr/bin/env node
+const { cli } = require( "@quase/cli" );
 
-const { cli, quaseConfig: { t, extractDefaults } } = require( "@quase/cli" );
+const schema = `
+type GitOptions {
+  branch: string @default("master") @description("");
+  check: boolean @default(true) @description("");
+  commitAndTag: boolean | "only-commit" @default(true) @description("");
+  push: boolean @default(true) @description("");
+  message: string? @description("");
+  tagPrefix: string? @description("");
+  signCommit: boolean @default(false) @description("");
+  signTag: boolean @default(false) @description("");
+  commitHooks: boolean @default(true) @description("");
+  pushHooks: boolean @default(true) @description("");
+}
+type Schema {
+  preview: boolean @default(false) @description("");
+  publish: boolean @default(true) @description("'false' to skip publishing");
+  tag: string? @description("Publish under a given dist-tag");
+  access: string? @description("");
+  contents: string? @description("Subdirectory (relative to --folder) to publish") @example("dist");
+  yarn: boolean? @description("Use Yarn");
+  git: boolean | GitOptions @default(true) @description("");
+  cwd: string @default(js(process.cwd())) @description("");
+  folder: string @default(js(process.cwd())) @description("");
+  tasks: type @additionalProperties {};
+}`;
 
-const boolOrFn = description => t.union( {
-  types: [ "boolean", "function" ],
-  default: true,
-  description: description || ""
-} );
-
-const gitConfig = t.object( {
-  properties: {
-    branch: {
-      type: "string",
-      default: "master",
-      description: ""
-    },
-    commitAndTag: {
-      type: "boolean",
-      default: true,
-      description: ""
-    },
-    message: {
-      type: "string",
-      optional: true,
-      description: ""
-    },
-    tagPrefix: {
-      type: "string",
-      optional: true,
-      description: ""
-    },
-    signCommit: {
-      type: "boolean",
-      default: false,
-      description: ""
-    },
-    signTag: {
-      type: "boolean",
-      default: false,
-      description: ""
-    },
-    commitHooks: {
-      type: "boolean",
-      default: true,
-      description: ""
-    },
-    pushHooks: {
-      type: "boolean",
-      default: true,
-      description: ""
-    }
-  }
-} );
-
-const gitConfigDefaults = extractDefaults( gitConfig );
-
-const schema = {
-  preview: {
-    type: "boolean",
-    description: ""
-  },
-  cwd: {
-    type: "string",
-    default: process.cwd(),
-  },
-  folder: {
-    type: "string",
-    default: process.cwd(),
-    description: ""
-  },
-  tag: {
-    type: "string",
-    optional: true,
-    description: "Publish under a given dist-tag"
-  },
-  access: {
-    type: "string",
-    optional: true,
-    description: ""
-  },
-  contents: {
-    type: "string",
-    optional: true,
-    description: "Subdirectory (relative to --folder) to publish",
-    example: "dist"
-  },
-  yarn: {
-    type: "boolean",
-    default: false,
-    description: "Use Yarn"
-  },
-  git: t.union( {
-    types: [ "boolean", gitConfig ],
-    map: x => ( x === true ? gitConfigDefaults : x ),
-    default: gitConfigDefaults,
-    description: "Git related options"
-  } ),
-  checkDeps: boolOrFn(),
-  checkSensitiveData: boolOrFn(),
-  preCheck: boolOrFn(),
-  gitCheck: boolOrFn(),
-  cleanup: boolOrFn( "Cleanup of node_modules" ),
-  build: {
-    type: "function",
-    optional: true
-  },
-  test: boolOrFn(),
-  rootBeforeVersion: boolOrFn(),
-  bumpVersion: boolOrFn(),
-  changelog: {
-    type: "function",
-    optional: true
-  },
-  commitAndTag: boolOrFn(),
-  rootAfterVersion: boolOrFn(),
-  rootBeforePublish: boolOrFn(),
-  publish: boolOrFn(),
-  rootAfterPublish: boolOrFn(),
-  gitPush: boolOrFn()
-};
+let history;
 
 cli( {
   usage: "$ quase-publisher <version> [options]",
@@ -127,12 +36,15 @@ cli( {
   schema
 } ).then( ( { input, options } ) => {
   options.version = input[ 0 ];
-  require( ".." ).default( options );
+  require( ".." ).default( options, h => ( history = h ) );
 } );
 
 /* eslint-disable no-process-exit, no-console */
 
 process.on( "SIGINT", () => {
   console.log( "\nAborted!" );
+  if ( history ) {
+    history.show();
+  }
   process.exit( 1 );
 } );
