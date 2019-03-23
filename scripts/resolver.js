@@ -1,31 +1,46 @@
-const fs = require( "fs" );
+const path = require( "path" );
 const resolve = require( "resolve" );
+const pnp = require( "../.pnp.js" );
+const extensions = [ ".js", ".ts", ".json" ];
 
-function isLocal( pkg, path ) {
-  return /@quase/.test( pkg.name ) && !/node_modules/.test( fs.realpathSync( path ) );
-}
-
-function toLocal( path ) {
-  if ( /@quase/.test( path ) ) {
-    return fs.realpathSync( path );
-  }
-  return path;
-}
-
-module.exports = function( path, options ) {
-  const resolved = resolve.sync( path, {
-    basedir: options.basedir,
-    extensions: [ ".js", ".ts" ],
-    moduleDirectory: options.moduleDirectory,
-    paths: options.paths,
-    rootDir: options.rootDir,
-    preserveSymlinks: false,
-    packageFilter( pkg, path ) {
-      if ( pkg.module && isLocal( pkg, path ) ) {
+function r( request, basedir ) {
+  return resolve.sync( request, {
+    basedir,
+    extensions,
+    packageFilter( pkg ) {
+      if ( pkg.module ) {
         pkg.main = pkg.module;
       }
       return pkg;
     }
   } );
-  return resolved && toLocal( resolved );
+}
+
+module.exports = function( request, options ) {
+
+  let basedir = options.basedir;
+  if ( basedir.charAt( basedir.length - 1 ) !== "/" ) {
+    basedir = `${basedir}/`;
+  }
+
+  if ( path.isAbsolute( request ) || /^\.\.?(\/|$)/.test( request ) ) {
+    return r( request, basedir );
+  }
+
+  // So that we can defer to the file specified in "module" in the package.json
+  if ( /^@quase\/[^/]+$/.test( request ) ) {
+    const manifestPath = pnp.resolveToUnqualified( `${request}/package.json`, basedir );
+    const isLocal = !/node_modules/.test( manifestPath );
+
+    if ( isLocal ) {
+      const folder = path.dirname( manifestPath );
+      return r( folder, basedir );
+    }
+  }
+
+  const resolution = pnp.resolveRequest( request, basedir, { extensions } );
+  if ( resolution === null ) {
+    return request;
+  }
+  return resolution;
 };

@@ -8,8 +8,7 @@ require( "@babel/register" )( {
 
 Module._resolveFilename = function( request, parent /* isMain, options */ ) {
   const filename = resolver( request, {
-    basedir: parent ? path.dirname( parent.filename ) : undefined,
-    extensions: Object.keys( Module._extensions )
+    basedir: parent ? path.dirname( parent.filename ) : process.cwd()
   } );
 
   if ( !filename ) {

@@ -1,0 +1,4 @@
+{
+  "typescript.tsdk": "scripts/node_modules/typescript/lib",
+  "eslint.nodePath": "scripts/node_modules"
+}

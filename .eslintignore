@@ -2,6 +2,7 @@ __dev__
 dist
 coverage
 node_modules
+.pnp.js
 flow-typed
 packages/builder/test/fixtures/**
 packages/builder/test/watch-fixtures/**
