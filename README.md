@@ -16,7 +16,7 @@ Allows you to create a command line interface very easily.
 
 **[config](packages/config)**
 
-Utilities to get configuration, apply defaults and validate options.
+Utilities to get configuration from files or `package.json`.
 
 **[error](packages/error)**
 
@@ -26,9 +26,9 @@ Some tools to work with Error objects and their stack.
 
 The Eslint configuration that we use.
 
-**[fs/cacheable-fs](packages/fs/cacheable-fs)**
+**[parser](packages/languages/parser)**
 
-A file system interface that caches `stat()`, `readFile()`, `readdir()` calls.
+Parser generator.
 
 **[package-manager](packages/package-manager)**
 
@@ -41,6 +41,10 @@ Utilities to handle paths and urls.
 **[publisher](packages/publisher)**
 
 A package publisher heavily inspired by [np](https://github.com/sindresorhus/np).
+
+**[schema](packages/schema)**
+
+Data validation, defaults application, merging.
 
 **[source-map](packages/source-map)**
 
