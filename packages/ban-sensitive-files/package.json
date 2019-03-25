@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "name": "@quase/ban-sensitive-files",
+  "version": "0.1.0-0",
+  "description": "Prevent files from being committed to Git",
+  "license": "MIT",
+  "homepage": "https://github.com/quase/quasejs",
+  "repository": "https://github.com/quase/quasejs/tree/master/packages/ban-sensitive-files",
+  "module": "src/index.ts",
+  "main": "dist/index.js",
+  "bin": {
+    "quase-ban-sensitive-files": "bin/index.js"
+  },
+  "engines": {
+		"node": ">=10"
+	},
+  "dependencies": {
+    "execa": "^1.0.0",
+    "fs-extra": "^7.0.1"
+  }
+}
