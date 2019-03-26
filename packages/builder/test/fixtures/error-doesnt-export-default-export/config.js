@@ -1,7 +1,7 @@
 module.exports = {
   babelOpts: {
     presets: [
-      [ "@babel/env", {
+      [ "@babel/preset-env", {
         targets: { chrome: 50 },
         modules: false,
         loose: true

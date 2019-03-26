@@ -9,15 +9,14 @@ import jsPlugin from "./implementations/js";
 import htmlPlugin from "./implementations/html";
 import defaultPlugin from "./implementations/default";
 
-const { ValidationError } = require( "@quase/config" );
 const { getPlugins } = require( "@quase/get-plugins" );
 
 const defaultPlugins = [ jsPlugin, htmlPlugin, defaultPlugin ];
 
 const EMPTY_OBJ = Object.freeze( Object.create( null ) );
 
-function isObject( obj: any ) {
-  return obj != null && typeof obj === "object";
+function isObject( obj: unknown ): obj is object {
+  return typeof obj === "object" && obj != null;
 }
 
 function error( hook: keyof Plugin, expected: string, actual: string, name: string|null ) {
@@ -25,6 +24,15 @@ function error( hook: keyof Plugin, expected: string, actual: string, name: stri
     `'${hook}' expected ${expected}${actual ? ` but got ${actual}` : ""}${name ? ` on plugin ${name}` : ""}`,
     {}
   );
+}
+
+class ValidationError extends Error {
+  __validation: boolean;
+  constructor( message: string | string[] ) {
+    super( Array.isArray( message ) ? message.join( "\n" ) : message );
+    this.name = "ValidationError";
+    this.__validation = true;
+  }
 }
 
 export interface PluginsRunnerInWorker {
@@ -176,7 +184,7 @@ export class PluginsRunner {
     return actual;
   }
 
-  async parse( data: Data, module: ModuleContext ): Promise<Object|null> {
+  async parse( data: Data, module: ModuleContext ): Promise<object|null> {
     const wasString = typeof data === "string";
     let string = null;
     for ( const { name, plugin } of this.plugins ) {

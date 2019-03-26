@@ -1,174 +1,85 @@
 import Reporter from "./reporter";
 
-const { t } = require( "@quase/config" );
 const fs = require( "fs-extra" );
 
-const OptimizationOptions = t.object( {
-  properties: {
-    hashId: {
-      type: "boolean"
-    },
-    hashing: {
-      type: "boolean"
-    },
-    sourceMaps: t.union( {
-      types: [ "boolean", t.value( { value: "inline" } ) ],
-      default: false
-    } ),
-    minify: {
-      type: "boolean",
-    },
-    cleanup: {
-      type: "boolean"
-    }
-  }
-} );
+export const schema = `
+type B @default(false) = boolean;
+type B2 @default(true) = boolean;
 
-OptimizationOptions.defaults = function( path: any, dest: any ) {
-  if ( dest.mode === "production" ) {
-    return {
-      hashId: true,
-      hashing: true,
-      sourceMaps: true,
-      minify: true,
-      cleanup: true
-    };
+type RuntimeOptions {
+  browser: B2;
+  node: B2;
+  worker: B2;
+}
+
+type OptimizationOptions {
+  hashId: boolean?;
+  hashing: boolean?;
+  sourceMaps: (boolean | "inline")?;
+  minify: boolean?;
+  cleanup: boolean?;
+}
+
+type PerformanceOptions {
+  hints: "warning" | "error" @default("warning");
+  maxEntrypointSize: number @default(250000);
+  maxAssetSize: number @default(250000);
+  assetFilter: Function @default(js(f => !/\\.map$/.test( f )));
+}
+
+type ServiceWorkerOptions @additionalProperties {
+  filename: string?;
+  staticFileGlobs: any[];
+  stripPrefixMulti: type @additionalProperties {};
+}
+
+type Schema {
+  mode: "production" | "development";
+  context: string;
+  entries: string[];
+  dest: string;
+  cwd: string @default(js(process.cwd()));
+  publicPath: string @default("");
+  dotGraph: string?;
+  runtime: RuntimeOptions;
+  fs: type @additionalProperties {};
+  codeFrameOptions: type @additionalProperties {};
+  reporter: ( string | Function | [ string | Function, Object ] )?;
+  watch: B @alias("w") @description("Watch files for changes and re-build");
+  watchOptions: type @additionalProperties {};
+  hmr: B @description("Enable hot module replacement");
+  plugins: any[] @mergeStrategy("concat");
+  performance: PerformanceOptions;
+  optimization: OptimizationOptions;
+  serviceWorker: ServiceWorkerOptions;
+}
+`;
+
+export function handleOptions( options: any ) {
+  if ( !options.reporter ) {
+    options.reporter = Reporter;
   }
-  return {
-    hashId: false,
-    hashing: false,
-    sourceMaps: true,
-    minify: false,
-    cleanup: false
+  options.fs = {
+    ...options.fs
   };
-};
+  if ( !options.fs.writeFile ) {
+    options.fs.writeFile = fs.writeFile;
+  }
+  if ( !options.fs.mkdirp ) {
+    options.fs.mkdirp = fs.mkdirp;
+  }
 
-export const schema = {
-  mode: t.choices( {
-    values: [ "production", "development" ],
-    required: true
-  } ),
-  context: {
-    type: "string",
-    required: true
-  },
-  entries: t.array( {
-    itemType: "string",
-    required: true
-  } ),
-  dest: {
-    type: "string",
-    required: true
-  },
-  cwd: {
-    type: "string",
-    default: process.cwd()
-  },
-  publicPath: {
-    type: "string",
-    default: ""
-  },
-  dotGraph: {
-    type: "string",
-    optional: true
-  },
-  runtime: t.object( {
-    properties: {
-      browser: {
-        type: "boolean",
-        default: true
-      },
-      node: {
-        type: "boolean",
-        default: true
-      },
-      worker: {
-        type: "boolean",
-        default: true
-      }
-    }
-  } ),
-  fs: t.object( {
-    properties: {
-      writeFile: {
-        type: "function",
-        default: fs.writeFile
-      },
-      mkdirp: {
-        type: "function",
-        default: fs.mkdirp
-      }
-    }
-  } ),
-  codeFrameOptions: t.object( {
-    additionalProperties: true
-  } ),
-  reporter: t.union( {
-    types: [
-      "string",
-      "function",
-      t.tuple( {
-        items: [
-          t.union( {
-            types: [ "string", "function" ]
-          } ),
-          "object"
-        ]
-      } )
-    ],
-    default: Reporter
-  } ),
-  watch: {
-    type: "boolean",
-    alias: "w",
-    description: "Watch files for changes and re-build"
-  },
-  watchOptions: t.object( {
-    additionalProperties: true
-  } ),
-  hmr: {
-    type: "boolean",
-    description: "Enable hot module replacement"
-  },
-  plugins: t.array( {
-    itemType: "any",
-    merge: "concat"
-  } ),
-  performance: t.object( {
-    properties: {
-      hints: t.choices( {
-        values: [ "warning", "error" ],
-        map: ( x: any ) => ( x === true ? "warning" : x ),
-        default: "warning"
-      } ),
-      maxEntrypointSize: {
-        type: "number",
-        default: 250000
-      },
-      maxAssetSize: {
-        type: "number",
-        default: 250000
-      },
-      assetFilter: {
-        type: "function",
-        default: ( f: string ) => ( !/\.map$/.test( f ) )
-      }
-    }
-  } ),
-  optimization: OptimizationOptions,
-  serviceWorker: t.object( {
-    properties: {
-      filename: {
-        type: "string",
-        optional: true
-      },
-      staticFileGlobs: t.array( {
-        itemType: "any"
-      } ),
-      stripPrefixMulti: t.object( {
-        additionalProperties: true
-      } )
-    },
-    additionalProperties: true
-  } )
-};
+  function b( value ) {
+    return value == null ? options.mode !== "development" : value;
+  }
+
+  options.optimization = {
+    hashId: b( options.optimization.hashId ),
+    hashing: b( options.optimization.hashing ),
+    sourceMaps: options.optimization.sourceMaps == null || options.optimization.sourceMaps,
+    minify: b( options.optimization.minify ),
+    cleanup: b( options.optimization.cleanup )
+  };
+
+  return options;
+}

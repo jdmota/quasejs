@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-const { default: start, schema } = require( ".." );
+const { default: start, schema, handleOptions } = require( ".." );
 
-require( "@quase/cli" ).default( {
+require( "@quase/cli" ).cli( {
   usage: "$ quase-builder [options]",
   configFiles: "quase-builder.config.js",
   configKey: "quase-builder",
   schema
 } ).then( ( { options } ) => {
-  start( options );
+  start( handleOptions( options ) );
 } );

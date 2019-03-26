@@ -18,6 +18,11 @@ function r( request, basedir ) {
 
 module.exports = function( request, options ) {
 
+  // https://github.com/babel/minify/issues/884
+  if ( request === "babel-helper-evaluate-path" ) {
+    return pnp.resolveRequest( request, __dirname, { extensions } );
+  }
+
   let basedir = options.basedir;
   if ( basedir.charAt( basedir.length - 1 ) !== "/" ) {
     basedir = `${basedir}/`;

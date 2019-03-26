@@ -56,4 +56,4 @@ export default function( options: Options, dontListenSigint?: boolean ): IndexRe
 
 export { Builder };
 
-export { schema } from "./options";
+export { schema, handleOptions } from "./options";

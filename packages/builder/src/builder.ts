@@ -166,11 +166,11 @@ export default class Builder extends EventEmitter {
     super();
 
     const cwd = path.resolve( options.cwd ),
-        context = resolvePath( options.context, cwd ),
-        dest = resolvePath( options.dest, cwd ),
-        entries = options.entries.map( e => resolvePath( e, context ) ),
-        publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "",
-        { watch, optimization, reporter, serviceWorker } = options;
+      context = resolvePath( options.context, cwd ),
+      dest = resolvePath( options.dest, cwd ),
+      entries = options.entries.map( e => resolvePath( e, context ) ),
+      publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "",
+      { watch, optimization, reporter, serviceWorker } = options;
 
     this.options = {
       ...options,
