@@ -783,9 +783,9 @@ class Compiler {
 
     const innerTypeInfo = this.compileType( type, ctx );
 
-    typeInfo.set( "validate", innerTypeInfo.getForSure( "validate" ) );
-    typeInfo.set( "merge", innerTypeInfo.getForSure( "merge" ) );
-    typeInfo.set( "defaults", innerTypeInfo.getForSure( "defaults" ) );
+    for ( const [ name, funId ] of innerTypeInfo.map ) {
+      typeInfo.set( name, funId );
+    }
 
     this.applyDecorators( typeInfo, decorators );
     this.statements.push( typeInfo.toCode() );

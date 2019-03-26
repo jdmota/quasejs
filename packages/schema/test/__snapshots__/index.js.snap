@@ -5855,6 +5855,107 @@ number:[\\"foo\\"],
   })"
 `;
 
+exports[`validate: code 24`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['watch'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+const type3={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+default:()=>true,
+};
+
+const type2={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+default:()=>true,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('watch'),value.watch);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.watch=type2.merge(path.add('watch'),pathValue.add('watch'),dest.watch,value.watch);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.watch=type2.defaults(path.add('watch'),value.watch);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[\\"w\\"],
+yargsOpts:{
+alias:{\\"watch\\":[\\"w\\"]},
+array:[],
+boolean:[\\"watch\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
 exports[`validate: log output 1`] = `
 Array [
   Array [
@@ -6129,6 +6230,8 @@ Array [
 ]
 `;
 
+exports[`validate: log output 24`] = `Array []`;
+
 exports[`validate: result 1`] = `
 Object {
   "deprecated": true,
@@ -6184,5 +6287,11 @@ Object {
   "obj2": Object {
     "bar": Object {},
   },
+}
+`;
+
+exports[`validate: result 8`] = `
+Object {
+  "watch": true,
 }
 `;

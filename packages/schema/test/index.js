@@ -371,6 +371,13 @@ it( "validate", () => {
     }
   `, {} );
 
+  run( `
+    type B @default(true) = boolean;
+    type Schema {
+      watch: B @alias("w");
+    }
+  `, {} );
+
 } );
 
 /* it( "show where the error is", () => {
