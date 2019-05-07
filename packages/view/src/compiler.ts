@@ -5,62 +5,83 @@ import {
   partValue
 } from "./spec";
 
-/*
+type BabelTypes = any;
+type BabelPath = any;
+
 type Expression = {
-  [key: string]: any
+  type: "unknown";
+  [key: string]: unknown;
+};
+
+type NumericLiteral = {
+  type: "NumericLiteral";
+  value: number;
 };
 
 type StringLiteral = {
-  value: string,
+  type: "StringLiteral";
+  value: string;
   extra: {
-    rawValue: string,
-    raw: string
-  }
+    rawValue: string;
+    raw: string;
+  };
 };
 
-type JSXEmptyExpression = {};
+type JSXEmptyExpression = {
+  type: "JSXEmptyExpression";
+};
+
+type JSXIdentifier = {
+  type: "JSXIdentifier";
+  name: string;
+};
 
 type JSXText = {
-  value: string,
+  type: "JSXText";
+  value: string;
   extra: {
-    rawValue: string,
-    raw: string
-  }
+    rawValue: string;
+    raw: string;
+  };
 };
 
 type JSXExpressionContainer = {
-  expression: JSXEmptyExpression | Expression
+  type: "JSXExpressionContainer";
+  expression: JSXEmptyExpression | StringLiteral | Expression;
 };
 
 type JSXAttribute = {
-  name: JSXIdentifier,
-  value: StringLiteral | JSXExpressionContainer
+  type: "JSXAttribute";
+  name: JSXIdentifier;
+  value: StringLiteral | JSXExpressionContainer;
 };
 
 type JSXOpeningElement = {
-  name: JSXIdentifier,
-  attributes: JSXAttribute[],
-  selfClosing: boolean
+  type: "JSXOpeningElement";
+  name: JSXIdentifier;
+  attributes: JSXAttribute[];
+  selfClosing: boolean;
 };
 
 type JSXElement = {
-  openingElement: JSXOpeningElement,
-  children: JSXChildren[]
+  type: "JSXElement";
+  openingElement: JSXOpeningElement;
+  children: JSXChildren[];
 };
 
 type JSXFragment = {
-  children: JSXChildren[]
+  type: "JSXFragment";
+  children: JSXChildren[];
 };
 
 type JSXChildren = JSXElement | JSXFragment | JSXText | JSXExpressionContainer;
-*/
 
 const escapeHTML = require( "he" ).encode;
 const reOn = /^on[A-Z]/;
 
-function handleAttr( result, t, attrName ) {
-  let type;
-  let string;
+function handleAttr( result: Result, t: BabelTypes, firstAttr: boolean, attrName: string ) {
+  let type: number;
+  let string: string;
   if ( reOn.test( attrName ) ) {
     type = PART_EVENT;
     string = attrName.slice( 2 ).toLowerCase();
@@ -71,18 +92,22 @@ function handleAttr( result, t, attrName ) {
     type = PART_PROP;
     string = attrName;
   }
-  result.parts.push( t.numericLiteral( partValue( result.index, type ) ) );
+  result.parts.push( t.numericLiteral( partValue( firstAttr, type ) ) );
   result.strings.push( t.stringLiteral( string ) );
 }
 
-function handleNode( result, t ) {
+function handleNode( result: Result, t: BabelTypes ) {
   result.parts.push(
-    t.numericLiteral( partValue( result.index, PART_NODE ) )
+    t.numericLiteral( partValue( true, PART_NODE ) )
   );
 }
 
 const visitor = {
-  JSXElement( result, t, { openingElement, children } ) {
+  JSXElement( result: Result, t: BabelTypes, { openingElement, children }: JSXElement ) {
+    const hasParts = visitor.hasAttrParts( openingElement );
+    if ( hasParts ) {
+      result.html.push( `<!---->` );
+    }
 
     if ( openingElement.selfClosing ) {
       result.html.push( `<${openingElement.name.name}` );
@@ -90,11 +115,11 @@ const visitor = {
       result.html.push( `<${openingElement.name.name}>` );
     }
 
+    let firstAttr = true;
     for ( const attr of openingElement.attributes ) {
-      visitor.JSXAttribute( result, t, attr );
+      visitor.JSXAttribute( result, t, attr, firstAttr );
+      firstAttr = false;
     }
-
-    result.index++;
 
     if ( openingElement.selfClosing ) {
       result.html.push( `/>` );
@@ -115,7 +140,7 @@ const visitor = {
             visitor.JSXExpressionContainer( result, t, child );
             break;
           default:
-            throw new Error( `Unknown child of type ${child.type}` );
+            throw new Error( `Unknown child of type ${( child as any ).type}` );
         }
       }
 
@@ -123,7 +148,7 @@ const visitor = {
     }
 
   },
-  JSXFragment( result, t, { children } ) {
+  JSXFragment( result: Result, t: BabelTypes, { children }: JSXFragment ) {
 
     for ( const child of children ) {
       switch ( child.type ) {
@@ -140,12 +165,35 @@ const visitor = {
           visitor.JSXExpressionContainer( result, t, child );
           break;
         default:
-          throw new Error( `Unknown child of type ${child.type}` );
+          throw new Error( `Unknown child of type ${( child as any ).type}` );
       }
     }
 
   },
-  JSXAttribute( result, t, { name: { name }, value } ) {
+  hasAttrParts( openingElement: JSXOpeningElement ) {
+    for ( const { value } of openingElement.attributes ) {
+      switch ( value.type ) {
+        case "StringLiteral":
+          break;
+        case "JSXExpressionContainer": {
+          const { expression } = value;
+          switch ( expression.type ) {
+            case "JSXEmptyExpression":
+              throw new Error( `Cannot use JSXEmptyExpression in JSXAttribute` );
+            case "StringLiteral":
+              break;
+            default:
+              return true;
+          }
+          break;
+        }
+        default:
+          throw new Error( `Unknown attr value of type ${( value as any ).type}` );
+      }
+    }
+    return false;
+  },
+  JSXAttribute( result: Result, t: BabelTypes, { name: { name }, value }: JSXAttribute, firstAttr: boolean ) {
     switch ( value.type ) {
       case "StringLiteral":
         result.html.push( `${name}="${escapeHTML( value.value )}"` );
@@ -159,16 +207,16 @@ const visitor = {
             result.html.push( `${name}="${escapeHTML( expression.value )}"` );
             break;
           default:
-            handleAttr( result, t, name );
+            handleAttr( result, t, firstAttr, name );
             result.expressions.push( expression );
         }
         break;
       }
       default:
-        throw new Error( `Unknown attr value of type ${value.type}` );
+        throw new Error( `Unknown attr value of type ${( value as any ).type}` );
     }
   },
-  JSXExpressionContainer( result, t, { expression } ) {
+  JSXExpressionContainer( result: Result, t: BabelTypes, { expression }: JSXExpressionContainer ) {
     switch ( expression.type ) {
       case "JSXEmptyExpression":
         break;
@@ -179,24 +227,37 @@ const visitor = {
         handleNode( result, t );
         result.html.push( "<!---->" );
         result.expressions.push( expression );
-        result.index++;
     }
   }
 };
 
-function mainVisitor( t, fn, path ) {
+type Result = {
+  html: string[];
+  parts: NumericLiteral[];
+  strings: StringLiteral[];
+  expressions: Expression[];
+};
+
+type Fn =
+  ( ( r: Result, t: BabelTypes, n: JSXElement ) => void ) |
+  ( ( r: Result, t: BabelTypes, n: JSXFragment ) => void );
+
+function mainVisitor(
+  t: BabelTypes,
+  fn: Fn,
+  path: BabelPath
+) {
 
   const { node } = path;
 
   const quaseViewTemplate = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE ) );
   const quaseViewTemplateResult = t.memberExpression( t.identifier( "QuaseView" ), t.identifier( TEMPLATE_RESULT ) );
 
-  const result = {
+  const result: Result = {
     html: [],
     parts: [],
     strings: [],
-    expressions: [],
-    index: 0
+    expressions: []
   };
 
   fn( result, t, node );
@@ -233,12 +294,12 @@ function mainVisitor( t, fn, path ) {
 
 }
 
-export default function( { types: t } ) {
+export default function( { types: t }: { types: BabelTypes } ) {
   return {
     inherits: jsx,
     visitor: {
-      JSXElement: path => mainVisitor( t, visitor.JSXElement, path ),
-      JSXFragment: path => mainVisitor( t, visitor.JSXFragment, path )
+      JSXElement: ( path: BabelPath ) => mainVisitor( t, visitor.JSXElement, path ),
+      JSXFragment: ( path: BabelPath ) => mainVisitor( t, visitor.JSXFragment, path )
     }
   };
 }

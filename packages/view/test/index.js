@@ -44,7 +44,7 @@ describe( "compile and runtime", () => {
         }
       } ).code;
 
-      expect( finalCode ).toMatchSnapshot();
+      expect( finalCode ).toMatchSnapshot( "code" );
 
       const dom = new JSDOM( `<!DOCTYPE html><div id="container"></div>` );
       const container = dom.window.document.getElementById( "container" );
@@ -54,7 +54,7 @@ describe( "compile and runtime", () => {
       eval( finalCode ); // eslint-disable-line no-eval
       QuaseView.render( render( { text: "text" } ), container );
 
-      expect( container.innerHTML ).toMatchSnapshot();
+      expect( container.innerHTML ).toMatchSnapshot( "html" );
 
     } );
   }

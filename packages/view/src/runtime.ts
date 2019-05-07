@@ -1,15 +1,24 @@
+type Win = Window & {
+  HTMLElement: typeof HTMLElement; // eslint-disable-line no-undef
+  Node: typeof Node; // eslint-disable-line no-undef
+};
+
 ( function( factory ) {
   if ( typeof module !== "undefined" && module.exports ) {
     module.exports = factory;
   } else {
-    factory( window ); // eslint-disable-line no-undef
+    factory( window as Win ); // eslint-disable-line no-undef
   }
-} )( function( win ) {
+} )( function( win: Win ) {
 
   const doc = win.document;
 
   class Template {
-    constructor( parts, strings, html ) {
+    element: HTMLTemplateElement;
+    parts: number[];
+    strings: string[];
+
+    constructor( parts: number[], strings: string[], html: string ) {
       this.element = doc.createElement( "template" );
       this.element.innerHTML = html;
       this.parts = parts;
@@ -18,20 +27,29 @@
   }
 
   class TemplateResult {
-    constructor( template, values ) {
+    template: Template;
+    values: unknown[];
+
+    constructor( template: Template, values: unknown[] ) {
       this.template = template;
       this.values = values;
     }
   }
 
-  class TemplateInstance {
+  function malformedTemplate(): never {
+    throw new Error( "Quase View: malformed template" );
+  }
 
-    constructor( template ) {
+  class TemplateInstance {
+    template: Template;
+    parts: Part[];
+
+    constructor( template: Template ) {
       this.template = template;
       this.parts = [];
     }
 
-    update( values ) {
+    update( values: unknown[] ) {
       let i = 0;
       for ( const part of this.parts ) {
         part.setValue( values[ i++ ] );
@@ -47,37 +65,48 @@
         // Edge needs all 4 parameters present
         const walker = doc.createTreeWalker(
           fragment,
-          129, /* NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT */
+          128, // NodeFilter.SHOW_COMMENT
           null,
           false
         );
 
-        let index = -1;
         let strIdx = 0;
+        let mark = null;
+        let node = null;
+
         for ( let i = 0; i < parts.length; i++ ) {
           const partInfo = parts[ i ];
-          const partIdx = partInfo >>> 2;
+          const newMark = partInfo >>> 2 !== 0;
+          const partType = partInfo & 0b11;
 
-          while ( index < partIdx ) {
-            index++;
-            walker.nextNode();
+          if ( newMark ) {
+            mark = walker.nextNode() || malformedTemplate();
+            node = mark.nextSibling;
+            if ( partType < 3 ) {
+              ( mark as ChildNode ).remove();
+              if ( node ) {
+                walker.currentNode = node;
+              }
+            }
           }
 
-          const node = walker.currentNode;
-          let part;
+          let part: Part;
 
-          switch ( partInfo & 0b11 ) {
+          switch ( partType ) {
             case 0:
-              part = new AttributePart( this, node, strings[ strIdx++ ] );
+              part = new AttributePart( ( node || malformedTemplate() ) as Element, strings[ strIdx++ ] );
               break;
             case 1:
-              part = new PropertyPart( this, node, strings[ strIdx++ ] );
+              part = new PropertyPart( ( node || malformedTemplate() ) as Element, strings[ strIdx++ ] );
               break;
             case 2:
-              part = new EventPart( this, node, strings[ strIdx++ ] );
+              part = new EventPart( node || malformedTemplate(), strings[ strIdx++ ] );
+              break;
+            case 3:
+              part = new NodePart( mark || malformedTemplate() );
               break;
             default:
-              part = new NodePart( this, node );
+              throw malformedTemplate();
           }
 
           this.parts.push( part );
@@ -87,32 +116,38 @@
     }
   }
 
-  class Part {
-    constructor( instance, element ) {
-      this.instance = instance;
+  abstract class Part {
+    protected element: Node;
+    protected _value: any;
+
+    constructor( element: Node ) {
       this.element = element;
       this._value = undefined;
     }
-    getValue( value ) {
+    getValue( value: any ) {
       if ( typeof value === "function" && value.__directive ) {
         value = value( this );
       }
       return value == null ? null : value;
     }
-    getValueNoFalse( value ) {
+    getValueNoFalse( value: any ) {
       const v = this.getValue( value );
       return v === false ? null : v;
     }
+    abstract setValue( value: any ): void;
   }
 
   class AttributePart extends Part {
+    protected name: string;
+    protected element: Element;
 
-    constructor( instance, element, name ) {
-      super( instance, element );
+    constructor( element: Element, name: string ) {
+      super( element );
       this.name = name;
+      this.element = element;
     }
 
-    setValue( _value ) {
+    setValue( _value: any ) {
       const value = this.getValueNoFalse( _value );
       if ( this._value !== value ) {
         if ( value == null ) {
@@ -126,19 +161,20 @@
   }
 
   class PropertyPart extends AttributePart {
-    setValue( value ) {
-      this.element[ this.name ] = value;
+    setValue( value: any ) {
+      ( this.element as any )[ this.name ] = value;
     }
   }
 
   class EventPart extends Part {
+    protected eventName: string;
 
-    constructor( instance, element, eventName ) {
-      super( instance, element );
+    constructor( element: Node, eventName: string ) {
+      super( element );
       this.eventName = eventName;
     }
 
-    setValue( value ) {
+    setValue( value: any ) {
       const listener = this.getValueNoFalse( value );
       const previous = this._value;
       if ( listener === previous ) {
@@ -157,7 +193,7 @@
 
   class NodePart extends Part {
 
-    setValue( value ) {
+    setValue( value: any ) {
       value = this.getValue( value );
 
       if ( value == null || !( typeof value === "object" || typeof value === "function" ) ) {
@@ -178,12 +214,16 @@
       }
     }
 
-    _replace( node ) {
-      this.element.parentNode.replaceChild( node, this.element );
+    private _replace( node: any ) {
+      if ( this.element.parentNode ) {
+        this.element.parentNode.replaceChild( node, this.element );
+      } else {
+        throw new Error( "Assertion error" );
+      }
       this.element = node;
     }
 
-    _setNode( value ) {
+    private _setNode( value: any ) {
       if ( this._value === value ) {
         return;
       }
@@ -191,7 +231,7 @@
       this._value = value;
     }
 
-    _setText( value ) {
+    private _setText( value: string ) {
       if ( this.element.nodeType === 3 /* Node.TEXT_NODE */ ) {
         this.element.textContent = value;
       } else {
@@ -200,8 +240,8 @@
       this._value = value;
     }
 
-    _setTemplateResult( value ) {
-      let instance;
+    private _setTemplateResult( value: TemplateResult ) {
+      let instance: TemplateInstance;
       if ( this._value && this._value.template === value.template ) {
         instance = this._value;
       } else {
@@ -212,7 +252,7 @@
       instance.update( value.values );
     }
 
-    _setPromise( value ) {
+    private _setPromise( value: Promise<any> ) {
       this._value = value;
       value.then( v => {
         if ( this._value === value ) {
@@ -221,10 +261,14 @@
       } );
     }
 
-    _setIterable( value ) {
+    private _setIterable( value: Iterable<any> ) {
       if ( !this._value || !this._value[ Symbol.iterator ] ) {
         this._replace( doc.createComment( "" ) );
         this._value = [];
+      }
+
+      if ( !this.element.parentNode ) {
+        throw new Error( "Assertion error" );
       }
 
       const itemParts = this._value;
@@ -234,7 +278,7 @@
         let itemPart = itemParts[ partIndex ];
 
         if ( partIndex >= itemParts.length ) {
-          itemPart = new NodePart( this.instance, doc.createComment( "" ) );
+          itemPart = new NodePart( doc.createComment( "" ) );
           itemParts.push( itemPart );
           this.element.parentNode.insertBefore( itemPart.element, this.element );
         }
@@ -252,9 +296,9 @@
 
   }
 
-  const nodeToInstance = new WeakMap();
+  const nodeToInstance: WeakMap<Node, TemplateInstance> = new WeakMap();
 
-  function render( result, container ) {
+  function render( result: TemplateResult, container: Node ) {
     let instance = nodeToInstance.get( container );
 
     if ( instance != null && instance.template === result.template ) {
@@ -272,7 +316,25 @@
     instance.update( result.values );
   }
 
-  class QuaseView extends win.HTMLElement {
+  const modules = Object.create( null );
+
+  function define( name: string, clazz: Function ) {
+    if ( modules[ name ] ) {
+      throw new Error( "QuaseView: module " + name + " already defined" );
+    }
+    modules[ name ] = true;
+    win.customElements.define( name, clazz );
+  }
+
+  abstract class QuaseView extends win.HTMLElement {
+    static t = Template;
+    static r = TemplateResult;
+    static render = render;
+    static define = define;
+    static props: any;
+
+    private _ready: boolean;
+
     constructor() {
       super();
       this._ready = false;
@@ -283,33 +345,22 @@
       return Object.keys( this.props || {} );
     }
     forceUpdate() {
-      QuaseView.render( this.render(), this.shadowRoot );
+      QuaseView.render( this.render(), this.shadowRoot as ShadowRoot );
     }
     connectedCallback() {
       this._ready = true;
       this.forceUpdate();
     }
-    attributeChangedCallback( name, oldValue, newValue ) {
+    attributeChangedCallback( _name: string, oldValue: any, newValue: any ) {
       if ( this._ready && oldValue !== newValue ) {
         this.forceUpdate();
       }
     }
+    render(): TemplateResult {
+      throw new Error( "QuaseView: unimplemented render method" );
+    }
   }
 
-  QuaseView.t = Template;
-  QuaseView.r = TemplateResult;
-  QuaseView.render = render;
-
-  const modules = Object.create( null );
-
-  QuaseView.define = function( name, clazz ) {
-    if ( modules[ name ] ) {
-      throw new Error( "QuaseView: module " + name + " already defined" );
-    }
-    modules[ name ] = true;
-    win.customElements.define( name, clazz );
-  };
-
-  win.QuaseView = QuaseView;
+  ( win as any ).QuaseView = QuaseView;
   return QuaseView;
 } );
