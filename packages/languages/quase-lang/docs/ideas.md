@@ -24,6 +24,8 @@ Just some random ideas that pop up in my head or concepts that I find.
   - Should be optional.
   - Only needed if we in the future desire native support.
 - Deal with aliasing
+- Hoare Logic and Separation Logic
+  - Support some inference
 
 ## Provide as a library or in the language?
 
@@ -52,11 +54,8 @@ Just some random ideas that pop up in my head or concepts that I find.
 
 ## Things the compiler should do
 
-- JavaScript/Web interop.
-- Compilation to WebAssembly.
 - Optimize initial load.
   - Initial memory snapshot.
-  - Like `Prepack` for JavaScript.
 - Removal of dead code
   - Optional: show which code gets removed
 - Allow for plugins
@@ -72,6 +71,7 @@ Just some random ideas that pop up in my head or concepts that I find.
     - Ignore side-effects that are not read later.
   - Move functions
     - A function that does not depend on state inside its scope, can be moved to an outer scope.
+  - Optimize a function for certain parameters
 
 ## Dev tools
 
@@ -79,8 +79,19 @@ Just some random ideas that pop up in my head or concepts that I find.
 - Auto correct name spelling
 - Create console extension for Chrome DevTools
 
-# Language changes
+## Domains to consider
 
-The ideia is to keep the language envolving. The language should use `semver` for version numbers.
-
-It would be ideal to be able to migrate a project slowly to a new version, but if a breaking change happens to the type checker or the way modules interact with each other, it's not possible to make modules, built with different versions of the language, to work with each other, unless the compiler includes knowledge of the older version as well as the new.
+- Web development
+- DevOps
+- Systems programming
+- Network programming
+- Databases
+- Security
+- Data science
+- Finance/Commerce
+- Desktop/GUI applications
+- Mobile
+- Embedded devices/Internet of Things
+- AI
+- Academic/Scientific/Numeric
+- Gaming

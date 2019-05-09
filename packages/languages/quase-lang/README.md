@@ -1,17 +1,19 @@
 # Quase lang
 
-This is my attempt to create a programming language and investigate what can be done to help even more programmers to make less mistakes, and avoid common problems.
+This is my attempt to create a programming language and investigate what can be done to help programmers make sure that the software developed and
+constructed is "correct".
 
 ## Pratical objectives
 
 - Good tooling
 - Good libraries
 - Be fast
-- Easy to learn syntax
+- Syntax easy to learn
 - Modular
-- Compile to WebAssembly
-- Compile to JavaScript
-- Work side by side with JavaScript modules
+- Compile targets:
+  - WebAssembly
+  - JavaScript
+  - Others...
 
 ## Concept
 
@@ -28,6 +30,18 @@ No runtime              Runtimes
 ```
 
 Code starts on the right, and the compiler tries to optimize it to the left.
+
+## Types of correctness we might want to impose
+
+- Runtime safety - Is it crash-free?
+- Functional correctness - Gives the right results?
+- Resource conformance - Does it operate effectively?
+- Security conformance - Does it violate user privacy?
+- Integrity conformance
+
+## Language changes
+
+The language should also be able to envolve and introduce breaking changes if necessary but with easy migration paths.
 
 ## More ideias
 
