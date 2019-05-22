@@ -1,3 +1,5 @@
+// Inspired in https://github.com/Polymer/lit-html/
+
 type Win = Window & {
   HTMLElement: typeof HTMLElement; // eslint-disable-line no-undef
   Node: typeof Node; // eslint-disable-line no-undef
@@ -40,6 +42,27 @@ type Win = Window & {
     throw new Error( "Quase View: malformed template" );
   }
 
+  // Edge needs all 4 parameters present
+  const walker = doc.createTreeWalker(
+    doc,
+    128, // NodeFilter.SHOW_COMMENT
+    null,
+    false
+  );
+
+  const getWalker = ( root: Node ): TreeWalker => {
+    if ( walker.currentNode !== doc ) {
+      throw new Error( "Quase View: walker was not reset" );
+    }
+    walker.currentNode = root;
+    return walker;
+  };
+
+  // TreeWalker should not hold onto any GC'able Nodes
+  const resetWalker = () => {
+    walker.currentNode = doc;
+  };
+
   class TemplateInstance {
     template: Template;
     parts: Part[];
@@ -62,13 +85,7 @@ type Win = Window & {
       const strings = this.template.strings;
 
       if ( parts.length > 0 ) {
-        // Edge needs all 4 parameters present
-        const walker = doc.createTreeWalker(
-          fragment,
-          128, // NodeFilter.SHOW_COMMENT
-          null,
-          false
-        );
+        const walker = getWalker( fragment );
 
         let strIdx = 0;
         let mark = null;
@@ -111,6 +128,8 @@ type Win = Window & {
 
           this.parts.push( part );
         }
+
+        resetWalker();
       }
       return fragment;
     }
@@ -364,3 +383,5 @@ type Win = Window & {
   ( win as any ).QuaseView = QuaseView;
   return QuaseView;
 } );
+
+export {};
