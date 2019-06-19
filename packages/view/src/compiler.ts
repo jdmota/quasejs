@@ -1,3 +1,4 @@
+// @ts-ignore
 import jsx from "@babel/plugin-syntax-jsx";
 import {
   PART_ATTR, PART_PROP, PART_EVENT, PART_NODE,
