@@ -14,6 +14,7 @@ import {} from "foo7";
 import {} from "foo8";
 import { a } from "foo8";
 
+function test() {}
 export { test };
 export var test2 = 5;
 

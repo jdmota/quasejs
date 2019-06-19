@@ -895,7 +895,8 @@ Foo = 20;"
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-9 1`] = `
 "$g($e, \\"default\\", function () {
   return foo;
-});"
+});
+let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-10 1`] = `
@@ -943,7 +944,8 @@ exports[`babel transform modules babel-plugin-transform-modules - Fixture: expor
 $a($e, _foo);
 $g($e, \\"foo\\", function () {
   return foo;
-});"
+});
+let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-2 1`] = `
@@ -1309,12 +1311,9 @@ $g($e, \\"foo100\\", function () {
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-9 1`] = `
-"let foo = 10;
-foo1;
+"var _foo = $r(\\"foo\\");
 
 function stuff() {
-  var _foo = $r(\\"foo\\");
-
   $g($e, \\"foo\\", function () {
     return _foo.foo;
   });
@@ -1625,7 +1624,8 @@ function stuff() {
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named 1`] = `
 "$g($e, \\"foo\\", function () {
   return foo;
-});"
+});
+let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-2 1`] = `
@@ -1634,19 +1634,23 @@ exports[`babel transform modules babel-plugin-transform-modules - Fixture: expor
 });
 $g($e, \\"bar\\", function () {
   return bar;
-});"
+});
+let foo = 10;
+let bar = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-3 1`] = `
 "$g($e, \\"bar\\", function () {
   return foo;
-});"
+});
+let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-4 1`] = `
 "$g($e, \\"default\\", function () {
   return foo;
-});"
+});
+let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-5 1`] = `
@@ -1655,7 +1659,9 @@ exports[`babel transform modules babel-plugin-transform-modules - Fixture: expor
 });
 $g($e, \\"bar\\", function () {
   return bar;
-});"
+});
+let foo = 10;
+let bar = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable 1`] = `
@@ -2034,6 +2040,9 @@ $g($e, \\"test\\", function () {
 $g($e, \\"test2\\", function () {
   return test2;
 });
+
+function test() {}
+
 var test2 = 5;
 _foo4.bar;
 _foo5.foo;

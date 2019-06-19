@@ -6,6 +6,8 @@ coverage
 dist
 node_modules
 .pnp
+packages/builder/test/fixtures/*/actual
+packages/builder/test/watch-fixtures/*/actual
 packages/builder/test/watch-fixtures/*/working
 DRAFT-CHANGELOG.md
 npm-debug.log

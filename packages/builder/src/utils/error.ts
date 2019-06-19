@@ -2,25 +2,30 @@ import { Loc } from "../types";
 
 const codeFrameColumns = require( "@babel/code-frame" ).codeFrameColumns;
 
-type ErrorOpts = {
+export type ErrorOpts = {
+  message: string;
   id?: string;
   code?: string | null;
   loc?: Loc | null;
   codeFrameOptions?: any;
+  noStack?: boolean;
 };
 
-interface Error2 extends Error {
+export interface Error2 extends Error {
   fileName?: string;
   loc?: Loc | null;
   codeFrame?: string;
 }
 
-export default function( message: string, { id, code, loc, codeFrameOptions }: ErrorOpts ) {
+export function error( { message, id, code, loc, codeFrameOptions, noStack }: ErrorOpts ) {
   const error: Error2 = new Error( message );
   error.fileName = id;
   error.loc = loc;
   error.codeFrame =
-    loc && code ? codeFrameColumns( code, { start: { line: loc.line } }, codeFrameOptions ) : "";
+    loc && code ? codeFrameColumns( code, { start: { line: loc.line } }, codeFrameOptions ) : undefined;
+  if ( noStack ) {
+    error.stack = "";
+  }
   throw error;
 }
 
@@ -60,7 +65,7 @@ export function formatError( err: string | Error2 ) {
     message = `${fileName}: ${message}`;
   }
 
-  let stack;
+  let stack = null;
   if ( err.codeFrame ) {
     stack = err.codeFrame;
   } else if ( err.stack ) {

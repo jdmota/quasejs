@@ -1,9 +1,7 @@
-import { Manifest } from "../types";
-import { createRuntimeHelper } from "./runtime";
-import babelPreset from "./babel-preset";
+import { Manifest, RuntimeManifest } from "../types";
 
+const fs = require( "fs-extra" );
 const path = require( "path" );
-const babel = require( "@babel/core" );
 
 export type RuntimeOptions = {
   hmr: {
@@ -28,48 +26,46 @@ export const chunkInit = `"use strict";({g:"undefined"==typeof self?Function("re
 
 export const moduleArgs: ReadonlyArray<string> = "$e,$r,$i,$g,$a,$m".split( "," );
 
+const cache: { [key: string]: Promise<string> } = {};
+
 export async function createRuntime(
   runtime: RuntimeOptions,
   { context, fullPath, publicPath, minify }: RuntimeInfo
 ): Promise<string> {
 
-  const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
+  const minified = minify === undefined ? !runtime.hmr : !!minify;
 
-  let input = createRuntimeHelper( runtime );
+  const filename = [
+    "runtime",
+    runtime.browser && "browser",
+    runtime.hmr && "hmr",
+    minified && "min",
+    "js"
+  ].filter( Boolean ).join( "." );
+
+  const fullFilename = path.join( __dirname, "builds", filename );
+
+  let input = await ( cache[ filename ] || ( cache[ filename ] = fs.readFile( fullFilename, "utf8" ) ) );
+
+  const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
 
   if ( relative === publicPath ) {
     input = input.replace( "$_PUBLIC_PATH", JSON.stringify( relative ) );
   } else if ( runtime.node ) {
-    input = input.replace( "$_PUBLIC_PATH", `isNode ? ${JSON.stringify( relative )} : ${JSON.stringify( publicPath )}` );
+    input = input.replace( "$_PUBLIC_PATH", `nodeRequire ? ${JSON.stringify( relative )} : ${JSON.stringify( publicPath )}` );
   } else {
     input = input.replace( "$_PUBLIC_PATH", JSON.stringify( publicPath ) );
   }
 
-  const minified = minify === undefined ? !runtime.hmr : !!minify;
+  if ( runtime.hmr ) {
+    input = input.replace( "$_HMR_HOSTNAME", JSON.stringify( runtime.hmr.hostname ) );
+    input = input.replace( "$_HMR_PORT", runtime.hmr.port + "" );
+  }
 
-  const { code } = await babel.transformAsync( input, {
-    babelrc: false,
-    configFile: false,
-    sourceType: "module",
-    presets: [
-      babelPreset
-    // @ts-ignore
-    ].concat( minified ? [
-      [ require( "babel-preset-minify" ), {
-        builtIns: false,
-        evaluate: false
-      } ]
-    ] : [] ),
-    comments: !minified,
-    sourceMaps: false,
-    ast: false,
-    minified
-  } );
-
-  return code.trim();
+  return input.replace( "/* eslint-disable */\n", "" );
 }
 
-export function createRuntimeManifest( { files, moduleToAssets }: Manifest ) {
+export function createRuntimeManifest( { files, moduleToAssets }: Manifest ): RuntimeManifest | null {
 
   if ( moduleToAssets.size === 0 ) {
     return null;
@@ -77,13 +73,13 @@ export function createRuntimeManifest( { files, moduleToAssets }: Manifest ) {
 
   const fileToIdx: { [key: string]: number } = {};
   const $files: string[] = files.map( ( f, i ) => {
-    fileToIdx[ f.relativeDest ] = i;
-    return f.relativeDest;
+    fileToIdx[ f ] = i;
+    return f;
   } );
 
   const $idToFiles: { [key: string]: number[] } = {};
-  for ( const [ module, files ] of moduleToAssets ) {
-    $idToFiles[ module.hashId ] = files.map( f => fileToIdx[ f.relativeDest ] );
+  for ( const [ hashId, files ] of moduleToAssets ) {
+    $idToFiles[ hashId ] = files.map( f => fileToIdx[ f ] );
   }
 
   return {

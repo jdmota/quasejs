@@ -1,528 +1,645 @@
-import { RuntimeOptions } from "./create-runtime";
+import { Updates, RuntimeManifest } from "../types";
 
-function createHotRuntime( hmr: {
+// TO REMOVE
+const $_PUBLIC_PATH = "";
+const $_HMR = null;
+const $_WITH_BROWSER = true;
+// END TO REMOVE
+
+/* globals self */
+/* eslint no-console: 0, @typescript-eslint/camelcase: 0 */
+
+type O<T> = { [key: string]: T };
+
+type Exported = {
+  __esModule: boolean;
+  default?: unknown;
+};
+
+type HmrOpts = {
   hostname: string;
   port: number;
-} ) {
-  return `
-  const hmrApis = new Map();
+};
 
-  function getHotApi( id ) {
-    const api = hmrApis.get( id ) || new HotApi( id );
-    hmrApis.set( id, api );
-    return api;
-  }
+interface HotApiInterface {
+  addRequiredBy( parentApi: HotApiInterface | null ): void;
+  onDependencyChange( id: string, fn: Function ): void;
+  onChange( fn: Function ): void;
+  callDependencyChange( id: string, error: Error | null ): any;
+  callChange(): any;
+  notifyParents( seen: Set<HotApiInterface>, needReload: Set<HotApiInterface | null>, error: Error | null ): void;
+  reset( fnReset: boolean ): void;
+  load( notifyAncestors: boolean ): Promise<HmrLoad>;
+  reload(): Promise<HmrLoad>;
+  reloadNew(): Promise<HmrLoad>;
+  delete(): void;
+}
 
-  class HotApi {
+type HmrLoad = {
+  api: HotApiInterface;
+  error: Error | null;
+  notifyAncestors: boolean;
+};
 
-    constructor( id ) {
-      this.id = id;
-      this.requiredBy = new Set();
-      this.dependencyChange = {};
-      this.change = null;
-    }
+type HmrOps = {
+  init: () => void;
+  getApi: ( id: string ) => HotApiInterface;
+  requireSync: ( parent: HotApiInterface | null ) => {
+    ( id: string ): Exported;
+    r( id: string ): unknown;
+  };
+  requireAsync: ( parent: HotApiInterface | null ) => ( id: string ) => Promise<Exported>;
+};
 
-    onDependencyChange( id, fn ) {
-      this.dependencyChange[ id ] = fn;
-    }
+type ModuleFn = (
+  e: Exported,
+  r: { ( id: string ): Exported; r( id: string ): unknown },
+  i: ( id: string ) => Promise<Exported>,
+  g: ( e: Exported, name: string, get: () => any ) => void,
+  a: ( e: Exported, o: O<any> ) => void,
+  m: O<unknown>
+) => void;
 
-    onChange( fn ) {
-      this.change = fn;
-    }
+type GlobalThis = {
+  window?: Window;
+  document?: Document;
+  location?: Location;
+  WebSocket?: {
+    new( url: string ): WebSocket;
+  };
+  importScripts?: Function;
+  __quase_builder__?: any;
+};
 
-    callDependencyChange( id, error ) {
-      const fn = this.dependencyChange[ id ];
-      return fn ? fn( id, error ) : false;
-    }
+( function( global: GlobalThis, nodeRequire: false | NodeRequire ) {
 
-    callChange() {
-      const fn = this.change;
-      return fn ? fn() : false;
-    }
+  // Help reduce minified size
+  const UNDEFINED = undefined;
+  const NULL = null;
+  const { document, location, importScripts } = global;
+  const isBrowser = $_WITH_BROWSER && global.window === global;
 
-    notifyParents( seen, needReload, error ) {
-      const requiredBy = this.requiredBy;
-      this.requiredBy = new Set();
+  const blank = () => Object.create( NULL );
 
-      for ( const ancestor of requiredBy ) {
-        if ( ancestor ) {
-          if ( !seen.has( ancestor ) ) {
-            if ( ancestor.callDependencyChange( this.id, error ) ) {
-              needReload.add( ancestor );
-            } else {
-              this.requiredBy.add( ancestor );
+  const modules = blank() as O<Exported | undefined>;
+  const fnModules = blank() as O<ModuleFn | null | undefined>; // Functions that load the module
+  const fileImports = blank() as O<Exported | null | undefined>; // Files that were imported already
+  const fetches = blank() as O<Promise<Exported | null> | undefined>; // Fetches
+
+  const publicPath = $_PUBLIC_PATH as string;
+  const moduleToFiles = blank() as O<string[]>;
+
+  const hmr = $_HMR as HmrOpts | null;
+  const hmrOps = hmr ? makeHmr( hmr ) : null;
+
+  function makeHmr( hmr: HmrOpts ): HmrOps {
+    const { WebSocket } = global;
+    const hmrApis: Map<string, HotApi> = new Map();
+
+    const getHotApi = ( id: string ) => {
+      const api = hmrApis.get( id ) || new HotApi( id );
+      hmrApis.set( id, api );
+      return api;
+    };
+
+    const hmrRequireSync = ( parentApi: HotApiInterface | null ) => {
+      const newFn = ( id: string ) => {
+        const e = requireSync( id );
+        getHotApi( id ).addRequiredBy( parentApi );
+        return e;
+      };
+
+      newFn.r = ( id: string ) => {
+        const e = newFn( id );
+        return e.__esModule === false ? e.default : e;
+      };
+      return newFn;
+    };
+
+    const hmrRequireAsync = ( parentApi: HotApiInterface | null ) => {
+      return ( id: string ) => {
+        return requireAsync( id ).then( e => {
+          getHotApi( id ).addRequiredBy( parentApi );
+          return e;
+        } );
+      };
+    };
+
+    class HotApi implements HotApiInterface {
+
+      private id: string;
+      private requiredBy: Set<HotApiInterface | null>;
+      private dependencyChange: { [key: string]: Function };
+      private change: Function | null;
+
+      constructor( id: string ) {
+        this.id = id;
+        this.requiredBy = new Set();
+        this.dependencyChange = {};
+        this.change = null;
+      }
+
+      addRequiredBy( parentApi: HotApiInterface | null ) {
+        this.requiredBy.add( parentApi );
+      }
+
+      onDependencyChange( id: string, fn: Function ) {
+        this.dependencyChange[ id ] = fn;
+      }
+
+      onChange( fn: Function ) {
+        this.change = fn;
+      }
+
+      callDependencyChange( id: string, error: Error | null ) {
+        const fn = this.dependencyChange[ id ];
+        return fn ? fn( id, error ) : false;
+      }
+
+      callChange() {
+        const fn = this.change;
+        return fn ? fn() : true;
+      }
+
+      notifyParents( seen: Set<HotApiInterface>, needReload: Set<HotApiInterface | null>, error: Error | null ) {
+        const requiredBy = this.requiredBy;
+        this.requiredBy = new Set();
+
+        for ( const ancestor of requiredBy ) {
+          if ( ancestor ) {
+            if ( !seen.has( ancestor ) ) {
+              if ( ancestor.callDependencyChange( this.id, error ) ) {
+                needReload.add( ancestor );
+              } else {
+                this.requiredBy.add( ancestor );
+              }
             }
+          } else {
+            needReload.add( null );
           }
-        } else {
-          needReload.add( null );
         }
       }
-    }
 
-    reset( fnReset ) {
-      this.dependencyChange = {};
-      this.change = null;
-      modules[ this.id ] = UNDEFINED;
-      if ( fnReset ) {
-        fnModules[ this.id ] = UNDEFINED;
+      reset( fnReset: boolean ) {
+        this.dependencyChange = {};
+        this.change = null;
+        modules[ this.id ] = UNDEFINED;
+        if ( fnReset ) {
+          fnModules[ this.id ] = UNDEFINED;
+        }
       }
-    }
 
-    load( notifyAncestors ) {
-      return requireAsync( this.id ).catch( err => err ).then( error => ( {
-        api: this,
-        error,
-        notifyAncestors
-      } ) );
-    }
-
-    reload() {
-      const notifyAncestors = this.callChange();
-      this.reset( false );
-      return this.load( notifyAncestors );
-    }
-
-    reloadNew() {
-      const notifyAncestors = this.callChange();
-      this.reset( true );
-      return this.load( notifyAncestors );
-    }
-
-    delete() {
-      // Module no longer exists.
-      // Modules that depend on this will get reloaded later.
-      this.callChange();
-
-      this.reset( true );
-      this.requiredBy.clear();
-      hmrApis.delete( this.id );
-    }
-
-  }
-
-  let lastHotUpdate = Promise.resolve();
-
-  async function hmrUpdate( updates ) {
-    const seen = new Set();
-    let queue = [];
-    let shouldReloadApp = false;
-    let reloadCauseEntry = false;
-
-    for ( const { id, file, prevFile, reloadApp, requiredAssets } of updates ) {
-      if ( file ) {
-        fileImports[ publicPath + file ] = UNDEFINED;
-        fetches[ publicPath + file ] = UNDEFINED;
-        moduleToFiles[ id ] = requiredAssets.map( f => publicPath + f );
+      load( notifyAncestors: boolean ): Promise<HmrLoad> {
+        return requireAsync( this.id ).then( () => ( {
+          api: this,
+          error: null,
+          notifyAncestors
+        } ), ( error: Error ) => ( {
+          api: this,
+          error,
+          notifyAncestors
+        } ) );
       }
-      if ( prevFile ) {
-        fileImports[ publicPath + prevFile ] = UNDEFINED;
-        fetches[ publicPath + prevFile ] = UNDEFINED;
+
+      reload() {
+        const notifyAncestors = this.callChange();
+        this.reset( false );
+        return this.load( notifyAncestors );
       }
-      shouldReloadApp = shouldReloadApp || reloadApp;
+
+      reloadNew() {
+        const notifyAncestors = this.callChange();
+        this.reset( true );
+        return this.load( notifyAncestors );
+      }
+
+      delete() {
+        // Module no longer exists.
+        // Modules that depend on this will get reloaded later.
+        this.callChange();
+
+        this.reset( true );
+        this.requiredBy.clear();
+        hmrApis.delete( this.id );
+      }
+
     }
 
-    reloadCauseEntry = shouldReloadApp;
+    let reloadApp: any;
+    let state = {
+      success: true,
+      reload: false
+    };
 
-    for ( const { id, file } of updates ) {
-      const api = hmrApis.get( id );
-      if ( api ) {
-        seen.add( api );
+    const UI_ID = "__quase_builder_ui__";
+    let ui: HTMLDivElement | null = null;
+
+    const updateUI = () => {
+      if ( !document ) {
+        return;
+      }
+      if ( !ui ) {
+        ui = document.createElement( "div" );
+        ui.id = UI_ID;
+        document.body.appendChild( ui );
+      }
+
+      const success = state.success;
+      const reload = state.reload;
+
+      ui.innerHTML = (
+        `<div style="z-index:99999;color:white;position:fixed;top:0;
+          right: 50px;line-height:30px;font-family:Menlo, Consolas, monospace;">
+          <div style="${reload ? "display:block;" : "display:none;"};font-size:18px;padding:10px;background:yellow;color:black;float:left;cursor:pointer;">🗘</div>
+          <div style="float:left;background:${success ? "green" : "red"};padding:10px;">Build: ${success ? "Success" : "Error"}</div>
+        </div>`
+      );
+
+      ui.getElementsByTagName( "div" )[ 1 ].onclick = reloadApp;
+    };
+
+    const hmrReloadApp = ( reason: string ) => {
+      console.log( "[quase-builder] App reload? Reason: " + reason );
+      state.reload = true;
+      updateUI();
+    };
+
+    let lastHotUpdate = Promise.resolve();
+
+    const hmrUpdate = async( updates: Updates ) => {
+      const seen: Set<HotApi> = new Set();
+      let queue: Promise<HmrLoad>[] = [];
+      let shouldReloadApp = false;
+      let reloadCauseEntry = false;
+
+      for ( const { id, file, prevFile, reloadApp, requiredAssets } of updates ) {
         if ( file ) {
-          queue.push( api.reloadNew() );
-        } else {
-          api.delete();
+          fileImports[ publicPath + file ] = UNDEFINED;
+          fetches[ publicPath + file ] = UNDEFINED;
+          moduleToFiles[ id ] = requiredAssets.map( f => publicPath + f );
         }
-      }
-    }
-
-    while ( queue.length > 0 ) {
-      const prevQueue = queue;
-      queue = [];
-
-      const needReload = new Set();
-
-      for ( const job of prevQueue ) {
-        const { api, error, notifyAncestors } = await job;
-
-        if ( notifyAncestors ) {
-          api.notifyParents( seen, needReload, error );
+        if ( prevFile ) {
+          fileImports[ publicPath + prevFile ] = UNDEFINED;
+          fetches[ publicPath + prevFile ] = UNDEFINED;
         }
+        shouldReloadApp = shouldReloadApp || reloadApp;
       }
 
-      for ( const api of needReload ) {
+      reloadCauseEntry = shouldReloadApp;
+
+      for ( const { id, file } of updates ) {
+        const api = hmrApis.get( id );
         if ( api ) {
           seen.add( api );
-          queue.push( api.reload() );
-        } else {
-          shouldReloadApp = true;
+          if ( file ) {
+            queue.push( api.reloadNew() );
+          } else {
+            api.delete();
+          }
         }
       }
-    }
 
-    if ( shouldReloadApp ) {
-      hmrReloadApp(
-        reloadCauseEntry ? "Entry changed" : "Immediate entry dependency requested reload"
+      while ( queue.length > 0 ) {
+        const prevQueue = queue;
+        queue = [];
+
+        const needReload = new Set();
+
+        for ( const job of prevQueue ) {
+          const { api, error, notifyAncestors } = await job;
+
+          if ( notifyAncestors ) {
+            api.notifyParents( seen, needReload, error );
+          }
+        }
+
+        for ( const api of needReload ) {
+          if ( api ) {
+            seen.add( api );
+            queue.push( api.reload() );
+          } else {
+            shouldReloadApp = true;
+          }
+        }
+      }
+
+      if ( shouldReloadApp ) {
+        hmrReloadApp(
+          reloadCauseEntry ? "Entry changed" : "Immediate entry dependency requested reload"
+        );
+      }
+    };
+
+    const OVERLAY_ID = "__quase_builder_error_overlay__";
+    let overlay: HTMLDivElement | null = null;
+
+    const removeErrorOverlay = () => {
+      if ( overlay ) {
+        overlay.remove();
+        overlay = null;
+      }
+    };
+
+    // Adapted from https://github.com/parcel-bundler/parcel
+    const createErrorOverlay = ( error: string ) => {
+      if ( !document ) {
+        return;
+      }
+      if ( !overlay ) {
+        overlay = document.createElement( "div" );
+        overlay.id = OVERLAY_ID;
+        document.body.appendChild( overlay );
+      }
+
+      // Html encode
+      const errorText = document.createElement( "pre" );
+      errorText.innerText = error;
+
+      overlay.innerHTML = (
+        `<div style="background:black;font-size:16px;color:white;position:fixed;height:100%;width:100%;top:0px;left:0px;padding:30px;opacity:0.85; font-family:Menlo,Consolas,monospace;z-index: 9999;">
+          <span style="background:red;padding:2px 4px;border-radius:2px;">ERROR</span>
+          <span style="margin-left:10px;font-size:18px;position:relative;cursor:pointer;">🗙</span>
+          <pre style="margin-top:20px;">${errorText.innerHTML}</pre>
+        </div>`
       );
-    }
-  }
 
-  let reloadApp;
-  let state = {
-    success: true,
-    reload: false
-  };
+      overlay.getElementsByTagName( "span" )[ 1 ].onclick = removeErrorOverlay;
+    };
 
-  function hmrReloadApp( reason ) {
-    console.log( "[quase-builder] App reload? Reason: " + reason );
-    state.reload = true;
-    updateUI();
-  }
+    const hmrInit = () => {
+      if ( !location || !WebSocket ) {
+        return;
+      }
+      const protocol = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket( protocol + "://" + hmr.hostname + ":" + hmr.port + "/" );
+      ws.onmessage = event => {
+        const data = JSON.parse( event.data );
 
-  const UI_ID = "__quase_builder_ui__";
-  let ui = null;
-
-  function updateUI() {
-    if ( !ui ) {
-      ui = document.createElement( "div" );
-      ui.id = UI_ID;
-      document.body.appendChild( ui );
-    }
-
-    const success = state.success;
-    const reload = state.reload;
-
-    ui.innerHTML = (
-      '<div style="z-index:99999;color:white;position:fixed;top:0;' +
-        'right: 50px;line-height:30px;font-family: Menlo, Consolas, monospace;">' +
-        '<div style="font-size:18px;padding:10px;background:yellow;color:black;float:left;cursor:pointer;' + ( reload ? 'display:block;' : 'display:none;' ) + '">🗘</div>' +
-        '<div style="float:left;background:' + ( success ? 'green' : 'red' ) + ';padding:10px;">Build: ' + ( success ? 'Success' : 'Error' ) + '</div>' +
-      '</div>'
-    );
-
-    ui.getElementsByTagName( "div" )[ 1 ].onclick = reloadApp;
-  }
-
-  const OVERLAY_ID = "__quase_builder_error_overlay__";
-  let overlay = null;
-
-  // Adapted from https://github.com/parcel-bundler/parcel
-  function createErrorOverlay( error ) {
-    if ( !overlay ) {
-      overlay = document.createElement( "div" );
-      overlay.id = OVERLAY_ID;
-      document.body.appendChild( overlay );
-    }
-
-    // Html encode
-    const errorText = document.createElement( "pre" );
-    errorText.innerText = error;
-
-    overlay.innerHTML = (
-      '<div style="background: black; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; opacity: 0.85; font-family: Menlo, Consolas, monospace; z-index: 9999;">' +
-        '<span style="background: red; padding: 2px 4px; border-radius: 2px;">ERROR</span>' +
-        '<span style="margin-left: 10px; font-size: 18px; position: relative; cursor: pointer;">🗙</span>' +
-        '<pre style="margin-top: 20px;">' + errorText.innerHTML + '</pre>' +
-      '</div>'
-    );
-
-    overlay.getElementsByTagName( "span" )[ 1 ].onclick = removeErrorOverlay;
-  }
-
-  function removeErrorOverlay() {
-    if ( overlay ) {
-      overlay.remove();
-      overlay = null;
-    }
-  }
-
-  function hmrInit() {
-    const protocol = location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket( protocol + "://" + ${JSON.stringify( hmr.hostname )} + ":" + ${JSON.stringify( hmr.port )} + "/" );
-    ws.onmessage = function( event ) {
-      const data = JSON.parse( event.data );
-
-      switch ( data.type ) {
-        case "update":
-          lastHotUpdate = lastHotUpdate.then( () => {
-            console.log( "[quase-builder] ✨", data.updates );
-            state.success = true;
+        switch ( data.type ) {
+          case "update":
+            lastHotUpdate = lastHotUpdate.then( () => {
+              console.log( "[quase-builder] ✨", data.updates );
+              state.success = true;
+              updateUI();
+              removeErrorOverlay();
+              return hmrUpdate( data.updates );
+            } );
+            break;
+          case "error":
+            console.error( "[quase-builder] 🚨", data.error );
+            state.success = false;
             updateUI();
-            removeErrorOverlay();
-            return hmrUpdate( data.updates );
-          } );
-          break;
-        case "error":
-          console.error( "[quase-builder] 🚨", data.error );
-          state.success = false;
-          updateUI();
-          createErrorOverlay( data.error );
-          break;
-      }
-    };
-    ws.onerror = function( event ) {
-      console.error( "[quase-builder] socket error", event );
-    };
-    ws.onopen = function() {
-      console.log( "[quase-builder] HMR connection open on port " + ${JSON.stringify( hmr.port )} );
-    };
+            createErrorOverlay( data.error );
+            break;
+          default:
+        }
+      };
+      ws.onerror = event => {
+        console.error( "[quase-builder] socket error", event );
+      };
+      ws.onopen = () => {
+        console.log( "[quase-builder] HMR connection open on port " + hmr.port );
+      };
 
-    reloadApp = function() {
-      if ( ws.readyState === 3 ) {
-        location.reload();
-      } else {
-        ws.close();
-        ws.onclose = function() {
+      reloadApp = () => {
+        if ( ws.readyState === 3 ) {
           location.reload();
-        };
-      }
-    };
-  }
-
-  function hmrRequireSync( parentApi ) {
-    const newFn = id => {
-      const e = requireSync( id );
-      getHotApi( id ).requiredBy.add( parentApi );
-      return e;
-    };
-
-    newFn.r = id => {
-      const e = newFn( id );
-      return e.__esModule === false ? e.default : e;
-    };
-    return newFn;
-  }
-
-  function hmrRequireAsync( parentApi ) {
-    return id => {
-      return requireAsync( id ).then( e => {
-        getHotApi( id ).requiredBy.add( parentApi );
-        return e;
-      } );
-    };
-  }
-  `;
-}
-
-export function createRuntimeHelper( { hmr, browser, node, worker }: RuntimeOptions ) {
-  return `( function( global ${node ? `, nodeRequire` : ""} ) {
-
-    // Help reduce minified size
-    const UNDEFINED = undefined;
-    const NULL = null;
-    const Promise = global.Promise;
-    ${worker ? `const importScripts = global.importScripts;` : ""}
-    ${browser ? `const doc = global.document;` : ""}
-
-    ${node ? `const isNode = !!nodeRequire;` : ""}
-    ${worker ? `const isWorker = !!importScripts;` : ""}
-    ${browser ? `const isBrowser = global.window === global;` : ""}
-
-    function blank() { return Object.create( NULL ); }
-
-    const modules = blank();
-    const fnModules = blank(); // Functions that load the module
-    const fileImports = blank(); // Files that were imported already
-    const fetches = blank(); // Fetches
-
-    const publicPath = $_PUBLIC_PATH;
-    const moduleToFiles = blank();
-
-    ${hmr ? createHotRuntime( hmr ) : ""}
-
-    function require( id ) {
-      if ( id ) {
-        if ( ${node ? "isWorker" : "false"} ) {
-          importScripts( id );
-        } else if ( ${node ? "isNode" : "false"} ) {
-          nodeRequire( id );
+        } else {
+          ws.close();
+          ws.onclose = () => {
+            location.reload();
+          };
         }
+      };
+    };
+
+    return {
+      init: hmrInit,
+      getApi: getHotApi,
+      requireSync: hmrRequireSync,
+      requireAsync: hmrRequireAsync
+    };
+  }
+
+  function require( id: string ) {
+    if ( id ) {
+      if ( importScripts ) {
+        importScripts( id );
+      } else if ( nodeRequire ) {
+        nodeRequire( id );
       }
-      return NULL;
     }
+    return NULL;
+  }
 
-    function pushInfo( moreInfo ) {
-      const files = moreInfo.f;
-      const mToFiles = moreInfo.m;
-      for ( const id in mToFiles ) {
-        moduleToFiles[ id ] = mToFiles[ id ].map( f => publicPath + files[ f ] );
+  function pushInfo( moreInfo: RuntimeManifest ) {
+    const files = moreInfo.f;
+    const mToFiles = moreInfo.m;
+    for ( const id in mToFiles ) {
+      moduleToFiles[ id ] = mToFiles[ id ].map( f => publicPath + files[ f ] );
+    }
+  }
+
+  function pushModules( moreModules: O<ModuleFn> ) {
+    for ( const id in moreModules ) {
+      if ( fnModules[ id ] === UNDEFINED ) {
+        fnModules[ id ] = moreModules[ id ];
       }
     }
+  }
 
-    function pushModules( moreModules ) {
-      for ( const id in moreModules ) {
-        if ( fnModules[ id ] === UNDEFINED ) {
-          fnModules[ id ] = moreModules[ id ];
-        }
-      }
-    }
+  function push( arg: [ O<ModuleFn>, RuntimeManifest | undefined ] ) {
+    if ( arg[ 1 ] ) pushInfo( arg[ 1 ] );
+    pushModules( arg[ 0 ] );
+  }
 
-    function push( arg ) {
-      if ( arg[ 1 ] ) pushInfo( arg[ 1 ] );
-      pushModules( arg[ 0 ] );
-    }
+  function exportHelper( e: Exported, name: string, get: () => any ) {
+    Object.defineProperty( e, name, { enumerable: true, get } );
+  }
 
-    function exportHelper( e, name, get ) {
-      Object.defineProperty( e, name, { enumerable: true, get } );
-    }
-
-    function exportAllHelper( e, o ) {
-      Object.keys( o ).forEach( k => {
-        if ( k === "default" || k === "__esModule" ) return;
-        Object.defineProperty( e, k, {
-          configurable: true,
-          enumerable: true,
-          get: () => o[ k ]
-        } );
+  function exportAllHelper( e: Exported, o: O<any> ) {
+    Object.keys( o ).forEach( k => {
+      if ( k === "default" || k === "__esModule" ) return;
+      Object.defineProperty( e, k, {
+        configurable: true,
+        enumerable: true,
+        get: () => o[ k ]
       } );
+    } );
+  }
+
+  function exists( id: string ) {
+    return !!( modules[ id ] || fnModules[ id ] );
+  }
+
+  const load = ( id: string ): Exported => {
+
+    const curr = modules[ id ];
+    if ( curr ) {
+      return curr;
     }
 
-    function exists( id ) {
-      return modules[ id ] || fnModules[ id ];
+    const fn = fnModules[ id ];
+    if ( !hmr ) {
+      fnModules[ id ] = NULL;
     }
 
-    function load( id ) {
+    if ( fn ) {
+      const moduleExports: Exported = { __esModule: true };
 
-      if ( modules[ id ] ) {
-        return modules[ id ];
-      }
+      modules[ id ] = moduleExports;
 
-      const fn = fnModules[ id ];
-      ${hmr ? "" : `fnModules[ id ] = NULL;`}
+      if ( hmrOps ) {
+        const api = hmrOps.getApi( id );
 
-      if ( fn ) {
-        const moduleExports = {};
-
-        Object.defineProperty( moduleExports, "__esModule", {
-          writable: true,
-          value: true
-        } );
-
-        modules[ id ] = moduleExports;
-
-        ${hmr ? `const api = getHotApi( id );` : ""}
-
-        // $e, $r, $i, $g, $a
+        // $e, $r, $i, $g, $a, $m
         fn(
           moduleExports,
-          ${hmr ? `hmrRequireSync( api )` : `requireSync`},
-          ${hmr ? `hmrRequireAsync( api )` : `requireAsync`},
+          hmrOps.requireSync( api ),
+          hmrOps.requireAsync( api ),
           exportHelper,
           exportAllHelper,
-          ${hmr ? `{ hot: api }` : "{}"}
+          { hot: api }
         );
-
-        return moduleExports;
-      }
-
-      const err = new Error( \`Cannot find module \${id}\` );
-      err.code = "MODULE_NOT_FOUND";
-      throw err;
-    }
-
-    function requireSync( id ) {
-      if ( !exists( id ) ) {
-        ( moduleToFiles[ id ] || [] ).forEach( importFileSync );
-      }
-      return load( id );
-    }
-
-    requireSync.r = function( id ) {
-      const e = requireSync( id );
-      return e.__esModule === false ? e.default : e;
-    };
-
-    function requireAsync( id ) {
-      return Promise.all(
-        exists( id ) ? [] : ( moduleToFiles[ id ] || [] ).map( importFileAsync )
-      ).then( () => load( id ) );
-    }
-
-    function importFileSync( file ) {
-      if ( fileImports[ file ] === UNDEFINED ) {
-        fileImports[ file ] = require( file );
-      }
-      return fileImports[ file ];
-    }
-
-    function importFileAsync( src ) {
-      if ( fileImports[ src ] !== UNDEFINED ) {
-        return Promise.resolve( fileImports[ src ] );
-      }
-
-      if ( fetches[ src ] ) {
-        return fetches[ src ];
-      }
-
-      const resolution = [ UNDEFINED, UNDEFINED ];
-
-      const promise = new Promise( ( resolve, reject ) => {
-        resolution[ 0 ] = e => {
-          fetches[ src ] = UNDEFINED;
-          resolve( fileImports[ src ] = e );
-        };
-        resolution[ 1 ] = err => {
-          fetches[ src ] = UNDEFINED;
-          reject( err );
-        };
-      } );
-
-      fetches[ src ] = promise;
-
-      if ( ${browser ? ( node || worker ? "isBrowser" : "true" ) : "false"} ) {
-        const script = doc.createElement( "script" );
-        script.type = "text/javascript";
-        script.charset = "utf-8";
-        script.async = true;
-        script.timeout = 120000;
-        script.src = src;
-
-        const timeout = setTimeout( onError, 120000 );
-
-        const done = err => {
-          clearTimeout( timeout );
-          script.onerror = script.onload = UNDEFINED; // Avoid memory leaks in IE
-          resolution[ err ? 1 : 0 ]( err || NULL );
-        };
-
-        const onError = () => {
-          done( new Error( \`Fetching \${src} failed\` ) );
-        };
-
-        script.onload = () => { done(); };
-        script.onerror = onError;
-
-        doc.head.appendChild( script );
       } else {
-        Promise.resolve( src ).then( require ).then( resolution[ 0 ], resolution[ 1 ] );
+        // $e, $r, $i, $g, $a, $m
+        fn(
+          moduleExports,
+          requireSync,
+          requireAsync,
+          exportHelper,
+          exportAllHelper,
+          {}
+        );
       }
 
-      return promise;
+      return moduleExports;
     }
 
-    let me = global.__quase_builder__;
+    const err = new Error( `Cannot find module ${id}` ) as Error & { code: string };
+    err.code = "MODULE_NOT_FOUND";
+    throw err;
+  };
 
-    if ( me ) {
-      if ( Array.isArray( me.q ) ) {
-        for ( let i = 0; i < me.q.length; i++ ) {
-          push( me.q[ i ] );
+  function requireSync( id: string ) {
+    if ( !exists( id ) ) {
+      ( moduleToFiles[ id ] || [] ).forEach( importFileSync );
+    }
+    return load( id );
+  }
+
+  requireSync.r = ( id: string ) => {
+    const e = requireSync( id );
+    return e.__esModule === false ? e.default : e;
+  };
+
+  function requireAsync( id: string ) {
+    return Promise.all(
+      exists( id ) ? [] : ( moduleToFiles[ id ] || [] ).map( importFileAsync )
+    ).then( () => load( id ) );
+  }
+
+  function importFileSync( file: string ) {
+    if ( fileImports[ file ] === UNDEFINED ) {
+      fileImports[ file ] = require( file );
+    }
+    return fileImports[ file ];
+  }
+
+  function importFileAsync( src: string ) {
+    if ( fileImports[ src ] !== UNDEFINED ) {
+      return Promise.resolve( fileImports[ src ] );
+    }
+
+    if ( fetches[ src ] ) {
+      return fetches[ src ];
+    }
+
+    let resolve: ( exported: Exported | null ) => void;
+    let reject: ( err: Error ) => void;
+
+    const promise = new Promise<Exported | null>( ( a, b ) => {
+      resolve = a;
+      reject = b;
+    } );
+
+    const resolution: [ typeof resolve, typeof reject ] = [
+      ( exported: Exported | null ) => {
+        fetches[ src ] = UNDEFINED;
+        resolve( fileImports[ src ] = exported );
+      },
+      ( err: Error ) => {
+        fetches[ src ] = UNDEFINED;
+        reject( err );
+      }
+    ];
+
+    fetches[ src ] = promise;
+
+    if ( isBrowser && document ) {
+      const script = document.createElement( "script" );
+      script.type = "text/javascript";
+      script.charset = "utf-8";
+      script.async = true;
+      script.src = src;
+
+      let timeout: any;
+
+      const done = ( err?: Error ) => {
+        clearTimeout( timeout );
+        // @ts-ignore
+        script.onerror = script.onload = NULL; // Avoid memory leaks in IE
+        if ( err ) {
+          resolution[ 1 ]( err );
+        } else {
+          resolution[ 0 ]( NULL );
         }
-        me.r = ${hmr ? `hmrRequireSync( null )` : `requireSync`};
-        me.i = ${hmr ? `hmrRequireAsync( null )` : `requireAsync`};
-        me.q = { push };
-        ${hmr ? `hmrInit();` : ""}
-      }
-    } else {
-      me = global.__quase_builder__ = {
-        r: ${hmr ? `hmrRequireSync( null )` : `requireSync`},
-        i: ${hmr ? `hmrRequireAsync( null )` : `requireAsync`},
-        q: { push }
       };
-      ${hmr ? `hmrInit();` : ""}
+
+      const onError = () => {
+        done( new Error( `Fetching ${src} failed` ) );
+      };
+
+      timeout = setTimeout( onError, 120000 );
+
+      script.onload = () => { done(); };
+      script.onerror = onError;
+
+      document.head.appendChild( script );
+    } else {
+      Promise.resolve( src ).then( require ).then( resolution[ 0 ], resolution[ 1 ] );
     }
 
-    return me.r;
-  } )(
-    typeof self !== "undefined" ? self : Function( "return this" )()
-    ${node ? `, typeof require !== "undefined" && require` : ""}
-  );`;
-}
+    return promise;
+  }
+
+  let me = global.__quase_builder__;
+
+  if ( me ) {
+    if ( Array.isArray( me.q ) ) {
+      for ( let i = 0; i < me.q.length; i++ ) {
+        push( me.q[ i ] );
+      }
+      me.r = hmrOps ? hmrOps.requireSync( null ) : requireSync;
+      me.i = hmrOps ? hmrOps.requireAsync( null ) : requireAsync;
+      me.q = { push };
+      if ( hmrOps ) {
+        hmrOps.init();
+      }
+    }
+  } else {
+    me = global.__quase_builder__ = {
+      r: hmrOps ? hmrOps.requireSync( null ) : requireSync,
+      i: hmrOps ? hmrOps.requireAsync( null ) : requireAsync,
+      q: { push }
+    };
+    if ( hmrOps ) {
+      hmrOps.init();
+    }
+  }
+
+  return me.r;
+} )(
+  // eslint-disable-next-line no-new-func
+  typeof self !== "undefined" ? self : Function( "return this" )(), typeof require !== "undefined" && require
+);

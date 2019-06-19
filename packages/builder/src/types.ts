@@ -1,24 +1,35 @@
-import Module from "./module";
-import { BuilderContext, ModuleContext } from "./plugins/context";
-import { Graph } from "./graph";
+import { BuilderUtil, ModuleContext } from "./plugins/context";
+
+export type Transforms = ReadonlyArray<ReadonlyArray<string>>;
 
 export type Data = Buffer | string | Uint8Array;
 
-export type DataType = "buffer" | "string";
+export type DataType = "buffer" | "string" | "uint8array";
 
 export type Loc = {
   line: number;
   column?: number;
 };
 
-export type LoadOutput = {
-  data: Data;
-  map: any|null;
+export type AstInfo = {
+  type: string;
+  version: string;
+  isDirty: boolean;
+  program: any;
 };
 
-export type TransformOutput = {
-  ast: any;
-  buffer: Buffer | Uint8Array | null;
+export type TransformableAsset = {
+  type: string;
+  data: Data;
+  ast: AstInfo | null;
+  map: any | null;
+  depsInfo: DepsInfo | null;
+  meta: { [key: string]: any } | null;
+};
+
+export type GenerateOutput = {
+  data: Data;
+  map: any;
 };
 
 export type ImportedName = {
@@ -35,14 +46,11 @@ export type ExportedName = {
   loc?: Loc;
 };
 
-export type ProvidedPlugin<T> = void | string | T | [string | T, any];
-
-export type ProvidedPluginsArr<T> = ReadonlyArray<ProvidedPlugin<T>>;
-
-export type NotResolvedDep = {
+export type Dep = {
+  path?: string; // Possibly provide an already resolved dependency
   loc?: Loc;
   async?: boolean;
-  typeTransforms?: ReadonlyArray<string>;
+  transforms?: Transforms;
 };
 
 export type InnerDep = {
@@ -50,70 +58,78 @@ export type InnerDep = {
   data: Data;
   loc?: Loc;
   async?: boolean;
-};
-
-export type ResolvedDep = {
-  path: string;
-  request: string;
-  loc?: Loc;
-  async?: boolean;
-};
-
-export type ModuleDep = {
-  path: string;
-  request: string;
-  loc?: Loc;
-  async?: boolean;
-  splitPoint: boolean;
-  required: Module;
-  inherit: boolean;
+  transforms?: Transforms;
 };
 
 export type DepsInfo = {
-  dependencies: Map<string, NotResolvedDep|null>;
-  innerDependencies: Map<string, InnerDep>;
-  importedNames: ReadonlyArray<ImportedName>;
-  exportedNames: ReadonlyArray<ExportedName>;
+  dependencies?: Map<string, Dep>;
+  innerDependencies?: Map<string, InnerDep>;
+  importedNames?: ImportedName[];
+  exportedNames?: ExportedName[];
 };
 
 export type WatchedFileInfo = { time: number; onlyExistance?: boolean };
 export type WatchedFiles = Map<string, WatchedFileInfo>;
 
-export type PipelineResult = {
-  depsInfo: DepsInfo;
-  content: TransformOutput;
-};
-
 export type Manifest = {
-  files: FinalAsset[];
-  moduleToAssets: Map<Module, FinalAsset[]>;
+  files: string[];
+  moduleToAssets: Map<string, string[]>;
 };
 
-export type FinalAsset = {
-  module: Module;
+export type RuntimeManifest = {
+  f: string[];
+  m: { [key: string]: number[] };
+};
+
+export type ResolvedDep = {
+  request: string;
+  path: string;
+  async: boolean;
+  transforms: Transforms;
+};
+
+export type ResolvedDepWithId = {
+  id: string;
+  hashId: string;
+  async: boolean;
+};
+
+type AbstractFinalModule = {
   id: string;
   path: string;
-  type: string;
-  innerId: string|null;
-  normalized: string;
   relativePath: string;
+  innerId: string | null;
+  hashId: string;
+  transformedBuildId: number;
+  resolvedBuildId: number;
+  moduleIdByRequest: Map<string, ResolvedDepWithId>;
+  innerModuleIdByRequest: Map<string, ResolvedDepWithId>;
+  requires: ResolvedDepWithId[];
+};
+
+export type FinalModule = AbstractFinalModule & {
+  asset: TransformableAsset;
+};
+
+type AbstractFinalAsset = {
   relativeDest: string;
   hash: string | null;
   isEntry: boolean;
   runtime: {
     code: string|null;
-    manifest: {
-      f: string[];
-      m: { [key: string]: number[] };
-    }|null;
+    manifest: RuntimeManifest|null;
   };
   manifest: Manifest;
-  srcs: Set<Module>;
+};
+
+export type FinalAsset = AbstractFinalAsset & {
+  module: FinalModule;
+  srcs: Map<string, FinalModule>;
   inlineAssets: FinalAsset[];
 };
 
 export type ProcessedGraph = {
-  moduleToFile: Map<Module, FinalAsset>;
+  moduleToFile: Map<FinalModule, FinalAsset>;
   files: FinalAsset[];
 };
 
@@ -152,54 +168,57 @@ export type Updates = {
 export type Output = {
   filesInfo: Info[];
   time: number;
+  timeCheckpoints?: Map<string, number>;
   updates: Updates;
 };
 
-type ThingOrPromise<T> = T | Promise<T>;
+type MaybeAsync<T> = T | Promise<T>;
+type MaybeAsyncOptional<T> = MaybeAsync<T | null | undefined>;
 
-export type Loader = ( file: string, ctx: ModuleContext ) => ThingOrPromise<Data|null>;
+export type ProvidedPlugin<T> = void | string | T | [string | T, any];
 
-export type Parser = ( code: string, ctx: ModuleContext ) => ThingOrPromise<any|null>;
+export type ProvidedPluginsArr<T> = ReadonlyArray<ProvidedPlugin<T>>;
 
-export type AstTransformer = ( ast: any, ctx: ModuleContext ) => ThingOrPromise<any|null>;
+export type WarnCb = ( msg: string ) => void;
+export type ErrorCb = ( id: string, msg: string, code: string | null, loc: Loc | null ) => void;
 
-export type BufferTransformer =
-  ( data: Buffer | Uint8Array, ctx: ModuleContext ) => ThingOrPromise<Buffer | Uint8Array | null>;
-
-export type DepExtractor = ( ast: any, ctx: ModuleContext ) => ThingOrPromise<DepsInfo | null>;
-
-export type Resolver = ( request: string, importer: ModuleContext ) => ThingOrPromise<string | false | null>;
-
-export type Checker = ( graph: Graph ) => ThingOrPromise<void>;
-
-export type TypeTransformer =
-  ( prevOutput: TransformOutput, ctx: ModuleContext ) => ThingOrPromise<LoadOutput | null>;
-
-export type GraphTransformer = ( graph: ProcessedGraph ) => ThingOrPromise<ProcessedGraph | null>;
-
-export type AssetRenderer =
-  (
-    asset: FinalAsset, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderContext
-  ) => ThingOrPromise<ToWrite | null>;
-
-export type Plugin = {
+export type Resolver = {
   name?: string;
-  getType?: ( file: string ) => string | null;
-  load?: Loader;
-  parse?: { [key: string]: Parser };
-  transformAst?: { [key: string]: AstTransformer };
-  transformBuffer?: { [key: string]: BufferTransformer };
-  dependencies?: { [key: string]: DepExtractor };
-  resolve?: { [key: string]: Resolver };
-  isSplitPoint?:
-    ( imported: ModuleContext, importer: ModuleContext ) => boolean | null;
-  getTypeTransforms?:
-    ( imported: ModuleContext, importer: ModuleContext | null ) => ReadonlyArray<string> | null;
-  isExternal?: ( file: string ) => ThingOrPromise<boolean | null>;
-  transformType?: { [key: string]: { [key: string]: TypeTransformer } };
-  check?: Checker;
-  graphTransform?: GraphTransformer;
-  renderAsset?: { [key: string]: AssetRenderer };
+  options?( options: any ): MaybeAsync<any>;
+  resolve( options: any, imported: string, ctx: ModuleContext ): MaybeAsyncOptional<string | false | { path: string; transforms?: Transforms }>;
+};
+
+export type Transformer = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  canReuseAST?: ( options: any, ast: AstInfo ) => boolean;
+  parse?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<AstInfo>;
+  transform?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<TransformableAsset>;
+  generate?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<GenerateOutput>;
+};
+
+export type ICheckerImpl = {
+  newModule( module: FinalModule ): void;
+  deletedModule( id: string ): void;
+  check(): MaybeAsync<void>;
+};
+
+export type Checker = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  checker( options: any, _: { warn: WarnCb; error: ErrorCb } ): ICheckerImpl;
+};
+
+export type Packager = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  pack( options: any, asset: FinalAsset, inlines: Map<FinalAsset, ToWrite>, ctx: BuilderUtil ): MaybeAsyncOptional<ToWrite>;
+};
+
+export type Plugin<T> = {
+  name: string;
+  plugin: T;
+  options: any;
 };
 
 export type OptimizationOptions = {
@@ -210,6 +229,15 @@ export type OptimizationOptions = {
   /* concatenateModules: boolean;
   treeshake: boolean; */
   cleanup: boolean;
+};
+
+export type UserConfigOpts = {
+  cwd: string;
+  optimization: OptimizationOptions;
+  resolvers: ProvidedPluginsArr<string>;
+  transformers: ProvidedPluginsArr<string>;
+  checkers: ProvidedPluginsArr<string>;
+  packagers: ProvidedPluginsArr<string>;
 };
 
 export type Options = {
@@ -226,13 +254,16 @@ export type Options = {
     worker: boolean;
   };
   fs: MinimalFS;
-  reporter: ProvidedPlugin<Function>;
   codeFrameOptions: any;
   watch: boolean;
   watchOptions: any;
   hmr: boolean;
-  plugins: ProvidedPluginsArr<string>;
   performance: PerformanceOpts;
   optimization: OptimizationOptions;
   serviceWorker: any;
+  reporter: ProvidedPlugin<Function>;
+  resolvers: ProvidedPluginsArr<string>;
+  transformers: ProvidedPluginsArr<string>;
+  checkers: ProvidedPluginsArr<string>;
+  packagers: ProvidedPluginsArr<string>;
 };

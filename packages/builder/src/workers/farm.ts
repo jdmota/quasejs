@@ -1,5 +1,5 @@
-import { PluginsRunnerInWorker, PluginsRunner } from "../plugins/runner";
-import { encapsulate, revive } from "./serialization";
+import { workerMethods, IPluginsRunnerInWorker } from "../plugins/worker-runner";
+import { UserConfig } from "../builder/user-config";
 
 const path = require( "path" );
 const { Worker } = require( "worker_threads" ); // eslint-disable-line
@@ -13,13 +13,15 @@ type Defer<T> = {
   reject: ( error: Error ) => void;
 };
 
+type MethodName = keyof IPluginsRunnerInWorker;
+
 type CallInfo = {
-  method: keyof PluginsRunner;
+  method: MethodName;
   args: unknown[];
 };
 
 type PendingCall = {
-  method: keyof PluginsRunner;
+  method: MethodName;
   args: unknown[];
   defer: Defer<unknown>;
   retry: number;
@@ -27,7 +29,7 @@ type PendingCall = {
 
 type Call = {
   id: number;
-  method: keyof PluginsRunner;
+  method: MethodName;
   args: unknown[];
   child: Child;
   defer: Defer<unknown>;
@@ -49,7 +51,7 @@ type ReceivedData = {
 
 export type SentData = {
   id: number;
-  method: keyof PluginsRunner;
+  method: MethodName;
   args: unknown[];
 };
 
@@ -70,27 +72,27 @@ function createDefer(): Defer<unknown> {
 
 export class Farm {
 
-  children: Set<Child>;
-  calls: Map<number, Call>;
-  initOptions: any;
-  localPluginsRunner: PluginsRunner;
-  callUUID: number;
-  pending: PendingCall[];
-  useWorkers: boolean;
-  ended: boolean;
+  private children: Set<Child>;
+  private calls: Map<number, Call>;
+  private initOptions: UserConfig;
+  private workersInit: Defer<unknown>;
+  private useWorkers: boolean;
+  private callUUID: number;
+  private pending: PendingCall[];
+  private ended: boolean;
 
-  constructor( initOptions: any ) {
+  constructor( initOptions: UserConfig ) {
     this.children = new Set();
     this.calls = new Map();
     this.initOptions = initOptions;
-    this.localPluginsRunner = new PluginsRunner();
+    this.workersInit = createDefer();
+    this.useWorkers = false;
     this.callUUID = 1;
     this.pending = [];
-    this.useWorkers = false;
     this.ended = false;
   }
 
-  mkhandle( method: keyof PluginsRunner ) {
+  private mkhandle( method: MethodName ) {
     return ( ...args: unknown[] ) => {
       return this.addCall( {
         method,
@@ -99,9 +101,13 @@ export class Farm {
     };
   }
 
-  async setup(): Promise<PluginsRunnerInWorker> {
+  workersReady() {
+    return this.workersInit.promise;
+  }
+
+  setup(): IPluginsRunnerInWorker {
     const iface: any = {};
-    for ( const m of PluginsRunner.workerMethods ) {
+    for ( const m of workerMethods ) {
       iface[ m ] = this.mkhandle( m );
     }
 
@@ -109,12 +115,10 @@ export class Farm {
       this.startChild();
     }
 
-    await this.localPluginsRunner.init( this.initOptions );
-
     return iface;
   }
 
-  startChild() {
+  private startChild() {
 
     const child = new Worker( path.join( __dirname, "fork.js" ), {
       workerData: this.initOptions
@@ -127,9 +131,10 @@ export class Farm {
       exitTimeout: null
     };
 
-    child.on( "online", () => {
+    child.once( "online", () => {
       c.ready = true;
       this.useWorkers = true;
+      this.workersInit.resolve( null );
     } );
 
     child.on( "message", ( msg: ReceivedData ) => this.receive( msg ) );
@@ -143,9 +148,10 @@ export class Farm {
 
 
     this.children.add( c );
+    return c;
   }
 
-  findChild(): Child|null {
+  private findChild(): Child|null {
     let child = null;
     let max = maxConcurrentCallsPerWorker;
 
@@ -160,25 +166,21 @@ export class Farm {
     return child;
   }
 
-  runLocal( { method, args }: CallInfo ): any {
-    return this.localPluginsRunner[ method ]( ...args );
-  }
-
-  addCall( callInfo: CallInfo ): Promise<any> {
+  private async addCall( callInfo: CallInfo ): Promise<any> {
     const defer = createDefer();
     if ( this.ended ) {
       return defer.promise;
     }
 
     if ( !this.useWorkers ) {
-      return this.runLocal( callInfo );
+      await this.workersInit.promise;
     }
 
     const { method, args } = callInfo;
 
     this.pending.push( {
       method,
-      args: args.map( encapsulate ),
+      args,
       defer,
       retry: 0
     } );
@@ -187,21 +189,19 @@ export class Farm {
     return defer.promise;
   }
 
-  receive( data: ReceivedData ) {
-    const { id, result: _result, error: _error } = data;
-    let result, error;
-
-    if ( _error ) {
-      const { message, stack } = _error;
-      error = new Error( message );
-      error.stack = stack;
-    } else {
-      result = revive( _result );
-    }
-
+  private receive( data: ReceivedData ) {
+    const { id, result, error: _error } = data;
     const call = this.calls.get( id );
 
     if ( call ) {
+      let error;
+
+      if ( _error ) {
+        const { message, stack } = _error;
+        error = new Error( message );
+        error.stack = stack;
+      }
+
       const { child, defer } = call;
 
       this.calls.delete( id );
@@ -217,7 +217,7 @@ export class Farm {
     this.processPending();
   }
 
-  send( child: Child, pendingCall: PendingCall ) {
+  private send( child: Child, pendingCall: PendingCall ) {
     const id = this.callUUID++;
     const { method, args, defer, retry } = pendingCall;
     const call: Call = {
@@ -241,8 +241,8 @@ export class Farm {
     child.child.postMessage( sentData );
   }
 
-  processPending() {
-    if ( this.ended ) {
+  private processPending() {
+    if ( this.ended || this.pending.length === 0 ) {
       return;
     }
 
@@ -256,7 +256,7 @@ export class Farm {
     }
   }
 
-  onExit( child: Child ) {
+  private onExit( child: Child ) {
     if ( this.ended ) {
       return;
     }
@@ -281,7 +281,7 @@ export class Farm {
     }, 10 );
   }
 
-  stopChild( child: Child ) {
+  private stopChild( child: Child ) {
     if ( this.children.delete( child ) ) {
       child.child.postMessage( "die" );
       child.exitTimeout = setTimeout( () => {

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../working/index.html","../working/a.js"],"names":["a"],"mappings":";8FACwB;;;;;ACDjB,MAAMA,CAAC,GAAG,EAAV","file":"index.js","sourcesContent":["\n      import { a } from \"./a.js\";\n    ","export const a = 10;"]}

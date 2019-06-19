@@ -99,30 +99,32 @@ let packageInformationStores = new Map([
         ["@babel/generator", "7.3.2"],
         ["@babel/helpers", "7.4.2"],
         ["@babel/helper-module-imports", "7.0.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:a0314f0934c570b276a81cf0d64b9659bbddae03"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:2660d98e22a1aac669fc354dff7330b7bf846b4e"],
-        ["@babel/plugin-transform-block-scoping", "pnp:6f3d8f766129471a0efe552514fa729e8531dddd"],
         ["@babel/template", "7.2.2"],
-        ["@quase/cacheable-fs", "0.1.0-0"],
         ["@quase/cli", "0.4.0-0"],
         ["@quase/get-plugins", "0.1.0-0"],
         ["@quase/source-map", "0.2.0-0"],
         ["babel-preset-minify", "0.5.0"],
-        ["colorette", "1.0.7"],
+        ["colorette", "1.0.8"],
         ["fs-extra", "7.0.1"],
-        ["fswatcher-child", "1.1.0"],
-        ["graphviz", "0.0.8"],
-        ["ora", "3.2.0"],
+        ["fswatcher-child", "1.1.1"],
+        ["graphviz", "0.0.9"],
+        ["import-lazy", "4.0.0"],
+        ["ora", "3.4.0"],
         ["parse5", "5.1.0"],
-        ["pretty-bytes", "5.1.0"],
-        ["resolve", "1.10.0"],
-        ["slash", "2.0.0"],
-        ["strip-ansi", "4.0.0"],
-        ["ws", "6.2.0"],
+        ["pretty-bytes", "5.2.0"],
+        ["resolve", "1.11.0"],
+        ["slash", "3.0.0"],
+        ["strip-ansi", "5.2.0"],
+        ["ws", "7.0.0"],
         ["@babel/preset-env", "pnp:e76030d8dcfb0877887649a8d95d3d7613693a26"],
+        ["@babel/preset-typescript", "pnp:ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5"],
         ["@babel/plugin-external-helpers", "7.2.0"],
+        ["@babel/plugin-proposal-class-properties", "pnp:670829f2e61e6f99eb155699eaf62046dff08834"],
+        ["@babel/plugin-proposal-object-rest-spread", "7.4.3"],
         ["@babel/plugin-transform-runtime", "7.4.0"],
         ["@quase/schema", "0.1.0-0"],
+        ["klaw", "3.0.0"],
+        ["rollup", "1.10.0"],
         ["sw-precache", "5.2.1"],
       ]),
     }],
@@ -634,6 +636,13 @@ let packageInformationStores = new Map([
         ["resolve", "1.10.0"],
       ]),
     }],
+    ["1.11.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-resolve-1.11.0-4014870ba296176b86343d50b60f3b50609ce232/node_modules/resolve/"),
+      packageDependencies: new Map([
+        ["path-parse", "1.0.6"],
+        ["resolve", "1.11.0"],
+      ]),
+    }],
     ["1.1.7", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-resolve-1.1.7-203114d82ad2c5ed9e8e0411b3932875e889e97b/node_modules/resolve/"),
       packageDependencies: new Map([
@@ -669,234 +678,6 @@ let packageInformationStores = new Map([
       packageDependencies: new Map([
         ["@babel/types", "7.3.2"],
         ["@babel/helper-module-imports", "7.0.0"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-transform-template-literals", new Map([
-    ["pnp:a0314f0934c570b276a81cf0d64b9659bbddae03", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-a0314f0934c570b276a81cf0d64b9659bbddae03/node_modules/@babel/plugin-transform-template-literals/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-annotate-as-pure", "7.0.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:a0314f0934c570b276a81cf0d64b9659bbddae03"],
-      ]),
-    }],
-    ["pnp:07c9f8dd69715410056f9812e051bff12cca28d1", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-07c9f8dd69715410056f9812e051bff12cca28d1/node_modules/@babel/plugin-transform-template-literals/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-annotate-as-pure", "7.0.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:07c9f8dd69715410056f9812e051bff12cca28d1"],
-      ]),
-    }],
-    ["pnp:5464c521611f60fd6e6b2f4d7b52fd3ece636ad8", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-5464c521611f60fd6e6b2f4d7b52fd3ece636ad8/node_modules/@babel/plugin-transform-template-literals/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-annotate-as-pure", "7.0.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:5464c521611f60fd6e6b2f4d7b52fd3ece636ad8"],
-      ]),
-    }],
-  ])],
-  ["@babel/helper-annotate-as-pure", new Map([
-    ["7.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-annotate-as-pure-7.0.0-323d39dd0b50e10c7c06ca7d7638e6864d8c5c32/node_modules/@babel/helper-annotate-as-pure/"),
-      packageDependencies: new Map([
-        ["@babel/types", "7.3.2"],
-        ["@babel/helper-annotate-as-pure", "7.0.0"],
-      ]),
-    }],
-  ])],
-  ["@babel/helper-plugin-utils", new Map([
-    ["7.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-plugin-utils-7.0.0-bbb3fbee98661c569034237cc03967ba99b4f250/node_modules/@babel/helper-plugin-utils/"),
-      packageDependencies: new Map([
-        ["@babel/helper-plugin-utils", "7.0.0"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-transform-arrow-functions", new Map([
-    ["pnp:2660d98e22a1aac669fc354dff7330b7bf846b4e", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-2660d98e22a1aac669fc354dff7330b7bf846b4e/node_modules/@babel/plugin-transform-arrow-functions/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:2660d98e22a1aac669fc354dff7330b7bf846b4e"],
-      ]),
-    }],
-    ["pnp:9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97/node_modules/@babel/plugin-transform-arrow-functions/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97"],
-      ]),
-    }],
-    ["pnp:d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b/node_modules/@babel/plugin-transform-arrow-functions/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-transform-block-scoping", new Map([
-    ["pnp:6f3d8f766129471a0efe552514fa729e8531dddd", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-6f3d8f766129471a0efe552514fa729e8531dddd/node_modules/@babel/plugin-transform-block-scoping/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["lodash", "4.17.11"],
-        ["@babel/plugin-transform-block-scoping", "pnp:6f3d8f766129471a0efe552514fa729e8531dddd"],
-      ]),
-    }],
-    ["pnp:09d895ce0b9367e25b83817575693badfed6795e", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-09d895ce0b9367e25b83817575693badfed6795e/node_modules/@babel/plugin-transform-block-scoping/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["lodash", "4.17.11"],
-        ["@babel/plugin-transform-block-scoping", "pnp:09d895ce0b9367e25b83817575693badfed6795e"],
-      ]),
-    }],
-    ["pnp:f3d33e75b56a0915b705ec5d6a0b192389584cb7", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-f3d33e75b56a0915b705ec5d6a0b192389584cb7/node_modules/@babel/plugin-transform-block-scoping/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["lodash", "4.17.11"],
-        ["@babel/plugin-transform-block-scoping", "pnp:f3d33e75b56a0915b705ec5d6a0b192389584cb7"],
-      ]),
-    }],
-  ])],
-  ["@quase/cacheable-fs", new Map([
-    ["0.1.0-0", {
-      packageLocation: path.resolve(__dirname, "./packages/fs/cacheable-fs/"),
-      packageDependencies: new Map([
-        ["@quase/path-url", "0.2.0-0"],
-        ["fs-extra", "5.0.0"],
-      ]),
-    }],
-  ])],
-  ["@quase/path-url", new Map([
-    ["0.2.0-0", {
-      packageLocation: path.resolve(__dirname, "./packages/path-url/"),
-      packageDependencies: new Map([
-        ["file-url", "2.0.2"],
-        ["is-url-superb", "2.0.0"],
-        ["slash", "1.0.0"],
-      ]),
-    }],
-    ["0.1.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/"),
-      packageDependencies: new Map([
-        ["file-url", "2.0.2"],
-        ["is-url-superb", "2.0.0"],
-        ["slash", "1.0.0"],
-        ["@quase/path-url", "0.1.0"],
-      ]),
-    }],
-  ])],
-  ["file-url", new Map([
-    ["2.0.2", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/"),
-      packageDependencies: new Map([
-        ["file-url", "2.0.2"],
-      ]),
-    }],
-  ])],
-  ["is-url-superb", new Map([
-    ["2.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/"),
-      packageDependencies: new Map([
-        ["url-regex", "3.2.0"],
-        ["is-url-superb", "2.0.0"],
-      ]),
-    }],
-  ])],
-  ["url-regex", new Map([
-    ["3.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/"),
-      packageDependencies: new Map([
-        ["ip-regex", "1.0.3"],
-        ["url-regex", "3.2.0"],
-      ]),
-    }],
-  ])],
-  ["ip-regex", new Map([
-    ["1.0.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/"),
-      packageDependencies: new Map([
-        ["ip-regex", "1.0.3"],
-      ]),
-    }],
-    ["2.1.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/"),
-      packageDependencies: new Map([
-        ["ip-regex", "2.1.0"],
-      ]),
-    }],
-  ])],
-  ["slash", new Map([
-    ["1.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/"),
-      packageDependencies: new Map([
-        ["slash", "1.0.0"],
-      ]),
-    }],
-    ["2.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/"),
-      packageDependencies: new Map([
-        ["slash", "2.0.0"],
-      ]),
-    }],
-  ])],
-  ["fs-extra", new Map([
-    ["5.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-5.0.0-414d0110cdd06705734d055652c5411260c31abd/node_modules/fs-extra/"),
-      packageDependencies: new Map([
-        ["graceful-fs", "4.1.15"],
-        ["jsonfile", "4.0.0"],
-        ["universalify", "0.1.2"],
-        ["fs-extra", "5.0.0"],
-      ]),
-    }],
-    ["7.0.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-7.0.1-4f189c44aa123b895f722804f55ea23eadc348e9/node_modules/fs-extra/"),
-      packageDependencies: new Map([
-        ["graceful-fs", "4.1.15"],
-        ["jsonfile", "4.0.0"],
-        ["universalify", "0.1.2"],
-        ["fs-extra", "7.0.1"],
-      ]),
-    }],
-  ])],
-  ["graceful-fs", new Map([
-    ["4.1.15", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-graceful-fs-4.1.15-ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00/node_modules/graceful-fs/"),
-      packageDependencies: new Map([
-        ["graceful-fs", "4.1.15"],
-      ]),
-    }],
-  ])],
-  ["jsonfile", new Map([
-    ["4.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-jsonfile-4.0.0-8771aae0799b64076b76640fca058f9c10e33ecb/node_modules/jsonfile/"),
-      packageDependencies: new Map([
-        ["graceful-fs", "4.1.15"],
-        ["jsonfile", "4.0.0"],
-      ]),
-    }],
-  ])],
-  ["universalify", new Map([
-    ["0.1.2", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-universalify-0.1.2-b646f69be3942dabcecc9d6639c80dc105efaa66/node_modules/universalify/"),
-      packageDependencies: new Map([
-        ["universalify", "0.1.2"],
       ]),
     }],
   ])],
@@ -1084,6 +865,14 @@ let packageInformationStores = new Map([
         ["pify", "2.3.0"],
         ["strip-bom", "3.0.0"],
         ["load-json-file", "2.0.0"],
+      ]),
+    }],
+  ])],
+  ["graceful-fs", new Map([
+    ["4.1.15", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-graceful-fs-4.1.15-ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00/node_modules/graceful-fs/"),
+      packageDependencies: new Map([
+        ["graceful-fs", "4.1.15"],
       ]),
     }],
   ])],
@@ -2464,6 +2253,12 @@ let packageInformationStores = new Map([
         ["import-lazy", "2.1.0"],
       ]),
     }],
+    ["4.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-import-lazy-4.0.0-e8eb627483a0a43da3c03f3e35548be5cb0cc153/node_modules/import-lazy/"),
+      packageDependencies: new Map([
+        ["import-lazy", "4.0.0"],
+      ]),
+    }],
   ])],
   ["is-ci", new Map([
     ["1.2.1", {
@@ -2782,6 +2577,122 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@quase/path-url", new Map([
+    ["0.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/"),
+      packageDependencies: new Map([
+        ["file-url", "2.0.2"],
+        ["is-url-superb", "2.0.0"],
+        ["slash", "1.0.0"],
+        ["@quase/path-url", "0.1.0"],
+      ]),
+    }],
+    ["0.2.0-0", {
+      packageLocation: path.resolve(__dirname, "./packages/path-url/"),
+      packageDependencies: new Map([
+        ["file-url", "2.0.2"],
+        ["is-url-superb", "2.0.0"],
+        ["slash", "1.0.0"],
+      ]),
+    }],
+  ])],
+  ["file-url", new Map([
+    ["2.0.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/"),
+      packageDependencies: new Map([
+        ["file-url", "2.0.2"],
+      ]),
+    }],
+  ])],
+  ["is-url-superb", new Map([
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/"),
+      packageDependencies: new Map([
+        ["url-regex", "3.2.0"],
+        ["is-url-superb", "2.0.0"],
+      ]),
+    }],
+  ])],
+  ["url-regex", new Map([
+    ["3.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "1.0.3"],
+        ["url-regex", "3.2.0"],
+      ]),
+    }],
+  ])],
+  ["ip-regex", new Map([
+    ["1.0.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "1.0.3"],
+      ]),
+    }],
+    ["2.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "2.1.0"],
+      ]),
+    }],
+  ])],
+  ["slash", new Map([
+    ["1.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/"),
+      packageDependencies: new Map([
+        ["slash", "1.0.0"],
+      ]),
+    }],
+    ["3.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-3.0.0-6539be870c165adbd5240220dbe361f1bc4d4634/node_modules/slash/"),
+      packageDependencies: new Map([
+        ["slash", "3.0.0"],
+      ]),
+    }],
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/"),
+      packageDependencies: new Map([
+        ["slash", "2.0.0"],
+      ]),
+    }],
+  ])],
+  ["fs-extra", new Map([
+    ["7.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-7.0.1-4f189c44aa123b895f722804f55ea23eadc348e9/node_modules/fs-extra/"),
+      packageDependencies: new Map([
+        ["graceful-fs", "4.1.15"],
+        ["jsonfile", "4.0.0"],
+        ["universalify", "0.1.2"],
+        ["fs-extra", "7.0.1"],
+      ]),
+    }],
+    ["5.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-5.0.0-414d0110cdd06705734d055652c5411260c31abd/node_modules/fs-extra/"),
+      packageDependencies: new Map([
+        ["graceful-fs", "4.1.15"],
+        ["jsonfile", "4.0.0"],
+        ["universalify", "0.1.2"],
+        ["fs-extra", "5.0.0"],
+      ]),
+    }],
+  ])],
+  ["jsonfile", new Map([
+    ["4.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-jsonfile-4.0.0-8771aae0799b64076b76640fca058f9c10e33ecb/node_modules/jsonfile/"),
+      packageDependencies: new Map([
+        ["graceful-fs", "4.1.15"],
+        ["jsonfile", "4.0.0"],
+      ]),
+    }],
+  ])],
+  ["universalify", new Map([
+    ["0.1.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-universalify-0.1.2-b646f69be3942dabcecc9d6639c80dc105efaa66/node_modules/universalify/"),
+      packageDependencies: new Map([
+        ["universalify", "0.1.2"],
+      ]),
+    }],
+  ])],
   ["babel-preset-minify", new Map([
     ["0.5.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-babel-preset-minify-0.5.0-e25bb8d3590087af02b650967159a77c19bfb96b/node_modules/babel-preset-minify/"),
@@ -3076,6 +2987,12 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["colorette", new Map([
+    ["1.0.8", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/"),
+      packageDependencies: new Map([
+        ["colorette", "1.0.8"],
+      ]),
+    }],
     ["1.0.7", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/"),
       packageDependencies: new Map([
@@ -3084,11 +3001,11 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["fswatcher-child", new Map([
-    ["1.1.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fswatcher-child-1.1.0-af1650590f897532431731247fd6270f333912ff/node_modules/fswatcher-child/"),
+    ["1.1.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-fswatcher-child-1.1.1-264dd95f9c4b5f8615327d7d7567884591846b9b/node_modules/fswatcher-child/"),
       packageDependencies: new Map([
         ["chokidar", "2.1.0"],
-        ["fswatcher-child", "1.1.0"],
+        ["fswatcher-child", "1.1.1"],
       ]),
     }],
   ])],
@@ -4072,11 +3989,11 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["graphviz", new Map([
-    ["0.0.8", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-graphviz-0.0.8-e599e40733ef80e1653bfe89a5f031ecf2aa4aaa/node_modules/graphviz/"),
+    ["0.0.9", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-graphviz-0.0.9-0bbf1df588c6a92259282da35323622528c4bbc4/node_modules/graphviz/"),
       packageDependencies: new Map([
         ["temp", "0.4.0"],
-        ["graphviz", "0.0.8"],
+        ["graphviz", "0.0.9"],
       ]),
     }],
   ])],
@@ -4089,6 +4006,18 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["ora", new Map([
+    ["3.4.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ora-3.4.0-bf0752491059a3ef3ed4c85097531de9fdbcd318/node_modules/ora/"),
+      packageDependencies: new Map([
+        ["chalk", "2.4.2"],
+        ["cli-cursor", "2.1.0"],
+        ["cli-spinners", "2.0.0"],
+        ["log-symbols", "2.2.0"],
+        ["strip-ansi", "5.2.0"],
+        ["wcwidth", "1.0.1"],
+        ["ora", "3.4.0"],
+      ]),
+    }],
     ["3.2.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ora-3.2.0-67e98a7e11f7f0ac95deaaaf11bb04de3d09e481/node_modules/ora/"),
       packageDependencies: new Map([
@@ -4195,10 +4124,10 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["pretty-bytes", new Map([
-    ["5.1.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-pretty-bytes-5.1.0-6237ecfbdc6525beaef4de722cc60a58ae0e6c6d/node_modules/pretty-bytes/"),
+    ["5.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-pretty-bytes-5.2.0-96c92c6e95a0b35059253fb33c03e260d40f5a1f/node_modules/pretty-bytes/"),
       packageDependencies: new Map([
-        ["pretty-bytes", "5.1.0"],
+        ["pretty-bytes", "5.2.0"],
       ]),
     }],
     ["4.0.2", {
@@ -4209,11 +4138,11 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["ws", new Map([
-    ["6.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ws-6.2.0-13806d9913b2a5f3cbb9ba47b563c002cbc7c526/node_modules/ws/"),
+    ["7.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ws-7.0.0-79351cbc3f784b3c20d0821baf4b4ff809ffbf51/node_modules/ws/"),
       packageDependencies: new Map([
         ["async-limiter", "1.0.0"],
-        ["ws", "6.2.0"],
+        ["ws", "7.0.0"],
       ]),
     }],
     ["5.2.2", {
@@ -4248,10 +4177,10 @@ let packageInformationStores = new Map([
         ["@babel/plugin-syntax-json-strings", "pnp:2edfde8466510083c2f91c4076db1e60d21767d8"],
         ["@babel/plugin-syntax-object-rest-spread", "pnp:b4acbdccca9aefd85abe112e6fce0001d8c615bf"],
         ["@babel/plugin-syntax-optional-catch-binding", "pnp:ec1a21746d9c7e682e3de90efa5b5b90f73dc7a5"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97"],
+        ["@babel/plugin-transform-arrow-functions", "7.2.0"],
         ["@babel/plugin-transform-async-to-generator", "7.4.0"],
         ["@babel/plugin-transform-block-scoped-functions", "7.2.0"],
-        ["@babel/plugin-transform-block-scoping", "pnp:09d895ce0b9367e25b83817575693badfed6795e"],
+        ["@babel/plugin-transform-block-scoping", "7.4.0"],
         ["@babel/plugin-transform-classes", "7.4.0"],
         ["@babel/plugin-transform-computed-properties", "7.2.0"],
         ["@babel/plugin-transform-destructuring", "7.4.0"],
@@ -4273,7 +4202,7 @@ let packageInformationStores = new Map([
         ["@babel/plugin-transform-shorthand-properties", "7.2.0"],
         ["@babel/plugin-transform-spread", "7.2.2"],
         ["@babel/plugin-transform-sticky-regex", "7.2.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:07c9f8dd69715410056f9812e051bff12cca28d1"],
+        ["@babel/plugin-transform-template-literals", "7.2.0"],
         ["@babel/plugin-transform-typeof-symbol", "7.2.0"],
         ["@babel/plugin-transform-unicode-regex", "7.2.0"],
         ["@babel/types", "7.4.0"],
@@ -4300,10 +4229,10 @@ let packageInformationStores = new Map([
         ["@babel/plugin-syntax-json-strings", "pnp:7fc215632666e2dc0ead1c08c524906526ca80a8"],
         ["@babel/plugin-syntax-object-rest-spread", "pnp:caefbbdce4b931f747f987fa8f31153510ecfce8"],
         ["@babel/plugin-syntax-optional-catch-binding", "pnp:77f848b3b1ef1a5cdc100828852f1a36195f6955"],
-        ["@babel/plugin-transform-arrow-functions", "pnp:d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b"],
+        ["@babel/plugin-transform-arrow-functions", "7.2.0"],
         ["@babel/plugin-transform-async-to-generator", "7.4.0"],
         ["@babel/plugin-transform-block-scoped-functions", "7.2.0"],
-        ["@babel/plugin-transform-block-scoping", "pnp:f3d33e75b56a0915b705ec5d6a0b192389584cb7"],
+        ["@babel/plugin-transform-block-scoping", "7.4.0"],
         ["@babel/plugin-transform-classes", "7.4.0"],
         ["@babel/plugin-transform-computed-properties", "7.2.0"],
         ["@babel/plugin-transform-destructuring", "7.4.0"],
@@ -4325,7 +4254,7 @@ let packageInformationStores = new Map([
         ["@babel/plugin-transform-shorthand-properties", "7.2.0"],
         ["@babel/plugin-transform-spread", "7.2.2"],
         ["@babel/plugin-transform-sticky-regex", "7.2.0"],
-        ["@babel/plugin-transform-template-literals", "pnp:5464c521611f60fd6e6b2f4d7b52fd3ece636ad8"],
+        ["@babel/plugin-transform-template-literals", "7.2.0"],
         ["@babel/plugin-transform-typeof-symbol", "7.2.0"],
         ["@babel/plugin-transform-unicode-regex", "7.2.0"],
         ["@babel/types", "7.4.0"],
@@ -4335,6 +4264,14 @@ let packageInformationStores = new Map([
         ["js-levenshtein", "1.1.6"],
         ["semver", "5.6.0"],
         ["@babel/preset-env", "pnp:e17cd84a3ba58a8ce519813255dbbbc8432b36ea"],
+      ]),
+    }],
+  ])],
+  ["@babel/helper-plugin-utils", new Map([
+    ["7.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-plugin-utils-7.0.0-bbb3fbee98661c569034237cc03967ba99b4f250/node_modules/@babel/helper-plugin-utils/"),
+      packageDependencies: new Map([
+        ["@babel/helper-plugin-utils", "7.0.0"],
       ]),
     }],
   ])],
@@ -4360,6 +4297,15 @@ let packageInformationStores = new Map([
         ["@babel/traverse", "7.2.3"],
         ["@babel/types", "7.3.2"],
         ["@babel/helper-remap-async-to-generator", "7.1.0"],
+      ]),
+    }],
+  ])],
+  ["@babel/helper-annotate-as-pure", new Map([
+    ["7.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-annotate-as-pure-7.0.0-323d39dd0b50e10c7c06ca7d7638e6864d8c5c32/node_modules/@babel/helper-annotate-as-pure/"),
+      packageDependencies: new Map([
+        ["@babel/types", "7.3.2"],
+        ["@babel/helper-annotate-as-pure", "7.0.0"],
       ]),
     }],
   ])],
@@ -4448,6 +4394,15 @@ let packageInformationStores = new Map([
         ["@babel/plugin-proposal-object-rest-spread", "pnp:2259d61fdda4f8f4098880a2151285b603f01aa9"],
       ]),
     }],
+    ["7.4.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-proposal-object-rest-spread-7.4.3-be27cd416eceeba84141305b93c282f5de23bbb4/node_modules/@babel/plugin-proposal-object-rest-spread/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-syntax-object-rest-spread", "pnp:9f663b6856b348804c2c0c2434805caf61c6c3e2"],
+        ["@babel/plugin-proposal-object-rest-spread", "7.4.3"],
+      ]),
+    }],
     ["pnp:933716d01b8e4976141d1ed0e51f792b37746c2d", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-933716d01b8e4976141d1ed0e51f792b37746c2d/node_modules/@babel/plugin-proposal-object-rest-spread/"),
       packageDependencies: new Map([
@@ -4482,6 +4437,14 @@ let packageInformationStores = new Map([
         ["@babel/core", "7.4.0"],
         ["@babel/helper-plugin-utils", "7.0.0"],
         ["@babel/plugin-syntax-object-rest-spread", "pnp:b4acbdccca9aefd85abe112e6fce0001d8c615bf"],
+      ]),
+    }],
+    ["pnp:9f663b6856b348804c2c0c2434805caf61c6c3e2", {
+      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-9f663b6856b348804c2c0c2434805caf61c6c3e2/node_modules/@babel/plugin-syntax-object-rest-spread/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-syntax-object-rest-spread", "pnp:9f663b6856b348804c2c0c2434805caf61c6c3e2"],
       ]),
     }],
     ["pnp:31a8457ec86228891d9bdca389413fc14d6974d6", {
@@ -4682,6 +4645,16 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@babel/plugin-transform-arrow-functions", new Map([
+    ["7.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-arrow-functions-7.2.0-9aeafbe4d6ffc6563bf8f8372091628f00779550/node_modules/@babel/plugin-transform-arrow-functions/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-transform-arrow-functions", "7.2.0"],
+      ]),
+    }],
+  ])],
   ["@babel/plugin-transform-async-to-generator", new Map([
     ["7.4.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-async-to-generator-7.4.0-234fe3e458dce95865c0d152d256119b237834b0/node_modules/@babel/plugin-transform-async-to-generator/"),
@@ -4701,6 +4674,17 @@ let packageInformationStores = new Map([
         ["@babel/core", "7.4.0"],
         ["@babel/helper-plugin-utils", "7.0.0"],
         ["@babel/plugin-transform-block-scoped-functions", "7.2.0"],
+      ]),
+    }],
+  ])],
+  ["@babel/plugin-transform-block-scoping", new Map([
+    ["7.4.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-block-scoping-7.4.0-164df3bb41e3deb954c4ca32ffa9fcaa56d30bcb/node_modules/@babel/plugin-transform-block-scoping/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["lodash", "4.17.11"],
+        ["@babel/plugin-transform-block-scoping", "7.4.0"],
       ]),
     }],
   ])],
@@ -5149,6 +5133,17 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@babel/plugin-transform-template-literals", new Map([
+    ["7.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-template-literals-7.2.0-d87ed01b8eaac7a92473f608c97c089de2ba1e5b/node_modules/@babel/plugin-transform-template-literals/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-annotate-as-pure", "7.0.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-transform-template-literals", "7.2.0"],
+      ]),
+    }],
+  ])],
   ["@babel/plugin-transform-typeof-symbol", new Map([
     ["7.2.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typeof-symbol-7.2.0-117d2bcec2fbf64b4b59d1f9819894682d29f2b2/node_modules/@babel/plugin-transform-typeof-symbol/"),
@@ -5253,6 +5248,47 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@babel/preset-typescript", new Map([
+    ["pnp:ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5", {
+      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5/node_modules/@babel/preset-typescript/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-transform-typescript", "7.4.0"],
+        ["@babel/preset-typescript", "pnp:ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5"],
+      ]),
+    }],
+    ["pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf", {
+      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-1eacac43c9327c4cb3cbca060094d2d32117e9cf/node_modules/@babel/preset-typescript/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-transform-typescript", "7.4.0"],
+        ["@babel/preset-typescript", "pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"],
+      ]),
+    }],
+  ])],
+  ["@babel/plugin-transform-typescript", new Map([
+    ["7.4.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typescript-7.4.0-0389ec53a34e80f99f708c4ca311181449a68eb1/node_modules/@babel/plugin-transform-typescript/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-syntax-typescript", "7.2.0"],
+        ["@babel/plugin-transform-typescript", "7.4.0"],
+      ]),
+    }],
+  ])],
+  ["@babel/plugin-syntax-typescript", new Map([
+    ["7.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-typescript-7.2.0-55d240536bd314dcbbec70fd949c5cabaed1de29/node_modules/@babel/plugin-syntax-typescript/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-syntax-typescript", "7.2.0"],
+      ]),
+    }],
+  ])],
   ["@babel/plugin-external-helpers", new Map([
     ["7.2.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-external-helpers-7.2.0-7f4cb7dee651cd380d2034847d914288467a6be4/node_modules/@babel/plugin-external-helpers/"),
@@ -5260,6 +5296,41 @@ let packageInformationStores = new Map([
         ["@babel/core", "7.4.0"],
         ["@babel/helper-plugin-utils", "7.0.0"],
         ["@babel/plugin-external-helpers", "7.2.0"],
+      ]),
+    }],
+  ])],
+  ["@babel/plugin-proposal-class-properties", new Map([
+    ["pnp:670829f2e61e6f99eb155699eaf62046dff08834", {
+      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-670829f2e61e6f99eb155699eaf62046dff08834/node_modules/@babel/plugin-proposal-class-properties/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-create-class-features-plugin", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-proposal-class-properties", "pnp:670829f2e61e6f99eb155699eaf62046dff08834"],
+      ]),
+    }],
+    ["pnp:e157ac3892db392386b32283de019e4671ce0a8b", {
+      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-e157ac3892db392386b32283de019e4671ce0a8b/node_modules/@babel/plugin-proposal-class-properties/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-create-class-features-plugin", "7.4.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/plugin-proposal-class-properties", "pnp:e157ac3892db392386b32283de019e4671ce0a8b"],
+      ]),
+    }],
+  ])],
+  ["@babel/helper-create-class-features-plugin", new Map([
+    ["7.4.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-create-class-features-plugin-7.4.0-30fd090e059d021995c1762a5b76798fa0b51d82/node_modules/@babel/helper-create-class-features-plugin/"),
+      packageDependencies: new Map([
+        ["@babel/core", "7.4.0"],
+        ["@babel/helper-function-name", "7.1.0"],
+        ["@babel/helper-member-expression-to-functions", "7.0.0"],
+        ["@babel/helper-optimise-call-expression", "7.0.0"],
+        ["@babel/helper-plugin-utils", "7.0.0"],
+        ["@babel/helper-replace-supers", "7.4.0"],
+        ["@babel/helper-split-export-declaration", "7.4.0"],
+        ["@babel/helper-create-class-features-plugin", "7.4.0"],
       ]),
     }],
   ])],
@@ -5273,6 +5344,80 @@ let packageInformationStores = new Map([
         ["resolve", "1.10.0"],
         ["semver", "5.6.0"],
         ["@babel/plugin-transform-runtime", "7.4.0"],
+      ]),
+    }],
+  ])],
+  ["klaw", new Map([
+    ["3.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-klaw-3.0.0-b11bec9cf2492f06756d6e809ab73a2910259146/node_modules/klaw/"),
+      packageDependencies: new Map([
+        ["graceful-fs", "4.1.15"],
+        ["klaw", "3.0.0"],
+      ]),
+    }],
+  ])],
+  ["rollup", new Map([
+    ["1.10.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-rollup-1.10.0-91d594aa4386c51ca0883ad4ef2050b469d3e8aa/node_modules/rollup/"),
+      packageDependencies: new Map([
+        ["@types/estree", "0.0.39"],
+        ["@types/node", "11.13.5"],
+        ["acorn", "6.1.1"],
+        ["rollup", "1.10.0"],
+      ]),
+    }],
+  ])],
+  ["@types/estree", new Map([
+    ["0.0.39", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-estree-0.0.39-e177e699ee1b8c22d23174caaa7422644389509f/node_modules/@types/estree/"),
+      packageDependencies: new Map([
+        ["@types/estree", "0.0.39"],
+      ]),
+    }],
+  ])],
+  ["@types/node", new Map([
+    ["11.13.5", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.13.5-266564afa8a6a09dc778dfacc703ed3f09c80516/node_modules/@types/node/"),
+      packageDependencies: new Map([
+        ["@types/node", "11.13.5"],
+      ]),
+    }],
+    ["11.11.6", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.11.6-df929d1bb2eee5afdda598a41930fe50b43eaa6a/node_modules/@types/node/"),
+      packageDependencies: new Map([
+        ["@types/node", "11.11.6"],
+      ]),
+    }],
+    ["10.14.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.14.3-170a81168620d931cc3b83460be253cadd3028f1/node_modules/@types/node/"),
+      packageDependencies: new Map([
+        ["@types/node", "10.14.3"],
+      ]),
+    }],
+    ["12.0.8", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-12.0.8-551466be11b2adc3f3d47156758f610bd9f6b1d8/node_modules/@types/node/"),
+      packageDependencies: new Map([
+        ["@types/node", "12.0.8"],
+      ]),
+    }],
+  ])],
+  ["acorn", new Map([
+    ["6.1.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.1-7d25ae05bb8ad1f9b699108e1094ecd7884adc1f/node_modules/acorn/"),
+      packageDependencies: new Map([
+        ["acorn", "6.1.1"],
+      ]),
+    }],
+    ["5.7.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-5.7.3-67aa231bf8812974b85235a96771eb6bd07ea279/node_modules/acorn/"),
+      packageDependencies: new Map([
+        ["acorn", "5.7.3"],
+      ]),
+    }],
+    ["6.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.0-b0a3be31752c97a0f7013c5f4903b71a05db6818/node_modules/acorn/"),
+      packageDependencies: new Map([
+        ["acorn", "6.1.0"],
       ]),
     }],
   ])],
@@ -5587,6 +5732,15 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@quase/cacheable-fs", new Map([
+    ["0.1.0-0", {
+      packageLocation: path.resolve(__dirname, "./packages/fs/cacheable-fs/"),
+      packageDependencies: new Map([
+        ["@quase/path-url", "0.2.0-0"],
+        ["fs-extra", "5.0.0"],
+      ]),
+    }],
+  ])],
   ["@quase/find-files", new Map([
     ["0.1.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/fs/find-files/"),
@@ -5758,15 +5912,6 @@ let packageInformationStores = new Map([
       packageDependencies: new Map([
         ["any-promise", "1.3.0"],
         ["thenify", "3.3.0"],
-      ]),
-    }],
-  ])],
-  ["klaw", new Map([
-    ["3.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-klaw-3.0.0-b11bec9cf2492f06756d6e809ab73a2910259146/node_modules/klaw/"),
-      packageDependencies: new Map([
-        ["graceful-fs", "4.1.15"],
-        ["klaw", "3.0.0"],
       ]),
     }],
   ])],
@@ -6728,26 +6873,6 @@ let packageInformationStores = new Map([
       packageDependencies: new Map([
         ["@types/node", "11.11.6"],
         ["@types/mz", "0.0.32"],
-      ]),
-    }],
-  ])],
-  ["@types/node", new Map([
-    ["11.11.6", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.11.6-df929d1bb2eee5afdda598a41930fe50b43eaa6a/node_modules/@types/node/"),
-      packageDependencies: new Map([
-        ["@types/node", "11.11.6"],
-      ]),
-    }],
-    ["10.14.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.14.3-170a81168620d931cc3b83460be253cadd3028f1/node_modules/@types/node/"),
-      packageDependencies: new Map([
-        ["@types/node", "10.14.3"],
-      ]),
-    }],
-    ["10.12.24", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.12.24-b13564af612a22a20b5d95ca40f1bffb3af315cf/node_modules/@types/node/"),
-      packageDependencies: new Map([
-        ["@types/node", "10.12.24"],
       ]),
     }],
   ])],
@@ -7766,26 +7891,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["acorn", new Map([
-    ["5.7.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-5.7.3-67aa231bf8812974b85235a96771eb6bd07ea279/node_modules/acorn/"),
-      packageDependencies: new Map([
-        ["acorn", "5.7.3"],
-      ]),
-    }],
-    ["6.1.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.0-b0a3be31752c97a0f7013c5f4903b71a05db6818/node_modules/acorn/"),
-      packageDependencies: new Map([
-        ["acorn", "6.1.0"],
-      ]),
-    }],
-    ["6.1.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.1-7d25ae05bb8ad1f9b699108e1094ecd7884adc1f/node_modules/acorn/"),
-      packageDependencies: new Map([
-        ["acorn", "6.1.1"],
-      ]),
-    }],
-  ])],
   ["acorn-globals", new Map([
     ["4.3.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-acorn-globals-4.3.0-e3b6f8da3c1552a95ae627571f7dd6923bb54103/node_modules/acorn-globals/"),
@@ -8763,32 +8868,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["@babel/plugin-proposal-class-properties", new Map([
-    ["pnp:e157ac3892db392386b32283de019e4671ce0a8b", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-e157ac3892db392386b32283de019e4671ce0a8b/node_modules/@babel/plugin-proposal-class-properties/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-create-class-features-plugin", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-proposal-class-properties", "pnp:e157ac3892db392386b32283de019e4671ce0a8b"],
-      ]),
-    }],
-  ])],
-  ["@babel/helper-create-class-features-plugin", new Map([
-    ["7.4.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-create-class-features-plugin-7.4.0-30fd090e059d021995c1762a5b76798fa0b51d82/node_modules/@babel/helper-create-class-features-plugin/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-function-name", "7.1.0"],
-        ["@babel/helper-member-expression-to-functions", "7.0.0"],
-        ["@babel/helper-optimise-call-expression", "7.0.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/helper-replace-supers", "7.4.0"],
-        ["@babel/helper-split-export-declaration", "7.4.0"],
-        ["@babel/helper-create-class-features-plugin", "7.4.0"],
-      ]),
-    }],
-  ])],
   ["@babel/preset-flow", new Map([
     ["pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-d4afbbd6215b1993d05095efb590984f9b6a3a02/node_modules/@babel/preset-flow/"),
@@ -8818,38 +8897,6 @@ let packageInformationStores = new Map([
         ["@babel/core", "7.4.0"],
         ["@babel/helper-plugin-utils", "7.0.0"],
         ["@babel/plugin-syntax-flow", "7.2.0"],
-      ]),
-    }],
-  ])],
-  ["@babel/preset-typescript", new Map([
-    ["pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-1eacac43c9327c4cb3cbca060094d2d32117e9cf/node_modules/@babel/preset-typescript/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-typescript", "7.4.0"],
-        ["@babel/preset-typescript", "pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-transform-typescript", new Map([
-    ["7.4.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typescript-7.4.0-0389ec53a34e80f99f708c4ca311181449a68eb1/node_modules/@babel/plugin-transform-typescript/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-syntax-typescript", "7.2.0"],
-        ["@babel/plugin-transform-typescript", "7.4.0"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-syntax-typescript", new Map([
-    ["7.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-typescript-7.2.0-55d240536bd314dcbbec70fd949c5cabaed1de29/node_modules/@babel/plugin-syntax-typescript/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.0"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-syntax-typescript", "7.2.0"],
       ]),
     }],
   ])],
@@ -9094,7 +9141,7 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-caac2f9b58f8c6588fef11ac7b9b5179b93d72d4/node_modules/@typescript-eslint/eslint-plugin/"),
       packageDependencies: new Map([
         ["eslint", "5.15.3"],
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["@typescript-eslint/parser", "pnp:93381d5f97fbd0ce14f95f91878fb8a21154c691"],
         ["@typescript-eslint/typescript-estree", "pnp:8d57ee99c74117e1ef1fd5f2243dbdb3ac1c7adf"],
         ["requireindex", "1.2.0"],
@@ -9108,7 +9155,7 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-93381d5f97fbd0ce14f95f91878fb8a21154c691/node_modules/@typescript-eslint/parser/"),
       packageDependencies: new Map([
         ["eslint", "5.15.3"],
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["@typescript-eslint/typescript-estree", "pnp:d48ca50d6d23216ec14cf5ba8a301552f09b6229"],
         ["eslint-scope", "4.0.0"],
         ["eslint-visitor-keys", "1.0.0"],
@@ -9119,7 +9166,7 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-4d5944d2f360d28d65da8421597889c6850ec3b1/node_modules/@typescript-eslint/parser/"),
       packageDependencies: new Map([
         ["eslint", "5.15.3"],
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["@typescript-eslint/typescript-estree", "pnp:30f6f003f7b36e463b483c41e56348347cff2108"],
         ["eslint-scope", "4.0.0"],
         ["eslint-visitor-keys", "1.0.0"],
@@ -9131,7 +9178,7 @@ let packageInformationStores = new Map([
     ["pnp:d48ca50d6d23216ec14cf5ba8a301552f09b6229", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-d48ca50d6d23216ec14cf5ba8a301552f09b6229/node_modules/@typescript-eslint/typescript-estree/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["lodash.unescape", "4.0.1"],
         ["semver", "5.5.0"],
         ["@typescript-eslint/typescript-estree", "pnp:d48ca50d6d23216ec14cf5ba8a301552f09b6229"],
@@ -9140,7 +9187,7 @@ let packageInformationStores = new Map([
     ["pnp:8d57ee99c74117e1ef1fd5f2243dbdb3ac1c7adf", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-8d57ee99c74117e1ef1fd5f2243dbdb3ac1c7adf/node_modules/@typescript-eslint/typescript-estree/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["lodash.unescape", "4.0.1"],
         ["semver", "5.5.0"],
         ["@typescript-eslint/typescript-estree", "pnp:8d57ee99c74117e1ef1fd5f2243dbdb3ac1c7adf"],
@@ -9149,7 +9196,7 @@ let packageInformationStores = new Map([
     ["pnp:30f6f003f7b36e463b483c41e56348347cff2108", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-30f6f003f7b36e463b483c41e56348347cff2108/node_modules/@typescript-eslint/typescript-estree/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["lodash.unescape", "4.0.1"],
         ["semver", "5.5.0"],
         ["@typescript-eslint/typescript-estree", "pnp:30f6f003f7b36e463b483c41e56348347cff2108"],
@@ -9176,7 +9223,7 @@ let packageInformationStores = new Map([
     ["3.8.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tsutils-3.8.0-7a3dbadc88e465596440622b65c04edc8e187ae5/node_modules/tsutils/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["tslib", "1.9.3"],
         ["tsutils", "3.8.0"],
       ]),
@@ -10900,16 +10947,16 @@ let packageInformationStores = new Map([
     ["pnp:5fe909d3d982cd25f862888abdcc9f01a7db5b4f", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-5fe909d3d982cd25f862888abdcc9f01a7db5b4f/node_modules/ts-pnp/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["ts-pnp", "pnp:5fe909d3d982cd25f862888abdcc9f01a7db5b4f"],
       ]),
     }],
   ])],
   ["typescript", new Map([
-    ["3.3.4000", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-typescript-3.3.4000-76b0f89cfdbf97827e1112d64f283f1151d6adf0/node_modules/typescript/"),
+    ["3.5.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-typescript-3.5.2-a09e1dc69bc9551cadf17dba10ee42cf55e5d56c/node_modules/typescript/"),
       packageDependencies: new Map([
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
       ]),
     }],
   ])],
@@ -10928,7 +10975,7 @@ let packageInformationStores = new Map([
         ["@babel/preset-typescript", "pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"],
         ["@babel/register", "pnp:f21d7295396de0e01b45ef09b679e86a8880cf23"],
         ["@quase/eslint-config-base", "pnp:0c89c1675497b0fec2ce71c0ceba145f497433f4"],
-        ["@types/node", "10.12.24"],
+        ["@types/node", "12.0.8"],
         ["@typescript-eslint/eslint-plugin", "pnp:caac2f9b58f8c6588fef11ac7b9b5179b93d72d4"],
         ["@typescript-eslint/parser", "pnp:4d5944d2f360d28d65da8421597889c6850ec3b1"],
         ["babel-eslint", "pnp:2126fa8eb473365323935ce00c45626c60a003e1"],
@@ -10948,7 +10995,7 @@ let packageInformationStores = new Map([
         ["prepend-file", "1.3.1"],
         ["resolve", "1.10.0"],
         ["ts-pnp", "pnp:5fe909d3d982cd25f862888abdcc9f01a7db5b4f"],
-        ["typescript", "3.3.4000"],
+        ["typescript", "3.5.2"],
         ["@quase/builder", "0.1.0"],
         ["@quase/cli", "0.4.0-0"],
         ["@quase/config", "0.2.0-0"],
@@ -10972,22 +11019,19 @@ let packageInformationStores = new Map([
 ]);
 
 let locatorsByLocations = new Map([
-  ["./.pnp/externals/pnp-a0314f0934c570b276a81cf0d64b9659bbddae03/node_modules/@babel/plugin-transform-template-literals/", blacklistedLocator],
-  ["./.pnp/externals/pnp-2660d98e22a1aac669fc354dff7330b7bf846b4e/node_modules/@babel/plugin-transform-arrow-functions/", blacklistedLocator],
-  ["./.pnp/externals/pnp-6f3d8f766129471a0efe552514fa729e8531dddd/node_modules/@babel/plugin-transform-block-scoping/", blacklistedLocator],
   ["./.pnp/externals/pnp-e76030d8dcfb0877887649a8d95d3d7613693a26/node_modules/@babel/preset-env/", blacklistedLocator],
+  ["./.pnp/externals/pnp-ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5/node_modules/@babel/preset-typescript/", blacklistedLocator],
+  ["./.pnp/externals/pnp-670829f2e61e6f99eb155699eaf62046dff08834/node_modules/@babel/plugin-proposal-class-properties/", blacklistedLocator],
   ["./.pnp/externals/pnp-2259d61fdda4f8f4098880a2151285b603f01aa9/node_modules/@babel/plugin-proposal-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-21f19bd6d4504d54e8f62e05261b5b5a818d99d7/node_modules/@babel/plugin-syntax-async-generators/", blacklistedLocator],
   ["./.pnp/externals/pnp-2edfde8466510083c2f91c4076db1e60d21767d8/node_modules/@babel/plugin-syntax-json-strings/", blacklistedLocator],
   ["./.pnp/externals/pnp-b4acbdccca9aefd85abe112e6fce0001d8c615bf/node_modules/@babel/plugin-syntax-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-ec1a21746d9c7e682e3de90efa5b5b90f73dc7a5/node_modules/@babel/plugin-syntax-optional-catch-binding/", blacklistedLocator],
-  ["./.pnp/externals/pnp-9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97/node_modules/@babel/plugin-transform-arrow-functions/", blacklistedLocator],
-  ["./.pnp/externals/pnp-09d895ce0b9367e25b83817575693badfed6795e/node_modules/@babel/plugin-transform-block-scoping/", blacklistedLocator],
-  ["./.pnp/externals/pnp-07c9f8dd69715410056f9812e051bff12cca28d1/node_modules/@babel/plugin-transform-template-literals/", blacklistedLocator],
   ["./.pnp/externals/pnp-65c7c77af01f23a3a52172d7ee45df1648814970/node_modules/@babel/plugin-syntax-async-generators/", blacklistedLocator],
   ["./.pnp/externals/pnp-cc0214911cc4e2626118e0e54105fc69b5a5972a/node_modules/@babel/plugin-syntax-json-strings/", blacklistedLocator],
   ["./.pnp/externals/pnp-1fa86608b372913f51f811abfc21218737e913ca/node_modules/@babel/plugin-syntax-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-3370d07367235b9c5a1cb9b71ec55425520b8884/node_modules/@babel/plugin-syntax-optional-catch-binding/", blacklistedLocator],
+  ["./.pnp/externals/pnp-9f663b6856b348804c2c0c2434805caf61c6c3e2/node_modules/@babel/plugin-syntax-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-f25fd475e6686d57d0483d44d9b4628a9fa17f83/node_modules/@babel/cli/", blacklistedLocator],
   ["./.pnp/externals/pnp-653c7013091a3a216f32c713947d012a2f19aae5/node_modules/@babel/node/", blacklistedLocator],
   ["./.pnp/externals/pnp-e157ac3892db392386b32283de019e4671ce0a8b/node_modules/@babel/plugin-proposal-class-properties/", blacklistedLocator],
@@ -11014,9 +11058,6 @@ let locatorsByLocations = new Map([
   ["./.pnp/externals/pnp-7fc215632666e2dc0ead1c08c524906526ca80a8/node_modules/@babel/plugin-syntax-json-strings/", blacklistedLocator],
   ["./.pnp/externals/pnp-caefbbdce4b931f747f987fa8f31153510ecfce8/node_modules/@babel/plugin-syntax-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-77f848b3b1ef1a5cdc100828852f1a36195f6955/node_modules/@babel/plugin-syntax-optional-catch-binding/", blacklistedLocator],
-  ["./.pnp/externals/pnp-d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b/node_modules/@babel/plugin-transform-arrow-functions/", blacklistedLocator],
-  ["./.pnp/externals/pnp-f3d33e75b56a0915b705ec5d6a0b192389584cb7/node_modules/@babel/plugin-transform-block-scoping/", blacklistedLocator],
-  ["./.pnp/externals/pnp-5464c521611f60fd6e6b2f4d7b52fd3ece636ad8/node_modules/@babel/plugin-transform-template-literals/", blacklistedLocator],
   ["./.pnp/externals/pnp-e5bc3dcd23d15d202ec8521fd0a370c574071683/node_modules/@babel/plugin-syntax-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-ed725272be21893539938120b6ef76cf342cbd4a/node_modules/babel-eslint/", blacklistedLocator],
   ["./.pnp/externals/pnp-8395219e1847352a4d3097871ab959813030458f/node_modules/eslint-plugin-import/", blacklistedLocator],
@@ -11096,37 +11137,12 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-minimist-0.0.8-857fcabfc3397d2625b8228262e86aa7a011b05d/node_modules/minimist/", {"name":"minimist","reference":"0.0.8"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-minimist-0.0.10-de3f98543dbf96082be48ad1a0c7cda836301dcf/node_modules/minimist/", {"name":"minimist","reference":"0.0.10"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-1.10.0-3bdaaeaf45cc07f375656dfd2e54ed0810b101ba/node_modules/resolve/", {"name":"resolve","reference":"1.10.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-1.11.0-4014870ba296176b86343d50b60f3b50609ce232/node_modules/resolve/", {"name":"resolve","reference":"1.11.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-1.1.7-203114d82ad2c5ed9e8e0411b3932875e889e97b/node_modules/resolve/", {"name":"resolve","reference":"1.1.7"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-path-parse-1.0.6-d62dbb5679405d72c4737ec58600e9ddcf06d24c/node_modules/path-parse/", {"name":"path-parse","reference":"1.0.6"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.6.0-7e74256fbaa49c75aa7c7a205cc22799cac80004/node_modules/semver/", {"name":"semver","reference":"5.6.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.5.0-dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab/node_modules/semver/", {"name":"semver","reference":"5.5.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-module-imports-7.0.0-96081b7111e486da4d2cd971ad1a4fe216cc2e3d/node_modules/@babel/helper-module-imports/", {"name":"@babel/helper-module-imports","reference":"7.0.0"}],
-  ["./.pnp/externals/pnp-a0314f0934c570b276a81cf0d64b9659bbddae03/node_modules/@babel/plugin-transform-template-literals/", {"name":"@babel/plugin-transform-template-literals","reference":"pnp:a0314f0934c570b276a81cf0d64b9659bbddae03"}],
-  ["./.pnp/externals/pnp-07c9f8dd69715410056f9812e051bff12cca28d1/node_modules/@babel/plugin-transform-template-literals/", {"name":"@babel/plugin-transform-template-literals","reference":"pnp:07c9f8dd69715410056f9812e051bff12cca28d1"}],
-  ["./.pnp/externals/pnp-5464c521611f60fd6e6b2f4d7b52fd3ece636ad8/node_modules/@babel/plugin-transform-template-literals/", {"name":"@babel/plugin-transform-template-literals","reference":"pnp:5464c521611f60fd6e6b2f4d7b52fd3ece636ad8"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-annotate-as-pure-7.0.0-323d39dd0b50e10c7c06ca7d7638e6864d8c5c32/node_modules/@babel/helper-annotate-as-pure/", {"name":"@babel/helper-annotate-as-pure","reference":"7.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-plugin-utils-7.0.0-bbb3fbee98661c569034237cc03967ba99b4f250/node_modules/@babel/helper-plugin-utils/", {"name":"@babel/helper-plugin-utils","reference":"7.0.0"}],
-  ["./.pnp/externals/pnp-2660d98e22a1aac669fc354dff7330b7bf846b4e/node_modules/@babel/plugin-transform-arrow-functions/", {"name":"@babel/plugin-transform-arrow-functions","reference":"pnp:2660d98e22a1aac669fc354dff7330b7bf846b4e"}],
-  ["./.pnp/externals/pnp-9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97/node_modules/@babel/plugin-transform-arrow-functions/", {"name":"@babel/plugin-transform-arrow-functions","reference":"pnp:9ef3a8ab71c5e6ae0ca1b654fff066c1f8b50f97"}],
-  ["./.pnp/externals/pnp-d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b/node_modules/@babel/plugin-transform-arrow-functions/", {"name":"@babel/plugin-transform-arrow-functions","reference":"pnp:d5e70aba30b5c0c1fe0c0f93d6e5215589102f8b"}],
-  ["./.pnp/externals/pnp-6f3d8f766129471a0efe552514fa729e8531dddd/node_modules/@babel/plugin-transform-block-scoping/", {"name":"@babel/plugin-transform-block-scoping","reference":"pnp:6f3d8f766129471a0efe552514fa729e8531dddd"}],
-  ["./.pnp/externals/pnp-09d895ce0b9367e25b83817575693badfed6795e/node_modules/@babel/plugin-transform-block-scoping/", {"name":"@babel/plugin-transform-block-scoping","reference":"pnp:09d895ce0b9367e25b83817575693badfed6795e"}],
-  ["./.pnp/externals/pnp-f3d33e75b56a0915b705ec5d6a0b192389584cb7/node_modules/@babel/plugin-transform-block-scoping/", {"name":"@babel/plugin-transform-block-scoping","reference":"pnp:f3d33e75b56a0915b705ec5d6a0b192389584cb7"}],
-  ["./packages/fs/cacheable-fs/", {"name":"@quase/cacheable-fs","reference":"0.1.0-0"}],
-  ["./packages/path-url/", {"name":"@quase/path-url","reference":"0.2.0-0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/", {"name":"@quase/path-url","reference":"0.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/", {"name":"file-url","reference":"2.0.2"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"2.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/", {"name":"url-regex","reference":"3.2.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/", {"name":"ip-regex","reference":"1.0.3"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/", {"name":"ip-regex","reference":"2.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/", {"name":"slash","reference":"1.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/", {"name":"slash","reference":"2.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-5.0.0-414d0110cdd06705734d055652c5411260c31abd/node_modules/fs-extra/", {"name":"fs-extra","reference":"5.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-7.0.1-4f189c44aa123b895f722804f55ea23eadc348e9/node_modules/fs-extra/", {"name":"fs-extra","reference":"7.0.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-graceful-fs-4.1.15-ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00/node_modules/graceful-fs/", {"name":"graceful-fs","reference":"4.1.15"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-jsonfile-4.0.0-8771aae0799b64076b76640fca058f9c10e33ecb/node_modules/jsonfile/", {"name":"jsonfile","reference":"4.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-universalify-0.1.2-b646f69be3942dabcecc9d6639c80dc105efaa66/node_modules/universalify/", {"name":"universalify","reference":"0.1.2"}],
   ["./packages/cli/", {"name":"@quase/cli","reference":"0.4.0-0"}],
   ["./packages/config/", {"name":"@quase/config","reference":"0.2.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-find-up-3.0.0-49169f1d7993430646da61ecc5ae355c21c97b73/node_modules/find-up/", {"name":"find-up","reference":"3.0.0"}],
@@ -11147,6 +11163,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-4.0.0-2f5f45ab91e33216234fd53adab668eb4ec0993b/node_modules/load-json-file/", {"name":"load-json-file","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-1.1.0-956905708d58b4bab4c2261b04f59f31c99374c0/node_modules/load-json-file/", {"name":"load-json-file","reference":"1.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-2.0.0-7947e42149af80d696cbf797bcaabcfe1fe29ca8/node_modules/load-json-file/", {"name":"load-json-file","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-graceful-fs-4.1.15-ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00/node_modules/graceful-fs/", {"name":"graceful-fs","reference":"4.1.15"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-parse-json-4.0.0-be35f5425be1f7f6c747184f98a788cb99477ee0/node_modules/parse-json/", {"name":"parse-json","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-parse-json-2.2.0-f480f40434ef80741f8469099f8dea18f55a4dc9/node_modules/parse-json/", {"name":"parse-json","reference":"2.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-error-ex-1.3.2-b4ac40648107fdcdcfae242f428bea8a14d4f1bf/node_modules/error-ex/", {"name":"error-ex","reference":"1.3.2"}],
@@ -11307,6 +11324,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-imurmurhash-0.1.4-9218b9b2b928a238b13dc4fb6b6d576f231453ea/node_modules/imurmurhash/", {"name":"imurmurhash","reference":"0.1.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-xdg-basedir-3.0.0-496b2cc109eca8dbacfe2dc72b603c17c5870ad4/node_modules/xdg-basedir/", {"name":"xdg-basedir","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-import-lazy-2.1.0-05698e3d45c88e8d7e9d92cb0584e77f096f3e43/node_modules/import-lazy/", {"name":"import-lazy","reference":"2.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-import-lazy-4.0.0-e8eb627483a0a43da3c03f3e35548be5cb0cc153/node_modules/import-lazy/", {"name":"import-lazy","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-ci-1.2.1-e3779c8ee17fccf428488f6e281187f2e632841c/node_modules/is-ci/", {"name":"is-ci","reference":"1.2.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-ci-2.0.0-6bc6334181810e04b5c22b3d589fdca55026404c/node_modules/is-ci/", {"name":"is-ci","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ci-info-1.6.0-2ca20dbb9ceb32d4524a683303313f0304b1e497/node_modules/ci-info/", {"name":"ci-info","reference":"1.6.0"}],
@@ -11341,6 +11359,20 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-diff-2.1.0-4bbb8437c8d37e4b0cf1a68fd726ec6d645d6d36/node_modules/semver-diff/", {"name":"semver-diff","reference":"2.1.0"}],
   ["./packages/util/get-plugins/", {"name":"@quase/get-plugins","reference":"0.1.0-0"}],
   ["./packages/source-map/", {"name":"@quase/source-map","reference":"0.2.0-0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/", {"name":"@quase/path-url","reference":"0.1.0"}],
+  ["./packages/path-url/", {"name":"@quase/path-url","reference":"0.2.0-0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/", {"name":"file-url","reference":"2.0.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/", {"name":"url-regex","reference":"3.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/", {"name":"ip-regex","reference":"1.0.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/", {"name":"ip-regex","reference":"2.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/", {"name":"slash","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-3.0.0-6539be870c165adbd5240220dbe361f1bc4d4634/node_modules/slash/", {"name":"slash","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/", {"name":"slash","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-7.0.1-4f189c44aa123b895f722804f55ea23eadc348e9/node_modules/fs-extra/", {"name":"fs-extra","reference":"7.0.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-5.0.0-414d0110cdd06705734d055652c5411260c31abd/node_modules/fs-extra/", {"name":"fs-extra","reference":"5.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-jsonfile-4.0.0-8771aae0799b64076b76640fca058f9c10e33ecb/node_modules/jsonfile/", {"name":"jsonfile","reference":"4.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-universalify-0.1.2-b646f69be3942dabcecc9d6639c80dc105efaa66/node_modules/universalify/", {"name":"universalify","reference":"0.1.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-preset-minify-0.5.0-e25bb8d3590087af02b650967159a77c19bfb96b/node_modules/babel-preset-minify/", {"name":"babel-preset-minify","reference":"0.5.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-minify-builtins-0.5.0-31eb82ed1a0d0efdc31312f93b6e4741ce82c36b/node_modules/babel-plugin-minify-builtins/", {"name":"babel-plugin-minify-builtins","reference":"0.5.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-minify-constant-folding-0.5.0-f84bc8dbf6a561e5e350ff95ae216b0ad5515b6e/node_modules/babel-plugin-minify-constant-folding/", {"name":"babel-plugin-minify-constant-folding","reference":"0.5.0"}],
@@ -11373,8 +11405,9 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-transform-simplify-comparison-operators-6.9.4-f62afe096cab0e1f68a2d753fdf283888471ceb9/node_modules/babel-plugin-transform-simplify-comparison-operators/", {"name":"babel-plugin-transform-simplify-comparison-operators","reference":"6.9.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-transform-undefined-to-void-6.9.4-be241ca81404030678b748717322b89d0c8fe280/node_modules/babel-plugin-transform-undefined-to-void/", {"name":"babel-plugin-transform-undefined-to-void","reference":"6.9.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-lodash-isplainobject-4.0.6-7c526a52d89b45c45cc690b88163be0497f550cb/node_modules/lodash.isplainobject/", {"name":"lodash.isplainobject","reference":"4.0.6"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/", {"name":"colorette","reference":"1.0.8"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/", {"name":"colorette","reference":"1.0.7"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-fswatcher-child-1.1.0-af1650590f897532431731247fd6270f333912ff/node_modules/fswatcher-child/", {"name":"fswatcher-child","reference":"1.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-fswatcher-child-1.1.1-264dd95f9c4b5f8615327d7d7567884591846b9b/node_modules/fswatcher-child/", {"name":"fswatcher-child","reference":"1.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-chokidar-2.1.0-5fcb70d0b28ebe0867eb0f09d5f6a08f29a1efa0/node_modules/chokidar/", {"name":"chokidar","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-anymatch-2.0.0-bcb24b4f37934d9aa7ac17b4adaf89e7c76ef2eb/node_modules/anymatch/", {"name":"anymatch","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-micromatch-3.1.10-70859bc95c9840952f359a068a3fc49f9ecfac23/node_modules/micromatch/", {"name":"micromatch","reference":"3.1.10"}],
@@ -11478,8 +11511,9 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-string-decoder-1.1.1-9cf1611ba62685d7030ae9e4ba34149c3af03fc8/node_modules/string_decoder/", {"name":"string_decoder","reference":"1.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-util-deprecate-1.0.2-450d4dc9fa70de732762fbd2d4a28981419a0ccf/node_modules/util-deprecate/", {"name":"util-deprecate","reference":"1.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-upath-1.1.0-35256597e46a581db4793d0ce47fa9aebfc9fabd/node_modules/upath/", {"name":"upath","reference":"1.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-graphviz-0.0.8-e599e40733ef80e1653bfe89a5f031ecf2aa4aaa/node_modules/graphviz/", {"name":"graphviz","reference":"0.0.8"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-graphviz-0.0.9-0bbf1df588c6a92259282da35323622528c4bbc4/node_modules/graphviz/", {"name":"graphviz","reference":"0.0.9"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-temp-0.4.0-671ad63d57be0fe9d7294664b3fc400636678a60/node_modules/temp/", {"name":"temp","reference":"0.4.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ora-3.4.0-bf0752491059a3ef3ed4c85097531de9fdbcd318/node_modules/ora/", {"name":"ora","reference":"3.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ora-3.2.0-67e98a7e11f7f0ac95deaaaf11bb04de3d09e481/node_modules/ora/", {"name":"ora","reference":"3.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cli-cursor-2.1.0-b35dac376479facc3e94747d41d0d0f5238ffcb5/node_modules/cli-cursor/", {"name":"cli-cursor","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-restore-cursor-2.0.0-9f7ee287f82fd326d4fd162923d62129eee0dfaf/node_modules/restore-cursor/", {"name":"restore-cursor","reference":"2.0.0"}],
@@ -11492,15 +11526,17 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-clone-1.0.4-da309cc263df15994c688ca902179ca3c7cd7c7e/node_modules/clone/", {"name":"clone","reference":"1.0.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-parse5-5.1.0-c59341c9723f414c452975564c7c00a68d58acd2/node_modules/parse5/", {"name":"parse5","reference":"5.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-parse5-4.0.0-6d78656e3da8d78b4ec0b906f7c08ef1dfe3f608/node_modules/parse5/", {"name":"parse5","reference":"4.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-pretty-bytes-5.1.0-6237ecfbdc6525beaef4de722cc60a58ae0e6c6d/node_modules/pretty-bytes/", {"name":"pretty-bytes","reference":"5.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-pretty-bytes-5.2.0-96c92c6e95a0b35059253fb33c03e260d40f5a1f/node_modules/pretty-bytes/", {"name":"pretty-bytes","reference":"5.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-pretty-bytes-4.0.2-b2bf82e7350d65c6c33aa95aaa5a4f6327f61cd9/node_modules/pretty-bytes/", {"name":"pretty-bytes","reference":"4.0.2"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-ws-6.2.0-13806d9913b2a5f3cbb9ba47b563c002cbc7c526/node_modules/ws/", {"name":"ws","reference":"6.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ws-7.0.0-79351cbc3f784b3c20d0821baf4b4ff809ffbf51/node_modules/ws/", {"name":"ws","reference":"7.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ws-5.2.2-dffef14866b8e8dc9133582514d1befaf96e980f/node_modules/ws/", {"name":"ws","reference":"5.2.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-async-limiter-1.0.0-78faed8c3d074ab81f22b4e985d79e8738f720f8/node_modules/async-limiter/", {"name":"async-limiter","reference":"1.0.0"}],
   ["./.pnp/externals/pnp-e76030d8dcfb0877887649a8d95d3d7613693a26/node_modules/@babel/preset-env/", {"name":"@babel/preset-env","reference":"pnp:e76030d8dcfb0877887649a8d95d3d7613693a26"}],
   ["./.pnp/externals/pnp-e17cd84a3ba58a8ce519813255dbbbc8432b36ea/node_modules/@babel/preset-env/", {"name":"@babel/preset-env","reference":"pnp:e17cd84a3ba58a8ce519813255dbbbc8432b36ea"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-plugin-utils-7.0.0-bbb3fbee98661c569034237cc03967ba99b4f250/node_modules/@babel/helper-plugin-utils/", {"name":"@babel/helper-plugin-utils","reference":"7.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-proposal-async-generator-functions-7.2.0-b289b306669dce4ad20b0252889a15768c9d417e/node_modules/@babel/plugin-proposal-async-generator-functions/", {"name":"@babel/plugin-proposal-async-generator-functions","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-remap-async-to-generator-7.1.0-361d80821b6f38da75bd3f0785ece20a88c5fe7f/node_modules/@babel/helper-remap-async-to-generator/", {"name":"@babel/helper-remap-async-to-generator","reference":"7.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-annotate-as-pure-7.0.0-323d39dd0b50e10c7c06ca7d7638e6864d8c5c32/node_modules/@babel/helper-annotate-as-pure/", {"name":"@babel/helper-annotate-as-pure","reference":"7.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-wrap-function-7.2.0-c4e0012445769e2815b55296ead43a958549f6fa/node_modules/@babel/helper-wrap-function/", {"name":"@babel/helper-wrap-function","reference":"7.2.0"}],
   ["./.pnp/externals/pnp-65c7c77af01f23a3a52172d7ee45df1648814970/node_modules/@babel/plugin-syntax-async-generators/", {"name":"@babel/plugin-syntax-async-generators","reference":"pnp:65c7c77af01f23a3a52172d7ee45df1648814970"}],
   ["./.pnp/externals/pnp-21f19bd6d4504d54e8f62e05261b5b5a818d99d7/node_modules/@babel/plugin-syntax-async-generators/", {"name":"@babel/plugin-syntax-async-generators","reference":"pnp:21f19bd6d4504d54e8f62e05261b5b5a818d99d7"}],
@@ -11510,10 +11546,12 @@ let locatorsByLocations = new Map([
   ["./.pnp/externals/pnp-2edfde8466510083c2f91c4076db1e60d21767d8/node_modules/@babel/plugin-syntax-json-strings/", {"name":"@babel/plugin-syntax-json-strings","reference":"pnp:2edfde8466510083c2f91c4076db1e60d21767d8"}],
   ["./.pnp/externals/pnp-7fc215632666e2dc0ead1c08c524906526ca80a8/node_modules/@babel/plugin-syntax-json-strings/", {"name":"@babel/plugin-syntax-json-strings","reference":"pnp:7fc215632666e2dc0ead1c08c524906526ca80a8"}],
   ["./.pnp/externals/pnp-2259d61fdda4f8f4098880a2151285b603f01aa9/node_modules/@babel/plugin-proposal-object-rest-spread/", {"name":"@babel/plugin-proposal-object-rest-spread","reference":"pnp:2259d61fdda4f8f4098880a2151285b603f01aa9"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-proposal-object-rest-spread-7.4.3-be27cd416eceeba84141305b93c282f5de23bbb4/node_modules/@babel/plugin-proposal-object-rest-spread/", {"name":"@babel/plugin-proposal-object-rest-spread","reference":"7.4.3"}],
   ["./.pnp/externals/pnp-933716d01b8e4976141d1ed0e51f792b37746c2d/node_modules/@babel/plugin-proposal-object-rest-spread/", {"name":"@babel/plugin-proposal-object-rest-spread","reference":"pnp:933716d01b8e4976141d1ed0e51f792b37746c2d"}],
   ["./.pnp/externals/pnp-31e91496ed908df489fe57440c15e9a083e7005a/node_modules/@babel/plugin-proposal-object-rest-spread/", {"name":"@babel/plugin-proposal-object-rest-spread","reference":"pnp:31e91496ed908df489fe57440c15e9a083e7005a"}],
   ["./.pnp/externals/pnp-1fa86608b372913f51f811abfc21218737e913ca/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:1fa86608b372913f51f811abfc21218737e913ca"}],
   ["./.pnp/externals/pnp-b4acbdccca9aefd85abe112e6fce0001d8c615bf/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:b4acbdccca9aefd85abe112e6fce0001d8c615bf"}],
+  ["./.pnp/externals/pnp-9f663b6856b348804c2c0c2434805caf61c6c3e2/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:9f663b6856b348804c2c0c2434805caf61c6c3e2"}],
   ["./.pnp/externals/pnp-31a8457ec86228891d9bdca389413fc14d6974d6/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:31a8457ec86228891d9bdca389413fc14d6974d6"}],
   ["./.pnp/externals/pnp-e5bc3dcd23d15d202ec8521fd0a370c574071683/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:e5bc3dcd23d15d202ec8521fd0a370c574071683"}],
   ["./.pnp/externals/pnp-caefbbdce4b931f747f987fa8f31153510ecfce8/node_modules/@babel/plugin-syntax-object-rest-spread/", {"name":"@babel/plugin-syntax-object-rest-spread","reference":"pnp:caefbbdce4b931f747f987fa8f31153510ecfce8"}],
@@ -11536,8 +11574,10 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-unicode-property-aliases-ecmascript-1.0.4-5a533f31b4317ea76f17d807fa0d116546111dd0/node_modules/unicode-property-aliases-ecmascript/", {"name":"unicode-property-aliases-ecmascript","reference":"1.0.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-unicode-match-property-value-ecmascript-1.1.0-5b4b426e08d13a80365e0d657ac7a6c1ec46a277/node_modules/unicode-match-property-value-ecmascript/", {"name":"unicode-match-property-value-ecmascript","reference":"1.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-unicode-match-property-value-ecmascript-1.0.2-9f1dc76926d6ccf452310564fd834ace059663d4/node_modules/unicode-match-property-value-ecmascript/", {"name":"unicode-match-property-value-ecmascript","reference":"1.0.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-arrow-functions-7.2.0-9aeafbe4d6ffc6563bf8f8372091628f00779550/node_modules/@babel/plugin-transform-arrow-functions/", {"name":"@babel/plugin-transform-arrow-functions","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-async-to-generator-7.4.0-234fe3e458dce95865c0d152d256119b237834b0/node_modules/@babel/plugin-transform-async-to-generator/", {"name":"@babel/plugin-transform-async-to-generator","reference":"7.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-block-scoped-functions-7.2.0-5d3cc11e8d5ddd752aa64c9148d0db6cb79fd190/node_modules/@babel/plugin-transform-block-scoped-functions/", {"name":"@babel/plugin-transform-block-scoped-functions","reference":"7.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-block-scoping-7.4.0-164df3bb41e3deb954c4ca32ffa9fcaa56d30bcb/node_modules/@babel/plugin-transform-block-scoping/", {"name":"@babel/plugin-transform-block-scoping","reference":"7.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-classes-7.4.0-e3428d3c8a3d01f33b10c529b998ba1707043d4d/node_modules/@babel/plugin-transform-classes/", {"name":"@babel/plugin-transform-classes","reference":"7.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-define-map-7.4.0-cbfd8c1b2f12708e262c26f600cd16ed6a3bc6c9/node_modules/@babel/helper-define-map/", {"name":"@babel/helper-define-map","reference":"7.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-optimise-call-expression-7.0.0-a2920c5702b073c15de51106200aa8cad20497d5/node_modules/@babel/helper-optimise-call-expression/", {"name":"@babel/helper-optimise-call-expression","reference":"7.0.0"}],
@@ -11582,6 +11622,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-shorthand-properties-7.2.0-6333aee2f8d6ee7e28615457298934a3b46198f0/node_modules/@babel/plugin-transform-shorthand-properties/", {"name":"@babel/plugin-transform-shorthand-properties","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-spread-7.2.2-3103a9abe22f742b6d406ecd3cd49b774919b406/node_modules/@babel/plugin-transform-spread/", {"name":"@babel/plugin-transform-spread","reference":"7.2.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-sticky-regex-7.2.0-a1e454b5995560a9c1e0d537dfc15061fd2687e1/node_modules/@babel/plugin-transform-sticky-regex/", {"name":"@babel/plugin-transform-sticky-regex","reference":"7.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-template-literals-7.2.0-d87ed01b8eaac7a92473f608c97c089de2ba1e5b/node_modules/@babel/plugin-transform-template-literals/", {"name":"@babel/plugin-transform-template-literals","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typeof-symbol-7.2.0-117d2bcec2fbf64b4b59d1f9819894682d29f2b2/node_modules/@babel/plugin-transform-typeof-symbol/", {"name":"@babel/plugin-transform-typeof-symbol","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-unicode-regex-7.2.0-4eb8db16f972f8abb5062c161b8b115546ade08b/node_modules/@babel/plugin-transform-unicode-regex/", {"name":"@babel/plugin-transform-unicode-regex","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-browserslist-4.5.2-36ad281f040af684555a23c780f5c2081c752df0/node_modules/browserslist/", {"name":"browserslist","reference":"4.5.2"}],
@@ -11593,8 +11634,25 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-invariant-2.2.4-610f3c92c9359ce1db616e538008d23ff35158e6/node_modules/invariant/", {"name":"invariant","reference":"2.2.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-loose-envify-1.4.0-71ee51fa7be4caec1a63839f7e682d8132d30caf/node_modules/loose-envify/", {"name":"loose-envify","reference":"1.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-js-levenshtein-1.1.6-c6cee58eb3550372df8deb85fad5ce66ce01d59d/node_modules/js-levenshtein/", {"name":"js-levenshtein","reference":"1.1.6"}],
+  ["./.pnp/externals/pnp-ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5/node_modules/@babel/preset-typescript/", {"name":"@babel/preset-typescript","reference":"pnp:ac5718fea5a5779ebf31d3ee9fa3d43d2173b0e5"}],
+  ["./.pnp/externals/pnp-1eacac43c9327c4cb3cbca060094d2d32117e9cf/node_modules/@babel/preset-typescript/", {"name":"@babel/preset-typescript","reference":"pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typescript-7.4.0-0389ec53a34e80f99f708c4ca311181449a68eb1/node_modules/@babel/plugin-transform-typescript/", {"name":"@babel/plugin-transform-typescript","reference":"7.4.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-typescript-7.2.0-55d240536bd314dcbbec70fd949c5cabaed1de29/node_modules/@babel/plugin-syntax-typescript/", {"name":"@babel/plugin-syntax-typescript","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-external-helpers-7.2.0-7f4cb7dee651cd380d2034847d914288467a6be4/node_modules/@babel/plugin-external-helpers/", {"name":"@babel/plugin-external-helpers","reference":"7.2.0"}],
+  ["./.pnp/externals/pnp-670829f2e61e6f99eb155699eaf62046dff08834/node_modules/@babel/plugin-proposal-class-properties/", {"name":"@babel/plugin-proposal-class-properties","reference":"pnp:670829f2e61e6f99eb155699eaf62046dff08834"}],
+  ["./.pnp/externals/pnp-e157ac3892db392386b32283de019e4671ce0a8b/node_modules/@babel/plugin-proposal-class-properties/", {"name":"@babel/plugin-proposal-class-properties","reference":"pnp:e157ac3892db392386b32283de019e4671ce0a8b"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-create-class-features-plugin-7.4.0-30fd090e059d021995c1762a5b76798fa0b51d82/node_modules/@babel/helper-create-class-features-plugin/", {"name":"@babel/helper-create-class-features-plugin","reference":"7.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-runtime-7.4.0-b4d8c925ed957471bc57e0b9da53408ebb1ed457/node_modules/@babel/plugin-transform-runtime/", {"name":"@babel/plugin-transform-runtime","reference":"7.4.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-klaw-3.0.0-b11bec9cf2492f06756d6e809ab73a2910259146/node_modules/klaw/", {"name":"klaw","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-rollup-1.10.0-91d594aa4386c51ca0883ad4ef2050b469d3e8aa/node_modules/rollup/", {"name":"rollup","reference":"1.10.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-estree-0.0.39-e177e699ee1b8c22d23174caaa7422644389509f/node_modules/@types/estree/", {"name":"@types/estree","reference":"0.0.39"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.13.5-266564afa8a6a09dc778dfacc703ed3f09c80516/node_modules/@types/node/", {"name":"@types/node","reference":"11.13.5"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.11.6-df929d1bb2eee5afdda598a41930fe50b43eaa6a/node_modules/@types/node/", {"name":"@types/node","reference":"11.11.6"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.14.3-170a81168620d931cc3b83460be253cadd3028f1/node_modules/@types/node/", {"name":"@types/node","reference":"10.14.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-12.0.8-551466be11b2adc3f3d47156758f610bd9f6b1d8/node_modules/@types/node/", {"name":"@types/node","reference":"12.0.8"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.1-7d25ae05bb8ad1f9b699108e1094ecd7884adc1f/node_modules/acorn/", {"name":"acorn","reference":"6.1.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-5.7.3-67aa231bf8812974b85235a96771eb6bd07ea279/node_modules/acorn/", {"name":"acorn","reference":"5.7.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.0-b0a3be31752c97a0f7013c5f4903b71a05db6818/node_modules/acorn/", {"name":"acorn","reference":"6.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-sw-precache-5.2.1-06134f319eec68f3b9583ce9a7036b1c119f7179/node_modules/sw-precache/", {"name":"sw-precache","reference":"5.2.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-dom-urls-1.1.0-001ddf81628cd1e706125c7176f53ccec55d918e/node_modules/dom-urls/", {"name":"dom-urls","reference":"1.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-urijs-1.19.1-5b0ff530c0cbde8386f6342235ba5ca6e995d25a/node_modules/urijs/", {"name":"urijs","reference":"1.19.1"}],
@@ -11628,6 +11686,7 @@ let locatorsByLocations = new Map([
   ["./packages/error/", {"name":"@quase/error","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-error-stack-parser-2.0.2-4ae8dbaa2bf90a8b450707b9149dcabca135520d/node_modules/error-stack-parser/", {"name":"error-stack-parser","reference":"2.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-stackframe-1.0.4-357b24a992f9427cba6b545d96a14ed2cbca187b/node_modules/stackframe/", {"name":"stackframe","reference":"1.0.4"}],
+  ["./packages/fs/cacheable-fs/", {"name":"@quase/cacheable-fs","reference":"0.1.0-0"}],
   ["./packages/fs/find-files/", {"name":"@quase/find-files","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ignore-by-default-1.0.1-48ca6d72f6c6a3af00a9ad4ae6876be3889e2b09/node_modules/ignore-by-default/", {"name":"ignore-by-default","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-negated-glob-1.0.0-6910bca5da8c95e784b5751b976cf5a10fee36d2/node_modules/is-negated-glob/", {"name":"is-negated-glob","reference":"1.0.0"}],
@@ -11645,7 +11704,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-any-promise-1.3.0-abc6afeedcea52e809cdc0376aed3ce39635d17f/node_modules/any-promise/", {"name":"any-promise","reference":"1.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-thenify-all-1.6.0-1a1918d402d8fc3f98fbf234db0bcc8cc10e9726/node_modules/thenify-all/", {"name":"thenify-all","reference":"1.6.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-thenify-3.3.0-e69e38a1babe969b0108207978b9f62b88604839/node_modules/thenify/", {"name":"thenify","reference":"3.3.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-klaw-3.0.0-b11bec9cf2492f06756d6e809ab73a2910259146/node_modules/klaw/", {"name":"klaw","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cacheable-request-2.1.4-0d808801b6342ad33c91df9d0b44dc09b91e5c3d/node_modules/cacheable-request/", {"name":"cacheable-request","reference":"2.1.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cacheable-request-6.0.0-4a1727414e02ac4af82560c4da1b61daa3fa2b63/node_modules/cacheable-request/", {"name":"cacheable-request","reference":"6.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-clone-response-1.0.2-d1dc973920314df67fbeb94223b4ee350239e96b/node_modules/clone-response/", {"name":"clone-response","reference":"1.0.2"}],
@@ -11743,9 +11801,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-minizlib-1.2.1-dd27ea6136243c7c880684e8672bb3a45fd9b614/node_modules/minizlib/", {"name":"minizlib","reference":"1.2.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-symlink-dir-1.1.3-b09af9599af5310c2fb77adc0c1613dee382ce4e/node_modules/symlink-dir/", {"name":"symlink-dir","reference":"1.1.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-mz-0.0.32-e8248b4e41424c052edc1725dd33650c313a3659/node_modules/@types/mz/", {"name":"@types/mz","reference":"0.0.32"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-11.11.6-df929d1bb2eee5afdda598a41930fe50b43eaa6a/node_modules/@types/node/", {"name":"@types/node","reference":"11.11.6"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.14.3-170a81168620d931cc3b83460be253cadd3028f1/node_modules/@types/node/", {"name":"@types/node","reference":"10.14.3"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-node-10.12.24-b13564af612a22a20b5d95ca40f1bffb3af315cf/node_modules/@types/node/", {"name":"@types/node","reference":"10.12.24"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-write-json-file-2.3.0-2b64c8a33004d54b8698c76d585a77ceb61da32f/node_modules/write-json-file/", {"name":"write-json-file","reference":"2.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-detect-indent-5.0.0-3871cc0a6a002e8c3e5b3cf7f336264675f06b9d/node_modules/detect-indent/", {"name":"detect-indent","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-write-pkg-3.2.0-0e178fe97820d389a8928bc79535dbe68c2cff21/node_modules/write-pkg/", {"name":"write-pkg","reference":"3.2.0"}],
@@ -11848,9 +11903,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-he-1.2.0-84ae65fa7eafb165fddb61566ae14baf05664f0f/node_modules/he/", {"name":"he","reference":"1.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jsdom-11.12.0-1a80d40ddd378a1de59656e9e6dc5a3ba8657bc8/node_modules/jsdom/", {"name":"jsdom","reference":"11.12.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-abab-2.0.0-aba0ab4c5eee2d4c79d3487d85450fb2376ebb0f/node_modules/abab/", {"name":"abab","reference":"2.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-5.7.3-67aa231bf8812974b85235a96771eb6bd07ea279/node_modules/acorn/", {"name":"acorn","reference":"5.7.3"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.0-b0a3be31752c97a0f7013c5f4903b71a05db6818/node_modules/acorn/", {"name":"acorn","reference":"6.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-6.1.1-7d25ae05bb8ad1f9b699108e1094ecd7884adc1f/node_modules/acorn/", {"name":"acorn","reference":"6.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-globals-4.3.0-e3b6f8da3c1552a95ae627571f7dd6923bb54103/node_modules/acorn-globals/", {"name":"acorn-globals","reference":"4.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-acorn-walk-6.1.1-d363b66f5fac5f018ff9c3a1e7b6f8e310cc3913/node_modules/acorn-walk/", {"name":"acorn-walk","reference":"6.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-array-equal-1.0.0-8c2a5ef2472fd9ea742b04c77a75093ba2757c93/node_modules/array-equal/", {"name":"array-equal","reference":"1.0.0"}],
@@ -11957,14 +12009,9 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-v8flags-3.1.2-fc5cd0c227428181e6c29b2992e4f8f1da5e0c9f/node_modules/v8flags/", {"name":"v8flags","reference":"3.1.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-homedir-polyfill-1.0.1-4c2bbc8a758998feebf5ed68580f76d46768b4bc/node_modules/homedir-polyfill/", {"name":"homedir-polyfill","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-parse-passwd-1.0.0-6d5b934a456993b23d37f40a382d6f1666a8e5c6/node_modules/parse-passwd/", {"name":"parse-passwd","reference":"1.0.0"}],
-  ["./.pnp/externals/pnp-e157ac3892db392386b32283de019e4671ce0a8b/node_modules/@babel/plugin-proposal-class-properties/", {"name":"@babel/plugin-proposal-class-properties","reference":"pnp:e157ac3892db392386b32283de019e4671ce0a8b"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-create-class-features-plugin-7.4.0-30fd090e059d021995c1762a5b76798fa0b51d82/node_modules/@babel/helper-create-class-features-plugin/", {"name":"@babel/helper-create-class-features-plugin","reference":"7.4.0"}],
   ["./.pnp/externals/pnp-d4afbbd6215b1993d05095efb590984f9b6a3a02/node_modules/@babel/preset-flow/", {"name":"@babel/preset-flow","reference":"pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-flow-strip-types-7.2.3-e3ac2a594948454e7431c7db33e1d02d51b5cd69/node_modules/@babel/plugin-transform-flow-strip-types/", {"name":"@babel/plugin-transform-flow-strip-types","reference":"7.2.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-flow-7.2.0-a765f061f803bc48f240c26f8747faf97c26bf7c/node_modules/@babel/plugin-syntax-flow/", {"name":"@babel/plugin-syntax-flow","reference":"7.2.0"}],
-  ["./.pnp/externals/pnp-1eacac43c9327c4cb3cbca060094d2d32117e9cf/node_modules/@babel/preset-typescript/", {"name":"@babel/preset-typescript","reference":"pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-typescript-7.4.0-0389ec53a34e80f99f708c4ca311181449a68eb1/node_modules/@babel/plugin-transform-typescript/", {"name":"@babel/plugin-transform-typescript","reference":"7.4.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-typescript-7.2.0-55d240536bd314dcbbec70fd949c5cabaed1de29/node_modules/@babel/plugin-syntax-typescript/", {"name":"@babel/plugin-syntax-typescript","reference":"7.2.0"}],
   ["./.pnp/externals/pnp-0c89c1675497b0fec2ce71c0ceba145f497433f4/node_modules/@quase/eslint-config-base/", {"name":"@quase/eslint-config-base","reference":"pnp:0c89c1675497b0fec2ce71c0ceba145f497433f4"}],
   ["./.pnp/externals/pnp-ed725272be21893539938120b6ef76cf342cbd4a/node_modules/babel-eslint/", {"name":"babel-eslint","reference":"pnp:ed725272be21893539938120b6ef76cf342cbd4a"}],
   ["./.pnp/externals/pnp-2126fa8eb473365323935ce00c45626c60a003e1/node_modules/babel-eslint/", {"name":"babel-eslint","reference":"pnp:2126fa8eb473365323935ce00c45626c60a003e1"}],
@@ -12145,7 +12192,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-sisteransi-1.0.0-77d9622ff909080f1c19e5f4a1df0c1b0a27b88c/node_modules/sisteransi/", {"name":"sisteransi","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-prepend-file-1.3.1-83b16e0b4ac1901fce88dbd945a22f4cc81df579/node_modules/prepend-file/", {"name":"prepend-file","reference":"1.3.1"}],
   ["./.pnp/externals/pnp-5fe909d3d982cd25f862888abdcc9f01a7db5b4f/node_modules/ts-pnp/", {"name":"ts-pnp","reference":"pnp:5fe909d3d982cd25f862888abdcc9f01a7db5b4f"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-typescript-3.3.4000-76b0f89cfdbf97827e1112d64f283f1151d6adf0/node_modules/typescript/", {"name":"typescript","reference":"3.3.4000"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-typescript-3.5.2-a09e1dc69bc9551cadf17dba10ee42cf55e5d56c/node_modules/typescript/", {"name":"typescript","reference":"3.5.2"}],
   ["./", topLevelLocator],
 ]);
 exports.findPackageLocator = function findPackageLocator(location) {

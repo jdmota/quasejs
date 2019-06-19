@@ -28,8 +28,8 @@ const schemaCompiler = require( "@quase/schema/dist/compiler" ).default;
 const compiledSchema = schemaCompiler( schema );
 const schemaFn = eval( compiledSchema ); // eslint-disable-line no-eval
 
-const jsPlugin = path.join( __dirname, "../dist/plugins/implementations/js" );
-const babelPlugin = path.join( __dirname, "../dist/plugins/implementations/babel" );
+const jsResolver = path.join( __dirname, "../dist/plugins/resolvers/js-resolver" );
+const babelTransformer = path.join( __dirname, "../dist/plugins/transformers/babel-transformer" );
 
 function handlePlugins( plugins ) {
   return plugins.map( p => {
@@ -45,20 +45,21 @@ function handlePlugins( plugins ) {
   } );
 }
 
-export default function( config, fixturePath ) {
+export default function( config ) {
   config.mode = config.mode || "development";
-  config.cwd = fixturePath;
   config.optimization = Object.assign( {
     hashId: true
   }, config.optimization );
-  config.plugins = config.plugins || [];
+  config.transformers = config.transformers || [];
+  config.resolvers = config.resolvers || [];
 
   const finalBabelOpts = Object.assign( {}, BABEL_OPTS, config.babelOpts );
   finalBabelOpts.plugins = handlePlugins( finalBabelOpts.plugins || [] );
   finalBabelOpts.presets = handlePlugins( finalBabelOpts.presets || [] );
 
-  config.plugins.push( [ babelPlugin, finalBabelOpts ] );
-  config.plugins.push( [ jsPlugin, { resolve: config.resolve } ] );
+  config.transformers.push( [ babelTransformer, finalBabelOpts ] );
+  config.resolvers.push( [ jsResolver, { resolve: config.resolve } ] );
+
   delete config.resolve;
   delete config.babelOpts;
 

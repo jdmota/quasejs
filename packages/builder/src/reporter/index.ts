@@ -1,6 +1,6 @@
 import { relative } from "../utils/path";
 import { Output } from "../types";
-import Builder from "../builder";
+import { Builder } from "../builder/builder";
 import Logger from "./logger";
 
 const prettyBytes = require( "pretty-bytes" );
@@ -10,13 +10,13 @@ export default class Reporter extends Logger {
   constructor( options = {}, builder: Builder ) {
     super( options );
 
-    builder.on( "build-start", () => {
-      this.progress( "Building..." );
+    builder.on( "status", message => {
+      this.progress( message );
     } );
 
-    builder.on( "build-success", ( { filesInfo, time }: Output ) => {
+    builder.on( "build-success", ( { filesInfo, time, timeCheckpoints }: Output ) => {
 
-      const COLUMNS = [
+      const COLUMNS: { align: "left" | "right" }[] = [
         { align: "left" }, // isEntry
         { align: "left" }, // name
         { align: "right" }, // size
@@ -24,7 +24,7 @@ export default class Reporter extends Logger {
       ];
 
       const { performance, dest } = builder.options;
-      const table = [];
+      const table: ( string | number )[][] = [];
 
       for ( const { file, size, isEntry } of filesInfo ) {
         if ( performance.assetFilter( file ) ) {
@@ -55,6 +55,10 @@ export default class Reporter extends Logger {
         this.success( "Built!" );
       } else {
         const timeStr = time < 1000 ? `${time}ms` : `${( time / 1000 ).toFixed( 2 )}s`;
+        if ( timeCheckpoints ) {
+          this.table( [], Array.from( timeCheckpoints ) );
+          this.log( "" );
+        }
         this.success( `Built in ${timeStr}!` );
       }
     } );

@@ -1,18 +1,19 @@
+import { Options, WatchedFiles } from "../types";
+import { ModuleInfo } from "../module/module";
 import { resolvePath, makeAbsolute } from "../utils/path";
-import isFile from "../utils/is-file";
-import { ModuleInfo } from "../module";
-import { WatchedFiles } from "../types";
 
 const fs = require( "fs-extra" );
 const { joinSourceMaps } = require( "@quase/source-map" );
+
 const ONLY_EXISTANCE = { onlyExistance: true };
 
-export class BuilderContext {
+export class BuilderUtil {
 
   builderOptions: any;
   files: WatchedFiles;
+  warnings: string[];
 
-  constructor( builderOptions: any, files?: WatchedFiles ) {
+  constructor( builderOptions: Options, files?: WatchedFiles ) {
     const {
       mode, context, entries, dest, cwd,
       publicPath, runtime, hmr, optimization
@@ -29,6 +30,11 @@ export class BuilderContext {
       optimization
     };
     this.files = files || new Map();
+    this.warnings = [];
+  }
+
+  warn( text: string ) {
+    this.warnings.push( text );
   }
 
   joinSourceMaps( maps: any[] ) {
@@ -74,19 +80,27 @@ export class BuilderContext {
     return fs.stat( file );
   }
 
-  readFile( file: string, enconding?: string ) {
+  readFile( file: string, enconding?: string ): string | Buffer {
     this.registerFile( file );
     return fs.readFile( file, enconding );
   }
 
-  readdir( folder: string ) {
+  readdir( folder: string ): Promise<string[]> {
     this.registerFile( folder );
     return fs.readdir( folder );
   }
 
-  async isFile( file: string ) {
+  async isFile( file: string ): Promise<boolean> {
     this.registerFile( file, ONLY_EXISTANCE );
-    return isFile( fs, file );
+    try {
+      const s = await fs.stat( file );
+      return s.isFile() || s.isFIFO();
+    } catch ( err ) {
+      if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
+        return false;
+      }
+      throw err;
+    }
   }
 
   dataToString( data: string | Buffer | Uint8Array ) {
@@ -98,33 +112,19 @@ export class BuilderContext {
 
 }
 
-export class ModuleContext extends BuilderContext {
+export class ModuleContext extends BuilderUtil {
 
   id: string;
   path: string;
   relativePath: string;
-  relativeDest: string;
-  normalized: string;
-  type: string;
-  innerId: string|null;
+  transforms: ReadonlyArray<string>;
 
-  constructor( builderOptions: any, m: ModuleInfo, files?: WatchedFiles ) {
+  constructor( builderOptions: Options, m: ModuleInfo, files?: WatchedFiles ) {
     super( builderOptions, files );
     this.id = m.id;
-    this.type = m.type;
-    this.innerId = m.innerId;
     this.path = m.path;
     this.relativePath = m.relativePath;
-    this.relativeDest = m.relativeDest;
-    this.normalized = m.normalized;
-  }
-
-}
-
-export class ModuleContextWithoutFS extends ModuleContext {
-
-  registerFile( _: string, _2: { onlyExistance?: boolean } = {} ) {
-    throw new Error( "File System operations are not possible with this context" );
+    this.transforms = m.transforms;
   }
 
 }

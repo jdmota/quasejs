@@ -44,14 +44,17 @@ type Schema {
   runtime: RuntimeOptions;
   fs: type @additionalProperties {};
   codeFrameOptions: type @additionalProperties {};
-  reporter: ( string | Function | [ string | Function, Object ] )?;
   watch: B @alias("w") @description("Watch files for changes and re-build");
   watchOptions: type @additionalProperties {};
   hmr: B @description("Enable hot module replacement");
-  plugins: any[] @mergeStrategy("concat");
   performance: PerformanceOptions;
   optimization: OptimizationOptions;
   serviceWorker: ServiceWorkerOptions;
+  reporter: ( string | Function | [ string | Function, Object ] )?;
+  resolvers: any[] @mergeStrategy("concat");
+  transformers: any[] @mergeStrategy("concat");
+  checkers: any[] @mergeStrategy("concat");
+  packagers: any[] @mergeStrategy("concat");
 }
 `;
 
@@ -69,7 +72,7 @@ export function handleOptions( options: any ) {
     options.fs.mkdirp = fs.mkdirp;
   }
 
-  function b( value ) {
+  function b( value: any ) {
     return value == null ? options.mode !== "development" : value;
   }
 

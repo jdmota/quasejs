@@ -1,16 +1,16 @@
 import { Options } from "./types";
-import Builder from "./builder";
-import HMRServer from "./hmr-server";
+import { Builder } from "./builder/builder";
+import { HMRServer } from "./builder/hmr-server";
 
 type IndexReturn = {
   builder: Builder;
   reporter: any;
 };
 
-export default function( options: Options, dontListenSigint?: boolean ): IndexReturn {
+export default function( options: Options, testing?: boolean ): IndexReturn {
   let reporter;
 
-  const builder = new Builder( options );
+  const builder = new Builder( options, testing );
   const watcher = builder.watcher;
 
   const { plugin: Reporter, options: reporterOpts } = builder.reporter;
@@ -28,7 +28,7 @@ export default function( options: Options, dontListenSigint?: boolean ): IndexRe
       watcher.start();
     }
 
-    if ( !dontListenSigint ) {
+    if ( !testing ) {
       process.once( "SIGINT", () => {
         builder.emit( "sigint" );
         builder.stop();
@@ -40,7 +40,6 @@ export default function( options: Options, dontListenSigint?: boolean ): IndexRe
   } else {
     reporter = new Reporter( reporterOpts, builder );
 
-    builder.emit( "build-start" );
     builder.runBuild().then(
       o => builder.emit( "build-success", o ),
       e => builder.emit( "build-error", e )

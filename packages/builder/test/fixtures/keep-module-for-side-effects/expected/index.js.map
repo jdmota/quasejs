@@ -1,0 +1,1 @@
+{"version":3,"sources":["../files/index.js","../files/bar.js","../files/foo.js"],"names":["console","log"],"mappings":";wBAAO;;wBCAQ;;mBCAfA,OAAO,CAACC,GAAR,CAAa,KAAb;AAAsB","file":"index.js","sourcesContent":["import \"./bar\";\n","export {} from \"./foo\";\n","console.log( \"foo\" ); /* eslint no-console: 0 */\n"]}

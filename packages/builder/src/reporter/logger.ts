@@ -1,5 +1,5 @@
 // Adapted from parcel-bundler's logger
-import { formatError } from "../utils/error";
+import { formatError, Error2 } from "../utils/error";
 
 const colorette = require( "colorette" );
 const readline = require( "readline" );
@@ -20,7 +20,7 @@ const emoji = {
 };
 
 // Pad a string with spaces on either side
-function pad( text: string, length: number, align = "left" ) {
+function pad( text: string, length: number, align: "left" | "right" = "left" ) {
   let pad = " ".repeat( length - text.length );
   if ( align === "right" ) {
     return pad + text;
@@ -95,12 +95,11 @@ export default class Logger {
     }
   }
 
-  _writeError( err: string | Error, emoji: string, color: ( msg: string ) => string ) {
+  _writeError( err: string | Error2, emoji: string, color: ( msg: string ) => string ) {
     const { message, stack } = formatError( err );
     this.write( color( `${emoji}  ${message}` ) );
     if ( stack ) {
-      // @ts-ignore
-      if ( !this.isTest || err.codeFrame ) {
+      if ( !this.isTest || ( typeof err !== "string" && err.codeFrame ) ) {
         this.write( stack );
       }
     }
@@ -189,23 +188,22 @@ export default class Logger {
     this.stopSpinner();
   }
 
-  table( columns: any[], table: any[][] ) {
+  table( columns: { align: "left" | "right" }[], table: ( string| number )[][] ) {
     // Measure column widths
     const colWidths: number[] = [];
     for ( let row of table ) {
       let i = 0;
-      for ( let item of row ) {
-        colWidths[ i ] = Math.max( colWidths[ i ] || 0, item.length );
+      for ( const item of row ) {
+        colWidths[ i ] = Math.max( colWidths[ i ] || 0, ( item + "" ).length );
         i++;
       }
     }
 
     // Render rows
-    for ( let row of table ) {
-      const items = row.map( ( item, i ) => {
-        return ` ${pad( item, colWidths[ i ], columns[ i ].align )} `;
-      } );
-
+    for ( const row of table ) {
+      const items = row.map(
+        ( item, i ) => ` ${pad( item + "", colWidths[ i ], columns[ i ] ? columns[ i ].align : undefined )} `
+      );
       this.log( items.join( "" ) );
     }
   }

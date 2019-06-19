@@ -27,3 +27,7 @@ export function getType( id: string ): string {
 export function makeAbsolute( file: string ) {
   return lowerPath( path.resolve( process.cwd(), file ) );
 }
+
+export function isAbsolute( file: string ): boolean {
+  return path.isAbsolute( file );
+}

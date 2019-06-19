@@ -1,6 +1,6 @@
-export default function isEmpty( obj: any ) {
+export default function isEmpty( obj: any ): boolean {
   if ( obj ) {
-    for ( const name in obj ) {
+    for ( const _name in obj ) {
       return false;
     }
   }

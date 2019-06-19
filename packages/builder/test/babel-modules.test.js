@@ -1,4 +1,4 @@
-import plugin from "../dist/plugins/implementations/babel-plugin-transform-modules";
+import plugin from "../dist/plugins/utils/babel-plugin-transform-modules";
 
 describe( "babel transform modules", () => {
 

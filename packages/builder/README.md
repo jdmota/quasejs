@@ -2,14 +2,12 @@
 
 ## Features
 
-- Automatic code splitting when using `import()`
-- Customizable code splitting
-- Hot Module Replacement support
-- Automatic service worker creation support
 - Supports any file type or language, even images, not just JavaScript
 - Supports any file types as entries, like HTML
 - Thanks to the plugin architecture, inlined JavaScript in HTML is possible
-- Thanks to the architecture, file changes are correctly detected and only what changed is updated.
+- Thanks to the architecture, file changes are correctly detected and only what changed is updated
+- Automatic code splitting when using `import()`
+- Hot Module Replacement support
 - `load` and `error` events are emitted for script tags, replicating the `<script type="module">` behaviour
 - The runtime is small (2kB or less) and is able to fetch the necessary scripts for each module in parallel
 - Errors have code frames to help pinpoint to the problem
@@ -36,207 +34,52 @@ module.exports = {
     cacheId: "CACHE-ID",
     navigateFallback: "index.html"
   },
-  plugins: [
-    "quase-builder-plugin",
-    [ "quase-builder-plugin-2", { /* options */ } ]
-  ]
+  resolvers: [],
+  transformers: [],
+  packagers: [],
+  checkers: []
 };
 ```
-
-## Lifecycle
-
-- Plugin: getType
-- Plugin: load
-- Plugin: parse
-- Plugin: transformAst's
-- Plugin: transformBuffer's
-- Plugin: dependencies
-- Plugin: resolve
-- Plugin: isSplitPoint
-- Plugin: getTypeTransforms
-- Plugin: transformType's
-- Plugin: check
-- Plugin: graphTransform's
-- Plugin: renderAsset
 
 ## Plugins
 
-Plugins are applied by the order they are in the array.
-
 Plugins are also deduplicated by name. This allows you to set options on internal plugins (for example), without having them run twice.
-The ones that appear first in the array take precedence.
 
-A plugin is a function that returns an object with one or more of the following properties:
+```ts
+type MaybeAsync<T> = T | Promise<T>;
+type MaybeAsyncOptional<T> = MaybeAsync<T | null | undefined>;
 
-### name
-
-It's a string with the name of the plugin. Optional, but should be used.
-
-### getType
-
-A synchronous function which receives `( path: string )` and returns a string with the type of the file.
-
-The default is the extension of the file.
-
-### load
-
-A (maybe asynchronous) function that accepts `( path: string, m: ModuleContext )` and returns `null` or `Buffer | string`.
-
-Returning `null` defers to other `load` functions.
-
-The default is to load from the file system.
-
-### parse
-
-A (maybe asynchronous) function that accepts `( data: string, m: ModuleContext )` and returns `null` or an object (the AST).
-
-Returning `null` defers to other `parse` functions.
-
-If no AST is produced, the module contents will be a buffer and `transformBuffer`'s will be called instead of `transformAst`'s in the next phase.
-
-### transformAst
-
-An object where the key is a module type, and the value a function.
-
-The function can be asynchronous and accepts `( ast, ModuleContext )` and returns `null` or a new AST.
-
-Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
-
-The builder will use the last output from the last transformer.
-
-### transformBuffer
-
-An object where the key is a module type, and the value a function.
-
-The function can be asynchronous and accepts `( buffer, ModuleContext )` and returns `null` or a new buffer.
-
-Transforms are applied in sequence. `null` values are ignored. The function receives as first argument the output from the last transformer.
-
-The builder will use the last output from the last transformer.
-
-### dependencies
-
-An object where the key is a module type, and the value a function.
-
-The function can be asynchronous and accepts `( ast, ModuleContext )` and returns `null` or:
-
-```
-{
-  dependencies: Map<string, {
-    loc: ?Loc,
-    async: ?boolean
-  }>,
-  innerDependencies: Map<string, {
-    type: string,
-    data: Buffer | string,
-    map: ?Object,
-    loc: ?Loc,
-    async: ?boolean
-  }>,
-  importedNames: ImportedName[],
-  exportedNames: ExportedName[]
-}
-```
-
-### resolve
-
-An object where the key is a module type, and the value a function.
-
-The function can be asynchronous and accepts `( importee: string, importer: ModuleContext )` and returns `null`, `false` or a path to the resolved file.
-
-Returning `null` defers to other `resolve` functions. Returning `false` means the resolution should stop because the dependency was not found.
-
-### isSplitPoint
-
-A synchronous function that accepts `( importee: ModuleContext, importer: ModuleContext )` and returns `null` or a boolean.
-
-Returning `null` defers to other `isSplitPoint` functions.
-
-This function is used to decide if in the final result a importee module should go in a different file than the importer. The default is to exclude modules with a different type associated with it or when an asynchronous import is used.
-
-## getTypeTransforms
-
-A synchronous function that accepts `( importee: ModuleContext, importer: ?ModuleContext )` and returns `null` or an array of strings.
-
-Returning `null` defers to other `getTypeTransforms` functions.
-
-The function is used to decide if, for example, a CSS file should be converted to JS, when a JS module is importing it.
-
-The array can suply various convertions.
-
-The default is to do nothing.
-
-```js
-export default function() {
-  return {
-    getTypeTransforms( importee, importer ) {
-      // If it's an entry file, don't convert
-      if ( !importer ) {
-        return [];
-      }
-      // If what is importing is a JS file,
-      // convert the importee to JS too
-      if ( importer && importer.type === "js" ) {
-        return [ "js" ];
-      }
-    }
-  };
-}
-```
-
-### transformType
-
-Each function (maybe asynchronous) is used to transform a module type to another. In the example below, the function transform `ts` modules into `js`.
-
-Returning `null` defers to other plugins that might support that transformation.
-
-```js
-type TransformOutput = {
-  ast: Object,
-  buffer: void
-} | {
-  ast: void,
-  buffer: Buffer
+type Resolver = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  resolve( options: any, imported: string, ctx: ModuleContext ): MaybeAsyncOptional<string | false | { path: string; transforms?: Transforms }>;
 };
 
-export default function() {
-  return {
-    transformType: {
-      ts: {
-        js( output: TransformOutput ) {
-          // TODO generation
-          return {
-            data: "", // string | Buffer
-            map: {}
-          };
-        }
-      }
-    }
+type Transformer = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  canReuseAST?: ( options: any, ast: AstInfo ) => boolean;
+  parse?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<AstInfo>;
+  transform?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<TransformableAsset>;
+  generate?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<GenerateOutput>;
+};
+
+type Checker = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  checker( options: any, _: { warn: WarnCb; error: ErrorCb } ): {
+    newModule( module: FinalModule ): void;
+    deletedModule( id: string ): void;
+    check(): MaybeAsync<void>;
   };
-}
+};
+
+type Packager = {
+  name?: string;
+  options?( options: any ): MaybeAsync<any>;
+  pack( options: any, asset: FinalAsset, inlines: Map<FinalAsset, ToWrite>, ctx: BuilderUtil ): MaybeAsyncOptional<ToWrite>;
+};
 ```
-
-### check
-
-A (maybe asynchronous) function that receives the `Builder` and throws an error to stop the build if a necessary check failed.
-
-All `check` functions are called in order.
-
-### graphTransform
-
-A (maybe asynchronous) function that receives the produced graph and transforms it.
-
-All `graphTransform` functions are called in order passing the last produced value to each other.
-
-The last graph produced will be used.
-
-### renderAsset
-
-An object where the key is a module type, and the value a function.
-
-The function can be asynchronous and accepts `( FinalAsset, inlines: Map<FinalAsset, ToWrite>, BuilderContext )` and returns `null` or `ToWrite`.
-
-Returning `null` defers to other `renderAsset` functions.
 
 ## ModuleContext
 
@@ -244,17 +87,13 @@ Returning `null` defers to other `renderAsset` functions.
 
 An unique id of the module.
 
-### type
-
-Type of the module.
-
 ### path
 
-String path of the file.
+String absolute path of the module.
 
-### normalized
+### relativePath
 
-String path relative to the `context` provided in the options.
+String relative path of the module. Relative to the `context` provided in the options.
 
 ### builderOptions
 
