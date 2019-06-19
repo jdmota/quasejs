@@ -303,7 +303,7 @@ type GlobalThis = {
         const prevQueue = queue;
         queue = [];
 
-        const needReload = new Set();
+        const needReload: Set<HotApi> = new Set();
 
         for ( const job of prevQueue ) {
           const { api, error, notifyAncestors } = await job;
