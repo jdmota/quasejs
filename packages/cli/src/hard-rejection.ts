@@ -13,10 +13,11 @@ export default function() {
   installed = true;
 
   process.on( "unhandledRejection", error => {
-    if ( !( error instanceof Error ) ) {
-      error = new Error( `Promise rejected with value: ${util.inspect( error )}` );
+    if ( error instanceof Error ) {
+      printError( error );
+    } else {
+      printError( new Error( `Promise rejected with value: ${util.inspect( error )}` ) );
     }
-    printError( error );
     process.exit( 1 );
   } );
 }
