@@ -73,7 +73,7 @@ export abstract class AbstractNfaToDfa<NFAState extends BaseState, DFAState exte
       }
 
       for ( const [ transition, set ] of this.combinations( closure ) ) {
-        const closure = new Set();
+        const closure: Set<NFAState> = new Set();
         for ( const s of set ) {
           for ( const s2 of this.getEpsilonClosure( s ) ) {
             closure.add( s2 );

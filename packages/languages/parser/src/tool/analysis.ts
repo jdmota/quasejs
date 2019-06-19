@@ -69,7 +69,7 @@ class LookData {
 
   constructor() {
     this.transitions = new MapKeyToSet();
-    this.ranges = new MapRangeToSet( 0, 0 );
+    this.ranges = new MapRangeToSet();
   }
 
   add( transition: Look, value: GoTo ) {
