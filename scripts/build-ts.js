@@ -32,9 +32,6 @@ var ts;
     }
   } );
 
-  var PKG_RE = ${/^(!(?:.*!)+)?((?!\.{0,2}\/)(?:@[^\/]+\/)?[^\/]+)?(.*)/};
-  var TYPE_RE = ${/node_modules(\/|\\)@types.+$/};
-
   var resolveType;
   Object.defineProperty( ts, "resolveTypeReferenceDirective", {
     get() {
@@ -42,14 +39,9 @@ var ts;
     },
     set( original ) {
       resolveType = function( typeReferenceDirectiveName, containingFile, options, host, redirectedReference ) {
-        try {
-          var request = "@types/" + typeReferenceDirectiveName;
-          var [ , prefix = "", packageName = "", rest ] = request.match( PKG_RE );
-          var regularPackagePath = packageName + rest;
-          var resolvedFileName = pnp.resolveToUnqualified( regularPackagePath, containingFile, { considerBuiltins: false } );
-          options.typeRoots = ( options.typeRoots || [] ).concat( resolvedFileName.replace( TYPE_RE, "node_modules/@types" ) );
-        } catch ( error ) {}
-        return original( typeReferenceDirectiveName, containingFile, options, host, redirectedReference );
+        return resolveModuleName(
+          typeReferenceDirectiveName, containingFile, options, host, original
+        );
       };
     }
   } );
