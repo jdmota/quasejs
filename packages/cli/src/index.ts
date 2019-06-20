@@ -4,12 +4,11 @@ import { generateHelp as _generateHelp } from "./help";
 import { handleArgs } from "./args";
 import normalizePkg from "./normalize-pkg";
 import { CliOptions } from "./types";
+import { getConfig } from "@quase/config";
 
 const path = require( "path" );
 const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
-const quaseConfig = require( "@quase/config" );
-const { getConfig } = quaseConfig;
 
 /* eslint no-process-exit: 0 */
 /* eslint no-console: 0 */
@@ -106,5 +105,5 @@ async function cli( _opts: any ) {
   };
 }
 
-export { cli, quaseConfig };
+export { cli, getConfig };
 export default cli;
