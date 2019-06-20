@@ -5,9 +5,8 @@ import { createRuntime, RuntimeInfo, createRuntimeManifest } from "../runtime/cr
 import hash from "../utils/hash";
 import { BuilderUtil } from "../plugins/context";
 import { Builder, Build } from "./builder";
-
-const path = require( "path" );
-const { sourceMapToString, sourceMapToUrl } = require( "@quase/source-map" );
+import { sourceMapToString, sourceMapToUrl } from "@quase/source-map";
+import path from "path";
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;

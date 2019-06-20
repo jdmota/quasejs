@@ -1,5 +1,5 @@
-const { relative } = require( "path" );
-const { SourceMapGenerator, SourceMapConsumer } = require( "@quase/source-map" );
+import { relative } from "path";
+import { SourceMapGenerator, SourceMapConsumer } from "@quase/source-map";
 
 function countNewLines( string: string ) {
   let c = 0;

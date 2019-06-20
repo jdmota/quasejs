@@ -13,10 +13,10 @@ import EventEmitter from "events";
 import { BuilderTransformResolve } from "./builder-transform-resolve";
 import { BuilderPack } from "./builder-pack";
 import { Module } from "../module/module";
-
-const fs = require( "fs-extra" );
-const path = require( "path" );
-const { getOnePlugin } = require( "@quase/get-plugins" );
+import { getOnePlugin } from "@quase/get-plugins";
+import path from "path";
+// @ts-ignore
+import fs from "fs-extra";
 
 export class Build {
 

@@ -1,9 +1,9 @@
 import { Options, WatchedFiles } from "../types";
 import { ModuleInfo } from "../module/module";
 import { resolvePath, makeAbsolute } from "../utils/path";
-
-const fs = require( "fs-extra" );
-const { joinSourceMaps } = require( "@quase/source-map" );
+import { joinSourceMaps } from "@quase/source-map";
+// @ts-ignore
+import fs from "fs-extra";
 
 const ONLY_EXISTANCE = { onlyExistance: true };
 

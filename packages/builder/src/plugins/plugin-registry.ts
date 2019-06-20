@@ -1,7 +1,6 @@
 import { ProvidedPluginsArr, Plugin } from "../types";
 import { defaultResolversMap, defaultTransformersMap, defaultPackagersMap, defaultCheckersMap } from "./default-plugins";
-
-const { getOnePlugin } = require( "@quase/get-plugins" );
+import { getOnePlugin } from "@quase/get-plugins";
 
 function isObject( obj: unknown ): boolean {
   return typeof obj === "object" && obj != null;
@@ -68,7 +67,7 @@ export class PluginRegistry<T extends { name?: string; options?( flags: any ): a
             `Expected ${name ? name + " " : ""}plugin to be an object instead got ${typeOf( plugin )}`
           );
         }
-        return this.handle( map, name, plugin, options );
+        return this.handle( map, name as string, plugin, options );
       }
     );
 
