@@ -38,6 +38,15 @@ export class BuilderUtil {
   }
 
   joinSourceMaps( maps: any[] ) {
+    maps = maps.filter( Boolean );
+    if ( maps.length === 0 ) {
+      return null;
+    }
+    if ( maps.length === 1 ) {
+      return {
+        ...maps[ 0 ]
+      };
+    }
     return joinSourceMaps( maps );
   }
 

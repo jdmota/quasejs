@@ -63,13 +63,15 @@ export async function compareFile( actual, expected ) {
   const actualLen = ignoreEndNewLines( actualBuffer );
   const expectedLen = ignoreEndNewLines( expectedBuffer );
 
-  if ( actualLen !== expectedLen ) {
-    throw new Error( `${actual} size ${actualLen} !== ${expected} size ${expectedLen}` );
-  }
+  /* if ( actualLen !== expectedLen ) {
+    throw new Error( `${actual} size ${actualLen} != ${expected} size ${expectedLen}` );
+  }*/
 
-  for ( let i = 0; i < actualLen; i++ ) {
+  const len = Math.min( actualLen, expectedLen );
+
+  for ( let i = 0; i < len; i++ ) {
     if ( actualBuffer[ i ] !== expectedBuffer[ i ] ) {
-      throw new Error( `${actual} !== ${expected} at ${i}` );
+      throw new Error( `${actual} != ${expected} at ${i} / ${actualBuffer[ i ]} !== ${expectedBuffer[ i ]}` );
     }
   }
 

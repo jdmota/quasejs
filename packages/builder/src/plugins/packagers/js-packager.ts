@@ -45,7 +45,7 @@ async function render( module: FinalModule, ctx: BuilderUtil ) {
 
   return {
     code: generateResult.code,
-    map: optimization.sourceMaps && ctx.joinSourceMaps( [ map, generateResult.map ] ),
+    map: optimization.sourceMaps && await ctx.joinSourceMaps( [ map, generateResult.map ] ),
     varsUsed: meta.varsUsed
   };
 }
@@ -106,10 +106,7 @@ export const packager: Packager = {
       );
     }
 
-    return {
-      data: build.toString(),
-      map: build.sourceMap()
-    };
+    return build.finish();
   }
 
 };

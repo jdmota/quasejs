@@ -1,5 +1,5 @@
 const { relative } = require( "path" );
-const { SourceMapGenerator, SourceMapConsumer, } = require( "@quase/source-map" );
+const { SourceMapGenerator, SourceMapConsumer } = require( "@quase/source-map" );
 
 function countNewLines( string: string ) {
   let c = 0;
@@ -24,6 +24,7 @@ export default class StringBuilder {
   private column: number;
   private cwd: string;
   private sourceMapGenerator: any;
+  private lastPromise: Promise<void>;
 
   constructor( { sourceMap, cwd, file }: { sourceMap: any; cwd: string; file: string } ) {
     this.finalString = "";
@@ -31,12 +32,13 @@ export default class StringBuilder {
     this.column = 0;
     this.cwd = cwd;
     this.sourceMapGenerator = !!sourceMap && new SourceMapGenerator( { file } );
+    this.lastPromise = Promise.resolve();
   }
 
-  append( string: string, map?: any ) { // map: { file, sources, sourceRoot, sourcesContent }
+  private async _append( string: string, consumerInit: any ) {
 
-    if ( this.sourceMapGenerator && map ) {
-      const consumer = new SourceMapConsumer( map );
+    if ( this.sourceMapGenerator && consumerInit ) {
+      const consumer = await consumerInit;
       consumer.eachMapping( ( m: any ) => {
 
         const newMapping: any = {
@@ -58,6 +60,8 @@ export default class StringBuilder {
           this.sourceMapGenerator.setSourceContent( m.source, consumer.sourceContentFor( m.source ) );
         }
       } );
+
+      consumer.destroy();
     }
 
     this.finalString += string;
@@ -76,11 +80,23 @@ export default class StringBuilder {
 
   }
 
-  toString() {
-    return this.finalString;
+  append( string: string, map?: any ) { // map: { file, sources, sourceRoot, sourcesContent }
+    const consumerInit = map ? new SourceMapConsumer( map ) : null;
+    this.lastPromise = this.lastPromise.then(
+      () => this._append( string, consumerInit ),
+      consumerInit ? () => consumerInit.then( ( c: any ) => c.destroy() ) : null
+    );
   }
 
-  sourceMap() {
+  async finish() {
+    await this.lastPromise;
+    return {
+      data: this.finalString,
+      map: this.sourceMap()
+    };
+  }
+
+  private sourceMap() {
     if ( !this.sourceMapGenerator ) {
       return null;
     }
