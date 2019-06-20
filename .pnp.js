@@ -2694,9 +2694,9 @@ let packageInformationStores = new Map([
     ["0.2.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/path-url/"),
       packageDependencies: new Map([
-        ["file-url", "2.0.2"],
-        ["is-url-superb", "2.0.0"],
-        ["slash", "1.0.0"],
+        ["file-url", "3.0.0"],
+        ["is-url-superb", "3.0.0"],
+        ["slash", "3.0.0"],
       ]),
     }],
   ])],
@@ -2705,6 +2705,12 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/"),
       packageDependencies: new Map([
         ["file-url", "2.0.2"],
+      ]),
+    }],
+    ["3.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-3.0.0-247a586a746ce9f7a8ed05560290968afc262a77/node_modules/file-url/"),
+      packageDependencies: new Map([
+        ["file-url", "3.0.0"],
       ]),
     }],
   ])],
@@ -2716,6 +2722,13 @@ let packageInformationStores = new Map([
         ["is-url-superb", "2.0.0"],
       ]),
     }],
+    ["3.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-3.0.0-b9a1da878a1ac73659047d1e6f4ef22c209d3e25/node_modules/is-url-superb/"),
+      packageDependencies: new Map([
+        ["url-regex", "5.0.0"],
+        ["is-url-superb", "3.0.0"],
+      ]),
+    }],
   ])],
   ["url-regex", new Map([
     ["3.2.0", {
@@ -2725,12 +2738,26 @@ let packageInformationStores = new Map([
         ["url-regex", "3.2.0"],
       ]),
     }],
+    ["5.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-5.0.0-8f5456ab83d898d18b2f91753a702649b873273a/node_modules/url-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "4.1.0"],
+        ["tlds", "1.203.1"],
+        ["url-regex", "5.0.0"],
+      ]),
+    }],
   ])],
   ["ip-regex", new Map([
     ["1.0.3", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/"),
       packageDependencies: new Map([
         ["ip-regex", "1.0.3"],
+      ]),
+    }],
+    ["4.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-4.1.0-5ad62f685a14edb421abebc2fff8db94df67b455/node_modules/ip-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "4.1.0"],
       ]),
     }],
     ["2.1.0", {
@@ -6297,6 +6324,14 @@ let packageInformationStores = new Map([
       packageDependencies: new Map([
         ["@quase/path-url", "0.2.0-0"],
         ["fs-extra", "5.0.0"],
+      ]),
+    }],
+  ])],
+  ["tlds", new Map([
+    ["1.203.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/"),
+      packageDependencies: new Map([
+        ["tlds", "1.203.1"],
       ]),
     }],
   ])],
@@ -11938,9 +11973,13 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/", {"name":"@quase/path-url","reference":"0.1.0"}],
   ["./packages/path-url/", {"name":"@quase/path-url","reference":"0.2.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/", {"name":"file-url","reference":"2.0.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-3.0.0-247a586a746ce9f7a8ed05560290968afc262a77/node_modules/file-url/", {"name":"file-url","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-3.0.0-b9a1da878a1ac73659047d1e6f4ef22c209d3e25/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/", {"name":"url-regex","reference":"3.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-5.0.0-8f5456ab83d898d18b2f91753a702649b873273a/node_modules/url-regex/", {"name":"url-regex","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/", {"name":"ip-regex","reference":"1.0.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-4.1.0-5ad62f685a14edb421abebc2fff8db94df67b455/node_modules/ip-regex/", {"name":"ip-regex","reference":"4.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/", {"name":"ip-regex","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/", {"name":"slash","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-3.0.0-6539be870c165adbd5240220dbe361f1bc4d4634/node_modules/slash/", {"name":"slash","reference":"3.0.0"}],
@@ -12314,6 +12353,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-error-stack-parser-2.0.2-4ae8dbaa2bf90a8b450707b9149dcabca135520d/node_modules/error-stack-parser/", {"name":"error-stack-parser","reference":"2.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-stackframe-1.0.4-357b24a992f9427cba6b545d96a14ed2cbca187b/node_modules/stackframe/", {"name":"stackframe","reference":"1.0.4"}],
   ["./packages/fs/cacheable-fs/", {"name":"@quase/cacheable-fs","reference":"0.1.0-0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/", {"name":"tlds","reference":"1.203.1"}],
   ["./packages/fs/find-files/", {"name":"@quase/find-files","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ignore-by-default-1.0.1-48ca6d72f6c6a3af00a9ad4ae6876be3889e2b09/node_modules/ignore-by-default/", {"name":"ignore-by-default","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-negated-glob-1.0.0-6910bca5da8c95e784b5751b976cf5a10fee36d2/node_modules/is-negated-glob/", {"name":"is-negated-glob","reference":"1.0.0"}],

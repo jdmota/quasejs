@@ -1,14 +1,14 @@
-// @flow
+import path from "path";
+import pathToUrl from "file-url";
+import slash from "slash";
+import isUrl from "is-url-superb";
 
-opaque type Url = string;
-opaque type Path = string;
+type Url = string;
+type Path = string;
 
 // File paths
 
-const path = require( "path" );
-
-export const pathToUrl = require( "file-url" );
-export const slash = require( "slash" );
+export { pathToUrl, slash };
 
 export function isAbsolutePath( file: Path ) {
   return path.isAbsolute( file );
@@ -26,7 +26,7 @@ export function resolvePathAsUrl( from: Path, to: Path ) {
   return path.resolve( path.dirname( from ), to );
 }
 
-export function prettifyPath( file: Path ) {
+export function prettifyPath( file: Path ): string {
   return slash( path.relative( process.cwd(), file ) );
 }
 
@@ -48,15 +48,15 @@ export function isAbsoluteUrl( url: Url ) {
   return reAbsUrl.test( url );
 }
 
-export function makeAbsoluteUrl( url: Url ) {
+export function makeAbsoluteUrl( url: Url ): string {
   return new URL( url, LOCATION ).href;
 }
 
-export function resolveUrl( from: Url, to: Url ) {
+export function resolveUrl( from: Url, to: Url ): string {
   return new URL( to, from ).href;
 }
 
-export function prettifyUrl( url: Url, opts: ?{ lastSlash: boolean } ) {
+export function prettifyUrl( url: Url, opts?: { lastSlash: boolean } ): string {
   let { hash, origin, pathname, search } = new URL( url, LOCATION );
   pathname = opts && opts.lastSlash ? pathname : removeLastSlash( pathname );
   origin = origin === LOCATION.origin ? "" : origin;
@@ -69,7 +69,7 @@ export function removeLastSlash( url: Url ) {
 
 // Both
 
-export const isUrl = require( "is-url-superb" );
+export { isUrl };
 
 export function isAbsolute( name: Url | Path ) {
   return isUrl( name ) ? isAbsoluteUrl( name ) : isAbsolutePath( name );
@@ -87,6 +87,6 @@ export function resolveAsUrl( from: Url | Path, to: Url | Path ) {
   return isUrl( from ) ? resolveUrl( from, to ) : resolvePathAsUrl( from, to );
 }
 
-export function prettify( name: Url | Path, opts: ?{ lastSlash: boolean } ) {
+export function prettify( name: Url | Path, opts?: { lastSlash: boolean } ) {
   return isUrl( name ) ? prettifyUrl( name, opts ) : prettifyPath( name );
 }
