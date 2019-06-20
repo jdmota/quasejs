@@ -1,29 +1,40 @@
 import { beautify, getStack, locToString } from "../src";
 
 const { SourceMapExtractor } = require( "@quase/source-map" );
-const fs = require( "fs-extra" );
+
+const cwd = process.cwd();
+
+function clean( string ) {
+  return string.split( cwd ).join( "" ).replace( /\\/g, "/" ).split( "\n" ).filter( x => !/node_modules/.test( x ) ).join( "\n" );
+}
+
+function a( offset ) {
+  return b( offset );
+}
+
+function b( offset ) {
+  return c( offset );
+}
+
+function c( offset ) {
+  return clean( getStack( offset ) );
+}
 
 it( "getStack", () => {
 
-  const cwd = process.cwd();
-
-  function clean( string ) {
-    return string.split( cwd ).join( "" ).replace( /\\/g, "/" ).split( "\n" ).filter( x => !/node_modules/.test( x ) ).join( "\n" );
-  }
-
-  expect( clean( getStack() ) ).toMatchSnapshot( "undefined" );
-  expect( clean( getStack( -1 ) ) ).toMatchSnapshot( "-1" );
-  expect( clean( getStack( 0 ) ) ).toMatchSnapshot( "0" );
-  expect( clean( getStack( 1 ) ) ).toMatchSnapshot( "1" );
-  expect( clean( getStack( 2 ) ) ).toMatchSnapshot( "2" );
-  expect( clean( getStack( 3 ) ) ).toMatchSnapshot( "3" );
+  expect( a() ).toMatchSnapshot( "undefined" );
+  expect( a( -1 ) ).toMatchSnapshot( "-1" );
+  expect( a( 0 ) ).toMatchSnapshot( "0" );
+  expect( a( 1 ) ).toMatchSnapshot( "1" );
+  expect( a( 2 ) ).toMatchSnapshot( "2" );
+  expect( a( 3 ) ).toMatchSnapshot( "3" );
 
 } );
 
 it( "beautify", async() => {
 
   const stack = getStack();
-  const extractor = new SourceMapExtractor( fs );
+  const extractor = new SourceMapExtractor();
 
   expect( ( await beautify( stack, { extractor, ignore: /node_modules/ } ) ).stack ).toMatchSnapshot();
 
@@ -32,7 +43,7 @@ it( "beautify", async() => {
 it( "beautify with title", async() => {
 
   const stack = new Error( "title" ).stack;
-  const extractor = new SourceMapExtractor( fs );
+  const extractor = new SourceMapExtractor();
 
   expect( ( await beautify( stack, { extractor, ignore: /node_modules/ } ) ).stack ).toMatchSnapshot();
 
