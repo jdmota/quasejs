@@ -1,7 +1,6 @@
 import SourceMapExtractorBase, { Original, SourceMapInfoWithMap } from "./extractor-base";
 import { GetFile } from "./readfile-fetch";
-
-const { makeAbsolute, resolveAsUrl, isUrl } = require( "@quase/path-url" );
+import { makeAbsolute, resolveAsUrl, isUrl } from "@quase/path-url";
 
 export default class SourceMapExtractor extends SourceMapExtractorBase {
 

@@ -1,7 +1,6 @@
 import encoding from "./encoding";
 import { RawSourceMap, RawIndexMap, SourceMapConsumer } from "source-map";
-
-const { resolveAsUrl } = require( "@quase/path-url" );
+import { resolveAsUrl } from "@quase/path-url";
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
   // Matches /* ... */ comments
@@ -76,7 +75,7 @@ export default class SourceMapExtractorBase {
     let result;
 
     if ( pos.line != null ) {
-      const originalFile = resolveAsUrl( mapLocation, pos.source );
+      const originalFile = pos.source ? resolveAsUrl( mapLocation, pos.source ) : null;
       const originalCode = pos.source ? consumer.sourceContentFor( pos.source, true ) : null;
 
       result = {
