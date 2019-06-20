@@ -1888,6 +1888,12 @@ let packageInformationStores = new Map([
         ["resolve-from", "3.0.0"],
       ]),
     }],
+    ["5.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-resolve-from-5.0.0-c35225843df8f776df21c57557bc087e9dfdfc69/node_modules/resolve-from/"),
+      packageDependencies: new Map([
+        ["resolve-from", "5.0.0"],
+      ]),
+    }],
     ["4.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-resolve-from-4.0.0-4abcd852ad32dd7baabfe9b40e00a36db5f392e6/node_modules/resolve-from/"),
       packageDependencies: new Map([
@@ -2667,7 +2673,7 @@ let packageInformationStores = new Map([
     ["0.1.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/util/get-plugins/"),
       packageDependencies: new Map([
-        ["resolve-from", "4.0.0"],
+        ["resolve-from", "5.0.0"],
       ]),
     }],
   ])],
@@ -11883,6 +11889,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-pkg-dir-2.0.0-f6d5d1109e19d63edf428e0bd57e12777615334b/node_modules/pkg-dir/", {"name":"pkg-dir","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-cwd-2.0.0-00a9f7387556e27038eae232caa372a6a59b665a/node_modules/resolve-cwd/", {"name":"resolve-cwd","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-from-3.0.0-b22c7af7d9d6881bc8b6e653335eebcb0a188748/node_modules/resolve-from/", {"name":"resolve-from","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-from-5.0.0-c35225843df8f776df21c57557bc087e9dfdfc69/node_modules/resolve-from/", {"name":"resolve-from","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-resolve-from-4.0.0-4abcd852ad32dd7baabfe9b40e00a36db5f392e6/node_modules/resolve-from/", {"name":"resolve-from","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-installed-globally-0.1.0-0dfd98f5a9111716dd535dda6492f67bf3d25a80/node_modules/is-installed-globally/", {"name":"is-installed-globally","reference":"0.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-global-dirs-0.1.1-b319c0dd4607f353f3be9cca4c72fc148c49f445/node_modules/global-dirs/", {"name":"global-dirs","reference":"0.1.1"}],

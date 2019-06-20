@@ -1,25 +1,23 @@
-// @flow
-const _resolveFrom = require( "resolve-from" );
+import _resolveFrom from "resolve-from";
 
-export function requireRelative( m: string, cwd: ?string ) {
-  // $FlowIgnore
+export function requireRelative( m: string, cwd?: string ) {
   return require( _resolveFrom( cwd || process.cwd(), m ) );
 }
 
 type Plugin = {
-  plugin: any,
-  name: ?string,
-  key: ?string,
-  options: Object
+  plugin: any;
+  name: string | undefined;
+  key: string | undefined;
+  options: any;
 };
 
-type ProvidedPlugin = string | Function | [string | Function, ?Object];
+type ProvidedPlugin = any | [any, any];
 
-type ProvidedPlugins = $ReadOnlyArray<?ProvidedPlugin>;
+type ProvidedPlugins = Readonly<( ProvidedPlugin | null | undefined )[]>;
 
 const regexp = /^([^]+)\[([^[\]]+)\]$/;
 
-export function getOnePlugin( p: ProvidedPlugin, cwd: ?string ): Plugin {
+export function getOnePlugin( p: ProvidedPlugin, cwd?: string ): Plugin {
   let plugin, name, key, options;
 
   if ( Array.isArray( p ) ) {
@@ -60,8 +58,8 @@ export function getOnePlugin( p: ProvidedPlugin, cwd: ?string ): Plugin {
   };
 }
 
-export function getPlugins( provided: ProvidedPlugins, cwd: ?string ): Plugin[] {
-  const plugins = [];
+export function getPlugins( provided: ProvidedPlugins, cwd?: string ): Plugin[] {
+  const plugins: Plugin[] = [];
   for ( const p of provided ) {
     if ( p ) {
       plugins.push( getOnePlugin( p, cwd ) );
