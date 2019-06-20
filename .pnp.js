@@ -6374,7 +6374,7 @@ let packageInformationStores = new Map([
     ["0.1.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/error/"),
       packageDependencies: new Map([
-        ["@quase/path-url", "0.1.0"],
+        ["@quase/path-url", "0.2.0-0"],
         ["error-stack-parser", "2.0.2"],
         ["@quase/source-map", "0.2.0-0"],
         ["fs-extra", "7.0.1"],

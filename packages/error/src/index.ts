@@ -1,6 +1,5 @@
 import stackParser from "error-stack-parser";
-
-const { slash, prettify } = require( "@quase/path-url" );
+import { slash, prettify } from "@quase/path-url";
 
 export const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
 export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
