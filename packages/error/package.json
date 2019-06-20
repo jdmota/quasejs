@@ -7,10 +7,10 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/error",
   "main": "dist/index.js",
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "dependencies": {
     "@quase/path-url": "^0.1.0",
-    "error-stack-parser": "^2.0.1"
+    "error-stack-parser": "^2.0.2"
   },
   "devDependencies": {
     "@quase/source-map": "0.2.0-0",

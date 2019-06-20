@@ -1,16 +1,30 @@
-const stackParser = require( "error-stack-parser" );
+import stackParser from "error-stack-parser";
+
 const { slash, prettify } = require( "@quase/path-url" );
 
 export const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
 export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
-export async function beautify( originalStack, options ) {
+type Opts = {
+  extractor?: any;
+  ignore?: {
+    test( text: string ): boolean;
+  };
+};
+
+type StackFrame = stackParser.StackFrame & { fileName: string };
+
+function excludeFramesWithoutFilename( v: stackParser.StackFrame ): v is StackFrame {
+  return !!v.fileName;
+}
+
+export async function beautify( originalStack: string, options: Opts = {} ) {
 
   const extractor = options && options.extractor;
   const ignore = options && options.ignore;
+  const error = { name: "", message: "", stack: originalStack };
 
-  const originalFrames =
-    stackParser.parse( { stack: originalStack } ).filter( ( { fileName } ) => !!fileName );
+  const originalFrames = stackParser.parse( error ).filter( excludeFramesWithoutFilename );
 
   const frames = originalFrames.filter( ( { fileName, functionName } ) => {
     const file = slash( fileName );
@@ -27,7 +41,7 @@ export async function beautify( originalStack, options ) {
     return !ignoreFileRe.test( file ) && !ignoreStackTraceRe.test( functionName || "" );
   } );
 
-  const originalFirst = originalFrames[ 0 ];
+  const originalFirst: StackFrame | undefined = originalFrames[ 0 ];
 
   if ( frames.length === 0 && originalFirst ) {
     frames.push( originalFirst );
@@ -71,7 +85,7 @@ export async function beautify( originalStack, options ) {
   const cleaned = await Promise.all( promises );
   const cleanedText = cleaned.map( ( { textLine, file, line, column } ) => ( `${textLine} (${prettify( file )}:${line}:${column})` ) );
 
-  const title = originalFirst ?
+  const title = originalFirst && originalFirst.source ?
     originalStack.split( originalFirst.source ).shift() :
     originalStack;
 
@@ -84,10 +98,9 @@ export async function beautify( originalStack, options ) {
     stack,
     source: first && first.file ? first : null
   };
-  // source: ?{ file, code, name, line, column }
 }
 
-export function getStack( offset ) {
+export function getStack( offset?: number ) {
   let error = new Error();
 
   // Not all browsers generate the `stack` property
@@ -101,7 +114,23 @@ export function getStack( offset ) {
     }
   }
 
-  const arr = error.stack.split( "\n" );
-  arr.splice( 1, offset > 1 ? offset : 1 );
+  const stack = error.stack as string;
+  const arr = stack.split( "\n" );
+  arr.splice( 1, offset != null && offset > 1 ? offset : 1 );
   return arr.join( "\n" );
+}
+
+type Loc = {
+  line?: number | null | undefined;
+  column?: number | null | undefined;
+};
+
+export function locToString( loc: Loc ) {
+  if ( loc.line != null ) {
+    if ( loc.column != null ) {
+      return `${loc.line}:${loc.column}`;
+    }
+    return `${loc.line}`;
+  }
+  return "";
 }

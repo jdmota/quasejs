@@ -8637,9 +8637,9 @@ let packageInformationStores = new Map([
     ["1.11.1", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-escodegen-1.11.1-c485ff8d6b4cdb89e27f4a856e91f118401ca510/node_modules/escodegen/"),
       packageDependencies: new Map([
+        ["esprima", "3.1.3"],
         ["estraverse", "4.2.0"],
         ["esutils", "2.0.2"],
-        ["esprima", "3.1.3"],
         ["optionator", "0.8.2"],
         ["source-map", "0.6.1"],
         ["escodegen", "1.11.1"],
@@ -8657,14 +8657,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["estraverse", new Map([
-    ["4.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-estraverse-4.2.0-0dee3fed31fcd469618ce7342099fc1afa0bdb13/node_modules/estraverse/"),
-      packageDependencies: new Map([
-        ["estraverse", "4.2.0"],
-      ]),
-    }],
-  ])],
   ["esprima", new Map([
     ["3.1.3", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-esprima-3.1.3-fdca51cee6133895e3c88d535ce49dbff62a4633/node_modules/esprima/"),
@@ -8676,6 +8668,14 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71/node_modules/esprima/"),
       packageDependencies: new Map([
         ["esprima", "4.0.1"],
+      ]),
+    }],
+  ])],
+  ["estraverse", new Map([
+    ["4.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-estraverse-4.2.0-0dee3fed31fcd469618ce7342099fc1afa0bdb13/node_modules/estraverse/"),
+      packageDependencies: new Map([
+        ["estraverse", "4.2.0"],
       ]),
     }],
   ])],
@@ -12551,9 +12551,9 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-domexception-1.0.1-937442644ca6a31261ef36e3ec677fe805582c90/node_modules/domexception/", {"name":"domexception","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-escodegen-1.11.1-c485ff8d6b4cdb89e27f4a856e91f118401ca510/node_modules/escodegen/", {"name":"escodegen","reference":"1.11.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-escodegen-1.11.0-b27a9389481d5bfd5bec76f7bb1eb3f8f4556589/node_modules/escodegen/", {"name":"escodegen","reference":"1.11.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-estraverse-4.2.0-0dee3fed31fcd469618ce7342099fc1afa0bdb13/node_modules/estraverse/", {"name":"estraverse","reference":"4.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-esprima-3.1.3-fdca51cee6133895e3c88d535ce49dbff62a4633/node_modules/esprima/", {"name":"esprima","reference":"3.1.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71/node_modules/esprima/", {"name":"esprima","reference":"4.0.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-estraverse-4.2.0-0dee3fed31fcd469618ce7342099fc1afa0bdb13/node_modules/estraverse/", {"name":"estraverse","reference":"4.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-optionator-0.8.2-364c5e409d3f4d6301d6c0b4c05bba50180aeb64/node_modules/optionator/", {"name":"optionator","reference":"0.8.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-deep-is-0.1.3-b369d6fb5dbc13eecf524f91b070feedc357cf34/node_modules/deep-is/", {"name":"deep-is","reference":"0.1.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-fast-levenshtein-2.0.6-3d8a5c66883a16a30ca8643e851f19baa7797917/node_modules/fast-levenshtein/", {"name":"fast-levenshtein","reference":"2.0.6"}],
