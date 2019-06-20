@@ -62,13 +62,13 @@ export default class SourceMapExtractor extends SourceMapExtractorBase {
     this.mapRequest.delete( file );
   }
 
-  async getOriginalLocation( file: string, generated: { line?: number; column?: number; bias?: number } ): Promise<Original | { code: string }> {
+  async getOriginalLocation( file: string, generated: { line: number; column: number; bias?: number } ): Promise<Original | { code: string }> {
 
     const info = await this.getMap( file );
 
     if ( info && info.map ) {
       const { map, mapLocation } = info;
-      const original = this.getOriginalLocationFromMap( map, mapLocation, generated );
+      const original = await this.getOriginalLocationFromMap( map, mapLocation, generated );
 
       if ( original ) {
         if ( original.originalCode == null && original.originalFile ) {
