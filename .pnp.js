@@ -426,6 +426,13 @@ let packageInformationStores = new Map([
         ["source-map", "0.5.7"],
       ]),
     }],
+    ["0.8.0-beta.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-source-map-0.8.0-beta.0-d4c1bb42c3f7ee925f005927ba10709e0d1d1f11/node_modules/source-map/"),
+      packageDependencies: new Map([
+        ["whatwg-url", "7.0.0"],
+        ["source-map", "0.8.0-beta.0"],
+      ]),
+    }],
     ["0.6.1", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-source-map-0.6.1-74722af32e9614e9c287a8d0bbde48b5e2f1a263/node_modules/source-map/"),
       packageDependencies: new Map([
@@ -2681,13 +2688,21 @@ let packageInformationStores = new Map([
     ["0.2.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/source-map/"),
       packageDependencies: new Map([
-        ["@quase/path-url", "0.1.0"],
-        ["source-map", "0.5.7"],
+        ["@quase/path-url", "0.2.0-0"],
+        ["source-map", "0.8.0-beta.0"],
         ["fs-extra", "7.0.1"],
       ]),
     }],
   ])],
   ["@quase/path-url", new Map([
+    ["0.2.0-0", {
+      packageLocation: path.resolve(__dirname, "./packages/path-url/"),
+      packageDependencies: new Map([
+        ["file-url", "3.0.0"],
+        ["is-url-superb", "3.0.0"],
+        ["slash", "3.0.0"],
+      ]),
+    }],
     ["0.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/"),
       packageDependencies: new Map([
@@ -2697,37 +2712,22 @@ let packageInformationStores = new Map([
         ["@quase/path-url", "0.1.0"],
       ]),
     }],
-    ["0.2.0-0", {
-      packageLocation: path.resolve(__dirname, "./packages/path-url/"),
-      packageDependencies: new Map([
-        ["file-url", "3.0.0"],
-        ["is-url-superb", "3.0.0"],
-        ["slash", "3.0.0"],
-      ]),
-    }],
   ])],
   ["file-url", new Map([
-    ["2.0.2", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/"),
-      packageDependencies: new Map([
-        ["file-url", "2.0.2"],
-      ]),
-    }],
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-3.0.0-247a586a746ce9f7a8ed05560290968afc262a77/node_modules/file-url/"),
       packageDependencies: new Map([
         ["file-url", "3.0.0"],
       ]),
     }],
-  ])],
-  ["is-url-superb", new Map([
-    ["2.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/"),
+    ["2.0.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/"),
       packageDependencies: new Map([
-        ["url-regex", "3.2.0"],
-        ["is-url-superb", "2.0.0"],
+        ["file-url", "2.0.2"],
       ]),
     }],
+  ])],
+  ["is-url-superb", new Map([
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-3.0.0-b9a1da878a1ac73659047d1e6f4ef22c209d3e25/node_modules/is-url-superb/"),
       packageDependencies: new Map([
@@ -2735,15 +2735,15 @@ let packageInformationStores = new Map([
         ["is-url-superb", "3.0.0"],
       ]),
     }],
-  ])],
-  ["url-regex", new Map([
-    ["3.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/"),
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/"),
       packageDependencies: new Map([
-        ["ip-regex", "1.0.3"],
         ["url-regex", "3.2.0"],
+        ["is-url-superb", "2.0.0"],
       ]),
     }],
+  ])],
+  ["url-regex", new Map([
     ["5.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-5.0.0-8f5456ab83d898d18b2f91753a702649b873273a/node_modules/url-regex/"),
       packageDependencies: new Map([
@@ -2752,18 +2752,25 @@ let packageInformationStores = new Map([
         ["url-regex", "5.0.0"],
       ]),
     }],
-  ])],
-  ["ip-regex", new Map([
-    ["1.0.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/"),
+    ["3.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/"),
       packageDependencies: new Map([
         ["ip-regex", "1.0.3"],
+        ["url-regex", "3.2.0"],
       ]),
     }],
+  ])],
+  ["ip-regex", new Map([
     ["4.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-4.1.0-5ad62f685a14edb421abebc2fff8db94df67b455/node_modules/ip-regex/"),
       packageDependencies: new Map([
         ["ip-regex", "4.1.0"],
+      ]),
+    }],
+    ["1.0.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/"),
+      packageDependencies: new Map([
+        ["ip-regex", "1.0.3"],
       ]),
     }],
     ["2.1.0", {
@@ -2773,23 +2780,90 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["slash", new Map([
-    ["1.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/"),
+  ["tlds", new Map([
+    ["1.203.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/"),
       packageDependencies: new Map([
-        ["slash", "1.0.0"],
+        ["tlds", "1.203.1"],
       ]),
     }],
+  ])],
+  ["slash", new Map([
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-3.0.0-6539be870c165adbd5240220dbe361f1bc4d4634/node_modules/slash/"),
       packageDependencies: new Map([
         ["slash", "3.0.0"],
       ]),
     }],
+    ["1.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/"),
+      packageDependencies: new Map([
+        ["slash", "1.0.0"],
+      ]),
+    }],
     ["2.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/"),
       packageDependencies: new Map([
         ["slash", "2.0.0"],
+      ]),
+    }],
+  ])],
+  ["whatwg-url", new Map([
+    ["7.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-7.0.0-fde926fa54a599f3adf82dff25a9f7be02dc6edd/node_modules/whatwg-url/"),
+      packageDependencies: new Map([
+        ["lodash.sortby", "4.7.0"],
+        ["tr46", "1.0.1"],
+        ["webidl-conversions", "4.0.2"],
+        ["whatwg-url", "7.0.0"],
+      ]),
+    }],
+    ["6.5.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-6.5.0-f2df02bff176fd65070df74ad5ccbb5a199965a8/node_modules/whatwg-url/"),
+      packageDependencies: new Map([
+        ["lodash.sortby", "4.7.0"],
+        ["tr46", "1.0.1"],
+        ["webidl-conversions", "4.0.2"],
+        ["whatwg-url", "6.5.0"],
+      ]),
+    }],
+  ])],
+  ["lodash.sortby", new Map([
+    ["4.7.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-lodash-sortby-4.7.0-edd14c824e2cc9c1e0b0a1b42bb5210516a42438/node_modules/lodash.sortby/"),
+      packageDependencies: new Map([
+        ["lodash.sortby", "4.7.0"],
+      ]),
+    }],
+  ])],
+  ["tr46", new Map([
+    ["1.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tr46-1.0.1-a8b13fd6bfd2489519674ccde55ba3693b706d09/node_modules/tr46/"),
+      packageDependencies: new Map([
+        ["punycode", "2.1.1"],
+        ["tr46", "1.0.1"],
+      ]),
+    }],
+  ])],
+  ["punycode", new Map([
+    ["2.1.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-punycode-2.1.1-b58b010ac40c22c5657616c8d2c2c02c7bf479ec/node_modules/punycode/"),
+      packageDependencies: new Map([
+        ["punycode", "2.1.1"],
+      ]),
+    }],
+    ["1.4.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-punycode-1.4.1-c0d5a63b2718800ad8e1eb0fa5269c84dd41845e/node_modules/punycode/"),
+      packageDependencies: new Map([
+        ["punycode", "1.4.1"],
+      ]),
+    }],
+  ])],
+  ["webidl-conversions", new Map([
+    ["4.0.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-webidl-conversions-4.0.2-a855980b1f0b6b359ba1d5d9fb39ae941faa63ad/node_modules/webidl-conversions/"),
+      packageDependencies: new Map([
+        ["webidl-conversions", "4.0.2"],
       ]),
     }],
   ])],
@@ -6333,14 +6407,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["tlds", new Map([
-    ["1.203.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/"),
-      packageDependencies: new Map([
-        ["tlds", "1.203.1"],
-      ]),
-    }],
-  ])],
   ["@quase/find-files", new Map([
     ["0.1.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/fs/find-files/"),
@@ -8603,65 +8669,6 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-mimetype-2.3.0-3d4b1e0312d2079879f826aff18dbeeca5960fbf/node_modules/whatwg-mimetype/"),
       packageDependencies: new Map([
         ["whatwg-mimetype", "2.3.0"],
-      ]),
-    }],
-  ])],
-  ["whatwg-url", new Map([
-    ["7.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-7.0.0-fde926fa54a599f3adf82dff25a9f7be02dc6edd/node_modules/whatwg-url/"),
-      packageDependencies: new Map([
-        ["lodash.sortby", "4.7.0"],
-        ["tr46", "1.0.1"],
-        ["webidl-conversions", "4.0.2"],
-        ["whatwg-url", "7.0.0"],
-      ]),
-    }],
-    ["6.5.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-6.5.0-f2df02bff176fd65070df74ad5ccbb5a199965a8/node_modules/whatwg-url/"),
-      packageDependencies: new Map([
-        ["lodash.sortby", "4.7.0"],
-        ["tr46", "1.0.1"],
-        ["webidl-conversions", "4.0.2"],
-        ["whatwg-url", "6.5.0"],
-      ]),
-    }],
-  ])],
-  ["lodash.sortby", new Map([
-    ["4.7.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-lodash-sortby-4.7.0-edd14c824e2cc9c1e0b0a1b42bb5210516a42438/node_modules/lodash.sortby/"),
-      packageDependencies: new Map([
-        ["lodash.sortby", "4.7.0"],
-      ]),
-    }],
-  ])],
-  ["tr46", new Map([
-    ["1.0.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-tr46-1.0.1-a8b13fd6bfd2489519674ccde55ba3693b706d09/node_modules/tr46/"),
-      packageDependencies: new Map([
-        ["punycode", "2.1.1"],
-        ["tr46", "1.0.1"],
-      ]),
-    }],
-  ])],
-  ["punycode", new Map([
-    ["2.1.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-punycode-2.1.1-b58b010ac40c22c5657616c8d2c2c02c7bf479ec/node_modules/punycode/"),
-      packageDependencies: new Map([
-        ["punycode", "2.1.1"],
-      ]),
-    }],
-    ["1.4.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-punycode-1.4.1-c0d5a63b2718800ad8e1eb0fa5269c84dd41845e/node_modules/punycode/"),
-      packageDependencies: new Map([
-        ["punycode", "1.4.1"],
-      ]),
-    }],
-  ])],
-  ["webidl-conversions", new Map([
-    ["4.0.2", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-webidl-conversions-4.0.2-a855980b1f0b6b359ba1d5d9fb39ae941faa63ad/node_modules/webidl-conversions/"),
-      packageDependencies: new Map([
-        ["webidl-conversions", "4.0.2"],
       ]),
     }],
   ])],
@@ -11717,6 +11724,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jsesc-2.5.2-80564d2e483dacf6e8ef209650a67df3f0c283a4/node_modules/jsesc/", {"name":"jsesc","reference":"2.5.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jsesc-0.5.0-e7dee66e35d6fc16f710fe91d5cf69f70f08911d/node_modules/jsesc/", {"name":"jsesc","reference":"0.5.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-source-map-0.5.7-8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc/node_modules/source-map/", {"name":"source-map","reference":"0.5.7"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-source-map-0.8.0-beta.0-d4c1bb42c3f7ee925f005927ba10709e0d1d1f11/node_modules/source-map/", {"name":"source-map","reference":"0.8.0-beta.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-source-map-0.6.1-74722af32e9614e9c287a8d0bbde48b5e2f1a263/node_modules/source-map/", {"name":"source-map","reference":"0.6.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-trim-right-1.0.1-cb2e1203067e0c8de1f614094b9fe45704ea6003/node_modules/trim-right/", {"name":"trim-right","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helpers-7.4.2-3bdfa46a552ca77ef5a0f8551be5f0845ae989be/node_modules/@babel/helpers/", {"name":"@babel/helpers","reference":"7.4.2"}],
@@ -11977,20 +11985,28 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-diff-2.1.0-4bbb8437c8d37e4b0cf1a68fd726ec6d645d6d36/node_modules/semver-diff/", {"name":"semver-diff","reference":"2.1.0"}],
   ["./packages/util/get-plugins/", {"name":"@quase/get-plugins","reference":"0.1.0-0"}],
   ["./packages/source-map/", {"name":"@quase/source-map","reference":"0.2.0-0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/", {"name":"@quase/path-url","reference":"0.1.0"}],
   ["./packages/path-url/", {"name":"@quase/path-url","reference":"0.2.0-0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/", {"name":"file-url","reference":"2.0.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@quase-path-url-0.1.0-42383ce0987748aee8291a3ddee2289a4734e036/node_modules/@quase/path-url/", {"name":"@quase/path-url","reference":"0.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-3.0.0-247a586a746ce9f7a8ed05560290968afc262a77/node_modules/file-url/", {"name":"file-url","reference":"3.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-file-url-2.0.2-e951784d79095127d3713029ab063f40818ca2ae/node_modules/file-url/", {"name":"file-url","reference":"2.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-3.0.0-b9a1da878a1ac73659047d1e6f4ef22c209d3e25/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"3.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/", {"name":"url-regex","reference":"3.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-url-superb-2.0.0-b728a18cf692e4d16da6b94c7408a811db0d0492/node_modules/is-url-superb/", {"name":"is-url-superb","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-5.0.0-8f5456ab83d898d18b2f91753a702649b873273a/node_modules/url-regex/", {"name":"url-regex","reference":"5.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/", {"name":"ip-regex","reference":"1.0.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-url-regex-3.2.0-dbad1e0c9e29e105dd0b1f09f6862f7fdb482724/node_modules/url-regex/", {"name":"url-regex","reference":"3.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-4.1.0-5ad62f685a14edb421abebc2fff8db94df67b455/node_modules/ip-regex/", {"name":"ip-regex","reference":"4.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-1.0.3-dc589076f659f419c222039a33316f1c7387effd/node_modules/ip-regex/", {"name":"ip-regex","reference":"1.0.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ip-regex-2.1.0-fa78bf5d2e6913c911ce9f819ee5146bb6d844e9/node_modules/ip-regex/", {"name":"ip-regex","reference":"2.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/", {"name":"slash","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/", {"name":"tlds","reference":"1.203.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-3.0.0-6539be870c165adbd5240220dbe361f1bc4d4634/node_modules/slash/", {"name":"slash","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-1.0.0-c41f2f6c39fc16d1cd17ad4b5d896114ae470d55/node_modules/slash/", {"name":"slash","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-slash-2.0.0-de552851a1759df3a8f206535442f5ec4ddeab44/node_modules/slash/", {"name":"slash","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-7.0.0-fde926fa54a599f3adf82dff25a9f7be02dc6edd/node_modules/whatwg-url/", {"name":"whatwg-url","reference":"7.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-6.5.0-f2df02bff176fd65070df74ad5ccbb5a199965a8/node_modules/whatwg-url/", {"name":"whatwg-url","reference":"6.5.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-lodash-sortby-4.7.0-edd14c824e2cc9c1e0b0a1b42bb5210516a42438/node_modules/lodash.sortby/", {"name":"lodash.sortby","reference":"4.7.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-tr46-1.0.1-a8b13fd6bfd2489519674ccde55ba3693b706d09/node_modules/tr46/", {"name":"tr46","reference":"1.0.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-punycode-2.1.1-b58b010ac40c22c5657616c8d2c2c02c7bf479ec/node_modules/punycode/", {"name":"punycode","reference":"2.1.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-punycode-1.4.1-c0d5a63b2718800ad8e1eb0fa5269c84dd41845e/node_modules/punycode/", {"name":"punycode","reference":"1.4.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-webidl-conversions-4.0.2-a855980b1f0b6b359ba1d5d9fb39ae941faa63ad/node_modules/webidl-conversions/", {"name":"webidl-conversions","reference":"4.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-7.0.1-4f189c44aa123b895f722804f55ea23eadc348e9/node_modules/fs-extra/", {"name":"fs-extra","reference":"7.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-fs-extra-5.0.0-414d0110cdd06705734d055652c5411260c31abd/node_modules/fs-extra/", {"name":"fs-extra","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jsonfile-4.0.0-8771aae0799b64076b76640fca058f9c10e33ecb/node_modules/jsonfile/", {"name":"jsonfile","reference":"4.0.0"}],
@@ -12360,7 +12376,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-error-stack-parser-2.0.2-4ae8dbaa2bf90a8b450707b9149dcabca135520d/node_modules/error-stack-parser/", {"name":"error-stack-parser","reference":"2.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-stackframe-1.0.4-357b24a992f9427cba6b545d96a14ed2cbca187b/node_modules/stackframe/", {"name":"stackframe","reference":"1.0.4"}],
   ["./packages/fs/cacheable-fs/", {"name":"@quase/cacheable-fs","reference":"0.1.0-0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-tlds-1.203.1-4dc9b02f53de3315bc98b80665e13de3edfc1dfc/node_modules/tlds/", {"name":"tlds","reference":"1.203.1"}],
   ["./packages/fs/find-files/", {"name":"@quase/find-files","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ignore-by-default-1.0.1-48ca6d72f6c6a3af00a9ad4ae6876be3889e2b09/node_modules/ignore-by-default/", {"name":"ignore-by-default","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-negated-glob-1.0.0-6910bca5da8c95e784b5751b976cf5a10fee36d2/node_modules/is-negated-glob/", {"name":"is-negated-glob","reference":"1.0.0"}],
@@ -12588,13 +12603,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cssstyle-1.1.1-18b038a9c44d65f7a8e428a653b9f6fe42faf5fb/node_modules/cssstyle/", {"name":"cssstyle","reference":"1.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-data-urls-1.1.0-15ee0582baa5e22bb59c77140da8f9c76963bbfe/node_modules/data-urls/", {"name":"data-urls","reference":"1.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-mimetype-2.3.0-3d4b1e0312d2079879f826aff18dbeeca5960fbf/node_modules/whatwg-mimetype/", {"name":"whatwg-mimetype","reference":"2.3.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-7.0.0-fde926fa54a599f3adf82dff25a9f7be02dc6edd/node_modules/whatwg-url/", {"name":"whatwg-url","reference":"7.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-whatwg-url-6.5.0-f2df02bff176fd65070df74ad5ccbb5a199965a8/node_modules/whatwg-url/", {"name":"whatwg-url","reference":"6.5.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-lodash-sortby-4.7.0-edd14c824e2cc9c1e0b0a1b42bb5210516a42438/node_modules/lodash.sortby/", {"name":"lodash.sortby","reference":"4.7.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-tr46-1.0.1-a8b13fd6bfd2489519674ccde55ba3693b706d09/node_modules/tr46/", {"name":"tr46","reference":"1.0.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-punycode-2.1.1-b58b010ac40c22c5657616c8d2c2c02c7bf479ec/node_modules/punycode/", {"name":"punycode","reference":"2.1.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-punycode-1.4.1-c0d5a63b2718800ad8e1eb0fa5269c84dd41845e/node_modules/punycode/", {"name":"punycode","reference":"1.4.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-webidl-conversions-4.0.2-a855980b1f0b6b359ba1d5d9fb39ae941faa63ad/node_modules/webidl-conversions/", {"name":"webidl-conversions","reference":"4.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-domexception-1.0.1-937442644ca6a31261ef36e3ec677fe805582c90/node_modules/domexception/", {"name":"domexception","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-escodegen-1.11.1-c485ff8d6b4cdb89e27f4a856e91f118401ca510/node_modules/escodegen/", {"name":"escodegen","reference":"1.11.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-escodegen-1.11.0-b27a9389481d5bfd5bec76f7bb1eb3f8f4556589/node_modules/escodegen/", {"name":"escodegen","reference":"1.11.0"}],

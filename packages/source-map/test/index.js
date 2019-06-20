@@ -1,4 +1,4 @@
-import { SourceMapExtractor, SourceMapExtractorBase } from "../src";
+import { joinSourceMaps, SourceMapExtractor, SourceMapExtractorBase } from "../src";
 
 const fs = require( "fs-extra" );
 const path = require( "path" );
@@ -53,14 +53,26 @@ test( "get original location from map", async() => {
   const extractor = new SourceMapExtractorBase();
   const fixturesFolder = path.join( __dirname, "fixtures" );
   const mapLocation = path.join( fixturesFolder, "map-file-comment.css.map" );
-  const map = SourceMapExtractorBase.consumeSourceMap( await fs.readFile( mapLocation, "utf8" ) );
+  const map = JSON.parse( await fs.readFile( mapLocation, "utf8" ) );
 
-  const location = extractor.getOriginalLocationFromMap( map, mapLocation, {
+  const location = await extractor.getOriginalLocationFromMap( map, mapLocation, {
     line: 8,
     column: 0
   } );
 
   location.originalFile = relative( fixturesFolder, location.originalFile );
   expect( location ).toMatchSnapshot();
+
+} );
+
+test( "joinSourceMaps", async() => {
+
+  // TODO better test
+
+  const fixturesFolder = path.join( __dirname, "fixtures" );
+  const mapLocation = path.join( fixturesFolder, "map-file-comment.css.map" );
+  const map = JSON.parse( await fs.readFile( mapLocation, "utf8" ) );
+
+  expect( await joinSourceMaps( [ map, map, map ] ) ).toMatchSnapshot();
 
 } );
