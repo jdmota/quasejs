@@ -11,9 +11,6 @@ module.exports = function( api ) {
     overrides: [ {
       test: "**/*.ts",
       presets: [ "@babel/preset-typescript" ]
-    }, {
-      test: "**/*.js",
-      presets: [ "@babel/preset-flow" ]
     } ],
     plugins: [
       // "istanbul",

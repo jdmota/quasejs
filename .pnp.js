@@ -8616,38 +8616,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["@babel/preset-flow", new Map([
-    ["pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-d4afbbd6215b1993d05095efb590984f9b6a3a02/node_modules/@babel/preset-flow/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.5"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-transform-flow-strip-types", "7.2.3"],
-        ["@babel/preset-flow", "pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-transform-flow-strip-types", new Map([
-    ["7.2.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-flow-strip-types-7.2.3-e3ac2a594948454e7431c7db33e1d02d51b5cd69/node_modules/@babel/plugin-transform-flow-strip-types/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.5"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-syntax-flow", "7.2.0"],
-        ["@babel/plugin-transform-flow-strip-types", "7.2.3"],
-      ]),
-    }],
-  ])],
-  ["@babel/plugin-syntax-flow", new Map([
-    ["7.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-flow-7.2.0-a765f061f803bc48f240c26f8747faf97c26bf7c/node_modules/@babel/plugin-syntax-flow/"),
-      packageDependencies: new Map([
-        ["@babel/core", "7.4.5"],
-        ["@babel/helper-plugin-utils", "7.0.0"],
-        ["@babel/plugin-syntax-flow", "7.2.0"],
-      ]),
-    }],
-  ])],
   ["@quase/eslint-config-base", new Map([
     ["pnp:0c89c1675497b0fec2ce71c0ceba145f497433f4", {
       packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-0c89c1675497b0fec2ce71c0ceba145f497433f4/node_modules/@quase/eslint-config-base/"),
@@ -9746,16 +9714,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["eslint-plugin-flowtype", new Map([
-    ["pnp:b20d52d1b63fe4d37c11acdb1befff790dd9c0c8", {
-      packageLocation: path.resolve(__dirname, "./.pnp/externals/pnp-b20d52d1b63fe4d37c11acdb1befff790dd9c0c8/node_modules/eslint-plugin-flowtype/"),
-      packageDependencies: new Map([
-        ["eslint", "5.16.0"],
-        ["lodash", "4.17.11"],
-        ["eslint-plugin-flowtype", "pnp:b20d52d1b63fe4d37c11acdb1befff790dd9c0c8"],
-      ]),
-    }],
-  ])],
   ["array-includes", new Map([
     ["3.0.3", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-array-includes-3.0.3-184b48f62d92d7452bb31b323165c7f8bd02266d/node_modules/array-includes/"),
@@ -9772,14 +9730,6 @@ let packageInformationStores = new Map([
       packageDependencies: new Map([
         ["eslint", "5.16.0"],
         ["eslint-plugin-jest", "pnp:c895d8e50ffed0a846dcd923855078bfa566d5f7"],
-      ]),
-    }],
-  ])],
-  ["flow-bin", new Map([
-    ["0.88.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-flow-bin-0.88.0-e4c7bd93da2331f6ac1733fbe484b1b0c52eb548/node_modules/flow-bin/"),
-      packageDependencies: new Map([
-        ["flow-bin", "0.88.0"],
       ]),
     }],
   ])],
@@ -10498,7 +10448,6 @@ let packageInformationStores = new Map([
         ["@babel/plugin-proposal-class-properties", "pnp:14724cda3c3ac650e41a80edd910cdecbe601f04"],
         ["@babel/plugin-proposal-object-rest-spread", "pnp:a45a6b0b6000042bfaa2a2e3f2942cdeb2c6aa75"],
         ["@babel/preset-env", "pnp:0fcb8a86302027dee988c72e7fda9a303025484a"],
-        ["@babel/preset-flow", "pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02"],
         ["@babel/preset-typescript", "pnp:1eacac43c9327c4cb3cbca060094d2d32117e9cf"],
         ["@babel/register", "pnp:212ab889e0e907ad9de719031b4506871141fc58"],
         ["@quase/eslint-config-base", "pnp:0c89c1675497b0fec2ce71c0ceba145f497433f4"],
@@ -10518,12 +10467,10 @@ let packageInformationStores = new Map([
         ["eslint", "5.16.0"],
         ["eslint-import-resolver-node", "0.3.2"],
         ["eslint-import-resolver-typescript", "pnp:6c6627c6b4ebc11ccdc386ee592dfbe75d32a50d"],
-        ["eslint-plugin-flowtype", "pnp:b20d52d1b63fe4d37c11acdb1befff790dd9c0c8"],
         ["eslint-plugin-import", "pnp:e13d44595399586b5a77811b3bc990943932eacf"],
         ["eslint-plugin-jest", "pnp:c895d8e50ffed0a846dcd923855078bfa566d5f7"],
         ["eslint-plugin-node", "pnp:0002cdcd4b4ece9dc23f69137327ea828b6e2a0b"],
         ["execa", "1.0.0"],
-        ["flow-bin", "0.88.0"],
         ["fs-extra", "7.0.1"],
         ["jest", "24.8.0"],
         ["prepend-file", "1.3.1"],
@@ -10580,7 +10527,6 @@ let locatorsByLocations = new Map([
   ["./.pnp/externals/pnp-14724cda3c3ac650e41a80edd910cdecbe601f04/node_modules/@babel/plugin-proposal-class-properties/", blacklistedLocator],
   ["./.pnp/externals/pnp-a45a6b0b6000042bfaa2a2e3f2942cdeb2c6aa75/node_modules/@babel/plugin-proposal-object-rest-spread/", blacklistedLocator],
   ["./.pnp/externals/pnp-0fcb8a86302027dee988c72e7fda9a303025484a/node_modules/@babel/preset-env/", blacklistedLocator],
-  ["./.pnp/externals/pnp-d4afbbd6215b1993d05095efb590984f9b6a3a02/node_modules/@babel/preset-flow/", blacklistedLocator],
   ["./.pnp/externals/pnp-1eacac43c9327c4cb3cbca060094d2d32117e9cf/node_modules/@babel/preset-typescript/", blacklistedLocator],
   ["./.pnp/externals/pnp-212ab889e0e907ad9de719031b4506871141fc58/node_modules/@babel/register/", blacklistedLocator],
   ["./.pnp/externals/pnp-0c89c1675497b0fec2ce71c0ceba145f497433f4/node_modules/@quase/eslint-config-base/", blacklistedLocator],
@@ -10589,7 +10535,6 @@ let locatorsByLocations = new Map([
   ["./.pnp/externals/pnp-40297bf345c2c41dbcbee7fd39cbf070f3594b60/node_modules/babel-eslint/", blacklistedLocator],
   ["./.pnp/externals/pnp-79a1891facb0f591b6362a15e98a77287a6e39bf/node_modules/babel-jest/", blacklistedLocator],
   ["./.pnp/externals/pnp-6c6627c6b4ebc11ccdc386ee592dfbe75d32a50d/node_modules/eslint-import-resolver-typescript/", blacklistedLocator],
-  ["./.pnp/externals/pnp-b20d52d1b63fe4d37c11acdb1befff790dd9c0c8/node_modules/eslint-plugin-flowtype/", blacklistedLocator],
   ["./.pnp/externals/pnp-e13d44595399586b5a77811b3bc990943932eacf/node_modules/eslint-plugin-import/", blacklistedLocator],
   ["./.pnp/externals/pnp-c895d8e50ffed0a846dcd923855078bfa566d5f7/node_modules/eslint-plugin-jest/", blacklistedLocator],
   ["./.pnp/externals/pnp-0002cdcd4b4ece9dc23f69137327ea828b6e2a0b/node_modules/eslint-plugin-node/", blacklistedLocator],
@@ -11538,9 +11483,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-member-expression-literals-7.2.0-fa10aa5c58a2cb6afcf2c9ffa8cb4d8b3d489a2d/node_modules/@babel/plugin-transform-member-expression-literals/", {"name":"@babel/plugin-transform-member-expression-literals","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-property-literals-7.2.0-03e33f653f5b25c4eb572c98b9485055b389e905/node_modules/@babel/plugin-transform-property-literals/", {"name":"@babel/plugin-transform-property-literals","reference":"7.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-reserved-words-7.2.0-4792af87c998a49367597d07fedf02636d2e1634/node_modules/@babel/plugin-transform-reserved-words/", {"name":"@babel/plugin-transform-reserved-words","reference":"7.2.0"}],
-  ["./.pnp/externals/pnp-d4afbbd6215b1993d05095efb590984f9b6a3a02/node_modules/@babel/preset-flow/", {"name":"@babel/preset-flow","reference":"pnp:d4afbbd6215b1993d05095efb590984f9b6a3a02"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-transform-flow-strip-types-7.2.3-e3ac2a594948454e7431c7db33e1d02d51b5cd69/node_modules/@babel/plugin-transform-flow-strip-types/", {"name":"@babel/plugin-transform-flow-strip-types","reference":"7.2.3"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-plugin-syntax-flow-7.2.0-a765f061f803bc48f240c26f8747faf97c26bf7c/node_modules/@babel/plugin-syntax-flow/", {"name":"@babel/plugin-syntax-flow","reference":"7.2.0"}],
   ["./.pnp/externals/pnp-0c89c1675497b0fec2ce71c0ceba145f497433f4/node_modules/@quase/eslint-config-base/", {"name":"@quase/eslint-config-base","reference":"pnp:0c89c1675497b0fec2ce71c0ceba145f497433f4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-eslint-10.0.1-919681dc099614cd7d31d45c8908695092a1faed/node_modules/babel-eslint/", {"name":"babel-eslint","reference":"10.0.1"}],
   ["./.pnp/externals/pnp-40297bf345c2c41dbcbee7fd39cbf070f3594b60/node_modules/babel-eslint/", {"name":"babel-eslint","reference":"pnp:40297bf345c2c41dbcbee7fd39cbf070f3594b60"}],
@@ -11644,10 +11586,8 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-tsconfig-paths-3.8.0-4e34202d5b41958f269cf56b01ed95b853d59f72/node_modules/tsconfig-paths/", {"name":"tsconfig-paths","reference":"3.8.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-json5-0.0.29-ee28707ae94e11d2b827bcbe5270bcea7f3e71ee/node_modules/@types/json5/", {"name":"@types/json5","reference":"0.0.29"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-deepmerge-2.2.1-5d3ff22a01c00f645405a2fbc17d0778a1801170/node_modules/deepmerge/", {"name":"deepmerge","reference":"2.2.1"}],
-  ["./.pnp/externals/pnp-b20d52d1b63fe4d37c11acdb1befff790dd9c0c8/node_modules/eslint-plugin-flowtype/", {"name":"eslint-plugin-flowtype","reference":"pnp:b20d52d1b63fe4d37c11acdb1befff790dd9c0c8"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-array-includes-3.0.3-184b48f62d92d7452bb31b323165c7f8bd02266d/node_modules/array-includes/", {"name":"array-includes","reference":"3.0.3"}],
   ["./.pnp/externals/pnp-c895d8e50ffed0a846dcd923855078bfa566d5f7/node_modules/eslint-plugin-jest/", {"name":"eslint-plugin-jest","reference":"pnp:c895d8e50ffed0a846dcd923855078bfa566d5f7"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-flow-bin-0.88.0-e4c7bd93da2331f6ac1733fbe484b1b0c52eb548/node_modules/flow-bin/", {"name":"flow-bin","reference":"0.88.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jest-24.8.0-d5dff1984d0d1002196e9b7f12f75af1b2809081/node_modules/jest/", {"name":"jest","reference":"24.8.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jest-cli-24.8.0-b075ac914492ed114fa338ade7362a301693e989/node_modules/jest-cli/", {"name":"jest-cli","reference":"24.8.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@jest-core-24.8.0-fbbdcd42a41d0d39cddbc9f520c8bab0c33eed5b/node_modules/@jest/core/", {"name":"@jest/core","reference":"24.8.0"}],
@@ -12020,10 +11960,6 @@ exports.findPackageLocator = function findPackageLocator(location) {
 
   if (relativeLocation.length >= 100 && relativeLocation[99] === '/')
     if (match = locatorsByLocations.get(relativeLocation.substr(0, 100)))
-      return blacklistCheck(match);
-
-  if (relativeLocation.length >= 98 && relativeLocation[97] === '/')
-    if (match = locatorsByLocations.get(relativeLocation.substr(0, 98)))
       return blacklistCheck(match);
 
   if (relativeLocation.length >= 96 && relativeLocation[95] === '/')
