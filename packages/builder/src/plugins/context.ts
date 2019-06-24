@@ -2,7 +2,6 @@ import { Options, WatchedFiles } from "../types";
 import { ModuleInfo } from "../module/module";
 import { resolvePath, makeAbsolute } from "../utils/path";
 import { joinSourceMaps } from "@quase/source-map";
-// @ts-ignore
 import fs from "fs-extra";
 
 const ONLY_EXISTANCE = { onlyExistance: true };
@@ -89,9 +88,9 @@ export class BuilderUtil {
     return fs.stat( file );
   }
 
-  readFile( file: string, enconding?: string ): string | Buffer {
+  readFile( file: string, enconding?: string ): Promise<string | Buffer> {
     this.registerFile( file );
-    return fs.readFile( file, enconding );
+    return enconding ? fs.readFile( file, enconding ) : fs.readFile( file );
   }
 
   readdir( folder: string ): Promise<string[]> {
@@ -126,7 +125,7 @@ export class ModuleContext extends BuilderUtil {
   id: string;
   path: string;
   relativePath: string;
-  transforms: ReadonlyArray<string>;
+  transforms: Readonly<string[]>;
 
   constructor( builderOptions: Options, m: ModuleInfo, files?: WatchedFiles ) {
     super( builderOptions, files );
