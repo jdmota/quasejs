@@ -30,10 +30,6 @@ The Eslint configuration that we use.
 
 Parser generator.
 
-**[package-manager](packages/package-manager)**
-
-An experimental package manager that removes the need for having a huge `node_modules` folder.
-
 **[path-url](packages/path-url)**
 
 Utilities to handle paths and urls.

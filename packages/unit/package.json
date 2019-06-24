@@ -18,7 +18,6 @@
     "@babel/code-frame": "^7.0.0",
     "@quase/cli": "0.4.0-0",
     "@quase/error": "0.1.0-0",
-    "@quase/cacheable-fs": "0.1.0-0",
     "@quase/config": "0.2.0-0",
     "@quase/get-plugins": "0.1.0-0",
     "@quase/path-url": "0.2.0-0",
