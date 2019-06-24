@@ -7,7 +7,7 @@
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/unit",
   "main": "dist/index.js",
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "bin": {
     "quase-unit": "bin/index.js"
   },
@@ -15,28 +15,29 @@
 		"node": ">=8.1"
 	},
   "dependencies": {
+    "@babel/code-frame": "^7.0.0",
     "@quase/cli": "0.4.0-0",
     "@quase/error": "0.1.0-0",
     "@quase/cacheable-fs": "0.1.0-0",
     "@quase/config": "0.2.0-0",
     "@quase/get-plugins": "0.1.0-0",
-    "@quase/path-url": "^0.1.0",
+    "@quase/path-url": "0.2.0-0",
+    "@quase/schema": "0.1.0-0",
     "@quase/source-map": "0.2.0-0",
-    "@babel/code-frame": "^7.0.0-rc.2",
-    "circular-json": "^0.5.5",
-    "concordance": "^3.0.0",
+    "circular-json": "^0.5.9",
+    "concordance": "^4.0.0",
     "fs-extra": "^7.0.0",
-    "globby": "^8.0.1",
-    "import-fresh": "^2.0.0",
-    "is-ci": "^1.1.0",
-    "matcher": "^1.1.1",
-    "log-symbols": "^2.2.0",
-    "ora": "^3.0.0",
-    "random-js": "^1.0.8",
-    "turbocolor": "^2.4.0",
-    "write-file-atomic": "^2.3.0"
+    "globby": "^9.2.0",
+    "import-fresh": "^3.0.0",
+    "is-ci": "^2.0.0",
+    "matcher": "^2.0.0",
+    "log-symbols": "^3.0.0",
+    "ora": "^3.4.0",
+    "random-js": "^2.1.0",
+    "turbocolor": "^2.6.1",
+    "write-file-atomic": "^3.0.0"
   },
   "devDependencies": {
-    "zen-observable": "^0.8.8"
+    "zen-observable": "^0.8.14"
   }
 }
