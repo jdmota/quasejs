@@ -818,12 +818,20 @@ let packageInformationStores = new Map([
     ["0.2.0-0", {
       packageLocation: path.resolve(__dirname, "./packages/config/"),
       packageDependencies: new Map([
-        ["find-up", "3.0.0"],
-        ["pkg-conf", "3.0.0"],
+        ["find-up", "4.1.0"],
+        ["pkg-conf", "3.1.0"],
       ]),
     }],
   ])],
   ["find-up", new Map([
+    ["4.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-find-up-4.1.0-97afe7d6cdc0bc5928584b7c8d7b16e8a9aa5d19/node_modules/find-up/"),
+      packageDependencies: new Map([
+        ["locate-path", "5.0.0"],
+        ["path-exists", "4.0.0"],
+        ["find-up", "4.1.0"],
+      ]),
+    }],
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-find-up-3.0.0-49169f1d7993430646da61ecc5ae355c21c97b73/node_modules/find-up/"),
       packageDependencies: new Map([
@@ -848,6 +856,13 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["locate-path", new Map([
+    ["5.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-locate-path-5.0.0-1afba396afd676a6d42504d0a67a3a7eb9f62aa0/node_modules/locate-path/"),
+      packageDependencies: new Map([
+        ["p-locate", "4.1.0"],
+        ["locate-path", "5.0.0"],
+      ]),
+    }],
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-locate-path-3.0.0-dbec3b3ab759758071b58fe59fc41871af21400e/node_modules/locate-path/"),
       packageDependencies: new Map([
@@ -866,6 +881,13 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["p-locate", new Map([
+    ["4.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-locate-4.1.0-a3428bb7088b3a60292f66919278b7c297ad4f07/node_modules/p-locate/"),
+      packageDependencies: new Map([
+        ["p-limit", "2.2.0"],
+        ["p-locate", "4.1.0"],
+      ]),
+    }],
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-locate-3.0.0-322d69a05c0264b25997d9f40cd8a891ab0064a4/node_modules/p-locate/"),
       packageDependencies: new Map([
@@ -882,6 +904,13 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["p-limit", new Map([
+    ["2.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-limit-2.2.0-417c9941e6027a9abcba5092dd2904e255b5fbc2/node_modules/p-limit/"),
+      packageDependencies: new Map([
+        ["p-try", "2.0.0"],
+        ["p-limit", "2.2.0"],
+      ]),
+    }],
     ["2.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-limit-2.1.0-1d5a0d20fb12707c758a655f6bbc4386b5930d68/node_modules/p-limit/"),
       packageDependencies: new Map([
@@ -912,6 +941,12 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["path-exists", new Map([
+    ["4.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-path-exists-4.0.0-513bdbe2d3b95d7762e8c1137efa195c6c61b5b3/node_modules/path-exists/"),
+      packageDependencies: new Map([
+        ["path-exists", "4.0.0"],
+      ]),
+    }],
     ["3.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-path-exists-3.0.0-ce0ebeaa5f78cb18925ea7d810d7b59b010fd515/node_modules/path-exists/"),
       packageDependencies: new Map([
@@ -927,12 +962,12 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["pkg-conf", new Map([
-    ["3.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-pkg-conf-3.0.0-41f836458fb83b080e08e62b2d63a68aa8c436df/node_modules/pkg-conf/"),
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-pkg-conf-3.1.0-d9f9c75ea1bae0e77938cde045b276dac7cc69ae/node_modules/pkg-conf/"),
       packageDependencies: new Map([
         ["find-up", "3.0.0"],
         ["load-json-file", "5.2.0"],
-        ["pkg-conf", "3.0.0"],
+        ["pkg-conf", "3.1.0"],
       ]),
     }],
   ])],
@@ -11813,20 +11848,25 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-module-imports-7.0.0-96081b7111e486da4d2cd971ad1a4fe216cc2e3d/node_modules/@babel/helper-module-imports/", {"name":"@babel/helper-module-imports","reference":"7.0.0"}],
   ["./packages/cli/", {"name":"@quase/cli","reference":"0.4.0-0"}],
   ["./packages/config/", {"name":"@quase/config","reference":"0.2.0-0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-find-up-4.1.0-97afe7d6cdc0bc5928584b7c8d7b16e8a9aa5d19/node_modules/find-up/", {"name":"find-up","reference":"4.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-find-up-3.0.0-49169f1d7993430646da61ecc5ae355c21c97b73/node_modules/find-up/", {"name":"find-up","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-find-up-2.1.0-45d1b7e506c717ddd482775a2b77920a3c0c57a7/node_modules/find-up/", {"name":"find-up","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-find-up-1.1.2-6b2e9822b1a2ce0a60ab64d610eccad53cb24d0f/node_modules/find-up/", {"name":"find-up","reference":"1.1.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-locate-path-5.0.0-1afba396afd676a6d42504d0a67a3a7eb9f62aa0/node_modules/locate-path/", {"name":"locate-path","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-locate-path-3.0.0-dbec3b3ab759758071b58fe59fc41871af21400e/node_modules/locate-path/", {"name":"locate-path","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-locate-path-2.0.0-2b568b265eec944c6d9c0de9c3dbbbca0354cd8e/node_modules/locate-path/", {"name":"locate-path","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-p-locate-4.1.0-a3428bb7088b3a60292f66919278b7c297ad4f07/node_modules/p-locate/", {"name":"p-locate","reference":"4.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-locate-3.0.0-322d69a05c0264b25997d9f40cd8a891ab0064a4/node_modules/p-locate/", {"name":"p-locate","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-locate-2.0.0-20a0103b222a70c8fd39cc2e580680f3dde5ec43/node_modules/p-locate/", {"name":"p-locate","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-p-limit-2.2.0-417c9941e6027a9abcba5092dd2904e255b5fbc2/node_modules/p-limit/", {"name":"p-limit","reference":"2.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-limit-2.1.0-1d5a0d20fb12707c758a655f6bbc4386b5930d68/node_modules/p-limit/", {"name":"p-limit","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-limit-1.3.0-b86bd5f0c25690911c7590fcbfc2010d54b3ccb8/node_modules/p-limit/", {"name":"p-limit","reference":"1.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-try-2.0.0-85080bb87c64688fa47996fe8f7dfbe8211760b1/node_modules/p-try/", {"name":"p-try","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-try-1.0.0-cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3/node_modules/p-try/", {"name":"p-try","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-path-exists-4.0.0-513bdbe2d3b95d7762e8c1137efa195c6c61b5b3/node_modules/path-exists/", {"name":"path-exists","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-path-exists-3.0.0-ce0ebeaa5f78cb18925ea7d810d7b59b010fd515/node_modules/path-exists/", {"name":"path-exists","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-path-exists-2.1.0-0feb6c64f0fc518d9a754dd5efb62c7022761f4b/node_modules/path-exists/", {"name":"path-exists","reference":"2.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-pkg-conf-3.0.0-41f836458fb83b080e08e62b2d63a68aa8c436df/node_modules/pkg-conf/", {"name":"pkg-conf","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-pkg-conf-3.1.0-d9f9c75ea1bae0e77938cde045b276dac7cc69ae/node_modules/pkg-conf/", {"name":"pkg-conf","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-5.2.0-1553627a18bf7b08cd7ec232d63981239085a578/node_modules/load-json-file/", {"name":"load-json-file","reference":"5.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-4.0.0-2f5f45ab91e33216234fd53adab668eb4ec0993b/node_modules/load-json-file/", {"name":"load-json-file","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-load-json-file-1.1.0-956905708d58b4bab4c2261b04f59f31c99374c0/node_modules/load-json-file/", {"name":"load-json-file","reference":"1.1.0"}],

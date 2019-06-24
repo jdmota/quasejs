@@ -1,5 +1,5 @@
-const findUp = require( "find-up" );
-const pkgConf = require( "pkg-conf" );
+import findUp from "find-up";
+import pkgConf from "pkg-conf";
 
 export function loadConfigFrom( location: string, arg: unknown ): unknown {
   const e = require( location );
@@ -18,11 +18,11 @@ type Options = {
 export async function getConfig( opts: Options = {} ) {
 
   const { cwd, configFiles, arg, configKey, failIfNotFound } = opts;
-  let config: unknown;
+  let config: any;
   let location: string | undefined;
 
   if ( configFiles && configFiles.length ) {
-    const loc = await findUp( configFiles, { cwd } ) as string;
+    const loc = await findUp( configFiles, { cwd } );
 
     if ( loc ) {
       config = await loadConfigFrom( loc, arg );
@@ -34,7 +34,7 @@ export async function getConfig( opts: Options = {} ) {
 
   if ( !config && configKey ) {
     config = await pkgConf( configKey, { cwd, skipOnFalse: true } );
-    location = pkgConf.filepath( config ) as string;
+    location = pkgConf.filepath( config ) || undefined;
 
     if ( location == null ) {
       config = undefined;
