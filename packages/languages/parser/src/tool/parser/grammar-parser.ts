@@ -299,6 +299,7 @@ class GrammarTokenizer extends Tokenizer<Token> {
       case "=":
       case ";":
       case "@":
+      case ".":
         this.pos++;
         return {
           label: char
@@ -371,11 +372,13 @@ export type OptionalOrRepetition = BaseNode & {
   item: Node;
 };
 
+export type Thing = StringNode | RegexpNode | Id | Dot;
+
 export type Named = BaseNode & {
   type: "Named";
   multiple: boolean;
   name: string;
-  item: StringNode | RegexpNode | Id;
+  item: Thing;
 };
 
 export type Options = BaseNode & {
@@ -392,10 +395,14 @@ export type Concat = BaseNode & {
   body: Node[];
 };
 
+export type Dot = BaseNode & {
+  type: "Dot";
+};
+
 export type Node =
   GrammarNode | Rule | Named | Empty |
   Id | RegexpNode | StringNode | ActionNode |
-  OptionalOrRepetition | Options | Concat;
+  OptionalOrRepetition | Options | Concat | Dot;
 
 class Names {
 
@@ -511,6 +518,7 @@ function connectAstNodes( node: Node, parent: Node | null, nextSibling: Node | n
     case "String":
     case "Regexp":
     case "Empty":
+    case "Dot":
       names = new Names();
       break;
     case "Named": {
@@ -670,13 +678,25 @@ export default class GrammarParser extends Parser<Token> {
     }
   }
 
-  parseThing(): StringNode | RegexpNode | Id {
-    return this.match( "string" ) ? this.parseString() :
-      this.match( "regexp" ) ? this.parseRegexp() : this.parseId();
+  parseThing(): StringNode | RegexpNode | Id | Dot {
+    return (
+      this.match( "string" ) ? this.parseString() :
+        this.match( "regexp" ) ? this.parseRegexp() :
+          this.match( "." ) ? this.parseDot() : this.parseId()
+    );
   }
 
   parseAtom(): Node {
     return this.match( "(" ) ? this.parseGroup() : this.parseThing();
+  }
+
+  parseDot(): Dot {
+    const start = this.startNode();
+    this.expect( "." );
+    return {
+      type: "Dot",
+      loc: this.locNode( start )
+    };
   }
 
   parseString(): StringNode {

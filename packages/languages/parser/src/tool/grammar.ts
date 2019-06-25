@@ -1,4 +1,4 @@
-import GrammarParser, { StringNode, RegexpNode, Id, Rule, LexerRule, ParserRule, Node } from "./parser/grammar-parser";
+import GrammarParser, { StringNode, RegexpNode, Id, Rule, LexerRule, ParserRule, Node, Thing, Dot } from "./parser/grammar-parser";
 import { printLoc } from "./utils";
 
 export type Options = {
@@ -21,6 +21,8 @@ export default class Grammar {
   terminalRawToId: Map<string, number>;
   types: string[];
   nodeToTypeId: Map<ParserRule | LexerRule | StringNode | RegexpNode, string>;
+  minTokenId: number;
+  maxTokenId: number;
 
   constructor( grammarText: string, options: Options = {} ) {
     this.options = options;
@@ -42,6 +44,9 @@ export default class Grammar {
 
     this.types = [];
     this.nodeToTypeId = new Map();
+
+    this.minTokenId = 1;
+    this.maxTokenId = 0;
 
     this.analyseLexer();
   }
@@ -65,6 +70,7 @@ export default class Grammar {
 
   analyseLexer() {
     let terminalUUID = 1;
+    this.minTokenId = terminalUUID;
 
     for ( const node of this.terminals ) {
       const currId = this.terminalRawToId.get( node.raw );
@@ -73,6 +79,7 @@ export default class Grammar {
         continue;
       }
       const id = terminalUUID++;
+      this.maxTokenId = id;
 
       this.nodeToId.set( node, id );
       this.idToNode.set( id, node );
@@ -81,20 +88,25 @@ export default class Grammar {
 
     for ( const node of this.lexerRules.values() ) {
       const id = terminalUUID++;
+      this.maxTokenId = id;
 
       this.nodeToId.set( node, id );
       this.idToNode.set( id, node );
     }
   }
 
-  typecheck( node: Id | StringNode | RegexpNode ) {
+  typecheck( node: Thing ) {
     if ( node.type === "Id" ) {
       return this.typecheckDefinition( this.getRule( node.name ) );
     }
     return this.typecheckDefinition( node );
   }
 
-  typecheckDefinition( node: ParserRule | LexerRule | StringNode | RegexpNode ) {
+  typecheckDefinition( node: ParserRule | LexerRule | StringNode | RegexpNode | Dot ) {
+    if ( node.type === "Dot" ) {
+      return "$Tokens";
+    }
+
     let id = this.nodeToTypeId.get( node );
     if ( id == null ) {
       if ( node.type === "ParserRule" ) {

@@ -266,7 +266,7 @@ export class CodeGenerator {
 
     const tokArgType = this.grammar.options.typescript ? `:string` : "";
     const propTypes = this.grammar.options.typescript ? `labels:string[];` : "";
-    const tokenTypes = [ "$EOF" ];
+    const tokenTypes = [];
 
     const labels = [ "" ];
     for ( const [ node, id ] of this.grammar.nodeToId ) {
@@ -284,6 +284,7 @@ export class CodeGenerator {
     if ( this.grammar.options.typescript ) {
       this.grammar.types.push( `export type $EOF = {id:0;label:"EOF";image:string };` );
       this.grammar.types.push( `export type $Tokens = ${tokenTypes.join( "|" )};` );
+      this.grammar.types.push( `export type $TokensWithEOF = $EOF|$Tokens;` );
     }
 
     for ( const [ transition ] of lexerAutomaton.states[ 1 ] ) {

@@ -530,6 +530,316 @@ Array [
 
 exports[`basic: error 1`] = `"Unexpected token EOF (at 1:14)"`;
 
+exports[`dot - typescript: code 1`] = `
+"/* eslint-disable */
+import Q from \\"@quase/parser\\";
+export type $1 = {id:1;label:\\"ID\\";image:string;};
+export type $2 = {id:2;label:\\"NUM\\";image:string;};
+export type $EOF = {id:0;label:\\"EOF\\";image:string };
+export type $Tokens = $1|$2;
+export type $TokensWithEOF = $EOF|$Tokens;
+export type $Position = {pos:number;line:number;column:number;};
+export type $Location = {start:$Position;end:$Position;};
+export interface $Base<T> {type:T;loc:$Location;}
+export interface PROGRAM extends $Base<'PROGRAM'> {tokens:($Tokens)[];};
+
+    class Tokenizer extends Q.Tokenizer{
+      labels:string[];
+      constructor(input:string){
+        super(input);
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+      }
+      readToken() {
+        const prevPos = this.pos;
+        let id = -1;
+
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+id=2;$$state=4;
+}
+break;
+case 3:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+}else {
+id=1;$$state=4;
+}
+break;
+case 4:
+{
+$$loop=false;
+}
+break;
+}}
+
+        if (id===-1) {
+          throw this.unexpected();
+        }
+
+        const image=this.input.slice(prevPos,this.pos);
+        const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+        const newLines=splitted.length-1;
+        if (newLines>0) {
+          this._lineStart=this.pos-splitted[newLines].length;
+          this._curLine+=newLines;
+        }
+        return {
+          id,
+          label: this.labels[id],
+          image
+        };
+      }
+      ruleID(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleNUM(){
+        this.consume2(48/*'0'*/,57/*'9'*/);let $$state=2,$$loop=true;while($$loop){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+$$loop=false;
+}
+}
+      }
+    }
+class Parser extends Q.Parser{
+
+    constructor(text:string){super(new Tokenizer(text));}
+    unexpected(id:number|string) {
+      const labels = this.tokenizer.labels;
+      super.unexpected(labels[id]||id);
+    }
+    
+rulePROGRAM(){
+        let $$loc=this.startNode();let $tokens=[];
+        let $$state=1,$$loop=true;while($$loop){
+if(/*ID*/1<=this.current&&this.current<=2/*NUM*/){
+$tokens.push(this.consume2(1/*ID*/,2/*NUM*/));$$state=1;
+}else if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+}
+        return {type:\\"PROGRAM\\",tokens:$tokens,loc:this.locNode($$loc)} as PROGRAM;
+      }
+parse(){
+      const r=this.rulePROGRAM();this.consume1(0);return r;
+    }}
+export default Parser;
+"
+`;
+
+exports[`dot: ast 1`] = `
+Object {
+  "loc": Object {
+    "end": Object {
+      "column": 15,
+      "line": 1,
+      "pos": 15,
+    },
+    "start": Object {
+      "column": 0,
+      "line": 1,
+      "pos": 0,
+    },
+  },
+  "tokens": Array [
+    Object {
+      "id": 1,
+      "image": "id1",
+      "label": "ID",
+    },
+    Object {
+      "id": 2,
+      "image": "100",
+      "label": "NUM",
+    },
+    Object {
+      "id": 1,
+      "image": "id2",
+      "label": "ID",
+    },
+    Object {
+      "id": 2,
+      "image": "200",
+      "label": "NUM",
+    },
+  ],
+  "type": "PROGRAM",
+}
+`;
+
+exports[`dot: code 1`] = `
+"/* eslint-disable */
+const Q=require(\\"@quase/parser\\");
+
+
+    class Tokenizer extends Q.Tokenizer{
+      
+      constructor(input){
+        super(input);
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+      }
+      readToken() {
+        const prevPos = this.pos;
+        let id = -1;
+
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+id=2;$$state=4;
+}
+break;
+case 3:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+}else {
+id=1;$$state=4;
+}
+break;
+case 4:
+{
+$$loop=false;
+}
+break;
+}}
+
+        if (id===-1) {
+          throw this.unexpected();
+        }
+
+        const image=this.input.slice(prevPos,this.pos);
+        const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+        const newLines=splitted.length-1;
+        if (newLines>0) {
+          this._lineStart=this.pos-splitted[newLines].length;
+          this._curLine+=newLines;
+        }
+        return {
+          id,
+          label: this.labels[id],
+          image
+        };
+      }
+      ruleID(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleNUM(){
+        this.consume2(48/*'0'*/,57/*'9'*/);let $$state=2,$$loop=true;while($$loop){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+$$loop=false;
+}
+}
+      }
+    }
+class Parser extends Q.Parser{
+
+    constructor(text){super(new Tokenizer(text));}
+    unexpected(id) {
+      const labels = this.tokenizer.labels;
+      super.unexpected(labels[id]||id);
+    }
+    
+rulePROGRAM(){
+        let $$loc=this.startNode();let $tokens=[];
+        let $$state=1,$$loop=true;while($$loop){
+if(/*ID*/1<=this.current&&this.current<=2/*NUM*/){
+$tokens.push(this.consume2(1/*ID*/,2/*NUM*/));$$state=1;
+}else if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+}
+        return {type:\\"PROGRAM\\",tokens:$tokens,loc:this.locNode($$loc)};
+      }
+parse(){
+      const r=this.rulePROGRAM();this.consume1(0);return r;
+    }}
+module.exports=Parser;
+"
+`;
+
 exports[`negative character class in regexp: code 1`] = `
 "/* eslint-disable */
 const Q=require(\\"@quase/parser\\");
@@ -855,7 +1165,8 @@ export type $4 = {id:4;label:\\"'end'\\";image:string;};
 export type $5 = {id:5;label:\\"ID\\";image:string;};
 export type $6 = {id:6;label:\\"NUM\\";image:string;};
 export type $EOF = {id:0;label:\\"EOF\\";image:string };
-export type $Tokens = $EOF|$1|$2|$3|$4|$5|$6;
+export type $Tokens = $1|$2|$3|$4|$5|$6;
+export type $TokensWithEOF = $EOF|$Tokens;
 export type $Position = {pos:number;line:number;column:number;};
 export type $Location = {start:$Position;end:$Position;};
 export interface $Base<T> {type:T;loc:$Location;}

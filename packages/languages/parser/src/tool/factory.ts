@@ -1,12 +1,13 @@
 import {
   StringNode, RegexpNode, LexerRule, Id, OptionalOrRepetition,
-  Options, Empty, Concat, ParserRule, ActionNode, Named
+  Options, Empty, Concat, ParserRule, ActionNode, Named, Dot
 } from "./parser/grammar-parser";
 import { printLoc } from "./utils";
 import Grammar, { LexerTokens } from "./grammar";
 import { Automaton, Frag } from "./automaton";
 import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 import { RuleTransition, ActionTransition, TokenFinalTransition, NamedTransition, RangeTransition } from "./transitions";
+import { MIN_CHAR, MAX_CHAR } from "./constants";
 
 export class Factory {
 
@@ -60,6 +61,18 @@ export class Factory {
     }
     _in.addNumber( tokenId, _out );
     return { in: _in, out: _out };
+  }
+
+  Dot( _node: Dot ) {
+    const min = this.inLexer ? MIN_CHAR : this.grammar.minTokenId;
+    const max = this.inLexer ? MAX_CHAR : this.grammar.maxTokenId;
+    const _in = this.automaton.newState();
+    const _out = this.automaton.newState();
+    _in.addRange( min, max, _out );
+    return {
+      in: _in,
+      out: _out
+    };
   }
 
   Regexp( node: RegexpNode ) {

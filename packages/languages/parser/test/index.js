@@ -120,3 +120,41 @@ it( "actions", () => {
   expect( code ).toMatchSnapshot( "code" );
 
 } );
+
+it( "dot", () => {
+
+  const { code } = tool(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+
+    @parser
+    start PROGRAM: ( tokens+=. )*;
+    `
+  );
+
+  expect( code ).toMatchSnapshot( "code" );
+  expect( runParser( code, "id1 100 id2 200" ) ).toMatchSnapshot( "ast" );
+
+} );
+
+it( "dot - typescript", () => {
+
+  const { code } = tool(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+
+    @parser
+    start PROGRAM: ( tokens+=. )*;
+    `,
+    {
+      typescript: true
+    }
+  );
+
+  expect( code ).toMatchSnapshot( "code" );
+
+} );

@@ -6,6 +6,7 @@ import {
 } from "regexp-tree/ast"; // eslint-disable-line import/no-unresolved
 import { RegexpNode } from "./parser/grammar-parser";
 import { Frag, Automaton } from "./automaton";
+import { MIN_CHAR, MAX_CHAR } from "./constants";
 
 type Char2 = Char & { codePoint: number };
 type ClassRange2 = { type: "ClassRange"; from: Char2; to: Char2 };
@@ -35,7 +36,7 @@ export class FactoryRegexp {
       } );
       const _in = this.automaton.newState();
       const _out = this.automaton.newState();
-      _in.addNotRangeSet( list, _out, 0, 0x10ffff );
+      _in.addNotRangeSet( list, _out, MIN_CHAR, MAX_CHAR );
       return { in: _in, out: _out };
     }
     const fragments = ( expressions || [] ).map( e => this.gen( e ) );
