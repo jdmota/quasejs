@@ -1,13 +1,16 @@
 import tool from "../src/tool";
 
 function runParser( generation, text ) {
-  let result;
+  let parser;
   /* eslint no-eval: 0 */
   eval( `
     ${generation.replace( "@quase/parser", "../src/runtime" )}\n
-    result = new Parser(${JSON.stringify( text )}).parse();`
+    parser = new Parser(${JSON.stringify( text )});`
   );
-  return result;
+  return {
+    ast: parser.parse(),
+    channels: parser.getChannels()
+  };
 }
 
 it( "basic", () => {
@@ -23,6 +26,7 @@ it( "basic", () => {
     fragment ID_CHAR: /[a-zA-Z0-9]/;
     ID: ID_START ID_CHAR*;
     NUM: /[0-9]+/;
+    SKIP: /\\s+/ -> skip;
 
     @parser
     start PROGRAM: FUN ( params+=ID ( COMMA params+=ID )* )? ARROW body=EXP END;
@@ -128,6 +132,7 @@ it( "dot", () => {
     @lexer
     ID: /[a-zA-Z][a-zA-Z0-9]*/;
     NUM: /[0-9]+/;
+    SKIP: /\\s+/ -> skip;
 
     @parser
     start PROGRAM: ( tokens+=. )*;
@@ -146,6 +151,49 @@ it( "dot - typescript", () => {
     @lexer
     ID: /[a-zA-Z][a-zA-Z0-9]*/;
     NUM: /[0-9]+/;
+    SKIP: /\\s+/ -> skip;
+
+    @parser
+    start PROGRAM: ( tokens+=. )*;
+    `,
+    {
+      typescript: true
+    }
+  );
+
+  expect( code ).toMatchSnapshot( "code" );
+
+} );
+
+it( "channels", () => {
+
+  const { code } = tool(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+    SKIP: /\\s+/ -> skip;
+    UNDERSCORE: '_' -> channel(underscores);
+
+    @parser
+    start PROGRAM: ( tokens+=. )*;
+    `
+  );
+
+  expect( code ).toMatchSnapshot( "code" );
+  expect( runParser( code, "id1 _ 100 _ id2 _ 200" ) ).toMatchSnapshot( "ast" );
+
+} );
+
+it( "channels - typescript", () => {
+
+  const { code } = tool(
+    `
+    @lexer
+    ID: /[a-zA-Z][a-zA-Z0-9]*/;
+    NUM: /[0-9]+/;
+    SKIP: /\\s+/ -> skip;
+    UNDERSCORE: '_' -> channel(underscores);
 
     @parser
     start PROGRAM: ( tokens+=. )*;

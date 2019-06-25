@@ -19,12 +19,6 @@ export type Location = {
   end: Position;
 };
 
-export type Comment = {
-  type: "CommentBlock" | "CommentLine";
-  value: string;
-  loc: Location;
-};
-
 export const FAKE_LOC = {
   start: {
     pos: 0,
@@ -38,10 +32,7 @@ export const FAKE_LOC = {
   }
 };
 
-const lineBreak = /\r\n?|\n/;
-const lineBreakG = new RegExp( lineBreak.source, "g" );
-
-export class Tokenizer {
+export class Tokenizer<$Tokens extends Token, $Channels extends string> {
 
   input: string;
   inputLen: number;
@@ -51,6 +42,9 @@ export class Tokenizer {
   _lineStart: number;
   _curLine: number;
   _start: Position;
+
+  idToChannels: { [key: number]: $Channels[] };
+  channels: { [key in $Channels]: $Tokens[] };
 
   static EOF: { id: 0; label: "EOF"; image: string } = { id: 0, label: "EOF", image: "" };
 
@@ -63,6 +57,10 @@ export class Tokenizer {
     this._lineStart = 0;
     this._curLine = 1;
     this._start = this.curPosition();
+
+    this.idToChannels = {};
+    // @ts-ignore
+    this.channels = {};
   }
 
   unexpected() {
@@ -110,7 +108,7 @@ export class Tokenizer {
     return first;
   }
 
-  readToken(): Token {
+  readToken(): $Tokens {
     throw new Error( "Abstract" );
   }
 
@@ -141,129 +139,27 @@ export class Tokenizer {
     this.unexpected();
   }
 
-  nextToken(): Token {
-    this.performSkip();
-    this._start = this.curPosition();
-    this.current = this.codeAt( this.pos );
-    return this.pos >= this.inputLen ? Tokenizer.EOF : this.readToken();
-  }
-
-  isNewLine( code: number ): boolean {
-    return code === 10 || code === 13;
-  }
-
-  consumeNewLine(): number {
-    const start = this.pos;
-    const code = this.codeAt( this.pos );
-    switch ( code ) {
-      case 13: // '\r' carriage return
-        // If the next char is '\n', move to pos+1 and let the next branch handle it
-        if ( this.codeAt( this.pos + 1 ) === 10 ) {
-          this.pos++;
-        }
-      case 10: // '\n' line feed
-        this.pos++;
-        this.nextLine();
-    }
-    return this.pos - start;
-  }
-
-  skip(): boolean {
-    const code = this.codeAt( this.pos );
-    switch ( code ) {
-      case 13: // '\r' carriage return
-        // If the next char is '\n', move to pos+1 and let the next branch handle it
-        if ( this.codeAt( this.pos + 1 ) === 10 ) {
-          this.pos++;
-        }
-      case 10: // '\n' line feed
-        this.pos++;
-        this.nextLine();
-        return true;
-      case 9: // horizontal tab
-      case 12: // form feed
-      case 32: // space
-        this.pos++;
-        return true;
-
-      case 47: // '/'
-        switch ( this.codeAt( this.pos + 1 ) ) {
-          case 42: // '*'
-            this.skipBlockComment();
-            return true;
-          case 47:
-            this.skipLineComment();
-            return true;
-        }
-    }
-    return false;
-  }
-
-  performSkip(): void {
-    while ( this.pos < this.inputLen ) {
-      if ( !this.skip() ) {
-        break;
+  nextToken(): $Tokens | typeof Tokenizer.EOF {
+    while ( true ) {
+      if ( this.pos >= this.inputLen ) {
+        return Tokenizer.EOF;
       }
-    }
-  }
 
-  skipLineComment(): void {
-    const start = this.curPosition();
+      this._start = this.curPosition();
+      this.current = this.codeAt( this.pos );
 
-    let ch = this.codeAt( ( this.pos += 2 ) );
-    if ( this.pos < this.inputLen ) {
-      while ( !this.isNewLine( ch ) && ++this.pos < this.inputLen ) {
-        ch = this.codeAt( this.pos );
+      const t = this.readToken();
+
+      const channels = this.idToChannels[ t.id ];
+      if ( channels ) {
+        for ( const chan of channels ) {
+          this.channels[ chan ].push( t );
+        }
+        continue;
       }
+
+      return t;
     }
-
-    this.pushComment(
-      false,
-      this.input.slice( start.pos + 2, this.pos ),
-      start,
-      this.curPosition()
-    );
-  }
-
-  skipBlockComment(): void {
-    const start = this.curPosition();
-
-    const end = this.input.indexOf( "*/", ( this.pos += 2 ) );
-    if ( end === -1 ) {
-      throw new Error( "Unterminated comment" );
-    }
-    this.pos = end + 2;
-
-    const comment = this.input.slice( start.pos + 2, end );
-
-    lineBreakG.lastIndex = start.pos;
-
-    let match;
-    while (
-      ( match = lineBreakG.exec( this.input ) ) &&
-      match.index < this.pos
-    ) {
-      this._curLine++;
-      this._lineStart = match.index + match[ 0 ].length;
-    }
-
-    this.pushComment(
-      true,
-      comment,
-      start,
-      this.curPosition()
-    );
-  }
-
-  pushComment( block: boolean, value: string, start: Position, end: Position ) {
-    this.comments.push( {
-      type: block ? "CommentBlock" : "CommentLine",
-      value,
-      loc: {
-        start,
-        end
-      }
-    } );
   }
 
 }

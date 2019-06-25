@@ -19,10 +19,12 @@ export default class Grammar {
   nodeToId: Map<LexerTokens, number>;
   idToNode: Map<number, LexerTokens>;
   terminalRawToId: Map<string, number>;
-  types: string[];
-  nodeToTypeId: Map<ParserRule | LexerRule | StringNode | RegexpNode, string>;
+  channels: { [key: string]: Readonly<unknown[]> };
+  idToChannels: { [key: number]: string[] };
   minTokenId: number;
   maxTokenId: number;
+  types: string[];
+  nodeToTypeId: Map<ParserRule | LexerRule | StringNode | RegexpNode, string>;
 
   constructor( grammarText: string, options: Options = {} ) {
     this.options = options;
@@ -41,12 +43,13 @@ export default class Grammar {
     this.nodeToId = new Map();
     this.idToNode = new Map();
     this.terminalRawToId = new Map();
+    this.channels = {};
+    this.idToChannels = {};
+    this.minTokenId = 1;
+    this.maxTokenId = 0;
 
     this.types = [];
     this.nodeToTypeId = new Map();
-
-    this.minTokenId = 1;
-    this.maxTokenId = 0;
 
     this.analyseLexer();
   }
@@ -92,6 +95,19 @@ export default class Grammar {
 
       this.nodeToId.set( node, id );
       this.idToNode.set( id, node );
+
+      for ( const command of node.commands ) {
+        if ( command.name === "channel" ) {
+          const { name } = command.args[ 0 ];
+          this.channels[ name ] = [];
+          const arr = this.idToChannels[ id ] || ( this.idToChannels[ id ] = [] );
+          arr.push( name );
+        } else if ( command.name === "skip" ) {
+          if ( !this.idToChannels[ id ] ) {
+            this.idToChannels[ id ] = [];
+          }
+        }
+      }
     }
   }
 

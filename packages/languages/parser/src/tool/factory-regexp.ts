@@ -11,6 +11,8 @@ import { MIN_CHAR, MAX_CHAR } from "./constants";
 type Char2 = Char & { codePoint: number };
 type ClassRange2 = { type: "ClassRange"; from: Char2; to: Char2 };
 
+const WS = [ " ", "\t", "\r", "\n", "\v", "\f" ].map( c => c.charCodeAt( 0 ) );
+
 export class FactoryRegexp {
 
   automaton: Automaton;
@@ -19,14 +21,24 @@ export class FactoryRegexp {
     this.automaton = automaton;
   }
 
-  Char( { codePoint, kind }: Char2 ) {
-    if ( codePoint == null || Number.isNaN( codePoint ) ) {
-      throw new Error( `Char of kind ${kind} is not supported` );
-    }
+  c( code: number ): Frag {
     const _in = this.automaton.newState();
     const _out = this.automaton.newState();
-    _in.addNumber( codePoint, _out );
+    _in.addNumber( code, _out );
     return { in: _in, out: _out };
+  }
+
+  Char( char: Char2 ) {
+    const { codePoint, value, kind } = char;
+    if ( value === "\\s" ) {
+      const frags = WS.map( c => this.c( c ) );
+      // @ts-ignore
+      return this.automaton.or( ...frags );
+    }
+    if ( codePoint == null || Number.isNaN( codePoint ) ) {
+      throw new Error( `Char of kind ${kind} is not supported - ${JSON.stringify( char )}` );
+    }
+    return this.c( codePoint );
   }
 
   CharacterClass( { negative, expressions }: CharacterClass ) {

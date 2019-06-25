@@ -282,6 +282,13 @@ class GrammarTokenizer extends Tokenizer<Token> {
       return this.readAction();
     }
 
+    if ( char === "-" && this.charAt( this.pos + 1 ) === ">" ) {
+      this.pos += 2;
+      return {
+        label: "->"
+      };
+    }
+
     switch ( char ) {
       case "(":
       case ")":
@@ -326,12 +333,19 @@ export type GrammarNode = BaseNode & {
   firstRule: ParserRule;
 };
 
+export type LexerCommand = BaseNode & {
+  type: "LexerCommand";
+  name: "channel" | "skip";
+  args: Id[];
+};
+
 export type LexerRule = BaseNode & {
   type: "LexerRule";
   modifiers: { [key: string]: boolean };
   name: string;
   names: Names;
   rule: Node;
+  commands: LexerCommand[];
 };
 
 export type ParserRule = BaseNode & {
@@ -582,7 +596,7 @@ export default class GrammarParser extends Parser<Token> {
         body = [];
       }
 
-      if ( this.match( ";" ) || this.match( ")" ) ) {
+      if ( this.match( ";" ) || this.match( ")" ) || this.match( "->" ) ) {
         break;
       } else {
         body.push( this.parseItem() );
@@ -778,13 +792,21 @@ export default class GrammarParser extends Parser<Token> {
 
     this.expect( ":" );
     const rule = this.parseExp();
+    const commands: LexerCommand[] = [];
+
+    if ( this.inLexer && this.eat( "->" ) ) {
+      commands.push( this.parseLexerCommand() );
+    }
+
     this.expect( ";" );
+
     return this.inLexer ? {
       type: "LexerRule",
       modifiers,
       name,
       names: new Names(),
       rule,
+      commands,
       loc: this.locNode( start )
     } : {
       type: "ParserRule",
@@ -792,6 +814,43 @@ export default class GrammarParser extends Parser<Token> {
       name,
       names: new Names(),
       rule,
+      loc: this.locNode( start )
+    };
+  }
+
+  parseLexerCommand(): LexerCommand {
+    const start = this.startNode();
+
+    const id = this.expect( "id" ) as IdToken;
+    const name = id.word;
+    const args: Id[] = [];
+
+    if ( this.eat( "(" ) ) {
+      while ( !this.match( ")" ) ) {
+        args.push( this.parseId() );
+        if ( !this.eat( "," ) ) {
+          break;
+        }
+      }
+      this.expect( ")" );
+    }
+
+    if ( name === "channel" ) {
+      if ( args.length !== 1 ) {
+        throw this.error( `Expected 1 argument but saw ${args.length}`, start );
+      }
+    } else if ( name === "skip" ) {
+      if ( args.length !== 0 ) {
+        throw this.error( `Expected 0 arguments but saw ${args.length}`, start );
+      }
+    } else {
+      throw this.error( `'${name}' is not a valid lexer command`, start );
+    }
+
+    return {
+      type: "LexerCommand",
+      name,
+      args,
       loc: this.locNode( start )
     };
   }

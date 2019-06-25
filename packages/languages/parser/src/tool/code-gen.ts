@@ -264,8 +264,16 @@ export class CodeGenerator {
 
   genTokenizer( lexerRuleToAutomaton: Map<LexerRule, DFA<DState>>, lexerAutomaton: DFA<DState> ): string {
 
+    const generics = this.grammar.options.typescript ? `<$Tokens, $Channels>` : "";
+
     const tokArgType = this.grammar.options.typescript ? `:string` : "";
-    const propTypes = this.grammar.options.typescript ? `labels:string[];` : "";
+
+    const propTypes = this.grammar.options.typescript ? [
+      `labels:string[];`,
+      `idToChannels:{[key:number]:$Channels[]};`,
+      `channels:{[key in $Channels]:$Tokens[]};`
+    ].join( "\n" ) : "";
+
     const tokenTypes = [];
 
     const labels = [ "" ];
@@ -282,9 +290,12 @@ export class CodeGenerator {
     }
 
     if ( this.grammar.options.typescript ) {
-      this.grammar.types.push( `export type $EOF = {id:0;label:"EOF";image:string };` );
-      this.grammar.types.push( `export type $Tokens = ${tokenTypes.join( "|" )};` );
-      this.grammar.types.push( `export type $TokensWithEOF = $EOF|$Tokens;` );
+      this.grammar.types.push( `export type $EOF={id:0;label:"EOF";image:string };` );
+      this.grammar.types.push( `export type $Tokens=${tokenTypes.join( "|" )};` );
+      this.grammar.types.push( `export type $TokensWithEOF=$EOF|$Tokens;` );
+
+      const channels = Object.keys( this.grammar.channels ).map( c => JSON.stringify( c ) ).join( "|" );
+      this.grammar.types.push( `export type $Channels=${channels || "never"};` );
     }
 
     for ( const [ transition ] of lexerAutomaton.states[ 1 ] ) {
@@ -301,11 +312,13 @@ export class CodeGenerator {
     }
 
     return `
-    class Tokenizer extends Q.Tokenizer{
+    class Tokenizer extends Q.Tokenizer${generics}{
       ${propTypes}
       constructor(input${tokArgType}){
         super(input);
         this.labels=${JSON.stringify( labels )};
+        this.idToChannels=${JSON.stringify( this.grammar.idToChannels )};
+        this.channels=${JSON.stringify( this.grammar.channels )};
       }
       readToken() {
         const prevPos = this.pos;

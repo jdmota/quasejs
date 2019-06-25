@@ -10,6 +10,8 @@ const Q=require(\\"@quase/parser\\");
       constructor(input){
         super(input);
         this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+        this.idToChannels={};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -142,96 +144,102 @@ module.exports=Parser;
 
 exports[`basic: ast 1`] = `
 Object {
-  "body": Object {
+  "ast": Object {
+    "body": Object {
+      "loc": Object {
+        "end": Object {
+          "column": 21,
+          "line": 1,
+          "pos": 21,
+        },
+        "start": Object {
+          "column": 16,
+          "line": 1,
+          "pos": 16,
+        },
+      },
+      "stuff": Object {
+        "id": 8,
+        "image": "10000",
+        "label": "NUM",
+      },
+      "type": "EXP",
+    },
     "loc": Object {
       "end": Object {
-        "column": 21,
+        "column": 25,
         "line": 1,
-        "pos": 21,
+        "pos": 25,
       },
       "start": Object {
-        "column": 16,
+        "column": 0,
         "line": 1,
-        "pos": 16,
+        "pos": 0,
       },
     },
-    "stuff": Object {
-      "id": 8,
-      "image": "10000",
-      "label": "NUM",
-    },
-    "type": "EXP",
+    "params": Array [
+      Object {
+        "id": 7,
+        "image": "id1",
+        "label": "ID",
+      },
+      Object {
+        "id": 7,
+        "image": "id2",
+        "label": "ID",
+      },
+    ],
+    "type": "PROGRAM",
   },
-  "loc": Object {
-    "end": Object {
-      "column": 25,
-      "line": 1,
-      "pos": 25,
-    },
-    "start": Object {
-      "column": 0,
-      "line": 1,
-      "pos": 0,
-    },
-  },
-  "params": Array [
-    Object {
-      "id": 7,
-      "image": "id1",
-      "label": "ID",
-    },
-    Object {
-      "id": 7,
-      "image": "id2",
-      "label": "ID",
-    },
-  ],
-  "type": "PROGRAM",
+  "channels": Object {},
 }
 `;
 
 exports[`basic: ast 2`] = `
 Object {
-  "body": Object {
+  "ast": Object {
+    "body": Object {
+      "loc": Object {
+        "end": Object {
+          "column": 14,
+          "line": 1,
+          "pos": 14,
+        },
+        "start": Object {
+          "column": 11,
+          "line": 1,
+          "pos": 11,
+        },
+      },
+      "stuff": Object {
+        "id": 7,
+        "image": "id1",
+        "label": "ID",
+      },
+      "type": "EXP",
+    },
     "loc": Object {
       "end": Object {
-        "column": 14,
+        "column": 18,
         "line": 1,
-        "pos": 14,
+        "pos": 18,
       },
       "start": Object {
-        "column": 11,
+        "column": 0,
         "line": 1,
-        "pos": 11,
+        "pos": 0,
       },
     },
-    "stuff": Object {
-      "id": 7,
-      "image": "id1",
-      "label": "ID",
-    },
-    "type": "EXP",
+    "params": Array [
+      Object {
+        "id": 7,
+        "image": "id1",
+        "label": "ID",
+      },
+    ],
+    "type": "PROGRAM",
   },
-  "loc": Object {
-    "end": Object {
-      "column": 18,
-      "line": 1,
-      "pos": 18,
-    },
-    "start": Object {
-      "column": 0,
-      "line": 1,
-      "pos": 0,
-    },
-  },
-  "params": Array [
-    Object {
-      "id": 7,
-      "image": "id1",
-      "label": "ID",
-    },
-  ],
-  "type": "PROGRAM",
+  "channels": Object {},
 }
 `;
 
@@ -244,7 +252,9 @@ const Q=require(\\"@quase/parser\\");
       
       constructor(input){
         super(input);
-        this.labels=[\\"\\",\\"FUN\\",\\"END\\",\\"COMMA\\",\\"ARROW\\",\\"ID_START\\",\\"ID_CHAR\\",\\"ID\\",\\"NUM\\"];
+        this.labels=[\\"\\",\\"FUN\\",\\"END\\",\\"COMMA\\",\\"ARROW\\",\\"ID_START\\",\\"ID_CHAR\\",\\"ID\\",\\"NUM\\",\\"SKIP\\"];
+        this.idToChannels={\\"9\\":[]};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -252,18 +262,34 @@ const Q=require(\\"@quase/parser\\");
 
         let $$state=1,$$loop=true;while($$loop){switch($$state){
 case 1:
-if(this.current===44/*','*/){
-this.consume1(44/*','*/);$$state=3;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=3;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=3;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=3;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=3;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=3;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=3;
+}else if(this.current===44/*','*/){
+this.consume1(44/*','*/);$$state=4;
 }else if(this.current===45/*'-'*/){
-this.consume1(45/*'-'*/);$$state=4;
+this.consume1(45/*'-'*/);$$state=5;
 }else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=6;
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=7;
 }else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/||/*'a'*/97<=this.current&&this.current<=100/*'d'*/){
 this.ruleID_START();$$state=2;
 }else if(this.current===101/*'e'*/){
-this.consume1(101/*'e'*/);$$state=7;
+this.consume1(101/*'e'*/);$$state=8;
 }else if(this.current===102/*'f'*/){
-this.consume1(102/*'f'*/);$$state=10;
+this.consume1(102/*'f'*/);$$state=11;
 }else if(/*'g'*/103<=this.current&&this.current<=122/*'z'*/){
 this.ruleID_START();$$state=2;
 }else {
@@ -274,72 +300,93 @@ case 2:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/||/*'A'*/65<=this.current&&this.current<=90/*'Z'*/||/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
 this.ruleID_CHAR();$$state=2;
 }else {
-id=7;$$state=13;
+id=7;$$state=14;
 }
 break;
 case 3:
-{
-id=3;$$state=13;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=3;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=3;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=3;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=3;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=3;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=3;
+}else {
+id=9;$$state=14;
 }
 break;
 case 4:
-if(this.current===62/*'>'*/){
-this.consume1(62/*'>'*/);$$state=5;
-}else {
-$$loop=false;
+{
+id=3;$$state=14;
 }
 break;
 case 5:
-{
-id=4;$$state=13;
-}
-break;
-case 6:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=6;
-}else {
-id=8;$$state=13;
-}
-break;
-case 7:
-if(this.current===110/*'n'*/){
-this.consume1(110/*'n'*/);$$state=8;
+if(this.current===62/*'>'*/){
+this.consume1(62/*'>'*/);$$state=6;
 }else {
 $$loop=false;
 }
 break;
+case 6:
+{
+id=4;$$state=14;
+}
+break;
+case 7:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=7;
+}else {
+id=8;$$state=14;
+}
+break;
 case 8:
-if(this.current===100/*'d'*/){
-this.consume1(100/*'d'*/);$$state=9;
+if(this.current===110/*'n'*/){
+this.consume1(110/*'n'*/);$$state=9;
 }else {
 $$loop=false;
 }
 break;
 case 9:
-{
-id=2;$$state=13;
-}
-break;
-case 10:
-if(this.current===117/*'u'*/){
-this.consume1(117/*'u'*/);$$state=11;
+if(this.current===100/*'d'*/){
+this.consume1(100/*'d'*/);$$state=10;
 }else {
 $$loop=false;
 }
 break;
+case 10:
+{
+id=2;$$state=14;
+}
+break;
 case 11:
-if(this.current===110/*'n'*/){
-this.consume1(110/*'n'*/);$$state=12;
+if(this.current===117/*'u'*/){
+this.consume1(117/*'u'*/);$$state=12;
 }else {
 $$loop=false;
 }
 break;
 case 12:
-{
-id=1;$$state=13;
+if(this.current===110/*'n'*/){
+this.consume1(110/*'n'*/);$$state=13;
+}else {
+$$loop=false;
 }
 break;
 case 13:
+{
+id=1;$$state=14;
+}
+break;
+case 14:
 {
 $$loop=false;
 }
@@ -430,6 +477,52 @@ this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
 $$loop=false;
 }
 }
+      }
+ruleSKIP(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
       }
     }
 class Parser extends Q.Parser{
@@ -523,31 +616,38 @@ module.exports=Parser;
 
 exports[`basic: conflicts 1`] = `
 Array [
-  "In lexer, in state 1, when seeing [Range [101,101]], multiple choices: [Range [101,101]] to 7; [Rule ID_START] to 2",
-  "In lexer, in state 1, when seeing [Range [102,102]], multiple choices: [Range [102,102]] to 10; [Rule ID_START] to 2",
+  "In lexer, in state 1, when seeing [Range [101,101]], multiple choices: [Range [101,101]] to 8; [Rule ID_START] to 2",
+  "In lexer, in state 1, when seeing [Range [102,102]], multiple choices: [Range [102,102]] to 11; [Rule ID_START] to 2",
 ]
 `;
 
-exports[`basic: error 1`] = `"Unexpected token EOF (at 1:14)"`;
+exports[`basic: error 1`] = `"Unexpected token EOF (at 1:11)"`;
 
-exports[`dot - typescript: code 1`] = `
+exports[`channels - typescript: code 1`] = `
 "/* eslint-disable */
 import Q from \\"@quase/parser\\";
 export type $1 = {id:1;label:\\"ID\\";image:string;};
 export type $2 = {id:2;label:\\"NUM\\";image:string;};
-export type $EOF = {id:0;label:\\"EOF\\";image:string };
-export type $Tokens = $1|$2;
-export type $TokensWithEOF = $EOF|$Tokens;
+export type $3 = {id:3;label:\\"SKIP\\";image:string;};
+export type $4 = {id:4;label:\\"UNDERSCORE\\";image:string;};
+export type $EOF={id:0;label:\\"EOF\\";image:string };
+export type $Tokens=$1|$2|$3|$4;
+export type $TokensWithEOF=$EOF|$Tokens;
+export type $Channels=\\"underscores\\";
 export type $Position = {pos:number;line:number;column:number;};
 export type $Location = {start:$Position;end:$Position;};
 export interface $Base<T> {type:T;loc:$Location;}
 export interface PROGRAM extends $Base<'PROGRAM'> {tokens:($Tokens)[];};
 
-    class Tokenizer extends Q.Tokenizer{
+    class Tokenizer extends Q.Tokenizer<$Tokens, $Channels>{
       labels:string[];
+idToChannels:{[key:number]:$Channels[]};
+channels:{[key in $Channels]:$Tokens[]};
       constructor(input:string){
         super(input);
-        this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\",\\"SKIP\\",\\"UNDERSCORE\\"];
+        this.idToChannels={\\"3\\":[],\\"4\\":[\\"underscores\\"]};
+        this.channels={\\"underscores\\":[]};
       }
       readToken() {
         const prevPos = this.pos;
@@ -555,35 +655,79 @@ export interface PROGRAM extends $Base<'PROGRAM'> {tokens:($Tokens)[];};
 
         let $$state=1,$$loop=true;while($$loop){switch($$state){
 case 1:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
 }else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(this.current===95/*'_'*/){
+this.consume1(95/*'_'*/);$$state=5;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
 }else {
 $$loop=false;
 }
 break;
 case 2:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
 }else {
-id=2;$$state=4;
+id=3;$$state=6;
 }
 break;
 case 3:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
 this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
 }else {
-id=1;$$state=4;
+id=2;$$state=6;
 }
 break;
 case 4:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=4;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+id=1;$$state=6;
+}
+break;
+case 5:
+{
+id=4;$$state=6;
+}
+break;
+case 6:
 {
 $$loop=false;
 }
@@ -640,6 +784,55 @@ $$loop=false;
 }
 }
       }
+ruleSKIP(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleUNDERSCORE(){
+        this.consume1(95/*'_'*/);
+      }
     }
 class Parser extends Q.Parser{
 
@@ -652,8 +845,523 @@ class Parser extends Q.Parser{
 rulePROGRAM(){
         let $$loc=this.startNode();let $tokens=[];
         let $$state=1,$$loop=true;while($$loop){
-if(/*ID*/1<=this.current&&this.current<=2/*NUM*/){
-$tokens.push(this.consume2(1/*ID*/,2/*NUM*/));$$state=1;
+if(/*ID*/1<=this.current&&this.current<=4/*UNDERSCORE*/){
+$tokens.push(this.consume2(1/*ID*/,4/*UNDERSCORE*/));$$state=1;
+}else if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+}
+        return {type:\\"PROGRAM\\",tokens:$tokens,loc:this.locNode($$loc)} as PROGRAM;
+      }
+parse(){
+      const r=this.rulePROGRAM();this.consume1(0);return r;
+    }}
+export default Parser;
+"
+`;
+
+exports[`channels: ast 1`] = `
+Object {
+  "ast": Object {
+    "loc": Object {
+      "end": Object {
+        "column": 21,
+        "line": 1,
+        "pos": 21,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 1,
+        "pos": 0,
+      },
+    },
+    "tokens": Array [
+      Object {
+        "id": 1,
+        "image": "id1",
+        "label": "ID",
+      },
+      Object {
+        "id": 2,
+        "image": "100",
+        "label": "NUM",
+      },
+      Object {
+        "id": 1,
+        "image": "id2",
+        "label": "ID",
+      },
+      Object {
+        "id": 2,
+        "image": "200",
+        "label": "NUM",
+      },
+    ],
+    "type": "PROGRAM",
+  },
+  "channels": Object {
+    "underscores": Array [
+      Object {
+        "id": 4,
+        "image": "_",
+        "label": "UNDERSCORE",
+      },
+      Object {
+        "id": 4,
+        "image": "_",
+        "label": "UNDERSCORE",
+      },
+      Object {
+        "id": 4,
+        "image": "_",
+        "label": "UNDERSCORE",
+      },
+    ],
+  },
+}
+`;
+
+exports[`channels: code 1`] = `
+"/* eslint-disable */
+const Q=require(\\"@quase/parser\\");
+
+
+    class Tokenizer extends Q.Tokenizer{
+      
+      constructor(input){
+        super(input);
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\",\\"SKIP\\",\\"UNDERSCORE\\"];
+        this.idToChannels={\\"3\\":[],\\"4\\":[\\"underscores\\"]};
+        this.channels={\\"underscores\\":[]};
+      }
+      readToken() {
+        const prevPos = this.pos;
+        let id = -1;
+
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(this.current===95/*'_'*/){
+this.consume1(95/*'_'*/);$$state=5;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+id=3;$$state=6;
+}
+break;
+case 3:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else {
+id=2;$$state=6;
+}
+break;
+case 4:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=4;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+id=1;$$state=6;
+}
+break;
+case 5:
+{
+id=4;$$state=6;
+}
+break;
+case 6:
+{
+$$loop=false;
+}
+break;
+}}
+
+        if (id===-1) {
+          throw this.unexpected();
+        }
+
+        const image=this.input.slice(prevPos,this.pos);
+        const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+        const newLines=splitted.length-1;
+        if (newLines>0) {
+          this._lineStart=this.pos-splitted[newLines].length;
+          this._curLine+=newLines;
+        }
+        return {
+          id,
+          label: this.labels[id],
+          image
+        };
+      }
+      ruleID(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleNUM(){
+        this.consume2(48/*'0'*/,57/*'9'*/);let $$state=2,$$loop=true;while($$loop){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+$$loop=false;
+}
+}
+      }
+ruleSKIP(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleUNDERSCORE(){
+        this.consume1(95/*'_'*/);
+      }
+    }
+class Parser extends Q.Parser{
+
+    constructor(text){super(new Tokenizer(text));}
+    unexpected(id) {
+      const labels = this.tokenizer.labels;
+      super.unexpected(labels[id]||id);
+    }
+    
+rulePROGRAM(){
+        let $$loc=this.startNode();let $tokens=[];
+        let $$state=1,$$loop=true;while($$loop){
+if(/*ID*/1<=this.current&&this.current<=4/*UNDERSCORE*/){
+$tokens.push(this.consume2(1/*ID*/,4/*UNDERSCORE*/));$$state=1;
+}else if(this.current===0/*EOF*/){
+$$loop=false;
+}else {
+throw this.unexpected();
+}
+}
+        return {type:\\"PROGRAM\\",tokens:$tokens,loc:this.locNode($$loc)};
+      }
+parse(){
+      const r=this.rulePROGRAM();this.consume1(0);return r;
+    }}
+module.exports=Parser;
+"
+`;
+
+exports[`dot - typescript: code 1`] = `
+"/* eslint-disable */
+import Q from \\"@quase/parser\\";
+export type $1 = {id:1;label:\\"ID\\";image:string;};
+export type $2 = {id:2;label:\\"NUM\\";image:string;};
+export type $3 = {id:3;label:\\"SKIP\\";image:string;};
+export type $EOF={id:0;label:\\"EOF\\";image:string };
+export type $Tokens=$1|$2|$3;
+export type $TokensWithEOF=$EOF|$Tokens;
+export type $Channels=never;
+export type $Position = {pos:number;line:number;column:number;};
+export type $Location = {start:$Position;end:$Position;};
+export interface $Base<T> {type:T;loc:$Location;}
+export interface PROGRAM extends $Base<'PROGRAM'> {tokens:($Tokens)[];};
+
+    class Tokenizer extends Q.Tokenizer<$Tokens, $Channels>{
+      labels:string[];
+idToChannels:{[key:number]:$Channels[]};
+channels:{[key in $Channels]:$Tokens[]};
+      constructor(input:string){
+        super(input);
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\",\\"SKIP\\"];
+        this.idToChannels={\\"3\\":[]};
+        this.channels={};
+      }
+      readToken() {
+        const prevPos = this.pos;
+        let id = -1;
+
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+id=3;$$state=5;
+}
+break;
+case 3:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
+}else {
+id=2;$$state=5;
+}
+break;
+case 4:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=4;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+id=1;$$state=5;
+}
+break;
+case 5:
+{
+$$loop=false;
+}
+break;
+}}
+
+        if (id===-1) {
+          throw this.unexpected();
+        }
+
+        const image=this.input.slice(prevPos,this.pos);
+        const splitted=image.split(/\\\\r\\\\n?|\\\\n/g);
+        const newLines=splitted.length-1;
+        if (newLines>0) {
+          this._lineStart=this.pos-splitted[newLines].length;
+          this._curLine+=newLines;
+        }
+        return {
+          id,
+          label: this.labels[id],
+          image
+        };
+      }
+      ruleID(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=2;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+ruleNUM(){
+        this.consume2(48/*'0'*/,57/*'9'*/);let $$state=2,$$loop=true;while($$loop){
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+}else {
+$$loop=false;
+}
+}
+      }
+ruleSKIP(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
+    }
+class Parser extends Q.Parser{
+
+    constructor(text:string){super(new Tokenizer(text));}
+    unexpected(id:number|string) {
+      const labels = this.tokenizer.labels;
+      super.unexpected(labels[id]||id);
+    }
+    
+rulePROGRAM(){
+        let $$loc=this.startNode();let $tokens=[];
+        let $$state=1,$$loop=true;while($$loop){
+if(/*ID*/1<=this.current&&this.current<=3/*SKIP*/){
+$tokens.push(this.consume2(1/*ID*/,3/*SKIP*/));$$state=1;
 }else if(this.current===0/*EOF*/){
 $$loop=false;
 }else {
@@ -671,41 +1379,44 @@ export default Parser;
 
 exports[`dot: ast 1`] = `
 Object {
-  "loc": Object {
-    "end": Object {
-      "column": 15,
-      "line": 1,
-      "pos": 15,
+  "ast": Object {
+    "loc": Object {
+      "end": Object {
+        "column": 15,
+        "line": 1,
+        "pos": 15,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 1,
+        "pos": 0,
+      },
     },
-    "start": Object {
-      "column": 0,
-      "line": 1,
-      "pos": 0,
-    },
+    "tokens": Array [
+      Object {
+        "id": 1,
+        "image": "id1",
+        "label": "ID",
+      },
+      Object {
+        "id": 2,
+        "image": "100",
+        "label": "NUM",
+      },
+      Object {
+        "id": 1,
+        "image": "id2",
+        "label": "ID",
+      },
+      Object {
+        "id": 2,
+        "image": "200",
+        "label": "NUM",
+      },
+    ],
+    "type": "PROGRAM",
   },
-  "tokens": Array [
-    Object {
-      "id": 1,
-      "image": "id1",
-      "label": "ID",
-    },
-    Object {
-      "id": 2,
-      "image": "100",
-      "label": "NUM",
-    },
-    Object {
-      "id": 1,
-      "image": "id2",
-      "label": "ID",
-    },
-    Object {
-      "id": 2,
-      "image": "200",
-      "label": "NUM",
-    },
-  ],
-  "type": "PROGRAM",
+  "channels": Object {},
 }
 `;
 
@@ -718,7 +1429,9 @@ const Q=require(\\"@quase/parser\\");
       
       constructor(input){
         super(input);
-        this.labels=[\\"\\",\\"ID\\",\\"NUM\\"];
+        this.labels=[\\"\\",\\"ID\\",\\"NUM\\",\\"SKIP\\"];
+        this.idToChannels={\\"3\\":[]};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -726,35 +1439,72 @@ const Q=require(\\"@quase/parser\\");
 
         let $$state=1,$$loop=true;while($$loop){switch($$state){
 case 1:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
 }else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
 }else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
 }else {
 $$loop=false;
 }
 break;
 case 2:
-if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
-this.consume2(48/*'0'*/,57/*'9'*/);$$state=2;
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
 }else {
-id=2;$$state=4;
+id=3;$$state=5;
 }
 break;
 case 3:
 if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
 this.consume2(48/*'0'*/,57/*'9'*/);$$state=3;
-}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
-this.consume2(65/*'A'*/,90/*'Z'*/);$$state=3;
-}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
-this.consume2(97/*'a'*/,122/*'z'*/);$$state=3;
 }else {
-id=1;$$state=4;
+id=2;$$state=5;
 }
 break;
 case 4:
+if(/*'0'*/48<=this.current&&this.current<=57/*'9'*/){
+this.consume2(48/*'0'*/,57/*'9'*/);$$state=4;
+}else if(/*'A'*/65<=this.current&&this.current<=90/*'Z'*/){
+this.consume2(65/*'A'*/,90/*'Z'*/);$$state=4;
+}else if(/*'a'*/97<=this.current&&this.current<=122/*'z'*/){
+this.consume2(97/*'a'*/,122/*'z'*/);$$state=4;
+}else {
+id=1;$$state=5;
+}
+break;
+case 5:
 {
 $$loop=false;
 }
@@ -811,6 +1561,52 @@ $$loop=false;
 }
 }
       }
+ruleSKIP(){
+        let $$state=1,$$loop=true;while($$loop){switch($$state){
+case 1:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+case 2:
+if(this.current===9/*'	'*/){
+this.consume1(9/*'	'*/);$$state=2;
+}else if(this.current===10/*'
+'*/){
+this.consume1(10/*'
+'*/);$$state=2;
+}else if(this.current===11/*''*/){
+this.consume1(11/*''*/);$$state=2;
+}else if(this.current===12/*''*/){
+this.consume1(12/*''*/);$$state=2;
+}else if(this.current===13/*'
+'*/){
+this.consume1(13/*'
+'*/);$$state=2;
+}else if(this.current===32/*' '*/){
+this.consume1(32/*' '*/);$$state=2;
+}else {
+$$loop=false;
+}
+break;
+}}
+      }
     }
 class Parser extends Q.Parser{
 
@@ -823,8 +1619,8 @@ class Parser extends Q.Parser{
 rulePROGRAM(){
         let $$loc=this.startNode();let $tokens=[];
         let $$state=1,$$loop=true;while($$loop){
-if(/*ID*/1<=this.current&&this.current<=2/*NUM*/){
-$tokens.push(this.consume2(1/*ID*/,2/*NUM*/));$$state=1;
+if(/*ID*/1<=this.current&&this.current<=3/*SKIP*/){
+$tokens.push(this.consume2(1/*ID*/,3/*SKIP*/));$$state=1;
 }else if(this.current===0/*EOF*/){
 $$loop=false;
 }else {
@@ -850,6 +1646,8 @@ const Q=require(\\"@quase/parser\\");
       constructor(input){
         super(input);
         this.labels=[\\"\\",\\"STRING\\"];
+        this.idToChannels={};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -977,6 +1775,8 @@ const Q=require(\\"@quase/parser\\");
       constructor(input){
         super(input);
         this.labels=[\\"\\",\\"'A'\\",\\"'B'\\"];
+        this.idToChannels={};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -1090,6 +1890,8 @@ const Q=require(\\"@quase/parser\\");
       constructor(input){
         super(input);
         this.labels=[\\"\\",\\"'A'\\"];
+        this.idToChannels={};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;
@@ -1164,20 +1966,25 @@ export type $3 = {id:3;label:\\"'->'\\";image:string;};
 export type $4 = {id:4;label:\\"'end'\\";image:string;};
 export type $5 = {id:5;label:\\"ID\\";image:string;};
 export type $6 = {id:6;label:\\"NUM\\";image:string;};
-export type $EOF = {id:0;label:\\"EOF\\";image:string };
-export type $Tokens = $1|$2|$3|$4|$5|$6;
-export type $TokensWithEOF = $EOF|$Tokens;
+export type $EOF={id:0;label:\\"EOF\\";image:string };
+export type $Tokens=$1|$2|$3|$4|$5|$6;
+export type $TokensWithEOF=$EOF|$Tokens;
+export type $Channels=never;
 export type $Position = {pos:number;line:number;column:number;};
 export type $Location = {start:$Position;end:$Position;};
 export interface $Base<T> {type:T;loc:$Location;}
 export interface EXP extends $Base<'EXP'> {stuff:$6|$5;};
 export interface PROGRAM extends $Base<'PROGRAM'> {params:($5)[];body:EXP;};
 
-    class Tokenizer extends Q.Tokenizer{
+    class Tokenizer extends Q.Tokenizer<$Tokens, $Channels>{
       labels:string[];
+idToChannels:{[key:number]:$Channels[]};
+channels:{[key in $Channels]:$Tokens[]};
       constructor(input:string){
         super(input);
         this.labels=[\\"\\",\\"'fun'\\",\\"','\\",\\"'->'\\",\\"'end'\\",\\"ID\\",\\"NUM\\"];
+        this.idToChannels={};
+        this.channels={};
       }
       readToken() {
         const prevPos = this.pos;

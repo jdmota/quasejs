@@ -1,9 +1,9 @@
 import { Token, Position, Location, Tokenizer } from "./tokenizer";
 import { error } from "./error";
 
-export class Parser {
+export class Parser<$Tokens extends Token, $Channels extends string> {
 
-  tokenizer: Tokenizer;
+  tokenizer: Tokenizer<$Tokens, $Channels>;
   start: Position;
   lastTokenEnd: Position;
   token: Token;
@@ -11,7 +11,7 @@ export class Parser {
   current: number;
   lastToken: Token;
 
-  constructor( tokenizer: Tokenizer ) {
+  constructor( tokenizer: Tokenizer<$Tokens, $Channels> ) {
     this.tokenizer = tokenizer;
     this.start = { pos: 0, line: 0, column: 0 };
     this.lastTokenEnd = this.start;
@@ -64,7 +64,14 @@ export class Parser {
   }
 
   unexpected( id?: number | string ) {
-    throw error( `Unexpected token ${this.token.label}${id == null ? "" : `, expected ${id}`}`, this.tokenLoc.start );
+    throw error(
+      `Unexpected token ${this.token.label}${id == null ? "" : `, expected ${id}`}`,
+      this.tokenLoc.start
+    );
+  }
+
+  getChannels() {
+    return this.tokenizer.channels;
   }
 
   parse() {
