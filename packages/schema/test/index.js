@@ -378,6 +378,38 @@ it( "validate", () => {
     }
   `, {} );
 
+  run( `
+    type Schema {
+      prop: true;
+    }
+  `, {
+    prop: false
+  } );
+
+  run( `
+    type Schema {
+      prop: false;
+    }
+  `, {
+    prop: true
+  } );
+
+  run( `
+    type Schema {
+      prop: true;
+    }
+  `, {
+    prop: true
+  } );
+
+  run( `
+    type Schema {
+      prop: false;
+    }
+  `, {
+    prop: false
+  } );
+
 } );
 
 /* it( "show where the error is", () => {

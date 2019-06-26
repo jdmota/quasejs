@@ -14,7 +14,12 @@ function formatOption( option: string ): string {
 }
 
 function format( value: unknown ) {
-  return util.inspect( value );
+  return util.inspect( value, {
+    compact: true,
+    depth: 2,
+    maxArrayLength: 5,
+    breakLength: 50
+  } );
 }
 
 function printWarning( str: string ) {

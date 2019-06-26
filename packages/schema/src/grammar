@@ -23,6 +23,8 @@ fragment JS_ESC: /\\[^]/;
 
 ID: /[_a-zA-Z][_a-zA-Z0-9]*/;
 
+SKIP: /\s+/ -> skip;
+
 @parser
 
 start Schema: types+=TypeDeclaration*;
@@ -59,7 +61,7 @@ MaybeArrayOrOptional:
   )*
   {return $t};
 
-TypeAtom: ( t=Identifier | t=TypeObject | t=TypeTuple | t=Number | t=String | '(' t=Type ')' ) {return $t;};
+TypeAtom: ( t=Identifier | t=TypeObject | t=TypeTuple | t=Boolean | t=Number | t=String | '(' t=Type ')' ) {return $t;};
 
 TypeObject: 'type' decorators+=Decorator* '{' properties+=TypeProperty* '}';
 

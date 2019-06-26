@@ -71,7 +71,7 @@ type Identifier = {
 type BooleanNode = {
   type: "Boolean";
   raw: string;
-}
+};
 
 type NumberNode = {
   type: "Number";
@@ -88,7 +88,7 @@ type JsNode = {
   raw: string;
 };
 
-type TypeLiteral = NumberNode | StringNode;
+type TypeLiteral = NumberNode | StringNode | BooleanNode;
 
 type TypeNotIdentifier = TypeDeclaration | UnionType | ArrayType | OptionalType | TypeObject | TypeProperty | TypeTuple;
 
@@ -310,7 +310,7 @@ class CliCompiler {
       }
       return this.compileTypeNotIdentifier( ctx.scope.find( node ), ctx );
     }
-    if ( node.type === "String" || node.type === "Number" ) {
+    if ( node.type === "String" || node.type === "Number" || node.type === "Boolean" ) {
       return this.compileLiteral( node, ctx );
     }
     return this.compileTypeNotIdentifier( node, ctx );
@@ -412,6 +412,9 @@ class CliCompiler {
         break;
       case "String":
         this.yargsOpts.string.push( ctx.path.join( "." ) );
+        break;
+      case "Boolean":
+        this.yargsOpts.boolean.push( ctx.path.join( "." ) );
         break;
       /* istanbul ignore next */
       default:
@@ -646,7 +649,7 @@ class Compiler {
       }
       return this.compileTypeNotIdentifier( ctx.scope.find( node ), ctx );
     }
-    if ( node.type === "String" || node.type === "Number" ) {
+    if ( node.type === "String" || node.type === "Number" || node.type === "Boolean" ) {
       return this.compileLiteral( node );
     }
     return this.compileTypeNotIdentifier( node, ctx );

@@ -5956,6 +5956,350 @@ number:[],
   })"
 `;
 
+exports[`validate: code 25`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['prop'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+runtime.assertValue(path,value,true,this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const literal1={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+literal1.validate(busy,path.add('prop'),value.prop);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.prop=literal1.merge(path.add('prop'),pathValue.add('prop'),dest.prop,value.prop);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.prop=literal1.defaults(path.add('prop'),value.prop);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"prop\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 26`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['prop'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+runtime.assertValue(path,value,false,this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const literal1={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+literal1.validate(busy,path.add('prop'),value.prop);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.prop=literal1.merge(path.add('prop'),pathValue.add('prop'),dest.prop,value.prop);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.prop=literal1.defaults(path.add('prop'),value.prop);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"prop\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 27`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['prop'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+runtime.assertValue(path,value,true,this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const literal1={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+literal1.validate(busy,path.add('prop'),value.prop);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.prop=literal1.merge(path.add('prop'),pathValue.add('prop'),dest.prop,value.prop);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.prop=literal1.defaults(path.add('prop'),value.prop);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"prop\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 28`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['prop'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+runtime.assertValue(path,value,false,this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const literal1={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+literal1.validate(busy,path.add('prop'),value.prop);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.prop=literal1.merge(path.add('prop'),pathValue.add('prop'),dest.prop,value.prop);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.prop=literal1.defaults(path.add('prop'),value.prop);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"prop\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
 exports[`validate: log output 1`] = `
 Array [
   Array [
@@ -6163,26 +6507,7 @@ Array [
   Example:
   {
     'obj': {
-      'foo': [ 'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a',
-        'a' ]
+      'foo': [ 'a', 'a', 'a', 'a', 'a', ... 15 more items ]
     }
   }
 ",
@@ -6231,6 +6556,38 @@ Array [
 `;
 
 exports[`validate: log output 24`] = `Array []`;
+
+exports[`validate: log output 25`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'prop' should be:
+    true
+  but instead received:
+    false
+",
+  ],
+]
+`;
+
+exports[`validate: log output 26`] = `
+Array [
+  Array [
+    "Validation Error:
+
+  Option 'prop' should be:
+    false
+  but instead received:
+    true
+",
+  ],
+]
+`;
+
+exports[`validate: log output 27`] = `Array []`;
+
+exports[`validate: log output 28`] = `Array []`;
 
 exports[`validate: result 1`] = `
 Object {
@@ -6293,5 +6650,17 @@ Object {
 exports[`validate: result 8`] = `
 Object {
   "watch": true,
+}
+`;
+
+exports[`validate: result 9`] = `
+Object {
+  "prop": true,
+}
+`;
+
+exports[`validate: result 10`] = `
+Object {
+  "prop": false,
 }
 `;
