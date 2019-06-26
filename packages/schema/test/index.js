@@ -98,6 +98,22 @@ it( "schema compilation", () => {
     }
   ` ) ).toThrowErrorMatchingSnapshot();
 
+  expect( () => schemaCompiler( `
+    type Schema {
+      key: string;
+      key: number;
+    }
+  ` ) ).toThrowErrorMatchingSnapshot();
+
+  expect( () => schemaCompiler( `
+    type Schema {
+      obj: type {
+        key: string;
+        key: number;
+      };
+    }
+  ` ) ).toThrowErrorMatchingSnapshot();
+
 } );
 
 it( "validate", () => {
@@ -448,6 +464,76 @@ it( "validate", () => {
     }
   `, {
     arr: []
+  } );
+
+  run( `
+    type b = boolean;
+
+    type Schema {
+      arr: b[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type n = number;
+
+    type Schema {
+      arr: n[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type Schema {
+      optional: number? | boolean;
+    }
+  `, {
+    optional: undefined
+  } );
+
+  run( `
+    type n = number?;
+
+    type Schema {
+      optional: n | boolean;
+    }
+  `, {
+    optional: undefined
+  } );
+
+  run( `
+    type Schema {
+      optional: any | boolean;
+    }
+  `, {
+    optional: undefined
+  } );
+
+  run( `
+    type Schema {
+      optional: undefined | boolean;
+    }
+  `, {
+    optional: undefined
+  } );
+
+  run( `
+    type Schema {
+      optional: any;
+    }
+  `, {
+    optional: undefined
+  } );
+
+  run( `
+    type Schema {
+      optional: undefined;
+    }
+  `, {
+    optional: undefined
   } );
 
 } );

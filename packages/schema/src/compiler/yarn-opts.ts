@@ -169,12 +169,12 @@ export class CliCompiler {
   }
 
   compileArray( node: ArrayType, ctx: CliContext ) {
-    if ( isBoolean( node.type1 ) ) {
+    if ( isBoolean( node.type1, ctx ) ) {
       this.yargsOpts.array.push( {
         key: ctx.path.join( "." ),
         boolean: true
       } );
-    } else if ( isNumber( node.type1 ) ) {
+    } else if ( isNumber( node.type1, ctx ) ) {
       this.yargsOpts.array.push( {
         key: ctx.path.join( "." ),
         number: true

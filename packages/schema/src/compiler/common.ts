@@ -91,13 +91,13 @@ export type Type = TypeNotIdentifier | TypeLiteral | Identifier;
 
 export class Scope {
 
-  map: Map<string, TypeNotIdentifier>;
+  map: Map<string, TypeDeclaration>;
 
   constructor() {
     this.map = new Map();
   }
 
-  bind( name: string, node: TypeNotIdentifier ) {
+  bind( name: string, node: TypeDeclaration ) {
     const curr = this.map.get( name );
     if ( curr ) {
       throw new Error( `Duplicate ${name} declaration` );
@@ -184,11 +184,14 @@ export class TypeInfo {
 
 }
 
-export type Context = {
-  // To prevent types from refering themselfs
-  circular: CircularCheck;
+export type WithScope = {
   // Scope
   scope: Scope;
+};
+
+export type Context = WithScope & {
+  // To prevent types from refering themselfs
+  circular: CircularCheck;
 };
 
 export type YargsOptions = {
@@ -202,9 +205,7 @@ export type YargsOptions = {
   number: string[];
 };
 
-export type CliContext = {
-  // Scope
-  scope: Scope;
+export type CliContext = WithScope & {
   // The current path
   path: string[];
   // To prevent maximum call stack size exceeded

@@ -2641,6 +2641,10 @@ exports[`schema compilation 6`] = `"You need to define a type called 'Schema' th
 
 exports[`schema compilation 7`] = `"NotDefined was not defined"`;
 
+exports[`schema compilation 8`] = `"Duplicate key 'key' in object type"`;
+
+exports[`schema compilation 9`] = `"Duplicate key 'key' in object type"`;
+
 exports[`validate: code 1`] = `
 "/* eslint-disable */({
     validateAndMerge: (()=>{
@@ -3644,7 +3648,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -3802,7 +3806,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -4152,7 +4156,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -4188,7 +4192,7 @@ function fun14(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun15(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -4339,7 +4343,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -4376,7 +4380,7 @@ function fun14(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun15(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -4527,7 +4531,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -4564,7 +4568,7 @@ function fun14(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun15(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -5297,7 +5301,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type4={
@@ -5334,7 +5338,7 @@ function fun14(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun15(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -5382,7 +5386,7 @@ function fun20(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun21(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type7={
@@ -5401,7 +5405,7 @@ function fun23(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun24(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type6={
@@ -5590,7 +5594,7 @@ function fun14(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun15(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -6464,7 +6468,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -6729,7 +6733,7 @@ function fun8(pathDest,pathValue,dest,value){
 return dest===undefined ? value : dest;
 }
 function fun9(path,value){
-if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path);}
 return value;
 }
 const type3={
@@ -6933,6 +6937,934 @@ allAlias:[],
 yargsOpts:{
 alias:{},
 array:[\\"arr\\"],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 34`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['arr'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _boolean.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_boolean.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_boolean.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_boolean.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_boolean.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type2={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('arr'),value.arr);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.arr=type2.merge(path.add('arr'),pathValue.add('arr'),dest.arr,value.arr);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.arr=type2.defaults(path.add('arr'),value.arr);
+return value;
+}
+const type1={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[{\\"key\\":\\"arr\\",\\"boolean\\":true}],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 35`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['arr'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Array',this);
+let i=(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")?1:0;
+for(;i<value.length;i++) _number.validate(busy,path.addIdx(i),value[i]);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+const first=dest===undefined;
+if(first)dest=[];
+let j=dest.length;
+if(this.mergeStrategy===\\"merge\\") for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+else if(this.mergeStrategy===\\"concat\\") for(let i=0;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(this.mergeStrategy===\\"spreadMeansConcat\\"&&value[0]===\\"...\\")  for(let i=1;i<value.length;i++,j++) dest.push(_number.merge(pathDest.addIdx(j),pathValue.addIdx(i),dest[j],value[i]));
+else if(first) for(let i=0;i<value.length;i++) dest[i]=_number.merge(pathDest.addIdx(i),pathValue.addIdx(i),dest[i],value[i]);
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)return [];
+return value;
+}
+const type2={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('arr'),value.arr);
+}
+function fun8(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.arr=type2.merge(path.add('arr'),pathValue.add('arr'),dest.arr,value.arr);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun9(path,value){
+if(value===undefined)value={};
+value.arr=type2.defaults(path.add('arr'),value.arr);
+return value;
+}
+const type1={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[{\\"key\\":\\"arr\\",\\"number\\":true}],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 36`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+_number.validate(busy,path,value);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+return _number.merge(pathDest,pathValue,dest,value);
+}
+function fun6(path,value){
+if(value===undefined)return;
+return _number.defaults(path,value);
+}
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun8(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun9(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+try{type3.validate(busy,path,value);}catch(err){
+busy.remove(value);_boolean.validate(busy,path,value);
+}
+}
+function fun11(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun12(path,value){
+if(value===undefined) { if(this.default) return this.default(); }
+return value;
+}
+const type2={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+function fun13(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('optional'),value.optional);
+}
+function fun14(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=type2.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun15(path,value){
+if(value===undefined)value={};
+value.optional=type2.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun13,
+merge:fun14,
+defaults:fun15,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"optional\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[\\"optional\\"],
+},
+}
+  })"
+`;
+
+exports[`validate: code 37`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'number',this);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _number={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+_number.validate(busy,path,value);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return dest;
+return _number.merge(pathDest,pathValue,dest,value);
+}
+function fun6(path,value){
+if(value===undefined)return;
+return _number.defaults(path,value);
+}
+const type3={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun8(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun9(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+try{type3.validate(busy,path,value);}catch(err){
+busy.remove(value);_boolean.validate(busy,path,value);
+}
+}
+function fun11(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun12(path,value){
+if(value===undefined) { if(this.default) return this.default(); }
+return value;
+}
+const type2={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+function fun13(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('optional'),value.optional);
+}
+function fun14(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=type2.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun15(path,value){
+if(value===undefined)value={};
+value.optional=type2.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun13,
+merge:fun14,
+defaults:fun15,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"optional\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[\\"optional\\"],
+},
+}
+  })"
+`;
+
+exports[`validate: code 38`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+busy.add(path,value);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined && this.default) return this.default();
+return value;
+}
+const _any={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun5(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun6(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+try{_any.validate(busy,path,value);}catch(err){
+busy.remove(value);_boolean.validate(busy,path,value);
+}
+}
+function fun8(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun9(path,value){
+if(value===undefined) { if(this.default) return this.default(); }
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('optional'),value.optional);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=type2.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.optional=type2.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"optional\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 39`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+busy.add(path,value);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined && this.default) return this.default();
+return value;
+}
+const _undefined={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'boolean',this);
+}
+function fun5(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun6(path,value){
+if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }
+return value;
+}
+const _boolean={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+function fun7(busy,path,value){
+if(value===undefined)return;
+try{_undefined.validate(busy,path,value);}catch(err){
+busy.remove(value);_boolean.validate(busy,path,value);
+}
+}
+function fun8(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun9(path,value){
+if(value===undefined) { if(this.default) return this.default(); }
+return value;
+}
+const type2={
+validate:fun7,
+merge:fun8,
+defaults:fun9,
+};
+
+function fun10(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+type2.validate(busy,path.add('optional'),value.optional);
+}
+function fun11(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=type2.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun12(path,value){
+if(value===undefined)value={};
+value.optional=type2.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun10,
+merge:fun11,
+defaults:fun12,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[\\"optional\\"],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 40`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+busy.add(path,value);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined && this.default) return this.default();
+return value;
+}
+const _any={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+_any.validate(busy,path.add('optional'),value.optional);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=_any.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.optional=_any.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
+boolean:[],
+coerce:{
+},
+count:[],
+string:[],
+narg:{},
+number:[],
+},
+}
+  })"
+`;
+
+exports[`validate: code 41`] = `
+"/* eslint-disable */({
+    validateAndMerge: (()=>{
+const { runtime } = require( \\"@quase/schema\\" );
+const keys_type1=['optional'];
+function fun1(busy,path,value){
+busy.add(path,value);
+}
+function fun2(pathDest,pathValue,dest,value){
+return dest===undefined ? value : dest;
+}
+function fun3(path,value){
+if(value===undefined && this.default) return this.default();
+return value;
+}
+const _undefined={
+validate:fun1,
+merge:fun2,
+defaults:fun3,
+};
+
+function fun4(busy,path,value){
+if(value===undefined)return;
+busy.add(path,value);
+runtime.assertType(path,value,'Object',this);
+if(!this.additionalProperties) runtime.checkUnrecognized(path,Object.keys(value),keys_type1);
+_undefined.validate(busy,path.add('optional'),value.optional);
+}
+function fun5(pathDest,pathValue,dest,value){
+if(value===undefined)return;
+if(dest===undefined)dest={};else if(this.mergeStrategy===\\"override\\")return dest;
+dest.optional=_undefined.merge(path.add('optional'),pathValue.add('optional'),dest.optional,value.optional);
+if(this.additionalProperties){
+const otherKeys = Object.keys(value).filter( k => !keys_type1.includes( k ) );
+for(const key of otherKeys) if(dest[key]===undefined&&value[key]!==undefined) dest[key]=value[key];
+}
+return dest;
+}
+function fun6(path,value){
+if(value===undefined)value={};
+value.optional=_undefined.defaults(path.add('optional'),value.optional);
+return value;
+}
+const type1={
+validate:fun4,
+merge:fun5,
+defaults:fun6,
+};
+
+const path = new runtime.Path(null,\\"\\");
+return (...values) => {
+      if(values.length===0){
+        throw new Error( \\"If must pass at least one value\\" );
+      }
+      const busy = new runtime.Busy();
+      const dest = values[0];
+      if(values.length>1)path.where=\\"0\\";
+      type1.validate(busy,path,dest);
+      for(let i=1;i<values.length;i++){
+        path.where=i+\\"\\";
+        type1.validate(busy,path,values[i]);
+        type1.merge(path,path,dest,values[i]);
+      }
+      path.where=\\"\\";
+      return type1.defaults(path,dest);
+    };
+})(),
+    cli: {
+help:\\"\\",
+allAlias:[],
+yargsOpts:{
+alias:{},
+array:[],
 boolean:[],
 coerce:{
 },
@@ -7244,6 +8176,22 @@ exports[`validate: log output 32`] = `Array []`;
 
 exports[`validate: log output 33`] = `Array []`;
 
+exports[`validate: log output 34`] = `Array []`;
+
+exports[`validate: log output 35`] = `Array []`;
+
+exports[`validate: log output 36`] = `Array []`;
+
+exports[`validate: log output 37`] = `Array []`;
+
+exports[`validate: log output 38`] = `Array []`;
+
+exports[`validate: log output 39`] = `Array []`;
+
+exports[`validate: log output 40`] = `Array []`;
+
+exports[`validate: log output 41`] = `Array []`;
+
 exports[`validate: result 1`] = `
 Object {
   "deprecated": true,
@@ -7347,5 +8295,53 @@ Object {
 exports[`validate: result 15`] = `
 Object {
   "arr": Array [],
+}
+`;
+
+exports[`validate: result 16`] = `
+Object {
+  "arr": Array [],
+}
+`;
+
+exports[`validate: result 17`] = `
+Object {
+  "arr": Array [],
+}
+`;
+
+exports[`validate: result 18`] = `
+Object {
+  "optional": undefined,
+}
+`;
+
+exports[`validate: result 19`] = `
+Object {
+  "optional": undefined,
+}
+`;
+
+exports[`validate: result 20`] = `
+Object {
+  "optional": undefined,
+}
+`;
+
+exports[`validate: result 21`] = `
+Object {
+  "optional": undefined,
+}
+`;
+
+exports[`validate: result 22`] = `
+Object {
+  "optional": undefined,
+}
+`;
+
+exports[`validate: result 23`] = `
+Object {
+  "optional": undefined,
 }
 `;

@@ -1,5 +1,6 @@
 import { Schema, Scope, Type, TypeNotIdentifier, TypeDeclaration, TypeProperty, TypeObject, TypeTuple, OptionalType, ArrayType, UnionType, TypeLiteral, Decorator, TypeInfo, CircularCheck, Context } from "./common";
 import TYPES from "./types";
+import { isOptional } from "./typechecking";
 
 export class Compiler {
 
@@ -159,6 +160,14 @@ export class Compiler {
   compileTypeObject( node: ( TypeDeclaration & { properties: TypeProperty[] } ) | TypeObject, ctx: Context ) {
     const { typeInfo, existed } = this.compileInfo( node );
     if ( existed ) return typeInfo;
+
+    const seenKeys = new Set();
+    for ( const { name } of node.properties ) {
+      if ( seenKeys.has( name ) ) {
+        throw new Error( `Duplicate key '${name}' in object type` );
+      }
+      seenKeys.add( name );
+    }
 
     this.statements.push( `const keys_${typeInfo.id}=[${node.properties.map( p => `'${p.name}'` )}];` );
 
@@ -388,8 +397,10 @@ export class Compiler {
 
     // Defaults
     {
+      const requiredCode = isOptional( node, ctx ) ? "" : "else throw runtime.requiredError(path);";
+
       let code = "";
-      code += `if(value===undefined) { if(this.default) return this.default(); else throw runtime.requiredError(path); }\n`;
+      code += `if(value===undefined) { if(this.default) return this.default(); ${requiredCode}}\n`;
       code += `return value;\n`;
       this.fnDefaults( typeInfo, code );
     }
@@ -407,7 +418,7 @@ export class Compiler {
     typeInfo = new TypeInfo( `_${name}` );
     this.compiledBuiltins.set( name, typeInfo );
 
-    if ( name === "any" ) {
+    if ( name === "any" || name === "undefined" ) {
       this.fnValidate( typeInfo, `busy.add(path,value);\n` );
       this.fnMerge( typeInfo, `return dest===undefined ? value : dest;\n` );
       this.fnDefaults( typeInfo, `if(value===undefined && this.default) return this.default();\nreturn value;\n` );
