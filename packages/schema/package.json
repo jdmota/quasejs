@@ -9,12 +9,12 @@
   "main": "dist/index.js",
   "dependencies": {
     "@quase/parser": "0.1.0-0",
-    "@sindresorhus/is": "^0.15.0",
-    "decamelize": "^3.0.0",
-    "leven": "^2.1.0",
-    "turbocolor": "^2.6.1"
+    "@sindresorhus/is": "^0.17.1",
+    "colorette": "^1.0.8",
+    "decamelize": "^3.2.0",
+    "leven": "^3.1.0"
   },
   "devDependencies": {
-    "strip-ansi": "^5.1.0"
+    "strip-ansi": "^5.2.0"
   }
 }

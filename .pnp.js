@@ -1090,10 +1090,10 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "./packages/schema/"),
       packageDependencies: new Map([
         ["@quase/parser", "0.1.0-0"],
-        ["@sindresorhus/is", "0.15.0"],
-        ["decamelize", "3.1.1"],
-        ["leven", "2.1.0"],
-        ["turbocolor", "2.6.1"],
+        ["@sindresorhus/is", "0.17.1"],
+        ["colorette", "1.0.8"],
+        ["decamelize", "3.2.0"],
+        ["leven", "3.1.0"],
         ["strip-ansi", "5.2.0"],
       ]),
     }],
@@ -1364,6 +1364,13 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-decamelize-1.2.0-f6534d15148269b20352e7bee26f501f9a191290/node_modules/decamelize/"),
       packageDependencies: new Map([
         ["decamelize", "1.2.0"],
+      ]),
+    }],
+    ["3.2.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-decamelize-3.2.0-84b8e8f4f8c579f938e35e2cc7024907e0090851/node_modules/decamelize/"),
+      packageDependencies: new Map([
+        ["xregexp", "4.2.4"],
+        ["decamelize", "3.2.0"],
       ]),
     }],
     ["3.1.1", {
@@ -1730,16 +1737,30 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["@sindresorhus/is", new Map([
-    ["0.15.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.15.0-96915baa05e6a6a1d137badf4984d3fc05820bb6/node_modules/@sindresorhus/is/"),
+    ["0.17.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.17.1-453b27750f358689c4aa3c9f32d9ace1f0929a79/node_modules/@sindresorhus/is/"),
       packageDependencies: new Map([
-        ["@sindresorhus/is", "0.15.0"],
+        ["@sindresorhus/is", "0.17.1"],
       ]),
     }],
     ["0.14.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.14.0-9fb3a3cf3132328151f353de4632e01e52102bea/node_modules/@sindresorhus/is/"),
       packageDependencies: new Map([
         ["@sindresorhus/is", "0.14.0"],
+      ]),
+    }],
+  ])],
+  ["colorette", new Map([
+    ["1.0.8", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/"),
+      packageDependencies: new Map([
+        ["colorette", "1.0.8"],
+      ]),
+    }],
+    ["1.0.7", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/"),
+      packageDependencies: new Map([
+        ["colorette", "1.0.7"],
       ]),
     }],
   ])],
@@ -1797,18 +1818,16 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["leven", new Map([
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-leven-3.1.0-77891de834064cccba82ae7842bb6b14a13ed7f2/node_modules/leven/"),
+      packageDependencies: new Map([
+        ["leven", "3.1.0"],
+      ]),
+    }],
     ["2.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-leven-2.1.0-c2e7a9f772094dee9d34202ae8acce4687875580/node_modules/leven/"),
       packageDependencies: new Map([
         ["leven", "2.1.0"],
-      ]),
-    }],
-  ])],
-  ["turbocolor", new Map([
-    ["2.6.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-turbocolor-2.6.1-1b47dcc0e0e5171f57d954351fb80a5088a8a921/node_modules/turbocolor/"),
-      packageDependencies: new Map([
-        ["turbocolor", "2.6.1"],
       ]),
     }],
   ])],
@@ -2173,6 +2192,14 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-trim-newlines-1.0.0-5887966bb582a4503a41eb524f7d35011815a613/node_modules/trim-newlines/"),
       packageDependencies: new Map([
         ["trim-newlines", "1.0.0"],
+      ]),
+    }],
+  ])],
+  ["turbocolor", new Map([
+    ["2.6.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-turbocolor-2.6.1-1b47dcc0e0e5171f57d954351fb80a5088a8a921/node_modules/turbocolor/"),
+      packageDependencies: new Map([
+        ["turbocolor", "2.6.1"],
       ]),
     }],
   ])],
@@ -3107,20 +3134,6 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-lodash-isplainobject-4.0.6-7c526a52d89b45c45cc690b88163be0497f550cb/node_modules/lodash.isplainobject/"),
       packageDependencies: new Map([
         ["lodash.isplainobject", "4.0.6"],
-      ]),
-    }],
-  ])],
-  ["colorette", new Map([
-    ["1.0.8", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/"),
-      packageDependencies: new Map([
-        ["colorette", "1.0.8"],
-      ]),
-    }],
-    ["1.0.7", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/"),
-      packageDependencies: new Map([
-        ["colorette", "1.0.7"],
       ]),
     }],
   ])],
@@ -10712,6 +10725,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-code-point-at-1.1.0-0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77/node_modules/code-point-at/", {"name":"code-point-at","reference":"1.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-number-is-nan-1.0.1-097b602b53422a522c1afb8790318336941a011d/node_modules/number-is-nan/", {"name":"number-is-nan","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-decamelize-1.2.0-f6534d15148269b20352e7bee26f501f9a191290/node_modules/decamelize/", {"name":"decamelize","reference":"1.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-decamelize-3.2.0-84b8e8f4f8c579f938e35e2cc7024907e0090851/node_modules/decamelize/", {"name":"decamelize","reference":"3.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-decamelize-3.1.1-ebf473c6f8607bd70fd9ed6d892da27c5eb8539e/node_modules/decamelize/", {"name":"decamelize","reference":"3.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-get-caller-file-1.0.3-f978fa4c90d1dfe7ff2d6beda2a515e713bdcf4a/node_modules/get-caller-file/", {"name":"get-caller-file","reference":"1.0.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-os-locale-2.1.0-42bc2900a6b5b8bd17376c8e882b65afccf24bf2/node_modules/os-locale/", {"name":"os-locale","reference":"2.1.0"}],
@@ -10755,8 +10769,10 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-camelcase-5.2.0-e7522abda5ed94cc0489e1b8466610e88404cf45/node_modules/camelcase/", {"name":"camelcase","reference":"5.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-camelcase-5.0.0-03295527d58bd3cd4aa75363f35b2e8d97be2f42/node_modules/camelcase/", {"name":"camelcase","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-camelcase-2.1.1-7c1d16d679a1bbe59ca02cacecfb011e201f5a1f/node_modules/camelcase/", {"name":"camelcase","reference":"2.1.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.15.0-96915baa05e6a6a1d137badf4984d3fc05820bb6/node_modules/@sindresorhus/is/", {"name":"@sindresorhus/is","reference":"0.15.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.17.1-453b27750f358689c4aa3c9f32d9ace1f0929a79/node_modules/@sindresorhus/is/", {"name":"@sindresorhus/is","reference":"0.17.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.14.0-9fb3a3cf3132328151f353de4632e01e52102bea/node_modules/@sindresorhus/is/", {"name":"@sindresorhus/is","reference":"0.14.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/", {"name":"colorette","reference":"1.0.8"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/", {"name":"colorette","reference":"1.0.7"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-xregexp-4.2.4-02a4aea056d65a42632c02f0233eab8e4d7e57ed/node_modules/xregexp/", {"name":"xregexp","reference":"4.2.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-runtime-corejs2-7.4.2-a0cec2c41717fa415e9c204f32b603d88b1796c2/node_modules/@babel/runtime-corejs2/", {"name":"@babel/runtime-corejs2","reference":"7.4.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-core-js-2.6.5-44bc8d249e7fb2ff5d00e0341a7ffb94fbf67895/node_modules/core-js/", {"name":"core-js","reference":"2.6.5"}],
@@ -10764,8 +10780,8 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-core-js-2.6.4-b8897c062c4d769dd30a0ac5c73976c47f92ea0d/node_modules/core-js/", {"name":"core-js","reference":"2.6.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-regenerator-runtime-0.13.2-32e59c9a6fb9b1a4aff09b4930ca2d4477343447/node_modules/regenerator-runtime/", {"name":"regenerator-runtime","reference":"0.13.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-regenerator-runtime-0.12.1-fa1a71544764c036f8c49b13a08b2594c9f8a0de/node_modules/regenerator-runtime/", {"name":"regenerator-runtime","reference":"0.12.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-leven-3.1.0-77891de834064cccba82ae7842bb6b14a13ed7f2/node_modules/leven/", {"name":"leven","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-leven-2.1.0-c2e7a9f772094dee9d34202ae8acce4687875580/node_modules/leven/", {"name":"leven","reference":"2.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-turbocolor-2.6.1-1b47dcc0e0e5171f57d954351fb80a5088a8a921/node_modules/turbocolor/", {"name":"turbocolor","reference":"2.6.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-camelcase-keys-5.0.0-67250d1d2e6617ed0568463e56fa337845706695/node_modules/camelcase-keys/", {"name":"camelcase-keys","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-camelcase-keys-2.1.0-308beeaffdf28119051efa1d932213c91b8f92e7/node_modules/camelcase-keys/", {"name":"camelcase-keys","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-map-obj-3.0.0-4221cc62360f88c0735f9e7c0813bd889657f490/node_modules/map-obj/", {"name":"map-obj","reference":"3.0.0"}],
@@ -10809,6 +10825,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-strip-indent-1.0.1-0c7962a6adefa7bbd4ac366460a638552ae1a0a2/node_modules/strip-indent/", {"name":"strip-indent","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-trim-newlines-2.0.0-b403d0b91be50c331dfc4b82eeceb22c3de16d20/node_modules/trim-newlines/", {"name":"trim-newlines","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-trim-newlines-1.0.0-5887966bb582a4503a41eb524f7d35011815a613/node_modules/trim-newlines/", {"name":"trim-newlines","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-turbocolor-2.6.1-1b47dcc0e0e5171f57d954351fb80a5088a8a921/node_modules/turbocolor/", {"name":"turbocolor","reference":"2.6.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-boxen-3.0.0-2e229f603c9c1da9d2966b7e9a5681eb692eca23/node_modules/boxen/", {"name":"boxen","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-boxen-1.3.0-55c6c39a8ba58d9c61ad22cd877532deb665a20b/node_modules/boxen/", {"name":"boxen","reference":"1.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ansi-align-3.0.0-b536b371cf687caaef236c18d3e21fe3797467cb/node_modules/ansi-align/", {"name":"ansi-align","reference":"3.0.0"}],
@@ -10912,8 +10929,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-transform-simplify-comparison-operators-6.9.4-f62afe096cab0e1f68a2d753fdf283888471ceb9/node_modules/babel-plugin-transform-simplify-comparison-operators/", {"name":"babel-plugin-transform-simplify-comparison-operators","reference":"6.9.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-babel-plugin-transform-undefined-to-void-6.9.4-be241ca81404030678b748717322b89d0c8fe280/node_modules/babel-plugin-transform-undefined-to-void/", {"name":"babel-plugin-transform-undefined-to-void","reference":"6.9.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-lodash-isplainobject-4.0.6-7c526a52d89b45c45cc690b88163be0497f550cb/node_modules/lodash.isplainobject/", {"name":"lodash.isplainobject","reference":"4.0.6"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/", {"name":"colorette","reference":"1.0.8"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/", {"name":"colorette","reference":"1.0.7"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-fswatcher-child-1.1.1-264dd95f9c4b5f8615327d7d7567884591846b9b/node_modules/fswatcher-child/", {"name":"fswatcher-child","reference":"1.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-chokidar-2.1.0-5fcb70d0b28ebe0867eb0f09d5f6a08f29a1efa0/node_modules/chokidar/", {"name":"chokidar","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-chokidar-2.1.6-b6cad653a929e244ce8a834244164d241fa954c5/node_modules/chokidar/", {"name":"chokidar","reference":"2.1.6"}],

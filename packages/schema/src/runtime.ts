@@ -1,7 +1,7 @@
-const is = require( "@sindresorhus/is" );
-const turbocolor = require( "turbocolor" );
-const leven = require( "leven" );
-const util = require( "util" );
+import is from "@sindresorhus/is";
+import leven from "leven";
+import { bold, green, yellow, red } from "colorette";
+import util from "util";
 
 const reIndent = /^(?!\s*$)/mg;
 
@@ -10,7 +10,7 @@ function indent( str: string, str2: string = "  " ) {
 }
 
 function formatOption( option: string ): string {
-  return turbocolor.bold( util.inspect( option ) );
+  return bold( util.inspect( option ) );
 }
 
 function format( value: unknown ) {
@@ -23,17 +23,17 @@ function format( value: unknown ) {
 }
 
 function printWarning( str: string ) {
-  console.warn( `${turbocolor.yellow( str )}\n` ); // eslint-disable-line no-console
+  console.warn( `${yellow( str )}\n` ); // eslint-disable-line no-console
 }
 
 function printError( error: Error ) {
   let message;
   if ( error instanceof ValidationError ) {
-    message = `${turbocolor.bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
+    message = `${bold( "Validation Error" )}:\n\n${error.message.replace( /^(?!$)/mg, "  " )}`;
   } else {
-    message = error.stack;
+    message = error.stack || error.message;
   }
-  console.error( `${turbocolor.red( message )}\n` ); // eslint-disable-line no-console
+  console.error( `${red( message )}\n` ); // eslint-disable-line no-console
 }
 
 class Path {
@@ -77,7 +77,7 @@ class Path {
       return `{}`;
     }
     return this.prev._example(
-      indent( `${formatOption( this.key )}: ${turbocolor.bold( format( example ) )}`, "  ".repeat( this.size ) )
+      indent( `${formatOption( this.key )}: ${bold( format( example ) )}`, "  ".repeat( this.size ) )
     );
   }
 
@@ -112,7 +112,7 @@ function createDidYouMeanMessage( unrecognized: string, allowedOptions: string[]
 }
 
 function printDeprecated( path: Path, message?: string ) {
-  printWarning( `${turbocolor.bold( "Deprecation Warning" )}: ${path.format()} ${message || ""}`.trim() );
+  printWarning( `${bold( "Deprecation Warning" )}: ${path.format()} ${message || ""}`.trim() );
 }
 
 function checkUnrecognized( path: Path, keys: string[], allowedOptions: string[], what?: string ) {
@@ -162,9 +162,9 @@ function assertType( path: Path, value: unknown, expectedType: string, meta?: Me
 
   throw new ValidationError( [
     `Option ${path.format()} must be of type:`,
-    `${indent( turbocolor.bold.green( expectedType ) )}`,
+    `${indent( bold( green( expectedType ) ) )}`,
     `but instead received:`,
-    `${indent( turbocolor.bold.red( actualType ) )}`,
+    `${indent( bold( red( actualType ) ) )}`,
     makeExample( path, meta )
   ] );
 }
@@ -177,7 +177,7 @@ function assertValue( path: Path, value: unknown, expectedValue: unknown ) {
     `Option ${path.format()} should be:`,
     `${indent( format( expectedValue ) )}`,
     `but instead received:`,
-    `${indent( turbocolor.bold.red( format( value ) ) )}`
+    `${indent( bold( red( format( value ) ) ) )}`
   ] );
 }
 
