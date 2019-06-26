@@ -1,15 +1,16 @@
 // @ts-ignore
 import Parser from "./parser";
 import TYPES from "./types";
+import { isBoolean, isNumber } from "./typechecking";
 
 const decamelize = require( "decamelize" );
 
-type Schema = {
+export type Schema = {
   type: "Schema";
   types: TypeDeclaration[];
 };
 
-type TypeDeclaration = {
+export type TypeDeclaration = {
   type: "TypeDeclaration";
   name: string;
   decorators: Decorator[];
@@ -23,76 +24,76 @@ type TypeDeclaration = {
   init: Type;
 };
 
-type TypeProperty = {
+export type TypeProperty = {
   type: "TypeProperty";
   name: string;
   typeSignature: Type;
   decorators: Decorator[];
 };
 
-type Decorator = {
+export type Decorator = {
   type: "Decorator";
   name: string;
   arguments: ( BooleanNode | NumberNode | StringNode | JsNode )[];
 };
 
-type UnionType = {
+export type UnionType = {
   type: "Union";
   type1: Type;
   type2: Type;
 };
 
-type ArrayType = {
+export type ArrayType = {
   type: "Array";
   type1: Type;
 };
 
-type OptionalType = {
+export type OptionalType = {
   type: "Optional";
   type1: Type;
 };
 
-type TypeObject = {
+export type TypeObject = {
   type: "TypeObject";
   decorators: Decorator[];
   properties: TypeProperty[];
 };
 
-type TypeTuple = {
+export type TypeTuple = {
   type: "TypeTuple";
   types: Type[];
 };
 
-type Identifier = {
+export type Identifier = {
   type: "Identifier";
   name: string;
 };
 
-type BooleanNode = {
+export type BooleanNode = {
   type: "Boolean";
   raw: string;
 };
 
-type NumberNode = {
+export type NumberNode = {
   type: "Number";
   raw: string;
 };
 
-type StringNode = {
+export type StringNode = {
   type: "String";
   raw: string;
 };
 
-type JsNode = {
+export type JsNode = {
   type: "Js";
   raw: string;
 };
 
-type TypeLiteral = NumberNode | StringNode | BooleanNode;
+export type TypeLiteral = NumberNode | StringNode | BooleanNode;
 
-type TypeNotIdentifier = TypeDeclaration | UnionType | ArrayType | OptionalType | TypeObject | TypeProperty | TypeTuple;
+export type TypeNotIdentifier = TypeDeclaration | UnionType | ArrayType | OptionalType | TypeObject | TypeProperty | TypeTuple;
 
-type Type = TypeNotIdentifier | TypeLiteral | Identifier;
+export type Type = TypeNotIdentifier | TypeLiteral | Identifier;
 
 class Scope {
 
@@ -198,7 +199,7 @@ type Context = {
 
 type YargsOptions = {
   alias: { [key: string]: string[] };
-  array: string[];
+  array: ( string | { key: string; boolean: true } | { key: string; number: true } )[];
   boolean: string[];
   coerce: { [key: string]: string };
   count: string[];
@@ -387,8 +388,20 @@ class CliCompiler {
     this.compileType( node.type1, ctx );
   }
 
-  compileArray( _: ArrayType, ctx: CliContext ) {
-    this.yargsOpts.array.push( ctx.path.join( "." ) );
+  compileArray( node: ArrayType, ctx: CliContext ) {
+    if ( isBoolean( node.type1 ) ) {
+      this.yargsOpts.array.push( {
+        key: ctx.path.join( "." ),
+        boolean: true
+      } );
+    } else if ( isNumber( node.type1 ) ) {
+      this.yargsOpts.array.push( {
+        key: ctx.path.join( "." ),
+        number: true
+      } );
+    } else {
+      this.yargsOpts.array.push( ctx.path.join( "." ) );
+    }
   }
 
   compileUnion( node: UnionType, ctx: CliContext ) {

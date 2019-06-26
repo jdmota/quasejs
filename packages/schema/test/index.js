@@ -410,6 +410,46 @@ it( "validate", () => {
     prop: false
   } );
 
+  run( `
+    type Schema {
+      arr: boolean[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type Schema {
+      arr: ( true | false )[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type Schema {
+      arr: number[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type Schema {
+      arr: ( 0 | 1 )[];
+    }
+  `, {
+    arr: []
+  } );
+
+  run( `
+    type Schema {
+      arr: string[];
+    }
+  `, {
+    arr: []
+  } );
+
 } );
 
 /* it( "show where the error is", () => {
