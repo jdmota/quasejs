@@ -1,4 +1,4 @@
-import { Type } from "./compiler";
+import { Type } from "./common";
 
 export function isBoolean( node: Type ): boolean {
   if ( node.type === "Union" ) {
