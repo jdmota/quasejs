@@ -1,9 +1,8 @@
+import decamelize from "decamelize";
+import trimNewlines from "trim-newlines";
+import redent from "redent";
 import { CliOptions, ArgsInfo, Schema, Command, CommandSet, Pkg } from "./types";
 import { pad } from "./utils";
-
-const decamelize = require( "decamelize" );
-const trimNewlines = require( "trim-newlines" );
-const redent = require( "redent" );
 
 type HelperArg = {
   usage: string | undefined;

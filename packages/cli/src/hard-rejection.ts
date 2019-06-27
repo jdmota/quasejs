@@ -1,8 +1,7 @@
 import { printError } from "./utils";
+import util from "util";
 
 // Adapted from https://github.com/sindresorhus/hard-rejection
-
-const util = require( "util" );
 
 let installed = false;
 

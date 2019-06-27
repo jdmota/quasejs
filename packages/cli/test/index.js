@@ -38,7 +38,8 @@ describe( "cli", () => {
       configFiles: "quase-cli-config.js",
       notifier: {
         options: {
-          updateCheckInterval: 0
+          updateCheckInterval: 0,
+          shouldNotifyInNpmScript: true
         },
         notify: {
           defer: false

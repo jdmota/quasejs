@@ -1,10 +1,9 @@
 import { Schema, CliOptions, ArgsInfo, CommandSet } from "./types";
-import { isObject } from "./utils";
+import camelCase from "camelcase";
+import camelcaseKeys from "camelcase-keys";
 
 const schemaCompiler = require( "@quase/schema/dist/compiler" ).default;
 const yargsParser = require( "yargs-parser" );
-const camelCase = require( "camelcase" );
-const camelcaseKeys = require( "camelcase-keys" );
 
 function compileSchema( schema: string ): Schema {
   return eval( schemaCompiler( schema ) ); // eslint-disable-line no-eval
@@ -19,19 +18,6 @@ function validationError( msg: string ) {
 
 function missingSchema( command: string | undefined ) {
   throw new Error( `Missing schema${command ? ` for command ${command}` : ""}` );
-}
-
-function clearAlias( obj: any, chain: string[], allAlias: Set<string> ) {
-  for ( const key in obj ) {
-    const v = obj[ key ];
-    chain.push( key );
-    if ( allAlias.has( chain.join( "." ) ) ) {
-      delete obj[ key ];
-    } else if ( isObject( v ) ) {
-      clearAlias( v, chain, allAlias );
-    }
-    chain.pop();
-  }
 }
 
 export function handleArgs( opts: CliOptions ): ArgsInfo {
@@ -84,15 +70,13 @@ export function handleArgs( opts: CliOptions ): ArgsInfo {
   }
 
   schema.cli.yargsOpts.configuration = {
-    "camel-case-expansion": false
+    "camel-case-expansion": false,
+    "strip-aliased": true
   };
-
-  const allAlias = new Set( schema.cli.allAlias );
 
   if ( opts.configFiles ) {
     schema.cli.yargsOpts.string.push( "config" );
-    schema.cli.yargsOpts.alias.c = [ "config" ];
-    allAlias.add( "c" );
+    schema.cli.yargsOpts.alias.config = [ "c" ];
   }
 
   if ( !opts.inferType ) {
@@ -122,8 +106,6 @@ export function handleArgs( opts: CliOptions ): ArgsInfo {
   const slashSlash = yargsFlags[ "--" ];
   delete yargsFlags._;
   delete yargsFlags[ "--" ];
-
-  clearAlias( yargsFlags, [], allAlias );
 
   for ( const key in yargsFlags ) {
     if ( allBooleans.has( key ) ) {

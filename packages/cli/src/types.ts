@@ -10,6 +10,8 @@ export type YargsOptions = {
   configuration?: {
     "camel-case-expansion"?: boolean;
     "populate--"?: boolean;
+    "strip-aliased"?: boolean;
+    "strip-dashed"?: boolean;
   };
   "--"?: boolean;
 };

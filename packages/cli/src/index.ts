@@ -4,10 +4,10 @@ import { generateHelp as _generateHelp } from "./help";
 import { handleArgs } from "./args";
 import normalizePkg from "./normalize-pkg";
 import { CliOptions } from "./types";
+import path from "path";
 import { getConfig } from "@quase/config";
+import readPkgUp from "read-pkg-up";
 
-const path = require( "path" );
-const readPkgUp = require( "read-pkg-up" );
 const importLocal = require( "import-local" );
 
 /* eslint no-process-exit: 0 */
@@ -16,7 +16,7 @@ const importLocal = require( "import-local" );
 // Prevent caching of this module so module.parent is always accurate
 delete require.cache[ __filename ];
 const filename = module.parent && module.parent.filename;
-const parentDir = filename && path.dirname( filename );
+const parentDir = ( filename && path.dirname( filename ) ) || undefined;
 
 async function cli( _opts: any ) {
   if ( filename && importLocal( filename ) ) {
@@ -34,14 +34,15 @@ async function cli( _opts: any ) {
 
   opts.cwd = path.resolve( opts.cwd );
 
-  const pkgJob = opts.pkg ? Promise.resolve( opts ) : readPkgUp( {
+  const pkgJob = opts.pkg ? Promise.resolve( { package: opts.pkg } ) : readPkgUp( {
     cwd: parentDir,
     normalize: false
   } );
 
   const argsInfo = handleArgs( opts );
 
-  const pkg = normalizePkg( ( await pkgJob ).pkg );
+  const _pkg = await pkgJob;
+  const pkg = normalizePkg( _pkg ? _pkg.package : {} );
 
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
 

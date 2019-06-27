@@ -13,8 +13,7 @@ Adapted from [meow](https://github.com/sindresorhus/meow), plus some features:
   - The options are validated automatically against the schema. If validation fails, an error is throw. If the error is left unhandled, the promise will loudly reject.
 - Automatic help generation from the schema.
 - Supports [update-notifier](https://github.com/yeoman/update-notifier).
-  - Update message is changed if Yarn is detected.
-  - If you want to use it, you have to install it and set `notifier` to `true` or an object (like in the example below).
+  - If you want to use it, you have to install it and set `notifier` to `true` or an object (see example below).
 
 ## Usage example
 
