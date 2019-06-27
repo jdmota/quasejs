@@ -120,6 +120,7 @@ export function handleArgs( opts: CliOptions ): ArgsInfo {
   const flags = camelcaseKeys( yargsFlags, { exclude: [ "--", /^\w$/ ], deep: true } );
 
   return {
+    argv,
     schema,
     command,
     flags,

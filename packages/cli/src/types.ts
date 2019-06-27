@@ -67,6 +67,7 @@ export type CommandSet = {
 };
 
 export type ArgsInfo = {
+  argv: string[];
   schema: Schema;
   command: CommandSet;
   flags: any;

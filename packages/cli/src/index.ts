@@ -60,12 +60,14 @@ async function cli( _opts: any ) {
 
   const { schema, command, input, flags } = argsInfo;
 
-  if ( flags.version && opts.autoVersion ) {
-    showVersion();
-  }
+  if ( argsInfo.argv.length === 1 ) {
+    if ( flags.version === true && opts.autoVersion ) {
+      showVersion();
+    }
 
-  if ( flags.help && opts.autoHelp ) {
-    showHelp( 0 );
+    if ( flags.help === true && opts.autoHelp ) {
+      showHelp( 0 );
+    }
   }
 
   const configJob = getConfig( {
