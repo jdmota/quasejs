@@ -93,6 +93,22 @@ exports[`cli generate help with subcommands including options of default command
 "
 `;
 
+exports[`cli interpret help as an option if it has a value - error 1`] = `
+"Option [1m'help [in 1]'[22m must be of type:
+  [1m[32mstring[39m[22m
+but instead received:
+  [1m[31mObject[39m[22m
+"
+`;
+
+exports[`cli interpret version as an option if it has a value - error 1`] = `
+"Option [1m'version [in 1]'[22m must be of type:
+  [1m[32mstring[39m[22m
+but instead received:
+  [1m[31mObject[39m[22m
+"
+`;
+
 exports[`cli nested commands 1`] = `
 "
   baz description

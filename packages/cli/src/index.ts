@@ -64,13 +64,22 @@ async function cli( _opts: any ) {
 
   const { schema, commandSet, input, flags } = argsInfo;
 
+  let ignoreVersionFlag = false;
+  let ignoreHelpFlag = false;
+
   if ( argsInfo.argv.length === 1 ) {
-    if ( flags.version === true && opts.autoVersion ) {
-      showVersion();
+    if ( flags.version === true ) {
+      if ( opts.autoVersion ) {
+        showVersion();
+      }
+      ignoreVersionFlag = true;
     }
 
-    if ( flags.help === true && opts.autoHelp ) {
-      showHelp( 0 );
+    if ( flags.help === true ) {
+      if ( opts.autoHelp ) {
+        showHelp( 0 );
+      }
+      ignoreHelpFlag = true;
     }
   }
 
@@ -91,8 +100,12 @@ async function cli( _opts: any ) {
   if ( opts.configFiles ) {
     delete flagsCopy.config;
   }
-  delete flagsCopy.help;
-  delete flagsCopy.version;
+  if ( ignoreVersionFlag ) {
+    delete flagsCopy.version;
+  }
+  if ( ignoreHelpFlag ) {
+    delete flagsCopy.help;
+  }
 
   flags[ "--" ] = argsInfo[ "--" ];
 

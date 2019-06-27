@@ -852,4 +852,88 @@ describe( "cli", () => {
 
   } );
 
+  it( "interpret version as an option if it has a value", async() => {
+
+    const { options } = await cli( {
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "--version", "foo" ],
+      schema: `type Schema {
+        version: string;
+      }`,
+      notifier: false
+    } );
+
+    expect( options ).toEqual( {
+      version: "foo"
+    } );
+
+  } );
+
+  it( "interpret help as an option if it has a value", async() => {
+
+    const { options } = await cli( {
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "--help", "foo" ],
+      schema: `type Schema {
+        help: string;
+      }`,
+      notifier: false
+    } );
+
+    expect( options ).toEqual( {
+      help: "foo"
+    } );
+
+  } );
+
+  it( "interpret version as an option if it has a value - error", async() => {
+
+    await expect(
+      cli( {
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        argv: [ "--version.prop", "stuff" ],
+        schema: `type Schema {
+          version: string;
+        }`,
+        notifier: false
+      } )
+    ).rejects.toThrowErrorMatchingSnapshot();
+
+  } );
+
+  it( "interpret help as an option if it has a value - error", async() => {
+
+    await expect(
+      cli( {
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        argv: [ "--help.prop", "stuff" ],
+        schema: `type Schema {
+          help: string;
+        }`,
+        notifier: false
+      } )
+    ).rejects.toThrowErrorMatchingSnapshot();
+
+  } );
+
 } );
