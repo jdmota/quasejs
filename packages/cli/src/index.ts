@@ -46,7 +46,11 @@ async function cli( _opts: any ) {
 
   process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
 
-  const generateHelp = () => _generateHelp( opts, pkg, argsInfo );
+  if ( !opts.description && opts.description !== false ) {
+    opts.description = pkg.description;
+  }
+
+  const generateHelp = () => _generateHelp( argsInfo );
 
   const showHelp = ( code?: number ) => {
     console.log( generateHelp() );
@@ -58,7 +62,7 @@ async function cli( _opts: any ) {
     process.exit();
   };
 
-  const { schema, command, input, flags } = argsInfo;
+  const { schema, commandSet, input, flags } = argsInfo;
 
   if ( argsInfo.argv.length === 1 ) {
     if ( flags.version === true && opts.autoVersion ) {
@@ -95,7 +99,7 @@ async function cli( _opts: any ) {
   const options = schema.validateAndMerge( {}, flagsCopy, config );
 
   return {
-    command: command.value,
+    command: commandSet.value,
     input,
     options,
     flags,

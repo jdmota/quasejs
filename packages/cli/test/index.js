@@ -534,7 +534,7 @@ describe( "cli", () => {
     } );
 
     expect( input ).toEqual( [] );
-    expect( command ).toBe( "fooCommand" );
+    expect( command ).toEqual( [ "fooCommand" ] );
     expect( options.foo ).toBe( true );
 
   } );
@@ -549,6 +549,7 @@ describe( "cli", () => {
           version: "0.0.1",
           description: "Description"
         },
+        requiredCommand: true,
         commands: {
           fooCommand: {
             schema: `type Schema {
@@ -559,7 +560,7 @@ describe( "cli", () => {
         argv: [ "--foo" ],
         notifier: false
       } )
-    ).rejects.toThrow( "Command required. E.g. fooCommand" );
+    ).rejects.toThrow( "Command required. Example: fooCommand" );
 
   } );
 
@@ -583,7 +584,7 @@ describe( "cli", () => {
         argv: [ "bar-command", "--foo" ],
         notifier: false
       } )
-    ).rejects.toThrow( /^"barCommand" is not a supported command$/ );
+    ).rejects.toThrow( /^barCommand is not a supported command$/ );
 
   } );
 
@@ -609,7 +610,7 @@ describe( "cli", () => {
     } );
 
     expect( input ).toEqual( [] );
-    expect( command ).toBe( "fooCommand" );
+    expect( command ).toEqual( [ "fooCommand" ] );
     expect( options.foo ).toBe( true );
 
   } );
@@ -736,6 +737,118 @@ describe( "cli", () => {
     } );
 
     expect( generateHelp() ).toMatchSnapshot();
+
+  } );
+
+  it( "nested commands", async() => {
+
+    const { command, options, generateHelp } = await cli( {
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "foo", "bar", "baz" ],
+      commands: {
+        foo: {
+          commands: {
+            bar: {
+              commands: {
+                baz: {
+                  description: "baz description",
+                  schema: `type Schema {
+                    number: number @default(0) @description("number description");
+                    unicorn: string? @alias("u") @description("unicorn description");
+                  }`
+                }
+              }
+            }
+          }
+        }
+      },
+      notifier: false
+    } );
+
+    expect( command ).toEqual( [ "foo", "bar", "baz" ] );
+    expect( options ).toEqual( {
+      number: 0
+    } );
+    expect( generateHelp() ).toMatchSnapshot();
+
+  } );
+
+  it( "nested commands with default on the way", async() => {
+
+    const { command, options, generateHelp } = await cli( {
+      cwd: __dirname,
+      pkg: {
+        name: "@quase/eslint-config-quase",
+        version: "0.0.1",
+        description: "Description"
+      },
+      argv: [ "foo", "bar" ],
+      commands: {
+        foo: {
+          commands: {
+            bar: {
+              defaultCommand: "baz",
+              commands: {
+                baz: {
+                  description: "baz description",
+                  schema: `type Schema {
+                    number: number @default(0) @description("number description");
+                    unicorn: string? @alias("u") @description("unicorn description");
+                  }`
+                }
+              }
+            }
+          }
+        }
+      },
+      notifier: false
+    } );
+
+    expect( command ).toEqual( [ "foo", "bar", "baz" ] );
+    expect( options ).toEqual( {
+      number: 0
+    } );
+    expect( generateHelp() ).toMatchSnapshot();
+
+  } );
+
+  it( "nested commands with required on the way", async() => {
+
+    await expect(
+      cli( {
+        cwd: __dirname,
+        pkg: {
+          name: "@quase/eslint-config-quase",
+          version: "0.0.1",
+          description: "Description"
+        },
+        argv: [ "foo", "bar" ],
+        commands: {
+          foo: {
+            commands: {
+              bar: {
+                requiredCommand: true,
+                commands: {
+                  baz: {
+                    description: "baz description",
+                    schema: `type Schema {
+                      number: number @default(0) @description("number description");
+                      unicorn: string? @alias("u") @description("unicorn description");
+                    }`
+                  }
+                }
+              }
+            }
+          }
+        },
+        notifier: false
+      } )
+    ).rejects.toThrow( "Command required. Example: foo bar baz" );
 
   } );
 

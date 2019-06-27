@@ -40,6 +40,7 @@ cli( {
   }`,
   // Subcommands
   defaultCommand: "commandName", // Default: undefined
+  requiredCommand: false, // Default: false
   commands: { // Default: {}
     commandName: {
       description: "",
@@ -73,6 +74,7 @@ cli( {
   // Custom arguments object
   argv: process.argv.slice( 2 )
 } ).then( ( {
+  command, // string[] - list of command and nested commands
   input, // Array with non-flag arguments
   options, // Flags, config, and defaults all applied - does not include "--"
   flags, // The flags only (without defaults applied) - includes "--" if "populate--" was true

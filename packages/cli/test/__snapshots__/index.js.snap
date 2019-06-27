@@ -2,7 +2,7 @@
 
 exports[`cli accept help for subcommand 1`] = `
 "
-  Description
+  foo command description
 
   Custom subcommand help
 "
@@ -37,7 +37,7 @@ exports[`cli generate help 1`] = `
 "
   Description
 
-  Usage: $ bin something
+  $ bin something
 
   Options:
     --number, -n, -n2 number description (default: 0) [number]
@@ -57,10 +57,6 @@ exports[`cli generate help 1`] = `
 
 exports[`cli generate help for subcommand 1`] = `
 "
-  Description
-
-  Usage: $ bin fooCommand [options]
-
   foo command description
 
   Options:
@@ -74,7 +70,7 @@ exports[`cli generate help with subcommands 1`] = `
 "
   Description
 
-  Usage: $ bin <command> [options]
+  $ bin <command> [options]
 
   Commands:
     foo-command    foo command description
@@ -87,14 +83,35 @@ exports[`cli generate help with subcommands 1`] = `
 
 exports[`cli generate help with subcommands including options of default command 1`] = `
 "
-  Description
-
-  Usage: $ bin <command> [options]
+  foo command description
 
   Commands:
     foo-command foo command description [default]
 
   Options:
     --number, -n, -n2 number description (default: 0) [number]
+"
+`;
+
+exports[`cli nested commands 1`] = `
+"
+  baz description
+
+  Options:
+    --number      number description (default: 0) [number]
+    --unicorn, -u unicorn description [string?]
+"
+`;
+
+exports[`cli nested commands with default on the way 1`] = `
+"
+  baz description
+
+  Commands:
+    baz baz description [default]
+
+  Options:
+    --number      number description (default: 0) [number]
+    --unicorn, -u unicorn description [string?]
 "
 `;

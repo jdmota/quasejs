@@ -1,4 +1,4 @@
-import { Schema, CliOptions, ArgsInfo, CommandSet } from "./types";
+import { Schema, CliOptions, ArgsInfo, CommandSet, CommandsOpts } from "./types";
 import camelCase from "camelcase";
 import camelcaseKeys from "camelcase-keys";
 
@@ -16,53 +16,72 @@ function validationError( msg: string ) {
   throw error;
 }
 
-function missingSchema( command: string | undefined ) {
-  throw new Error( `Missing schema${command ? ` for command ${command}` : ""}` );
+function missingSchema( command: string[] ) {
+  throw new Error( `Missing schema${command.length ? ` for command ${command.join( " " )}` : ""}` );
 }
 
 export function handleArgs( opts: CliOptions ): ArgsInfo {
-  let argv = opts.argv;
+  let argv = opts.argv.filter( Boolean );
   let schema;
-  let command: CommandSet = {
-    value: undefined,
-    set: false
+  const commandSet: CommandSet = {
+    value: [],
+    detail: {
+      last: undefined,
+      set: false
+    }
   };
 
-  if ( opts.commands ) {
+  let parentCommandOpts: CommandsOpts | null = null;
+  let commandOpts: CommandsOpts = opts;
+  let readingCommands = true;
 
-    const c = argv[ 0 ];
+  while ( readingCommands ) {
+    readingCommands = false;
 
-    if ( argv.length === 0 || /^--?/.test( c ) ) {
-      command = {
-        value: opts.defaultCommand,
-        set: false
-      };
-    } else {
-      command = {
-        value: camelCase( c ) as string,
-        set: true
-      };
-      argv = argv.slice( 1 );
-    }
+    if ( commandOpts.commands ) {
 
-    if ( command.value ) {
-      const commandInfo = opts.commands[ command.value ];
-      if ( !commandInfo ) {
-        validationError( `${JSON.stringify( command.value )} is not a supported command` );
+      const c = argv[ 0 ];
+
+      if ( argv.length === 0 || /^--?/.test( c ) ) {
+        if ( commandOpts.requiredCommand ) {
+          const context = commandSet.value.join( " " );
+          const examples = Object.keys( commandOpts.commands ).slice( 0, 3 ).join( "|" );
+          validationError( `Command required. Example: ${context ? context + " " : ""}${examples}` );
+        }
+        if ( commandOpts.defaultCommand ) {
+          commandSet.value.push( commandOpts.defaultCommand );
+          commandSet.detail = {
+            last: commandOpts.defaultCommand,
+            set: false
+          };
+        }
+      } else {
+        commandSet.value.push( camelCase( c ) );
+        commandSet.detail = {
+          last: camelCase( c ),
+          set: true
+        };
+        argv = argv.slice( 1 );
+        readingCommands = true;
       }
-      schema = commandInfo.schema;
-    } else {
-      if ( !opts.schema ) {
-        validationError( `Command required. E.g. ${Object.keys( opts.commands ).slice( 0, 3 ).join( ", " )}` );
+
+      const { last } = commandSet.detail;
+
+      if ( last ) {
+        const commandInfo = commandOpts.commands[ last ];
+        if ( !commandInfo ) {
+          validationError( `${commandSet.value.join( " " )} is not a supported command` );
+        }
+        parentCommandOpts = commandOpts;
+        commandOpts = commandInfo;
       }
-      schema = opts.schema;
     }
-  } else {
-    schema = opts.schema;
   }
 
+  schema = commandOpts.schema;
+
   if ( !schema ) {
-    missingSchema( command && command.value );
+    missingSchema( commandSet.value );
   }
 
   if ( typeof schema === "string" ) {
@@ -122,7 +141,9 @@ export function handleArgs( opts: CliOptions ): ArgsInfo {
   return {
     argv,
     schema,
-    command,
+    parentCommandOpts,
+    commandOpts,
+    commandSet,
     flags,
     input,
     "--": slashSlash

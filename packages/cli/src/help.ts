@@ -1,32 +1,31 @@
 import decamelize from "decamelize";
 import trimNewlines from "trim-newlines";
 import redent from "redent";
-import { CliOptions, ArgsInfo, Schema, Command, CommandSet, Pkg } from "./types";
+import { ArgsInfo } from "./types";
 import { pad } from "./utils";
 
-type HelperArg = {
-  usage: string | undefined;
-  commands: { [key: string]: Command } | undefined;
-  command: CommandSet;
-  defaultCommand: string | undefined;
-  schema: Schema;
-};
-
 function generateHelpHelper(
-  { usage, commands, defaultCommand, schema, command }: HelperArg
+  { schema, commandSet, commandOpts, parentCommandOpts }: ArgsInfo
 ) {
+  const { usage } = commandOpts;
   const commandLines = [];
   let commandsLength = 0;
 
-  if ( !command.set && commands ) {
-    for ( const key in commands ) {
-      const { description } = commands[ key ];
+  const infoToShow = (
+    !commandSet.detail.set && commandSet.detail.last && parentCommandOpts ?
+      parentCommandOpts :
+      commandOpts
+  );
+
+  if ( infoToShow.commands ) {
+    for ( const key in infoToShow.commands ) {
+      const { description } = infoToShow.commands[ key ];
 
       if ( description != null ) {
         const line = [
           `  ${decamelize( key, "-" )}`,
-          description,
-          key === defaultCommand ? `[default]` : ""
+          description || "",
+          key === infoToShow.defaultCommand ? `[default]` : ""
         ];
 
         commandLines.push( line );
@@ -38,9 +37,11 @@ function generateHelpHelper(
     }
   }
 
-  let result = [
-    usage ? `Usage: ${usage.replace( /<command>/, command.set ? command.value : "<command>" )}\n` : ""
-  ];
+  let result = [];
+
+  if ( usage ) {
+    result.push( usage.replace( /\n*$/, "\n" ) );
+  }
 
   if ( commandLines.length ) {
     result = result.concat(
@@ -50,13 +51,6 @@ function generateHelpHelper(
         return line.filter( Boolean ).join( " " );
       } )
     );
-  }
-
-  if ( command.set && commands ) {
-    const commandInfo = commands[ command.value ];
-    if ( commandInfo && commandInfo.description ) {
-      result.push( commandInfo.description + "\n" );
-    }
   }
 
   if ( commandLines.length ) {
@@ -70,21 +64,18 @@ function generateHelpHelper(
   return result.join( "\n" );
 }
 
-export function generateHelp( opts: CliOptions, pkg: Pkg, argsInfo: ArgsInfo ) {
-  const { schema, command } = argsInfo;
-  const { usage, commands, defaultCommand } = opts;
-  const description = !opts.description && opts.description !== false ? pkg.description : opts.description;
-  const providedHelp = (
-    commands && command.set &&
-    commands[ command.value ] && commands[ command.value ].help
-  ) || opts.help;
+export function generateHelp( argsInfo: ArgsInfo ) {
+  const { commandOpts: opts } = argsInfo;
+
   const help = redent(
-    providedHelp ?
-      trimNewlines( providedHelp.replace( /\t+\n*$/, "" ) ) :
-      generateHelpHelper( {
-        schema, usage, defaultCommand, commands, command
-      } ),
+    opts.help ?
+      trimNewlines( opts.help.replace( /\t+\n*$/, "" ) ) :
+      generateHelpHelper( argsInfo ),
     2
   ).trimRight();
-  return ( description ? `\n  ${description}\n` : "" ) + ( help ? `\n${help}\n` : "\n" );
+
+  return (
+    ( opts.description ? `\n  ${opts.description.replace( /\n*$/, "\n" )}` : "" ) +
+    ( help ? `\n${help}\n` : "\n" )
+  );
 }

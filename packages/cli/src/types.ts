@@ -20,33 +20,30 @@ export type Schema = {
   validateAndMerge: ( ..._: unknown[] ) => unknown;
   cli: {
     yargsOpts: YargsOptions;
-    allAlias: string[];
     help: string;
   };
-};
-
-export type Command = {
-  schema: Schema | string;
-  description?: string;
-  help?: string;
 };
 
 export type Pkg = {
   name: string;
   version: string;
-  description: string | undefined;
-  bin: { [ key: string ]: unknown } | undefined;
+  description?: string;
+  bin?: { [ key: string ]: unknown };
 };
 
-export type CliOptions = {
-  cwd: string;
-  argv: string[];
-  description?: string | false;
+export type CommandsOpts = {
+  schema: Schema | string;
   usage?: string;
+  description?: string | false;
   help?: string;
   defaultCommand?: string;
-  commands?: { [key: string]: Command };
-  schema: Schema | string;
+  requiredCommand?: boolean;
+  commands?: { [key: string]: CommandsOpts };
+};
+
+export type CliOptions = CommandsOpts & {
+  cwd: string;
+  argv: string[];
   configFiles?: string | string[];
   configKey?: string;
   inferType?: boolean;
@@ -59,17 +56,22 @@ export type CliOptions = {
 };
 
 export type CommandSet = {
-  value: string;
-  set: true;
-} | {
-  value: string | undefined;
-  set: false;
+  value: string[];
+  detail: {
+    last: string | undefined;
+    set: false;
+  } | {
+    last: string;
+    set: true;
+  };
 };
 
 export type ArgsInfo = {
   argv: string[];
   schema: Schema;
-  command: CommandSet;
+  parentCommandOpts: CommandsOpts | null;
+  commandOpts: CommandsOpts;
+  commandSet: CommandSet;
   flags: any;
   input: any;
   "--": any;
