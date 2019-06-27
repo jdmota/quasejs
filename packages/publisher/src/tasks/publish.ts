@@ -1,3 +1,4 @@
+import colorette from "colorette";
 import { execPromise } from "../util/util";
 import History from "../history";
 import { Options } from "../types";
@@ -7,7 +8,6 @@ import { Options } from "../types";
 const listrInput = require( "listr-input" );
 const { throwError, from } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
-const colorette = require( "colorette" );
 
 type PublishOptions = {
   history: History;

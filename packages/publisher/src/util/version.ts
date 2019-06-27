@@ -1,3 +1,5 @@
+import { error } from "./util";
+
 // Adapted from https://github.com/sindresorhus/np
 
 const semver = require( "semver" );
@@ -11,7 +13,7 @@ export const isValidInput = ( input: string ) => SEMVER_INCREMENTS.includes( inp
 
 export const validate = ( version: string ) => {
   if ( !isValidVersion( version ) ) {
-    throw new Error( "Version should be a valid semver version." );
+    throw error( `Version ${version} should be a valid semver version.` );
   }
 };
 
@@ -22,14 +24,14 @@ export const isPrereleaseVersion = ( version: string ) => PRERELEASE_VERSIONS.in
 export const getNewVersion = ( oldVersion: string, input: string ): string => {
   validate( oldVersion );
   if ( !isValidVersionInput( input ) ) {
-    throw new Error( `Version should be either ${SEMVER_INCREMENTS.join( ", " )} or a valid semver version.` );
+    throw error( `Version should be either ${SEMVER_INCREMENTS.join( ", " )} or a valid semver version.` );
   }
   return SEMVER_INCREMENTS.includes( input ) ? semver.inc( oldVersion, input ) : input;
 };
 
 export const isVersionGreater = ( oldVersion: string, newVersion: string ): boolean => {
   if ( !isValidVersion( newVersion ) ) {
-    throw new Error( "Version should be a valid semver version." );
+    throw error( "Version should be a valid semver version." );
   }
 
   return semver.gt( newVersion, oldVersion );
@@ -37,7 +39,7 @@ export const isVersionGreater = ( oldVersion: string, newVersion: string ): bool
 
 export const isVersionLower = ( oldVersion: string, newVersion: string ): boolean => {
   if ( !isValidVersion( newVersion ) ) {
-    throw new Error( "Version should be a valid semver version." );
+    throw error( "Version should be a valid semver version." );
   }
 
   return semver.lt( newVersion, oldVersion );

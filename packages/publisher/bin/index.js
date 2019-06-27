@@ -17,6 +17,7 @@ type GitOptions {
 type Schema {
   preview: boolean @default(false) @description("");
   publish: boolean @default(true) @description("'false' to skip publishing");
+  version: string? @description("Version to publish");
   tag: string? @description("Publish under a given dist-tag");
   access: string? @description("");
   contents: string? @description("Subdirectory (relative to --folder) to publish") @example("dist");
@@ -35,7 +36,7 @@ cli( {
   configKey: "quase-publisher",
   schema
 } ).then( ( { input, options } ) => {
-  options.version = input[ 0 ];
+  options.version = options.version || input[ 0 ];
   require( ".." ).default( options, h => ( history = h ) );
 } );
 

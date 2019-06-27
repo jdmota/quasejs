@@ -4,9 +4,9 @@ export type Pkg = {
   private?: boolean;
   name: string;
   version: string;
-  repository?: { url?: string };
-  scripts?: { [key: string]: string };
-  publishConfig?: { registry?: string };
+  repository?: { url?: string } | null;
+  scripts?: { [key: string]: string } | null;
+  publishConfig?: { registry?: string } | null;
 };
 
 export type GitOptions = {

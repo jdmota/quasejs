@@ -1,9 +1,9 @@
+import execa from "execa";
+import npmName from "npm-name";
+import pTimeout from "p-timeout";
 import * as versionUtil from "./version";
 import { Pkg } from "../types";
 import { error, execStdout } from "./util";
-
-const execa = require( "execa" );
-const pTimeout = require( "p-timeout" );
 
 export const checkConnection = () => pTimeout(
   ( async() => {
@@ -24,7 +24,7 @@ export const username = async( { externalRegistry }: { externalRegistry: string 
     args.push( "--registry", externalRegistry );
   }
   try {
-    return await execa.stdout( "npm", args );
+    return ( await execa( "npm", args ) ).stdout;
   } catch ( error ) {
     throw error( /ENEEDAUTH/.test( error.stderr ) ?
       "You must be logged in. Use `npm login` and try again." :
@@ -34,7 +34,7 @@ export const username = async( { externalRegistry }: { externalRegistry: string 
 
 export const collaborators = async( packageName: string ) => {
   try {
-    return await execa.stdout( "npm", [ "access", "ls-collaborators", packageName ] );
+    return ( await execa( "npm", [ "access", "ls-collaborators", packageName ] ) ).stdout;
   } catch ( error ) {
     // Ignore non-existing package error
     if ( error.stderr.includes( "code E404" ) ) {
@@ -66,7 +66,11 @@ export const prereleaseTags = async( packageName: string ) => {
 };
 
 export const isExternalRegistry = ( pkg: Pkg ): pkg is Pkg & { publishConfig: { registry: string } } => {
-  return typeof pkg.publishConfig === "object" && typeof pkg.publishConfig.registry === "string";
+  return (
+    typeof pkg.publishConfig === "object" &&
+    pkg.publishConfig != null &&
+    typeof pkg.publishConfig.registry === "string"
+  );
 };
 
 export const version = () => execStdout( "npm", [ "--version" ] );
@@ -77,4 +81,12 @@ export const verifyRecentNpmVersion = async() => {
   if ( versionUtil.satisfies( npmVersion, "<6.8.0" ) ) {
     throw error( "Please upgrade to npm@6.8.0 or newer" );
   }
+};
+
+export const isPackageNameAvailable = async( pkg: Pkg ) => {
+  const isExternal = isExternalRegistry( pkg );
+  if ( isExternal ) {
+    return true;
+  }
+  return npmName( pkg.name );
 };

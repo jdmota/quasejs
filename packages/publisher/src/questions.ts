@@ -1,3 +1,4 @@
+import colorette from "colorette";
 import { linkifyIssues, linkifyCommit, linkifyCompare, info, execStdout } from "./util/util";
 import { Options } from "./types";
 import * as version from "./util/version";
@@ -9,8 +10,6 @@ import * as git from "./util/git";
 const prettyVersionDiff = require( "pretty-version-diff" );
 const githubUrlFromGit = require( "github-url-from-git" );
 const inquirer = require( "inquirer" );
-const colorette = require( "colorette" );
-const npmName = require( "npm-name" );
 
 /* eslint-disable no-console */
 
@@ -21,7 +20,7 @@ type Answers = {
   confirm?: boolean | undefined;
 };
 
-function getRepositoryUrl( { repository }: { repository?: { url?: string } } ) {
+function getRepositoryUrl( { repository }: { repository?: { url?: string } | null } ) {
   let url = repository && repository.url;
   if ( !url ) {
     return;
@@ -168,7 +167,10 @@ export default async function( opts: Options ) {
       type: "list",
       name: "access",
       message: "This scoped repo was not published. What should be its access?",
-      when: async() => !opts.access && !pkg.private && /^@/.test( pkg.name ) && !( await npmName( pkg.name ) ),
+      when: async() => (
+        opts.publish && !opts.access && !pkg.private && /^@/.test( pkg.name ) &&
+        !( await npm.isPackageNameAvailable( pkg ) )
+      ),
       choices: () => [
         {
           name: "Restricted",

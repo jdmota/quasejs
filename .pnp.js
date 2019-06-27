@@ -756,6 +756,12 @@ let packageInformationStores = new Map([
         ["semver", "6.1.1"],
       ]),
     }],
+    ["6.1.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-semver-6.1.2-079960381376a3db62eb2edc8a3bfb10c7cfe318/node_modules/semver/"),
+      packageDependencies: new Map([
+        ["semver", "6.1.2"],
+      ]),
+    }],
     ["5.7.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.7.0-790a7cf6fea5459bac96110b29b60412dc8ff96b/node_modules/semver/"),
       packageDependencies: new Map([
@@ -1427,6 +1433,20 @@ let packageInformationStores = new Map([
         ["execa", "1.0.0"],
       ]),
     }],
+    ["2.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-execa-2.0.1-546a5be56388953409cbf24972d2fd1bb36dbfcd/node_modules/execa/"),
+      packageDependencies: new Map([
+        ["cross-spawn", "6.0.5"],
+        ["get-stream", "5.1.0"],
+        ["is-stream", "2.0.0"],
+        ["merge-stream", "2.0.0"],
+        ["npm-run-path", "3.1.0"],
+        ["p-finally", "2.0.1"],
+        ["signal-exit", "3.0.2"],
+        ["strip-final-newline", "2.0.0"],
+        ["execa", "2.0.1"],
+      ]),
+    }],
   ])],
   ["cross-spawn", new Map([
     ["5.1.0", {
@@ -1524,12 +1544,25 @@ let packageInformationStores = new Map([
         ["get-stream", "4.1.0"],
       ]),
     }],
+    ["5.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-get-stream-5.1.0-01203cdc92597f9b909067c3e656cc1f4d3c4dc9/node_modules/get-stream/"),
+      packageDependencies: new Map([
+        ["pump", "3.0.0"],
+        ["get-stream", "5.1.0"],
+      ]),
+    }],
   ])],
   ["is-stream", new Map([
     ["1.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-stream-1.1.0-12d4a3dd4e68e0b79ceb8dbc84173ae80d91ca44/node_modules/is-stream/"),
       packageDependencies: new Map([
         ["is-stream", "1.1.0"],
+      ]),
+    }],
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-is-stream-2.0.0-bde9c32680d6fae04129d6ac9d921ce7815f78e3/node_modules/is-stream/"),
+      packageDependencies: new Map([
+        ["is-stream", "2.0.0"],
       ]),
     }],
   ])],
@@ -1541,6 +1574,13 @@ let packageInformationStores = new Map([
         ["npm-run-path", "2.0.2"],
       ]),
     }],
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-npm-run-path-3.1.0-7f91be317f6a466efed3c9f2980ad8a4ee8b0fa5/node_modules/npm-run-path/"),
+      packageDependencies: new Map([
+        ["path-key", "3.1.0"],
+        ["npm-run-path", "3.1.0"],
+      ]),
+    }],
   ])],
   ["path-key", new Map([
     ["2.0.1", {
@@ -1549,12 +1589,24 @@ let packageInformationStores = new Map([
         ["path-key", "2.0.1"],
       ]),
     }],
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-path-key-3.1.0-99a10d870a803bdd5ee6f0470e58dfcd2f9a54d3/node_modules/path-key/"),
+      packageDependencies: new Map([
+        ["path-key", "3.1.0"],
+      ]),
+    }],
   ])],
   ["p-finally", new Map([
     ["1.0.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-finally-1.0.0-3fbcfb15b899a44123b34b6dcc18b724336a2cae/node_modules/p-finally/"),
       packageDependencies: new Map([
         ["p-finally", "1.0.0"],
+      ]),
+    }],
+    ["2.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-finally-2.0.1-bd6fcaa9c559a096b680806f4d657b3f0f240561/node_modules/p-finally/"),
+      packageDependencies: new Map([
+        ["p-finally", "2.0.1"],
       ]),
     }],
   ])],
@@ -1746,12 +1798,6 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/"),
       packageDependencies: new Map([
         ["colorette", "1.0.8"],
-      ]),
-    }],
-    ["1.0.7", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/"),
-      packageDependencies: new Map([
-        ["colorette", "1.0.7"],
       ]),
     }],
   ])],
@@ -2030,14 +2076,6 @@ let packageInformationStores = new Map([
         ["normalize-package-data", "2.5.0"],
         ["path-type", "1.1.0"],
         ["read-pkg", "1.1.0"],
-      ]),
-    }],
-    ["5.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-5.0.0-75449907ece8dfb89cbc76adcba2665316e32b94/node_modules/read-pkg/"),
-      packageDependencies: new Map([
-        ["normalize-package-data", "2.5.0"],
-        ["parse-json", "4.0.0"],
-        ["read-pkg", "5.0.0"],
       ]),
     }],
     ["2.0.0", {
@@ -2463,12 +2501,6 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-has-yarn-2.1.0-137e11354a7b5bf11aa5cb649cf0c6f3ff2b2e77/node_modules/has-yarn/"),
       packageDependencies: new Map([
         ["has-yarn", "2.1.0"],
-      ]),
-    }],
-    ["2.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-has-yarn-2.0.0-11b77911708db3c5cccd07400537d9acab6131f1/node_modules/has-yarn/"),
-      packageDependencies: new Map([
-        ["has-yarn", "2.0.0"],
       ]),
     }],
   ])],
@@ -6560,27 +6592,27 @@ let packageInformationStores = new Map([
         ["@quase/cli", "0.4.0-0"],
         ["@samverschueren/stream-to-observable", "0.3.0"],
         ["any-observable", "0.3.0"],
-        ["colorette", "1.0.7"],
-        ["del", "4.0.0"],
-        ["execa", "1.0.0"],
+        ["colorette", "1.0.8"],
+        ["del", "4.1.1"],
+        ["execa", "2.0.1"],
         ["fs-extra", "7.0.1"],
         ["github-url-from-git", "1.5.0"],
-        ["has-yarn", "2.0.0"],
-        ["inquirer", "6.2.2"],
-        ["issue-regex", "3.0.0"],
-        ["npm-name", "5.2.0"],
-        ["p-timeout", "3.0.0"],
+        ["has-yarn", "2.1.0"],
+        ["inquirer", "6.4.1"],
+        ["issue-regex", "3.1.0"],
+        ["npm-name", "5.4.0"],
+        ["p-timeout", "3.1.0"],
         ["pretty-version-diff", "1.0.0"],
         ["listr", "0.14.3"],
         ["listr-input", "0.1.3"],
-        ["log-symbols", "2.2.0"],
-        ["read-pkg", "5.0.0"],
-        ["rxjs", "6.4.0"],
-        ["semver", "5.6.0"],
-        ["slash", "2.0.0"],
+        ["log-symbols", "3.0.0"],
+        ["read-pkg", "5.1.1"],
+        ["rxjs", "6.5.2"],
+        ["semver", "6.1.2"],
+        ["slash", "3.0.0"],
         ["split", "1.0.1"],
         ["symbol-observable", "1.2.0"],
-        ["terminal-link", "1.2.0"],
+        ["terminal-link", "1.3.0"],
       ]),
     }],
   ])],
@@ -6602,16 +6634,44 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["del", new Map([
-    ["4.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-del-4.0.0-4fa27e92c366cb45b9bdaa56a9b8703dced17437/node_modules/del/"),
+    ["4.1.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-del-4.1.1-9e8f117222ea44a31ff3a156c049b99052a9f0b4/node_modules/del/"),
       packageDependencies: new Map([
+        ["@types/glob", "7.1.1"],
         ["globby", "6.1.0"],
         ["is-path-cwd", "2.0.0"],
         ["is-path-in-cwd", "2.0.0"],
         ["p-map", "2.0.0"],
         ["pify", "4.0.1"],
         ["rimraf", "2.6.3"],
-        ["del", "4.0.0"],
+        ["del", "4.1.1"],
+      ]),
+    }],
+  ])],
+  ["@types/glob", new Map([
+    ["7.1.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-glob-7.1.1-aa59a1c6e3fbc421e07ccd31a944c30eba521575/node_modules/@types/glob/"),
+      packageDependencies: new Map([
+        ["@types/events", "3.0.0"],
+        ["@types/minimatch", "3.0.3"],
+        ["@types/node", "11.11.6"],
+        ["@types/glob", "7.1.1"],
+      ]),
+    }],
+  ])],
+  ["@types/events", new Map([
+    ["3.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-events-3.0.0-2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7/node_modules/@types/events/"),
+      packageDependencies: new Map([
+        ["@types/events", "3.0.0"],
+      ]),
+    }],
+  ])],
+  ["@types/minimatch", new Map([
+    ["3.0.3", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-minimatch-3.0.3-3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d/node_modules/@types/minimatch/"),
+      packageDependencies: new Map([
+        ["@types/minimatch", "3.0.3"],
       ]),
     }],
   ])],
@@ -6693,6 +6753,29 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["merge-stream", new Map([
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-2.0.0-52823629a14dd00c9770fb6ad47dc6310f2c1f60/node_modules/merge-stream/"),
+      packageDependencies: new Map([
+        ["merge-stream", "2.0.0"],
+      ]),
+    }],
+    ["1.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-1.0.1-4041202d508a342ba00174008df0c251b8c135e1/node_modules/merge-stream/"),
+      packageDependencies: new Map([
+        ["readable-stream", "2.3.6"],
+        ["merge-stream", "1.0.1"],
+      ]),
+    }],
+  ])],
+  ["strip-final-newline", new Map([
+    ["2.0.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-strip-final-newline-2.0.0-89b852fb2fcbe936f6f4b3187afb0a12c1ab58ad/node_modules/strip-final-newline/"),
+      packageDependencies: new Map([
+        ["strip-final-newline", "2.0.0"],
+      ]),
+    }],
+  ])],
   ["github-url-from-git", new Map([
     ["1.5.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-github-url-from-git-1.5.0-f985fedcc0a9aa579dc88d7aff068d55cc6251a0/node_modules/github-url-from-git/"),
@@ -6702,8 +6785,8 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["inquirer", new Map([
-    ["6.2.2", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.2.2-46941176f65c9eb20804627149b743a218f25406/node_modules/inquirer/"),
+    ["6.4.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.4.1-7bd9e5ab0567cd23b41b0180b68e0cfa82fc3c0b/node_modules/inquirer/"),
       packageDependencies: new Map([
         ["ansi-escapes", "3.2.0"],
         ["chalk", "2.4.2"],
@@ -6716,9 +6799,9 @@ let packageInformationStores = new Map([
         ["run-async", "2.3.0"],
         ["rxjs", "6.4.0"],
         ["string-width", "2.1.1"],
-        ["strip-ansi", "5.0.0"],
+        ["strip-ansi", "5.2.0"],
         ["through", "2.3.8"],
-        ["inquirer", "6.2.2"],
+        ["inquirer", "6.4.1"],
       ]),
     }],
     ["3.3.0", {
@@ -6739,6 +6822,25 @@ let packageInformationStores = new Map([
         ["strip-ansi", "4.0.0"],
         ["through", "2.3.8"],
         ["inquirer", "3.3.0"],
+      ]),
+    }],
+    ["6.2.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.2.2-46941176f65c9eb20804627149b743a218f25406/node_modules/inquirer/"),
+      packageDependencies: new Map([
+        ["ansi-escapes", "3.2.0"],
+        ["chalk", "2.4.2"],
+        ["cli-cursor", "2.1.0"],
+        ["cli-width", "2.2.0"],
+        ["external-editor", "3.0.3"],
+        ["figures", "2.0.0"],
+        ["lodash", "4.17.11"],
+        ["mute-stream", "0.0.7"],
+        ["run-async", "2.3.0"],
+        ["rxjs", "6.4.0"],
+        ["string-width", "2.1.1"],
+        ["strip-ansi", "5.0.0"],
+        ["through", "2.3.8"],
+        ["inquirer", "6.2.2"],
       ]),
     }],
   ])],
@@ -6890,6 +6992,13 @@ let packageInformationStores = new Map([
         ["rxjs", "5.5.12"],
       ]),
     }],
+    ["6.5.2", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-rxjs-6.5.2-2e35ce815cd46d84d02a209fb4e5921e051dbec7/node_modules/rxjs/"),
+      packageDependencies: new Map([
+        ["tslib", "1.9.3"],
+        ["rxjs", "6.5.2"],
+      ]),
+    }],
   ])],
   ["tslib", new Map([
     ["1.9.3", {
@@ -6908,24 +7017,25 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["issue-regex", new Map([
-    ["3.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-issue-regex-3.0.0-275c5dac460e7827819f749747baf686109695b7/node_modules/issue-regex/"),
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-issue-regex-3.1.0-0671f094d6449c5b712fac3c9562aecb727d709e/node_modules/issue-regex/"),
       packageDependencies: new Map([
-        ["issue-regex", "3.0.0"],
+        ["issue-regex", "3.1.0"],
       ]),
     }],
   ])],
   ["npm-name", new Map([
-    ["5.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-npm-name-5.2.0-652e53c2b007d4cc0a685014885ca478d7886f6a/node_modules/npm-name/"),
+    ["5.4.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-npm-name-5.4.0-9b8623e253642c298e7a22f67c510235429b35e2/node_modules/npm-name/"),
       packageDependencies: new Map([
         ["got", "9.6.0"],
         ["is-scoped", "1.0.0"],
+        ["is-url-superb", "3.0.0"],
         ["lodash.zip", "4.2.0"],
         ["registry-auth-token", "3.4.0"],
         ["registry-url", "4.0.0"],
         ["validate-npm-package-name", "3.0.0"],
-        ["npm-name", "5.2.0"],
+        ["npm-name", "5.4.0"],
       ]),
     }],
   ])],
@@ -6972,11 +7082,11 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["p-timeout", new Map([
-    ["3.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-timeout-3.0.0-1bbd42db28c669efd02e1a82ccf14dc59eb57ed1/node_modules/p-timeout/"),
+    ["3.1.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-p-timeout-3.1.0-198c1f503bb973e9b9727177a276c80afd6851f3/node_modules/p-timeout/"),
       packageDependencies: new Map([
         ["p-finally", "1.0.0"],
-        ["p-timeout", "3.0.0"],
+        ["p-timeout", "3.1.0"],
       ]),
     }],
   ])],
@@ -7167,12 +7277,12 @@ let packageInformationStores = new Map([
     }],
   ])],
   ["terminal-link", new Map([
-    ["1.2.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-terminal-link-1.2.0-ed1ac495da75a8c3eadc8a5db985226e451edffd/node_modules/terminal-link/"),
+    ["1.3.0", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-terminal-link-1.3.0-3e9a308289e13340053aaf40e8f1a06d1335646e/node_modules/terminal-link/"),
       packageDependencies: new Map([
         ["ansi-escapes", "3.2.0"],
         ["supports-hyperlinks", "1.0.1"],
-        ["terminal-link", "1.2.0"],
+        ["terminal-link", "1.3.0"],
       ]),
     }],
   ])],
@@ -7328,33 +7438,6 @@ let packageInformationStores = new Map([
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-well-known-symbols-2.0.0-e9c7c07dbd132b7b84212c8174391ec1f9871ba5/node_modules/well-known-symbols/"),
       packageDependencies: new Map([
         ["well-known-symbols", "2.0.0"],
-      ]),
-    }],
-  ])],
-  ["@types/glob", new Map([
-    ["7.1.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-glob-7.1.1-aa59a1c6e3fbc421e07ccd31a944c30eba521575/node_modules/@types/glob/"),
-      packageDependencies: new Map([
-        ["@types/events", "3.0.0"],
-        ["@types/minimatch", "3.0.3"],
-        ["@types/node", "11.11.6"],
-        ["@types/glob", "7.1.1"],
-      ]),
-    }],
-  ])],
-  ["@types/events", new Map([
-    ["3.0.0", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-events-3.0.0-2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7/node_modules/@types/events/"),
-      packageDependencies: new Map([
-        ["@types/events", "3.0.0"],
-      ]),
-    }],
-  ])],
-  ["@types/minimatch", new Map([
-    ["3.0.3", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-minimatch-3.0.3-3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d/node_modules/@types/minimatch/"),
-      packageDependencies: new Map([
-        ["@types/minimatch", "3.0.3"],
       ]),
     }],
   ])],
@@ -9457,15 +9540,6 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
-  ["merge-stream", new Map([
-    ["1.0.1", {
-      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-1.0.1-4041202d508a342ba00174008df0c251b8c135e1/node_modules/merge-stream/"),
-      packageDependencies: new Map([
-        ["readable-stream", "2.3.6"],
-        ["merge-stream", "1.0.1"],
-      ]),
-    }],
-  ])],
   ["sane", new Map([
     ["4.1.0", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-sane-4.1.0-ed881fd922733a6c461bc189dc2b6c006f3ffded/node_modules/sane/"),
@@ -10792,6 +10866,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-path-parse-1.0.6-d62dbb5679405d72c4737ec58600e9ddcf06d24c/node_modules/path-parse/", {"name":"path-parse","reference":"1.0.6"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.6.0-7e74256fbaa49c75aa7c7a205cc22799cac80004/node_modules/semver/", {"name":"semver","reference":"5.6.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-6.1.1-53f53da9b30b2103cd4f15eab3a18ecbcb210c9b/node_modules/semver/", {"name":"semver","reference":"6.1.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-6.1.2-079960381376a3db62eb2edc8a3bfb10c7cfe318/node_modules/semver/", {"name":"semver","reference":"6.1.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.7.0-790a7cf6fea5459bac96110b29b60412dc8ff96b/node_modules/semver/", {"name":"semver","reference":"5.7.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-semver-5.5.0-dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab/node_modules/semver/", {"name":"semver","reference":"5.5.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-helper-module-imports-7.0.0-96081b7111e486da4d2cd971ad1a4fe216cc2e3d/node_modules/@babel/helper-module-imports/", {"name":"@babel/helper-module-imports","reference":"7.0.0"}],
@@ -10868,6 +10943,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-os-locale-3.1.0-a802a6ee17f24c10483ab9935719cef4ed16bf1a/node_modules/os-locale/", {"name":"os-locale","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-execa-0.7.0-944becd34cc41ee32a63a9faf27ad5a65fc59777/node_modules/execa/", {"name":"execa","reference":"0.7.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-execa-1.0.0-c6236a5bb4df6d6f15e88e7f017798216749ddd8/node_modules/execa/", {"name":"execa","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-execa-2.0.1-546a5be56388953409cbf24972d2fd1bb36dbfcd/node_modules/execa/", {"name":"execa","reference":"2.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cross-spawn-5.1.0-e8bd0efee58fcff6f8f94510a0a554bbfa235449/node_modules/cross-spawn/", {"name":"cross-spawn","reference":"5.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cross-spawn-6.0.5-4a5ec7c64dfae22c3a14124dbacdee846d80cbc4/node_modules/cross-spawn/", {"name":"cross-spawn","reference":"6.0.5"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-lru-cache-4.1.5-8bbe50ea85bed59bc9e33dcab8235ee9bcf443cd/node_modules/lru-cache/", {"name":"lru-cache","reference":"4.1.5"}],
@@ -10879,10 +10955,15 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-isexe-2.0.0-e8fbf374dc556ff8947a10dcb0572d633f2cfa10/node_modules/isexe/", {"name":"isexe","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-get-stream-3.0.0-8e943d1358dc37555054ecbe2edb05aa174ede14/node_modules/get-stream/", {"name":"get-stream","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-get-stream-4.1.0-c1b255575f3dc21d59bfc79cd3d2b46b1c3a54b5/node_modules/get-stream/", {"name":"get-stream","reference":"4.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-get-stream-5.1.0-01203cdc92597f9b909067c3e656cc1f4d3c4dc9/node_modules/get-stream/", {"name":"get-stream","reference":"5.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-stream-1.1.0-12d4a3dd4e68e0b79ceb8dbc84173ae80d91ca44/node_modules/is-stream/", {"name":"is-stream","reference":"1.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-is-stream-2.0.0-bde9c32680d6fae04129d6ac9d921ce7815f78e3/node_modules/is-stream/", {"name":"is-stream","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-npm-run-path-2.0.2-35a9232dfa35d7067b4cb2ddf2357b1871536c5f/node_modules/npm-run-path/", {"name":"npm-run-path","reference":"2.0.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-npm-run-path-3.1.0-7f91be317f6a466efed3c9f2980ad8a4ee8b0fa5/node_modules/npm-run-path/", {"name":"npm-run-path","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-path-key-2.0.1-411cadb574c5a140d3a4b1910d40d80cc9f40b40/node_modules/path-key/", {"name":"path-key","reference":"2.0.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-path-key-3.1.0-99a10d870a803bdd5ee6f0470e58dfcd2f9a54d3/node_modules/path-key/", {"name":"path-key","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-finally-1.0.0-3fbcfb15b899a44123b34b6dcc18b724336a2cae/node_modules/p-finally/", {"name":"p-finally","reference":"1.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-p-finally-2.0.1-bd6fcaa9c559a096b680806f4d657b3f0f240561/node_modules/p-finally/", {"name":"p-finally","reference":"2.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-signal-exit-3.0.2-b5fdc08f1287ea1178628e415e25132b73646c6d/node_modules/signal-exit/", {"name":"signal-exit","reference":"3.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-strip-eof-1.0.0-bb43ff5598a6eb05d89b59fcd129c983313606bf/node_modules/strip-eof/", {"name":"strip-eof","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-lcid-1.0.0-308accafa0bc483a3867b4b6f2b9506251d1b835/node_modules/lcid/", {"name":"lcid","reference":"1.0.0"}],
@@ -10908,7 +10989,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.17.1-453b27750f358689c4aa3c9f32d9ace1f0929a79/node_modules/@sindresorhus/is/", {"name":"@sindresorhus/is","reference":"0.17.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@sindresorhus-is-0.14.0-9fb3a3cf3132328151f353de4632e01e52102bea/node_modules/@sindresorhus/is/", {"name":"@sindresorhus/is","reference":"0.14.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.8-421ff11c80b7414027ebed922396bc1833d1903c/node_modules/colorette/", {"name":"colorette","reference":"1.0.8"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-colorette-1.0.7-7adf43c445ee63a541b4a4aef7d13f03df1e0cc0/node_modules/colorette/", {"name":"colorette","reference":"1.0.7"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-xregexp-4.2.4-02a4aea056d65a42632c02f0233eab8e4d7e57ed/node_modules/xregexp/", {"name":"xregexp","reference":"4.2.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@babel-runtime-corejs2-7.4.2-a0cec2c41717fa415e9c204f32b603d88b1796c2/node_modules/@babel/runtime-corejs2/", {"name":"@babel/runtime-corejs2","reference":"7.4.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-core-js-2.6.5-44bc8d249e7fb2ff5d00e0341a7ffb94fbf67895/node_modules/core-js/", {"name":"core-js","reference":"2.6.5"}],
@@ -10943,7 +11023,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-up-4.0.0-1b221c6088ba7799601c808f91161c66e58f8978/node_modules/read-pkg-up/", {"name":"read-pkg-up","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-5.1.1-5cf234dde7a405c90c88a519ab73c467e9cb83f5/node_modules/read-pkg/", {"name":"read-pkg","reference":"5.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-1.1.0-f5ffaa5ecd29cb31c0474bca7d756b6bb29e3f28/node_modules/read-pkg/", {"name":"read-pkg","reference":"1.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-5.0.0-75449907ece8dfb89cbc76adcba2665316e32b94/node_modules/read-pkg/", {"name":"read-pkg","reference":"5.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-2.0.0-8ef1c0623c6a6db0dc6713c4bfac46332b2368f8/node_modules/read-pkg/", {"name":"read-pkg","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-read-pkg-3.0.0-9cbc686978fee65d16c00e2b19c237fcf6e38389/node_modules/read-pkg/", {"name":"read-pkg","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-normalize-package-data-2.4.0-e486d0d97396d79beedd0a6e33f4534ff6b4973e/node_modules/@types/normalize-package-data/", {"name":"@types/normalize-package-data","reference":"2.4.0"}],
@@ -10990,7 +11069,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-imurmurhash-0.1.4-9218b9b2b928a238b13dc4fb6b6d576f231453ea/node_modules/imurmurhash/", {"name":"imurmurhash","reference":"0.1.4"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-xdg-basedir-3.0.0-496b2cc109eca8dbacfe2dc72b603c17c5870ad4/node_modules/xdg-basedir/", {"name":"xdg-basedir","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-has-yarn-2.1.0-137e11354a7b5bf11aa5cb649cf0c6f3ff2b2e77/node_modules/has-yarn/", {"name":"has-yarn","reference":"2.1.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-has-yarn-2.0.0-11b77911708db3c5cccd07400537d9acab6131f1/node_modules/has-yarn/", {"name":"has-yarn","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-import-lazy-2.1.0-05698e3d45c88e8d7e9d92cb0584e77f096f3e43/node_modules/import-lazy/", {"name":"import-lazy","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-import-lazy-4.0.0-e8eb627483a0a43da3c03f3e35548be5cb0cc153/node_modules/import-lazy/", {"name":"import-lazy","reference":"4.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-ci-2.0.0-6bc6334181810e04b5c22b3d589fdca55026404c/node_modules/is-ci/", {"name":"is-ci","reference":"2.0.0"}],
@@ -11425,7 +11503,10 @@ let locatorsByLocations = new Map([
   ["./packages/publisher/", {"name":"@quase/publisher","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@samverschueren-stream-to-observable-0.3.0-ecdf48d532c58ea477acfcab80348424f8d0662f/node_modules/@samverschueren/stream-to-observable/", {"name":"@samverschueren/stream-to-observable","reference":"0.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-any-observable-0.3.0-af933475e5806a67d0d7df090dd5e8bef65d119b/node_modules/any-observable/", {"name":"any-observable","reference":"0.3.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-del-4.0.0-4fa27e92c366cb45b9bdaa56a9b8703dced17437/node_modules/del/", {"name":"del","reference":"4.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-del-4.1.1-9e8f117222ea44a31ff3a156c049b99052a9f0b4/node_modules/del/", {"name":"del","reference":"4.1.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-glob-7.1.1-aa59a1c6e3fbc421e07ccd31a944c30eba521575/node_modules/@types/glob/", {"name":"@types/glob","reference":"7.1.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-events-3.0.0-2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7/node_modules/@types/events/", {"name":"@types/events","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-minimatch-3.0.3-3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d/node_modules/@types/minimatch/", {"name":"@types/minimatch","reference":"3.0.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-globby-6.1.0-f5a6d70e8395e21c858fb0489d64df02424d506c/node_modules/globby/", {"name":"globby","reference":"6.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-globby-9.2.0-fd029a706c703d29bdd170f4b6db3a3f7a7cb63d/node_modules/globby/", {"name":"globby","reference":"9.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-array-union-1.0.2-9a34410e4f4e3da23dea375be5be70f24778ec39/node_modules/array-union/", {"name":"array-union","reference":"1.0.2"}],
@@ -11434,9 +11515,13 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-path-in-cwd-2.0.0-68e452a6eec260500cec21e029c0a44cc0dcd2ea/node_modules/is-path-in-cwd/", {"name":"is-path-in-cwd","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-p-map-2.0.0-be18c5a5adeb8e156460651421aceca56c213a50/node_modules/p-map/", {"name":"p-map","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-rimraf-2.6.3-b2d104fe0d8fb27cf9e0a1cda8262dd3833c6cab/node_modules/rimraf/", {"name":"rimraf","reference":"2.6.3"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-2.0.0-52823629a14dd00c9770fb6ad47dc6310f2c1f60/node_modules/merge-stream/", {"name":"merge-stream","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-1.0.1-4041202d508a342ba00174008df0c251b8c135e1/node_modules/merge-stream/", {"name":"merge-stream","reference":"1.0.1"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-strip-final-newline-2.0.0-89b852fb2fcbe936f6f4b3187afb0a12c1ab58ad/node_modules/strip-final-newline/", {"name":"strip-final-newline","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-github-url-from-git-1.5.0-f985fedcc0a9aa579dc88d7aff068d55cc6251a0/node_modules/github-url-from-git/", {"name":"github-url-from-git","reference":"1.5.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.2.2-46941176f65c9eb20804627149b743a218f25406/node_modules/inquirer/", {"name":"inquirer","reference":"6.2.2"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.4.1-7bd9e5ab0567cd23b41b0180b68e0cfa82fc3c0b/node_modules/inquirer/", {"name":"inquirer","reference":"6.4.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-3.3.0-9dd2f2ad765dcab1ff0443b491442a20ba227dc9/node_modules/inquirer/", {"name":"inquirer","reference":"3.3.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-inquirer-6.2.2-46941176f65c9eb20804627149b743a218f25406/node_modules/inquirer/", {"name":"inquirer","reference":"6.2.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-ansi-escapes-3.2.0-8780b98ff9dbf5638152d1f1fe5c1d7b4442976b/node_modules/ansi-escapes/", {"name":"ansi-escapes","reference":"3.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-cli-width-2.2.0-ff19ede8a9a5e579324147b0c11f0fbcbabed639/node_modules/cli-width/", {"name":"cli-width","reference":"2.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-external-editor-3.0.3-5866db29a97826dbe4bf3afd24070ead9ea43a27/node_modules/external-editor/", {"name":"external-editor","reference":"3.0.3"}],
@@ -11455,16 +11540,17 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-promise-2.1.0-79a2a9ece7f096e80f36d2b2f3bc16c1ff4bf3fa/node_modules/is-promise/", {"name":"is-promise","reference":"2.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-rxjs-6.4.0-f3bb0fe7bda7fb69deac0c16f17b50b0b8790504/node_modules/rxjs/", {"name":"rxjs","reference":"6.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-rxjs-5.5.12-6fa61b8a77c3d793dbaf270bee2f43f652d741cc/node_modules/rxjs/", {"name":"rxjs","reference":"5.5.12"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-rxjs-6.5.2-2e35ce815cd46d84d02a209fb4e5921e051dbec7/node_modules/rxjs/", {"name":"rxjs","reference":"6.5.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-tslib-1.9.3-d7e4dd79245d85428c4d7e4822a79917954ca286/node_modules/tslib/", {"name":"tslib","reference":"1.9.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-through-2.3.8-0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5/node_modules/through/", {"name":"through","reference":"2.3.8"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-issue-regex-3.0.0-275c5dac460e7827819f749747baf686109695b7/node_modules/issue-regex/", {"name":"issue-regex","reference":"3.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-npm-name-5.2.0-652e53c2b007d4cc0a685014885ca478d7886f6a/node_modules/npm-name/", {"name":"npm-name","reference":"5.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-issue-regex-3.1.0-0671f094d6449c5b712fac3c9562aecb727d709e/node_modules/issue-regex/", {"name":"issue-regex","reference":"3.1.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-npm-name-5.4.0-9b8623e253642c298e7a22f67c510235429b35e2/node_modules/npm-name/", {"name":"npm-name","reference":"5.4.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-scoped-1.0.0-449ca98299e713038256289ecb2b540dc437cb30/node_modules/is-scoped/", {"name":"is-scoped","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-scoped-regex-1.0.0-a346bb1acd4207ae70bd7c0c7ca9e566b6baddb8/node_modules/scoped-regex/", {"name":"scoped-regex","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-lodash-zip-4.2.0-ec6662e4896408ed4ab6c542a3990b72cc080020/node_modules/lodash.zip/", {"name":"lodash.zip","reference":"4.2.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-validate-npm-package-name-3.0.0-5fa912d81eb7d0c74afc140de7317f0ca7df437e/node_modules/validate-npm-package-name/", {"name":"validate-npm-package-name","reference":"3.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-builtins-1.0.3-cb94faeb61c8696451db36534e1422f94f0aee88/node_modules/builtins/", {"name":"builtins","reference":"1.0.3"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-p-timeout-3.0.0-1bbd42db28c669efd02e1a82ccf14dc59eb57ed1/node_modules/p-timeout/", {"name":"p-timeout","reference":"3.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-p-timeout-3.1.0-198c1f503bb973e9b9727177a276c80afd6851f3/node_modules/p-timeout/", {"name":"p-timeout","reference":"3.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-pretty-version-diff-1.0.0-d9a0a3acc1a1332366a8da2f85c8bbf62724652d/node_modules/pretty-version-diff/", {"name":"pretty-version-diff","reference":"1.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-listr-0.14.3-2fea909604e434be464c50bddba0d496928fa586/node_modules/listr/", {"name":"listr","reference":"0.14.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-is-observable-1.1.0-b3e986c8f44de950867cab5403f5a3465005975e/node_modules/is-observable/", {"name":"is-observable","reference":"1.1.0"}],
@@ -11484,7 +11570,7 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-rx-lite-4.0.8-0b1e11af8bc44836f04a6407e92da42467b79444/node_modules/rx-lite/", {"name":"rx-lite","reference":"4.0.8"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-rx-lite-aggregates-4.0.8-753b87a89a11c95467c4ac1626c4efc4e05c67be/node_modules/rx-lite-aggregates/", {"name":"rx-lite-aggregates","reference":"4.0.8"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-split-1.0.1-605bd9be303aa59fb35f9229fbea0ddec9ea07d9/node_modules/split/", {"name":"split","reference":"1.0.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-terminal-link-1.2.0-ed1ac495da75a8c3eadc8a5db985226e451edffd/node_modules/terminal-link/", {"name":"terminal-link","reference":"1.2.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-terminal-link-1.3.0-3e9a308289e13340053aaf40e8f1a06d1335646e/node_modules/terminal-link/", {"name":"terminal-link","reference":"1.3.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-supports-hyperlinks-1.0.1-71daedf36cc1060ac5100c351bb3da48c29c0ef7/node_modules/supports-hyperlinks/", {"name":"supports-hyperlinks","reference":"1.0.1"}],
   ["./packages/unit/", {"name":"@quase/unit","reference":"0.1.0-0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-circular-json-0.5.9-932763ae88f4f7dead7a0d09c8a51a4743a53b1d/node_modules/circular-json/", {"name":"circular-json","reference":"0.5.9"}],
@@ -11500,9 +11586,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-md5-hex-2.0.0-d0588e9f1c74954492ecd24ac0ac6ce997d92e33/node_modules/md5-hex/", {"name":"md5-hex","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-md5-o-matic-0.1.1-822bccd65e117c514fab176b25945d54100a03c3/node_modules/md5-o-matic/", {"name":"md5-o-matic","reference":"0.1.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-well-known-symbols-2.0.0-e9c7c07dbd132b7b84212c8174391ec1f9871ba5/node_modules/well-known-symbols/", {"name":"well-known-symbols","reference":"2.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-glob-7.1.1-aa59a1c6e3fbc421e07ccd31a944c30eba521575/node_modules/@types/glob/", {"name":"@types/glob","reference":"7.1.1"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-events-3.0.0-2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7/node_modules/@types/events/", {"name":"@types/events","reference":"3.0.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-minimatch-3.0.3-3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d/node_modules/@types/minimatch/", {"name":"@types/minimatch","reference":"3.0.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-dir-glob-2.2.2-fa09f0694153c8918b18ba0deafae94769fc50c4/node_modules/dir-glob/", {"name":"dir-glob","reference":"2.2.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-fast-glob-2.2.7-6953857c3afa475fff92ee6015d52da70a4cd39d/node_modules/fast-glob/", {"name":"fast-glob","reference":"2.2.7"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@mrmlnc-readdir-enhanced-2.2.1-524af240d1a360527b730475ecfa1344aa540dde/node_modules/@mrmlnc/readdir-enhanced/", {"name":"@mrmlnc/readdir-enhanced","reference":"2.2.1"}],
@@ -11715,7 +11798,6 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-stack-utils-1.0.2-33eba3897788558bebfc2db059dc158ec36cebb8/node_modules/stack-utils/", {"name":"stack-utils","reference":"1.0.2"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jest-mock-24.8.0-2f9d14d37699e863f1febf4e4d5a33b7fdbbde56/node_modules/jest-mock/", {"name":"jest-mock","reference":"24.8.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-jest-worker-24.6.0-7f81ceae34b7cde0c9827a6980c35b7cdc0161b3/node_modules/jest-worker/", {"name":"jest-worker","reference":"24.6.0"}],
-  ["../../../AppData/Local/Yarn/Cache/v4/npm-merge-stream-1.0.1-4041202d508a342ba00174008df0c251b8c135e1/node_modules/merge-stream/", {"name":"merge-stream","reference":"1.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-sane-4.1.0-ed881fd922733a6c461bc189dc2b6c006f3ffded/node_modules/sane/", {"name":"sane","reference":"4.1.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@cnakazawa-watch-1.0.3-099139eaec7ebf07a27c1786a3ff64f39464d2ef/node_modules/@cnakazawa/watch/", {"name":"@cnakazawa/watch","reference":"1.0.3"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-exec-sh-0.3.2-6738de2eb7c8e671d0366aea0b0db8c6f7d7391b/node_modules/exec-sh/", {"name":"exec-sh","reference":"0.3.2"}],

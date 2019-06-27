@@ -127,7 +127,8 @@ export const push = ( opts: Options & { git: GitOptions & { push: true } } ) => 
 
 const gitVersion = async() => {
   const { stdout } = await execPromise( "git", [ "version" ] );
-  return stdout.match( /git version (\d+\.\d+\.\d+).*/ )[ 1 ];
+  const m = stdout.match( /git version (\d+\.\d+\.\d+).*/ );
+  return m ? m[ 1 ] : "";
 };
 
 export const verifyRecentGitVersion = async() => {

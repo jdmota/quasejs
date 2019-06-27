@@ -1,19 +1,18 @@
-import "./register-observable";
+import execa from "execa";
+import logSymbols from "log-symbols";
+import terminalLink from "terminal-link";
+import issueRegex from "issue-regex";
 import History from "../history";
 
-const { merge } = require( "rxjs" );
 const { filter } = require( "rxjs/operators" );
 const streamToObservable = require( "@samverschueren/stream-to-observable" );
 const split = require( "split" );
-const execa = require( "execa" );
 const Listr = require( "listr" );
-const issueRegex = require( "issue-regex" );
-const terminalLink = require( "terminal-link" );
-const logSymbols = require( "log-symbols" );
 
 type ExecOpts = {
   cwd?: string;
   history?: History;
+  preferLocal?: boolean;
 };
 
 export function errorIgnoreStack( error: any ) {
@@ -26,7 +25,10 @@ export async function execPromise( cmd: string, args: string[], opts: ExecOpts =
   const operation = [ cmd ].concat( args );
   try {
     if ( history ) history.start( operation );
-    const cp = await execa( cmd, args, opts );
+    const cp = await execa( cmd, args, {
+      preferLocal: true,
+      ...opts
+    } );
     if ( history ) history.end( operation );
     return cp;
   } catch ( error ) {
@@ -40,9 +42,12 @@ export async function execStdout( cmd: string, args: string[], opts: ExecOpts = 
   const operation = [ cmd ].concat( args );
   try {
     if ( history ) history.start( operation );
-    const cp = await execa.stdout( cmd, args, opts );
+    const { stdout } = await execa( cmd, args, {
+      preferLocal: true,
+      ...opts
+    } );
     if ( history ) history.end( operation );
-    return cp;
+    return stdout;
   } catch ( error ) {
     error.__generated = true;
     throw error;
@@ -52,17 +57,18 @@ export async function execStdout( cmd: string, args: string[], opts: ExecOpts = 
 export function execObservable( cmd: string, args: string[], opts: ExecOpts = {} ) {
   const { history } = opts;
   const operation = [ cmd ].concat( args );
-  const cp = execa( cmd, args, opts );
+  const cp = execa( cmd, args, {
+    preferLocal: true,
+    ...opts
+  } );
 
   if ( history ) {
     history.start( operation );
     cp.then( () => history.end( operation ) );
   }
 
-  return merge(
-    streamToObservable( cp.stdout.pipe( split() ), { await: cp } ),
-    streamToObservable( cp.stderr.pipe( split() ), { await: cp } )
-  ).pipe( filter( Boolean ) );
+  const { all } = cp as any;
+  return streamToObservable( all.pipe( split() ) ).pipe( filter( Boolean ) );
 }
 
 export function l( tasks?: any[] ) {

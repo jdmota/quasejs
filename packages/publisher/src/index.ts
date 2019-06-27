@@ -1,18 +1,19 @@
 /* eslint-disable no-console */
+import "./util/register-observable";
+import hasYarn from "has-yarn";
+import logSymbols from "log-symbols";
+import readPkg from "read-pkg";
+import slash from "slash";
+import path from "path";
 import { execPromise, execStdout, execObservable, l, error, info } from "./util/util";
 import { Options, ProvidedOptions, Pkg, GitOptions } from "./types";
 import * as git from "./util/git";
 import * as tasks from "./tasks";
 import additionalQuestions from "./questions";
-import { isValidVersion } from "./util/version";
+import { isValidVersion, getNewVersion } from "./util/version";
 import History from "./history";
 
 const fs = require( "fs-extra" );
-const path = require( "path" );
-const logSymbols = require( "log-symbols" );
-const readPkg = require( "read-pkg" );
-const hasYarn = require( "has-yarn" );
-const slash = require( "slash" );
 
 function getConfig( yarn: boolean, npmKey: string, yarnKey: string ): Promise<string> {
   if ( yarn ) {
@@ -81,6 +82,11 @@ async function handleOptions( provided: ProvidedOptions, history: History ): Pro
 
   console.log();
   info( `Current: ${pkg.name}@${pkg.version} [${pkgRelativePath}]` );
+
+  // If version was already provided, validate it
+  if ( provided.version ) {
+    provided.version = getNewVersion( pkg.version, provided.version );
+  }
 
   let yarn = provided.yarn;
   if ( yarn === undefined ) {

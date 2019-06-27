@@ -1,3 +1,5 @@
+import del from "del";
+import hasYarn from "has-yarn";
 import { Options, GitOptions } from "../types";
 import { execPromise, execObservable, l, error, execStdout } from "../util/util";
 import * as git from "../util/git";
@@ -8,9 +10,6 @@ import publishTask from "./publish";
 
 const { throwError } = require( "rxjs" );
 const { catchError } = require( "rxjs/operators" );
-
-const del = require( "del" );
-const hasYarn = require( "has-yarn" );
 
 export function checkVersions( opts: Options ) {
   return [
@@ -44,7 +43,7 @@ export function checkDeps( opts: Options ) {
     task( _ctx: any, task: any ) {
       return execStdout( opts.yarn ? "yarn" : "npm", [ "audit" ], {
         cwd: opts.folder
-      } ).catch( ( err: Error & { stdout: string; stderr: string } ) => {
+      } ).catch( ( err: any ) => {
         if ( /(Did you mean|npm <command>)/.test( err.stdout ) ) {
           task.skip( "This version of npm does not support audit. Upgrade to npm>=6" );
           return;
@@ -53,6 +52,7 @@ export function checkDeps( opts: Options ) {
           task.skip( "This version of yarn does not support audit. Upgrade to yarn>=1.12" );
           return;
         }
+        err.message = "\n" + err.all;
         throw err;
       } );
     }
