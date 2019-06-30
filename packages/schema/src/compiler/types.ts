@@ -1,6 +1,6 @@
 export default new Set( [
   "any",
-  // "null",
+  "null",
   "boolean",
   "undefined",
   "string",

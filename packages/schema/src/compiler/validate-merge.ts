@@ -169,6 +169,8 @@ export class Compiler {
       seenKeys.add( name );
     }
 
+    const defaultObj = `{${node.properties.map( p => `${p.name}:undefined` ).join( "," )}}`;
+
     this.statements.push( `const keys_${typeInfo.id}=[${node.properties.map( p => `'${p.name}'` )}];` );
 
     // Validate
@@ -188,7 +190,7 @@ export class Compiler {
     {
       let code = "";
       code += `if(value===undefined)return;\n`;
-      code += `if(dest===undefined)dest={};else if(this.mergeStrategy==="override")return dest;\n`;
+      code += `if(dest===undefined)dest=${defaultObj};\nelse if(this.mergeStrategy==="override")return dest;\n`;
       for ( const prop of node.properties ) {
         code += `dest.${prop.name}=${this.callMerge( prop, ctx, prop.name, prop.name )};\n`;
       }
@@ -203,7 +205,7 @@ export class Compiler {
     // Defaults
     {
       let code = "";
-      code += `if(value===undefined)value={};\n`;
+      code += `if(value===undefined)value=${defaultObj};\n`;
       for ( const prop of node.properties ) {
         code += `value.${prop.name}=${this.callDefaults( prop, ctx, prop.name )};\n`;
       }
