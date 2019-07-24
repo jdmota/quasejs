@@ -629,9 +629,15 @@ describe( "computations", () => {
 
     const r = new ComputationRegistry();
 
-    const a = new C( r, () => {
-      throw new Error( "Error" );
-    } );
+    class C2 extends Computation<void> {
+
+      async run( _: void, _2: () => void ): Promise<CValue<void>> {
+        throw new Error( "Error" );
+      }
+
+    }
+
+    const a = new C2( r );
 
     expect( await run( r ) ).toEqual( [ "Error" ] );
     expect( a.peekError() ).toMatchObject( {
