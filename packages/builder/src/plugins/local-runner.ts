@@ -1,9 +1,10 @@
-import { Transforms, TransformableAsset, FinalAsset } from "../types";
+import { Transforms, FinalAsset } from "../types";
 import { BuilderUtil, ModuleContext } from "./context";
 import { Farm } from "../workers/farm";
 import { UserConfig } from "../builder/user-config";
 import { PluginsRunner } from "./runner";
 import { IPluginsRunnerInWorker } from "./worker-runner";
+import { serialize } from "../utils/serialization";
 
 export class PluginsRunnerLocal {
 
@@ -31,12 +32,16 @@ export class PluginsRunnerLocal {
     return this.runner.resolve( imported, module );
   }
 
-  pipeline( asset: TransformableAsset | null, ctx: ModuleContext ) {
-    return this.worker.pipeline( asset, ctx );
+  async pipeline( asset: SharedArrayBuffer | null, ctx: ModuleContext ) {
+    const { result, files } = await this.worker.pipeline( asset, ctx );
+    return {
+      result: serialize( result ), // TODO remove
+      files
+    };
   }
 
-  renderAsset( asset: FinalAsset, util: BuilderUtil ) {
-    return this.worker.renderAsset( asset, util );
+  renderAsset( asset: FinalAsset, hashIds: ReadonlyMap<string, string>, util: BuilderUtil ) {
+    return this.worker.renderAsset( asset, hashIds, util );
   }
 
 }

@@ -1,7 +1,5 @@
 import Reporter from "./reporter";
 
-const fs = require( "fs-extra" );
-
 export const schema = `
 type B @default(false) = boolean;
 type B2 @default(true) = boolean;
@@ -17,7 +15,6 @@ type OptimizationOptions {
   hashing: boolean?;
   sourceMaps: (boolean | "inline")?;
   minify: boolean?;
-  cleanup: boolean?;
 }
 
 type PerformanceOptions {
@@ -42,7 +39,6 @@ type Schema {
   publicPath: string @default("");
   dotGraph: string?;
   runtime: RuntimeOptions;
-  fs: type @additionalProperties {};
   codeFrameOptions: type @additionalProperties {};
   watch: B @alias("w") @description("Watch files for changes and re-build");
   watchOptions: type @additionalProperties {};
@@ -62,15 +58,6 @@ export function handleOptions( options: any ) {
   if ( !options.reporter ) {
     options.reporter = Reporter;
   }
-  options.fs = {
-    ...options.fs
-  };
-  if ( !options.fs.writeFile ) {
-    options.fs.writeFile = fs.writeFile;
-  }
-  if ( !options.fs.mkdirp ) {
-    options.fs.mkdirp = fs.mkdirp;
-  }
 
   function b( value: any ) {
     return value == null ? options.mode !== "development" : value;
@@ -80,8 +67,7 @@ export function handleOptions( options: any ) {
     hashId: b( options.optimization.hashId ),
     hashing: b( options.optimization.hashing ),
     sourceMaps: options.optimization.sourceMaps == null || options.optimization.sourceMaps,
-    minify: b( options.optimization.minify ),
-    cleanup: b( options.optimization.cleanup )
+    minify: b( options.optimization.minify )
   };
 
   return options;

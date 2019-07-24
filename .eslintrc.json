@@ -5,13 +5,14 @@
       "env": {
         "jest": true
       },
-      "files": [ "**/test/**/*.js" ],
+      "files": [ "**/test/**/*.js", "**/test/**/*.ts" ],
       "plugins": [ "jest" ],
       "rules": {
         "jest/no-focused-tests": "error",
         "jest/prefer-to-have-length": "error",
         "jest/valid-describe": "error",
-        "jest/valid-expect": "error"
+        "jest/valid-expect": "error",
+        "spaced-comment": "off"
       }
     },
     {

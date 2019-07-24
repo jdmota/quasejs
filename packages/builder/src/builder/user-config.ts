@@ -22,7 +22,7 @@ export class UserConfig {
 
   // TODO
   isSplitPoint( imported: FinalModule, importee: FinalModule ): boolean | null {
-    return imported.asset.type !== importee.asset.type;
+    return imported.type !== importee.type;
   }
 
   // TODO

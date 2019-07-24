@@ -1,13 +1,12 @@
-import { Options, WatchedFiles, Updates, Loc, Checker, ICheckerImpl, Transforms, Output } from "../types";
+import { Options, WatchedFiles, Updates, Loc, Checker, ICheckerImpl, Transforms, Output, FinalModule } from "../types";
 import { resolvePath, makeAbsolute } from "../utils/path";
 import { Time } from "../utils/time";
-import { ComputationGet, ComputationCancelled } from "../utils/computation";
 import { PluginsRunnerLocal } from "../plugins/local-runner";
 import Watcher from "./watcher";
 import { BuilderUtil } from "../plugins/context";
-import { processGraph, Graph } from "./graph";
+import { processGraph } from "./graph";
 import { UserConfig } from "./user-config";
-import { error } from "../utils/error";
+import { createError } from "../utils/error";
 import { PluginRegistry } from "../plugins/plugin-registry";
 import EventEmitter from "events";
 import { BuilderTransformResolve } from "./builder-transform-resolve";
@@ -15,24 +14,9 @@ import { BuilderPack } from "./builder-pack";
 import { Module } from "../module/module";
 import { getOnePlugin } from "@quase/get-plugins";
 import path from "path";
-// @ts-ignore
 import fs from "fs-extra";
-
-export class Build {
-
-  id: number;
-  promises: Promise<unknown>[];
-  pending: Set<string>;
-  graph: Graph;
-
-  constructor( id: number ) {
-    this.id = id;
-    this.graph = new Graph();
-    this.promises = [];
-    this.pending = new Set();
-  }
-
-}
+import { Computation } from "../utils/computation-registry";
+import { BuildCancelled } from "./build-cancelled";
 
 export class Builder extends EventEmitter {
 
@@ -51,7 +35,7 @@ export class Builder extends EventEmitter {
   reporter: { plugin: any; options: any };
 
   actualCheckers: ICheckerImpl[];
-  build: Build;
+  buildId: number;
 
   private checkers: PluginRegistry<Checker>;
   private checkersInit: Promise<void>;
@@ -131,7 +115,7 @@ export class Builder extends EventEmitter {
 
     this.time = new Time();
     this.summary = new Map();
-    this.build = new Build( 0 );
+    this.buildId = 0;
 
     this.builderTransformResolve = new BuilderTransformResolve( this );
     this.builderPack = new BuilderPack( this );
@@ -143,7 +127,11 @@ export class Builder extends EventEmitter {
   }
 
   error( id: string, message: string, code: string | null, loc: Loc | null ) {
-    error( {
+    throw this.createError( id, message, code, loc );
+  }
+
+  createError( id: string, message: string, code: string | null, loc: Loc | null ) {
+    return createError( {
       message,
       id,
       code,
@@ -153,14 +141,22 @@ export class Builder extends EventEmitter {
     } );
   }
 
-  registerFiles( files: WatchedFiles, getter: ComputationGet ) {
+  subscribeFiles( files: WatchedFiles, sub: Computation<any> ) {
     const { watcher } = this;
 
     if ( watcher ) {
       for ( const [ file, info ] of files ) {
-        watcher.registerFile( file, info, getter );
+        this.builderTransformResolve.subscribeFile( file, info, sub );
       }
     }
+  }
+
+  change( what: string, type: "added" | "changed" | "removed" ) {
+    this.builderTransformResolve.change( what, type );
+  }
+
+  watchedFiles() {
+    return this.builderTransformResolve.watchedFiles();
   }
 
   stop() {
@@ -172,78 +168,89 @@ export class Builder extends EventEmitter {
     }
   }
 
-  notifyAddModule( buildId: number, path: string, transforms: Transforms ) {
-    if ( this.build.id === buildId ) {
-      this.builderTransformResolve.addModuleAndTransform(
-        this.build, path, transforms
-      );
+  addModule( path: string, transforms: Transforms ) {
+    return this.builderTransformResolve.addModule(
+      path, transforms
+    ).id;
+  }
+
+  addInnerModule( innerId: string, parentInner: Module, transforms: Transforms ) {
+    return this.builderTransformResolve.addInnerModule(
+      innerId, parentInner, transforms
+    ).id;
+  }
+
+  notifyCheckers( module: FinalModule ) {
+    for ( const checker of this.actualCheckers ) {
+      checker.newModule( module );
     }
   }
 
-  notifyAddInnerModule( buildId: number, innerId: string, parentInner: Module, transforms: Transforms ) {
-    if ( this.build.id === buildId ) {
-      this.builderTransformResolve.addInnerModuleAndTransform(
-        this.build, innerId, parentInner, transforms
-      );
+  removeModuleById( id: string ) {
+    this.builderTransformResolve.removeModuleById( id );
+  }
+
+  private checkIfCancelled( buildId: number ) {
+    if ( this.buildId !== buildId ) {
+      throw new BuildCancelled();
     }
   }
 
-  private checkIfCancelled( build: Build ) {
-    if ( this.build !== build ) {
-      throw new ComputationCancelled();
-    }
-  }
-
-  private wait<T>( build: Build, p: Promise<T> ) {
-    this.checkIfCancelled( build );
+  private wait<T>( buildId: number, p: Promise<T> ) {
+    this.checkIfCancelled( buildId );
     return p;
   }
 
   async cancelBuild() {
-    this.build = new Build( this.build.id + 1 );
+    this.buildId = this.buildId + 1;
+    this.builderTransformResolve.interrupt();
   }
 
   // Pre-condition: "cancelPreviousBuild" must be called and previous "runBuild" needs to finish
   async runBuild(): Promise<Output> {
-    const { build } = this;
+    const { buildId } = this;
 
     this.emit( "status", "Warming up..." );
     this.time.start();
 
-    await this.wait( build, this.checkersInit );
-    await this.wait( build, this.pluginsRunnerInit );
-
-    const emptyDirPromise =
-      this.options.optimization.cleanup ? fs.emptyDir( this.options.dest ) : Promise.resolve();
+    await this.wait( buildId, this.checkersInit );
+    await this.wait( buildId, this.pluginsRunnerInit );
 
     this.time.checkpoint( "warmup" );
     this.emit( "status", "Building..." );
 
-    await this.wait( build, this.builderTransformResolve.run( build ) );
+    const result = await this.wait( buildId, this.builderTransformResolve.run() );
+
+    // TODO show all errors?
+    if ( result.errors ) {
+      throw result.errors[ 0 ];
+    }
+
+    const { graph } = result;
+    if ( !graph ) {
+      throw new BuildCancelled();
+    }
 
     this.time.checkpoint( "modules processed" );
     this.emit( "status", "Checking..." );
 
     // Checks
-    await this.wait( build, Promise.all( this.actualCheckers.map( c => c.check() ) ) );
+    await this.wait( buildId, Promise.all( this.actualCheckers.map( c => c.check() ) ) );
 
     this.time.checkpoint( "checking done" );
     this.emit( "status", "Computing graph..." );
 
-    build.graph.init( this.userConfig );
-    const processedGraph = processGraph( build.graph );
+    const processedGraph = processGraph( graph );
 
     this.time.checkpoint( "graph processed" );
     this.emit( "status", "Creating files..." );
 
-    await this.wait( build, emptyDirPromise );
-
     const { dotGraph } = this.options;
     if ( dotGraph ) {
-      await this.wait( build, build.graph.dumpDotGraph( path.resolve( this.options.dest, dotGraph ) ) );
+      await this.wait( buildId, graph.dumpDotGraph( path.resolve( this.options.dest, dotGraph ) ) );
     }
 
-    const filesInfo = await this.wait( build, this.builderPack.run( build, processedGraph ) );
+    const { filesInfo, removedCount } = await this.wait( buildId, this.builderPack.run( processedGraph ) );
 
     this.time.checkpoint( "finished rendering" );
 
@@ -259,6 +266,7 @@ export class Builder extends EventEmitter {
       await fs.outputFile( swFile, serviceWorkerCode );
 
       filesInfo.push( {
+        moduleId: "",
         file: swFile,
         hash: null,
         size: serviceWorkerCode.length,
@@ -272,21 +280,21 @@ export class Builder extends EventEmitter {
       const previousSummary = this.summary;
       const newSummary = new Map();
 
-      for ( const [ id, m ] of build.graph ) {
+      for ( const [ id, m ] of graph ) {
         const file = processedGraph.moduleToFile.get( m );
         if ( !file ) {
           // Inline assets
           continue;
         }
 
-        const requiredAssets = build.graph.requiredAssets(
+        const requiredAssets = graph.requiredAssets(
           m,
           processedGraph.moduleToFile
         ).map( a => a.relativeDest );
 
         const data = {
           id,
-          lastChangeId: m.resolvedBuildId,
+          lastChangeId: m.resolvedId,
           file: file.relativeDest,
           fileIsEntry: file.isEntry
         };
@@ -330,6 +338,7 @@ export class Builder extends EventEmitter {
 
     return {
       filesInfo,
+      removedCount,
       time: this.time.end(),
       timeCheckpoints: this.time.getCheckpoints(),
       updates

@@ -1,12 +1,12 @@
 import { Options, Info, ToWrite, FinalAsset, ProcessedGraph } from "../types";
 import { resolvePath, relative } from "../utils/path";
-import { ComputationCancelled } from "../utils/computation";
 import { createRuntime, RuntimeInfo, createRuntimeManifest } from "../runtime/create-runtime";
 import hash from "../utils/hash";
 import { BuilderUtil } from "../plugins/context";
-import { Builder, Build } from "./builder";
+import { Builder } from "./builder";
 import { sourceMapToString, sourceMapToUrl } from "@quase/source-map";
 import path from "path";
+import fs from "fs-extra";
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
@@ -20,11 +20,13 @@ export class BuilderPack {
   private builder: Builder;
   private options: Options;
   private previousFiles: Map<string, FinalAsset>;
+  private writtenFiles: Map<string, string>;
 
   constructor( builder: Builder ) {
     this.builder = builder;
     this.options = builder.options;
     this.previousFiles = new Map();
+    this.writtenFiles = new Map();
   }
 
   private createRuntime( info: RuntimeInfo ) {
@@ -39,7 +41,6 @@ export class BuilderPack {
   private async writeAsset( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
 
     let dest = path.join( this.options.dest, asset.relativeDest );
-    const fs = this.options.fs;
     const inlineMap = this.options.optimization.sourceMaps === "inline";
     const directory = path.dirname( dest );
 
@@ -70,6 +71,8 @@ export class BuilderPack {
 
     asset.hash = h;
 
+    this.writtenFiles.set( asset.module.id, dest );
+
     await fs.mkdirp( directory );
 
     if ( map && typeof data === "string" ) {
@@ -86,6 +89,7 @@ export class BuilderPack {
     }
 
     return {
+      moduleId: asset.module.id,
       file: dest,
       hash: h,
       size: data.length,
@@ -93,7 +97,7 @@ export class BuilderPack {
     };
   }
 
-  private async render( asset: FinalAsset ): Promise<Info> {
+  private async render( asset: FinalAsset, hashIds: ReadonlyMap<string, string> ): Promise<Info> {
     const manifest = createRuntimeManifest( asset.manifest );
 
     if ( asset.isEntry ) {
@@ -112,7 +116,7 @@ export class BuilderPack {
     }
 
     const { result } =
-      await this.builder.pluginsRunner.renderAsset( asset, new BuilderUtil( this.options ) );
+      await this.builder.pluginsRunner.renderAsset( asset, hashIds, new BuilderUtil( this.options ) );
 
     if ( result ) {
       return this.writeAsset( asset, result );
@@ -120,18 +124,7 @@ export class BuilderPack {
     throw new Error( `Could not build asset ${asset.module.id}` );
   }
 
-  private checkIfCancelled( build: Build ) {
-    if ( this.builder.build !== build ) {
-      throw new ComputationCancelled();
-    }
-  }
-
-  private wait<T>( build: Build, p: Promise<T> ) {
-    this.checkIfCancelled( build );
-    return p;
-  }
-
-  private shouldRebuild( oldFile: FinalAsset | undefined, newFile: FinalAsset ): boolean {
+  private shouldRebuild( processedGraph: ProcessedGraph, oldFile: FinalAsset | undefined, newFile: FinalAsset ): boolean {
     if (
       !oldFile ||
       oldFile.srcs.size !== newFile.srcs.size ||
@@ -157,12 +150,12 @@ export class BuilderPack {
       const oldM = oldFile.srcs.get( key );
       if (
         !oldM ||
-        oldM.transformedBuildId !== newM.transformedBuildId ||
+        oldM.transformedId !== newM.transformedId ||
         oldM.requires.length !== newM.requires.length
       ) {
         return true;
       }
-      // If the module's code didn't change (per transformedBuildId)
+      // If the module's code didn't change (per transformedId)
       // then we just need to check if the dependencies are the same.
       // We assume that if something changed order in this array,
       // then something actually changed and needs update so,
@@ -170,33 +163,75 @@ export class BuilderPack {
       for ( let i = 0; i < oldM.requires.length; i++ ) {
         const a = oldM.requires[ i ];
         const b = newM.requires[ i ];
-        if ( a.id !== b.id || a.hashId !== b.hashId || a.async !== b.async ) {
+        if ( a.id !== b.id || a.async !== b.async ) {
+          return true;
+        }
+        const aHashId = get( processedGraph.hashIds, a.id );
+        const bHashId = get( processedGraph.hashIds, b.id );
+        if ( aHashId !== bHashId ) {
           return true;
         }
       }
     }
     const oldInlineAssets = new Map( oldFile.inlineAssets.map( a => [ a.module.id, a ] ) );
     for ( const a of newFile.inlineAssets ) {
-      if ( this.shouldRebuild( oldInlineAssets.get( a.module.id ), a ) ) {
+      if ( this.shouldRebuild( processedGraph, oldInlineAssets.get( a.module.id ), a ) ) {
         return true;
       }
     }
     return false;
   }
 
-  async run( build: Build, processedGraph: ProcessedGraph ) {
+  async run( processedGraph: ProcessedGraph ) {
 
+    // See which assets we need to rerender
     const files = processedGraph.files.filter(
-      f => this.shouldRebuild( this.previousFiles.get( f.module.id ), f )
+      f => this.shouldRebuild( processedGraph, this.previousFiles.get( f.module.id ), f )
     );
 
-    const filesInfo = await this.wait( build,
-      Promise.all( files.map( a => this.render( a ) ) )
+    // Render them
+    const filesInfo = await Promise.all(
+      files.map( a => this.render( a, processedGraph.hashIds ) )
     );
 
+    // Calculate which files to remove
+    const toRemove = new Map( this.writtenFiles );
+    for ( const asset of processedGraph.files ) {
+      toRemove.delete( asset.module.id );
+    }
+
+    // Save current files for later
     this.previousFiles = new Map( processedGraph.files.map( v => [ v.module.id, v ] ) );
 
-    return filesInfo;
+    // Removal of unnecessary files
+    let removedCount = 0;
+
+    await Promise.all(
+      Array.from( toRemove ).map( async( [ id, file ] ) => {
+        try {
+          await fs.unlink( file );
+          removedCount++;
+          this.writtenFiles.delete( id );
+        } catch ( err ) {
+          if ( err.code === "ENOENT" || err.code === "EISDIR" ) {
+            this.writtenFiles.delete( id );
+          }
+        }
+      } )
+    );
+
+    return {
+      filesInfo,
+      removedCount
+    };
   }
 
+}
+
+function get<K, V>( map: ReadonlyMap<K, V>, key: K ): V {
+  const value = map.get( key );
+  if ( value ) {
+    return value;
+  }
+  throw new Error( "Assertion error" );
 }

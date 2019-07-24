@@ -21,7 +21,7 @@ async function runMethod( runner: PluginsRunnerInWorker, method: SentData[ "meth
     return runner.pipeline( args[ 0 ], args[ 1 ] );
   }
   if ( method === "renderAsset" ) {
-    return runner.renderAsset( args[ 0 ], args[ 1 ] );
+    return runner.renderAsset( args[ 0 ], args[ 1 ], args[ 2 ] );
   }
   throw new Error( `Worker: No method ${method}` );
 }

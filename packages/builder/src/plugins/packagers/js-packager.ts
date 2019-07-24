@@ -2,6 +2,7 @@ import { BuilderUtil } from "../context";
 import { FinalAsset, FinalModule, Packager } from "../../types";
 import StringBuilder from "../../utils/string-builder";
 import { chunkInit, moduleArgs } from "../../runtime/create-runtime";
+import { get } from "../../utils/get";
 
 const importLazy = require( "import-lazy" )( require );
 const path = require( "path" );
@@ -9,23 +10,29 @@ const generate = importLazy( "@babel/generator" );
 
 const PACKAGER_NAME = "quase_builder_js_packager";
 
-async function render( module: FinalModule, ctx: BuilderUtil ) {
-  const { data, map } = module.asset;
-  const ast = module.asset.ast && module.asset.ast.program;
+async function render(
+  module: FinalModule, hashIds: ReadonlyMap<string, string>, ctx: BuilderUtil
+) {
+  if ( module.type !== "js" ) {
+    throw new Error( `Module ${module.id} is not of type 'js'` );
+  }
 
-  if ( !ast ) {
+  const { data, map, ast } = ctx.deserializeAsset( module.asset );
+  const program = ast && ast.program;
+
+  if ( !program ) {
     throw new Error( `${PACKAGER_NAME}: No AST? ${module.id}` );
   }
 
-  const meta = ast._meta;
+  const meta = program._meta;
 
   if ( !meta ) {
     throw new Error( `${PACKAGER_NAME}: No metadata in AST? ${module.id}` );
   }
 
   for ( const { source, stringLiteral } of meta.imports ) {
-    const m = module.moduleIdByRequest.get( source );
-    const newSource = m ? m.hashId : source;
+    const m = module.dependencies.get( source );
+    const newSource = m ? get( hashIds, m.id ) : source;
     if ( newSource !== stringLiteral.value ) {
       stringLiteral.value = newSource;
     }
@@ -41,7 +48,7 @@ async function render( module: FinalModule, ctx: BuilderUtil ) {
     minified: optimization.minify
   };
 
-  const generateResult = generate.default( ast, opts, ctx.dataToString( data ) );
+  const generateResult = generate.default( program, opts, ctx.dataToString( data ) );
 
   return {
     code: generateResult.code,
@@ -52,11 +59,17 @@ async function render( module: FinalModule, ctx: BuilderUtil ) {
 
 export const packager: Packager = {
 
-  async pack( _options, asset: FinalAsset, _, ctx: BuilderUtil ) {
+  async pack(
+    _options,
+    asset: FinalAsset,
+    _,
+    hashIds: ReadonlyMap<string, string>,
+    ctx: BuilderUtil
+  ) {
 
     const { module: entryModule, relativeDest } = asset;
 
-    if ( entryModule.asset.type !== "js" ) {
+    if ( entryModule.type !== "js" ) {
       return null;
     }
 
@@ -72,18 +85,14 @@ export const packager: Packager = {
 
     for ( const module of asset.srcs.values() ) {
 
-      if ( module.asset.type !== "js" ) {
-        throw new Error( `Module ${module.id} is not of type 'js'` );
-      }
-
-      const { code, map, varsUsed } = await render( module, ctx );
+      const { code, map, varsUsed } = await render( module, hashIds, ctx );
 
       const args = moduleArgs.slice();
       while ( args.length > 0 && !varsUsed[ args[ args.length - 1 ] ] ) {
         args.pop();
       }
 
-      build.append( `${first ? "" : ","}\n${ctx.wrapInJsPropKey( module.hashId )}:function(${args.join( "," )}){` );
+      build.append( `${first ? "" : ","}\n${ctx.wrapInJsPropKey( get( hashIds, module.id ) )}:function(${args.join( "," )}){` );
       build.append( code, ctx.isFakePath( module.path ) ? null : map );
       build.append( "\n}" );
 
@@ -102,7 +111,7 @@ export const packager: Packager = {
     const runtimeCode = asset.runtime.code;
     if ( runtimeCode ) {
       build.append(
-        runtimeCode.replace( /;?$/, `(${ctx.wrapInJsString( entryModule.hashId )});` )
+        runtimeCode.replace( /;?$/, `(${ctx.wrapInJsString( get( hashIds, entryModule.id ) )});` )
       );
     }
 

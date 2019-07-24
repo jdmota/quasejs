@@ -17,7 +17,11 @@ export interface Error2 extends Error {
   codeFrame?: string;
 }
 
-export function error( { message, id, code, loc, codeFrameOptions, noStack }: ErrorOpts ) {
+export function error( opts: ErrorOpts ) {
+  throw createError( opts );
+}
+
+export function createError( { message, id, code, loc, codeFrameOptions, noStack }: ErrorOpts ) {
   const error: Error2 = new Error( message );
   error.fileName = id;
   error.loc = loc;
@@ -26,7 +30,7 @@ export function error( { message, id, code, loc, codeFrameOptions, noStack }: Er
   if ( noStack ) {
     error.stack = "";
   }
-  throw error;
+  return error;
 }
 
 export function locToString( loc: Loc|null|undefined ) {

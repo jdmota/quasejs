@@ -77,7 +77,7 @@ describe( "watcher", () => {
 
       function update( file, type ) {
         file = path.sep === "\\" ? file.toLowerCase() : file;
-        if ( watcher.watchedFiles().has( file ) ) {
+        if ( watcher.builder.watchedFiles().has( file ) ) {
           watcher._onUpdate( file, type );
           return true;
         }

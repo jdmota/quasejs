@@ -1,111 +1,119 @@
-import { Transforms, FinalModule, Options } from "../types";
-import { computationInvalidate, computationGet, ComputationCancelled } from "../utils/computation";
-import { Module, ModuleArg } from "../module/module";
+import path from "path";
+import { Transforms, Options, WatchedFileInfo } from "../types";
+import { Module } from "../module/module";
 import { ModuleRegistry } from "../module/module-registry";
-import { Builder, Build } from "./builder";
+import { Builder } from "./builder";
 import { UserConfig } from "./user-config";
+import { Graph } from "./graph";
+import { makeAbsolute } from "../utils/path";
+import { ComputationRegistry, Computation } from "../utils/computation-registry";
+import { FileComputation } from "./file-computation";
 
 export class BuilderTransformResolve {
 
   private builder: Builder;
   private options: Options;
   private userConfig: UserConfig;
+  private entries: { path: string; transforms: readonly ( readonly string[] )[] }[] | null;
   private registry: ModuleRegistry;
+  private computationRegistry: ComputationRegistry;
+  private computationsByFile: Map<string, {
+    change: FileComputation | null;
+    addOrRemove: FileComputation;
+  }>;
 
   constructor( builder: Builder ) {
     this.builder = builder;
     this.options = builder.options;
     this.userConfig = builder.userConfig;
-    this.registry = new ModuleRegistry( this.builder );
+    this.entries = null;
+    this.computationRegistry = new ComputationRegistry();
+    this.registry = new ModuleRegistry( this.builder, this.computationRegistry );
+    this.computationsByFile = new Map();
   }
 
-  private removeOrphans( build: Build ) {
-    const removed = [];
-
-    for ( const module of this.registry ) {
-      if ( !build.graph.exists( module.id ) ) {
-        removed.push( module );
-      }
-    }
-
-    for ( const module of removed ) {
-      for ( const checker of this.builder.actualCheckers ) {
-        checker.deletedModule( module.id );
-      }
-      this.registry.remove( module );
-      computationInvalidate( module.pipeline );
-      computationInvalidate( module.resolveDeps );
-    }
-  }
-
-  private async _process( build: Build, m: Module ) {
-    const { transformedBuildId, resolvedBuildId, asset, resolvedDeps } = await computationGet( m.resolveDeps, build.id );
-
-    const finalModule: FinalModule = {
-      id: m.id,
-      path: m.path,
-      relativePath: m.relativePath,
-      innerId: m.innerId,
-      hashId: m.id,
-      transformedBuildId,
-      resolvedBuildId,
-      asset,
-      moduleIdByRequest: new Map(),
-      innerModuleIdByRequest: new Map(),
-      requires: []
+  subscribeFile( _path: string, info: WatchedFileInfo, sub: Computation<any> ) {
+    const path = makeAbsolute( _path );
+    const subs = this.computationsByFile.get( path ) || {
+      change: null,
+      addOrRemove: new FileComputation( this.computationRegistry, path )
     };
 
-    for ( const resolved of resolvedDeps ) {
-      const required = this.addModuleAndTransform( build, resolved.path, resolved.transforms );
-      const resolvedWithId = {
-        id: required.id,
-        hashId: required.id,
-        async: resolved.async
-      };
-      finalModule.moduleIdByRequest.set( resolved.request, resolvedWithId );
-      finalModule.requires.push( resolvedWithId );
-    }
+    subs.addOrRemove.subscribe( sub );
 
-    if ( asset.depsInfo && asset.depsInfo.innerDependencies ) {
-      for ( const [ innerId, innerDep ] of asset.depsInfo.innerDependencies ) {
-        const required = this.addInnerModuleAndTransform(
-          build, innerId, m,
-          innerDep.transforms || this.userConfig.getTransformationsForType( innerDep.type )
-        );
-        const resolvedWithId = {
-          id: required.id,
-          hashId: required.id,
-          async: !!innerDep.async
-        };
-        finalModule.innerModuleIdByRequest.set( innerId, resolvedWithId );
-        finalModule.requires.push( resolvedWithId );
+    if ( !info.onlyExistance ) {
+      if ( !subs.change ) {
+        subs.change = new FileComputation( this.computationRegistry, path );
       }
+      subs.change.subscribe( sub );
     }
 
-    build.graph.add( finalModule );
+    this.computationsByFile.set( path, subs );
+  }
 
-    if ( resolvedBuildId === build.id ) {
-      for ( const checker of this.builder.actualCheckers ) {
-        checker.newModule( finalModule );
+  private invalidateFile( what: string, existance: boolean ) {
+    const computations = this.computationsByFile.get( what );
+    if ( computations ) {
+      if ( computations.change ) {
+        computations.change.destroy();
+        computations.change = null;
+      }
+      if ( existance ) {
+        computations.addOrRemove.destroy();
+        this.computationsByFile.delete( what );
+        this.change( path.dirname( what ), "changed" );
       }
     }
   }
 
-  private addModule( build: Build, arg: ModuleArg ): Module {
-    const m = this.registry.add( arg );
-    if ( this.builder.build !== build ) return m;
-    if ( build.pending.has( m.id ) ) return m;
-    build.pending.add( m.id );
-    build.promises.push( this._process( build, m ) );
-    return m;
+  change( _what: string, type: "added" | "changed" | "removed" ) {
+    const what = makeAbsolute( _what );
+
+    switch ( type ) {
+      case "added":
+        this.invalidateFile( what, true );
+        break;
+      case "removed":
+        this.invalidateFile( what, true );
+        for ( const module of this.registry.getByFile( what ) ) {
+          this.removeModule( module );
+        }
+        break;
+      default:
+        this.invalidateFile( what, false );
+    }
   }
 
-  addModuleAndTransform(
-    build: Build, path: string, transforms: Transforms
-  ): Module {
+  watchedFiles() {
+    const set = new Set( this.computationsByFile.keys() );
+    // Always watch entry files
+    for ( const file of this.options.entries ) {
+      set.add( file );
+    }
+    return set;
+  }
+
+  removeModuleById( id: string ) {
+    const m = this.registry.get( id );
+    this.removeModule( m );
+  }
+
+  private removeModule( module: Module ) {
+    for ( const checker of this.builder.actualCheckers ) {
+      checker.deletedModule( module.id );
+    }
+    this.registry.remove( module );
+  }
+
+  private removeOrphans() {
+    for ( const module of this.registry.toDelete() ) {
+      this.removeModule( module );
+    }
+  }
+
+  addModule( path: string, transforms: Transforms ): Module {
     return this.applyTransforms(
-      build,
-      this.addModule( build, {
+      this.registry.add( {
         innerId: null,
         parentInner: null,
         parentGenerator: null,
@@ -116,12 +124,9 @@ export class BuilderTransformResolve {
     );
   }
 
-  addInnerModuleAndTransform(
-    build: Build, innerId: string, parentInner: Module, transforms: Transforms
-  ): Module {
+  addInnerModule( innerId: string, parentInner: Module, transforms: Transforms ): Module {
     return this.applyTransforms(
-      build,
-      this.addModule( build, {
+      this.registry.add( {
         innerId,
         parentInner,
         parentGenerator: null,
@@ -132,10 +137,10 @@ export class BuilderTransformResolve {
     );
   }
 
-  private applyTransforms( build: Build, original: Module, transforms: Transforms ): Module {
+  private applyTransforms( original: Module, transforms: Transforms ): Module {
     let m = original;
     for ( const t of transforms ) {
-      m = this.addModule( build, {
+      m = this.registry.add( {
         innerId: null,
         parentInner: null,
         parentGenerator: m,
@@ -146,32 +151,57 @@ export class BuilderTransformResolve {
     return m;
   }
 
-  private checkIfCancelled( build: Build ) {
-    if ( this.builder.build !== build ) {
-      throw new ComputationCancelled();
-    }
+  interrupt() {
+    this.computationRegistry.interrupt();
   }
 
-  private wait<T>( build: Build, p: Promise<T> ) {
-    this.checkIfCancelled( build );
-    return p;
+  getModule( id: string ) {
+    return this.registry.get( id ).resolveDeps.peekValue();
   }
 
-  async run( build: Build ) {
+  async run() {
 
-    for ( const path of this.options.entries ) {
-      build.graph.markEntry(
-        this.addModuleAndTransform( build, path, this.userConfig.getTransformationsForPath( path ) ).id
-      );
+    const entries = this.entries || (
+      this.entries = this.options.entries.map( path => ( {
+        path,
+        transforms: this.userConfig.getTransformationsForPath( path )
+      } ) )
+    );
+
+    const moduleEntries = entries.map(
+      ( { path, transforms } ) => this.addModule( path, transforms ).id
+    );
+
+    const errors = await this.computationRegistry.run();
+
+    if ( this.computationRegistry.wasInterrupted() ) {
+      return {
+        graph: null,
+        errors: null
+      };
     }
 
-    let promise;
-    while ( promise = build.promises.pop() ) {
-      await this.wait( build, promise );
+    if ( errors.length > 0 ) {
+      return {
+        graph: null,
+        errors
+      };
     }
 
-    this.removeOrphans( build );
+    this.registry.resetMarks();
 
+    const g = new Graph(
+      this.userConfig,
+      this.registry,
+      moduleEntries
+    );
+
+    this.removeOrphans();
+
+    return {
+      graph: g,
+      errors: null
+    };
   }
 
 }

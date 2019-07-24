@@ -2,6 +2,7 @@ import { ToWrite, TransformableAsset, FinalAsset, WatchedFileInfo } from "../typ
 import { BuilderUtil, ModuleContext } from "./context";
 import { UserConfig } from "../builder/user-config";
 import { PluginsRunner } from "./runner";
+import { deserialize, serialize } from "../utils/serialization";
 
 function reviveBuilderUtil( value: any ): BuilderUtil {
   return Object.assign( Object.create( BuilderUtil.prototype ), value );
@@ -14,11 +15,11 @@ function reviveModuleContext( value: any ): ModuleContext {
 export const workerMethods: ( keyof IPluginsRunnerInWorker )[] = [ "pipeline", "renderAsset" ];
 
 export interface IPluginsRunnerInWorker {
-  pipeline( asset: TransformableAsset | null, ctx: ModuleContext ): Promise<{
+  pipeline( asset: SharedArrayBuffer | null, ctx: ModuleContext ): Promise<{
     result: TransformableAsset;
     files: Map<string, WatchedFileInfo>;
   }>;
-  renderAsset( asset: FinalAsset, util: BuilderUtil ): Promise<{
+  renderAsset( asset: FinalAsset, hashIds: ReadonlyMap<string, string>, util: BuilderUtil ): Promise<{
     result: ToWrite;
     files: Map<string, WatchedFileInfo>;
   }>;
@@ -38,18 +39,19 @@ export class PluginsRunnerInWorker implements IPluginsRunnerInWorker {
     await this.runner.packagers.init( packagers, cwd );
   }
 
-  async pipeline( asset: TransformableAsset | null, _ctx: ModuleContext ) {
+  async pipeline( buffer: SharedArrayBuffer | null, _ctx: ModuleContext ) {
+    const asset = buffer ? deserialize<TransformableAsset>( buffer ) : null;
     const ctx = reviveModuleContext( _ctx );
     const result = await this.runner.pipeline( asset, ctx );
     return {
-      result,
+      result: result, // TODO serialize( result ),
       files: ctx.files
     };
   }
 
-  async renderAsset( asset: FinalAsset, _util: BuilderUtil ) {
+  async renderAsset( asset: FinalAsset, hashIds: ReadonlyMap<string, string>, _util: BuilderUtil ) {
     const util = reviveBuilderUtil( _util );
-    const result = await this.runner.renderAsset( asset, util );
+    const result = await this.runner.renderAsset( asset, hashIds, util );
     return {
       result,
       files: util.files

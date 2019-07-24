@@ -1,7 +1,8 @@
 import blank from "../../utils/blank";
 import { locToString } from "../../utils/error";
 import isEmpty from "../../utils/is-empty";
-import { Loc, ImportedName, ExportedName, WarnCb, ErrorCb, Checker, ICheckerImpl, FinalModule } from "../../types";
+import { Loc, ImportedName, ExportedName, WarnCb, ErrorCb, Checker, ICheckerImpl, FinalModule, TransformableAsset } from "../../types";
+import { deserialize } from "../../utils/serialization";
 
 type ExportedNameAll = {
   request: string;
@@ -21,6 +22,8 @@ class CheckedModule {
   private _exports: { [key: string]: boolean }|null;
   private _exportsSingle: { [key: string]: boolean }|null;
   private _exportsAllFrom: { [key: string]: boolean }|null;
+  private importedNames: readonly ImportedName[];
+  private exportedNames: readonly ExportedName[];
 
   constructor( module: FinalModule, checker: CheckerImpl ) {
     this.module = module;
@@ -30,6 +33,10 @@ class CheckedModule {
     this._exports = null;
     this._exportsSingle = null;
     this._exportsAllFrom = null;
+
+    const { depsInfo } = deserialize<TransformableAsset>( this.module.asset );
+    this.importedNames = ( depsInfo && depsInfo.importedNames ) || [];
+    this.exportedNames = ( depsInfo && depsInfo.exportedNames ) || [];
   }
 
   error( msg: string, loc?: Loc ) {
@@ -37,18 +44,8 @@ class CheckedModule {
     this.checker.error( this.id, msg, undefined, loc );
   }
 
-  getImportedNames() {
-    const { depsInfo } = this.module.asset;
-    return ( depsInfo && depsInfo.importedNames ) || [];
-  }
-
-  getExportedNames() {
-    const { depsInfo } = this.module.asset;
-    return ( depsInfo && depsInfo.exportedNames ) || [];
-  }
-
   getModule( request: string ) {
-    const m = this.module.moduleIdByRequest.get( request );
+    const m = this.module.dependencies.get( request );
     if ( !m ) {
       throw new Error( `Internal: dependency for ${JSON.stringify( request )} not found.` );
     }
@@ -58,7 +55,7 @@ class CheckedModule {
   getImports() {
     if ( !this._imports ) {
       const imports = blank();
-      for ( const { name, loc } of this.getImportedNames() ) {
+      for ( const { name, loc } of this.importedNames ) {
         if ( imports[ name ] ) {
           this.error( `Duplicate import ${name}`, loc );
         }
@@ -76,7 +73,7 @@ class CheckedModule {
 
     const exports = blank();
 
-    for ( const exportedName of this.getExportedNames() ) {
+    for ( const exportedName of this.exportedNames ) {
       if ( !isExportAll( exportedName ) ) {
         if ( exports[ exportedName.name ] ) {
           this.error( `Duplicate export ${exportedName.name}`, exportedName.loc );
@@ -112,7 +109,7 @@ class CheckedModule {
 
     stack.add( this );
 
-    for ( const exportedName of this.getExportedNames() ) {
+    for ( const exportedName of this.exportedNames ) {
       if ( isExportAll( exportedName ) ) {
         const module = this.getModule( exportedName.request );
 
@@ -174,8 +171,8 @@ class CheckedModule {
       }
     };
 
-    this.getImportedNames().forEach( check );
-    this.getExportedNames().forEach( check );
+    this.importedNames.forEach( check );
+    this.exportedNames.forEach( check );
   }
 
   reset() {

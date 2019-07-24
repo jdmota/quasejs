@@ -3,6 +3,7 @@ import { chunkInit } from "../../runtime/create-runtime";
 import { BuilderUtil } from "../context";
 import { TreeAdapter } from "../utils/html-tree-adapter";
 import cloneAst from "../utils/clone-ast";
+import { get } from "../../utils/get";
 
 const importLazy = require( "import-lazy" )( require );
 const parse5 = importLazy( "parse5" );
@@ -51,7 +52,12 @@ class HtmlRenderer {
     this.treeAdapter.detachNode( node );
   }
 
-  async render( asset: FinalAsset, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderUtil ): Promise<ToWrite> {
+  async render(
+    asset: FinalAsset,
+    inlineAssets: Map<FinalAsset, ToWrite>,
+    hashIds: ReadonlyMap<string, string>,
+    ctx: BuilderUtil
+  ): Promise<ToWrite> {
 
     // TODO preload
 
@@ -83,14 +89,14 @@ class HtmlRenderer {
 
     for ( const { node, request, async, importType, inner } of deps ) {
       const resolvedDep = inner ?
-        asset.module.innerModuleIdByRequest.get( request ) :
-        asset.module.moduleIdByRequest.get( request );
+        asset.module.innerDependencies.get( request ) :
+        asset.module.dependencies.get( request );
 
       if ( !resolvedDep ) {
         throw new Error( `Internal: missing module by request ${request} in ${asset.module.id}` );
       }
 
-      const neededAssets = asset.manifest.moduleToAssets.get( resolvedDep.hashId ) || [];
+      const neededAssets = asset.manifest.moduleToAssets.get( get( hashIds, resolvedDep.id ) ) || [];
 
       if ( importType === "css" ) {
 
@@ -111,7 +117,9 @@ class HtmlRenderer {
         this.treeAdapter.removeAttr( node, "type" );
         node.childNodes = [];
 
-        const inlineAsset = asset.inlineAssets.find( a => a.module.hashId === resolvedDep.hashId );
+        const inlineAsset = asset.inlineAssets.find(
+          a => a.module.id === resolvedDep.id
+        );
 
         if ( inlineAsset ) {
 
@@ -135,7 +143,7 @@ class HtmlRenderer {
 
           }
 
-          this.treeAdapter.insertText( node, `${ctx.dataToString( data )}\n__quase_builder__.r(${ctx.wrapInJsString( resolvedDep.hashId )});` );
+          this.treeAdapter.insertText( node, `${ctx.dataToString( data )}\n__quase_builder__.r(${ctx.wrapInJsString( get( hashIds, resolvedDep.id ) )});` );
 
         } else {
 
@@ -144,7 +152,7 @@ class HtmlRenderer {
             this.treeAdapter.insertText( node, `
                 (function(){
                   var s=document.currentScript;
-                  __quase_builder__.i(${ctx.wrapInJsString( resolvedDep.hashId )}).then(function(){
+                  __quase_builder__.i(${ctx.wrapInJsString( get( hashIds, resolvedDep.id ) )}).then(function(){
                     s.dispatchEvent(new Event('load'));
                   },function(){
                     s.dispatchEvent(new Event('error'));
@@ -155,7 +163,7 @@ class HtmlRenderer {
           } else {
 
             this.treeAdapter.setAttr( node, "defer", "" );
-            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r(${ctx.wrapInJsString( resolvedDep.hashId )});` );
+            this.treeAdapter.setAttr( node, "src", `data:text/javascript,__quase_builder__.r(${ctx.wrapInJsString( get( hashIds, resolvedDep.id ) )});` );
 
             for ( const relativeDest of neededAssets ) {
               this.insertBefore( this.createSrcScript( ctx.builderOptions.publicPath + relativeDest ), node );
@@ -182,9 +190,15 @@ const PACKAGER_NAME = "quase_builder_html_packager";
 
 export const packager: Packager = {
 
-  pack( _options, asset: FinalAsset, inlineAssets: Map<FinalAsset, ToWrite>, ctx: BuilderUtil ) {
+  pack(
+    _options,
+    asset: FinalAsset,
+    inlineAssets: Map<FinalAsset, ToWrite>,
+    hashIds: ReadonlyMap<string, string>,
+    ctx: BuilderUtil
+  ) {
 
-    if ( asset.module.asset.type !== "html" ) {
+    if ( asset.module.type !== "html" ) {
       return null;
     }
 
@@ -192,11 +206,11 @@ export const packager: Packager = {
       throw new Error( `${PACKAGER_NAME}: Asset "${asset.module.id}" to be generated can only have 1 source.` );
     }
 
-    const { ast } = asset.module.asset;
+    const { ast } = ctx.deserializeAsset( asset.module.asset );
 
     if ( ast ) {
       const renderer = new HtmlRenderer( ast.program );
-      return renderer.render( asset, inlineAssets, ctx );
+      return renderer.render( asset, inlineAssets, hashIds, ctx );
     }
 
     throw new Error( `${PACKAGER_NAME}: Could not find AST` );

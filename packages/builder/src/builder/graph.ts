@@ -2,49 +2,79 @@ import { Manifest, FinalModule, FinalAsset, ProcessedGraph } from "../types";
 import { hashName } from "../utils/hash";
 import { reExt } from "../utils/path";
 import { UserConfig } from "./user-config";
+import { ModuleRegistry } from "../module/module-registry";
 
 const modulesSorter = ( { id: a }: { id: string }, { id: b }: { id: string } ) => a.localeCompare( b );
 
 export class Graph {
 
+  appEntriesId: readonly string[];
   modules: Map<string, FinalModule>;
-  moduleEntries: Set<FinalModule>;
-  entrypoints: Set<FinalModule>;
+  entrypoints: Set<string>;
   incs: Map<FinalModule, FinalModule[]>;
   inline: Map<FinalModule, FinalModule>;
-  private markedEntries: Set<string>;
+  hashIds: Map<string, string>;
+  groups: Map<FinalModule, number>;
+  private n: number;
+  private registry: ModuleRegistry;
 
-  constructor() {
+  constructor(
+    userConfig: UserConfig,
+    registry: ModuleRegistry,
+    appEntriesId: readonly string[]
+  ) {
+    this.appEntriesId = appEntriesId;
     this.modules = new Map();
-    this.moduleEntries = new Set();
     this.entrypoints = new Set();
     this.incs = new Map();
     this.inline = new Map();
-    this.markedEntries = new Set();
+    this.hashIds = new Map();
+    this.groups = new Map();
+    this.n = 0;
+    this.registry = registry;
+    this.init( userConfig );
   }
 
   [Symbol.iterator]() {
     return this.modules.entries();
   }
 
-  exists( id: string ) {
-    return this.modules.has( id );
+  // Adapted from https://github.com/samthor/srcgraph
+  private addEntrypoint( entry: string ) {
+    this.entrypoints.add( entry );
+
+    // every bit at 1 says that the module belongs to a certain group
+    // for example
+    // 1010 is for the module that is reached from entrypoint index 1 and 3
+    // 1010 == ( 1 << 1 ) || ( 1 << 3 )
+    const pending = new Set( [ this.getAndMark( entry ) ] );
+    for ( const next of pending ) {
+      this.groups.set( next, ( this.groups.get( next ) || 0 ) | ( 1 << this.n ) );
+      for ( const { id } of next.requires ) {
+        pending.add( this.getAndMark( id ) );
+      }
+    }
+    this.n++;
   }
 
-  add( module: FinalModule ) {
-    this.modules.set( module.id, module );
-    this.incs.set( module, [] );
+  private getAndMark( id: string ) {
+    let module;
+    module = this.modules.get( id );
+    if ( module ) {
+      // Already marked and stored in graph
+    } else {
+      module = this.registry.getAndMark( id );
+      this.modules.set( module.id, module );
+      this.incs.set( module, [] );
+    }
+    return module;
   }
 
-  markEntry( id: string ) {
-    this.markedEntries.add( id );
-  }
-
-  init( userConfig: UserConfig ) {
-    for ( const id of this.markedEntries ) {
-      const m = get( this.modules, id );
-      this.moduleEntries.add( m );
-      this.entrypoints.add( m );
+  private init( userConfig: UserConfig ) {
+    // Store FinalModule's, fill "groups",
+    // take advantage of the graph traversal to mark reachable modules
+    for ( const entry of this.appEntriesId ) {
+      this.addEntrypoint( entry );
     }
 
     if ( userConfig.optimization.hashId ) {
@@ -56,7 +86,11 @@ export class Graph {
       const modulesList = Array.from( this.modules.values() ).sort( modulesSorter );
 
       for ( const module of modulesList ) {
-        module.hashId = hashName( module.id, usedIds, 5 );
+        this.hashIds.set( module.id, hashName( module.id, usedIds, 5 ) );
+      }
+    } else {
+      for ( const module of this.modules.values() ) {
+        this.hashIds.set( module.id, module.id );
       }
     }
 
@@ -67,15 +101,13 @@ export class Graph {
         const required = get( this.modules, dep.id );
         const splitPoint = dep.async || userConfig.isSplitPoint( required, module );
 
-        dep.hashId = required.hashId;
-
         if ( splitPoint ) {
           splitPoints.add( required );
-        } else if ( required.innerId || required.asset.type !== module.asset.type ) {
+        } else if ( required.innerId || required.type !== module.type ) {
           this.inline.set( required, module );
         }
-        const l = this.incs.get( required );
-        if ( l && !l.includes( module ) ) {
+        const l = get( this.incs, required );
+        if ( !l.includes( module ) ) {
           l.push( module );
         }
       }
@@ -84,7 +116,7 @@ export class Graph {
     // If a module was splitted from some other module,
     // make sure it's not inlined and make it an entrypoint.
     for ( const split of splitPoints ) {
-      this.entrypoints.add( split );
+      this.addEntrypoint( split.id );
       this.inline.delete( split );
     }
 
@@ -93,7 +125,7 @@ export class Graph {
     for ( const inline of this.inline.keys() ) {
       const r = this.requiredBy( inline );
       if ( r.length === 1 ) {
-        this.entrypoints.add( inline );
+        this.addEntrypoint( inline.id );
       } else {
         this.inline.delete( inline );
       }
@@ -116,7 +148,11 @@ export class Graph {
     return set;
   }
 
-  requiredAssets( module: FinalModule, moduleToFile: Map<FinalModule, FinalAsset>, exclude?: FinalAsset ) {
+  requiredAssets(
+    module: FinalModule,
+    moduleToFile: ReadonlyMap<FinalModule, FinalAsset>,
+    exclude?: FinalAsset
+  ) {
     const set: Set<FinalAsset> = new Set();
 
     const asset = moduleToFile.get( module );
@@ -163,42 +199,23 @@ export class Graph {
 }
 
 // Adapted from https://github.com/samthor/srcgraph
-
 export function processGraph( graph: Graph ): ProcessedGraph {
-  // every bit at 1 says that the module belongs to a certain group
-  // for example
-  // 1010 is for the module that is reached from entrypoint index 1 and 3
-  // 1010 == ( 1 << 1 ) || ( 1 << 3 )
-  const groups: Map<FinalModule, number> = new Map();
-
-  let n = 0;
-  for ( const entrypoint of graph.entrypoints ) {
-    const pending = new Set( [ entrypoint ] );
-    for ( const next of pending ) {
-      groups.set( next, ( groups.get( next ) || 0 ) | ( 1 << n ) );
-      for ( const { id } of next.requires ) {
-        pending.add( get( graph.modules, id ) );
-      }
-    }
-    n++;
-  }
-
   // Find all modules that will be in the file
   // with entrypoint "from"
   const grow = ( from: FinalModule ): Map<string, FinalModule>|null => {
-    const group = groups.get( from );
+    const group = graph.groups.get( from );
     const wouldSplitSrc = ( src: FinalModule ) => {
       // Entrypoints are always their own starting point
-      if ( graph.entrypoints.has( src ) ) {
+      if ( graph.entrypoints.has( src.id ) ) {
         return true;
       }
       // Split if "src" belongs to a different group
-      if ( groups.get( src ) !== group ) {
+      if ( graph.groups.get( src ) !== group ) {
         return true;
       }
       // Split if "src" has an input from other group
       const all = graph.requiredBy( src );
-      return all.some( other => groups.get( other ) !== group );
+      return all.some( other => graph.groups.get( other ) !== group );
     };
 
     // Not a module entrypoint
@@ -233,14 +250,15 @@ export function processGraph( graph: Graph ): ProcessedGraph {
   const filesByPath: Map<string, FinalAsset[]> = new Map();
   const moduleToFile: Map<FinalModule, FinalAsset> = new Map();
 
-  for ( const m of groups.keys() ) {
+  for ( const m of graph.groups.keys() ) {
     const srcs = grow( m );
     if ( srcs ) {
+      const hashId = get( graph.hashIds, m.id );
       const f: FinalAsset = {
         module: m,
-        relativeDest: m.relativePath.replace( reExt, `.${m.hashId}.${m.asset.type}` ),
+        relativeDest: m.relativePath.replace( reExt, `.${hashId}.${m.type}` ),
         hash: null,
-        isEntry: graph.moduleEntries.has( m ),
+        isEntry: graph.appEntriesId.includes( m.id ),
         srcs,
         inlineAssets: [],
         runtime: {
@@ -275,7 +293,7 @@ export function processGraph( graph: Graph ): ProcessedGraph {
 
   // Attempt to have simpler unique file names
   for ( const f of files ) {
-    const possibleDest = f.module.relativePath.replace( reExt, `.${f.module.asset.type}` );
+    const possibleDest = f.module.relativePath.replace( reExt, `.${f.module.type}` );
     const arr = filesByPath.get( possibleDest ) || [];
     arr.push( f );
     filesByPath.set( possibleDest, arr );
@@ -325,7 +343,8 @@ export function processGraph( graph: Graph ): ProcessedGraph {
           files.add( f.relativeDest );
         }
         // Sort to get deterministic results
-        moduleToAssets.set( module.hashId, array.map( f => f.relativeDest ) );
+        const hashId = get( graph.hashIds, module.id );
+        moduleToAssets.set( hashId, array.map( f => f.relativeDest ) );
       }
     }
     return {
@@ -339,6 +358,7 @@ export function processGraph( graph: Graph ): ProcessedGraph {
   }
 
   return {
+    hashIds: graph.hashIds,
     moduleToFile,
     files: sortFilesByEntry( files ) // Leave entries last
   };
@@ -348,7 +368,7 @@ function sortFilesByEntry( files: FinalAsset[] ) {
   return files.sort( ( a, b ) => ( +a.isEntry ) - ( +b.isEntry ) );
 }
 
-function get<K, V>( map: Map<K, V>, key: K ): V {
+function get<K, V>( map: ReadonlyMap<K, V>, key: K ): V {
   const value = map.get( key );
   if ( value ) {
     return value;

@@ -14,7 +14,7 @@ export default class Reporter extends Logger {
       this.progress( message );
     } );
 
-    builder.on( "build-success", ( { filesInfo, time, timeCheckpoints }: Output ) => {
+    builder.on( "build-success", ( { filesInfo, removedCount, time, timeCheckpoints }: Output ) => {
 
       const COLUMNS: { align: "left" | "right" }[] = [
         { align: "left" }, // isEntry
@@ -50,6 +50,10 @@ export default class Reporter extends Logger {
       this.log( "" );
       this.table( COLUMNS, table );
       this.log( "" );
+
+      if ( removedCount ) {
+        this.log( `Removed ${removedCount} old file${removedCount === 1 ? "" : "s"}.\n` );
+      }
 
       if ( this.isTest ) {
         this.success( "Built!" );

@@ -1,16 +1,18 @@
-import { Options, WatchedFiles } from "../types";
+import { Options, WatchedFiles, TransformableAsset } from "../types";
 import { ModuleInfo } from "../module/module";
 import { resolvePath, makeAbsolute } from "../utils/path";
+import { get } from "../utils/get";
 import { joinSourceMaps } from "@quase/source-map";
 import fs from "fs-extra";
+import { deserialize } from "../utils/serialization";
 
 const ONLY_EXISTANCE = { onlyExistance: true };
 
 export class BuilderUtil {
 
-  builderOptions: any;
-  files: WatchedFiles;
-  warnings: string[];
+  readonly builderOptions: any;
+  readonly files: WatchedFiles;
+  readonly warnings: string[];
 
   constructor( builderOptions: Options, files?: WatchedFiles ) {
     const {
@@ -30,6 +32,10 @@ export class BuilderUtil {
     };
     this.files = files || new Map();
     this.warnings = [];
+  }
+
+  get<K, V>( map: ReadonlyMap<K, V>, key: K ): V {
+    return get( map, key );
   }
 
   warn( text: string ) {
@@ -118,14 +124,22 @@ export class BuilderUtil {
     return data.toString();
   }
 
+  /* deserialize<T>( buffer: SharedArrayBuffer ): T {
+    return deserialize( buffer );
+  } */
+
+  deserializeAsset( buffer: SharedArrayBuffer ): Readonly<TransformableAsset> {
+    return deserialize( buffer );
+  }
+
 }
 
 export class ModuleContext extends BuilderUtil {
 
-  id: string;
-  path: string;
-  relativePath: string;
-  transforms: Readonly<string[]>;
+  readonly id: string;
+  readonly path: string;
+  readonly relativePath: string;
+  readonly transforms: Readonly<string[]>;
 
   constructor( builderOptions: Options, m: ModuleInfo, files?: WatchedFiles ) {
     super( builderOptions, files );

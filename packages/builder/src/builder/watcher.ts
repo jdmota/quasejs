@@ -1,15 +1,7 @@
-import { SoloProducer, createProducer, isComputationCancelled, ComputationGet, invalidate } from "../utils/computation";
-import { makeAbsolute } from "../utils/path";
-import { WatchedFileInfo } from "../types";
 import { Builder } from "./builder";
+import { BuildCancelled } from "./build-cancelled";
 
-const path = require( "path" );
 const _FSWatcher = require( "fswatcher-child" );
-
-type FSProducers = {
-  changed: SoloProducer<void>;
-  addOrRemove: SoloProducer<void>;
-};
 
 class FSWatcher extends _FSWatcher {
 
@@ -62,21 +54,16 @@ class FSWatcher extends _FSWatcher {
 
 }
 
-const noopPromise = Promise.resolve();
-const noop = () => noopPromise;
-
 export default class Watcher {
 
   private builder: Builder;
-  private producersByFile: Map<string, FSProducers>;
-  private updates: { path: string; type: string }[];
+  private updates: { path: string; type: "added" | "changed" | "removed" }[];
   private currentBuild: Promise<unknown>|null;
   private rebuildTimeout: NodeJS.Timeout|null;
   private watcher: FSWatcher|null;
 
   constructor( builder: Builder, testing?: boolean ) {
     this.builder = builder;
-    this.producersByFile = new Map();
     this.updates = [];
     this.currentBuild = null;
     this.rebuildTimeout = null;
@@ -121,67 +108,19 @@ export default class Watcher {
     this.rebuildTimeout = setTimeout( () => this.queueBuild(), 1000 );
   }
 
-  watchedFiles(): Set<string> {
-    const set = new Set( this.producersByFile.keys() );
-    // Always watch entry files
-    for ( const file of this.builder.options.entries ) {
-      set.add( file );
-    }
-    return set;
-  }
-
-  registerFile( _path: string, info: WatchedFileInfo, getter: ComputationGet ) {
-    const path = makeAbsolute( _path );
-    const producers = this.producersByFile.get( path ) || {
-      changed: createProducer( noop ),
-      addOrRemove: createProducer( noop )
-    };
-    if ( info.onlyExistance ) {
-      getter( producers.addOrRemove );
-    } else {
-      getter( producers.addOrRemove );
-      getter( producers.changed );
-    }
-    this.producersByFile.set( path, producers );
-  }
-
-  _invalidate( what: string, existance: boolean ) {
-    const producers = this.producersByFile.get( what );
-    if ( producers ) {
-      invalidate( producers.changed );
-      if ( existance ) {
-        invalidate( producers.addOrRemove );
-        this.producersByFile.delete( what );
-        this.changed( path.dirname( what ) );
-      }
-    }
-  }
-
-  addedOrRemoved( what: string ) {
-    this._invalidate( makeAbsolute( what ), true );
-  }
-
-  changed( what: string ) {
-    this._invalidate( makeAbsolute( what ), false );
-  }
-
   async _queueBuild( prevBuildJob: Promise<unknown> ) {
     if ( this.updates.length ) {
       this.emit( "updates", this.updates );
     }
 
-    let update;
-    while ( update = this.updates.pop() ) {
-      if ( update.type === "added" || update.type === "removed" ) {
-        this.addedOrRemoved( update.path );
-      } else {
-        this.changed( update.path );
-      }
-    }
-
     // Two pre-conditions for calling "runBuild"
     this.builder.cancelBuild();
     await prevBuildJob;
+
+    let update;
+    while ( update = this.updates.pop() ) {
+      this.builder.change( update.path, update.type );
+    }
 
     // Start new build
 
@@ -189,7 +128,7 @@ export default class Watcher {
       const output = await this.builder.runBuild();
       this.emit( "build-success", output );
     } catch ( err ) {
-      if ( isComputationCancelled( err ) ) {
+      if ( err instanceof BuildCancelled ) {
         this.emit( "build-cancelled" );
         return;
       }
@@ -197,7 +136,7 @@ export default class Watcher {
     }
 
     // Update tracked files
-    const files = this.watchedFiles();
+    const files = this.builder.watchedFiles();
     const filesArr = Array.from( files );
     const { watcher } = this;
     if ( watcher ) {

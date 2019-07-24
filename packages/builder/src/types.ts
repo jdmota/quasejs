@@ -1,6 +1,6 @@
 import { BuilderUtil, ModuleContext } from "./plugins/context";
 
-export type Transforms = ReadonlyArray<ReadonlyArray<string>>;
+export type Transforms = readonly ( readonly string[] )[];
 
 export type Data = Buffer | string | Uint8Array;
 
@@ -81,37 +81,37 @@ export type RuntimeManifest = {
   m: { [key: string]: number[] };
 };
 
-export type ResolvedDep = {
+export type ResolvedDep = Readonly<{
+  id: string;
   request: string;
   path: string;
   async: boolean;
   transforms: Transforms;
-};
+}>;
 
-export type ResolvedDepWithId = {
+export type ResolvedInnerDep = Readonly<{
   id: string;
-  hashId: string;
+  innerId: string;
+  type: string;
   async: boolean;
-};
+  transforms: Transforms;
+}>;
 
-type AbstractFinalModule = {
+export type FinalModule = Readonly<{
   id: string;
   path: string;
   relativePath: string;
   innerId: string | null;
-  hashId: string;
-  transformedBuildId: number;
-  resolvedBuildId: number;
-  moduleIdByRequest: Map<string, ResolvedDepWithId>;
-  innerModuleIdByRequest: Map<string, ResolvedDepWithId>;
-  requires: ResolvedDepWithId[];
-};
+  type: string;
+  transformedId: number;
+  asset: SharedArrayBuffer;
+  resolvedId: number;
+  dependencies: ReadonlyMap<string, ResolvedDep>;
+  innerDependencies: ReadonlyMap<string, ResolvedInnerDep>;
+  requires: readonly ( ResolvedDep | ResolvedInnerDep )[];
+}>;
 
-export type FinalModule = AbstractFinalModule & {
-  asset: TransformableAsset;
-};
-
-type AbstractFinalAsset = {
+export type FinalAsset = {
   relativeDest: string;
   hash: string | null;
   isEntry: boolean;
@@ -120,17 +120,15 @@ type AbstractFinalAsset = {
     manifest: RuntimeManifest|null;
   };
   manifest: Manifest;
-};
-
-export type FinalAsset = AbstractFinalAsset & {
   module: FinalModule;
   srcs: Map<string, FinalModule>;
   inlineAssets: FinalAsset[];
 };
 
 export type ProcessedGraph = {
-  moduleToFile: Map<FinalModule, FinalAsset>;
-  files: FinalAsset[];
+  hashIds: ReadonlyMap<string, string>;
+  moduleToFile: ReadonlyMap<FinalModule, FinalAsset>;
+  files: readonly FinalAsset[];
 };
 
 export type ToWrite = {
@@ -145,12 +143,8 @@ export type PerformanceOpts = {
   assetFilter: ( asset: string ) => boolean;
 };
 
-export type MinimalFS = {
-  writeFile( file: string, data: Data ): Promise<void>;
-  mkdirp( file: string ): Promise<void>;
-};
-
 export type Info = {
+  moduleId: string;
   file: string;
   hash: string | null;
   size: number;
@@ -167,6 +161,7 @@ export type Updates = {
 
 export type Output = {
   filesInfo: Info[];
+  removedCount: number;
   time: number;
   timeCheckpoints?: Map<string, number>;
   updates: Updates;
@@ -177,7 +172,7 @@ type MaybeAsyncOptional<T> = MaybeAsync<T | null | undefined>;
 
 export type ProvidedPlugin<T> = void | string | T | [string | T, any];
 
-export type ProvidedPluginsArr<T> = ReadonlyArray<ProvidedPlugin<T>>;
+export type ProvidedPluginsArr<T> = readonly ProvidedPlugin<T>[];
 
 export type WarnCb = ( msg: string ) => void;
 export type ErrorCb = ( id: string, msg: string, code: string | null, loc: Loc | null ) => void;
@@ -212,7 +207,13 @@ export type Checker = {
 export type Packager = {
   name?: string;
   options?( options: any ): MaybeAsync<any>;
-  pack( options: any, asset: FinalAsset, inlines: Map<FinalAsset, ToWrite>, ctx: BuilderUtil ): MaybeAsyncOptional<ToWrite>;
+  pack(
+    options: any,
+    asset: FinalAsset,
+    inlines: ReadonlyMap<FinalAsset, ToWrite>,
+    hashIds: ReadonlyMap<string, string>,
+    ctx: BuilderUtil
+  ): MaybeAsyncOptional<ToWrite>;
 };
 
 export type Plugin<T> = {
@@ -228,7 +229,6 @@ export type OptimizationOptions = {
   minify: boolean;
   /* concatenateModules: boolean;
   treeshake: boolean; */
-  cleanup: boolean;
 };
 
 export type UserConfigOpts = {
@@ -253,7 +253,6 @@ export type Options = {
     node: boolean;
     worker: boolean;
   };
-  fs: MinimalFS;
   codeFrameOptions: any;
   watch: boolean;
   watchOptions: any;

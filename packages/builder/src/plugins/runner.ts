@@ -181,18 +181,22 @@ export class PluginsRunner {
     };
   }
 
-  async renderAsset( asset: FinalAsset, ctx: BuilderUtil ): Promise<ToWrite> {
+  async renderAsset(
+    asset: FinalAsset,
+    hashIds: ReadonlyMap<string, string>,
+    ctx: BuilderUtil
+  ): Promise<ToWrite> {
     const inlines: Map<FinalAsset, ToWrite> = new Map();
 
     await Promise.all( asset.inlineAssets.map( async a => {
-      const toWrite = await this.renderAsset( a, ctx );
+      const toWrite = await this.renderAsset( a, hashIds, ctx );
       inlines.set( a, toWrite );
     } ) );
 
     for ( const { name, plugin, options } of this.packagers.list() ) {
       const fn = plugin.pack;
       if ( fn ) {
-        const result = await fn( options, asset, inlines, ctx );
+        const result = await fn( options, asset, inlines, hashIds, ctx );
         if ( result != null ) {
           return this.validateRenderAsset( result, name );
         }
@@ -203,7 +207,7 @@ export class PluginsRunner {
       throw new Error( `Asset "${asset.module.id}" has more than 1 source. Probably there is some plugin missing.` );
     }
 
-    const { data, map } = asset.module.asset;
+    const { data, map } = ctx.deserializeAsset( asset.module.asset );
 
     if ( data ) {
       return {

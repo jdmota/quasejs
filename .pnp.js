@@ -9119,6 +9119,23 @@ let packageInformationStores = new Map([
       ]),
     }],
   ])],
+  ["@types/jest", new Map([
+    ["24.0.15", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-jest-24.0.15-6c42d5af7fe3b44ffff7cc65de7bf741e8fa427f/node_modules/@types/jest/"),
+      packageDependencies: new Map([
+        ["@types/jest-diff", "20.0.1"],
+        ["@types/jest", "24.0.15"],
+      ]),
+    }],
+  ])],
+  ["@types/jest-diff", new Map([
+    ["20.0.1", {
+      packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-jest-diff-20.0.1-35cc15b9c4f30a18ef21852e255fdb02f6d59b89/node_modules/@types/jest-diff/"),
+      packageDependencies: new Map([
+        ["@types/jest-diff", "20.0.1"],
+      ]),
+    }],
+  ])],
   ["@types/write-file-atomic", new Map([
     ["2.1.2", {
       packageLocation: path.resolve(__dirname, "../../../AppData/Local/Yarn/Cache/v4/npm-@types-write-file-atomic-2.1.2-1657761692b70cf9ad2593e4eb4ac498adb9463f/node_modules/@types/write-file-atomic/"),
@@ -10679,6 +10696,7 @@ let packageInformationStores = new Map([
         ["@types/fs-extra", "7.0.0"],
         ["@types/glob", "7.1.1"],
         ["@types/is-ci", "2.0.0"],
+        ["@types/jest", "24.0.15"],
         ["@types/minimatch", "3.0.3"],
         ["@types/node", "12.0.8"],
         ["@types/normalize-package-data", "2.4.0"],
@@ -10714,6 +10732,7 @@ let packageInformationStores = new Map([
         ["@quase/unit", "0.1.0-0"],
         ["@quase/get-plugins", "0.1.0-0"],
         ["@quase/view", "pnp:f6c2e49fe52de5adc21cf52765acc9aa2dc1178b"],
+        ["@types/jest-diff", "20.0.1"],
       ]),
     }],
   ])],
@@ -11760,6 +11779,8 @@ let locatorsByLocations = new Map([
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-ci-info-2.0.0-51848cc0f5c30c064f4b25f7f688bf35825b3971/node_modules/@types/ci-info/", {"name":"@types/ci-info","reference":"2.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-fs-extra-7.0.0-9c4ad9e1339e7448a76698829def1f159c1b636c/node_modules/@types/fs-extra/", {"name":"@types/fs-extra","reference":"7.0.0"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-is-ci-2.0.0-e2b81d0f9275861649d501dbc39a480fbf311459/node_modules/@types/is-ci/", {"name":"@types/is-ci","reference":"2.0.0"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-jest-24.0.15-6c42d5af7fe3b44ffff7cc65de7bf741e8fa427f/node_modules/@types/jest/", {"name":"@types/jest","reference":"24.0.15"}],
+  ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-jest-diff-20.0.1-35cc15b9c4f30a18ef21852e255fdb02f6d59b89/node_modules/@types/jest-diff/", {"name":"@types/jest-diff","reference":"20.0.1"}],
   ["../../../AppData/Local/Yarn/Cache/v4/npm-@types-write-file-atomic-2.1.2-1657761692b70cf9ad2593e4eb4ac498adb9463f/node_modules/@types/write-file-atomic/", {"name":"@types/write-file-atomic","reference":"2.1.2"}],
   ["./.pnp/externals/pnp-28e2761177fbb5133e7217e1b5aeeace3a6a060d/node_modules/@typescript-eslint/eslint-plugin/", {"name":"@typescript-eslint/eslint-plugin","reference":"pnp:28e2761177fbb5133e7217e1b5aeeace3a6a060d"}],
   ["./.pnp/externals/pnp-8bd157d24be50560e6bb5dca18f73efd37fd1706/node_modules/@typescript-eslint/experimental-utils/", {"name":"@typescript-eslint/experimental-utils","reference":"pnp:8bd157d24be50560e6bb5dca18f73efd37fd1706"}],
