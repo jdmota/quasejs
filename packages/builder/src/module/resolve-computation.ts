@@ -28,7 +28,7 @@ class SingleResolveComputation extends Computation<ResolvedDep> {
     return [ null, this.builder.createError( this.module.id, message, null, loc ) ] as const;
   }
 
-  protected async run( _: ResolvedDep | null ): Promise<CValue<ResolvedDep>> {
+  protected async run( _: ResolvedDep | null, isRunning: () => void ): Promise<CValue<ResolvedDep>> {
     const { request, dep } = this;
     const ctx = new ModuleContext( this.builder.options, this.module );
     const loc = dep.loc || null;
@@ -41,6 +41,8 @@ class SingleResolveComputation extends Computation<ResolvedDep> {
 
     try {
       res = await this.builder.pluginsRunner.resolve( request, ctx );
+      isRunning();
+
       this.builder.subscribeFiles( ctx.files, this );
     } catch ( error ) {
       return [ null, error ];
@@ -141,9 +143,10 @@ export class ResolveComputation extends Computation<FinalModule> {
     return id;
   }
 
-  protected async run(): Promise<CValue<FinalModule>> {
+  protected async run( _: FinalModule | null, isRunning: () => void ): Promise<CValue<FinalModule>> {
 
     const [ result, error ] = await this.getDep( this.module.pipeline );
+    isRunning();
 
     if ( error ) {
       return [ null, error ];
@@ -206,6 +209,8 @@ export class ResolveComputation extends Computation<FinalModule> {
       deps.set( resolved.request, resolved );
       requires.push( resolved );
     }
+
+    isRunning();
 
     const finalModule = {
       id: this.module.id,

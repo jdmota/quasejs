@@ -625,4 +625,19 @@ describe( "computations", () => {
 
   } );
 
+  it( "thrown error", async() => {
+
+    const r = new ComputationRegistry();
+
+    const a = new C( r, () => {
+      throw new Error( "Error" );
+    } );
+
+    expect( await run( r ) ).toEqual( [ "Error" ] );
+    expect( a.peekError() ).toMatchObject( {
+      message: "Error"
+    } );
+
+  } );
+
 } );

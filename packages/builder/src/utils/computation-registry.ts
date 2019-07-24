@@ -101,7 +101,13 @@ export abstract class Computation<T> {
     }
     if ( !this.running ) {
       const runId = this.runId = {};
-      this.running = this.run( this.oldValue, runId ).then(
+      const isRunning = () => {
+        if ( runId !== this.runId ) {
+          throw new Error( "Computation was cancelled" );
+        }
+      };
+
+      this.running = this.run( this.oldValue, isRunning ).then(
         v => this.after( v, runId ),
         e => this.after( [ null, e ], runId )
       );
@@ -110,7 +116,7 @@ export abstract class Computation<T> {
     return this.running;
   }
 
-  protected abstract run( _: T | null, runId: {} ): Promise<CValue<T>>;
+  protected abstract run( _: T | null, isRunning: () => void ): Promise<CValue<T>>;
 
   invalidate() {
     const { value } = this;

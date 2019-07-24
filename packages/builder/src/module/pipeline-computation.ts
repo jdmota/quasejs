@@ -24,7 +24,7 @@ export class PipelineComputation extends Computation<Processed> {
     this.id = 0;
   }
 
-  protected async run(): Promise<CValue<Processed>> {
+  protected async run( _: Processed | null, isRunning: () => void ): Promise<CValue<Processed>> {
 
     const id = this.id++;
     const { module } = this;
@@ -35,6 +35,7 @@ export class PipelineComputation extends Computation<Processed> {
     if ( module.parentInner ) {
 
       const [ parentResult, error ] = await this.getDep( module.parentInner.pipeline );
+      isRunning();
 
       if ( error ) {
         return [ null, error ];
@@ -76,6 +77,7 @@ export class PipelineComputation extends Computation<Processed> {
     } else if ( module.parentGenerator ) {
 
       const [ parentResult, error ] = await this.getDep( module.parentGenerator.pipeline );
+      isRunning();
 
       if ( error ) {
         return [ null, error ];
@@ -92,6 +94,8 @@ export class PipelineComputation extends Computation<Processed> {
 
     try {
       const o = await this.builder.pluginsRunner.pipeline( asset, this.module.ctx );
+      isRunning();
+
       this.builder.subscribeFiles( o.files, this );
       result = o.result;
     } catch ( error ) {
