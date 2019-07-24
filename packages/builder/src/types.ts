@@ -265,4 +265,5 @@ export type Options = {
   transformers: ProvidedPluginsArr<string>;
   checkers: ProvidedPluginsArr<string>;
   packagers: ProvidedPluginsArr<string>;
+  _debug: boolean;
 };

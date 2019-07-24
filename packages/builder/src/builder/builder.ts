@@ -231,18 +231,18 @@ export class Builder extends EventEmitter {
       throw new BuildCancelled();
     }
 
-    this.time.checkpoint( "modules processed" );
+    this.time.checkpoint( "modules processing" );
     this.emit( "status", "Checking..." );
 
     // Checks
     await this.wait( buildId, Promise.all( this.actualCheckers.map( c => c.check() ) ) );
 
-    this.time.checkpoint( "checking done" );
+    this.time.checkpoint( "checking" );
     this.emit( "status", "Computing graph..." );
 
     const processedGraph = processGraph( graph );
 
-    this.time.checkpoint( "graph processed" );
+    this.time.checkpoint( "graph processing" );
     this.emit( "status", "Creating files..." );
 
     const { dotGraph } = this.options;
@@ -252,7 +252,7 @@ export class Builder extends EventEmitter {
 
     const { filesInfo, removedCount } = await this.wait( buildId, this.builderPack.run( processedGraph ) );
 
-    this.time.checkpoint( "finished rendering" );
+    this.time.checkpoint( "rendering" );
 
     const swFile = this.options.serviceWorker.filename;
 
@@ -272,6 +272,8 @@ export class Builder extends EventEmitter {
         size: serviceWorkerCode.length,
         isEntry: false
       } );
+
+      this.time.checkpoint( "service worker creation" );
     }
 
     const updates: Updates = [];
@@ -340,7 +342,7 @@ export class Builder extends EventEmitter {
       filesInfo,
       removedCount,
       time: this.time.end(),
-      timeCheckpoints: this.time.getCheckpoints(),
+      timeCheckpoints: this.options._debug ? this.time.getCheckpoints() : undefined,
       updates
     };
   }

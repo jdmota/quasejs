@@ -51,6 +51,7 @@ type Schema {
   transformers: any[] @mergeStrategy("concat");
   checkers: any[] @mergeStrategy("concat");
   packagers: any[] @mergeStrategy("concat");
+  _debug: B;
 }
 `;
 
