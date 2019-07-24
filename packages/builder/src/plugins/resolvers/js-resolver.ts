@@ -31,6 +31,13 @@ export const resolver: Resolver = {
           cb( err );
         }
       },
+      async isDirectory( file: string, cb: any ) {
+        try {
+          cb( null, await importerUtils.isDirectory( file ) );
+        } catch ( err ) {
+          cb( err );
+        }
+      },
       packageFilter( pkg: any, path: string ) {
         if ( pkg.module ) {
           pkg.main = pkg.module;

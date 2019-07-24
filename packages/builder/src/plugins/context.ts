@@ -6,7 +6,7 @@ import { joinSourceMaps } from "@quase/source-map";
 import fs from "fs-extra";
 import { deserialize } from "../utils/serialization";
 
-const ONLY_EXISTANCE = { onlyExistance: true };
+const ONLY_EXISTANCE: Readonly<{ onlyExistance: true }> = { onlyExistance: true };
 
 export class BuilderUtil {
 
@@ -109,6 +109,19 @@ export class BuilderUtil {
     try {
       const s = await fs.stat( file );
       return s.isFile() || s.isFIFO();
+    } catch ( err ) {
+      if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
+        return false;
+      }
+      throw err;
+    }
+  }
+
+  async isDirectory( file: string ): Promise<boolean> {
+    this.registerFile( file, ONLY_EXISTANCE );
+    try {
+      const s = await fs.stat( file );
+      return s.isDirectory();
     } catch ( err ) {
       if ( err.code === "ENOENT" || err.code === "ENOTDIR" ) {
         return false;

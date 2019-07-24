@@ -122,13 +122,22 @@ describe( "watcher", () => {
           case "rename":
             arg2 = path.resolve( workingPath, arg2 );
             await fs.rename( arg1, arg2 );
-            if ( update( arg1, "removed" ) || update( arg2, "added" ) ) {
+            if ( [ update( arg1, "removed" ), update( arg2, "added" ) ].some( x => x ) ) {
               watcher.queueBuild();
             }
             break;
           case "remove":
             await fs.remove( arg1 );
             if ( update( arg1, "removed" ) ) {
+              watcher.queueBuild();
+            }
+            break;
+          case "removeDir":
+            await fs.remove( arg1 );
+            if ( [
+              update( arg1, "removed" ),
+              ...arg2.map( x => update( x, "removed" ) )
+            ].some( x => x ) ) {
               watcher.queueBuild();
             }
             break;
