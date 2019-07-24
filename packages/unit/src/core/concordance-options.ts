@@ -8,7 +8,7 @@ for ( const key in turbocolor.Styles ) {
   };
 }
 
-function createTheme( withColor: boolean, ansi:  { [key: string]: { open: string; close: string } } ) {
+function createTheme( withColor: boolean, ansi: { [key: string]: { open: string; close: string } } ) {
   const prev = turbocolor.enabled;
   turbocolor.enabled = withColor;
 

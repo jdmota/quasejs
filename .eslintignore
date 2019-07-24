@@ -3,7 +3,9 @@ dist
 coverage
 node_modules
 .pnp.js
-flow-typed
+packages/_legacy/**
+packages/builder/src/plugins/transformers/babel-helpers.js
+packages/builder/src/runtime/builds/**
 packages/builder/test/fixtures/**
 packages/builder/test/watch-fixtures/**
 packages/builder/test/babel-modules-fixtures/**
