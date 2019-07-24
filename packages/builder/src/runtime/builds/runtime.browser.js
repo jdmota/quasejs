@@ -6,10 +6,12 @@
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
-  const isBrowser = global.window === global;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
+  const isBrowser =  global.window === global;
 
   const blank = () => Object.create(NULL);
 
@@ -99,8 +101,14 @@
       modules[id] = moduleExports;
 
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
 
       return moduleExports;
@@ -121,7 +129,7 @@
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {
@@ -207,16 +215,16 @@
         push(me.q[i]);
       }
 
-      me.r = requireSync;
-      me.i = requireAsync;
+      me.r =  requireSync;
+      me.i =  requireAsync;
       me.q = {
         push
       };
     }
   } else {
     me = global.__quase_builder__ = {
-      r: requireSync,
-      i: requireAsync,
+      r:  requireSync,
+      i:  requireAsync,
       q: {
         push
       }

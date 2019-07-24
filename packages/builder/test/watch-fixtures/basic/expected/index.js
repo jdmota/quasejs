@@ -1,7 +1,7 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"index.js[quase_builder_js_transformer]":function($e,$r){$r("a.js[quase_builder_js_transformer]");
+"index.js[quase_builder_js_transformer]":function(_$){_$.r("a.js[quase_builder_js_transformer]");
 },
-"a.js[quase_builder_js_transformer]":function($e){$e.default = 10;
+"a.js[quase_builder_js_transformer]":function(_$){_$.e.default = 10;
 }});"use strict";
 
 
@@ -12,9 +12,11 @@
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -103,8 +105,14 @@
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -124,7 +132,7 @@
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

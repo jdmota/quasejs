@@ -1,12 +1,12 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r){var _createObject = $r("935ae");
+"0cc20":function(_$){var _createObject = _$.r("935ae");
 
 console.log((0, _createObject.default)(13).children.length);
 /* eslint no-console: 0 */
 },
-"935ae":function($e,$r,$i,$g){var _createChildren = $r("7ae70");
+"935ae":function(_$){var _createChildren = _$.r("7ae70");
 
-$g($e, "default", function () {
+_$.g(_$.e, "default", function () {
   return createObject;
 });
 
@@ -16,9 +16,9 @@ function createObject(numChildren) {
   };
 }
 },
-"7ae70":function($e,$r,$i,$g){var _createObject = $r("935ae");
+"7ae70":function(_$){var _createObject = _$.r("935ae");
 
-$g($e, "default", function () {
+_$.g(_$.e, "default", function () {
   return createChildren;
 });
 
@@ -41,9 +41,11 @@ function createChildren(i) {
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -132,8 +134,14 @@ function createChildren(i) {
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -153,7 +161,7 @@ function createChildren(i) {
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

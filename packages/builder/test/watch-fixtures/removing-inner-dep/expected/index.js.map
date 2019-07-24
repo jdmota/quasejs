@@ -1,1 +1,1 @@
-{"version":3,"sources":["../working/index.html"],"names":["console","log"],"mappings":";yFACUA,OAAO,CAACC,GAAR,CAAY,GAAZ","file":"index.js","sourcesContent":["\n          console.log(\"a\");\n        "]}
+{"version":3,"sources":["../working/index.html"],"names":["console","log"],"mappings":";2FACUA,OAAO,CAACC,GAAR,CAAY,GAAZ","file":"index.js","sourcesContent":["\n          console.log(\"a\");\n        "]}

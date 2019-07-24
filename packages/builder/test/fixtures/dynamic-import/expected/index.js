@@ -1,5 +1,5 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r,$i){$i("8278a").then(module => module.default());
+"0cc20":function(_$){_$.i("8278a").then(module => module.default());
 }},{"f":["func.js"],"m":{"8278a":[0]}});"use strict";
 
 
@@ -10,9 +10,11 @@
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -101,8 +103,14 @@
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -122,7 +130,7 @@
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

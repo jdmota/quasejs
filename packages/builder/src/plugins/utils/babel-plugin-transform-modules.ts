@@ -6,12 +6,12 @@ const importLazy = require( "import-lazy" )( require );
 const babelTemplate = importLazy( "@babel/template" );
 
 const vars = {
-  exports: "$e",
-  require: "$r",
-  import: "$i",
-  export: "$g",
-  exportAll: "$a",
-  meta: "$m"
+  exports: "e",
+  require: "r",
+  import: "i",
+  export: "g",
+  exportAll: "a",
+  meta: "m"
 };
 
 function makeTemplate( string: string ) {
@@ -25,13 +25,13 @@ function makeTemplate( string: string ) {
 }
 
 const templates = {
-  commonjs: makeTemplate( `${vars.exports}.__esModule = false;` ),
-  require: makeTemplate( `${vars.require}($0);` ),
-  exportsGetter: makeTemplate( `${vars.export}(${vars.exports}, $0, function() { return $1; } );` ),
-  exportsAssignment: makeTemplate( `${vars.exports}.$0 = $1;` ),
-  exportsDefaultsAssignment: makeTemplate( `${vars.exports}.default = { default: $0 }.default;` ),
-  exportsDefaultsMember: makeTemplate( `${vars.exports}.default` ),
-  exportAll: makeTemplate( `${vars.exportAll}(${vars.exports}, $0)` )
+  commonjs: makeTemplate( `$0.${vars.exports}.__esModule = false;` ),
+  require: makeTemplate( `$0.${vars.require}($1);` ),
+  exportsGetter: makeTemplate( `$0.${vars.export}($0.${vars.exports}, $1, function() { return $2; } );` ),
+  exportsAssignment: makeTemplate( `$0.${vars.exports}.$1 = $2;` ),
+  exportsDefaultsAssignment: makeTemplate( `$0.${vars.exports}.default = { default: $1 }.default;` ),
+  exportsDefaultsMember: makeTemplate( `$0.${vars.exports}.default` ),
+  exportAll: makeTemplate( `$0.${vars.exportAll}(${vars.exports}, $1)` )
 };
 
 const THIS_BREAK_KEYS = [ "FunctionExpression", "FunctionDeclaration", "ClassProperty", "ClassMethod", "ObjectMethod" ];
@@ -61,36 +61,11 @@ export default ( { types: t }: any, options: any ) => {
   const extractor = options.extractor || ( () => {} );
   const resolveModuleSource = options.resolveModuleSource || identity;
   const extractModuleSource = options.extractModuleSource || ( () => {} );
-  const varsUsed = options.varsUsed || {};
+  const quaseApiVar = options.quaseApiVar || {};
   const hmr = options.hmr;
 
-  function getVar( name: keyof typeof vars ) {
-    varsUsed[ vars[ name ] ] = true;
-    return vars[ name ];
-  }
-
   function runTemplate( name: keyof typeof templates, arg1?: any, arg2?: any ) {
-    switch ( name ) {
-      case "require":
-        varsUsed[ vars.require ] = true;
-        break;
-      case "exportsGetter":
-        varsUsed[ vars.export ] = true;
-        varsUsed[ vars.exports ] = true;
-        break;
-      case "commonjs":
-      case "exportsAssignment":
-      case "exportsDefaultsAssignment":
-      case "exportsDefaultsMember":
-        varsUsed[ vars.exports ] = true;
-        break;
-      case "exportAll":
-        varsUsed[ vars.exportAll ] = true;
-        varsUsed[ vars.exports ] = true;
-        break;
-      default:
-    }
-    return templates[ name ]()( [ arg1, arg2 ].filter( Boolean ) );
+    return templates[ name ]()( [ quaseApiVar.value, arg1, arg2 ].filter( Boolean ) );
   }
 
   function remapImport( path: any, newNode: any ) {
@@ -237,12 +212,6 @@ export default ( { types: t }: any, options: any ) => {
 
     visitor: {
 
-      Scope( { scope }: any ) {
-        for ( const name in vars ) {
-          scope.rename( vars[ name as keyof typeof vars ] );
-        }
-      },
-
       // Adapted from https://github.com/babel/babel/tree/7.0/packages/babel-plugin-transform-es2015-modules-commonjs
       ThisExpression( path: any ) {
         if (
@@ -255,6 +224,9 @@ export default ( { types: t }: any, options: any ) => {
       },
 
       Program: {
+        enter( path: any ) {
+          quaseApiVar.value = path.scope.generateUid( "$" );
+        },
         exit( path: any ) {
           // @ts-ignore
           if ( this.commonjs ) {
@@ -297,8 +269,10 @@ export default ( { types: t }: any, options: any ) => {
       MetaProperty( path: any ) {
         const { node } = path;
         if ( node.meta.name === "import" && node.property.name === "meta" ) {
-          varsUsed[ vars.meta ] = true;
-          path.replaceWith( t.identifier( vars.meta ) );
+          path.replaceWith( t.memberExpression(
+            t.identifier( quaseApiVar.value ),
+            t.identifier( vars.meta )
+          ) );
         }
       },
 
@@ -487,7 +461,10 @@ export default ( { types: t }: any, options: any ) => {
         if ( node.callee.type === "Import" ) {
           extractor( node );
 
-          callee.replaceWith( t.identifier( getVar( "import" ) ) );
+          callee.replaceWith( t.memberExpression(
+            t.identifier( quaseApiVar.value ),
+            t.identifier( vars.import )
+          ) );
 
           const arg = node.arguments[ 0 ];
 
@@ -509,7 +486,10 @@ export default ( { types: t }: any, options: any ) => {
               extractModuleSource( arg );
 
               callee.replaceWith( t.memberExpression(
-                t.identifier( getVar( "require" ) ),
+                t.memberExpression(
+                  t.identifier( quaseApiVar.value ),
+                  t.identifier( vars.require )
+                ),
                 t.identifier( "r" )
               ) );
             }

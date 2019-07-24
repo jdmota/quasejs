@@ -24,7 +24,7 @@ const KEY = "__quase_builder__";
 
 export const chunkInit = `"use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.${KEY}=this.g.${KEY}||{q:[]}).q.push([m,f])}})`;
 
-export const moduleArgs: readonly string[] = "$e,$r,$i,$g,$a,$m".split( "," );
+// export const moduleArgs: readonly string[] = "$e,$r,$i,$g,$a,$m".split( "," );
 
 const cache: { [key: string]: Promise<string> } = {};
 

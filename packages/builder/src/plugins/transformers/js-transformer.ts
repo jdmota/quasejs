@@ -190,7 +190,7 @@ export const transformer: Transformer = {
       return asset;
     }
 
-    const varsUsed = {};
+    const quaseApiVar = { value: "" };
     const imports: any[] = [];
     const deps: MutableDepsInfo = {
       dependencies: new Map(),
@@ -219,7 +219,7 @@ export const transformer: Transformer = {
       plugins: [
         [ babelPluginModules, {
           hmr: module.builderOptions.hmr,
-          varsUsed,
+          quaseApiVar,
           extractor: extractor.bind( null, deps ),
           extractModuleSource( stringLiteral: any ) {
             imports.push( {
@@ -238,7 +238,7 @@ export const transformer: Transformer = {
     asset.ast.program = newAst;
     asset.ast.isDirty = true;
     newAst._meta = {
-      varsUsed,
+      quaseApiVar,
       imports,
       deps
     };

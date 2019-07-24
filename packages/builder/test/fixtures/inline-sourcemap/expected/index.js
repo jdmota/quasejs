@@ -1,9 +1,9 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r){var _func = $r("8278a");
+"0cc20":function(_$){var _func = _$.r("8278a");
 
 (0, _func.default)(); // Comment at the end
 },
-"8278a":function($e){$e.default = {
+"8278a":function(_$){_$.e.default = {
   default: function () {
     console.log("foo");
     /* eslint no-console: 0 */
@@ -19,9 +19,11 @@
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -110,8 +112,14 @@
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -131,7 +139,7 @@
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {
@@ -236,4 +244,4 @@
   return me.r;
 })( // eslint-disable-next-line no-new-func
 typeof self !== "undefined" ? self : Function("return this")(), typeof require !== "undefined" && require)('0cc20');
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2ZpbGVzL2luZGV4LmpzIiwiLi4vZmlsZXMvZnVuYy5qcyJdLCJuYW1lcyI6WyJjb25zb2xlIiwibG9nIl0sIm1hcHBpbmdzIjoiO3dCQUFpQjs7QUFFakIsSUFGTyxhQUVQLEksQ0FBUTs7cUJDRlI7QUFBQSxXQUFlLFlBQVc7QUFDeEJBLElBQUFBLE9BQU8sQ0FBQ0MsR0FBUixDQUFhLEtBQWI7QUFBc0I7QUFDdkI7QUFGRCIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBmdW5jIGZyb20gXCIuL2Z1bmNcIjtcblxuZnVuYygpOyAvLyBDb21tZW50IGF0IHRoZSBlbmRcbiIsImV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKCkge1xuICBjb25zb2xlLmxvZyggXCJmb29cIiApOyAvKiBlc2xpbnQgbm8tY29uc29sZTogMCAqL1xufVxuLy8gQ29tbWVudCBhdCB0aGUgZW5kXG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2ZpbGVzL2luZGV4LmpzIiwiLi4vZmlsZXMvZnVuYy5qcyJdLCJuYW1lcyI6WyJjb25zb2xlIiwibG9nIl0sIm1hcHBpbmdzIjoiO3FCQUFpQjs7QUFFakIsSUFGTyxhQUVQLEksQ0FBUTs7cUJDRlI7QUFBQSxXQUFlLFlBQVc7QUFDeEJBLElBQUFBLE9BQU8sQ0FBQ0MsR0FBUixDQUFhLEtBQWI7QUFBc0I7QUFDdkI7QUFGRCIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBmdW5jIGZyb20gXCIuL2Z1bmNcIjtcblxuZnVuYygpOyAvLyBDb21tZW50IGF0IHRoZSBlbmRcbiIsImV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKCkge1xuICBjb25zb2xlLmxvZyggXCJmb29cIiApOyAvKiBlc2xpbnQgbm8tY29uc29sZTogMCAqL1xufVxuLy8gQ29tbWVudCBhdCB0aGUgZW5kXG4iXX0=

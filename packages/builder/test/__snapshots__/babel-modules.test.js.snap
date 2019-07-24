@@ -1,130 +1,171 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: babel-helpers 1`] = `
-"$g($e, \\"typeof\\", function () {
+"_$.g(_$.e, \\"typeof\\", function () {
   return _typeof;
 });
-$g($e, \\"jsx\\", function () {
+
+_$.g(_$.e, \\"jsx\\", function () {
   return _jsx;
 });
-$g($e, \\"asyncIterator\\", function () {
+
+_$.g(_$.e, \\"asyncIterator\\", function () {
   return _asyncIterator;
 });
-$g($e, \\"AwaitValue\\", function () {
+
+_$.g(_$.e, \\"AwaitValue\\", function () {
   return _AwaitValue;
 });
-$g($e, \\"AsyncGenerator\\", function () {
+
+_$.g(_$.e, \\"AsyncGenerator\\", function () {
   return _AsyncGenerator;
 });
-$g($e, \\"wrapAsyncGenerator\\", function () {
+
+_$.g(_$.e, \\"wrapAsyncGenerator\\", function () {
   return _wrapAsyncGenerator;
 });
-$g($e, \\"awaitAsyncGenerator\\", function () {
+
+_$.g(_$.e, \\"awaitAsyncGenerator\\", function () {
   return _awaitAsyncGenerator;
 });
-$g($e, \\"asyncGeneratorDelegate\\", function () {
+
+_$.g(_$.e, \\"asyncGeneratorDelegate\\", function () {
   return _asyncGeneratorDelegate;
 });
-$g($e, \\"asyncToGenerator\\", function () {
+
+_$.g(_$.e, \\"asyncToGenerator\\", function () {
   return _asyncToGenerator;
 });
-$g($e, \\"classCallCheck\\", function () {
+
+_$.g(_$.e, \\"classCallCheck\\", function () {
   return _classCallCheck;
 });
-$g($e, \\"createClass\\", function () {
+
+_$.g(_$.e, \\"createClass\\", function () {
   return _createClass;
 });
-$g($e, \\"defineEnumerableProperties\\", function () {
+
+_$.g(_$.e, \\"defineEnumerableProperties\\", function () {
   return _defineEnumerableProperties;
 });
-$g($e, \\"defaults\\", function () {
+
+_$.g(_$.e, \\"defaults\\", function () {
   return _defaults;
 });
-$g($e, \\"defineProperty\\", function () {
+
+_$.g(_$.e, \\"defineProperty\\", function () {
   return _defineProperty;
 });
-$g($e, \\"extends\\", function () {
+
+_$.g(_$.e, \\"extends\\", function () {
   return _extends;
 });
-$g($e, \\"get\\", function () {
+
+_$.g(_$.e, \\"get\\", function () {
   return _get;
 });
-$g($e, \\"inherits\\", function () {
+
+_$.g(_$.e, \\"inherits\\", function () {
   return _inherits;
 });
-$g($e, \\"inheritsLoose\\", function () {
+
+_$.g(_$.e, \\"inheritsLoose\\", function () {
   return _inheritsLoose;
 });
-$g($e, \\"instanceof\\", function () {
+
+_$.g(_$.e, \\"instanceof\\", function () {
   return _instanceof;
 });
-$g($e, \\"interopRequireDefault\\", function () {
+
+_$.g(_$.e, \\"interopRequireDefault\\", function () {
   return _interopRequireDefault;
 });
-$g($e, \\"interopRequireWildcard\\", function () {
+
+_$.g(_$.e, \\"interopRequireWildcard\\", function () {
   return _interopRequireWildcard;
 });
-$g($e, \\"newArrowCheck\\", function () {
+
+_$.g(_$.e, \\"newArrowCheck\\", function () {
   return _newArrowCheck;
 });
-$g($e, \\"objectDestructuringEmpty\\", function () {
+
+_$.g(_$.e, \\"objectDestructuringEmpty\\", function () {
   return _objectDestructuringEmpty;
 });
-$g($e, \\"objectWithoutProperties\\", function () {
+
+_$.g(_$.e, \\"objectWithoutProperties\\", function () {
   return _objectWithoutProperties;
 });
-$g($e, \\"assertThisInitialized\\", function () {
+
+_$.g(_$.e, \\"assertThisInitialized\\", function () {
   return _assertThisInitialized;
 });
-$g($e, \\"possibleConstructorReturn\\", function () {
+
+_$.g(_$.e, \\"possibleConstructorReturn\\", function () {
   return _possibleConstructorReturn;
 });
-$g($e, \\"set\\", function () {
+
+_$.g(_$.e, \\"set\\", function () {
   return _set;
 });
-$g($e, \\"slicedToArray\\", function () {
+
+_$.g(_$.e, \\"slicedToArray\\", function () {
   return _slicedToArray;
 });
-$g($e, \\"slicedToArrayLoose\\", function () {
+
+_$.g(_$.e, \\"slicedToArrayLoose\\", function () {
   return _slicedToArrayLoose;
 });
-$g($e, \\"taggedTemplateLiteral\\", function () {
+
+_$.g(_$.e, \\"taggedTemplateLiteral\\", function () {
   return _taggedTemplateLiteral;
 });
-$g($e, \\"taggedTemplateLiteralLoose\\", function () {
+
+_$.g(_$.e, \\"taggedTemplateLiteralLoose\\", function () {
   return _taggedTemplateLiteralLoose;
 });
-$g($e, \\"temporalRef\\", function () {
+
+_$.g(_$.e, \\"temporalRef\\", function () {
   return _temporalRef;
 });
-$g($e, \\"readOnlyError\\", function () {
+
+_$.g(_$.e, \\"readOnlyError\\", function () {
   return _readOnlyError;
 });
-$g($e, \\"classNameTDZError\\", function () {
+
+_$.g(_$.e, \\"classNameTDZError\\", function () {
   return _classNameTDZError;
 });
-$g($e, \\"temporalUndefined\\", function () {
+
+_$.g(_$.e, \\"temporalUndefined\\", function () {
   return _temporalUndefined;
 });
-$g($e, \\"toArray\\", function () {
+
+_$.g(_$.e, \\"toArray\\", function () {
   return _toArray;
 });
-$g($e, \\"toConsumableArray\\", function () {
+
+_$.g(_$.e, \\"toConsumableArray\\", function () {
   return _toConsumableArray;
 });
-$g($e, \\"skipFirstGeneratorNext\\", function () {
+
+_$.g(_$.e, \\"skipFirstGeneratorNext\\", function () {
   return _skipFirstGeneratorNext;
 });
-$g($e, \\"toPropertyKey\\", function () {
+
+_$.g(_$.e, \\"toPropertyKey\\", function () {
   return _toPropertyKey;
 });
-$g($e, \\"initializerWarningHelper\\", function () {
+
+_$.g(_$.e, \\"initializerWarningHelper\\", function () {
   return _initializerWarningHelper;
 });
-$g($e, \\"initializerDefineProperty\\", function () {
+
+_$.g(_$.e, \\"initializerDefineProperty\\", function () {
   return _initializerDefineProperty;
 });
-$g($e, \\"applyDecoratedDescriptor\\", function () {
+
+_$.g(_$.e, \\"applyDecoratedDescriptor\\", function () {
   return _applyDecoratedDescriptor;
 });
 
@@ -819,61 +860,65 @@ function _applyDecoratedDescriptor(target, property, decorators, descriptor, con
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: commonjs 1`] = `
-"$e.__esModule = false;
-$e.default = {
+"_$.e.__esModule = false;
+_$.e.default = {
   default: {}
 }.default;
-$e.default.thing();
-$e.default.thing();
-$e.default.foo = {};
-$e.default.bar = {};
-$r.r(\\"package\\");
 
-const abc = $e.default.abc = function () {
+_$.e.default.thing();
+
+_$.e.default.thing();
+
+_$.e.default.foo = {};
+_$.e.default.bar = {};
+
+_$.r.r(\\"package\\");
+
+const abc = _$.e.default.abc = function () {
   const module = {
     exports: {}
   };
   module.exports.foo = {};
 };
 
-$e.default = function () {};
+_$.e.default = function () {};
 
 const req = require;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: dynamic-import 1`] = `
-"$i(\\"./foo\\").then();
+"_$.i(\\"./foo\\").then();
 
 function foo(n) {
-  $i(\`./foo-\${n}\`).then();
+  _$.i(\`./foo-\${n}\`).then();
 }"
 `;
 
-exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default 1`] = `"$e.default = 42;"`;
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default 1`] = `"_$.e.default = 42;"`;
 
-exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-2 1`] = `"$e.default = {};"`;
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-2 1`] = `"_$.e.default = {};"`;
 
-exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-3 1`] = `"$e.default = [];"`;
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-3 1`] = `"_$.e.default = [];"`;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-4 1`] = `
-"$e.default = foo;
+"_$.e.default = foo;
 foo = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-5 1`] = `
-"$e.default = {
+"_$.e.default = {
   default: function () {}
 }.default;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-6 1`] = `
-"$e.default = {
+"_$.e.default = {
   default: class {}
 }.default;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-7 1`] = `
-"$g($e, \\"default\\", function () {
+"_$.g(_$.e, \\"default\\", function () {
   return foo;
 });
 
@@ -883,7 +928,7 @@ foo = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-8 1`] = `
-"$g($e, \\"default\\", function () {
+"_$.g(_$.e, \\"default\\", function () {
   return Foo;
 });
 
@@ -893,32 +938,35 @@ Foo = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-9 1`] = `
-"$g($e, \\"default\\", function () {
+"_$.g(_$.e, \\"default\\", function () {
   return foo;
 });
+
 let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-10 1`] = `
-"$e.default = function () {
+"_$.e.default = function () {
   return \\"foo\\";
 }();"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-11 1`] = `
-"$g($e, \\"Cachier\\", function () {
+"_$.g(_$.e, \\"Cachier\\", function () {
   return Cachier;
 });
-$e.default = new Cachier();
+
+_$.e.default = new Cachier();
 
 function Cachier(databaseName) {}"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-12 1`] = `
-"$g($e, \\"Cachier\\", function () {
+"_$.g(_$.e, \\"Cachier\\", function () {
   return Cachier;
 });
-$e.default = new Cachier();
+
+_$.e.default = new Cachier();
 
 function Cachier(databaseName) {}"
 `;
@@ -926,781 +974,1006 @@ function Cachier(databaseName) {}"
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-default-13 1`] = `
 "class Foo {}
 
-$e.default = new Foo();"
+_$.e.default = new Foo();"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-extensions 1`] = `
-"var _abc = $r(\\"./abc\\");
+"var _abc = _$.r(\\"./abc\\");
 
-$g($e, \\"a\\", function () {
+_$.g(_$.e, \\"a\\", function () {
   return _abc.default;
 });
-$e.b = _abc;"
+
+_$.e.b = _abc;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$a($e, _foo);
-$g($e, \\"foo\\", function () {
+_$.a(e, _foo);
+
+_$.g(_$.e, \\"foo\\", function () {
   return foo;
 });
+
 let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-2 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"foo\\", function () {
+_$.g(_$.e, \\"foo\\", function () {
   return _foo.foo;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-3 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"foo\\", function () {
+_$.g(_$.e, \\"foo\\", function () {
   return _foo.foo;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return _foo.bar;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-4 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"bar\\", function () {
+_$.g(_$.e, \\"bar\\", function () {
   return _foo.foo;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-5 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"default\\", function () {
+_$.g(_$.e, \\"default\\", function () {
   return _foo.foo;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-6 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"default\\", function () {
+_$.g(_$.e, \\"default\\", function () {
   return _foo.foo;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return _foo.bar;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-7 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"foo\\", function () {
+_$.g(_$.e, \\"foo\\", function () {
   return _foo.default;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-8 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-$g($e, \\"foo\\", function () {
+_$.g(_$.e, \\"foo\\", function () {
   return _foo.foo;
 });
-$g($e, \\"foo1\\", function () {
+
+_$.g(_$.e, \\"foo1\\", function () {
   return _foo.foo1;
 });
-$g($e, \\"foo2\\", function () {
+
+_$.g(_$.e, \\"foo2\\", function () {
   return _foo.foo2;
 });
-$g($e, \\"foo3\\", function () {
+
+_$.g(_$.e, \\"foo3\\", function () {
   return _foo.foo3;
 });
-$g($e, \\"foo4\\", function () {
+
+_$.g(_$.e, \\"foo4\\", function () {
   return _foo.foo4;
 });
-$g($e, \\"foo5\\", function () {
+
+_$.g(_$.e, \\"foo5\\", function () {
   return _foo.foo5;
 });
-$g($e, \\"foo6\\", function () {
+
+_$.g(_$.e, \\"foo6\\", function () {
   return _foo.foo6;
 });
-$g($e, \\"foo7\\", function () {
+
+_$.g(_$.e, \\"foo7\\", function () {
   return _foo.foo7;
 });
-$g($e, \\"foo8\\", function () {
+
+_$.g(_$.e, \\"foo8\\", function () {
   return _foo.foo8;
 });
-$g($e, \\"foo9\\", function () {
+
+_$.g(_$.e, \\"foo9\\", function () {
   return _foo.foo9;
 });
-$g($e, \\"foo10\\", function () {
+
+_$.g(_$.e, \\"foo10\\", function () {
   return _foo.foo10;
 });
-$g($e, \\"foo11\\", function () {
+
+_$.g(_$.e, \\"foo11\\", function () {
   return _foo.foo11;
 });
-$g($e, \\"foo12\\", function () {
+
+_$.g(_$.e, \\"foo12\\", function () {
   return _foo.foo12;
 });
-$g($e, \\"foo13\\", function () {
+
+_$.g(_$.e, \\"foo13\\", function () {
   return _foo.foo13;
 });
-$g($e, \\"foo14\\", function () {
+
+_$.g(_$.e, \\"foo14\\", function () {
   return _foo.foo14;
 });
-$g($e, \\"foo15\\", function () {
+
+_$.g(_$.e, \\"foo15\\", function () {
   return _foo.foo15;
 });
-$g($e, \\"foo16\\", function () {
+
+_$.g(_$.e, \\"foo16\\", function () {
   return _foo.foo16;
 });
-$g($e, \\"foo17\\", function () {
+
+_$.g(_$.e, \\"foo17\\", function () {
   return _foo.foo17;
 });
-$g($e, \\"foo18\\", function () {
+
+_$.g(_$.e, \\"foo18\\", function () {
   return _foo.foo18;
 });
-$g($e, \\"foo19\\", function () {
+
+_$.g(_$.e, \\"foo19\\", function () {
   return _foo.foo19;
 });
-$g($e, \\"foo20\\", function () {
+
+_$.g(_$.e, \\"foo20\\", function () {
   return _foo.foo20;
 });
-$g($e, \\"foo21\\", function () {
+
+_$.g(_$.e, \\"foo21\\", function () {
   return _foo.foo21;
 });
-$g($e, \\"foo22\\", function () {
+
+_$.g(_$.e, \\"foo22\\", function () {
   return _foo.foo22;
 });
-$g($e, \\"foo23\\", function () {
+
+_$.g(_$.e, \\"foo23\\", function () {
   return _foo.foo23;
 });
-$g($e, \\"foo24\\", function () {
+
+_$.g(_$.e, \\"foo24\\", function () {
   return _foo.foo24;
 });
-$g($e, \\"foo25\\", function () {
+
+_$.g(_$.e, \\"foo25\\", function () {
   return _foo.foo25;
 });
-$g($e, \\"foo26\\", function () {
+
+_$.g(_$.e, \\"foo26\\", function () {
   return _foo.foo26;
 });
-$g($e, \\"foo27\\", function () {
+
+_$.g(_$.e, \\"foo27\\", function () {
   return _foo.foo27;
 });
-$g($e, \\"foo28\\", function () {
+
+_$.g(_$.e, \\"foo28\\", function () {
   return _foo.foo28;
 });
-$g($e, \\"foo29\\", function () {
+
+_$.g(_$.e, \\"foo29\\", function () {
   return _foo.foo29;
 });
-$g($e, \\"foo30\\", function () {
+
+_$.g(_$.e, \\"foo30\\", function () {
   return _foo.foo30;
 });
-$g($e, \\"foo31\\", function () {
+
+_$.g(_$.e, \\"foo31\\", function () {
   return _foo.foo31;
 });
-$g($e, \\"foo32\\", function () {
+
+_$.g(_$.e, \\"foo32\\", function () {
   return _foo.foo32;
 });
-$g($e, \\"foo33\\", function () {
+
+_$.g(_$.e, \\"foo33\\", function () {
   return _foo.foo33;
 });
-$g($e, \\"foo34\\", function () {
+
+_$.g(_$.e, \\"foo34\\", function () {
   return _foo.foo34;
 });
-$g($e, \\"foo35\\", function () {
+
+_$.g(_$.e, \\"foo35\\", function () {
   return _foo.foo35;
 });
-$g($e, \\"foo36\\", function () {
+
+_$.g(_$.e, \\"foo36\\", function () {
   return _foo.foo36;
 });
-$g($e, \\"foo37\\", function () {
+
+_$.g(_$.e, \\"foo37\\", function () {
   return _foo.foo37;
 });
-$g($e, \\"foo38\\", function () {
+
+_$.g(_$.e, \\"foo38\\", function () {
   return _foo.foo38;
 });
-$g($e, \\"foo39\\", function () {
+
+_$.g(_$.e, \\"foo39\\", function () {
   return _foo.foo39;
 });
-$g($e, \\"foo40\\", function () {
+
+_$.g(_$.e, \\"foo40\\", function () {
   return _foo.foo40;
 });
-$g($e, \\"foo41\\", function () {
+
+_$.g(_$.e, \\"foo41\\", function () {
   return _foo.foo41;
 });
-$g($e, \\"foo42\\", function () {
+
+_$.g(_$.e, \\"foo42\\", function () {
   return _foo.foo42;
 });
-$g($e, \\"foo43\\", function () {
+
+_$.g(_$.e, \\"foo43\\", function () {
   return _foo.foo43;
 });
-$g($e, \\"foo44\\", function () {
+
+_$.g(_$.e, \\"foo44\\", function () {
   return _foo.foo44;
 });
-$g($e, \\"foo45\\", function () {
+
+_$.g(_$.e, \\"foo45\\", function () {
   return _foo.foo45;
 });
-$g($e, \\"foo46\\", function () {
+
+_$.g(_$.e, \\"foo46\\", function () {
   return _foo.foo46;
 });
-$g($e, \\"foo47\\", function () {
+
+_$.g(_$.e, \\"foo47\\", function () {
   return _foo.foo47;
 });
-$g($e, \\"foo48\\", function () {
+
+_$.g(_$.e, \\"foo48\\", function () {
   return _foo.foo48;
 });
-$g($e, \\"foo49\\", function () {
+
+_$.g(_$.e, \\"foo49\\", function () {
   return _foo.foo49;
 });
-$g($e, \\"foo50\\", function () {
+
+_$.g(_$.e, \\"foo50\\", function () {
   return _foo.foo50;
 });
-$g($e, \\"foo51\\", function () {
+
+_$.g(_$.e, \\"foo51\\", function () {
   return _foo.foo51;
 });
-$g($e, \\"foo52\\", function () {
+
+_$.g(_$.e, \\"foo52\\", function () {
   return _foo.foo52;
 });
-$g($e, \\"foo53\\", function () {
+
+_$.g(_$.e, \\"foo53\\", function () {
   return _foo.foo53;
 });
-$g($e, \\"foo54\\", function () {
+
+_$.g(_$.e, \\"foo54\\", function () {
   return _foo.foo54;
 });
-$g($e, \\"foo55\\", function () {
+
+_$.g(_$.e, \\"foo55\\", function () {
   return _foo.foo55;
 });
-$g($e, \\"foo56\\", function () {
+
+_$.g(_$.e, \\"foo56\\", function () {
   return _foo.foo56;
 });
-$g($e, \\"foo57\\", function () {
+
+_$.g(_$.e, \\"foo57\\", function () {
   return _foo.foo57;
 });
-$g($e, \\"foo58\\", function () {
+
+_$.g(_$.e, \\"foo58\\", function () {
   return _foo.foo58;
 });
-$g($e, \\"foo59\\", function () {
+
+_$.g(_$.e, \\"foo59\\", function () {
   return _foo.foo59;
 });
-$g($e, \\"foo60\\", function () {
+
+_$.g(_$.e, \\"foo60\\", function () {
   return _foo.foo60;
 });
-$g($e, \\"foo61\\", function () {
+
+_$.g(_$.e, \\"foo61\\", function () {
   return _foo.foo61;
 });
-$g($e, \\"foo62\\", function () {
+
+_$.g(_$.e, \\"foo62\\", function () {
   return _foo.foo62;
 });
-$g($e, \\"foo63\\", function () {
+
+_$.g(_$.e, \\"foo63\\", function () {
   return _foo.foo63;
 });
-$g($e, \\"foo64\\", function () {
+
+_$.g(_$.e, \\"foo64\\", function () {
   return _foo.foo64;
 });
-$g($e, \\"foo65\\", function () {
+
+_$.g(_$.e, \\"foo65\\", function () {
   return _foo.foo65;
 });
-$g($e, \\"foo66\\", function () {
+
+_$.g(_$.e, \\"foo66\\", function () {
   return _foo.foo66;
 });
-$g($e, \\"foo67\\", function () {
+
+_$.g(_$.e, \\"foo67\\", function () {
   return _foo.foo67;
 });
-$g($e, \\"foo68\\", function () {
+
+_$.g(_$.e, \\"foo68\\", function () {
   return _foo.foo68;
 });
-$g($e, \\"foo69\\", function () {
+
+_$.g(_$.e, \\"foo69\\", function () {
   return _foo.foo69;
 });
-$g($e, \\"foo70\\", function () {
+
+_$.g(_$.e, \\"foo70\\", function () {
   return _foo.foo70;
 });
-$g($e, \\"foo71\\", function () {
+
+_$.g(_$.e, \\"foo71\\", function () {
   return _foo.foo71;
 });
-$g($e, \\"foo72\\", function () {
+
+_$.g(_$.e, \\"foo72\\", function () {
   return _foo.foo72;
 });
-$g($e, \\"foo73\\", function () {
+
+_$.g(_$.e, \\"foo73\\", function () {
   return _foo.foo73;
 });
-$g($e, \\"foo74\\", function () {
+
+_$.g(_$.e, \\"foo74\\", function () {
   return _foo.foo74;
 });
-$g($e, \\"foo75\\", function () {
+
+_$.g(_$.e, \\"foo75\\", function () {
   return _foo.foo75;
 });
-$g($e, \\"foo76\\", function () {
+
+_$.g(_$.e, \\"foo76\\", function () {
   return _foo.foo76;
 });
-$g($e, \\"foo77\\", function () {
+
+_$.g(_$.e, \\"foo77\\", function () {
   return _foo.foo77;
 });
-$g($e, \\"foo78\\", function () {
+
+_$.g(_$.e, \\"foo78\\", function () {
   return _foo.foo78;
 });
-$g($e, \\"foo79\\", function () {
+
+_$.g(_$.e, \\"foo79\\", function () {
   return _foo.foo79;
 });
-$g($e, \\"foo80\\", function () {
+
+_$.g(_$.e, \\"foo80\\", function () {
   return _foo.foo80;
 });
-$g($e, \\"foo81\\", function () {
+
+_$.g(_$.e, \\"foo81\\", function () {
   return _foo.foo81;
 });
-$g($e, \\"foo82\\", function () {
+
+_$.g(_$.e, \\"foo82\\", function () {
   return _foo.foo82;
 });
-$g($e, \\"foo83\\", function () {
+
+_$.g(_$.e, \\"foo83\\", function () {
   return _foo.foo83;
 });
-$g($e, \\"foo84\\", function () {
+
+_$.g(_$.e, \\"foo84\\", function () {
   return _foo.foo84;
 });
-$g($e, \\"foo85\\", function () {
+
+_$.g(_$.e, \\"foo85\\", function () {
   return _foo.foo85;
 });
-$g($e, \\"foo86\\", function () {
+
+_$.g(_$.e, \\"foo86\\", function () {
   return _foo.foo86;
 });
-$g($e, \\"foo87\\", function () {
+
+_$.g(_$.e, \\"foo87\\", function () {
   return _foo.foo87;
 });
-$g($e, \\"foo88\\", function () {
+
+_$.g(_$.e, \\"foo88\\", function () {
   return _foo.foo88;
 });
-$g($e, \\"foo89\\", function () {
+
+_$.g(_$.e, \\"foo89\\", function () {
   return _foo.foo89;
 });
-$g($e, \\"foo90\\", function () {
+
+_$.g(_$.e, \\"foo90\\", function () {
   return _foo.foo90;
 });
-$g($e, \\"foo91\\", function () {
+
+_$.g(_$.e, \\"foo91\\", function () {
   return _foo.foo91;
 });
-$g($e, \\"foo92\\", function () {
+
+_$.g(_$.e, \\"foo92\\", function () {
   return _foo.foo92;
 });
-$g($e, \\"foo93\\", function () {
+
+_$.g(_$.e, \\"foo93\\", function () {
   return _foo.foo93;
 });
-$g($e, \\"foo94\\", function () {
+
+_$.g(_$.e, \\"foo94\\", function () {
   return _foo.foo94;
 });
-$g($e, \\"foo95\\", function () {
+
+_$.g(_$.e, \\"foo95\\", function () {
   return _foo.foo95;
 });
-$g($e, \\"foo96\\", function () {
+
+_$.g(_$.e, \\"foo96\\", function () {
   return _foo.foo96;
 });
-$g($e, \\"foo97\\", function () {
+
+_$.g(_$.e, \\"foo97\\", function () {
   return _foo.foo97;
 });
-$g($e, \\"foo98\\", function () {
+
+_$.g(_$.e, \\"foo98\\", function () {
   return _foo.foo98;
 });
-$g($e, \\"foo99\\", function () {
+
+_$.g(_$.e, \\"foo99\\", function () {
   return _foo.foo99;
 });
-$g($e, \\"foo100\\", function () {
+
+_$.g(_$.e, \\"foo100\\", function () {
   return _foo.foo100;
 });"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-from-9 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
 function stuff() {
-  $g($e, \\"foo\\", function () {
+  _$.g(_$.e, \\"foo\\", function () {
     return _foo.foo;
   });
-  $g($e, \\"foo1\\", function () {
+
+  _$.g(_$.e, \\"foo1\\", function () {
     return _foo.foo1;
   });
-  $g($e, \\"foo2\\", function () {
+
+  _$.g(_$.e, \\"foo2\\", function () {
     return _foo.foo2;
   });
-  $g($e, \\"foo3\\", function () {
+
+  _$.g(_$.e, \\"foo3\\", function () {
     return _foo.foo3;
   });
-  $g($e, \\"foo4\\", function () {
+
+  _$.g(_$.e, \\"foo4\\", function () {
     return _foo.foo4;
   });
-  $g($e, \\"foo5\\", function () {
+
+  _$.g(_$.e, \\"foo5\\", function () {
     return _foo.foo5;
   });
-  $g($e, \\"foo6\\", function () {
+
+  _$.g(_$.e, \\"foo6\\", function () {
     return _foo.foo6;
   });
-  $g($e, \\"foo7\\", function () {
+
+  _$.g(_$.e, \\"foo7\\", function () {
     return _foo.foo7;
   });
-  $g($e, \\"foo8\\", function () {
+
+  _$.g(_$.e, \\"foo8\\", function () {
     return _foo.foo8;
   });
-  $g($e, \\"foo9\\", function () {
+
+  _$.g(_$.e, \\"foo9\\", function () {
     return _foo.foo9;
   });
-  $g($e, \\"foo10\\", function () {
+
+  _$.g(_$.e, \\"foo10\\", function () {
     return _foo.foo10;
   });
-  $g($e, \\"foo11\\", function () {
+
+  _$.g(_$.e, \\"foo11\\", function () {
     return _foo.foo11;
   });
-  $g($e, \\"foo12\\", function () {
+
+  _$.g(_$.e, \\"foo12\\", function () {
     return _foo.foo12;
   });
-  $g($e, \\"foo13\\", function () {
+
+  _$.g(_$.e, \\"foo13\\", function () {
     return _foo.foo13;
   });
-  $g($e, \\"foo14\\", function () {
+
+  _$.g(_$.e, \\"foo14\\", function () {
     return _foo.foo14;
   });
-  $g($e, \\"foo15\\", function () {
+
+  _$.g(_$.e, \\"foo15\\", function () {
     return _foo.foo15;
   });
-  $g($e, \\"foo16\\", function () {
+
+  _$.g(_$.e, \\"foo16\\", function () {
     return _foo.foo16;
   });
-  $g($e, \\"foo17\\", function () {
+
+  _$.g(_$.e, \\"foo17\\", function () {
     return _foo.foo17;
   });
-  $g($e, \\"foo18\\", function () {
+
+  _$.g(_$.e, \\"foo18\\", function () {
     return _foo.foo18;
   });
-  $g($e, \\"foo19\\", function () {
+
+  _$.g(_$.e, \\"foo19\\", function () {
     return _foo.foo19;
   });
-  $g($e, \\"foo20\\", function () {
+
+  _$.g(_$.e, \\"foo20\\", function () {
     return _foo.foo20;
   });
-  $g($e, \\"foo21\\", function () {
+
+  _$.g(_$.e, \\"foo21\\", function () {
     return _foo.foo21;
   });
-  $g($e, \\"foo22\\", function () {
+
+  _$.g(_$.e, \\"foo22\\", function () {
     return _foo.foo22;
   });
-  $g($e, \\"foo23\\", function () {
+
+  _$.g(_$.e, \\"foo23\\", function () {
     return _foo.foo23;
   });
-  $g($e, \\"foo24\\", function () {
+
+  _$.g(_$.e, \\"foo24\\", function () {
     return _foo.foo24;
   });
-  $g($e, \\"foo25\\", function () {
+
+  _$.g(_$.e, \\"foo25\\", function () {
     return _foo.foo25;
   });
-  $g($e, \\"foo26\\", function () {
+
+  _$.g(_$.e, \\"foo26\\", function () {
     return _foo.foo26;
   });
-  $g($e, \\"foo27\\", function () {
+
+  _$.g(_$.e, \\"foo27\\", function () {
     return _foo.foo27;
   });
-  $g($e, \\"foo28\\", function () {
+
+  _$.g(_$.e, \\"foo28\\", function () {
     return _foo.foo28;
   });
-  $g($e, \\"foo29\\", function () {
+
+  _$.g(_$.e, \\"foo29\\", function () {
     return _foo.foo29;
   });
-  $g($e, \\"foo30\\", function () {
+
+  _$.g(_$.e, \\"foo30\\", function () {
     return _foo.foo30;
   });
-  $g($e, \\"foo31\\", function () {
+
+  _$.g(_$.e, \\"foo31\\", function () {
     return _foo.foo31;
   });
-  $g($e, \\"foo32\\", function () {
+
+  _$.g(_$.e, \\"foo32\\", function () {
     return _foo.foo32;
   });
-  $g($e, \\"foo33\\", function () {
+
+  _$.g(_$.e, \\"foo33\\", function () {
     return _foo.foo33;
   });
-  $g($e, \\"foo34\\", function () {
+
+  _$.g(_$.e, \\"foo34\\", function () {
     return _foo.foo34;
   });
-  $g($e, \\"foo35\\", function () {
+
+  _$.g(_$.e, \\"foo35\\", function () {
     return _foo.foo35;
   });
-  $g($e, \\"foo36\\", function () {
+
+  _$.g(_$.e, \\"foo36\\", function () {
     return _foo.foo36;
   });
-  $g($e, \\"foo37\\", function () {
+
+  _$.g(_$.e, \\"foo37\\", function () {
     return _foo.foo37;
   });
-  $g($e, \\"foo38\\", function () {
+
+  _$.g(_$.e, \\"foo38\\", function () {
     return _foo.foo38;
   });
-  $g($e, \\"foo39\\", function () {
+
+  _$.g(_$.e, \\"foo39\\", function () {
     return _foo.foo39;
   });
-  $g($e, \\"foo40\\", function () {
+
+  _$.g(_$.e, \\"foo40\\", function () {
     return _foo.foo40;
   });
-  $g($e, \\"foo41\\", function () {
+
+  _$.g(_$.e, \\"foo41\\", function () {
     return _foo.foo41;
   });
-  $g($e, \\"foo42\\", function () {
+
+  _$.g(_$.e, \\"foo42\\", function () {
     return _foo.foo42;
   });
-  $g($e, \\"foo43\\", function () {
+
+  _$.g(_$.e, \\"foo43\\", function () {
     return _foo.foo43;
   });
-  $g($e, \\"foo44\\", function () {
+
+  _$.g(_$.e, \\"foo44\\", function () {
     return _foo.foo44;
   });
-  $g($e, \\"foo45\\", function () {
+
+  _$.g(_$.e, \\"foo45\\", function () {
     return _foo.foo45;
   });
-  $g($e, \\"foo46\\", function () {
+
+  _$.g(_$.e, \\"foo46\\", function () {
     return _foo.foo46;
   });
-  $g($e, \\"foo47\\", function () {
+
+  _$.g(_$.e, \\"foo47\\", function () {
     return _foo.foo47;
   });
-  $g($e, \\"foo48\\", function () {
+
+  _$.g(_$.e, \\"foo48\\", function () {
     return _foo.foo48;
   });
-  $g($e, \\"foo49\\", function () {
+
+  _$.g(_$.e, \\"foo49\\", function () {
     return _foo.foo49;
   });
-  $g($e, \\"foo50\\", function () {
+
+  _$.g(_$.e, \\"foo50\\", function () {
     return _foo.foo50;
   });
-  $g($e, \\"foo51\\", function () {
+
+  _$.g(_$.e, \\"foo51\\", function () {
     return _foo.foo51;
   });
-  $g($e, \\"foo52\\", function () {
+
+  _$.g(_$.e, \\"foo52\\", function () {
     return _foo.foo52;
   });
-  $g($e, \\"foo53\\", function () {
+
+  _$.g(_$.e, \\"foo53\\", function () {
     return _foo.foo53;
   });
-  $g($e, \\"foo54\\", function () {
+
+  _$.g(_$.e, \\"foo54\\", function () {
     return _foo.foo54;
   });
-  $g($e, \\"foo55\\", function () {
+
+  _$.g(_$.e, \\"foo55\\", function () {
     return _foo.foo55;
   });
-  $g($e, \\"foo56\\", function () {
+
+  _$.g(_$.e, \\"foo56\\", function () {
     return _foo.foo56;
   });
-  $g($e, \\"foo57\\", function () {
+
+  _$.g(_$.e, \\"foo57\\", function () {
     return _foo.foo57;
   });
-  $g($e, \\"foo58\\", function () {
+
+  _$.g(_$.e, \\"foo58\\", function () {
     return _foo.foo58;
   });
-  $g($e, \\"foo59\\", function () {
+
+  _$.g(_$.e, \\"foo59\\", function () {
     return _foo.foo59;
   });
-  $g($e, \\"foo60\\", function () {
+
+  _$.g(_$.e, \\"foo60\\", function () {
     return _foo.foo60;
   });
-  $g($e, \\"foo61\\", function () {
+
+  _$.g(_$.e, \\"foo61\\", function () {
     return _foo.foo61;
   });
-  $g($e, \\"foo62\\", function () {
+
+  _$.g(_$.e, \\"foo62\\", function () {
     return _foo.foo62;
   });
-  $g($e, \\"foo63\\", function () {
+
+  _$.g(_$.e, \\"foo63\\", function () {
     return _foo.foo63;
   });
-  $g($e, \\"foo64\\", function () {
+
+  _$.g(_$.e, \\"foo64\\", function () {
     return _foo.foo64;
   });
-  $g($e, \\"foo65\\", function () {
+
+  _$.g(_$.e, \\"foo65\\", function () {
     return _foo.foo65;
   });
-  $g($e, \\"foo66\\", function () {
+
+  _$.g(_$.e, \\"foo66\\", function () {
     return _foo.foo66;
   });
-  $g($e, \\"foo67\\", function () {
+
+  _$.g(_$.e, \\"foo67\\", function () {
     return _foo.foo67;
   });
-  $g($e, \\"foo68\\", function () {
+
+  _$.g(_$.e, \\"foo68\\", function () {
     return _foo.foo68;
   });
-  $g($e, \\"foo69\\", function () {
+
+  _$.g(_$.e, \\"foo69\\", function () {
     return _foo.foo69;
   });
-  $g($e, \\"foo70\\", function () {
+
+  _$.g(_$.e, \\"foo70\\", function () {
     return _foo.foo70;
   });
-  $g($e, \\"foo71\\", function () {
+
+  _$.g(_$.e, \\"foo71\\", function () {
     return _foo.foo71;
   });
-  $g($e, \\"foo72\\", function () {
+
+  _$.g(_$.e, \\"foo72\\", function () {
     return _foo.foo72;
   });
-  $g($e, \\"foo73\\", function () {
+
+  _$.g(_$.e, \\"foo73\\", function () {
     return _foo.foo73;
   });
-  $g($e, \\"foo74\\", function () {
+
+  _$.g(_$.e, \\"foo74\\", function () {
     return _foo.foo74;
   });
-  $g($e, \\"foo75\\", function () {
+
+  _$.g(_$.e, \\"foo75\\", function () {
     return _foo.foo75;
   });
-  $g($e, \\"foo76\\", function () {
+
+  _$.g(_$.e, \\"foo76\\", function () {
     return _foo.foo76;
   });
-  $g($e, \\"foo77\\", function () {
+
+  _$.g(_$.e, \\"foo77\\", function () {
     return _foo.foo77;
   });
-  $g($e, \\"foo78\\", function () {
+
+  _$.g(_$.e, \\"foo78\\", function () {
     return _foo.foo78;
   });
-  $g($e, \\"foo79\\", function () {
+
+  _$.g(_$.e, \\"foo79\\", function () {
     return _foo.foo79;
   });
-  $g($e, \\"foo80\\", function () {
+
+  _$.g(_$.e, \\"foo80\\", function () {
     return _foo.foo80;
   });
-  $g($e, \\"foo81\\", function () {
+
+  _$.g(_$.e, \\"foo81\\", function () {
     return _foo.foo81;
   });
-  $g($e, \\"foo82\\", function () {
+
+  _$.g(_$.e, \\"foo82\\", function () {
     return _foo.foo82;
   });
-  $g($e, \\"foo83\\", function () {
+
+  _$.g(_$.e, \\"foo83\\", function () {
     return _foo.foo83;
   });
-  $g($e, \\"foo84\\", function () {
+
+  _$.g(_$.e, \\"foo84\\", function () {
     return _foo.foo84;
   });
-  $g($e, \\"foo85\\", function () {
+
+  _$.g(_$.e, \\"foo85\\", function () {
     return _foo.foo85;
   });
-  $g($e, \\"foo86\\", function () {
+
+  _$.g(_$.e, \\"foo86\\", function () {
     return _foo.foo86;
   });
-  $g($e, \\"foo87\\", function () {
+
+  _$.g(_$.e, \\"foo87\\", function () {
     return _foo.foo87;
   });
-  $g($e, \\"foo88\\", function () {
+
+  _$.g(_$.e, \\"foo88\\", function () {
     return _foo.foo88;
   });
-  $g($e, \\"foo89\\", function () {
+
+  _$.g(_$.e, \\"foo89\\", function () {
     return _foo.foo89;
   });
-  $g($e, \\"foo90\\", function () {
+
+  _$.g(_$.e, \\"foo90\\", function () {
     return _foo.foo90;
   });
-  $g($e, \\"foo91\\", function () {
+
+  _$.g(_$.e, \\"foo91\\", function () {
     return _foo.foo91;
   });
-  $g($e, \\"foo92\\", function () {
+
+  _$.g(_$.e, \\"foo92\\", function () {
     return _foo.foo92;
   });
-  $g($e, \\"foo93\\", function () {
+
+  _$.g(_$.e, \\"foo93\\", function () {
     return _foo.foo93;
   });
-  $g($e, \\"foo94\\", function () {
+
+  _$.g(_$.e, \\"foo94\\", function () {
     return _foo.foo94;
   });
-  $g($e, \\"foo95\\", function () {
+
+  _$.g(_$.e, \\"foo95\\", function () {
     return _foo.foo95;
   });
-  $g($e, \\"foo96\\", function () {
+
+  _$.g(_$.e, \\"foo96\\", function () {
     return _foo.foo96;
   });
-  $g($e, \\"foo97\\", function () {
+
+  _$.g(_$.e, \\"foo97\\", function () {
     return _foo.foo97;
   });
-  $g($e, \\"foo98\\", function () {
+
+  _$.g(_$.e, \\"foo98\\", function () {
     return _foo.foo98;
   });
-  $g($e, \\"foo99\\", function () {
+
+  _$.g(_$.e, \\"foo99\\", function () {
     return _foo.foo99;
   });
-  $g($e, \\"foo100\\", function () {
+
+  _$.g(_$.e, \\"foo100\\", function () {
     return _foo.foo100;
   });
+
   bar();
 }"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named 1`] = `
-"$g($e, \\"foo\\", function () {
+"_$.g(_$.e, \\"foo\\", function () {
   return foo;
 });
+
 let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-2 1`] = `
-"$g($e, \\"foo\\", function () {
+"_$.g(_$.e, \\"foo\\", function () {
   return foo;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return bar;
 });
+
 let foo = 10;
 let bar = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-3 1`] = `
-"$g($e, \\"bar\\", function () {
+"_$.g(_$.e, \\"bar\\", function () {
   return foo;
 });
+
 let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-4 1`] = `
-"$g($e, \\"default\\", function () {
+"_$.g(_$.e, \\"default\\", function () {
   return foo;
 });
+
 let foo = 10;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: export-named-5 1`] = `
-"$g($e, \\"default\\", function () {
+"_$.g(_$.e, \\"default\\", function () {
   return foo;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return bar;
 });
+
 let foo = 10;
 let bar = 20;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable 1`] = `
-"$g($e, \\"foo\\", function () {
+"_$.g(_$.e, \\"foo\\", function () {
   return foo;
 });
-$g($e, \\"foo2\\", function () {
+
+_$.g(_$.e, \\"foo2\\", function () {
   return foo2;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return bar;
 });
-$g($e, \\"foo3\\", function () {
+
+_$.g(_$.e, \\"foo3\\", function () {
   return foo3;
 });
-$g($e, \\"foo4\\", function () {
+
+_$.g(_$.e, \\"foo4\\", function () {
   return foo4;
 });
-$g($e, \\"foo5\\", function () {
+
+_$.g(_$.e, \\"foo5\\", function () {
   return foo5;
 });
-$g($e, \\"foo6\\", function () {
+
+_$.g(_$.e, \\"foo6\\", function () {
   return foo6;
 });
-$g($e, \\"foo7\\", function () {
+
+_$.g(_$.e, \\"foo7\\", function () {
   return foo7;
 });
-$g($e, \\"foo8\\", function () {
+
+_$.g(_$.e, \\"foo8\\", function () {
   return foo8;
 });
-$g($e, \\"foo9\\", function () {
+
+_$.g(_$.e, \\"foo9\\", function () {
   return foo9;
 });
-$g($e, \\"b\\", function () {
+
+_$.g(_$.e, \\"b\\", function () {
   return b;
 });
-$g($e, \\"c\\", function () {
+
+_$.g(_$.e, \\"c\\", function () {
   return c;
 });
+
 var foo = 1;
 var foo2 = 1,
     bar = 2;
@@ -1723,33 +1996,42 @@ const {
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: exports-variable-2 1`] = `
-"$g($e, \\"test\\", function () {
+"_$.g(_$.e, \\"test\\", function () {
   return test;
 });
-$g($e, \\"a\\", function () {
+
+_$.g(_$.e, \\"a\\", function () {
   return a;
 });
-$g($e, \\"c\\", function () {
+
+_$.g(_$.e, \\"c\\", function () {
   return b;
 });
-$g($e, \\"e\\", function () {
+
+_$.g(_$.e, \\"e\\", function () {
   return d;
 });
-$g($e, \\"f\\", function () {
+
+_$.g(_$.e, \\"f\\", function () {
   return d;
 });
-$g($e, \\"yy\\", function () {
+
+_$.g(_$.e, \\"yy\\", function () {
   return yy;
 });
-$g($e, \\"zz\\", function () {
+
+_$.g(_$.e, \\"zz\\", function () {
   return zz;
 });
-$g($e, \\"bar\\", function () {
+
+_$.g(_$.e, \\"bar\\", function () {
   return bar;
 });
-$g($e, \\"baz\\", function () {
+
+_$.g(_$.e, \\"baz\\", function () {
   return baz;
 });
+
 var test = 2;
 test = 5;
 test++;
@@ -1778,13 +2060,20 @@ bar = 10;
 baz = 10;"
 `;
 
-exports[`babel transform modules babel-plugin-transform-modules - Fixture: hoist-function-exports 1`] = `
-"var _evens = $r(\\"./evens\\");
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: global-var-conflict 1`] = `
+"_$2.r(\\"foo\\");
 
-$g($e, \\"nextOdd\\", function () {
+const usingGlobalVar = _$;"
+`;
+
+exports[`babel transform modules babel-plugin-transform-modules - Fixture: hoist-function-exports 1`] = `
+"var _evens = _$.r(\\"./evens\\");
+
+_$.g(_$.e, \\"nextOdd\\", function () {
   return nextOdd;
 });
-$g($e, \\"isOdd\\", function () {
+
+_$.g(_$.e, \\"isOdd\\", function () {
   return isOdd;
 });
 
@@ -1800,13 +2089,15 @@ var isOdd = function (isEven) {
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports 1`] = `
-"$r(\\"foo\\");
-$r(\\"foo-bar\\");
-$r(\\"./directory/foo-bar\\");"
+"_$.r(\\"foo\\");
+
+_$.r(\\"foo-bar\\");
+
+_$.r(\\"./directory/foo-bar\\");"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
 _foo.default;
 _foo.default.bar;
@@ -1819,9 +2110,9 @@ function a() {
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-default-jsx 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
-var _bar = $r(\\"bar\\");
+var _bar = _$.r(\\"bar\\");
 
 <_foo.default></_foo.default>;
 <_foo.default.bar></_foo.default.bar>;
@@ -1835,26 +2126,26 @@ function func() {
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-glob 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
 var foo = _foo;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-hoisting 1`] = `
-"var _foo = $r(\\"./foo\\");
+"var _foo = _$.r(\\"./foo\\");
 
 var bar = (0, _foo.default)();"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-mixing 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
 _foo.default;
 _foo.baz;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: imports-named 1`] = `
-"var _foo = $r(\\"foo\\");
+"var _foo = _$.r(\\"foo\\");
 
 _foo.bar;
 _foo.bar2;
@@ -1865,20 +2156,20 @@ _foo.xyz;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: internals-shadow 1`] = `
-"$g($e, \\"$e\\", function () {
-  return _$e;
+"_$.g(_$.e, \\"$e\\", function () {
+  return $e;
 });
 
-function _$e() {}"
+function $e() {}"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports 1`] = `
 "if (true) {
-  var _abc = $r(\\"./abc\\");
+  var _abc = _$.r(\\"./abc\\");
 
-  var _other = $r(\\"./other\\");
+  var _other = _$.r(\\"./other\\");
 
-  $g($e, \\"outer\\", function () {
+  _$.g(_$.e, \\"outer\\", function () {
     return outer;
   });
 
@@ -1897,17 +2188,17 @@ foo;"
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-2 1`] = `
 "switch (true) {
   case 0:
-    var _abc = $r(\\"./abc\\");
+    var _abc = _$.r(\\"./abc\\");
 
     break;
 
   case true:
-    $g($e, \\"outer\\", function () {
+    _$.g(_$.e, \\"outer\\", function () {
       return outer;
     });
 
     function outer() {
-      var _abc2 = $r(\\"./abc\\");
+      var _abc2 = _$.r(\\"./abc\\");
 
       return [_abc2.a, _abc2.b, _abc2.c];
     }
@@ -1915,11 +2206,11 @@ exports[`babel transform modules babel-plugin-transform-modules - Fixture: neste
     break;
 
   case false:
-    var _abc3 = $r(\\"./abc\\");
+    var _abc3 = _$.r(\\"./abc\\");
 
   default:
     _abc.default;
-    $e.default = null;
+    _$.e.default = null;
 }
 
 foo;"
@@ -1927,29 +2218,29 @@ foo;"
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-3 1`] = `
 "if (true) {
-  var _abc = $r(\\"./abc\\");
+  var _abc = _$.r(\\"./abc\\");
 }
 
 if (false) {
-  var _abc2 = $r(\\"./abc\\");
+  var _abc2 = _$.r(\\"./abc\\");
 }
 
 if (true) {
-  $g($e, \\"outer\\", function () {
+  _$.g(_$.e, \\"outer\\", function () {
     return outer;
   });
 
   function outer() {
-    var _abc3 = $r(\\"./abc\\");
+    var _abc3 = _$.r(\\"./abc\\");
 
     return [_abc3.a, _abc3.b, _abc3.c];
   }
 }
 
 if (false) {
-  var _foo = $r(\\"./foo\\");
+  var _foo = _$.r(\\"./foo\\");
 
-  $g($e, \\"x\\", function () {
+  _$.g(_$.e, \\"x\\", function () {
     return _foo.x;
   });
 }
@@ -1961,16 +2252,16 @@ y; // Stay as y"
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-4 1`] = `
 "function a() {
-  var _abc = $r(\\"./abc\\");
+  var _abc = _$.r(\\"./abc\\");
 }
 
 function b() {
-  $g($e, \\"outer\\", function () {
+  _$.g(_$.e, \\"outer\\", function () {
     return outer;
   });
 
   function outer() {
-    var _abc2 = $r(\\"./abc\\");
+    var _abc2 = _$.r(\\"./abc\\");
 
     return [_abc2.a, _abc2.b, _abc2.c];
   }
@@ -1983,29 +2274,29 @@ y; // Stay as y"
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: nested-imports-exports-5 1`] = `
 "while (true) {
-  var _abc = $r(\\"./abc\\");
+  var _abc = _$.r(\\"./abc\\");
 }
 
 while (false) {
-  var _abc2 = $r(\\"./abc\\");
+  var _abc2 = _$.r(\\"./abc\\");
 }
 
 for (const a in obj) {
-  $g($e, \\"outer\\", function () {
+  _$.g(_$.e, \\"outer\\", function () {
     return outer;
   });
 
   function outer() {
-    var _abc3 = $r(\\"./abc\\");
+    var _abc3 = _$.r(\\"./abc\\");
 
     return [_abc3.a, _abc3.b, _abc3.c];
   }
 }
 
 while (false) {
-  var _foo = $r(\\"./foo\\");
+  var _foo = _$.r(\\"./foo\\");
 
-  $g($e, \\"x\\", function () {
+  _$.g(_$.e, \\"x\\", function () {
     return _foo.x;
   });
 }
@@ -2016,28 +2307,33 @@ y; // Stay as y"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: overview 1`] = `
-"$r(\\"foo\\");
-$r(\\"foo-bar\\");
-$r(\\"./directory/foo-bar\\");
+"_$.r(\\"foo\\");
 
-var _foo2 = $r(\\"foo2\\");
+_$.r(\\"foo-bar\\");
 
-var _foo3 = $r(\\"foo3\\");
+_$.r(\\"./directory/foo-bar\\");
 
-var _foo4 = $r(\\"foo4\\");
+var _foo2 = _$.r(\\"foo2\\");
 
-var _foo5 = $r(\\"foo5\\");
+var _foo3 = _$.r(\\"foo3\\");
 
-$r(\\"foo6\\");
-$r(\\"foo7\\");
+var _foo4 = _$.r(\\"foo4\\");
 
-var _foo8 = $r(\\"foo8\\");
+var _foo5 = _$.r(\\"foo5\\");
+
+_$.r(\\"foo6\\");
+
+_$.r(\\"foo7\\");
+
+var _foo8 = _$.r(\\"foo8\\");
 
 var foo2 = _foo3;
-$g($e, \\"test\\", function () {
+
+_$.g(_$.e, \\"test\\", function () {
   return test;
 });
-$g($e, \\"test2\\", function () {
+
+_$.g(_$.e, \\"test2\\", function () {
   return test2;
 });
 
@@ -2052,17 +2348,19 @@ _foo8.a;"
 `;
 
 exports[`babel transform modules babel-plugin-transform-modules - Fixture: this 1`] = `
-"$r(\\"foo\\");
-$r(\\"foo-bar\\");
-$r(\\"./directory/foo-bar\\");
+"_$.r(\\"foo\\");
 
-var _foo2 = $r(\\"foo2\\");
+_$.r(\\"foo-bar\\");
 
-var _foo3 = $r(\\"foo3\\");
+_$.r(\\"./directory/foo-bar\\");
 
-var _foo4 = $r(\\"foo4\\");
+var _foo2 = _$.r(\\"foo2\\");
 
-var _foo5 = $r(\\"foo5\\");
+var _foo3 = _$.r(\\"foo3\\");
+
+var _foo4 = _$.r(\\"foo4\\");
+
+var _foo5 = _$.r(\\"foo5\\");
 
 var foo2 = _foo3;
 let a = undefined;

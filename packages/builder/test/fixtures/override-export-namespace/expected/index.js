@@ -1,23 +1,26 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r){var _export = $r("5d4f5");
+"0cc20":function(_$){var _export = _$.r("5d4f5");
 
 console.log(_export.foo);
 },
-"5d4f5":function($e,$r,$i,$g,$a){var _a = $r("67adc");
+"5d4f5":function(_$){var _a = _$.r("67adc");
 
-var _b = $r("a4db4");
+var _b = _$.r("a4db4");
 
-$a($e, _a);
-$a($e, _b);
+_$.a(e, _a);
+
+_$.a(e, _b);
 },
-"67adc":function($e,$r,$i,$g){$g($e, "foo", function () {
+"67adc":function(_$){_$.g(_$.e, "foo", function () {
   return foo;
 });
+
 const foo = "a";
 },
-a4db4:function($e,$r,$i,$g){$g($e, "foo", function () {
+a4db4:function(_$){_$.g(_$.e, "foo", function () {
   return foo;
 });
+
 const foo = "b";
 }});"use strict";
 
@@ -29,9 +32,11 @@ const foo = "b";
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -120,8 +125,14 @@ const foo = "b";
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -141,7 +152,7 @@ const foo = "b";
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

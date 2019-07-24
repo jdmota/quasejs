@@ -1,19 +1,22 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r,$i,$g,$a){var _a = $r("67adc");
+"0cc20":function(_$){var _a = _$.r("67adc");
 
-var _b = $r("a4db4");
+var _b = _$.r("a4db4");
 
-$a($e, _a);
-$a($e, _b);
+_$.a(e, _a);
+
+_$.a(e, _b);
 },
-"67adc":function($e,$r,$i,$g){$g($e, "foo", function () {
+"67adc":function(_$){_$.g(_$.e, "foo", function () {
   return foo;
 });
+
 const foo = 10;
 },
-a4db4:function($e,$r,$i,$g){$g($e, "foo", function () {
+a4db4:function(_$){_$.g(_$.e, "foo", function () {
   return foo;
 });
+
 const foo = 20;
 }});"use strict";
 
@@ -25,9 +28,11 @@ const foo = 20;
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -116,8 +121,14 @@ const foo = 20;
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -137,7 +148,7 @@ const foo = 20;
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

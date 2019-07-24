@@ -51,14 +51,14 @@ type HmrOps = {
   requireAsync: ( parent: HotApiInterface | null ) => ( id: string ) => Promise<Exported>;
 };
 
-type ModuleFn = (
-  e: Exported,
-  r: { ( id: string ): Exported; r( id: string ): unknown },
-  i: ( id: string ) => Promise<Exported>,
-  g: ( e: Exported, name: string, get: () => any ) => void,
-  a: ( e: Exported, o: O<any> ) => void,
-  m: O<unknown>
-) => void;
+type ModuleFn = ( _: {
+  e: Exported;
+  r: { ( id: string ): Exported; r( id: string ): unknown };
+  i: ( id: string ) => Promise<Exported>;
+  g: ( e: Exported, name: string, get: () => any ) => void;
+  a: ( e: Exported, o: O<any> ) => void;
+  m: O<unknown>;
+} ) => void;
 
 type GlobalThis = {
   window?: Window;
@@ -492,25 +492,23 @@ type GlobalThis = {
       if ( hmrOps ) {
         const api = hmrOps.getApi( id );
 
-        // $e, $r, $i, $g, $a, $m
-        fn(
-          moduleExports,
-          hmrOps.requireSync( api ),
-          hmrOps.requireAsync( api ),
-          exportHelper,
-          exportAllHelper,
-          { hot: api }
-        );
+        fn( {
+          e: moduleExports,
+          r: hmrOps.requireSync( api ),
+          i: hmrOps.requireAsync( api ),
+          g: exportHelper,
+          a: exportAllHelper,
+          m: { hot: api }
+        } );
       } else {
-        // $e, $r, $i, $g, $a, $m
-        fn(
-          moduleExports,
-          requireSync,
-          requireAsync,
-          exportHelper,
-          exportAllHelper,
-          {}
-        );
+        fn( {
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        } );
       }
 
       return moduleExports;

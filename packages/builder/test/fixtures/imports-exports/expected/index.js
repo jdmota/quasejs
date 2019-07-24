@@ -1,51 +1,62 @@
 "use strict";({g:"undefined"==typeof self?Function("return this")():self,p(m,f){(this.g.__quase_builder__=this.g.__quase_builder__||{q:[]}).q.push([m,f])}}).p({
-"0cc20":function($e,$r){var _importAndExport = $r("867bb");
+"0cc20":function(_$){var _importAndExport = _$.r("867bb");
 
 console.log(_importAndExport.a, _importAndExport.b, _importAndExport.c, _importAndExport.d, _importAndExport.e, _importAndExport.f, _importAndExport.g, _importAndExport.h, _importAndExport.i, _importAndExport.j, _importAndExport.k.value);
 /* eslint no-console: 0 */
 },
-"867bb":function($e,$r,$i,$g,$a){var _export = $r("f2ed6");
+"867bb":function(_$){var _export = _$.r("f2ed6");
 
-var _export2 = $r("e3098");
+var _export2 = _$.r("e3098");
 
-var _export3 = $r("a9914");
+var _export3 = _$.r("a9914");
 
-var _export4 = $r("cdded");
+var _export4 = _$.r("cdded");
 
-var _export5 = $r("ac522");
+var _export5 = _$.r("ac522");
 
-var _export6 = $r("15bd3");
+var _export6 = _$.r("15bd3");
 
-$a($e, _export3);
+_$.a(e, _export3);
+
 var _namespace = _export;
-$g($e, "a", function () {
+
+_$.g(_$.e, "a", function () {
   return a;
 });
-$g($e, "b", function () {
+
+_$.g(_$.e, "b", function () {
   return b;
 });
-$g($e, "c", function () {
+
+_$.g(_$.e, "c", function () {
   return c;
 });
-$e.default = {
+
+_$.e.default = {
   default: function () {}
 }.default;
-$g($e, "d", function () {
+
+_$.g(_$.e, "d", function () {
   return value;
 });
-$g($e, "e", function () {
+
+_$.g(_$.e, "e", function () {
   return e;
 });
-$g($e, "f", function () {
+
+_$.g(_$.e, "f", function () {
   return _export2.f;
 });
-$g($e, "i", function () {
+
+_$.g(_$.e, "i", function () {
   return _export4.default;
 });
-$g($e, "j", function () {
+
+_$.g(_$.e, "j", function () {
   return _export5.default;
 });
-$e.k = _export6;
+
+_$.e.k = _export6;
 
 /* eslint import/no-named-default: 0 */
 const a = _export.default;
@@ -53,31 +64,37 @@ const [b, c] = [_namespace.a, _namespace.b];
 const value = _export2.default;
 const e = _export2.foo;
 },
-f2ed6:function($e,$r,$i,$g){$g($e, "a", function () {
+f2ed6:function(_$){_$.g(_$.e, "a", function () {
   return a;
 });
-$g($e, "b", function () {
+
+_$.g(_$.e, "b", function () {
   return b;
 });
-$e.default = 1;
+
+_$.e.default = 1;
 const [a, b] = [2, 3];
 },
-e3098:function($e,$r,$i,$g){$g($e, "foo", function () {
+e3098:function(_$){_$.g(_$.e, "foo", function () {
   return foo;
 });
-$g($e, "f", function () {
+
+_$.g(_$.e, "f", function () {
   return f;
 });
-$e.default = 4;
+
+_$.e.default = 4;
 const foo = 5;
 const f = 6;
 },
-a9914:function($e,$r,$i,$g){$g($e, "g", function () {
+a9914:function(_$){_$.g(_$.e, "g", function () {
   return g;
 });
-$g($e, "h", function () {
+
+_$.g(_$.e, "h", function () {
   return h;
 });
+
 const {
   a: g,
   h
@@ -86,13 +103,14 @@ const {
   h: 8
 };
 },
-cdded:function($e){$e.default = 9;
+cdded:function(_$){_$.e.default = 9;
 },
-ac522:function($e){$e.default = 10;
+ac522:function(_$){_$.e.default = 10;
 },
-"15bd3":function($e,$r,$i,$g){$g($e, "value", function () {
+"15bd3":function(_$){_$.g(_$.e, "value", function () {
   return value;
 });
+
 const value = 11;
 }});"use strict";
 
@@ -104,9 +122,11 @@ const value = 11;
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
   const isBrowser = global.window === global;
 
   const blank = () => Object.create(NULL);
@@ -195,8 +215,14 @@ const value = 11;
       };
       modules[id] = moduleExports;
       {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
       return moduleExports;
     }
@@ -216,7 +242,7 @@ const value = 11;
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {

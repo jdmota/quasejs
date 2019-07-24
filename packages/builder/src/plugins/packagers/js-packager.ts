@@ -1,7 +1,7 @@
 import { BuilderUtil } from "../context";
 import { FinalAsset, FinalModule, Packager } from "../../types";
 import StringBuilder from "../../utils/string-builder";
-import { chunkInit, moduleArgs } from "../../runtime/create-runtime";
+import { chunkInit } from "../../runtime/create-runtime";
 import { get } from "../../utils/get";
 
 const importLazy = require( "import-lazy" )( require );
@@ -53,7 +53,7 @@ async function render(
   return {
     code: generateResult.code,
     map: optimization.sourceMaps && await ctx.joinSourceMaps( [ map, generateResult.map ] ),
-    varsUsed: meta.varsUsed
+    quaseApiVar: meta.quaseApiVar
   };
 }
 
@@ -85,14 +85,9 @@ export const packager: Packager = {
 
     for ( const module of asset.srcs.values() ) {
 
-      const { code, map, varsUsed } = await render( module, hashIds, ctx );
+      const { code, map, quaseApiVar } = await render( module, hashIds, ctx );
 
-      const args = moduleArgs.slice();
-      while ( args.length > 0 && !varsUsed[ args[ args.length - 1 ] ] ) {
-        args.pop();
-      }
-
-      build.append( `${first ? "" : ","}\n${ctx.wrapInJsPropKey( get( hashIds, module.id ) )}:function(${args.join( "," )}){` );
+      build.append( `${first ? "" : ","}\n${ctx.wrapInJsPropKey( get( hashIds, module.id ) )}:function(${quaseApiVar.value}){` );
       build.append( code, ctx.isFakePath( module.path ) ? null : map );
       build.append( "\n}" );
 

@@ -6,10 +6,12 @@
   // Help reduce minified size
   const UNDEFINED = undefined;
   const NULL = null;
-  const document = global.document,
-        location = global.location,
-        importScripts = global.importScripts;
-  const isBrowser = global.window === global;
+  const {
+    document,
+    location,
+    importScripts
+  } = global;
+  const isBrowser =  global.window === global;
 
   const blank = () => Object.create(NULL);
 
@@ -26,7 +28,9 @@
   const hmrOps = hmr ? makeHmr(hmr) : null;
 
   function makeHmr(hmr) {
-    const WebSocket = global.WebSocket;
+    const {
+      WebSocket
+    } = global;
     const hmrApis = new Map();
 
     const getHotApi = id => {
@@ -44,7 +48,7 @@
 
       newFn.r = id => {
         const e = newFn(id);
-        return e.__esModule === false ? e.default : e;
+        return e.__esModule === false ? e["default"] : e;
       };
 
       return newFn;
@@ -152,7 +156,7 @@
         this.callChange();
         this.reset(true);
         this.requiredBy.clear();
-        hmrApis.delete(this.id);
+        hmrApis["delete"](this.id);
       }
 
     }
@@ -197,11 +201,13 @@
       let reloadCauseEntry = false;
 
       for (const _ref of updates) {
-        const id = _ref.id,
-              file = _ref.file,
-              prevFile = _ref.prevFile,
-              reloadApp = _ref.reloadApp,
-              requiredAssets = _ref.requiredAssets;
+        const {
+          id,
+          file,
+          prevFile,
+          reloadApp,
+          requiredAssets
+        } = _ref;
 
         if (file) {
           fileImports[publicPath + file] = UNDEFINED;
@@ -220,8 +226,10 @@
       reloadCauseEntry = shouldReloadApp;
 
       for (const _ref2 of updates) {
-        const id = _ref2.id,
-              file = _ref2.file;
+        const {
+          id,
+          file
+        } = _ref2;
         const api = hmrApis.get(id);
 
         if (api) {
@@ -230,7 +238,7 @@
           if (file) {
             queue.push(api.reloadNew());
           } else {
-            api.delete();
+            api["delete"]();
           }
         }
       }
@@ -241,10 +249,11 @@
         const needReload = new Set();
 
         for (const job of prevQueue) {
-          const _ref3 = await job,
-                api = _ref3.api,
-                error = _ref3.error,
-                notifyAncestors = _ref3.notifyAncestors;
+          const {
+            api,
+            error,
+            notifyAncestors
+          } = await job;
 
           if (notifyAncestors) {
             api.notifyParents(seen, needReload, error);
@@ -433,14 +442,26 @@
       modules[id] = moduleExports;
 
       if (hmrOps) {
-        const api = hmrOps.getApi(id); // $e, $r, $i, $g, $a, $m
-
-        fn(moduleExports, hmrOps.requireSync(api), hmrOps.requireAsync(api), exportHelper, exportAllHelper, {
-          hot: api
+        const api = hmrOps.getApi(id);
+        fn({
+          e: moduleExports,
+          r: hmrOps.requireSync(api),
+          i: hmrOps.requireAsync(api),
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {
+            hot: api
+          }
         });
       } else {
-        // $e, $r, $i, $g, $a, $m
-        fn(moduleExports, requireSync, requireAsync, exportHelper, exportAllHelper, {});
+        fn({
+          e: moduleExports,
+          r: requireSync,
+          i: requireAsync,
+          g: exportHelper,
+          a: exportAllHelper,
+          m: {}
+        });
       }
 
       return moduleExports;
@@ -461,7 +482,7 @@
 
   requireSync.r = id => {
     const e = requireSync(id);
-    return e.__esModule === false ? e.default : e;
+    return e.__esModule === false ? e["default"] : e;
   };
 
   function requireAsync(id) {
