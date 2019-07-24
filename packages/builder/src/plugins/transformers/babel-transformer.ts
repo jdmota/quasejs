@@ -1,14 +1,11 @@
 // @ts-ignore
 import { addNamed } from "@babel/helper-module-imports";
 // @ts-ignore
-import { parseAsync, buildExternalHelpers, transformFromAstAsync } from "@babel/core";
+import { parseAsync, transformFromAstAsync } from "@babel/core";
 import { join } from "path";
-import { writeFileSync } from "fs";
 import { Transformer } from "../../types";
 
 const babelExternalsFile = join( __dirname, "babel-helpers.js" );
-const babelExternalsCode = buildExternalHelpers( null, "module" );
-writeFileSync( babelExternalsFile, babelExternalsCode );
 
 function importHelperPlugin() {
   return {

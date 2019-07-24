@@ -88,9 +88,11 @@ async function compileMinify( input ) {
   return code.trim();
 }
 
+const RUNTIME_FOLDER = path.join( __dirname, "../src/runtime" );
+
 async function compile( builds ) {
 
-  const runtime = await compileTStoJS( await fs.readFile( path.resolve( __dirname, "./runtime.ts" ), "utf8" ) );
+  const runtime = await compileTStoJS( await fs.readFile( path.join( RUNTIME_FOLDER, "runtime.ts" ), "utf8" ) );
 
   for ( const build of builds ) {
     let code = await compileReplace( runtime, build );
@@ -105,7 +107,7 @@ async function compile( builds ) {
       "js"
     ].filter( Boolean ).join( "." );
 
-    const fullFilename = path.join( __dirname, "builds", filename );
+    const fullFilename = path.join( RUNTIME_FOLDER, "builds", filename );
 
     await fs.outputFile( fullFilename, `/* eslint-disable */\n${code}` );
 
