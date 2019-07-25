@@ -35,7 +35,7 @@
   const fetches = blank(); // Fetches
 
   const publicPath = nodeRequire ? "./" : "";
-  const moduleToFiles = blank();
+  const moduleToAssets = blank();
 
   function require(id) {
     if (id) {
@@ -54,7 +54,7 @@
     const mToFiles = moreInfo.m;
 
     for (const id in mToFiles) {
-      moduleToFiles[id] = mToFiles[id].map(f => publicPath + files[f]);
+      moduleToAssets[id] = mToFiles[id].map(f => publicPath + files[f]);
     }
   }
 
@@ -130,7 +130,7 @@
 
   function requireSync(id) {
     if (!exists(id)) {
-      (moduleToFiles[id] || []).forEach(importFileSync);
+      (moduleToAssets[id] || []).forEach(importFileSync);
     }
 
     return load(id);
@@ -142,7 +142,7 @@
   };
 
   function requireAsync(id) {
-    return Promise.all(exists(id) ? [] : (moduleToFiles[id] || []).map(importFileAsync)).then(() => load(id));
+    return Promise.all(exists(id) ? [] : (moduleToAssets[id] || []).map(importFileAsync)).then(() => load(id));
   }
 
   function importFileSync(file) {
