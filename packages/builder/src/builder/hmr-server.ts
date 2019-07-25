@@ -1,6 +1,6 @@
 // Adapted from parcel-bundler's HMR server
 import { formatError } from "../utils/error";
-import { Updates, Output } from "../types";
+import { Output, HmrUpdate, HmrMessage } from "../types";
 import { Builder } from "./builder";
 
 const http = require( "http" );
@@ -23,7 +23,7 @@ export class HMRServer {
     this.handleSocketError = this.handleSocketError.bind( this );
     this.firstBuild = true;
 
-    this.builder.on( "build-success", ( o: Output ) => this.emitUpdate( o.updates ) );
+    this.builder.on( "build-success", ( o: Output ) => this.emitUpdate( o.hmrUpdate ) );
     this.builder.on( "build-error", ( e: Error ) => this.emitError( e ) );
   }
 
@@ -56,14 +56,14 @@ export class HMRServer {
     this.server.close();
   }
 
-  private broadcast( msg: any ) {
+  private broadcast( msg: HmrMessage ) {
     const json = JSON.stringify( msg );
     for ( const ws of this.wss.clients ) {
       ws.send( json );
     }
   }
 
-  private emitUpdate( updates: Updates ) {
+  private emitUpdate( update: HmrUpdate ) {
     if ( this.firstBuild ) {
       this.firstBuild = false;
       return;
@@ -73,7 +73,7 @@ export class HMRServer {
 
     this.broadcast( {
       type: "update",
-      updates
+      update
     } );
   }
 

@@ -1,4 +1,4 @@
-import { Updates, RuntimeManifest } from "../types";
+import { RuntimeManifest, HmrUpdate, HmrMessage } from "../types";
 
 // TO REMOVE
 const $_PUBLIC_PATH = "";
@@ -87,7 +87,7 @@ type GlobalThis = {
   const fetches = blank() as O<Promise<Exported | null> | undefined>; // Fetches
 
   const publicPath = $_PUBLIC_PATH as string;
-  const moduleToFiles = blank() as O<string[]>;
+  const moduleToAssets = blank() as O<string[] | undefined>;
 
   const hmr = $_HMR as HmrOpts | null;
   const hmrOps = hmr ? makeHmr( hmr ) : null;
@@ -266,17 +266,24 @@ type GlobalThis = {
 
     let lastHotUpdate = Promise.resolve();
 
-    const hmrUpdate = async( updates: Updates ) => {
+    const hmrUpdate = async( hmrUpdate: HmrUpdate ) => {
       const seen: Set<HotApi> = new Set();
       let queue: Promise<HmrLoad>[] = [];
       let shouldReloadApp = false;
       let reloadCauseEntry = false;
 
-      for ( const { id, file, prevFile, reloadApp, requiredAssets } of updates ) {
+      for ( const id in moduleToAssets ) {
+        moduleToAssets[ id ] = undefined;
+      }
+
+      for ( const id in hmrUpdate.moduleToAssets ) {
+        moduleToAssets[ id ] = hmrUpdate.moduleToAssets[ id ].map( f => publicPath + f );
+      }
+
+      for ( const { file, prevFile, reloadApp } of hmrUpdate.updates ) {
         if ( file ) {
           fileImports[ publicPath + file ] = UNDEFINED;
           fetches[ publicPath + file ] = UNDEFINED;
-          moduleToFiles[ id ] = requiredAssets.map( f => publicPath + f );
         }
         if ( prevFile ) {
           fileImports[ publicPath + prevFile ] = UNDEFINED;
@@ -287,7 +294,7 @@ type GlobalThis = {
 
       reloadCauseEntry = shouldReloadApp;
 
-      for ( const { id, file } of updates ) {
+      for ( const { id, file } of hmrUpdate.updates ) {
         const api = hmrApis.get( id );
         if ( api ) {
           seen.add( api );
@@ -310,6 +317,10 @@ type GlobalThis = {
 
           if ( notifyAncestors ) {
             api.notifyParents( seen, needReload, error );
+          }
+
+          if ( error ) {
+            console.error( error );
           }
         }
 
@@ -373,16 +384,16 @@ type GlobalThis = {
       const protocol = location.protocol === "https:" ? "wss" : "ws";
       const ws = new WebSocket( protocol + "://" + hmr.hostname + ":" + hmr.port + "/" );
       ws.onmessage = event => {
-        const data = JSON.parse( event.data );
+        const data = JSON.parse( event.data ) as HmrMessage;
 
         switch ( data.type ) {
           case "update":
             lastHotUpdate = lastHotUpdate.then( () => {
-              console.log( "[quase-builder] ✨", data.updates );
+              console.log( "[quase-builder] ✨", data.update );
               state.success = true;
               updateUI();
               removeErrorOverlay();
-              return hmrUpdate( data.updates );
+              return hmrUpdate( data.update );
             } );
             break;
           case "error":
@@ -436,7 +447,7 @@ type GlobalThis = {
     const files = moreInfo.f;
     const mToFiles = moreInfo.m;
     for ( const id in mToFiles ) {
-      moduleToFiles[ id ] = mToFiles[ id ].map( f => publicPath + files[ f ] );
+      moduleToAssets[ id ] = mToFiles[ id ].map( f => publicPath + files[ f ] );
     }
   }
 
@@ -521,7 +532,7 @@ type GlobalThis = {
 
   function requireSync( id: string ) {
     if ( !exists( id ) ) {
-      ( moduleToFiles[ id ] || [] ).forEach( importFileSync );
+      ( moduleToAssets[ id ] || [] ).forEach( importFileSync );
     }
     return load( id );
   }
@@ -533,7 +544,7 @@ type GlobalThis = {
 
   function requireAsync( id: string ) {
     return Promise.all(
-      exists( id ) ? [] : ( moduleToFiles[ id ] || [] ).map( importFileAsync )
+      exists( id ) ? [] : ( moduleToAssets[ id ] || [] ).map( importFileAsync )
     ).then( () => load( id ) );
   }
 

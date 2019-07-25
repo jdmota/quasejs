@@ -125,11 +125,12 @@ export type FinalAsset = {
   inlineAssets: FinalAsset[];
 };
 
-export type ProcessedGraph = {
+export type ProcessedGraph = Readonly<{
   hashIds: ReadonlyMap<string, string>;
   moduleToFile: ReadonlyMap<FinalModule, FinalAsset>;
   files: readonly FinalAsset[];
-};
+  moduleToAssets: Readonly<{ [id: string]: string[] }>;
+}>;
 
 export type ToWrite = {
   data: Data;
@@ -151,20 +152,30 @@ export type Info = {
   isEntry: boolean;
 };
 
-export type Updates = {
-  id: string;
-  file: string|null;
-  prevFile: string|null;
-  reloadApp: boolean;
-  requiredAssets: string[];
-}[];
+export type HmrUpdate = Readonly<{
+  updates: Readonly<{
+    id: string;
+    file: string | null;
+    prevFile: string | null;
+    reloadApp: boolean;
+  }>[];
+  moduleToAssets: Readonly<{ [id: string]: string[] }>;
+}>;
+
+export type HmrMessage = {
+  type: "update";
+  update: HmrUpdate;
+} | {
+  type: "error";
+  error: string;
+};
 
 export type Output = {
   filesInfo: Info[];
   removedCount: number;
   time: number;
   timeCheckpoints?: Map<string, number>;
-  updates: Updates;
+  hmrUpdate: HmrUpdate;
 };
 
 type MaybeAsync<T> = T | Promise<T>;

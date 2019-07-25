@@ -1,4 +1,4 @@
-import { Options, WatchedFiles, Updates, Loc, Checker, ICheckerImpl, Transforms, Output, FinalModule } from "../types";
+import { Options, WatchedFiles, Loc, Checker, ICheckerImpl, Transforms, Output, FinalModule, HmrUpdate } from "../types";
 import { resolvePath, makeAbsolute } from "../utils/path";
 import { Time } from "../utils/time";
 import { PluginsRunnerLocal } from "../plugins/local-runner";
@@ -276,7 +276,7 @@ export class Builder extends EventEmitter {
       this.time.checkpoint( "service worker creation" );
     }
 
-    const updates: Updates = [];
+    const updates: HmrUpdate[ "updates" ] = [];
 
     if ( this.options.hmr ) {
       const previousSummary = this.summary;
@@ -288,11 +288,6 @@ export class Builder extends EventEmitter {
           // Inline assets
           continue;
         }
-
-        const requiredAssets = graph.requiredAssets(
-          m,
-          processedGraph.moduleToFile
-        ).map( a => a.relativeDest );
 
         const data = {
           id,
@@ -309,16 +304,14 @@ export class Builder extends EventEmitter {
             id,
             file: data.file,
             prevFile: null,
-            reloadApp: data.fileIsEntry,
-            requiredAssets
+            reloadApp: data.fileIsEntry
           } );
         } else if ( inPrevSummary.lastChangeId !== data.lastChangeId ) {
           updates.push( {
             id,
             file: data.file,
             prevFile: inPrevSummary.file,
-            reloadApp: inPrevSummary.fileIsEntry || data.fileIsEntry,
-            requiredAssets
+            reloadApp: inPrevSummary.fileIsEntry || data.fileIsEntry
           } );
         }
       }
@@ -329,8 +322,7 @@ export class Builder extends EventEmitter {
             id,
             file: null,
             prevFile: inPrevSummary.file,
-            reloadApp: inPrevSummary.fileIsEntry,
-            requiredAssets: []
+            reloadApp: inPrevSummary.fileIsEntry
           } );
         }
       }
@@ -343,7 +335,10 @@ export class Builder extends EventEmitter {
       removedCount,
       time: this.time.end(),
       timeCheckpoints: this.options._debug ? this.time.getCheckpoints() : undefined,
-      updates
+      hmrUpdate: {
+        updates,
+        moduleToAssets: processedGraph.moduleToAssets
+      }
     };
   }
 

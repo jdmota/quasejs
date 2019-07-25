@@ -23,7 +23,7 @@
   const fetches = blank(); // Fetches
 
   const publicPath = $_PUBLIC_PATH;
-  const moduleToFiles = blank();
+  const moduleToAssets = blank();
   const hmr = {hostname:$_HMR_HOSTNAME,port:$_HMR_PORT};
   const hmrOps = hmr ? makeHmr(hmr) : null;
 
@@ -194,25 +194,30 @@
 
     let lastHotUpdate = Promise.resolve();
 
-    const hmrUpdate = async updates => {
+    const hmrUpdate = async hmrUpdate => {
       const seen = new Set();
       let queue = [];
       let shouldReloadApp = false;
       let reloadCauseEntry = false;
 
-      for (const _ref of updates) {
+      for (const id in moduleToAssets) {
+        moduleToAssets[id] = undefined;
+      }
+
+      for (const id in hmrUpdate.moduleToAssets) {
+        moduleToAssets[id] = hmrUpdate.moduleToAssets[id].map(f => publicPath + f);
+      }
+
+      for (const _ref of hmrUpdate.updates) {
         const {
-          id,
           file,
           prevFile,
-          reloadApp,
-          requiredAssets
+          reloadApp
         } = _ref;
 
         if (file) {
           fileImports[publicPath + file] = UNDEFINED;
           fetches[publicPath + file] = UNDEFINED;
-          moduleToFiles[id] = requiredAssets.map(f => publicPath + f);
         }
 
         if (prevFile) {
@@ -225,7 +230,7 @@
 
       reloadCauseEntry = shouldReloadApp;
 
-      for (const _ref2 of updates) {
+      for (const _ref2 of hmrUpdate.updates) {
         const {
           id,
           file
@@ -257,6 +262,10 @@
 
           if (notifyAncestors) {
             api.notifyParents(seen, needReload, error);
+          }
+
+          if (error) {
+            console.error(error);
           }
         }
 
@@ -318,11 +327,11 @@
         switch (data.type) {
           case "update":
             lastHotUpdate = lastHotUpdate.then(() => {
-              console.log("[quase-builder] ✨", data.updates);
+              console.log("[quase-builder] ✨", data.update);
               state.success = true;
               updateUI();
               removeErrorOverlay();
-              return hmrUpdate(data.updates);
+              return hmrUpdate(data.update);
             });
             break;
 
@@ -383,7 +392,7 @@
     const mToFiles = moreInfo.m;
 
     for (const id in mToFiles) {
-      moduleToFiles[id] = mToFiles[id].map(f => publicPath + files[f]);
+      moduleToAssets[id] = mToFiles[id].map(f => publicPath + files[f]);
     }
   }
 
@@ -474,7 +483,7 @@
 
   function requireSync(id) {
     if (!exists(id)) {
-      (moduleToFiles[id] || []).forEach(importFileSync);
+      (moduleToAssets[id] || []).forEach(importFileSync);
     }
 
     return load(id);
@@ -486,7 +495,7 @@
   };
 
   function requireAsync(id) {
-    return Promise.all(exists(id) ? [] : (moduleToFiles[id] || []).map(importFileAsync)).then(() => load(id));
+    return Promise.all(exists(id) ? [] : (moduleToAssets[id] || []).map(importFileAsync)).then(() => load(id));
   }
 
   function importFileSync(file) {

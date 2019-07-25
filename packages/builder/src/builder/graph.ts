@@ -150,19 +150,18 @@ export class Graph {
 
   requiredAssets(
     module: FinalModule,
-    moduleToFile: ReadonlyMap<FinalModule, FinalAsset>,
-    exclude?: FinalAsset
+    moduleToFile: ReadonlyMap<FinalModule, FinalAsset>
   ) {
     const set: Set<FinalAsset> = new Set();
 
     const asset = moduleToFile.get( module );
-    if ( asset && asset !== exclude ) {
+    if ( asset ) {
       set.add( asset );
     }
 
     for ( const dep of this.syncDeps( module ) ) {
       const asset = moduleToFile.get( dep );
-      if ( asset && asset !== exclude ) {
+      if ( asset ) {
         set.add( asset );
       }
     }
@@ -331,28 +330,32 @@ export function processGraph( graph: Graph ): ProcessedGraph {
 
   // "module" -> "assets" mapping necessary for the runtime
   // It tells for each module, which files it needs to fetch
-  const globalModuleToAssets: Map<string, string[]> = new Map();
+  const globalModuleToAssets: { [id: string]: string[] } = {};
+
+  for ( const module of moduleToFile.keys() ) {
+    const hashId = get( graph.hashIds, module.id );
+    // Sort to get deterministic results
+    globalModuleToAssets[ hashId ] =
+      graph.requiredAssets( module, moduleToFile ).map( f => f.relativeDest ).sort();
+  }
 
   // Manifest for each asset
+  // Optimized by not specifying the asset itself and modules already present in it
   function manifest( asset: FinalAsset ): Manifest {
     const moduleToAssets: Map<string, string[]> = new Map();
     const files: Set<string> = new Set();
 
     for ( const module of assetDependencies( asset ) ) {
       const hashId = get( graph.hashIds, module.id );
-      let assets = globalModuleToAssets.get( hashId );
+      const assets = globalModuleToAssets[ hashId ];
 
-      if ( !assets ) {
-        // Sort to get deterministic results
-        assets = graph.requiredAssets( module, moduleToFile, asset ).map( f => f.relativeDest ).sort();
-        globalModuleToAssets.set( hashId, assets );
-      }
-
+      // Store required assets except this one
       for ( const f of assets ) {
-        files.add( f );
+        if ( f !== asset.relativeDest ) {
+          files.add( f );
+        }
       }
-
-      moduleToAssets.set( hashId, assets );
+      moduleToAssets.set( hashId, assets.filter( a => a !== asset.relativeDest ) );
     }
     return {
       files: Array.from( files ).sort(),
@@ -367,7 +370,8 @@ export function processGraph( graph: Graph ): ProcessedGraph {
   return {
     hashIds: graph.hashIds,
     moduleToFile,
-    files: sortFilesByEntry( files ) // Leave entries last
+    files: sortFilesByEntry( files ), // Leave entries last
+    moduleToAssets: globalModuleToAssets
   };
 }
 
