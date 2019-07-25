@@ -329,23 +329,30 @@ export function processGraph( graph: Graph ): ProcessedGraph {
     return set;
   }
 
+  // "module" -> "assets" mapping necessary for the runtime
+  // It tells for each module, which files it needs to fetch
+  const globalModuleToAssets: Map<string, string[]> = new Map();
+
   // Manifest for each asset
   function manifest( asset: FinalAsset ): Manifest {
-    // Produce the "module" -> "asset" mapping necessary for the runtime
-    // It tells for each module, which files it needs to fetch
     const moduleToAssets: Map<string, string[]> = new Map();
     const files: Set<string> = new Set();
 
     for ( const module of assetDependencies( asset ) ) {
-      const array = graph.requiredAssets( module, moduleToFile, asset );
-      if ( array.length > 0 ) {
-        for ( const f of array ) {
-          files.add( f.relativeDest );
-        }
+      const hashId = get( graph.hashIds, module.id );
+      let assets = globalModuleToAssets.get( hashId );
+
+      if ( !assets ) {
         // Sort to get deterministic results
-        const hashId = get( graph.hashIds, module.id );
-        moduleToAssets.set( hashId, array.map( f => f.relativeDest ) );
+        assets = graph.requiredAssets( module, moduleToFile, asset ).map( f => f.relativeDest ).sort();
+        globalModuleToAssets.set( hashId, assets );
       }
+
+      for ( const f of assets ) {
+        files.add( f );
+      }
+
+      moduleToAssets.set( hashId, assets );
     }
     return {
       files: Array.from( files ).sort(),

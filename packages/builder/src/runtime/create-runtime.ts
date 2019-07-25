@@ -67,7 +67,7 @@ export async function createRuntime(
 
 export function createRuntimeManifest( { files, moduleToAssets }: Manifest ): RuntimeManifest | null {
 
-  if ( moduleToAssets.size === 0 ) {
+  if ( files.length === 0 ) {
     return null;
   }
 
@@ -79,7 +79,9 @@ export function createRuntimeManifest( { files, moduleToAssets }: Manifest ): Ru
 
   const $idToFiles: { [key: string]: number[] } = {};
   for ( const [ hashId, files ] of moduleToAssets ) {
-    $idToFiles[ hashId ] = files.map( f => fileToIdx[ f ] );
+    if ( files.length > 0 ) {
+      $idToFiles[ hashId ] = files.map( f => fileToIdx[ f ] );
+    }
   }
 
   return {
