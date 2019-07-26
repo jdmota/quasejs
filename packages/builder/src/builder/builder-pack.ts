@@ -7,6 +7,7 @@ import { Builder } from "./builder";
 import { sourceMapToString, sourceMapToUrl } from "@quase/source-map";
 import path from "path";
 import fs from "fs-extra";
+import { KeyToArray } from "../utils/key-to-array";
 
 const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
 const rehash = /(\..*)?$/;
@@ -20,13 +21,13 @@ export class BuilderPack {
   private builder: Builder;
   private options: Options;
   private previousFiles: Map<string, FinalAsset>;
-  private writtenFiles: Map<string, string>;
+  private allWrittenFiles: KeyToArray<string, string>;
 
   constructor( builder: Builder ) {
     this.builder = builder;
     this.options = builder.options;
     this.previousFiles = new Map();
-    this.writtenFiles = new Map();
+    this.allWrittenFiles = new KeyToArray();
   }
 
   private createRuntime( info: RuntimeInfo ) {
@@ -38,7 +39,10 @@ export class BuilderPack {
     }, info );
   }
 
-  private async writeAsset( asset: FinalAsset, { data, map }: ToWrite ): Promise<Info> {
+  private async writeAsset(
+    asset: FinalAsset, { data, map }: ToWrite,
+    currWrittenFiles: KeyToArray<string, string>
+  ): Promise<Info> {
 
     let dest = path.join( this.options.dest, asset.relativeDest );
     const inlineMap = this.options.optimization.sourceMaps === "inline";
@@ -71,7 +75,8 @@ export class BuilderPack {
 
     asset.hash = h;
 
-    this.writtenFiles.set( asset.module.id, dest );
+    this.allWrittenFiles.set( asset.module.id, dest );
+    currWrittenFiles.set( asset.module.id, dest );
 
     await fs.mkdirp( directory );
 
@@ -79,6 +84,9 @@ export class BuilderPack {
       if ( inlineMap ) {
         await fs.writeFile( dest, data );
       } else {
+        this.allWrittenFiles.set( asset.module.id, dest + ".map" );
+        currWrittenFiles.set( asset.module.id, dest + ".map" );
+
         const p1 = fs.writeFile( dest, data + `${path.basename( dest )}.map` );
         const p2 = fs.writeFile( dest + ".map", sourceMapToString( map ) );
         await p1;
@@ -97,7 +105,11 @@ export class BuilderPack {
     };
   }
 
-  private async render( asset: FinalAsset, hashIds: ReadonlyMap<string, string> ): Promise<Info> {
+  private async render(
+    asset: FinalAsset,
+    hashIds: ReadonlyMap<string, string>,
+    currWrittenFiles: KeyToArray<string, string>
+  ): Promise<Info> {
     const manifest = createRuntimeManifest( asset.manifest );
 
     if ( asset.isEntry ) {
@@ -119,7 +131,7 @@ export class BuilderPack {
       await this.builder.pluginsRunner.renderAsset( asset, hashIds, new BuilderUtil( this.options ) );
 
     if ( result ) {
-      return this.writeAsset( asset, result );
+      return this.writeAsset( asset, result, currWrittenFiles );
     }
     throw new Error( `Could not build asset ${asset.module.id}` );
   }
@@ -184,20 +196,25 @@ export class BuilderPack {
 
   async run( processedGraph: ProcessedGraph ) {
 
+    const previousWrittenFiles = this.allWrittenFiles.allValues();
+    const currWrittenFiles = new KeyToArray<string, string>();
+
     // See which assets we need to rerender
-    const files = processedGraph.files.filter(
+    const filesToRender = processedGraph.files.filter(
       f => this.shouldRebuild( processedGraph, this.previousFiles.get( f.module.id ), f )
     );
 
     // Render them
     const filesInfo = await Promise.all(
-      files.map( a => this.render( a, processedGraph.hashIds ) )
+      filesToRender.map( a => this.render( a, processedGraph.hashIds, currWrittenFiles ) )
     );
 
     // Calculate which files to remove
-    const toRemove = new Map( this.writtenFiles );
     for ( const asset of processedGraph.files ) {
-      toRemove.delete( asset.module.id );
+      const files = currWrittenFiles.get( asset.module.id ) || this.allWrittenFiles.get( asset.module.id );
+      for ( const file of files ) {
+        previousWrittenFiles.delete( file );
+      }
     }
 
     // Save current files for later
@@ -207,14 +224,14 @@ export class BuilderPack {
     let removedCount = 0;
 
     await Promise.all(
-      Array.from( toRemove ).map( async( [ id, file ] ) => {
+      Array.from( previousWrittenFiles ).map( async file => {
         try {
           await fs.unlink( file );
           removedCount++;
-          this.writtenFiles.delete( id );
         } catch ( err ) {
-          if ( err.code === "ENOENT" || err.code === "EISDIR" ) {
-            this.writtenFiles.delete( id );
+          if ( err.code !== "ENOENT" && err.code !== "EISDIR" ) {
+            // Maybe we could not delete this file... Delete next time
+            this.allWrittenFiles.set( "", file );
           }
         }
       } )

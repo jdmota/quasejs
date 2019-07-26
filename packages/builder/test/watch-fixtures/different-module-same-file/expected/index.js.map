@@ -1,0 +1,1 @@
+{"version":3,"sources":["../working/index.html","../working/a.js"],"names":["console","log"],"mappings":";2FACe;;kDCDfA,OAAO,CAACC,GAAR,CAAa,MAAb","file":"index.js","sourcesContent":["\n        import \"./a.js\";\n      ","console.log( \"a.js\" );\n"]}

@@ -17,6 +17,8 @@ import path from "path";
 import fs from "fs-extra";
 import { Computation } from "../utils/computation-registry";
 import { BuildCancelled } from "./build-cancelled";
+import { get } from "../utils/get";
+import { setEquals } from "../utils/set-equals";
 
 export class Builder extends EventEmitter {
 
@@ -44,9 +46,10 @@ export class Builder extends EventEmitter {
   private builderPack: BuilderPack;
   private summary: Map<string, {
     id: string;
-    lastChangeId: number;
     file: string;
     fileIsEntry: boolean;
+    transformedId: number;
+    requires: Set<string>;
   }>;
 
   constructor( options: Options, testing?: boolean ) {
@@ -282,18 +285,14 @@ export class Builder extends EventEmitter {
       const previousSummary = this.summary;
       const newSummary = new Map();
 
-      for ( const [ id, m ] of graph ) {
-        const file = processedGraph.moduleToFile.get( m );
-        if ( !file ) {
-          // Inline assets
-          continue;
-        }
-
+      for ( const [ m, file ] of processedGraph.moduleToFile ) {
+        const { id } = m;
         const data = {
           id,
-          lastChangeId: m.resolvedId,
           file: file.relativeDest,
-          fileIsEntry: file.isEntry
+          fileIsEntry: file.isEntry,
+          transformedId: m.transformedId,
+          requires: new Set( m.requires.map( ( { id } ) => get( processedGraph.hashIds, id ) ) )
         };
 
         newSummary.set( id, data );
@@ -306,7 +305,10 @@ export class Builder extends EventEmitter {
             prevFile: null,
             reloadApp: data.fileIsEntry
           } );
-        } else if ( inPrevSummary.lastChangeId !== data.lastChangeId ) {
+        } else if (
+          inPrevSummary.transformedId !== data.transformedId ||
+          !setEquals( inPrevSummary.requires, data.requires )
+        ) {
           updates.push( {
             id,
             file: data.file,
