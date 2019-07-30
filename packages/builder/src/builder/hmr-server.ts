@@ -2,6 +2,7 @@
 import { formatError } from "../utils/error";
 import { Output, HmrUpdate, HmrMessage } from "../types";
 import { Builder } from "./builder";
+import { IncomingMessage } from "http";
 
 const http = require( "http" );
 const WebSocket = require( "ws" );
@@ -31,7 +32,16 @@ export class HMRServer {
     this.builder.emit( "hmr-starting" );
 
     this.server = http.createServer();
-    this.wss = new WebSocket.Server( { server: this.server } );
+    this.wss = new WebSocket.Server( {
+      server: this.server,
+      verifyClient: ( info: { origin: string; req: IncomingMessage; secure: boolean } ) => {
+        if ( info.origin === "file://" ) {
+          return true;
+        }
+        const url = new URL( info.origin );
+        return url.hostname === "localhost";
+      }
+    } );
 
     await new Promise( async r => this.server.listen( 0, "0.0.0.0", r ) );
 
