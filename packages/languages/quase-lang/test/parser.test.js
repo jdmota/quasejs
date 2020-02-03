@@ -1,37 +1,38 @@
 // @flow
 import { Parser } from "../src/frontend/parser";
 
-declare function test( a: any, b: any ): void;
-declare function expect( a: any ): any;
+declare function test(a: any, b: any): void;
+declare function expect(a: any): any;
 
-function serializeAst( ast: any, indent: string = "" ): string {
-
+function serializeAst(ast: any, indent: string = ""): string {
   const { start, end } = ast.loc || { start: {}, end: {} };
-  const header = ast.type ? `${ast.type} (${start.line}:${start.column}-${end.line}:${end.column})\n` : "Object\n";
+  const header = ast.type
+    ? `${ast.type} (${start.line}:${start.column}-${end.line}:${end.column})\n`
+    : "Object\n";
   let str = header;
 
-  for ( const key of Object.keys( ast ).sort() ) {
-    const node = ast[ key ];
-    if ( key === "type" || key === "loc" ) {
+  for (const key of Object.keys(ast).sort()) {
+    const node = ast[key];
+    if (key === "type" || key === "loc") {
       continue;
     }
-    if ( Array.isArray( node ) ) {
+    if (Array.isArray(node)) {
       str += `${indent}  ${key}\n`;
-      for ( const subNode of node ) {
-        str += `${indent}    ${serializeAst( subNode, indent + "    " )}\n`;
+      for (const subNode of node) {
+        str += `${indent}    ${serializeAst(subNode, indent + "    ")}\n`;
       }
-    } else if ( node != null && typeof node === "object" ) {
-      str += `${indent}  ${key}: ${serializeAst( node, indent + "  " )}\n`;
-    } else if ( typeof node === "number" ) {
+    } else if (node != null && typeof node === "object") {
+      str += `${indent}  ${key}: ${serializeAst(node, indent + "  ")}\n`;
+    } else if (typeof node === "number") {
       str += `${indent}  ${key}: N(${node})\n`;
-    } else if ( typeof node === "string" ) {
+    } else if (typeof node === "string") {
       str += `${indent}  ${key}: S(${node})\n`;
-    } else if ( node !== undefined ) {
+    } else if (node !== undefined) {
       str += `${indent}  ${key}: ${node}\n`;
     }
   }
 
-  return str.replace( /\n$/, "" );
+  return str.replace(/\n$/, "");
 }
 
 const tests = {
@@ -228,7 +229,8 @@ const tests = {
     }
   };`,
   decl20: "fun a( a: A, { b }: B, [ c ]: C, d: D = 0, ...e: E ) {};",
-  decl21: "fun a( var a: A, val { b }: B, var [ c ]: C, val d: D = 0, var ...e: E ) {};",
+  decl21:
+    "fun a( var a: A, val { b }: B, var [ c ]: C, val d: D = 0, var ...e: E ) {};",
   decl22: `class A extends B {
     init() = super();
     override a() {
@@ -363,34 +365,34 @@ const errors = {
   exported2: "export class() {}",
 };
 
-for ( const key in tests ) {
-  test( `parser: ${key}`, () => {
-    const input = tests[ key ];
-    const parser = new Parser( { input } );
+for (const key in tests) {
+  test(`parser: ${key}`, () => {
+    const input = tests[key];
+    const parser = new Parser({ input });
 
     try {
-      expect( serializeAst( parser.parse() ) ).toMatchSnapshot( key );
-    } catch ( e ) {
-      expect( e.stack ).toBe( key );
+      expect(serializeAst(parser.parse())).toMatchSnapshot(key);
+    } catch (e) {
+      expect(e.stack).toBe(key);
     }
-  } );
+  });
 }
 
-for ( const key in errors ) {
+for (const key in errors) {
   const snapKey = "error " + key;
-  test( `parser: ${snapKey}`, () => {
-    const input = errors[ key ];
-    const parser = new Parser( { input } );
+  test(`parser: ${snapKey}`, () => {
+    const input = errors[key];
+    const parser = new Parser({ input });
 
     try {
       parser.parse();
-    } catch ( e ) {
-      expect( e ).toMatchSnapshot( snapKey );
+    } catch (e) {
+      expect(e).toMatchSnapshot(snapKey);
       return;
     }
 
-    expect( false ).toBe( key );
-  } );
+    expect(false).toBe(key);
+  });
 }
 
 /* TODO test( "skip hashbang", () => {

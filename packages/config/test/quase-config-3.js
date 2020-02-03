@@ -1,6 +1,6 @@
-module.exports = function( arg ) {
-  return Promise.resolve( {
+module.exports = function(arg) {
+  return Promise.resolve({
     arg,
-    fromFunction: "yes"
-  } );
+    fromFunction: "yes",
+  });
 };

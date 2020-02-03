@@ -3,27 +3,30 @@ import { ModuleContext } from "../plugins/context";
 import { PipelineComputation } from "./pipeline-computation";
 import { ResolveComputation } from "./resolve-computation";
 
-export type ModuleArg = Readonly<{
-  innerId: null;
-  parentInner: null;
-  parentGenerator: null;
-  transforms: readonly string[];
-  path: string;
-}> | Readonly<{
-  // This module is inside other module
-  innerId: string;
-  parentInner: Module;
-  parentGenerator: null;
-  transforms: readonly string[];
-  path: string;
-}> | Readonly<{
-  // This module was transformed from other module
-  innerId: null;
-  parentInner: null;
-  parentGenerator: Module;
-  transforms: readonly string[];
-  path: string;
-}>;
+export type ModuleArg =
+  | Readonly<{
+      innerId: null;
+      parentInner: null;
+      parentGenerator: null;
+      transforms: readonly string[];
+      path: string;
+    }>
+  | Readonly<{
+      // This module is inside other module
+      innerId: string;
+      parentInner: Module;
+      parentGenerator: null;
+      transforms: readonly string[];
+      path: string;
+    }>
+  | Readonly<{
+      // This module was transformed from other module
+      innerId: null;
+      parentInner: null;
+      parentGenerator: Module;
+      transforms: readonly string[];
+      path: string;
+    }>;
 
 export type Module = {
   // Unique id
@@ -49,9 +52,9 @@ export type ModuleInfo = Readonly<{
 }>;
 
 export class ModuleContextWithoutFS extends ModuleContext {
-
-  registerFile( _: string, _2: { onlyExistance?: boolean } = {} ) {
-    throw new Error( "File system operations are not possible with this context" );
+  registerFile(_: string, _2: { onlyExistance?: boolean } = {}) {
+    throw new Error(
+      "File system operations are not possible with this context"
+    );
   }
-
 }

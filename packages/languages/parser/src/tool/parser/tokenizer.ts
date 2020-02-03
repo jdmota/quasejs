@@ -23,20 +23,19 @@ export const FAKE_LOC = {
   start: {
     pos: 0,
     line: 0,
-    column: 0
+    column: 0,
   },
   end: {
     pos: 0,
     line: 0,
-    column: 0
-  }
+    column: 0,
+  },
 };
 
 const lineBreak = /\r\n?|\n/;
-const lineBreakG = new RegExp( lineBreak.source, "g" );
+const lineBreakG = new RegExp(lineBreak.source, "g");
 
 export class Tokenizer<Token> {
-
   input: string;
   inputLen: number;
   comments: Comment[];
@@ -47,7 +46,7 @@ export class Tokenizer<Token> {
   _lastToken: Token;
   _eof: Token;
 
-  constructor( input: string ) {
+  constructor(input: string) {
     this.input = input;
     this.inputLen = input.length;
     this.comments = [];
@@ -59,18 +58,18 @@ export class Tokenizer<Token> {
     this._eof = this.eof();
   }
 
-  error( message: string ) {
-    throw error( message, this._start );
+  error(message: string) {
+    throw error(message, this._start);
   }
 
   unexpectedChar() {
-    throw this.error( `Unexpected character '${this.charAt( this.pos )}'` );
+    throw this.error(`Unexpected character '${this.charAt(this.pos)}'`);
   }
 
   getAllTokens(): Token[] {
     const tokens = [];
-    while ( this._lastToken !== this._eof ) {
-      tokens.push( this.nextToken() );
+    while (this._lastToken !== this._eof) {
+      tokens.push(this.nextToken());
     }
     return tokens;
   }
@@ -87,14 +86,14 @@ export class Tokenizer<Token> {
     return {
       pos: this.pos,
       line: this._curLine,
-      column: this.pos - this._lineStart
+      column: this.pos - this._lineStart,
     };
   }
 
   loc() {
     return {
       start: this._start,
-      end: this.curPosition()
+      end: this.curPosition(),
     };
   }
 
@@ -103,34 +102,34 @@ export class Tokenizer<Token> {
     this._curLine++;
   }
 
-  codeAt( pos: number ) {
-    return this.input.charCodeAt( pos );
+  codeAt(pos: number) {
+    return this.input.charCodeAt(pos);
   }
 
-  charAt( pos: number ) {
-    return this.input.charAt( pos );
+  charAt(pos: number) {
+    return this.input.charAt(pos);
   }
 
   initial(): Token {
-    throw new Error( "Abstract" );
+    throw new Error("Abstract");
   }
 
   eof(): Token {
-    throw new Error( "Abstract" );
+    throw new Error("Abstract");
   }
 
-  identifier( _word: string ): Token {
-    throw new Error( "Abstract" );
+  identifier(_word: string): Token {
+    throw new Error("Abstract");
   }
 
   readToken(): Token {
-    throw new Error( "Abstract" );
+    throw new Error("Abstract");
   }
 
   nextToken(): Token {
     this.performSkip();
     this._start = this.curPosition();
-    if ( this.pos >= this.inputLen ) {
+    if (this.pos >= this.inputLen) {
       this._lastToken = this._eof;
     } else {
       this._lastToken = this.readToken();
@@ -138,31 +137,31 @@ export class Tokenizer<Token> {
     return this._lastToken;
   }
 
-  isNewLine( code: number ): boolean {
+  isNewLine(code: number): boolean {
     return code === 10 || code === 13;
   }
 
-  isIdentifierStart( code: number ): boolean {
-    if ( code < 65 ) return code === 36; // 36 -> $
-    if ( code < 91 ) return true; // 65-90 -> A-Z
-    if ( code < 97 ) return code === 95; // 95 -> _
-    if ( code < 123 ) return true; // 97-122 -> a-z
+  isIdentifierStart(code: number): boolean {
+    if (code < 65) return code === 36; // 36 -> $
+    if (code < 91) return true; // 65-90 -> A-Z
+    if (code < 97) return code === 95; // 95 -> _
+    if (code < 123) return true; // 97-122 -> a-z
     return false;
   }
 
-  isIdentifierChar( code: number ): boolean {
-    if ( code < 48 ) return code === 36; // 36 -> $
-    if ( code < 58 ) return true; // 48-57 -> 0-9
-    return this.isIdentifierStart( code );
+  isIdentifierChar(code: number): boolean {
+    if (code < 48) return code === 36; // 36 -> $
+    if (code < 58) return true; // 48-57 -> 0-9
+    return this.isIdentifierStart(code);
   }
 
   consumeNewLine(): number {
     const start = this.pos;
-    const code = this.codeAt( this.pos );
-    switch ( code ) {
+    const code = this.codeAt(this.pos);
+    switch (code) {
       case 13: // '\r' carriage return
         // If the next char is '\n', move to pos+1 and let the next branch handle it
-        if ( this.codeAt( this.pos + 1 ) === 10 ) {
+        if (this.codeAt(this.pos + 1) === 10) {
           this.pos++;
         }
       case 10: // '\n' line feed
@@ -173,11 +172,11 @@ export class Tokenizer<Token> {
   }
 
   skip(): boolean {
-    const code = this.codeAt( this.pos );
-    switch ( code ) {
+    const code = this.codeAt(this.pos);
+    switch (code) {
       case 13: // '\r' carriage return
         // If the next char is '\n', move to pos+1 and let the next branch handle it
-        if ( this.codeAt( this.pos + 1 ) === 10 ) {
+        if (this.codeAt(this.pos + 1) === 10) {
           this.pos++;
         }
       case 10: // '\n' line feed
@@ -191,7 +190,7 @@ export class Tokenizer<Token> {
         return true;
 
       case 47: // '/'
-        switch ( this.codeAt( this.pos + 1 ) ) {
+        switch (this.codeAt(this.pos + 1)) {
           case 42: // '*'
             this.skipBlockComment();
             return true;
@@ -204,8 +203,8 @@ export class Tokenizer<Token> {
   }
 
   performSkip(): void {
-    while ( this.pos < this.inputLen ) {
-      if ( !this.skip() ) {
+    while (this.pos < this.inputLen) {
+      if (!this.skip()) {
         break;
       }
     }
@@ -214,16 +213,16 @@ export class Tokenizer<Token> {
   skipLineComment(): void {
     const start = this.curPosition();
 
-    let ch = this.codeAt( ( this.pos += 2 ) );
-    if ( this.pos < this.inputLen ) {
-      while ( !this.isNewLine( ch ) && ++this.pos < this.inputLen ) {
-        ch = this.codeAt( this.pos );
+    let ch = this.codeAt((this.pos += 2));
+    if (this.pos < this.inputLen) {
+      while (!this.isNewLine(ch) && ++this.pos < this.inputLen) {
+        ch = this.codeAt(this.pos);
       }
     }
 
     this.pushComment(
       false,
-      this.input.slice( start.pos + 2, this.pos ),
+      this.input.slice(start.pos + 2, this.pos),
       start,
       this.curPosition()
     );
@@ -232,58 +231,49 @@ export class Tokenizer<Token> {
   skipBlockComment(): void {
     const start = this.curPosition();
 
-    const end = this.input.indexOf( "*/", ( this.pos += 2 ) );
-    if ( end === -1 ) {
-      throw new Error( "Unterminated comment" );
+    const end = this.input.indexOf("*/", (this.pos += 2));
+    if (end === -1) {
+      throw new Error("Unterminated comment");
     }
     this.pos = end + 2;
 
-    const comment = this.input.slice( start.pos + 2, end );
+    const comment = this.input.slice(start.pos + 2, end);
 
     lineBreakG.lastIndex = start.pos;
 
     let match;
-    while (
-      ( match = lineBreakG.exec( this.input ) ) &&
-      match.index < this.pos
-    ) {
+    while ((match = lineBreakG.exec(this.input)) && match.index < this.pos) {
       this._curLine++;
-      this._lineStart = match.index + match[ 0 ].length;
+      this._lineStart = match.index + match[0].length;
     }
 
-    this.pushComment(
-      true,
-      comment,
-      start,
-      this.curPosition()
-    );
+    this.pushComment(true, comment, start, this.curPosition());
   }
 
-  pushComment( block: boolean, value: string, start: Position, end: Position ) {
-    this.comments.push( {
+  pushComment(block: boolean, value: string, start: Position, end: Position) {
+    this.comments.push({
       type: block ? "CommentBlock" : "CommentLine",
       value,
       loc: {
         start,
-        end
-      }
-    } );
+        end,
+      },
+    });
   }
 
   readWord(): string {
     const start = this.pos;
-    while ( this.pos < this.inputLen ) {
-      if ( this.isIdentifierChar( this.codeAt( this.pos ) ) ) {
+    while (this.pos < this.inputLen) {
+      if (this.isIdentifierChar(this.codeAt(this.pos))) {
         this.pos++;
       } else {
         break;
       }
     }
-    return this.input.slice( start, this.pos );
+    return this.input.slice(start, this.pos);
   }
 
   readIdentifier(): Token {
-    return this.identifier( this.readWord() );
+    return this.identifier(this.readWord());
   }
-
 }

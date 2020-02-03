@@ -1,6 +1,6 @@
 type MapKey = {
   hashCode(): number;
-  equals( other: unknown ): boolean;
+  equals(other: unknown): boolean;
 };
 
 type MapEntry<K, V> = {
@@ -11,8 +11,7 @@ type MapEntry<K, V> = {
 const TABLE_SIZE = 10;
 
 export class MapKeyToValue<K extends MapKey, V> {
-
-  table: ( MapEntry<K, V>[] | undefined )[];
+  table: (MapEntry<K, V>[] | undefined)[];
   size: number;
 
   constructor() {
@@ -20,51 +19,51 @@ export class MapKeyToValue<K extends MapKey, V> {
     this.size = 0;
   }
 
-  _entry( key: K ) {
-    const idx = Math.abs( key.hashCode() % TABLE_SIZE );
-    let list = this.table[ idx ];
-    if ( !list ) {
-      list = this.table[ idx ] = [];
+  _entry(key: K) {
+    const idx = Math.abs(key.hashCode() % TABLE_SIZE);
+    let list = this.table[idx];
+    if (!list) {
+      list = this.table[idx] = [];
     }
     return {
-      entry: list.find( entry => entry.key.equals( key ) ),
-      list
+      entry: list.find(entry => entry.key.equals(key)),
+      list,
     };
   }
 
-  get( key: K ): V | null {
-    const { entry } = this._entry( key );
-    if ( entry ) {
+  get(key: K): V | null {
+    const { entry } = this._entry(key);
+    if (entry) {
       return entry.value;
     }
     return null;
   }
 
-  add( key: K, value: V ) {
-    const { entry, list } = this._entry( key );
-    if ( entry ) {
-      if ( entry.value === value ) {
+  add(key: K, value: V) {
+    const { entry, list } = this._entry(key);
+    if (entry) {
+      if (entry.value === value) {
         return false;
       }
-      throw new Error( `Already exists key:${key} value:${value}` );
+      throw new Error(`Already exists key:${key} value:${value}`);
     }
-    list.push( {
+    list.push({
       key,
-      value
-    } );
+      value,
+    });
     this.size++;
     return true;
   }
 
-  * [Symbol.iterator]() {
+  *[Symbol.iterator]() {
     let idx = 0;
     let listIdx = 0;
-    while ( idx < this.table.length ) {
-      const list = this.table[ idx ];
-      if ( list ) {
-        while ( listIdx < list.length ) {
-          const { key, value } = list[ listIdx ];
-          yield [ key, value ] as [ K, V ];
+    while (idx < this.table.length) {
+      const list = this.table[idx];
+      if (list) {
+        while (listIdx < list.length) {
+          const { key, value } = list[listIdx];
+          yield [key, value] as [K, V];
           listIdx++;
         }
       }
@@ -72,5 +71,4 @@ export class MapKeyToValue<K extends MapKey, V> {
       listIdx = 0;
     }
   }
-
 }

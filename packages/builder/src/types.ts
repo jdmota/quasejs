@@ -1,6 +1,6 @@
 import { BuilderUtil, ModuleContext } from "./plugins/context";
 
-export type Transforms = readonly ( readonly string[] )[];
+export type Transforms = readonly (readonly string[])[];
 
 export type Data = Buffer | string | Uint8Array;
 
@@ -108,7 +108,7 @@ export type FinalModule = Readonly<{
   resolvedId: number;
   dependencies: ReadonlyMap<string, ResolvedDep>;
   innerDependencies: ReadonlyMap<string, ResolvedInnerDep>;
-  requires: readonly ( ResolvedDep | ResolvedInnerDep )[];
+  requires: readonly (ResolvedDep | ResolvedInnerDep)[];
 }>;
 
 export type FinalAsset = {
@@ -116,8 +116,8 @@ export type FinalAsset = {
   hash: string | null;
   isEntry: boolean;
   runtime: {
-    code: string|null;
-    manifest: RuntimeManifest|null;
+    code: string | null;
+    manifest: RuntimeManifest | null;
   };
   manifest: Manifest;
   module: FinalModule;
@@ -141,7 +141,7 @@ export type PerformanceOpts = {
   hints: boolean | "warning" | "error";
   maxEntrypointSize: number;
   maxAssetSize: number;
-  assetFilter: ( asset: string ) => boolean;
+  assetFilter: (asset: string) => boolean;
 };
 
 export type Info = {
@@ -162,13 +162,15 @@ export type HmrUpdate = Readonly<{
   moduleToAssets: Readonly<{ [id: string]: string[] }>;
 }>;
 
-export type HmrMessage = {
-  type: "update";
-  update: HmrUpdate;
-} | {
-  type: "error";
-  error: string;
-};
+export type HmrMessage =
+  | {
+      type: "update";
+      update: HmrUpdate;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
 
 export type Output = {
   filesInfo: Info[];
@@ -185,39 +187,62 @@ export type ProvidedPlugin<T> = void | string | T | [string | T, any];
 
 export type ProvidedPluginsArr<T> = readonly ProvidedPlugin<T>[];
 
-export type WarnCb = ( msg: string ) => void;
-export type ErrorCb = ( id: string, msg: string, code: string | null, loc: Loc | null ) => void;
+export type WarnCb = (msg: string) => void;
+export type ErrorCb = (
+  id: string,
+  msg: string,
+  code: string | null,
+  loc: Loc | null
+) => void;
 
 export type Resolver = {
   name?: string;
-  options?( options: any ): MaybeAsync<any>;
-  resolve( options: any, imported: string, ctx: ModuleContext ): MaybeAsyncOptional<string | false | { path: string; transforms?: Transforms }>;
+  options?(options: any): MaybeAsync<any>;
+  resolve(
+    options: any,
+    imported: string,
+    ctx: ModuleContext
+  ): MaybeAsyncOptional<
+    string | false | { path: string; transforms?: Transforms }
+  >;
 };
 
 export type Transformer = {
   name?: string;
-  options?( options: any ): MaybeAsync<any>;
-  canReuseAST?: ( options: any, ast: AstInfo ) => boolean;
-  parse?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<AstInfo>;
-  transform?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<TransformableAsset>;
-  generate?: ( options: any, asset: TransformableAsset, ctx: ModuleContext ) => MaybeAsync<GenerateOutput>;
+  options?(options: any): MaybeAsync<any>;
+  canReuseAST?: (options: any, ast: AstInfo) => boolean;
+  parse?: (
+    options: any,
+    asset: TransformableAsset,
+    ctx: ModuleContext
+  ) => MaybeAsync<AstInfo>;
+  transform?: (
+    options: any,
+    asset: TransformableAsset,
+    ctx: ModuleContext
+  ) => MaybeAsync<TransformableAsset>;
+  generate?: (
+    options: any,
+    asset: TransformableAsset,
+    ctx: ModuleContext
+  ) => MaybeAsync<GenerateOutput>;
 };
 
 export type ICheckerImpl = {
-  newModule( module: FinalModule ): void;
-  deletedModule( id: string ): void;
+  newModule(module: FinalModule): void;
+  deletedModule(id: string): void;
   check(): MaybeAsync<void>;
 };
 
 export type Checker = {
   name?: string;
-  options?( options: any ): MaybeAsync<any>;
-  checker( options: any, _: { warn: WarnCb; error: ErrorCb } ): ICheckerImpl;
+  options?(options: any): MaybeAsync<any>;
+  checker(options: any, _: { warn: WarnCb; error: ErrorCb }): ICheckerImpl;
 };
 
 export type Packager = {
   name?: string;
-  options?( options: any ): MaybeAsync<any>;
+  options?(options: any): MaybeAsync<any>;
   pack(
     options: any,
     asset: FinalAsset,
@@ -258,7 +283,7 @@ export type Options = {
   dest: string;
   cwd: string;
   publicPath: string;
-  dotGraph: string|null;
+  dotGraph: string | null;
   runtime: {
     browser: boolean;
     node: boolean;

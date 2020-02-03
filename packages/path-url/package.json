@@ -5,11 +5,13 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/path-url",
-  "main": "dist/index.js",
-  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js"
+  },
   "engines": {
-		"node": ">=8"
-	},
+    "node": ">=8"
+  },
   "dependencies": {
     "file-url": "^3.0.0",
     "is-url-superb": "^3.0.0",

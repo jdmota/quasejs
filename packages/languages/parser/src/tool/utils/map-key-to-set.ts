@@ -1,6 +1,6 @@
 type MapKey = {
   hashCode(): number;
-  equals( other: unknown ): boolean;
+  equals(other: unknown): boolean;
 };
 
 type MapEntry<K, V> = {
@@ -11,8 +11,7 @@ type MapEntry<K, V> = {
 const TABLE_SIZE = 10;
 
 export class MapKeyToSet<K extends MapKey, V> {
-
-  table: ( MapEntry<K, Set<V>>[] | undefined )[];
+  table: (MapEntry<K, Set<V>>[] | undefined)[];
   size: number;
   EMPTY_SET: Set<V>;
 
@@ -22,63 +21,63 @@ export class MapKeyToSet<K extends MapKey, V> {
     this.EMPTY_SET = new Set();
   }
 
-  _entry( key: K ) {
-    const idx = Math.abs( key.hashCode() % TABLE_SIZE );
-    let list = this.table[ idx ];
-    if ( !list ) {
-      list = this.table[ idx ] = [];
+  _entry(key: K) {
+    const idx = Math.abs(key.hashCode() % TABLE_SIZE);
+    let list = this.table[idx];
+    if (!list) {
+      list = this.table[idx] = [];
     }
     return {
-      entry: list.find( entry => entry.key.equals( key ) ),
-      list
+      entry: list.find(entry => entry.key.equals(key)),
+      list,
     };
   }
 
-  get( key: K ): Set<V> {
-    const { entry } = this._entry( key );
-    if ( entry ) {
+  get(key: K): Set<V> {
+    const { entry } = this._entry(key);
+    if (entry) {
       return entry.value;
     }
     return this.EMPTY_SET;
   }
 
-  add( key: K, value: Set<V> ) {
-    const { entry, list } = this._entry( key );
-    if ( entry ) {
-      for ( const v of value ) {
-        entry.value.add( v );
+  add(key: K, value: Set<V>) {
+    const { entry, list } = this._entry(key);
+    if (entry) {
+      for (const v of value) {
+        entry.value.add(v);
       }
     } else {
-      list.push( {
+      list.push({
         key,
-        value
-      } );
+        value,
+      });
       this.size++;
     }
   }
 
-  addOne( key: K, value: V ) {
-    const { entry, list } = this._entry( key );
-    if ( entry ) {
-      entry.value.add( value );
+  addOne(key: K, value: V) {
+    const { entry, list } = this._entry(key);
+    if (entry) {
+      entry.value.add(value);
     } else {
-      list.push( {
+      list.push({
         key,
-        value: new Set( [ value ] )
-      } );
+        value: new Set([value]),
+      });
       this.size++;
     }
   }
 
-  * [Symbol.iterator]() {
+  *[Symbol.iterator]() {
     let idx = 0;
     let listIdx = 0;
-    while ( idx < this.table.length ) {
-      const list = this.table[ idx ];
-      if ( list ) {
-        while ( listIdx < list.length ) {
-          const { key, value } = list[ listIdx ];
-          yield [ key, value ] as [ K, Set<V> ];
+    while (idx < this.table.length) {
+      const list = this.table[idx];
+      if (list) {
+        while (listIdx < list.length) {
+          const { key, value } = list[listIdx];
+          yield [key, value] as [K, Set<V>];
           listIdx++;
         }
       }
@@ -86,5 +85,4 @@ export class MapKeyToSet<K extends MapKey, V> {
       listIdx = 0;
     }
   }
-
 }

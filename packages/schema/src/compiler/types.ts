@@ -1,4 +1,4 @@
-export default new Set( [
+export default new Set([
   "any",
   "null",
   "boolean",
@@ -36,5 +36,5 @@ export default new Set( [
   "SharedArrayBuffer",
   "DataView",
   "Promise",
-  "URL"
-] );
+  "URL",
+]);

@@ -1,1 +1,1 @@
-require( "../../dist" );
+require("../../dist");

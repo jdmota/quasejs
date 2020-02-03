@@ -4,19 +4,22 @@ import isCi from "is-ci";
 import os from "os";
 import NodeReporter from "../reporters/node";
 import { assertTimeout } from "./util/assert-args";
-import { color as colorConcordanceOptions, plain as plainConcordanceOptions } from "./concordance-options";
+import {
+  color as colorConcordanceOptions,
+  plain as plainConcordanceOptions,
+} from "./concordance-options";
 import randomizerFn from "./random";
 import { validationError } from "../node-runner/util";
 import { CliOptions, NormalizedOptions } from "../types";
 
-function arrify<T>( val: T | T[] | undefined ): T[] {
-  if ( val == null ) {
+function arrify<T>(val: T | T[] | undefined): T[] {
+  if (val == null) {
     return [];
   }
-  return Array.isArray( val ) ? val : [ val ];
+  return Array.isArray(val) ? val : [val];
 }
 
-const schemaCompiler = require( "@quase/schema/dist/compiler" ).default;
+const schemaCompiler = require("@quase/schema/dist/compiler").default;
 
 export const schema = `
 type B @default(false) = boolean;
@@ -56,10 +59,10 @@ type Schema {
 }
 `;
 
-const compiledSchema = eval( schemaCompiler( schema ) ); // eslint-disable-line no-eval
+const compiledSchema = eval(schemaCompiler(schema)); // eslint-disable-line no-eval
 
-export function cliValidate( opts: any ): CliOptions {
-  return compiledSchema.validateAndMerge( {}, opts );
+export function cliValidate(opts: any): CliOptions {
+  return compiledSchema.validateAndMerge({}, opts);
 }
 
 export default function(
@@ -67,65 +70,73 @@ export default function(
   slashSlash?: string[] | undefined,
   configLocation?: string | undefined
 ): NormalizedOptions {
-  if ( options.forceSerial ) {
-    if ( options.concurrency != null && options.concurrency !== 1 ) {
-      throw validationError( `You cannot use "concurrency" with --force-serial` );
+  if (options.forceSerial) {
+    if (options.concurrency != null && options.concurrency !== 1) {
+      throw validationError(`You cannot use "concurrency" with --force-serial`);
     }
   }
 
-  let concurrency = options.concurrency && options.concurrency > 0 ? options.concurrency : Math.min( os.cpus().length, isCi ? 2 : Infinity );
-  let color = options.color === undefined ? turbocolor.enabled : !!options.color;
+  let concurrency =
+    options.concurrency && options.concurrency > 0
+      ? options.concurrency
+      : Math.min(os.cpus().length, isCi ? 2 : Infinity);
+  let color =
+    options.color === undefined ? turbocolor.enabled : !!options.color;
 
-  if ( options.forceSerial ) {
+  if (options.forceSerial) {
     concurrency = 1;
   }
 
-  const randomizer = options.random ? randomizerFn( options.random ) : null;
+  const randomizer = options.random ? randomizerFn(options.random) : null;
   const random = randomizer ? randomizer.hex : undefined;
   let timeouts = options.timeouts;
   let globalTimeout = options.globalTimeout;
 
-  if ( options.debug ) {
+  if (options.debug) {
     timeouts = false;
     globalTimeout = 0;
-  } else if ( globalTimeout != null ) {
-    assertTimeout( globalTimeout, "global timeout" );
+  } else if (globalTimeout != null) {
+    assertTimeout(globalTimeout, "global timeout");
   }
 
-  assertTimeout( options.timeout );
+  assertTimeout(options.timeout);
 
   let stackIgnore;
-  if ( typeof options.stackIgnore === "string" ) {
-    stackIgnore = new RegExp( options.stackIgnore );
+  if (typeof options.stackIgnore === "string") {
+    stackIgnore = new RegExp(options.stackIgnore);
   }
 
-  const reporter = options.reporter ? getOnePlugin( options.reporter ).plugin : NodeReporter;
+  const reporter = options.reporter
+    ? getOnePlugin(options.reporter).plugin
+    : NodeReporter;
 
-  if ( typeof reporter !== "function" ) {
-    throw validationError( `Reporter should be a constructor` );
+  if (typeof reporter !== "function") {
+    throw validationError(`Reporter should be a constructor`);
   }
 
-  const env = options.env ? getOnePlugin( options.env ).plugin : {};
+  const env = options.env ? getOnePlugin(options.env).plugin : {};
 
-  if ( env == null || typeof env !== "object" ) {
-    throw validationError( `Environment variables should be an object` );
+  if (env == null || typeof env !== "object") {
+    throw validationError(`Environment variables should be an object`);
   }
 
-  const concordanceOptions = options.concordanceOptions ?
-    getOnePlugin( options.concordanceOptions ).plugin :
-    ( options.color ? colorConcordanceOptions : plainConcordanceOptions );
+  const concordanceOptions = options.concordanceOptions
+    ? getOnePlugin(options.concordanceOptions).plugin
+    : options.color
+    ? colorConcordanceOptions
+    : plainConcordanceOptions;
 
-  if ( concordanceOptions == null || typeof concordanceOptions !== "object" ) {
-    throw validationError( `Concordance options should be an object` );
+  if (concordanceOptions == null || typeof concordanceOptions !== "object") {
+    throw validationError(`Concordance options should be an object`);
   }
 
-  const files = arrify( options.files );
-  const match = arrify( options.match );
-  const globals = arrify<boolean | string>( options.globals );
+  const files = arrify(options.files);
+  const match = arrify(options.match);
+  const globals = arrify<boolean | string>(options.globals);
 
   return {
     ...options,
-    "--": arrify( slashSlash ),
+    "--": arrify(slashSlash),
     configLocation,
     files,
     match,
@@ -137,6 +148,6 @@ export default function(
     globals,
     reporter,
     env,
-    concordanceOptions
+    concordanceOptions,
   };
 }

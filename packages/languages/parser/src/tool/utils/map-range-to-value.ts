@@ -8,7 +8,6 @@ type Node<T> = {
 };
 
 export class MapRangeToValue<T> {
-
   head: Node<T> | null;
   size: number;
 
@@ -17,80 +16,82 @@ export class MapRangeToValue<T> {
     this.size = 0;
   }
 
-  addRange( from: number, to: number, value: T ) {
-
+  addRange(from: number, to: number, value: T) {
     let curr = this.head;
-    let node = this._node( from, to, value );
+    let node = this._node(from, to, value);
 
-    if ( curr == null ) {
+    if (curr == null) {
       this.head = node;
       this.size = 1;
       return true;
     }
 
-    while ( true ) {
-
-      if ( node.range.to < curr.range.from ) {
-        this._insertBefore( node, curr );
+    while (true) {
+      if (node.range.to < curr.range.from) {
+        this._insertBefore(node, curr);
         this.size++;
         return true;
       }
 
-      if ( curr.range.to < node.range.from ) {
-        if ( curr.next ) {
+      if (curr.range.to < node.range.from) {
+        if (curr.next) {
           curr = curr.next;
           continue;
         } else {
-          this._insertAfter( node, curr );
+          this._insertAfter(node, curr);
           this.size++;
           return true;
         }
       }
 
-      if ( curr.value === node.value && curr.range.from === node.range.from && curr.range.to === node.range.to ) {
+      if (
+        curr.value === node.value &&
+        curr.range.from === node.range.from &&
+        curr.range.to === node.range.to
+      ) {
         return false;
       }
 
-      throw new Error( `Already exists (curr:${curr.range.from},${curr.range.to}; node:${node.range.from},${node.range.to})` );
+      throw new Error(
+        `Already exists (curr:${curr.range.from},${curr.range.to}; node:${node.range.from},${node.range.to})`
+      );
     }
-
   }
 
-  _insertBefore( node: Node<T>, before: Node<T> ) {
+  _insertBefore(node: Node<T>, before: Node<T>) {
     node.prev = before.prev;
     before.prev = node;
     node.next = before;
-    if ( node.prev ) {
+    if (node.prev) {
       node.prev.next = node;
     } else {
       this.head = node;
     }
   }
 
-  _insertAfter( node: Node<T>, after: Node<T> ) {
+  _insertAfter(node: Node<T>, after: Node<T>) {
     node.next = after.next;
     after.next = node;
     node.prev = after;
-    if ( node.next ) {
+    if (node.next) {
       node.next.prev = node;
     }
   }
 
-  _node( from: number, to: number, value: T ): Node<T> {
+  _node(from: number, to: number, value: T): Node<T> {
     return {
       range: { from, to },
       value,
       prev: null,
-      next: null
+      next: null,
     };
   }
 
-  * [Symbol.iterator]() {
+  *[Symbol.iterator]() {
     let current = this.head;
-    while ( current ) {
-      yield [ current.range, current.value ] as [ Range, T ];
+    while (current) {
+      yield [current.range, current.value] as [Range, T];
       current = current.next;
     }
   }
-
 }

@@ -1,12 +1,12 @@
 {
-  "extends": [ "@quase/eslint-config-base" ],
+  "extends": ["@quase/eslint-config-base", "eslint-config-prettier"],
   "overrides": [
     {
       "env": {
         "jest": true
       },
-      "files": [ "**/test/**/*.js", "**/test/**/*.ts" ],
-      "plugins": [ "jest" ],
+      "files": ["**/test/**/*.js", "**/test/**/*.ts"],
+      "plugins": ["jest"],
       "rules": {
         "jest/no-focused-tests": "error",
         "jest/prefer-to-have-length": "error",
@@ -16,27 +16,24 @@
       }
     },
     {
-      "files": [ "*.js" ],
+      "files": ["*.js"],
       "settings": {
         "import/resolver": {
           "node": {
-            "extensions": [
-              ".js",
-              ".ts"
-            ]
+            "extensions": [".js", ".ts"]
           }
         }
       }
     },
     {
-      "files": [ "*.ts" ],
-      "plugins": [ "@typescript-eslint" ],
+      "files": ["*.ts"],
+      "plugins": ["@typescript-eslint"],
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
         "project": "./tsconfig.json"
       },
       "rules": {
-        "import/extensions": [ 0, "never", { "ts": "never" } ],
+        "import/extensions": [0, "never", { "ts": "never" }],
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/array-type": "error",
         "@typescript-eslint/ban-types": "error",
@@ -46,7 +43,7 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
         "indent": "off",
-        "@typescript-eslint/indent": [ "error", 2 ],
+        "@typescript-eslint/indent": ["error", 2],
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/member-delimiter-style": "error",
         "@typescript-eslint/no-angle-bracket-type-assertion": "error",

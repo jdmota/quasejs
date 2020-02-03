@@ -1,20 +1,18 @@
 import tool from "../src/tool";
 
-function runParser( generation, text ) {
+function runParser(generation, text) {
   let parser;
   /* eslint no-eval: 0 */
-  eval( `
-    ${generation.replace( "@quase/parser", "../src/runtime" )}\n
-    parser = new Parser(${JSON.stringify( text )});`
-  );
+  eval(`
+    ${generation.replace("@quase/parser", "../src/runtime")}\n
+    parser = new Parser(${JSON.stringify(text)});`);
   return {
     ast: parser.parse(),
-    channels: parser.getChannels()
+    channels: parser.getChannels(),
   };
 }
 
-it( "basic", () => {
-
+it("basic", () => {
   const { code, conflicts } = tool(
     `
     @lexer
@@ -34,30 +32,28 @@ it( "basic", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( conflicts ).toMatchSnapshot( "conflicts" );
+  expect(code).toMatchSnapshot("code");
+  expect(conflicts).toMatchSnapshot("conflicts");
 
-  expect( runParser( code, "fun id1, id2 -> 10000 end" ) ).toMatchSnapshot( "ast" );
-  expect( runParser( code, "fun id1 -> id1 end" ) ).toMatchSnapshot( "ast" );
-  expect( () => runParser( code, "fun id1 -> id1" ) ).toThrowErrorMatchingSnapshot( "error" );
+  expect(runParser(code, "fun id1, id2 -> 10000 end")).toMatchSnapshot("ast");
+  expect(runParser(code, "fun id1 -> id1 end")).toMatchSnapshot("ast");
+  expect(() => runParser(code, "fun id1 -> id1")).toThrowErrorMatchingSnapshot(
+    "error"
+  );
+});
 
-} );
-
-it( "supports empty", () => {
-
+it("supports empty", () => {
   const { code, conflicts } = tool(
     `
     start RULE1 : 'A' | ;
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( conflicts ).toMatchSnapshot( "conflicts" );
+  expect(code).toMatchSnapshot("code");
+  expect(conflicts).toMatchSnapshot("conflicts");
+});
 
-} );
-
-it( "optimized repetitions and nested rule on right side", () => {
-
+it("optimized repetitions and nested rule on right side", () => {
   const { code, conflicts } = tool(
     `
     start RULE1 : 'A'* 'A' RULE2;
@@ -65,13 +61,11 @@ it( "optimized repetitions and nested rule on right side", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( conflicts ).toMatchSnapshot( "conflicts" );
+  expect(code).toMatchSnapshot("code");
+  expect(conflicts).toMatchSnapshot("conflicts");
+});
 
-} );
-
-it( "negative character class in regexp", () => {
-
+it("negative character class in regexp", () => {
   const { code, conflicts } = tool(
     `
     @lexer
@@ -82,13 +76,11 @@ it( "negative character class in regexp", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( conflicts ).toMatchSnapshot( "conflicts" );
+  expect(code).toMatchSnapshot("code");
+  expect(conflicts).toMatchSnapshot("conflicts");
+});
 
-} );
-
-it( "typescript", () => {
-
+it("typescript", () => {
   const { code } = tool(
     `
     @lexer
@@ -100,16 +92,14 @@ it( "typescript", () => {
     EXP: stuff=NUM | stuff=ID;
     `,
     {
-      typescript: true
+      typescript: true,
     }
   );
 
-  expect( code ).toMatchSnapshot( "code" );
+  expect(code).toMatchSnapshot("code");
+});
 
-} );
-
-it( "actions", () => {
-
+it("actions", () => {
   const { code } = tool(
     `
     @lexer
@@ -121,12 +111,10 @@ it( "actions", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
+  expect(code).toMatchSnapshot("code");
+});
 
-} );
-
-it( "dot", () => {
-
+it("dot", () => {
   const { code } = tool(
     `
     @lexer
@@ -139,13 +127,11 @@ it( "dot", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( runParser( code, "id1 100 id2 200" ) ).toMatchSnapshot( "ast" );
+  expect(code).toMatchSnapshot("code");
+  expect(runParser(code, "id1 100 id2 200")).toMatchSnapshot("ast");
+});
 
-} );
-
-it( "dot - typescript", () => {
-
+it("dot - typescript", () => {
   const { code } = tool(
     `
     @lexer
@@ -157,16 +143,14 @@ it( "dot - typescript", () => {
     start PROGRAM: ( tokens+=. )*;
     `,
     {
-      typescript: true
+      typescript: true,
     }
   );
 
-  expect( code ).toMatchSnapshot( "code" );
+  expect(code).toMatchSnapshot("code");
+});
 
-} );
-
-it( "channels", () => {
-
+it("channels", () => {
   const { code } = tool(
     `
     @lexer
@@ -180,13 +164,11 @@ it( "channels", () => {
     `
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-  expect( runParser( code, "id1 _ 100 _ id2 _ 200" ) ).toMatchSnapshot( "ast" );
+  expect(code).toMatchSnapshot("code");
+  expect(runParser(code, "id1 _ 100 _ id2 _ 200")).toMatchSnapshot("ast");
+});
 
-} );
-
-it( "channels - typescript", () => {
-
+it("channels - typescript", () => {
   const { code } = tool(
     `
     @lexer
@@ -199,10 +181,9 @@ it( "channels - typescript", () => {
     start PROGRAM: ( tokens+=. )*;
     `,
     {
-      typescript: true
+      typescript: true,
     }
   );
 
-  expect( code ).toMatchSnapshot( "code" );
-
-} );
+  expect(code).toMatchSnapshot("code");
+});

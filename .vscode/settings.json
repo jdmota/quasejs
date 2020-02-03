@@ -1,4 +1,23 @@
 {
-  "typescript.tsdk": "scripts/node_modules/typescript/lib",
-  "eslint.nodePath": "scripts/node_modules"
+  "files.eol": "\n",
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.enable": false,
+  "eslint.nodePath": ".vscode/pnpify",
+  "eslint.validate": [
+    "javascript",
+    "typescript"
+  ],
+  "typescript.validate.enable": true,
+  "typescript.tsdk": ".vscode/pnpify/typescript/lib",
+  "prettier.prettierPath": ".vscode/pnpify/prettier/index.js",
+  "[javascript]": {
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.formatOnSave": true
+  }
 }

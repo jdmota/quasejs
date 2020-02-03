@@ -9,12 +9,11 @@ type Node<T> = {
 
 type NotRangeSet = [number, number][];
 
-function rangeComparator( a: [number, number], b: [number, number] ) {
-  return a[ 0 ] - b[ 0 ];
+function rangeComparator(a: [number, number], b: [number, number]) {
+  return a[0] - b[0];
 }
 
 export class MapRangeToSet<T> {
-
   head: Node<T> | null;
   size: number;
 
@@ -23,114 +22,111 @@ export class MapRangeToSet<T> {
     this.size = 0;
   }
 
-  addNotRangeSet( set: NotRangeSet, value: Set<T>, MIN: number, MAX: number ) {
-    set = set.sort( rangeComparator );
+  addNotRangeSet(set: NotRangeSet, value: Set<T>, MIN: number, MAX: number) {
+    set = set.sort(rangeComparator);
 
     let min = MIN;
 
-    for ( let i = 0; i < set.length; i++ ) {
-      const el = set[ i ];
-      if ( min < el[ 0 ] ) {
-        this.addRange( min, el[ 0 ] - 1, value );
+    for (let i = 0; i < set.length; i++) {
+      const el = set[i];
+      if (min < el[0]) {
+        this.addRange(min, el[0] - 1, value);
       }
-      min = Math.max( min, el[ 1 ] + 1 );
+      min = Math.max(min, el[1] + 1);
     }
 
-    if ( min < MAX ) {
-      this.addRange( min, MAX, value );
+    if (min < MAX) {
+      this.addRange(min, MAX, value);
     }
   }
 
-  addRange( from: number, to: number, value: Set<T> ) {
-
+  addRange(from: number, to: number, value: Set<T>) {
     let curr = this.head;
-    let node = this._node( from, to, value );
+    let node = this._node(from, to, value);
 
-    if ( curr == null ) {
+    if (curr == null) {
       this.head = node;
       this.size = 1;
       return;
     }
 
-    while ( true ) {
-
-      if ( node.range.to < curr.range.from ) {
-        this._insertBefore( node, curr );
+    while (true) {
+      if (node.range.to < curr.range.from) {
+        this._insertBefore(node, curr);
         this.size++;
         return;
       }
 
-      if ( curr.range.to < node.range.from ) {
-        if ( curr.next ) {
+      if (curr.range.to < node.range.from) {
+        if (curr.next) {
           curr = curr.next;
           continue;
         } else {
-          this._insertAfter( node, curr );
+          this._insertAfter(node, curr);
           this.size++;
           return;
         }
       }
 
-      const { left, middle, right } = this._intersection( curr, node );
+      const { left, middle, right } = this._intersection(curr, node);
 
-      if ( left ) {
-        this._connect( curr.prev, left );
-        this._connect( left, middle );
+      if (left) {
+        this._connect(curr.prev, left);
+        this._connect(left, middle);
         this.size++;
       } else {
-        this._connect( curr.prev, middle );
+        this._connect(curr.prev, middle);
       }
 
-      if ( right ) {
-        if ( curr.next ) {
-          if ( right.range.to < curr.next.range.from ) {
-            this._connect( middle, right );
-            this._connect( right, curr.next );
+      if (right) {
+        if (curr.next) {
+          if (right.range.to < curr.next.range.from) {
+            this._connect(middle, right);
+            this._connect(right, curr.next);
           } else {
-            this._connect( middle, curr.next );
+            this._connect(middle, curr.next);
             curr = curr.next;
             node = right;
             continue;
           }
         } else {
-          this._connect( middle, right );
+          this._connect(middle, right);
         }
         this.size++;
       } else {
-        if ( curr.next ) {
-          this._connect( middle, curr.next );
+        if (curr.next) {
+          this._connect(middle, curr.next);
         }
       }
       return;
     }
-
   }
 
-  _insertBefore( node: Node<T>, before: Node<T> ) {
+  _insertBefore(node: Node<T>, before: Node<T>) {
     node.prev = before.prev;
     before.prev = node;
     node.next = before;
-    if ( node.prev ) {
+    if (node.prev) {
       node.prev.next = node;
     } else {
       this.head = node;
     }
   }
 
-  _insertAfter( node: Node<T>, after: Node<T> ) {
+  _insertAfter(node: Node<T>, after: Node<T>) {
     node.next = after.next;
     after.next = node;
     node.prev = after;
-    if ( node.next ) {
+    if (node.next) {
       node.next.prev = node;
     }
   }
 
-  _connect( a: Node<T> | null, b: Node<T> ) {
-    if ( a ) {
+  _connect(a: Node<T> | null, b: Node<T>) {
+    if (a) {
       a.next = b;
       b.prev = a;
-      if ( !a.prev ) {
+      if (!a.prev) {
         this.head = a;
       }
     } else {
@@ -138,17 +134,16 @@ export class MapRangeToSet<T> {
     }
   }
 
-  _node( from: number, to: number, value: Set<T> ): Node<T> {
+  _node(from: number, to: number, value: Set<T>): Node<T> {
     return {
       range: { from, to },
       value,
       prev: null,
-      next: null
+      next: null,
     };
   }
 
-  _intersection( current: Node<T>, newNode: Node<T> ) {
-
+  _intersection(current: Node<T>, newNode: Node<T>) {
     const a = current.range;
     const b = newNode.range;
 
@@ -156,62 +151,61 @@ export class MapRangeToSet<T> {
     let right = null;
 
     // Left
-    if ( a.from !== b.from ) {
+    if (a.from !== b.from) {
       left = this._node(
-        Math.min( a.from, b.from ),
-        Math.max( a.from, b.from ) - 1,
-        this._clone( a.from < b.from ? current.value : newNode.value )
+        Math.min(a.from, b.from),
+        Math.max(a.from, b.from) - 1,
+        this._clone(a.from < b.from ? current.value : newNode.value)
       );
     }
 
     // Middle (intersection)
 
     const middle = this._node(
-      Math.max( a.from, b.from ),
-      Math.min( a.to, b.to ),
-      this._clone( current.value, newNode.value )
+      Math.max(a.from, b.from),
+      Math.min(a.to, b.to),
+      this._clone(current.value, newNode.value)
     );
 
     // Right
-    if ( a.to !== b.to ) {
+    if (a.to !== b.to) {
       right = this._node(
-        Math.min( a.to, b.to ) + 1,
-        Math.max( a.to, b.to ),
-        this._clone( a.to < b.to ? newNode.value : current.value )
+        Math.min(a.to, b.to) + 1,
+        Math.max(a.to, b.to),
+        this._clone(a.to < b.to ? newNode.value : current.value)
       );
     }
 
     return {
       left,
       middle,
-      right
+      right,
     };
   }
 
-  _clone( value: Set<T>, newValue?: Set<T> ): Set<T> {
-    const clone = new Set( value );
-    if ( newValue ) {
-      for ( const v of newValue ) {
-        clone.add( v );
+  _clone(value: Set<T>, newValue?: Set<T>): Set<T> {
+    const clone = new Set(value);
+    if (newValue) {
+      for (const v of newValue) {
+        clone.add(v);
       }
     }
     return clone;
   }
 
-  importFrom( data: MapRangeToSet<T> ) {
+  importFrom(data: MapRangeToSet<T>) {
     let current = data.head;
-    while ( current ) {
-      this.addRange( current.range.from, current.range.to, current.value );
+    while (current) {
+      this.addRange(current.range.from, current.range.to, current.value);
       current = current.next;
     }
   }
 
-  * [Symbol.iterator]() {
+  *[Symbol.iterator]() {
     let current = this.head;
-    while ( current ) {
-      yield [ current.range, current.value ] as [ Range, Set<T> ];
+    while (current) {
+      yield [current.range, current.value] as [Range, Set<T>];
       current = current.next;
     }
   }
-
 }

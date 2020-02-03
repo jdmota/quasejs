@@ -1,0 +1,12 @@
+__dev__
+.vscode
+.yarn
+dist
+node_modules
+.pnp.js
+packages/_legacy/**
+packages/builder/src/plugins/transformers/babel-helpers.js
+packages/builder/src/runtime/builds/**
+packages/builder/test/babel-modules-fixtures/**
+packages/builder/test/fixtures/**
+packages/builder/test/watch-fixtures/**

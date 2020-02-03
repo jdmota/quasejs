@@ -1,119 +1,99 @@
 import Runner from "../../src/core/runner";
 
-describe( "unit", () => {
+describe("unit", () => {
+  it("test reruns", () => {
+    expect.assertions(2);
 
-  it( "test reruns", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "test",
-      "test"
-    ];
+    const expected = ["test", "test"];
 
-    test( "test", t => {
-      t.reruns( 1 );
-      actual.push( "test" );
-    } );
+    test("test", t => {
+      t.reruns(1);
+      actual.push("test");
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-  } );
+  it("only rerun if passing", () => {
+    expect.assertions(2);
 
-  it( "only rerun if passing", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "test"
-    ];
+    const expected = ["test"];
 
-    test( "test", t => {
-      t.reruns( 100 );
-      actual.push( "test" );
-      throw new Error( "fail" );
-    } );
+    test("test", t => {
+      t.reruns(100);
+      actual.push("test");
+      throw new Error("fail");
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "failed" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("failed");
+    });
+  });
 
-  } );
+  it("test reruns with delay", () => {
+    expect.assertions(3);
 
-  it( "test reruns with delay", () => {
-
-    expect.assertions( 3 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const times = [];
 
-    test( "test", t => {
-      t.reruns( 1 );
-      t.rerunDelay( 100 );
-      times.push( Date.now() );
-    } );
+    test("test", t => {
+      t.reruns(1);
+      t.rerunDelay(100);
+      times.push(Date.now());
+    });
 
-    return runner.run().then( () => {
-      expect( times ).toHaveLength( 2 );
-      expect( times[ 1 ] - times[ 0 ] >= 100 ).toBe( true );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
+    return runner.run().then(() => {
+      expect(times).toHaveLength(2);
+      expect(times[1] - times[0] >= 100).toBe(true);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-  } );
+  it("test reruns inherit value from group", () => {
+    expect.assertions(2);
 
-  it( "test reruns inherit value from group", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "test",
-      "test"
-    ];
+    const expected = ["test", "test"];
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
+      test("test", () => {
+        actual.push("test");
+      });
+    });
 
-      test( "test", () => {
-        actual.push( "test" );
-      } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-    } );
+  it("hooks are also run when rerunning", () => {
+    expect.assertions(2);
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
-
-  } );
-
-  it( "hooks are also run when rerunning", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
@@ -124,154 +104,130 @@ describe( "unit", () => {
       "afterEach",
       "beforeEach",
       "test",
-      "afterEach"
+      "afterEach",
     ];
 
-    test.beforeEach( () => {
-      actual.push( "beforeEach" );
-    } );
+    test.beforeEach(() => {
+      actual.push("beforeEach");
+    });
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
+      test("test", () => {
+        actual.push("test");
+      });
+    });
 
-      test( "test", () => {
-        actual.push( "test" );
-      } );
+    test.afterEach(() => {
+      actual.push("afterEach");
+    });
 
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-    test.afterEach( () => {
-      actual.push( "afterEach" );
-    } );
+  it("dont rerun if beforeEach failed", () => {
+    expect.assertions(2);
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
-
-  } );
-
-  it( "dont rerun if beforeEach failed", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "beforeEach",
-      "afterEach"
-    ];
+    const expected = ["beforeEach", "afterEach"];
 
-    test.beforeEach( () => {
-      actual.push( "beforeEach" );
-      throw new Error( "error" );
-    } );
+    test.beforeEach(() => {
+      actual.push("beforeEach");
+      throw new Error("error");
+    });
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
-
-      test( () => {
+      test(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
+    });
 
-    } );
+    test.afterEach(() => {
+      actual.push("afterEach");
+    });
 
-    test.afterEach( () => {
-      actual.push( "afterEach" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("failed");
+    });
+  });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "failed" );
-    } );
+  it("dont rerun if afterEach failed", () => {
+    expect.assertions(2);
 
-  } );
-
-  it( "dont rerun if afterEach failed", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "beforeEach",
-      "test",
-      "afterEach"
-    ];
+    const expected = ["beforeEach", "test", "afterEach"];
 
-    test.beforeEach( () => {
-      actual.push( "beforeEach" );
-    } );
+    test.beforeEach(() => {
+      actual.push("beforeEach");
+    });
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
+      test("test", () => {
+        actual.push("test");
+      });
+    });
 
-      test( "test", () => {
-        actual.push( "test" );
-      } );
+    test.afterEach(() => {
+      actual.push("afterEach");
+      throw new Error("error");
+    });
 
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("failed");
+    });
+  });
 
-    test.afterEach( () => {
-      actual.push( "afterEach" );
-      throw new Error( "error" );
-    } );
+  it("calling .reruns() again makes no difference", () => {
+    expect.assertions(2);
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "failed" );
-    } );
-
-  } );
-
-  it( "calling .reruns() again makes no difference", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
-    const expected = [
-      "test",
-      "test rerun"
-    ];
+    const expected = ["test", "test rerun"];
 
     let count = 0;
 
-    test( "test", t => {
-      t.reruns( 1 );
-      if ( count++ === 0 ) {
-        actual.push( "test" );
+    test("test", t => {
+      t.reruns(1);
+      if (count++ === 0) {
+        actual.push("test");
       } else {
-        t.reruns( 10 );
-        actual.push( "test rerun" );
+        t.reruns(10);
+        actual.push("test rerun");
       }
-    } );
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-  } );
+  it("mark as skipped if called t.skip() in second run", () => {
+    expect.assertions(2);
 
-  it( "mark as skipped if called t.skip() in second run", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
@@ -282,46 +238,42 @@ describe( "unit", () => {
       "afterEach",
       "beforeEach",
       "test",
-      "afterEach"
+      "afterEach",
     ];
 
     let count = 0;
 
-    test.beforeEach( () => {
-      actual.push( "beforeEach" );
-    } );
+    test.beforeEach(() => {
+      actual.push("beforeEach");
+    });
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
-
-      test( "test", t => {
-        actual.push( "test" );
-        if ( count++ === 0 ) {
+      test("test", t => {
+        actual.push("test");
+        if (count++ === 0) {
           // Continue
         } else {
           t.skip();
         }
-      } );
+      });
+    });
 
-    } );
+    test.afterEach(() => {
+      actual.push("afterEach");
+    });
 
-    test.afterEach( () => {
-      actual.push( "afterEach" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("skipped");
+    });
+  });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "skipped" );
-    } );
+  it("mark as skipped if called t.skip() (inside beforeEach) in second run", () => {
+    expect.assertions(2);
 
-  } );
-
-  it( "mark as skipped if called t.skip() (inside beforeEach) in second run", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
@@ -331,211 +283,174 @@ describe( "unit", () => {
       "test",
       "afterEach",
       "beforeEach",
-      "afterEach"
+      "afterEach",
     ];
 
     let count = 0;
 
-    test.beforeEach( t => {
-      actual.push( "beforeEach" );
-      if ( count !== 0 ) {
+    test.beforeEach(t => {
+      actual.push("beforeEach");
+      if (count !== 0) {
         t.skip();
       }
-    } );
+    });
 
-    test.group( t => {
+    test.group(t => {
+      t.reruns(1);
 
-      t.reruns( 1 );
-
-      test( "test", () => {
-        actual.push( "test" );
+      test("test", () => {
+        actual.push("test");
         count++;
-      } );
+      });
+    });
 
-    } );
+    test.afterEach(() => {
+      actual.push("afterEach");
+    });
 
-    test.afterEach( () => {
-      actual.push( "afterEach" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("skipped");
+    });
+  });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "skipped" );
-    } );
+  it(".reruns() not available for hooks", () => {
+    expect.assertions(2);
 
-  } );
-
-  it( ".reruns() not available for hooks", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
     const expected = [];
 
-    test.beforeEach( t => {
-      t.reruns( 10 );
-    } );
+    test.beforeEach(t => {
+      t.reruns(10);
+    });
 
-    test( () => {
+    test(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ 5 ].errors[ 0 ].message ).toBe( ".reruns() is not available for hooks" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[5].errors[0].message).toBe(
+        ".reruns() is not available for hooks"
+      );
+    });
+  });
 
-  } );
+  it(".rerunDelay() not available for hooks", () => {
+    expect.assertions(2);
 
-  it( ".rerunDelay() not available for hooks", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
     const actual = [];
     const expected = [];
 
-    test.beforeEach( t => {
-      t.rerunDelay( 10 );
-    } );
+    test.beforeEach(t => {
+      t.rerunDelay(10);
+    });
 
-    test( () => {
+    test(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ 5 ].errors[ 0 ].message ).toBe( ".rerunDelay() is not available for hooks" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[5].errors[0].message).toBe(
+        ".rerunDelay() is not available for hooks"
+      );
+    });
+  });
 
-  } );
-
-  it( "throw when rerunDelay value is not number - group", () => {
-
-    const runner = Runner.init( { allowNoPlan: true } );
+  it("throw when rerunDelay value is not number - group", () => {
+    const runner = Runner.init({ allowNoPlan: true });
     const test = runner.test;
 
-    expect( () => {
-      test.group( t => {
-        t.rerunDelay( "abc" );
-      } );
-    } ).toThrow( /Expected a number but saw/ );
+    expect(() => {
+      test.group(t => {
+        t.rerunDelay("abc");
+      });
+    }).toThrow(/Expected a number but saw/);
+  });
 
-  } );
-
-  it( "throw when rerunDelay value is too big - group", () => {
-
-    const runner = Runner.init( { allowNoPlan: true } );
+  it("throw when rerunDelay value is too big - group", () => {
+    const runner = Runner.init({ allowNoPlan: true });
     const test = runner.test;
 
-    expect( () => {
-      test.group( t => {
-        t.rerunDelay( 2 ** 31 + 1 );
-      } );
-    } ).toThrow( /2147483649 is too big of a delay value/ );
+    expect(() => {
+      test.group(t => {
+        t.rerunDelay(2 ** 31 + 1);
+      });
+    }).toThrow(/2147483649 is too big of a delay value/);
+  });
 
-  } );
+  it("test retries + reruns passing", () => {
+    expect.assertions(2);
 
-  it( "test retries + reruns passing", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
-    const output = [
-      false,
-      false,
-      true,
-      false,
-      false,
-      true
-    ];
+    const output = [false, false, true, false, false, true];
 
     const actual = [];
-    const expected = [
-      "fail",
-      "fail",
-      "ok",
-      "fail",
-      "fail",
-      "ok"
-    ];
+    const expected = ["fail", "fail", "ok", "fail", "fail", "ok"];
 
     let i = 0;
 
-    test( "test", t => {
-      t.reruns( 1 );
-      t.retries( 2 );
+    test("test", t => {
+      t.reruns(1);
+      t.retries(2);
 
-      if ( output[ i++ ] ) {
-        actual.push( "ok" );
+      if (output[i++]) {
+        actual.push("ok");
       } else {
-        actual.push( "fail" );
-        throw new Error( "fail" );
+        actual.push("fail");
+        throw new Error("fail");
       }
-    } );
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "passed" );
-    } );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("passed");
+    });
+  });
 
-  } );
+  it("test retries + reruns failing", () => {
+    expect.assertions(2);
 
-  it( "test retries + reruns failing", () => {
-
-    expect.assertions( 2 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const test = runner.test;
 
-    const output = [
-      false,
-      false,
-      false,
-      false,
-      false,
-      false
-    ];
+    const output = [false, false, false, false, false, false];
 
     const actual = [];
-    const expected = [
-      "fail",
-      "fail",
-      "fail"
-    ];
+    const expected = ["fail", "fail", "fail"];
 
     let i = 0;
 
-    test( "test", t => {
-      t.reruns( 1 );
-      t.retries( 2 );
+    test("test", t => {
+      t.reruns(1);
+      t.retries(2);
 
-      if ( output[ i++ ] ) {
-        actual.push( "ok" );
+      if (output[i++]) {
+        actual.push("ok");
       } else {
-        actual.push( "fail" );
-        throw new Error( "fail" );
+        actual.push("fail");
+        throw new Error("fail");
       }
-    } );
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results.pop().status ).toBe( "failed" );
-    } );
-
-  } );
-
-} );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results.pop().status).toBe("failed");
+    });
+  });
+});

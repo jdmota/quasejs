@@ -1,9 +1,9 @@
-const test = require( "../../dist" );
+const test = require("../../dist");
 
-test.group( "group", () => {
-  test( "test", t => {
-    t.plan( 0 );
-  } );
+test.group("group", () => {
+  test("test", t => {
+    t.plan(0);
+  });
 
-  return Promise.reject( "reject" );
-} );
+  return Promise.reject("reject");
+});

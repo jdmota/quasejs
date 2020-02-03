@@ -1,12 +1,10 @@
 import Runner from "../../src/core/runner";
 
-describe( "unit", () => {
+describe("unit", () => {
+  it("only", () => {
+    expect.assertions(3);
 
-  it( "only", () => {
-
-    expect.assertions( 3 );
-
-    let runner = Runner.init( { allowNoPlan: true } );
+    let runner = Runner.init({ allowNoPlan: true });
     let results = runner.listen();
     let t = runner.test;
 
@@ -23,241 +21,217 @@ describe( "unit", () => {
       "afterEach",
       "afterEach 2",
       "after",
-      "after 2"
+      "after 2",
     ];
 
-    t.before( () => {
-      actual.push( "before" );
-    } );
+    t.before(() => {
+      actual.push("before");
+    });
 
-    t.after( () => {
-      actual.push( "after" );
-    } );
+    t.after(() => {
+      actual.push("after");
+    });
 
-    t.after( () => {
-      actual.push( "after 2" );
-    } );
+    t.after(() => {
+      actual.push("after 2");
+    });
 
-    t.beforeEach( () => {
-      actual.push( "beforeEach" );
-    } );
+    t.beforeEach(() => {
+      actual.push("beforeEach");
+    });
 
-    t.serial( () => {
+    t.serial(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    t( () => {
+    t(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    t.group.only( () => {
+    t.group.only(() => {
+      actual.push("group");
 
-      actual.push( "group" );
+      t.beforeEach(() => {
+        actual.push("group beforeEach");
+      });
 
-      t.beforeEach( () => {
-        actual.push( "group beforeEach" );
-      } );
+      t.afterEach(() => {
+        actual.push("group afterEach");
+      });
 
-      t.afterEach( () => {
-        actual.push( "group afterEach" );
-      } );
+      t.beforeEach(() => {
+        actual.push("group beforeEach 2");
+      });
 
-      t.beforeEach( () => {
-        actual.push( "group beforeEach 2" );
-      } );
+      t.afterEach(() => {
+        actual.push("group afterEach 2");
+      });
 
-      t.afterEach( () => {
-        actual.push( "group afterEach 2" );
-      } );
+      t.only(() => {
+        actual.push("group test");
+      });
 
-      t.only( () => {
-        actual.push( "group test" );
-      } );
-
-      t.failing.serial( () => {
+      t.failing.serial(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
 
-      t.skip( () => {
+      t.skip(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
+    });
 
-    } );
+    t.afterEach(() => {
+      actual.push("afterEach");
+    });
 
-    t.afterEach( () => {
-      actual.push( "afterEach" );
-    } );
+    t.afterEach(() => {
+      actual.push("afterEach 2");
+    });
 
-    t.afterEach( () => {
-      actual.push( "afterEach 2" );
-    } );
-
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ results.length - 1 ].onlyCount ).toBe( 2 );
-      expect( results[ results.length - 1 ].testCounts ).toEqual( {
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[results.length - 1].onlyCount).toBe(2);
+      expect(results[results.length - 1].testCounts).toEqual({
         failed: 0,
         passed: 4,
         skipped: 0,
         todo: 0,
-        total: 4
-      } );
-    } );
+        total: 4,
+      });
+    });
+  });
 
-  } );
+  it("only - ignore group", () => {
+    expect.assertions(3);
 
-  it( "only - ignore group", () => {
-
-    expect.assertions( 3 );
-
-    let runner = Runner.init( { allowNoPlan: true } );
+    let runner = Runner.init({ allowNoPlan: true });
     let results = runner.listen();
     let t = runner.test;
 
     let actual = [];
-    let expected = [
-      "only"
-    ];
+    let expected = ["only"];
 
-    t.only( () => {
-      actual.push( "only" );
-    } );
+    t.only(() => {
+      actual.push("only");
+    });
 
-    t.group( () => {
-
-      t( () => {
+    t.group(() => {
+      t(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
+    });
 
-    } );
-
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ results.length - 1 ].onlyCount ).toBe( 1 );
-      expect( results[ results.length - 1 ].testCounts ).toEqual( {
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[results.length - 1].onlyCount).toBe(1);
+      expect(results[results.length - 1].testCounts).toEqual({
         failed: 0,
         passed: 1,
         skipped: 0,
         todo: 0,
-        total: 1
-      } );
-    } );
+        total: 1,
+      });
+    });
+  });
 
-  } );
+  it("only & --only", () => {
+    expect.assertions(3);
 
-  it( "only & --only", () => {
-
-    expect.assertions( 3 );
-
-    const runner = Runner.init( { allowNoPlan: true, only: true } );
+    const runner = Runner.init({ allowNoPlan: true, only: true });
     const results = runner.listen();
     const t = runner.test;
 
     const actual = [];
-    const expected = [
-      "group test"
-    ];
+    const expected = ["group test"];
 
-    t.serial( () => {
+    t.serial(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    t( () => {
+    t(() => {
       /* istanbul ignore next */
-      actual.push( "dont run" );
-    } );
+      actual.push("dont run");
+    });
 
-    t.group( () => {
+    t.group(() => {
+      t.only(() => {
+        actual.push("group test");
+      });
 
-      t.only( () => {
-        actual.push( "group test" );
-      } );
-
-      t.failing.serial( () => {
+      t.failing.serial(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
 
-      t.skip( () => {
+      t.skip(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
+    });
 
-    } );
-
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ results.length - 1 ].onlyCount ).toBe( 1 );
-      expect( results[ results.length - 1 ].testCounts ).toEqual( {
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[results.length - 1].onlyCount).toBe(1);
+      expect(results[results.length - 1].testCounts).toEqual({
         failed: 0,
         passed: 1,
         skipped: 0,
         todo: 0,
-        total: 1
-      } );
-    } );
+        total: 1,
+      });
+    });
+  });
 
-  } );
+  it("only & --only=false", () => {
+    expect.assertions(3);
 
-  it( "only & --only=false", () => {
-
-    expect.assertions( 3 );
-
-    const runner = Runner.init( { allowNoPlan: true, only: false } );
+    const runner = Runner.init({ allowNoPlan: true, only: false });
     const results = runner.listen();
     const t = runner.test;
 
     const actual = [];
-    const expected = [
-      "test 1",
-      "test 2",
-      "group test"
-    ];
+    const expected = ["test 1", "test 2", "group test"];
 
-    t.serial( () => {
-      actual.push( "test 1" );
-    } );
+    t.serial(() => {
+      actual.push("test 1");
+    });
 
-    t( () => {
-      actual.push( "test 2" );
-    } );
+    t(() => {
+      actual.push("test 2");
+    });
 
-    t.group( () => {
+    t.group(() => {
+      t.only(() => {
+        actual.push("group test");
+      });
 
-      t.only( () => {
-        actual.push( "group test" );
-      } );
-
-      t.failing.serial( () => {
+      t.failing.serial(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
 
-      t.skip( () => {
+      t.skip(() => {
         /* istanbul ignore next */
-        actual.push( "dont run" );
-      } );
+        actual.push("dont run");
+      });
+    });
 
-    } );
-
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-      expect( results[ results.length - 1 ].onlyCount ).toBe( 1 );
-      expect( results[ results.length - 1 ].testCounts ).toEqual( {
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+      expect(results[results.length - 1].onlyCount).toBe(1);
+      expect(results[results.length - 1].testCounts).toEqual({
         failed: 0,
         passed: 3,
         skipped: 0,
         todo: 0,
-        total: 3
-      } );
-    } );
-
-  } );
-
-} );
+        total: 3,
+      });
+    });
+  });
+});

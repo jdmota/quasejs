@@ -5,13 +5,15 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/source-map",
-  "main": "dist/index.js",
-  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js"
+  },
   "dependencies": {
-    "@quase/path-url": "0.2.0-0",
+    "@quase/path-url": "workspace:*",
     "source-map": "0.8.0-beta.0"
   },
   "devDependencies": {
-    "fs-extra": "^7.0.0"
+    "fs-extra": "^8.1.0"
   }
 }

@@ -1,6 +1,6 @@
 import { Loc } from "../types";
 
-const codeFrameColumns = require( "@babel/code-frame" ).codeFrameColumns;
+const codeFrameColumns = require("@babel/code-frame").codeFrameColumns;
 
 export type ErrorOpts = {
   message: string;
@@ -17,25 +17,34 @@ export interface Error2 extends Error {
   codeFrame?: string;
 }
 
-export function error( opts: ErrorOpts ) {
-  throw createError( opts );
+export function error(opts: ErrorOpts) {
+  throw createError(opts);
 }
 
-export function createError( { message, id, code, loc, codeFrameOptions, noStack }: ErrorOpts ) {
-  const error: Error2 = new Error( message );
+export function createError({
+  message,
+  id,
+  code,
+  loc,
+  codeFrameOptions,
+  noStack,
+}: ErrorOpts) {
+  const error: Error2 = new Error(message);
   error.fileName = id;
   error.loc = loc;
   error.codeFrame =
-    loc && code ? codeFrameColumns( code, { start: { line: loc.line } }, codeFrameOptions ) : undefined;
-  if ( noStack ) {
+    loc && code
+      ? codeFrameColumns(code, { start: { line: loc.line } }, codeFrameOptions)
+      : undefined;
+  if (noStack) {
     error.stack = "";
   }
   return error;
 }
 
-export function locToString( loc: Loc|null|undefined ) {
-  if ( loc ) {
-    if ( loc.column != null ) {
+export function locToString(loc: Loc | null | undefined) {
+  if (loc) {
+    if (loc.column != null) {
       return `${loc.line}:${loc.column}`;
     }
     return `${loc.line}`;
@@ -43,37 +52,37 @@ export function locToString( loc: Loc|null|undefined ) {
   return "";
 }
 
-export function formatError( err: string | Error2 ) {
-  if ( typeof err === "string" ) {
+export function formatError(err: string | Error2) {
+  if (typeof err === "string") {
     let message = err;
-    if ( !message ) {
+    if (!message) {
       message = "Unknown error";
     }
     return {
       message,
-      stack: null
+      stack: null,
     };
   }
 
   let message = err.message;
-  if ( !message ) {
+  if (!message) {
     message = "Unknown error";
   }
 
-  if ( err.fileName ) {
+  if (err.fileName) {
     let fileName = err.fileName;
-    if ( err.loc ) {
-      fileName += `:${locToString( err.loc )}`;
+    if (err.loc) {
+      fileName += `:${locToString(err.loc)}`;
     }
 
     message = `${fileName}: ${message}`;
   }
 
   let stack = null;
-  if ( err.codeFrame ) {
+  if (err.codeFrame) {
     stack = err.codeFrame;
-  } else if ( err.stack ) {
-    stack = err.stack.slice( err.stack.indexOf( "\n" ) + 1 );
+  } else if (err.stack) {
+    stack = err.stack.slice(err.stack.indexOf("\n") + 1);
   }
 
   return { message, stack };

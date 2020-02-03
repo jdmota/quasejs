@@ -2,8 +2,8 @@ import { ContextRef } from "./core/context";
 
 export type Deferred<T> = {
   promise: Promise<T>;
-  resolve: ( x: T ) => void;
-  reject: ( err: Error ) => void;
+  resolve: (x: T) => void;
+  reject: (err: Error) => void;
 };
 
 export type WhyIsRunning = {
@@ -124,9 +124,22 @@ export type TestEnd = {
   source?: EventAskSourceContent | null;
 };
 
-export type CoreRunnerEvents = RunStart | RunEnd | SuiteStart | SuiteEnd | TestStart | TestEnd;
+export type CoreRunnerEvents =
+  | RunStart
+  | RunEnd
+  | SuiteStart
+  | SuiteEnd
+  | TestStart
+  | TestEnd;
 
-export type CoreRunnerEventTypes = "runStart" | "runEnd" | "otherError" | "testStart" | "testEnd" | "suiteStart" | "suiteEnd";
+export type CoreRunnerEventTypes =
+  | "runStart"
+  | "runEnd"
+  | "otherError"
+  | "testStart"
+  | "testEnd"
+  | "suiteStart"
+  | "suiteEnd";
 
 export type ChildEventsEmit = {
   type: "quase-unit-emit";
@@ -134,17 +147,21 @@ export type ChildEventsEmit = {
   arg: CoreRunnerEvents;
 };
 
-export type ChildEvents = ChildEventsEmit | {
-  type: "quase-unit-source";
-  stack: string;
-  id: number;
-} | {
-  type: "quase-unit-why-is-running";
-  whyIsRunning: WhyIsRunning;
-} | {
-  type: "quase-unit-file-imported";
-  file: string;
-};
+export type ChildEvents =
+  | ChildEventsEmit
+  | {
+      type: "quase-unit-source";
+      stack: string;
+      id: number;
+    }
+  | {
+      type: "quase-unit-why-is-running";
+      whyIsRunning: WhyIsRunning;
+    }
+  | {
+      type: "quase-unit-file-imported";
+      file: string;
+    };
 
 export type EventAskSourceContent = {
   file: string;
@@ -153,23 +170,34 @@ export type EventAskSourceContent = {
   column: number | undefined;
 };
 
-export type RunnerToChildEvents = {
-  type: "quase-unit-start";
-  options: NormalizedOptions;
-  files: string[];
-} | {
-  type: "quase-unit-source";
-  source: EventAskSourceContent;
-  id: number;
-} | {
-  type: "quase-unit-bail";
-} | {
-  type: "quase-unit-sigint";
-} | {
-  type: "quase-unit-ping";
-};
+export type RunnerToChildEvents =
+  | {
+      type: "quase-unit-start";
+      options: NormalizedOptions;
+      files: string[];
+    }
+  | {
+      type: "quase-unit-source";
+      source: EventAskSourceContent;
+      id: number;
+    }
+  | {
+      type: "quase-unit-bail";
+    }
+  | {
+      type: "quase-unit-sigint";
+    }
+  | {
+      type: "quase-unit-ping";
+    };
 
-export type MetadataTypes = "test" | "before" | "after" | "beforeEach" | "afterEach" | "group";
+export type MetadataTypes =
+  | "test"
+  | "before"
+  | "after"
+  | "beforeEach"
+  | "afterEach"
+  | "group";
 
 export type GroupMetadata = {
   type: "group";
@@ -200,8 +228,8 @@ export interface IRunnableResult {
 }
 
 export interface GenericRunnable<T extends IRunnableResult> {
-  run( ref: ContextRef ): IRunReturn<T>;
-  runSkip( reason?: string ): T;
+  run(ref: ContextRef): IRunReturn<T>;
+  runSkip(reason?: string): T;
   runTodo(): T;
 }
 
@@ -224,17 +252,17 @@ export interface ITest extends GenericRunnable<ITestResult> {
 export type NumOrVoid = number | undefined;
 
 export type PublicTestApi = {
-  plan( n: number ): void;
+  plan(n: number): void;
   incCount(): void;
-  skip( reason?: string ): void;
-  retries( n: NumOrVoid ): void;
-  retryDelay( n: NumOrVoid ): void;
-  reruns( n: NumOrVoid ): void;
-  rerunDelay( n: NumOrVoid ): void;
-  timeout( n: NumOrVoid ): void;
-  slow( n: NumOrVoid ): void;
-  log( ...args: any[] ): void;
-  matchesSnapshot( something: unknown, key?: string ): void;
+  skip(reason?: string): void;
+  retries(n: NumOrVoid): void;
+  retryDelay(n: NumOrVoid): void;
+  reruns(n: NumOrVoid): void;
+  rerunDelay(n: NumOrVoid): void;
+  timeout(n: NumOrVoid): void;
+  slow(n: NumOrVoid): void;
+  log(...args: any[]): void;
+  matchesSnapshot(something: unknown, key?: string): void;
   context: any;
 };
 
@@ -250,7 +278,7 @@ type BaseOptions = {
   only: boolean;
   strict: boolean;
   allowNoPlan: boolean;
-  snapshotLocation: string | ( ( file: string ) => string ) | undefined;
+  snapshotLocation: string | ((file: string) => string) | undefined;
   env: string | NodeJS.ProcessEnv | undefined;
   diff: boolean;
   stack: boolean;
@@ -284,6 +312,6 @@ export type NormalizedOptions = BaseOptions & {
   color: boolean;
   stackIgnore: RegExp | undefined;
   random: string | undefined;
-  globals: ( string | boolean )[];
+  globals: (string | boolean)[];
   reporter: any;
 };

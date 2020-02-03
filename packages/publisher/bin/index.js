@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { cli } = require( "@quase/cli" );
+const { cli } = require("@quase/cli");
 
 const schema = `
 type GitOptions {
@@ -30,22 +30,22 @@ type Schema {
 
 let history;
 
-cli( {
+cli({
   usage: "$ quase-publisher <version> [options]",
   configFiles: "quase-publisher.config.js",
   configKey: "quase-publisher",
-  schema
-} ).then( ( { input, options } ) => {
-  options.version = options.version || input[ 0 ];
-  require( ".." ).default( options, h => ( history = h ) );
-} );
+  schema,
+}).then(({ input, options }) => {
+  options.version = options.version || input[0];
+  require("..").default(options, h => (history = h));
+});
 
 /* eslint-disable no-process-exit, no-console */
 
-process.on( "SIGINT", () => {
-  console.log( "\nAborted!" );
-  if ( history ) {
+process.on("SIGINT", () => {
+  console.log("\nAborted!");
+  if (history) {
     history.show();
   }
-  process.exit( 1 );
-} );
+  process.exit(1);
+});

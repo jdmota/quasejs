@@ -1,6 +1,8 @@
-export default ( obj: unknown ): obj is PromiseLike<unknown> => {
-  return typeof obj === "object" &&
+export default (obj: unknown): obj is PromiseLike<unknown> => {
+  return (
+    typeof obj === "object" &&
     obj != null &&
     // @ts-ignore
-    typeof obj.then === "function";
+    typeof obj.then === "function"
+  );
 };

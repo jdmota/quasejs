@@ -9,7 +9,7 @@ export const TEMPLATE_RESULT = "r";
 export const MASK = 0b11;
 export const BITS = 2;
 
-export function partValue( newMark: boolean, type: number ) {
+export function partValue(newMark: boolean, type: number) {
   const newMarkBit = newMark ? 1 : 0;
-  return ( newMarkBit << BITS ) | type;
+  return (newMarkBit << BITS) | type;
 }

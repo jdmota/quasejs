@@ -17,7 +17,7 @@ export type YargsOptions = {
 };
 
 export type Schema = {
-  validateAndMerge: ( ..._: unknown[] ) => unknown;
+  validateAndMerge: (..._: unknown[]) => unknown;
   cli: {
     yargsOpts: YargsOptions;
     help: string;
@@ -28,7 +28,7 @@ export type Pkg = {
   name: string;
   version: string;
   description?: string;
-  bin?: { [ key: string ]: unknown };
+  bin?: { [key: string]: unknown };
 };
 
 export type CommandsOpts = {
@@ -57,13 +57,15 @@ export type CliOptions = CommandsOpts & {
 
 export type CommandSet = {
   value: string[];
-  detail: {
-    last: string | undefined;
-    set: false;
-  } | {
-    last: string;
-    set: true;
-  };
+  detail:
+    | {
+        last: string | undefined;
+        set: false;
+      }
+    | {
+        last: string;
+        set: true;
+      };
 };
 
 export type ArgsInfo = {

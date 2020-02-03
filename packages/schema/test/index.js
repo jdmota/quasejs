@@ -1,14 +1,14 @@
 import runtime from "../src/runtime";
 import schemaCompiler from "../src/compiler";
 
-const stripAnsi = require( "strip-ansi" );
+const stripAnsi = require("strip-ansi");
 const { printError } = runtime;
 
 /* eslint no-console: 0 */
 
-function run( schema, ...args ) {
-  const code = schemaCompiler( schema );
-  expect( code ).toMatchSnapshot( "code" );
+function run(schema, ...args) {
+  const code = schemaCompiler(schema);
+  expect(code).toMatchSnapshot("code");
 
   const { error: prevError, warn: prevWarn } = console;
   const mock = jest.fn();
@@ -16,125 +16,153 @@ function run( schema, ...args ) {
   console.warn = mock;
   try {
     /* eslint no-eval: 0 */
-    const { validateAndMerge } = eval( code.replace( "@quase/schema", "../src/index" ) );
-    expect( validateAndMerge( ...args ) ).toMatchSnapshot( "result" );
-  } catch ( e ) {
-    printError( e );
+    const { validateAndMerge } = eval(
+      code.replace("@quase/schema", "../src/index")
+    );
+    expect(validateAndMerge(...args)).toMatchSnapshot("result");
+  } catch (e) {
+    printError(e);
   }
   expect(
-    mock.mock.calls.map( x => {
-      if ( Array.isArray( x ) ) {
-        return x.map( stripAnsi );
+    mock.mock.calls.map(x => {
+      if (Array.isArray(x)) {
+        return x.map(stripAnsi);
       }
-      return stripAnsi( x );
-    } )
-  ).toMatchSnapshot( "log output" );
+      return stripAnsi(x);
+    })
+  ).toMatchSnapshot("log output");
   console.error = prevError;
   console.warn = prevWarn;
 }
 
-it( "schema compilation", () => {
-
-  expect( () => schemaCompiler( `
+it("schema compilation", () => {
+  expect(() =>
+    schemaCompiler(`
     type BadCircularity = BadCircularity;
     type Schema {
       obj: BadCircularity;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type BadCircularity = BadCircularity | string;
     type Schema {
       obj: BadCircularity;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type BadCircularity @example("") = BadCircularity | string;
     type Schema {
       obj: BadCircularity;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type BadCircularity = IndirectCircularity;
     type IndirectCircularity = BadCircularity;
     type Schema {
       obj: IndirectCircularity;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type AllowedCircularity = AllowedCircularity[] | string;
     type Schema {
       obj: AllowedCircularity;
     }
-  ` ) ).not.toThrow();
+  `)
+  ).not.toThrow();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type Schema {
       obj: Schema;
     }
-  ` ) ).not.toThrow();
+  `)
+  ).not.toThrow();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type Schema {
       string: string;
     }
     type Schema {
       string: string;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type NotSchema {
       string: string;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type Schema {
       string: NotDefined;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type Schema {
       key: string;
       key: number;
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
 
-  expect( () => schemaCompiler( `
+  expect(() =>
+    schemaCompiler(`
     type Schema {
       obj: type {
         key: string;
         key: number;
       };
     }
-  ` ) ).toThrowErrorMatchingSnapshot();
+  `)
+  ).toThrowErrorMatchingSnapshot();
+});
 
-} );
-
-it( "validate", () => {
-
-  run( `
+it("validate", () => {
+  run(
+    `
     type Schema {
       deprecated: boolean @deprecated;
     }
-  `, {
-    deprecated: true
-  } );
+  `,
+    {
+      deprecated: true,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       config: string;
     }
-  `, {
-    config: true
-  } );
+  `,
+    {
+      config: true,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: type {
@@ -142,15 +170,18 @@ it( "validate", () => {
         };
       };
     }
-  `, {
-    obj: {
-      foo: {
-        bar: 10
-      }
+  `,
+    {
+      obj: {
+        foo: {
+          bar: 10,
+        },
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: type {
@@ -158,13 +189,16 @@ it( "validate", () => {
         };
       };
     }
-  `, {
-    obj: {
-      foo: 10
+  `,
+    {
+      obj: {
+        foo: 10,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: type {
@@ -172,15 +206,18 @@ it( "validate", () => {
         };
       };
     }
-  `, {
-    obj: {
-      foo: {
-        baz: "abc"
-      }
+  `,
+    {
+      obj: {
+        foo: {
+          baz: "abc",
+        },
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type StringExample @example("example") = string;
     type Schema {
       obj: type {
@@ -190,13 +227,16 @@ it( "validate", () => {
         ];
       };
     }
-  `, {
-    obj: {
-      foo: [ "string", 10 ]
+  `,
+    {
+      obj: {
+        foo: ["string", 10],
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type StringExample @example("example") = string;
     type Schema {
       obj: type {
@@ -206,145 +246,186 @@ it( "validate", () => {
         ];
       };
     }
-  `, {
-    obj: {
-      foo: {}
+  `,
+    {
+      obj: {
+        foo: {},
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: (string | number) @example("example");
       };
     }
-  `, {
-    obj: {
-      foo: [ "string", 10 ]
+  `,
+    {
+      obj: {
+        foo: ["string", 10],
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: (0 | 1) @example(1);
       };
     }
-  `, {
-    obj: {
-      foo: 2
+  `,
+    {
+      obj: {
+        foo: 2,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: boolean?;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       required: boolean;
     }
-  `, {
-    required: undefined
-  } );
+  `,
+    {
+      required: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: 0 | 1 | "Object";
       };
     }
-  `, {
-    obj: {
-      foo: 2
+  `,
+    {
+      obj: {
+        foo: 2,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: 0 | 1 | Object;
       };
     }
-  `, {
-    obj: {
-      foo: 2
+  `,
+    {
+      obj: {
+        foo: 2,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: 0 | 1 | Object;
       };
     }
-  `, {
-    obj: {
-      foo: 0
+  `,
+    {
+      obj: {
+        foo: 0,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type {
         boolean: boolean;
       };
     }
-  `, {
-    foo: {
-      boolean: true,
-      unknown: "stuff"
+  `,
+    {
+      foo: {
+        boolean: true,
+        unknown: "stuff",
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type @additionalProperties {
         boolean: boolean;
       };
     }
-  `, {
-    foo: {
-      boolean: true,
-      unknown: "stuff"
+  `,
+    {
+      foo: {
+        boolean: true,
+        unknown: "stuff",
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
-        foo: string[] @example(js(${JSON.stringify( "aaaaaaaaaaaaaaaaaaaa".split( "" ) )}));
+        foo: string[] @example(js(${JSON.stringify(
+          "aaaaaaaaaaaaaaaaaaaa".split("")
+        )}));
       };
     }
-  `, {
-    obj: {
-      foo: {}
+  `,
+    {
+      obj: {
+        foo: {},
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: any;
     }
-  `, {
-    obj: {
-      foo: {}
+  `,
+    {
+      obj: {
+        foo: {},
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: any[];
     }
-  `, {
-    obj: [ 1, {}, [] ]
-  } );
+  `,
+    {
+      obj: [1, {}, []],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: 0 | 1 | Object;
@@ -353,190 +434,254 @@ it( "validate", () => {
         bar: 0 | 1 | Object;
       };
     }
-  `, {
-    obj: {
-      foo: 1
-    },
-    obj2: {
-      bar: {}
+  `,
+    {
+      obj: {
+        foo: 1,
+      },
+      obj2: {
+        bar: {},
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: [ string, number, 0 | 1 ];
     }
-  `, {
-    obj: [ "", 0, 1, 10 ]
-  } );
+  `,
+    {
+      obj: ["", 0, 1, 10],
+    }
+  );
 
   const obj = {
-    obj: null
+    obj: null,
   };
   obj.obj = obj;
 
-  run( `
+  run(
+    `
     type Schema {
       obj: Schema;
     }
-  `, obj );
+  `,
+    obj
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: number;
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type B @default(true) = boolean;
     type Schema {
       watch: B @alias("w");
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       prop: true;
     }
-  `, {
-    prop: false
-  } );
+  `,
+    {
+      prop: false,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       prop: false;
     }
-  `, {
-    prop: true
-  } );
+  `,
+    {
+      prop: true,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       prop: true;
     }
-  `, {
-    prop: true
-  } );
+  `,
+    {
+      prop: true,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       prop: false;
     }
-  `, {
-    prop: false
-  } );
+  `,
+    {
+      prop: false,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       arr: boolean[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       arr: ( true | false )[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       arr: number[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       arr: ( 0 | 1 )[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       arr: string[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type b = boolean;
 
     type Schema {
       arr: b[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type n = number;
 
     type Schema {
       arr: n[];
     }
-  `, {
-    arr: []
-  } );
+  `,
+    {
+      arr: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: number? | boolean;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type n = number?;
 
     type Schema {
       optional: n | boolean;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: any | boolean;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: undefined | boolean;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: any;
     }
-  `, {
-    optional: undefined
-  } );
+  `,
+    {
+      optional: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       optional: undefined;
     }
-  `, {
-    optional: undefined
-  } );
-
-} );
+  `,
+    {
+      optional: undefined,
+    }
+  );
+});
 
 /* it( "show where the error is", () => {
 
@@ -574,253 +719,320 @@ it( "validate", () => {
 
 } ); */
 
-it( "apply defaults", () => {
-
-  run( `
+it("apply defaults", () => {
+  run(
+    `
     type A @default("A") = string;
     type B @default("B") = string;
     type Schema {
       foo: [ A, B ];
     }
-  `, {
-    foo: []
-  } );
+  `,
+    {
+      foo: [],
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type {
         a: any @default(10);
         b: any @default(20);
       };
     }
-  `, {
-    foo: {}
-  } );
+  `,
+    {
+      foo: {},
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type {
         a: any @default(10);
         b: any @default(20);
       };
     }
-  `, {
-    foo: {
-      a: 100
+  `,
+    {
+      foo: {
+        a: 100,
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: string[];
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type {
 
       };
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: number?;
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: number @default(10);
     }
-  `, {} );
+  `,
+    {}
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: string?;
     }
-  `, {
-    foo: "string"
-  }, {
-    foo: undefined
-  } );
+  `,
+    {
+      foo: "string",
+    },
+    {
+      foo: undefined,
+    }
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: type @additionalProperties {};
     }
-  `, {
-    foo: {}
-  }, {
-    foo: {
-      abc: "string"
+  `,
+    {
+      foo: {},
+    },
+    {
+      foo: {
+        abc: "string",
+      },
     }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       foo: string[];
     }
-  `, {
-    foo: undefined
-  }, {
-    foo: [ "foo" ]
-  } );
+  `,
+    {
+      foo: undefined,
+    },
+    {
+      foo: ["foo"],
+    }
+  );
+});
 
-} );
-
-it( "apply defaults - merge strategies", () => {
-
-  run( `
+it("apply defaults - merge strategies", () => {
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("concat");
       };
     }
-  `, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("override");
       };
     }
-  `, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("spreadMeansConcat");
       };
     }
-  `, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("spreadMeansConcat");
       };
     }
-  `, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: ["...", 1],
+      },
+    },
+    {
+      obj: {
+        foo: ["...", 2],
+      },
     }
-  }, {
-    obj: {
-      foo: [ "...", 1 ]
-    }
-  }, {
-    obj: {
-      foo: [ "...", 2 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("concat");
       };
     }
-  `, {
-    obj: {}
-  }, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {},
+    },
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("override");
       };
     }
-  `, {
-    obj: {}
-  }, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {},
+    },
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("spreadMeansConcat");
       };
     }
-  `, {
-    obj: {}
-  }, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {},
+    },
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: [1],
+      },
     }
-  }, {
-    obj: {
-      foo: [ 1 ]
-    }
-  } );
+  );
 
-  run( `
+  run(
+    `
     type Schema {
       obj: type {
         foo: number[] @mergeStrategy("spreadMeansConcat");
       };
     }
-  `, {
-    obj: {}
-  }, {
-    obj: {
-      foo: [ 0 ]
+  `,
+    {
+      obj: {},
+    },
+    {
+      obj: {
+        foo: [0],
+      },
+    },
+    {
+      obj: {
+        foo: ["...", 1],
+      },
+    },
+    {
+      obj: {
+        foo: ["...", 2],
+      },
     }
-  }, {
-    obj: {
-      foo: [ "...", 1 ]
-    }
-  }, {
-    obj: {
-      foo: [ "...", 2 ]
-    }
-  } );
+  );
+});
 
-} );
-
-it( "cli", () => {
-
-  run( `
+it("cli", () => {
+  run(
+    `
     type Schema {
       foo: string
         @description("description of this option")
@@ -828,8 +1040,9 @@ it( "cli", () => {
         @example("example")
         @alias("f","fo");
     }
-  `, {
-    foo: undefined
-  } );
-
-} );
+  `,
+    {
+      foo: undefined,
+    }
+  );
+});

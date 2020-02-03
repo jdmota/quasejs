@@ -1,18 +1,15 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
-    "lib": [ "es2018", "dom" ],
-    "types": [ "node" ],
+    "lib": ["es2018", "dom"],
+    "types": ["node"],
     "noEmit": true,
     "strict": true,
     "isolatedModules": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "node_modules",
-    "scripts",
-    "**/__dev__/**"
-  ]
+  "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts"]
 }

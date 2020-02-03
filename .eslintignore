@@ -1,8 +1,9 @@
+.yarn
+.pnp.js
 __dev__
 dist
 coverage
 node_modules
-.pnp.js
 packages/_legacy/**
 packages/builder/src/plugins/transformers/babel-helpers.js
 packages/builder/src/runtime/builds/**

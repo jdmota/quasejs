@@ -6,14 +6,16 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/error",
-  "main": "dist/index.js",
-  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js"
+  },
   "dependencies": {
-    "@quase/path-url": "0.2.0-0",
-    "error-stack-parser": "^2.0.2"
+    "@quase/path-url": "workspace:*",
+    "error-stack-parser": "^2.0.6"
   },
   "devDependencies": {
-    "@quase/source-map": "0.2.0-0",
-    "fs-extra": "^7.0.0"
+    "@quase/source-map": "workspace:*",
+    "fs-extra": "^8.1.0"
   }
 }

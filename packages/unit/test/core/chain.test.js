@@ -1,36 +1,32 @@
 import Runner from "../../src/core/runner";
 
-describe( "unit", () => {
+describe("unit", () => {
+  it("chain", () => {
+    expect.assertions(1);
 
-  it( "chain", () => {
-
-    expect.assertions( 1 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const test = runner.test;
 
-    const expected = [ "before", "test", "after" ];
+    const expected = ["before", "test", "after"];
     const actual = [];
 
     const t2 = test.before;
     const t3 = test.after;
 
-    t3( "after", () => {
-      actual.push( "after" );
-    } );
+    t3("after", () => {
+      actual.push("after");
+    });
 
-    test( "test", () => {
-      actual.push( "test" );
-    } );
+    test("test", () => {
+      actual.push("test");
+    });
 
-    t2( "before", () => {
-      actual.push( "before" );
-    } );
+    t2("before", () => {
+      actual.push("before");
+    });
 
-    return runner.run().then( () => {
-      expect( actual ).toEqual( expected );
-    } );
-
-  } );
-
-} );
+    return runner.run().then(() => {
+      expect(actual).toEqual(expected);
+    });
+  });
+});

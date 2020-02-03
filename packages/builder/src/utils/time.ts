@@ -1,5 +1,4 @@
 export class Time {
-
   private startTime: number;
   private time: number;
   private checkpoints: Map<string, number>;
@@ -14,10 +13,10 @@ export class Time {
     this.startTime = this.time = Date.now();
   }
 
-  checkpoint( name: string ) {
+  checkpoint(name: string) {
     const start = this.time;
     this.time = Date.now();
-    this.checkpoints.set( name, this.time - start );
+    this.checkpoints.set(name, this.time - start);
   }
 
   end() {
@@ -27,5 +26,4 @@ export class Time {
   getCheckpoints() {
     return this.checkpoints;
   }
-
 }

@@ -2,68 +2,73 @@ import { EventEmitter } from "events";
 import { SourceMapExtractor } from "@quase/source-map";
 import { beautify as beautifyStack } from "@quase/error";
 import { RunnerProcess } from "./child";
-import { RunStart, RunEnd, ChildEvents, NormalizedOptions, ChildEventsEmit } from "../types";
+import {
+  RunStart,
+  RunEnd,
+  ChildEvents,
+  NormalizedOptions,
+  ChildEventsEmit,
+} from "../types";
 import { setExitCode } from "./util";
 
-const CircularJSON = require( "circular-json" );
+const CircularJSON = require("circular-json");
 
 const reDebugger = /Debugger listening on (ws:\/\/.+)\r?\n/;
 const reDebuggerWaiting = /Waiting for the debugger to disconnect/;
 
-function getDebugger( child: RunnerProcess ) {
-  return new Promise<string>( ( resolve, reject ) => {
+function getDebugger(child: RunnerProcess) {
+  return new Promise<string>((resolve, reject) => {
     function error() {
-      reject( new Error( "Waited for debugger for too long" ) );
+      reject(new Error("Waited for debugger for too long"));
     }
 
-    const timeoutId = setTimeout( error, 10000 );
+    const timeoutId = setTimeout(error, 10000);
     let str = "";
 
-    function cb( data: string ) {
+    function cb(data: string) {
       str += data;
-      const m = str.match( reDebugger );
-      if ( m ) {
-        if ( child.stderr ) {
-          child.stderr.removeListener( "data", cb );
+      const m = str.match(reDebugger);
+      if (m) {
+        if (child.stderr) {
+          child.stderr.removeListener("data", cb);
         }
-        clearTimeout( timeoutId );
-        resolve( m[ 1 ] );
+        clearTimeout(timeoutId);
+        resolve(m[1]);
       }
     }
 
-    if ( child.stderr ) {
-      child.stderr.on( "data", cb );
+    if (child.stderr) {
+      child.stderr.on("data", cb);
     }
-  } );
+  });
 }
 
-function getDebuggerWaiting( child: RunnerProcess ) {
-  return new Promise<void>( resolve => {
+function getDebuggerWaiting(child: RunnerProcess) {
+  return new Promise<void>(resolve => {
     let str = "";
-    function cb( data: string ) {
+    function cb(data: string) {
       str += data;
-      if ( reDebuggerWaiting.test( str ) ) {
-        if ( child.stderr ) {
-          child.stderr.removeListener( "data", cb );
+      if (reDebuggerWaiting.test(str)) {
+        if (child.stderr) {
+          child.stderr.removeListener("data", cb);
         }
         resolve();
       }
     }
-    if ( child.stderr ) {
-      child.stderr.on( "data", cb );
+    if (child.stderr) {
+      child.stderr.on("data", cb);
     }
-  } );
+  });
 }
 
-function concat<T>( original: T[], array: T[] ) {
-  for ( let i = 0; i < array.length; i++ ) {
-    original.push( array[ i ] );
+function concat<T>(original: T[], array: T[]) {
+  for (let i = 0; i < array.length; i++) {
+    original.push(array[i]);
   }
   return original;
 }
 
 export class NodeRunner extends EventEmitter {
-
   options: NormalizedOptions;
   files: string[];
   division: string[][];
@@ -86,7 +91,7 @@ export class NodeRunner extends EventEmitter {
   private sentSigint: number;
   private onSigint: () => void;
 
-  constructor( options: NormalizedOptions, files: string[] ) {
+  constructor(options: NormalizedOptions, files: string[]) {
     super();
     this.options = options;
     this.files = files;
@@ -114,8 +119,8 @@ export class NodeRunner extends EventEmitter {
         failed: undefined,
         skipped: undefined,
         todo: undefined,
-        total: 0 // Increment
-      }
+        total: 0, // Increment
+      },
     };
     this.runEndArg = {
       type: "runEnd",
@@ -130,19 +135,19 @@ export class NodeRunner extends EventEmitter {
         failed: 0, // Increment
         skipped: 0, // Increment
         todo: 0, // Increment
-        total: 0 // Increment
+        total: 0, // Increment
       },
       snapshotStats: {
         added: 0, // Increment
         updated: 0, // Increment
         removed: 0, // Increment
-        obsolete: 0 // Increment
+        obsolete: 0, // Increment
       },
       onlyCount: 0, // Increment
       pendingTests: new Set(), // Fill
       notStartedForks: [], // Fill
       interrupted: false, // Set
-      whyIsRunning: [] // Fill
+      whyIsRunning: [], // Fill
     };
 
     this.extractor = new SourceMapExtractor();
@@ -153,19 +158,19 @@ export class NodeRunner extends EventEmitter {
 
     this.sentSigint = 0;
     this.onSigint = () => {
-      setExitCode( 1 );
+      setExitCode(1);
 
       this.sentSigint++;
-      if ( this.runEndEmmited || this.sentSigint > 2 ) {
-        process.removeListener( "SIGINT", this.onSigint );
+      if (this.runEndEmmited || this.sentSigint > 2) {
+        process.removeListener("SIGINT", this.onSigint);
         this.killAllForks();
       } else {
-        this.emit( "sigint", this.sentSigint );
+        this.emit("sigint", this.sentSigint);
 
-        for ( const fork of this.forks ) {
-          fork.send( {
-            type: "quase-unit-sigint"
-          } );
+        for (const fork of this.forks) {
+          fork.send({
+            type: "quase-unit-sigint",
+          });
         }
       }
     };
@@ -173,21 +178,21 @@ export class NodeRunner extends EventEmitter {
 
   finishedFork() {
     this.finishedForks++;
-    if ( this.finishedForks === this.forks.length ) {
-      if ( this.detectFinishedTimeout != null ) {
-        clearTimeout( this.detectFinishedTimeout );
+    if (this.finishedForks === this.forks.length) {
+      if (this.detectFinishedTimeout != null) {
+        clearTimeout(this.detectFinishedTimeout);
       }
-      if ( this.globalTimeoutId != null ) {
-        clearTimeout( this.globalTimeoutId );
+      if (this.globalTimeoutId != null) {
+        clearTimeout(this.globalTimeoutId);
       }
-      process.nextTick( () => this.runEnd() );
+      process.nextTick(() => this.runEnd());
     }
   }
 
   forksRunning() {
     let running = 0;
-    for ( const fork of this.forks ) {
-      if ( !fork.didFinish() ) {
+    for (const fork of this.forks) {
+      if (!fork.didFinish()) {
         running++;
       }
     }
@@ -195,7 +200,7 @@ export class NodeRunner extends EventEmitter {
   }
 
   killAllForks() {
-    for ( const fork of this.forks ) {
+    for (const fork of this.forks) {
       fork.notifyWhyIsRunning();
       fork.kill();
     }
@@ -205,96 +210,101 @@ export class NodeRunner extends EventEmitter {
   // - All forks sent "runEnd" (that does not mean that they finished)
   // - All forks have finished
   runEnd() {
-    if ( this.runEndEmmited ) {
+    if (this.runEndEmmited) {
       return;
     }
     this.runEndEmmited = true;
 
     const { notStartedForks, pendingTests } = this.runEndArg;
 
-    for ( const fork of this.forks ) {
-      if ( !fork.didStart() ) {
-        notStartedForks.push( {
+    for (const fork of this.forks) {
+      if (!fork.didStart()) {
+        notStartedForks.push({
           didCrash: fork.didCrash(),
-          notImportedFiles: fork.getNotImportedFiles()
-        } );
+          notImportedFiles: fork.getNotImportedFiles(),
+        });
       }
     }
 
     this.runEndArg.interrupted = !!this.sentSigint;
 
-    if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped ) {
+    if (this.runEndArg.testCounts.total === this.runEndArg.testCounts.skipped) {
       this.runEndArg.status = "skipped";
-    } else if ( this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo ) {
+    } else if (
+      this.runEndArg.testCounts.total === this.runEndArg.testCounts.todo
+    ) {
       this.runEndArg.status = "todo";
-    } else if ( this.runEndArg.testCounts.failed ) {
+    } else if (this.runEndArg.testCounts.failed) {
       this.runEndArg.status = "failed";
     } else {
       this.runEndArg.status = "passed";
     }
 
-    if ( notStartedForks.length > 0 || this.runEndArg.interrupted || pendingTests.size > 0 ) {
-      setExitCode( 1 );
+    if (
+      notStartedForks.length > 0 ||
+      this.runEndArg.interrupted ||
+      pendingTests.size > 0
+    ) {
+      setExitCode(1);
     }
 
     const { failed, total } = this.runEndArg.testCounts;
-    setExitCode( failed || !total ? 1 : 0 );
+    setExitCode(failed || !total ? 1 : 0);
 
-    this.emit( "runEnd", this.runEndArg );
+    this.emit("runEnd", this.runEndArg);
 
-    if ( this.forksRunning() ) {
-      this.detectFinishedTimeout = setTimeout( () => {
-        for ( const fork of this.forks ) {
+    if (this.forksRunning()) {
+      this.detectFinishedTimeout = setTimeout(() => {
+        for (const fork of this.forks) {
           fork.notifyWhyIsRunning();
         }
-      }, 2000 );
+      }, 2000);
     }
   }
 
   testFailure() {
-    if ( this.failedOnce ) {
+    if (this.failedOnce) {
       return;
     }
     this.failedOnce = true;
 
-    if ( this.options.bail ) {
-      for ( const fork of this.forks ) {
-        fork.send( {
-          type: "quase-unit-bail"
-        } );
+    if (this.options.bail) {
+      for (const fork of this.forks) {
+        fork.send({
+          type: "quase-unit-bail",
+        });
       }
     }
   }
 
-  onChildEmit( forkProcess: RunnerProcess, msg: ChildEvents ) {
-    if ( msg.type === "quase-unit-emit" ) {
-
+  onChildEmit(forkProcess: RunnerProcess, msg: ChildEvents) {
+    if (msg.type === "quase-unit-emit") {
       const eventType = msg.eventType;
-      const arg = CircularJSON.parse( msg.arg );
+      const arg = CircularJSON.parse(msg.arg);
 
-      if ( eventType === "runStart" ) {
+      if (eventType === "runStart") {
         forkProcess.setStarted();
 
-        concat( this.runStartArg.tests, arg.tests );
-        concat( this.runStartArg.childSuites, arg.childSuites );
+        concat(this.runStartArg.tests, arg.tests);
+        concat(this.runStartArg.childSuites, arg.childSuites);
         this.runStartArg.testCounts.total += arg.testCounts.total;
 
-        if ( ++this.runStarts === this.forks.length ) {
+        if (++this.runStarts === this.forks.length) {
           this.timeStart = Date.now();
 
-          this.emit( eventType, this.runStartArg );
+          this.emit(eventType, this.runStartArg);
           this.runStartEmmited = true;
 
           const buffer = this.buffer;
           this.buffer = [];
 
-          for ( const { eventType, arg } of buffer ) {
-            this.emit( eventType, arg );
+          for (const { eventType, arg } of buffer) {
+            this.emit(eventType, arg);
           }
         }
-      } else if ( eventType === "runEnd" ) {
-        concat( this.runEndArg.tests, arg.tests );
-        concat( this.runEndArg.childSuites, arg.childSuites );
+      } else if (eventType === "runEnd") {
+        concat(this.runEndArg.tests, arg.tests);
+        concat(this.runEndArg.childSuites, arg.childSuites);
 
         this.runEndArg.testCounts.passed += arg.testCounts.passed;
         this.runEndArg.testCounts.failed += arg.testCounts.failed;
@@ -309,67 +319,65 @@ export class NodeRunner extends EventEmitter {
 
         this.runEndArg.onlyCount += arg.onlyCount;
 
-        forkProcess.setWhyIsRunning( arg.whyIsRunning );
+        forkProcess.setWhyIsRunning(arg.whyIsRunning);
 
-        if ( ++this.runEnds === this.forks.length ) {
-          if ( this.timeStart ) {
+        if (++this.runEnds === this.forks.length) {
+          if (this.timeStart) {
             this.runEndArg.runtime = Date.now() - this.timeStart;
           }
           this.runEnd();
         }
-      } else if ( eventType === "otherError" ) {
-        setExitCode( 1 );
+      } else if (eventType === "otherError") {
+        setExitCode(1);
 
-        this.emit( eventType, arg );
-        if ( !forkProcess.didStart() ) {
+        this.emit(eventType, arg);
+        if (!forkProcess.didStart()) {
           forkProcess.kill();
         }
       } else {
+        if (eventType === "testStart") {
+          this.runEndArg.pendingTests.add(arg.defaultStack);
+        } else if (eventType === "testEnd") {
+          this.runEndArg.pendingTests.delete(arg.defaultStack);
 
-        if ( eventType === "testStart" ) {
-          this.runEndArg.pendingTests.add( arg.defaultStack );
-        } else if ( eventType === "testEnd" ) {
-          this.runEndArg.pendingTests.delete( arg.defaultStack );
-
-          if ( arg.status === "failed" ) {
+          if (arg.status === "failed") {
             this.testFailure();
           }
         }
 
-        if ( this.runStartEmmited ) {
-          this.emit( eventType, arg );
+        if (this.runStartEmmited) {
+          this.emit(eventType, arg);
         } else {
-          this.buffer.push( {
+          this.buffer.push({
             type: "quase-unit-emit",
             eventType,
-            arg
-          } );
+            arg,
+          });
         }
       }
-
-    } else if ( msg.type === "quase-unit-source" ) {
-      this.beautifyStack( msg.stack ).then( ( { source } ) => {
-        if ( !source ) {
-          throw new Error( "Assertion error" );
+    } else if (msg.type === "quase-unit-source") {
+      this.beautifyStack(msg.stack).then(({ source }) => {
+        if (!source) {
+          throw new Error("Assertion error");
         }
-        forkProcess.send( {
+        forkProcess.send({
           type: "quase-unit-source",
           id: msg.id,
-          source
-        } );
-      } );
-    } else if ( msg.type === "quase-unit-why-is-running" ) {
-      forkProcess.setWhyIsRunning( msg.whyIsRunning );
-    } else if ( msg.type === "quase-unit-file-imported" ) {
-      forkProcess.fileImported( msg.file );
+          source,
+        });
+      });
+    } else if (msg.type === "quase-unit-why-is-running") {
+      forkProcess.setWhyIsRunning(msg.whyIsRunning);
+    } else if (msg.type === "quase-unit-file-imported") {
+      forkProcess.fileImported(msg.file);
     }
   }
 
-  async beautifyStack( stack: string ) {
-    return beautifyStack( stack, {
+  async beautifyStack(stack: string) {
+    return beautifyStack(stack, {
       extractor: this.extractor,
-      ignore: this.options.stackIgnore
-    } );
+      ignore: this.options.stackIgnore,
+    });
   }
 
   async divide() {
@@ -385,40 +393,40 @@ export class NodeRunner extends EventEmitter {
     const weirdFiles: Set<string> = new Set();
 
     await Promise.all(
-      this.files.map( async file => {
-        for ( const src of await this.extractor.getOriginalSources( file ) ) {
-          const set = map.get( src ) || new Set();
-          set.add( file );
-          map.set( src, set );
+      this.files.map(async file => {
+        for (const src of await this.extractor.getOriginalSources(file)) {
+          const set = map.get(src) || new Set();
+          set.add(file);
+          map.set(src, set);
         }
-      } )
+      })
     );
 
-    for ( let i = 0; i < num; i++ ) {
-      final.push( [] );
+    for (let i = 0; i < num; i++) {
+      final.push([]);
     }
 
-    for ( const set of map.values() ) {
-      if ( set.size > 1 ) {
-        for ( const f of set ) {
-          weirdFiles.add( f );
+    for (const set of map.values()) {
+      if (set.size > 1) {
+        for (const f of set) {
+          weirdFiles.add(f);
         }
       }
     }
 
-    if ( weirdFiles.size ) {
-      for ( let i = 0; i < this.files.length; i++ ) {
-        const file = this.files[ i ];
-        if ( weirdFiles.has( file ) ) {
-          final[ 0 ].push( file );
+    if (weirdFiles.size) {
+      for (let i = 0; i < this.files.length; i++) {
+        const file = this.files[i];
+        if (weirdFiles.has(file)) {
+          final[0].push(file);
         } else {
-          final[ i % ( num - 1 ) + 1 ].push( file );
+          final[(i % (num - 1)) + 1].push(file);
         }
       }
     } else {
-      for ( let i = 0; i < this.files.length; i++ ) {
-        const file = this.files[ i ];
-        final[ i % num ].push( file );
+      for (let i = 0; i < this.files.length; i++) {
+        const file = this.files[i];
+        final[i % num].push(file);
       }
     }
 
@@ -427,57 +435,63 @@ export class NodeRunner extends EventEmitter {
 
   async start() {
     const options = this.options;
-    const division = this.division = await this.divide();
+    const division = (this.division = await this.divide());
 
-    const env = Object.assign( { NODE_ENV: "test" }, process.env, options.env );
+    const env = Object.assign({ NODE_ENV: "test" }, process.env, options.env);
     const execArgv = [];
     const args = [];
     let debugging = false;
 
-    if ( options.logHeapUsage ) {
-      args.push( "--expose-gc" );
+    if (options.logHeapUsage) {
+      args.push("--expose-gc");
     }
 
-    for ( const arg of options[ "--" ] ) {
-      args.push( arg );
+    for (const arg of options["--"]) {
+      args.push(arg);
     }
 
-    if ( options.debug ) {
-      execArgv.push( "--inspect-brk=0" );
+    if (options.debug) {
+      execArgv.push("--inspect-brk=0");
       debugging = true;
     }
 
-    for ( let i = 0; i < division.length; i++ ) {
-      if ( division[ i ].length ) {
-        const fork = new RunnerProcess( this, division[ i ], options, args, env, execArgv );
-        this.forks.push( fork );
-        if ( debugging ) {
-          this.debuggersPromises.push( getDebugger( fork ) );
-          this.debuggersWaitingPromises.push( getDebuggerWaiting( fork ) );
+    for (let i = 0; i < division.length; i++) {
+      if (division[i].length) {
+        const fork = new RunnerProcess(
+          this,
+          division[i],
+          options,
+          args,
+          env,
+          execArgv
+        );
+        this.forks.push(fork);
+        if (debugging) {
+          this.debuggersPromises.push(getDebugger(fork));
+          this.debuggersWaitingPromises.push(getDebuggerWaiting(fork));
         }
       }
     }
 
-    process.on( "SIGINT", this.onSigint );
+    process.on("SIGINT", this.onSigint);
 
-    process.once( "beforeExit", async() => {
-      this.emit( "exit", {} );
-    } );
+    process.once("beforeExit", async () => {
+      this.emit("exit", {});
+    });
 
-    if ( this.options.globalTimeout ) {
-      this.globalTimeoutId = setTimeout( () => {
-        this.emit( "global-timeout" );
+    if (this.options.globalTimeout) {
+      this.globalTimeoutId = setTimeout(() => {
+        this.emit("global-timeout");
 
-        for ( const fork of this.forks ) {
+        for (const fork of this.forks) {
           fork.ping();
         }
 
-        setTimeout( () => this.killAllForks(), 1000 );
-      }, this.options.globalTimeout );
+        setTimeout(() => this.killAllForks(), 1000);
+      }, this.options.globalTimeout);
     }
 
-    this.emit( "start" );
+    this.emit("start");
     return this;
   }
-
 }

@@ -1,13 +1,13 @@
 import { Manifest, RuntimeManifest } from "../types";
 
-const fs = require( "fs-extra" );
-const path = require( "path" );
+const fs = require("fs-extra");
+const path = require("path");
 
 export type RuntimeOptions = {
   hmr: {
     hostname: string;
     port: number;
-  }|null;
+  } | null;
   browser: boolean;
   node: boolean;
   worker: boolean;
@@ -32,7 +32,6 @@ export async function createRuntime(
   runtime: RuntimeOptions,
   { context, fullPath, publicPath, minify }: RuntimeInfo
 ): Promise<string> {
-
   const minified = minify === undefined ? !runtime.hmr : !!minify;
 
   const filename = [
@@ -40,52 +39,67 @@ export async function createRuntime(
     runtime.browser && "browser",
     runtime.hmr && "hmr",
     minified && "min",
-    "js"
-  ].filter( Boolean ).join( "." );
+    "js",
+  ]
+    .filter(Boolean)
+    .join(".");
 
-  const fullFilename = path.join( __dirname, "builds", filename );
+  const fullFilename = path.join(__dirname, "builds", filename);
 
-  let input = await ( cache[ filename ] || ( cache[ filename ] = fs.readFile( fullFilename, "utf8" ) ) );
+  let input = await (cache[filename] ||
+    (cache[filename] = fs.readFile(fullFilename, "utf8")));
 
-  const relative = ( path.relative( path.dirname( fullPath ), context ).replace( /\\/g, "/" ) || "." ) + "/";
+  const relative =
+    (path.relative(path.dirname(fullPath), context).replace(/\\/g, "/") ||
+      ".") + "/";
 
-  if ( relative === publicPath ) {
-    input = input.replace( "$_PUBLIC_PATH", JSON.stringify( relative ) );
-  } else if ( runtime.node ) {
-    input = input.replace( "$_PUBLIC_PATH", `nodeRequire ? ${JSON.stringify( relative )} : ${JSON.stringify( publicPath )}` );
+  if (relative === publicPath) {
+    input = input.replace("$_PUBLIC_PATH", JSON.stringify(relative));
+  } else if (runtime.node) {
+    input = input.replace(
+      "$_PUBLIC_PATH",
+      `nodeRequire ? ${JSON.stringify(relative)} : ${JSON.stringify(
+        publicPath
+      )}`
+    );
   } else {
-    input = input.replace( "$_PUBLIC_PATH", JSON.stringify( publicPath ) );
+    input = input.replace("$_PUBLIC_PATH", JSON.stringify(publicPath));
   }
 
-  if ( runtime.hmr ) {
-    input = input.replace( "$_HMR_HOSTNAME", JSON.stringify( runtime.hmr.hostname ) );
-    input = input.replace( "$_HMR_PORT", runtime.hmr.port + "" );
+  if (runtime.hmr) {
+    input = input.replace(
+      "$_HMR_HOSTNAME",
+      JSON.stringify(runtime.hmr.hostname)
+    );
+    input = input.replace("$_HMR_PORT", runtime.hmr.port + "");
   }
 
-  return input.replace( "/* eslint-disable */\n", "" );
+  return input.replace("/* eslint-disable */\n", "");
 }
 
-export function createRuntimeManifest( { files, moduleToAssets }: Manifest ): RuntimeManifest | null {
-
-  if ( files.length === 0 ) {
+export function createRuntimeManifest({
+  files,
+  moduleToAssets,
+}: Manifest): RuntimeManifest | null {
+  if (files.length === 0) {
     return null;
   }
 
   const fileToIdx: { [key: string]: number } = {};
-  const $files: string[] = files.map( ( f, i ) => {
-    fileToIdx[ f ] = i;
+  const $files: string[] = files.map((f, i) => {
+    fileToIdx[f] = i;
     return f;
-  } );
+  });
 
   const $idToFiles: { [key: string]: number[] } = {};
-  for ( const [ hashId, files ] of moduleToAssets ) {
-    if ( files.length > 0 ) {
-      $idToFiles[ hashId ] = files.map( f => fileToIdx[ f ] );
+  for (const [hashId, files] of moduleToAssets) {
+    if (files.length > 0) {
+      $idToFiles[hashId] = files.map(f => fileToIdx[f]);
     }
   }
 
   return {
     f: $files,
-    m: $idToFiles
+    m: $idToFiles,
   };
 }

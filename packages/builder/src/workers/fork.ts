@@ -2,53 +2,55 @@ import { PluginsRunnerInWorker } from "../plugins/worker-runner";
 import { UserConfig } from "../builder/user-config";
 import { SentData } from "./farm";
 
-const {
-  isMainThread, parentPort, workerData
-} = require( "worker_threads" ); // eslint-disable-line
+const { isMainThread, parentPort, workerData } = require("worker_threads"); // eslint-disable-line
 
-if ( isMainThread ) {
-  throw new Error( "This file should only be loaded by workers" );
+if (isMainThread) {
+  throw new Error("This file should only be loaded by workers");
 }
 
-const runnerInit = ( async() => {
-  const runner = new PluginsRunnerInWorker( new UserConfig( workerData ) );
+const runnerInit = (async () => {
+  const runner = new PluginsRunnerInWorker(new UserConfig(workerData));
   await runner.init();
   return runner;
-} )();
+})();
 
-async function runMethod( runner: PluginsRunnerInWorker, method: SentData[ "method" ], args: any[] ) {
-  if ( method === "pipeline" ) {
-    return runner.pipeline( args[ 0 ], args[ 1 ] );
+async function runMethod(
+  runner: PluginsRunnerInWorker,
+  method: SentData["method"],
+  args: any[]
+) {
+  if (method === "pipeline") {
+    return runner.pipeline(args[0], args[1]);
   }
-  if ( method === "renderAsset" ) {
-    return runner.renderAsset( args[ 0 ], args[ 1 ], args[ 2 ] );
+  if (method === "renderAsset") {
+    return runner.renderAsset(args[0], args[1], args[2]);
   }
-  throw new Error( `Worker: No method ${method}` );
+  throw new Error(`Worker: No method ${method}`);
 }
 
-async function handle( { id, method, args }: SentData ) {
+async function handle({ id, method, args }: SentData) {
   try {
     const runner = await runnerInit;
-    const result = await runMethod( runner, method, args );
-    parentPort.postMessage( {
+    const result = await runMethod(runner, method, args);
+    parentPort.postMessage({
       id,
-      result
-    } );
-  } catch ( error ) {
-    parentPort.postMessage( {
+      result,
+    });
+  } catch (error) {
+    parentPort.postMessage({
       id,
       error: {
         message: error.message,
-        stack: error.stack
-      }
-    } );
+        stack: error.stack,
+      },
+    });
   }
 }
 
-parentPort.on( "message", ( data: "die" | SentData ) => {
-  if ( data === "die" ) {
+parentPort.on("message", (data: "die" | SentData) => {
+  if (data === "die") {
     parentPort.removeAllListeners();
   } else {
-    handle( data );
+    handle(data);
   }
-} );
+});

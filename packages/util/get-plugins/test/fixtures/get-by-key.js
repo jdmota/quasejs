@@ -1,5 +1,5 @@
 module.exports = {
   customKey: {
-    a: 10
-  }
+    a: 10,
+  },
 };

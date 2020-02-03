@@ -1,6 +1,6 @@
-const test = require( "../../dist" );
+const test = require("../../dist");
 
-test( t => {
-  t.matchesSnapshot( "abc", "key" );
-  t.matchesSnapshot( { abc: 10 } );
-} );
+test(t => {
+  t.matchesSnapshot("abc", "key");
+  t.matchesSnapshot({ abc: 10 });
+});

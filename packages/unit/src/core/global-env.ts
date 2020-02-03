@@ -1,23 +1,26 @@
 const freeGlobal = typeof global === "object" && global;
 const freeSelf = typeof self === "object" && self; // eslint-disable-line no-undef
-const root = freeGlobal || freeSelf || Function( "return this" )(); // eslint-disable-line no-new-func
+const root = freeGlobal || freeSelf || Function("return this")(); // eslint-disable-line no-new-func
 
 const has = Object.prototype.hasOwnProperty;
 
 // Returns a new Array with the elements that are in a but not in b
-function diff( a: string[], b: string[] ) {
-  let i, j, found = false, result = [];
+function diff(a: string[], b: string[]) {
+  let i,
+    j,
+    found = false,
+    result = [];
 
-  for ( i = 0; i < a.length; i++ ) {
+  for (i = 0; i < a.length; i++) {
     found = false;
-    for ( j = 0; j < b.length; j++ ) {
-      if ( a[ i ] === b[ j ] ) {
+    for (j = 0; j < b.length; j++) {
+      if (a[i] === b[j]) {
         found = true;
         break;
       }
     }
-    if ( !found ) {
-      result.push( a[ i ] );
+    if (!found) {
+      result.push(a[i]);
     }
   }
 
@@ -25,12 +28,11 @@ function diff( a: string[], b: string[] ) {
 }
 
 class GlobalEnv {
-
-  private allowedVars: ( boolean | string )[];
+  private allowedVars: (boolean | string)[];
   private initialVars: string[] | null;
   private root: any;
 
-  constructor( allowedVars: ( boolean | string )[] ) {
+  constructor(allowedVars: (boolean | string)[]) {
     this.allowedVars = allowedVars;
     this.initialVars = null;
     this.root = root;
@@ -38,9 +40,9 @@ class GlobalEnv {
 
   getVars() {
     const vars = [];
-    for ( const key in this.root ) {
-      if ( has.call( this.root, key ) && this.checkNotAllowed( key ) ) {
-        vars.push( key );
+    for (const key in this.root) {
+      if (has.call(this.root, key) && this.checkNotAllowed(key)) {
+        vars.push(key);
       }
     }
     return vars;
@@ -51,13 +53,13 @@ class GlobalEnv {
     return this;
   }
 
-  checkNotAllowed( name: string ) {
+  checkNotAllowed(name: string) {
     let i = this.allowedVars.length;
-    while ( i-- ) {
-      if ( this.allowedVars[ i ] === false ) {
+    while (i--) {
+      if (this.allowedVars[i] === false) {
         return true;
       }
-      if ( this.allowedVars[ i ] === true || this.allowedVars[ i ] === name ) {
+      if (this.allowedVars[i] === true || this.allowedVars[i] === name) {
         return false;
       }
     }
@@ -65,32 +67,29 @@ class GlobalEnv {
   }
 
   check() {
-
     const old = this.initialVars;
 
-    if ( !old ) {
+    if (!old) {
       return;
     }
 
     const errors = [];
     const vars = this.getVars();
 
-    const newGlobals = diff( vars, old );
-    if ( newGlobals.length > 0 ) {
-      errors.push( "Introduced global variable(s): " + newGlobals.join( ", " ) );
+    const newGlobals = diff(vars, old);
+    if (newGlobals.length > 0) {
+      errors.push("Introduced global variable(s): " + newGlobals.join(", "));
     }
 
-    const deletedGlobals = diff( old, vars );
-    if ( deletedGlobals.length > 0 ) {
-      errors.push( "Deleted global variable(s): " + deletedGlobals.join( ", " ) );
+    const deletedGlobals = diff(old, vars);
+    if (deletedGlobals.length > 0) {
+      errors.push("Deleted global variable(s): " + deletedGlobals.join(", "));
     }
 
-    if ( errors.length ) {
-      return new Error( errors.join( "; " ) );
+    if (errors.length) {
+      return new Error(errors.join("; "));
     }
-
   }
-
 }
 
 export default GlobalEnv;

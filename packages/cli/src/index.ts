@@ -8,57 +8,62 @@ import path from "path";
 import { getConfig } from "@quase/config";
 import readPkgUp from "read-pkg-up";
 
-const importLocal = require( "import-local" );
+const importLocal = require("import-local");
 
 /* eslint no-process-exit: 0 */
 /* eslint no-console: 0 */
 
 // Prevent caching of this module so module.parent is always accurate
-delete require.cache[ __filename ];
+delete require.cache[__filename];
 const filename = module.parent && module.parent.filename;
-const parentDir = ( filename && path.dirname( filename ) ) || undefined;
+const parentDir = (filename && path.dirname(filename)) || undefined;
 
-async function cli( _opts: any ) {
-  if ( filename && importLocal( filename ) ) {
+async function cli(_opts: any) {
+  if (filename && importLocal(filename)) {
     return;
   }
   hardRejection();
 
-  const opts = Object.assign( {
-    cwd: process.cwd(),
-    inferType: false,
-    autoHelp: true,
-    autoVersion: true,
-    argv: process.argv.slice( 2 )
-  }, _opts ) as CliOptions;
+  const opts = Object.assign(
+    {
+      cwd: process.cwd(),
+      inferType: false,
+      autoHelp: true,
+      autoVersion: true,
+      argv: process.argv.slice(2),
+    },
+    _opts
+  ) as CliOptions;
 
-  opts.cwd = path.resolve( opts.cwd );
+  opts.cwd = path.resolve(opts.cwd);
 
-  const pkgJob = opts.pkg ? Promise.resolve( { package: opts.pkg } ) : readPkgUp( {
-    cwd: parentDir,
-    normalize: false
-  } );
+  const pkgJob = opts.pkg
+    ? Promise.resolve({ packageJson: opts.pkg })
+    : readPkgUp({
+        cwd: parentDir,
+        normalize: false,
+      });
 
-  const argsInfo = handleArgs( opts );
+  const argsInfo = handleArgs(opts);
 
   const _pkg = await pkgJob;
-  const pkg = normalizePkg( _pkg ? _pkg.package : {} );
+  const pkg = normalizePkg(_pkg ? _pkg.packageJson : {});
 
-  process.title = pkg.bin ? Object.keys( pkg.bin )[ 0 ] : pkg.name;
+  process.title = pkg.bin ? Object.keys(pkg.bin)[0] : pkg.name;
 
-  if ( !opts.description && opts.description !== false ) {
+  if (!opts.description && opts.description !== false) {
     opts.description = pkg.description;
   }
 
-  const generateHelp = () => _generateHelp( argsInfo );
+  const generateHelp = () => _generateHelp(argsInfo);
 
-  const showHelp = ( code?: number ) => {
-    console.log( generateHelp() );
-    process.exit( typeof code === "number" ? code : 2 );
+  const showHelp = (code?: number) => {
+    console.log(generateHelp());
+    process.exit(typeof code === "number" ? code : 2);
   };
 
   const showVersion = () => {
-    console.log( typeof opts.version === "string" ? opts.version : pkg.version );
+    console.log(typeof opts.version === "string" ? opts.version : pkg.version);
     process.exit();
   };
 
@@ -67,49 +72,51 @@ async function cli( _opts: any ) {
   let ignoreVersionFlag = false;
   let ignoreHelpFlag = false;
 
-  if ( argsInfo.argv.length === 1 ) {
-    if ( flags.version === true ) {
-      if ( opts.autoVersion ) {
+  if (argsInfo.argv.length === 1) {
+    if (flags.version === true) {
+      if (opts.autoVersion) {
         showVersion();
       }
       ignoreVersionFlag = true;
     }
 
-    if ( flags.help === true ) {
-      if ( opts.autoHelp ) {
-        showHelp( 0 );
+    if (flags.help === true) {
+      if (opts.autoHelp) {
+        showHelp(0);
       }
       ignoreHelpFlag = true;
     }
   }
 
-  const configJob = getConfig( {
+  const configJob = getConfig({
     cwd: opts.cwd,
-    configFiles: opts.configFiles ? flags.config || opts.configFiles : undefined,
+    configFiles: opts.configFiles
+      ? flags.config || opts.configFiles
+      : undefined,
     configKey: opts.configKey,
-    failIfNotFound: !!flags.config
-  } );
+    failIfNotFound: !!flags.config,
+  });
 
-  if ( opts.notifier ) {
-    notify( pkg, opts.notifier === true ? {} : opts.notifier );
+  if (opts.notifier) {
+    notify(pkg, opts.notifier === true ? {} : opts.notifier);
   }
 
   const { config, location: configLocation } = await configJob;
 
   const flagsCopy = { ...flags };
-  if ( opts.configFiles ) {
+  if (opts.configFiles) {
     delete flagsCopy.config;
   }
-  if ( ignoreVersionFlag ) {
+  if (ignoreVersionFlag) {
     delete flagsCopy.version;
   }
-  if ( ignoreHelpFlag ) {
+  if (ignoreHelpFlag) {
     delete flagsCopy.help;
   }
 
-  flags[ "--" ] = argsInfo[ "--" ];
+  flags["--"] = argsInfo["--"];
 
-  const options = schema.validateAndMerge( {}, flagsCopy, config );
+  const options = schema.validateAndMerge({}, flagsCopy, config);
 
   return {
     command: commandSet.value,
@@ -121,7 +128,7 @@ async function cli( _opts: any ) {
     pkg,
     generateHelp,
     showHelp,
-    showVersion
+    showVersion,
   };
 }
 

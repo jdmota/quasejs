@@ -11,6 +11,6 @@ type Node = {
   };
 };
 
-export function printLoc( node: Node ) {
+export function printLoc(node: Node) {
   return `${node.loc.start.line}:${node.loc.start.column}-${node.loc.end.line}:${node.loc.end.column}`;
 }

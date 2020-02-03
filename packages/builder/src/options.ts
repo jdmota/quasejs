@@ -55,20 +55,22 @@ type Schema {
 }
 `;
 
-export function handleOptions( options: any ) {
-  if ( !options.reporter ) {
+export function handleOptions(options: any) {
+  if (!options.reporter) {
     options.reporter = Reporter;
   }
 
-  function b( value: any ) {
+  function b(value: any) {
     return value == null ? options.mode !== "development" : value;
   }
 
   options.optimization = {
-    hashId: b( options.optimization.hashId ),
-    hashing: b( options.optimization.hashing ),
-    sourceMaps: options.optimization.sourceMaps == null || options.optimization.sourceMaps,
-    minify: b( options.optimization.minify )
+    hashId: b(options.optimization.hashId),
+    hashing: b(options.optimization.hashing),
+    sourceMaps:
+      options.optimization.sourceMaps == null ||
+      options.optimization.sourceMaps,
+    minify: b(options.optimization.minify),
   };
 
   return options;

@@ -8,16 +8,16 @@ const MD5_HASH_LENGTH = 16;
 const HEADER = "Quase-unit Snapshot v1";
 
 class SnapshotError extends Error {
-  constructor( message: string ) {
-    super( message );
+  constructor(message: string) {
+    super(message);
     this.name = "SnapshotError";
   }
 }
 
 class ChecksumError extends SnapshotError {
   snapPath: string;
-  constructor( snapPath: string ) {
-    super( `Checksum mismatch (${prettifyPath( snapPath )})` );
+  constructor(snapPath: string) {
+    super(`Checksum mismatch (${prettifyPath(snapPath)})`);
     this.name = "ChecksumError";
     this.snapPath = snapPath;
   }
@@ -27,8 +27,8 @@ class HeaderMismatchError extends SnapshotError {
   snapPath: string;
   actual: string;
   expected: string;
-  constructor( header: string, snapPath: string ) {
-    super( `Unexpected snapshot header (${prettifyPath( snapPath )})` );
+  constructor(header: string, snapPath: string) {
+    super(`Unexpected snapshot header (${prettifyPath(snapPath)})`);
     this.name = "HeaderMismatchError";
     this.snapPath = snapPath;
     this.actual = header;
@@ -40,32 +40,32 @@ class ReadableBuffer {
   buffer: Buffer;
   byteOffset: number;
 
-  constructor( buffer: Buffer ) {
+  constructor(buffer: Buffer) {
     this.buffer = buffer;
     this.byteOffset = 0;
   }
 
   readLine(): Buffer {
     const start = this.byteOffset;
-    const index = this.buffer.indexOf( "\n", start );
+    const index = this.buffer.indexOf("\n", start);
     this.byteOffset = index + 1;
-    return this.buffer.slice( start, index );
+    return this.buffer.slice(start, index);
   }
 
   readLineString(): string {
     return this.readLine().toString();
   }
 
-  readAmount( size: number ): Buffer {
+  readAmount(size: number): Buffer {
     const start = this.byteOffset;
     this.byteOffset += size;
-    return this.buffer.slice( start, start + size );
+    return this.buffer.slice(start, start + size);
   }
 
   readLeft(): Buffer {
     const start = this.byteOffset;
     this.byteOffset = this.buffer.length;
-    return this.buffer.slice( start );
+    return this.buffer.slice(start);
   }
 
   canRead(): boolean {
@@ -82,76 +82,80 @@ class WritableBuffer {
     this.size = 0;
   }
 
-  write( buffer: Buffer ) {
-    this.entries.push( buffer );
+  write(buffer: Buffer) {
+    this.entries.push(buffer);
     this.size += buffer.length;
   }
 
-  writeLineString( str: string ) {
-    this.write( Buffer.from( str + "\n" ) );
+  writeLineString(str: string) {
+    this.write(Buffer.from(str + "\n"));
   }
 
   toBuffer(): Buffer {
-    return Buffer.concat( this.entries, this.size );
+    return Buffer.concat(this.entries, this.size);
   }
 }
 
 export type Snapshots = Map<string, Buffer>;
 
-export function encode( snapshots: Snapshots ): Buffer {
-
+export function encode(snapshots: Snapshots): Buffer {
   const buffer = new WritableBuffer();
 
-  for ( const key of Array.from( snapshots.keys() ).sort() ) {
-    const value = snapshots.get( key );
-    if ( value == null ) {
-      throw new Error( `Snapshot ${key} not found` );
+  for (const key of Array.from(snapshots.keys()).sort()) {
+    const value = snapshots.get(key);
+    if (value == null) {
+      throw new Error(`Snapshot ${key} not found`);
     }
-    buffer.writeLineString( key );
-    buffer.writeLineString( value.length + "" );
-    buffer.write( value );
+    buffer.writeLineString(key);
+    buffer.writeLineString(value.length + "");
+    buffer.write(value);
   }
 
-  const compressed = zlib.gzipSync( buffer.toBuffer() );
-  compressed[ 9 ] = 0x03; // Override the GZip header containing the OS to always be Linux
-  const md5sum = crypto.createHash( "md5" ).update( compressed ).digest();
+  const compressed = zlib.gzipSync(buffer.toBuffer());
+  compressed[9] = 0x03; // Override the GZip header containing the OS to always be Linux
+  const md5sum = crypto
+    .createHash("md5")
+    .update(compressed)
+    .digest();
 
   const finalBuffer = new WritableBuffer();
-  finalBuffer.writeLineString( HEADER );
-  finalBuffer.write( md5sum );
-  finalBuffer.write( compressed );
+  finalBuffer.writeLineString(HEADER);
+  finalBuffer.write(md5sum);
+  finalBuffer.write(compressed);
   return finalBuffer.toBuffer();
 }
 
-export function decode( _buffer: Buffer, snapPath: string ): Snapshots {
-
+export function decode(_buffer: Buffer, snapPath: string): Snapshots {
   const snapshots: Snapshots = new Map();
 
-  const wrapperBuffer = new ReadableBuffer( _buffer );
+  const wrapperBuffer = new ReadableBuffer(_buffer);
 
   const header = wrapperBuffer.readLineString();
-  if ( header !== HEADER ) {
-    throw new HeaderMismatchError( header, snapPath );
+  if (header !== HEADER) {
+    throw new HeaderMismatchError(header, snapPath);
   }
 
-  const expectedSum = wrapperBuffer.readAmount( MD5_HASH_LENGTH );
+  const expectedSum = wrapperBuffer.readAmount(MD5_HASH_LENGTH);
 
   const compressed = wrapperBuffer.readLeft();
 
-  const actualSum = crypto.createHash( "md5" ).update( compressed ).digest();
+  const actualSum = crypto
+    .createHash("md5")
+    .update(compressed)
+    .digest();
 
-  if ( !actualSum.equals( expectedSum ) ) {
-    throw new ChecksumError( snapPath );
+  if (!actualSum.equals(expectedSum)) {
+    throw new ChecksumError(snapPath);
   }
 
-  const decompressed = zlib.gunzipSync( compressed );
-  const buffer = new ReadableBuffer( decompressed );
+  const decompressed = zlib.gunzipSync(compressed);
+  const buffer = new ReadableBuffer(decompressed);
 
-  while ( buffer.canRead() ) {
+  while (buffer.canRead()) {
     const key = buffer.readLineString();
-    const length = Number( buffer.readLineString() );
-    const value = buffer.readAmount( length );
-    snapshots.set( key, value );
+    const length = Number(buffer.readLineString());
+    const value = buffer.readAmount(length);
+    snapshots.set(key, value);
   }
 
   return snapshots;

@@ -1,3 +1,3 @@
 module.exports = {
-  iAmTheConfigFile: "yes"
+  iAmTheConfigFile: "yes",
 };

@@ -3,19 +3,21 @@ export type Schema = {
   types: TypeDeclaration[];
 };
 
-export type TypeDeclaration = {
-  type: "TypeDeclaration";
-  name: string;
-  decorators: Decorator[];
-  properties: TypeProperty[];
-  init: undefined;
-} | {
-  type: "TypeDeclaration";
-  name: string;
-  decorators: Decorator[];
-  properties: undefined;
-  init: Type;
-};
+export type TypeDeclaration =
+  | {
+      type: "TypeDeclaration";
+      name: string;
+      decorators: Decorator[];
+      properties: TypeProperty[];
+      init: undefined;
+    }
+  | {
+      type: "TypeDeclaration";
+      name: string;
+      decorators: Decorator[];
+      properties: undefined;
+      init: Type;
+    };
 
 export type TypeProperty = {
   type: "TypeProperty";
@@ -27,7 +29,7 @@ export type TypeProperty = {
 export type Decorator = {
   type: "Decorator";
   name: string;
-  arguments: ( BooleanNode | NumberNode | StringNode | JsNode )[];
+  arguments: (BooleanNode | NumberNode | StringNode | JsNode)[];
 };
 
 export type UnionType = {
@@ -85,70 +87,71 @@ export type JsNode = {
 export type TypeLiteral = NumberNode | StringNode | BooleanNode;
 
 export type TypeNotIdentifier =
-  TypeDeclaration | UnionType | ArrayType | OptionalType | TypeObject | TypeProperty | TypeTuple;
+  | TypeDeclaration
+  | UnionType
+  | ArrayType
+  | OptionalType
+  | TypeObject
+  | TypeProperty
+  | TypeTuple;
 
 export type Type = TypeNotIdentifier | TypeLiteral | Identifier;
 
 export class Scope {
-
   map: Map<string, TypeDeclaration>;
 
   constructor() {
     this.map = new Map();
   }
 
-  bind( name: string, node: TypeDeclaration ) {
-    const curr = this.map.get( name );
-    if ( curr ) {
-      throw new Error( `Duplicate ${name} declaration` );
+  bind(name: string, node: TypeDeclaration) {
+    const curr = this.map.get(name);
+    if (curr) {
+      throw new Error(`Duplicate ${name} declaration`);
     }
-    this.map.set( name, node );
+    this.map.set(name, node);
   }
 
-  get( name: string ) {
-    return this.map.get( name );
+  get(name: string) {
+    return this.map.get(name);
   }
 
-  find( node: Identifier ) {
-    const curr = this.map.get( node.name );
-    if ( curr ) {
+  find(node: Identifier) {
+    const curr = this.map.get(node.name);
+    if (curr) {
       return curr;
     }
-    throw new Error( `${node.name} was not defined` );
+    throw new Error(`${node.name} was not defined`);
   }
-
 }
 
 export class CircularCheck {
-
   set: WeakSet<TypeNotIdentifier>;
 
   constructor() {
     this.set = new WeakSet();
   }
 
-  check( node: TypeNotIdentifier ) {
-    if ( this.set.has( node ) ) {
-      throw new Error( `Type refers itself` );
+  check(node: TypeNotIdentifier) {
+    if (this.set.has(node)) {
+      throw new Error(`Type refers itself`);
     }
   }
 
-  add( node: TypeNotIdentifier ) {
-    this.set.add( node );
+  add(node: TypeNotIdentifier) {
+    this.set.add(node);
   }
 
-  remove( node: TypeNotIdentifier ) {
-    this.set.delete( node );
+  remove(node: TypeNotIdentifier) {
+    this.set.delete(node);
   }
-
 }
 
 export class TypeInfo {
-
   id: string;
   map: Map<string, string>;
 
-  constructor( id: string ) {
+  constructor(id: string) {
     this.id = id;
     this.map = new Map();
   }
@@ -157,31 +160,30 @@ export class TypeInfo {
     return this.map.get( name );
   } */
 
-  getForSure( name: string ) {
-    const value = this.map.get( name );
+  getForSure(name: string) {
+    const value = this.map.get(name);
     /* istanbul ignore if */
-    if ( value == null ) {
-      throw new Error( "Assertion error" );
+    if (value == null) {
+      throw new Error("Assertion error");
     }
     return value;
   }
 
-  set( name: string, funId: string ) {
-    const oldValue = this.map.get( name );
-    this.map.set( name, funId );
+  set(name: string, funId: string) {
+    const oldValue = this.map.get(name);
+    this.map.set(name, funId);
     return oldValue;
   }
 
   toCode() {
     let code = "";
     code += `const ${this.id}={\n`;
-    for ( const [ name, funId ] of this.map ) {
+    for (const [name, funId] of this.map) {
       code += `${name}:${funId},\n`;
     }
     code += `};\n`;
     return code;
   }
-
 }
 
 export type WithScope = {
@@ -196,7 +198,11 @@ export type Context = WithScope & {
 
 export type YargsOptions = {
   alias: { [key: string]: string[] };
-  array: ( string | { key: string; boolean: true } | { key: string; number: true } )[];
+  array: (
+    | string
+    | { key: string; boolean: true }
+    | { key: string; number: true }
+  )[];
   boolean: string[];
   coerce: { [key: string]: string };
   count: string[];
@@ -212,8 +218,8 @@ export type CliContext = WithScope & {
   stack: Set<TypeNotIdentifier>;
 };
 
-export function pad( str: string, length: number ) {
-  while ( str.length < length ) {
+export function pad(str: string, length: number) {
+  while (str.length < length) {
     str += " ";
   }
   return str;

@@ -1,4 +1,14 @@
-import { Options, WatchedFiles, Loc, Checker, ICheckerImpl, Transforms, Output, FinalModule, HmrUpdate } from "../types";
+import {
+  Options,
+  WatchedFiles,
+  Loc,
+  Checker,
+  ICheckerImpl,
+  Transforms,
+  Output,
+  FinalModule,
+  HmrUpdate,
+} from "../types";
 import { resolvePath, makeAbsolute } from "../utils/path";
 import { Time } from "../utils/time";
 import { PluginsRunnerLocal } from "../plugins/local-runner";
@@ -21,7 +31,6 @@ import { get } from "../utils/get";
 import { setEquals } from "../utils/set-equals";
 
 export class Builder extends EventEmitter {
-
   options: Options;
   userConfig: UserConfig;
   context: string;
@@ -44,22 +53,27 @@ export class Builder extends EventEmitter {
   private time: Time;
   private builderTransformResolve: BuilderTransformResolve;
   private builderPack: BuilderPack;
-  private summary: Map<string, {
-    id: string;
-    file: string;
-    fileIsEntry: boolean;
-    transformedId: number;
-    requires: Set<string>;
-  }>;
+  private summary: Map<
+    string,
+    {
+      id: string;
+      file: string;
+      fileIsEntry: boolean;
+      transformedId: number;
+      requires: Set<string>;
+    }
+  >;
 
-  constructor( options: Options, testing?: boolean ) {
+  constructor(options: Options, testing?: boolean) {
     super();
 
-    const cwd = makeAbsolute( options.cwd ),
-      context = resolvePath( options.context, cwd ),
-      dest = resolvePath( options.dest, cwd ),
-      entries = options.entries.map( e => resolvePath( e, context ) ),
-      publicPath = options.publicPath ? options.publicPath.replace( /\/+$/, "" ) + "/" : "",
+    const cwd = makeAbsolute(options.cwd),
+      context = resolvePath(options.context, cwd),
+      dest = resolvePath(options.dest, cwd),
+      entries = options.entries.map(e => resolvePath(e, context)),
+      publicPath = options.publicPath
+        ? options.publicPath.replace(/\/+$/, "") + "/"
+        : "",
       { watch, optimization, reporter, serviceWorker } = options;
 
     this.options = {
@@ -69,50 +83,58 @@ export class Builder extends EventEmitter {
         context,
         dest,
         entries,
-        publicPath
-      }
+        publicPath,
+      },
     };
 
     this.context = context;
 
-    if ( watch ) {
+    if (watch) {
       optimization.hashId = false;
     }
 
-    serviceWorker.staticFileGlobs = serviceWorker.staticFileGlobs.map( ( p: string ) => path.join( dest, p ) );
-    serviceWorker.stripPrefixMulti[ `${dest}${path.sep}`.replace( /\\/g, "/" ) ] = publicPath;
-    serviceWorker.filename = serviceWorker.filename ? resolvePath( serviceWorker.filename, dest ) : "";
+    serviceWorker.staticFileGlobs = serviceWorker.staticFileGlobs.map(
+      (p: string) => path.join(dest, p)
+    );
+    serviceWorker.stripPrefixMulti[
+      `${dest}${path.sep}`.replace(/\\/g, "/")
+    ] = publicPath;
+    serviceWorker.filename = serviceWorker.filename
+      ? resolvePath(serviceWorker.filename, dest)
+      : "";
 
-    this.util = new BuilderUtil( this.options );
+    this.util = new BuilderUtil(this.options);
 
-    this.reporter = getOnePlugin( reporter );
+    this.reporter = getOnePlugin(reporter);
 
-    this.watcher = watch ? new Watcher( this, testing ) : null;
+    this.watcher = watch ? new Watcher(this, testing) : null;
 
-    this.userConfig = new UserConfig( {
+    this.userConfig = new UserConfig({
       cwd: this.options.cwd,
       resolvers: this.options.resolvers,
       transformers: this.options.transformers,
       checkers: this.options.checkers,
       packagers: this.options.packagers,
-      optimization: this.options.optimization
-    } );
+      optimization: this.options.optimization,
+    });
 
-    this.pluginsRunner = new PluginsRunnerLocal( this.userConfig );
+    this.pluginsRunner = new PluginsRunnerLocal(this.userConfig);
     this.pluginsRunnerInit = this.pluginsRunner.init();
 
     const callbacks = {
-      warn: this.warn.bind( this ),
-      error: this.error.bind( this )
+      warn: this.warn.bind(this),
+      error: this.error.bind(this),
     };
 
     this.actualCheckers = [];
     this.checkers = new PluginRegistry();
-    this.checkersInit = this.checkers.init( this.userConfig.checkers, this.userConfig.cwd ).then( () => {
-      this.actualCheckers = this.checkers.list().map(
-        ( { options, plugin } ) => plugin.checker( options, callbacks )
-      );
-    } );
+    this.checkersInit = this.checkers
+      .init(this.userConfig.checkers, this.userConfig.cwd)
+      .then(() => {
+        this.actualCheckers = this.checkers
+          .list()
+          .map(({ options, plugin }) => plugin.checker(options, callbacks));
+      });
 
     this.hmrOptions = null;
 
@@ -120,42 +142,47 @@ export class Builder extends EventEmitter {
     this.summary = new Map();
     this.buildId = 0;
 
-    this.builderTransformResolve = new BuilderTransformResolve( this );
-    this.builderPack = new BuilderPack( this );
+    this.builderTransformResolve = new BuilderTransformResolve(this);
+    this.builderPack = new BuilderPack(this);
   }
 
-  warn( warning: any ) {
+  warn(warning: any) {
     // @ts-ignore
-    this.emit( "warning", warning );
+    this.emit("warning", warning);
   }
 
-  error( id: string, message: string, code: string | null, loc: Loc | null ) {
-    throw this.createError( id, message, code, loc );
+  error(id: string, message: string, code: string | null, loc: Loc | null) {
+    throw this.createError(id, message, code, loc);
   }
 
-  createError( id: string, message: string, code: string | null, loc: Loc | null ) {
-    return createError( {
+  createError(
+    id: string,
+    message: string,
+    code: string | null,
+    loc: Loc | null
+  ) {
+    return createError({
       message,
       id,
       code,
       loc,
       codeFrameOptions: this.options.codeFrameOptions,
-      noStack: true
-    } );
+      noStack: true,
+    });
   }
 
-  subscribeFiles( files: WatchedFiles, sub: Computation<any> ) {
+  subscribeFiles(files: WatchedFiles, sub: Computation<any>) {
     const { watcher } = this;
 
-    if ( watcher ) {
-      for ( const [ file, info ] of files ) {
-        this.builderTransformResolve.subscribeFile( file, info, sub );
+    if (watcher) {
+      for (const [file, info] of files) {
+        this.builderTransformResolve.subscribeFile(file, info, sub);
       }
     }
   }
 
-  change( what: string, type: "added" | "changed" | "removed" ) {
-    this.builderTransformResolve.change( what, type );
+  change(what: string, type: "added" | "changed" | "removed") {
+    this.builderTransformResolve.change(what, type);
   }
 
   watchedFiles() {
@@ -166,41 +193,41 @@ export class Builder extends EventEmitter {
     this.cancelBuild();
     this.pluginsRunner.stopFarm();
     const { watcher } = this;
-    if ( watcher ) {
+    if (watcher) {
       watcher.stop();
     }
   }
 
-  addModule( path: string, transforms: Transforms ) {
-    return this.builderTransformResolve.addModule(
-      path, transforms
-    ).id;
+  addModule(path: string, transforms: Transforms) {
+    return this.builderTransformResolve.addModule(path, transforms).id;
   }
 
-  addInnerModule( innerId: string, parentInner: Module, transforms: Transforms ) {
+  addInnerModule(innerId: string, parentInner: Module, transforms: Transforms) {
     return this.builderTransformResolve.addInnerModule(
-      innerId, parentInner, transforms
+      innerId,
+      parentInner,
+      transforms
     ).id;
   }
 
-  notifyCheckers( module: FinalModule ) {
-    for ( const checker of this.actualCheckers ) {
-      checker.newModule( module );
+  notifyCheckers(module: FinalModule) {
+    for (const checker of this.actualCheckers) {
+      checker.newModule(module);
     }
   }
 
-  removeModuleById( id: string ) {
-    this.builderTransformResolve.removeModuleById( id );
+  removeModuleById(id: string) {
+    this.builderTransformResolve.removeModuleById(id);
   }
 
-  private checkIfCancelled( buildId: number ) {
-    if ( this.buildId !== buildId ) {
+  private checkIfCancelled(buildId: number) {
+    if (this.buildId !== buildId) {
       throw new BuildCancelled();
     }
   }
 
-  private wait<T>( buildId: number, p: Promise<T> ) {
-    this.checkIfCancelled( buildId );
+  private wait<T>(buildId: number, p: Promise<T>) {
+    this.checkIfCancelled(buildId);
     return p;
   }
 
@@ -213,119 +240,130 @@ export class Builder extends EventEmitter {
   async runBuild(): Promise<Output> {
     const { buildId } = this;
 
-    this.emit( "status", "Warming up..." );
+    this.emit("status", "Warming up...");
     this.time.start();
 
-    await this.wait( buildId, this.checkersInit );
-    await this.wait( buildId, this.pluginsRunnerInit );
+    await this.wait(buildId, this.checkersInit);
+    await this.wait(buildId, this.pluginsRunnerInit);
 
-    this.time.checkpoint( "warmup" );
-    this.emit( "status", "Building..." );
+    this.time.checkpoint("warmup");
+    this.emit("status", "Building...");
 
-    const result = await this.wait( buildId, this.builderTransformResolve.run() );
+    const result = await this.wait(buildId, this.builderTransformResolve.run());
 
     // TODO show all errors?
-    if ( result.errors ) {
-      throw result.errors[ 0 ];
+    if (result.errors) {
+      throw result.errors[0];
     }
 
     const { graph } = result;
-    if ( !graph ) {
+    if (!graph) {
       throw new BuildCancelled();
     }
 
-    this.time.checkpoint( "modules processing" );
-    this.emit( "status", "Checking..." );
+    this.time.checkpoint("modules processing");
+    this.emit("status", "Checking...");
 
     // Checks
-    await this.wait( buildId, Promise.all( this.actualCheckers.map( c => c.check() ) ) );
+    await this.wait(
+      buildId,
+      Promise.all(this.actualCheckers.map(c => c.check()))
+    );
 
-    this.time.checkpoint( "checking" );
-    this.emit( "status", "Computing graph..." );
+    this.time.checkpoint("checking");
+    this.emit("status", "Computing graph...");
 
-    const processedGraph = processGraph( graph );
+    const processedGraph = processGraph(graph);
 
-    this.time.checkpoint( "graph processing" );
-    this.emit( "status", "Creating files..." );
+    this.time.checkpoint("graph processing");
+    this.emit("status", "Creating files...");
 
     const { dotGraph } = this.options;
-    if ( dotGraph ) {
-      await this.wait( buildId, graph.dumpDotGraph( path.resolve( this.options.dest, dotGraph ) ) );
+    if (dotGraph) {
+      await this.wait(
+        buildId,
+        graph.dumpDotGraph(path.resolve(this.options.dest, dotGraph))
+      );
     }
 
-    const { filesInfo, removedCount } = await this.wait( buildId, this.builderPack.run( processedGraph ) );
+    const { filesInfo, removedCount } = await this.wait(
+      buildId,
+      this.builderPack.run(processedGraph)
+    );
 
-    this.time.checkpoint( "rendering" );
+    this.time.checkpoint("rendering");
 
     const swFile = this.options.serviceWorker.filename;
 
-    if ( swFile ) {
-      const swPrecache = require( "sw-precache" );
-      const serviceWorkerCode = await swPrecache.generate( {
+    if (swFile) {
+      const swPrecache = require("sw-precache");
+      const serviceWorkerCode = await swPrecache.generate({
         ...this.options.serviceWorker,
-        logger: () => {}
-      } );
+        logger: () => {},
+      });
 
-      await fs.outputFile( swFile, serviceWorkerCode );
+      await fs.outputFile(swFile, serviceWorkerCode);
 
-      filesInfo.push( {
+      filesInfo.push({
         moduleId: "",
         file: swFile,
         hash: null,
         size: serviceWorkerCode.length,
-        isEntry: false
-      } );
+        isEntry: false,
+      });
 
-      this.time.checkpoint( "service worker creation" );
+      this.time.checkpoint("service worker creation");
     }
 
-    const updates: HmrUpdate[ "updates" ] = [];
+    const updates: HmrUpdate["updates"] = [];
 
-    if ( this.options.hmr ) {
+    if (this.options.hmr) {
       const previousSummary = this.summary;
       const newSummary = new Map();
 
-      for ( const [ m, file ] of processedGraph.moduleToFile ) {
+      for (const [m, file] of processedGraph.moduleToFile) {
         const { id } = m;
         const data = {
           id,
           file: file.relativeDest,
           fileIsEntry: file.isEntry,
           transformedId: m.transformedId,
-          requires: new Set( m.requires.map( ( { id } ) => get( processedGraph.hashIds, id ) ) )
+          requires: new Set(
+            m.requires.map(({ id }) => get(processedGraph.hashIds, id))
+          ),
         };
 
-        newSummary.set( id, data );
+        newSummary.set(id, data);
 
-        const inPrevSummary = previousSummary.get( id );
-        if ( !inPrevSummary ) {
-          updates.push( {
+        const inPrevSummary = previousSummary.get(id);
+        if (!inPrevSummary) {
+          updates.push({
             id,
             file: data.file,
             prevFile: null,
-            reloadApp: data.fileIsEntry
-          } );
+            reloadApp: data.fileIsEntry,
+          });
         } else if (
           inPrevSummary.transformedId !== data.transformedId ||
-          !setEquals( inPrevSummary.requires, data.requires )
+          !setEquals(inPrevSummary.requires, data.requires)
         ) {
-          updates.push( {
+          updates.push({
             id,
             file: data.file,
             prevFile: inPrevSummary.file,
-            reloadApp: inPrevSummary.fileIsEntry || data.fileIsEntry
-          } );
+            reloadApp: inPrevSummary.fileIsEntry || data.fileIsEntry,
+          });
         }
       }
 
-      for ( const [ id, inPrevSummary ] of previousSummary ) {
-        if ( !newSummary.has( id ) ) {
-          updates.push( {
+      for (const [id, inPrevSummary] of previousSummary) {
+        if (!newSummary.has(id)) {
+          updates.push({
             id,
             file: null,
             prevFile: inPrevSummary.file,
-            reloadApp: inPrevSummary.fileIsEntry
-          } );
+            reloadApp: inPrevSummary.fileIsEntry,
+          });
         }
       }
 
@@ -336,12 +374,13 @@ export class Builder extends EventEmitter {
       filesInfo,
       removedCount,
       time: this.time.end(),
-      timeCheckpoints: this.options._debug ? this.time.getCheckpoints() : undefined,
+      timeCheckpoints: this.options._debug
+        ? this.time.getCheckpoints()
+        : undefined,
       hmrUpdate: {
         updates,
-        moduleToAssets: processedGraph.moduleToAssets
-      }
+        moduleToAssets: processedGraph.moduleToAssets,
+      },
     };
   }
-
 }

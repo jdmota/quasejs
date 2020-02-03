@@ -2,7 +2,6 @@ import { Token, Position, Location, Tokenizer } from "./tokenizer";
 import { error } from "./error";
 
 export class Parser<$Tokens extends Token, $Channels extends string> {
-
   tokenizer: Tokenizer<$Tokens, $Channels>;
   start: Position;
   lastTokenEnd: Position;
@@ -11,7 +10,7 @@ export class Parser<$Tokens extends Token, $Channels extends string> {
   current: number;
   lastToken: Token;
 
-  constructor( tokenizer: Tokenizer<$Tokens, $Channels> ) {
+  constructor(tokenizer: Tokenizer<$Tokens, $Channels>) {
     this.tokenizer = tokenizer;
     this.start = { pos: 0, line: 0, column: 0 };
     this.lastTokenEnd = this.start;
@@ -29,10 +28,10 @@ export class Parser<$Tokens extends Token, $Channels extends string> {
     return this.lastTokenEnd;
   }
 
-  locNode( start: Position ): Location {
+  locNode(start: Position): Location {
     return {
       start,
-      end: this.endNode()
+      end: this.endNode(),
     };
   }
 
@@ -43,29 +42,31 @@ export class Parser<$Tokens extends Token, $Channels extends string> {
     this.current = this.token.id;
   }
 
-  consume1( id: number ) {
+  consume1(id: number) {
     const token = this.token;
-    if ( token.id === id ) {
+    if (token.id === id) {
       this.next();
       this.lastToken = token;
       return token;
     }
-    this.unexpected( id );
+    this.unexpected(id);
   }
 
-  consume2( a: number, b: number ) {
+  consume2(a: number, b: number) {
     const token = this.token;
-    if ( a <= token.id && token.id <= b ) {
+    if (a <= token.id && token.id <= b) {
       this.next();
       this.lastToken = token;
       return token;
     }
-    this.unexpected( a );
+    this.unexpected(a);
   }
 
-  unexpected( id?: number | string ) {
+  unexpected(id?: number | string) {
     throw error(
-      `Unexpected token ${this.token.label}${id == null ? "" : `, expected ${id}`}`,
+      `Unexpected token ${this.token.label}${
+        id == null ? "" : `, expected ${id}`
+      }`,
       this.tokenLoc.start
     );
   }
@@ -75,7 +76,6 @@ export class Parser<$Tokens extends Token, $Channels extends string> {
   }
 
   parse() {
-    throw new Error( "Abstract" );
+    throw new Error("Abstract");
   }
-
 }

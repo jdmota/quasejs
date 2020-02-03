@@ -7,33 +7,33 @@ type O = {
 };
 
 export const defaultCheckersMap: O = {
-  quase_builder_default_checker: join( __dirname, "checkers/default-checker" ),
+  quase_builder_default_checker: join(__dirname, "checkers/default-checker"),
 };
 
-export const defaultCheckers = Object.keys( defaultCheckersMap );
+export const defaultCheckers = Object.keys(defaultCheckersMap);
 
 export const defaultResolversMap: O = {
-  quase_builder_js_resolver: join( __dirname, "resolvers/js-resolver" ),
-  quase_builder_default_resolver: join( __dirname, "resolvers/default-resolver" )
+  quase_builder_js_resolver: join(__dirname, "resolvers/js-resolver"),
+  quase_builder_default_resolver: join(__dirname, "resolvers/default-resolver"),
 };
 
-export const defaultResolvers = Object.keys( defaultResolversMap );
+export const defaultResolvers = Object.keys(defaultResolversMap);
 
 export const babelTransformer = "quase_builder_babel_transformer";
 export const jsTransformer = "quase_builder_js_transformer";
 export const htmlTransformer = "quase_builder_html_transformer";
 
 export const defaultTransformersMap: O = {
-  [ babelTransformer ]: join( __dirname, "transformers/babel-transformer" ),
-  [ jsTransformer ]: join( __dirname, "transformers/js-transformer" ),
-  [ htmlTransformer ]: join( __dirname, "transformers/html-transformer" )
+  [babelTransformer]: join(__dirname, "transformers/babel-transformer"),
+  [jsTransformer]: join(__dirname, "transformers/js-transformer"),
+  [htmlTransformer]: join(__dirname, "transformers/html-transformer"),
 };
 
-export const defaultTransformers = Object.keys( defaultTransformersMap );
+export const defaultTransformers = Object.keys(defaultTransformersMap);
 
 export const defaultPackagersMap: O = {
-  quase_builder_js_packager: join( __dirname, "packagers/js-packager" ),
-  quase_builder_html_packager: join( __dirname, "packagers/html-packager" )
+  quase_builder_js_packager: join(__dirname, "packagers/js-packager"),
+  quase_builder_html_packager: join(__dirname, "packagers/html-packager"),
 };
 
-export const defaultPackagers = Object.keys( defaultPackagersMap );
+export const defaultPackagers = Object.keys(defaultPackagersMap);

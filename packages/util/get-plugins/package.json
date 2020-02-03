@@ -6,8 +6,10 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/util/get-plugins",
-  "main": "dist/index.js",
-  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js"
+  },
   "dependencies": {
     "resolve-from": "^5.0.0"
   }

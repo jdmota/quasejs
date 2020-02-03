@@ -1,4 +1,10 @@
-import { Status, IRunnable, GroupMetadata, SuiteStart, SuiteEnd } from "../types";
+import {
+  Status,
+  IRunnable,
+  GroupMetadata,
+  SuiteStart,
+  SuiteEnd,
+} from "../types";
 import isPromise from "./util/is-promise";
 import Runner from "./runner";
 import Test from "./test";
@@ -8,7 +14,6 @@ import { GroupPlaceholder } from "./placeholders";
 import { ContextRef } from "./context";
 
 export default class Suite implements IRunnable {
-
   name: string;
   fullname: string[];
   status: Status | undefined;
@@ -35,8 +40,7 @@ export default class Suite implements IRunnable {
   suiteStartInfo: SuiteStart | null;
   suiteEndInfo: SuiteEnd | null;
 
-  constructor( placeholder: GroupPlaceholder, parent?: Suite ) {
-
+  constructor(placeholder: GroupPlaceholder, parent?: Suite) {
     this.name = placeholder.name;
     this.fullname = placeholder.fullname;
 
@@ -53,7 +57,7 @@ export default class Suite implements IRunnable {
       failed: 0,
       skipped: 0,
       todo: 0,
-      total: 0
+      total: 0,
     };
 
     this.level = placeholder.level;
@@ -68,13 +72,13 @@ export default class Suite implements IRunnable {
     this.runner = placeholder.runner;
     this.placeholder = placeholder;
 
-    if ( parent ) {
+    if (parent) {
       // Save this suite in the parent
-      parent.childSuites.push( this );
+      parent.childSuites.push(this);
     }
 
     this.collection = placeholder.collection;
-    this.sequence = this.collection.build( this );
+    this.sequence = this.collection.build(this);
 
     this.testCounts.total = this.getTestsCount();
 
@@ -82,16 +86,19 @@ export default class Suite implements IRunnable {
     this.suiteEndInfo = null;
 
     const _this: any = this;
-    _this.run = this.run.bind( this );
-    _this.exit = this.exit.bind( this );
+    _this.run = this.run.bind(this);
+    _this.exit = this.exit.bind(this);
   }
 
   hasTests() {
-    return this.collection.tests.concurrent.length || this.collection.tests.serial.length;
+    return (
+      this.collection.tests.concurrent.length ||
+      this.collection.tests.serial.length
+    );
   }
 
   exit() {
-    if ( this.finished ) {
+    if (this.finished) {
       return this;
     }
     this.finished = true;
@@ -99,14 +106,14 @@ export default class Suite implements IRunnable {
     this.failedBecauseOfHook = this.sequence.failedBecauseOfHook;
     this.skipReason = this.sequence.skipReason;
 
-    if ( this.timeStart ) {
+    if (this.timeStart) {
       this.runtime = Date.now() - this.timeStart;
     }
 
     const testCounts = this.testCounts;
 
-    this.tests.forEach( t => {
-      switch ( t.status ) {
+    this.tests.forEach(t => {
+      switch (t.status) {
         case "passed":
           testCounts.passed++;
           break;
@@ -120,52 +127,58 @@ export default class Suite implements IRunnable {
           testCounts.todo++;
           break;
         default:
-          throw new Error( `Test '${t.fullname.join( " " )}' [${t.metadata.type}] did not finish` );
+          throw new Error(
+            `Test '${t.fullname.join(" ")}' [${t.metadata.type}] did not finish`
+          );
       }
-    } );
+    });
 
-    this.childSuites.forEach( t => {
+    this.childSuites.forEach(t => {
       testCounts.passed += t.testCounts.passed;
       testCounts.skipped += t.testCounts.skipped;
       testCounts.failed += t.testCounts.failed;
       testCounts.todo += t.testCounts.todo;
-    } );
+    });
 
-    const sum = testCounts.passed + testCounts.failed + testCounts.skipped + testCounts.todo;
+    const sum =
+      testCounts.passed +
+      testCounts.failed +
+      testCounts.skipped +
+      testCounts.todo;
 
-    if ( testCounts.total !== sum ) {
-      throw new Error( `Wrong count. Total: ${testCounts.total}, Sum: ${sum}` );
+    if (testCounts.total !== sum) {
+      throw new Error(`Wrong count. Total: ${testCounts.total}, Sum: ${sum}`);
     }
 
-    if ( testCounts.total === testCounts.skipped ) {
+    if (testCounts.total === testCounts.skipped) {
       this.status = "skipped";
-    } else if ( testCounts.total === testCounts.todo ) {
+    } else if (testCounts.total === testCounts.todo) {
       this.status = "todo";
-    } else if ( testCounts.failed ) {
+    } else if (testCounts.failed) {
       this.status = "failed";
     } else {
       this.status = "passed";
     }
 
-    this.runner.suiteEnd( this );
+    this.runner.suiteEnd(this);
     return this;
   }
 
   getTestsCount() {
     let total = this.tests.length;
-    this.childSuites.forEach( t => {
+    this.childSuites.forEach(t => {
       total += t.testCounts.total;
-    } );
+    });
     return total;
   }
 
   start() {
-    this.runner.suiteStart( this );
+    this.runner.suiteStart(this);
   }
 
-  runSkip( reason?: string ) {
+  runSkip(reason?: string) {
     this.start();
-    this.sequence.runSkip( reason );
+    this.sequence.runSkip(reason);
     return this.exit();
   }
 
@@ -176,11 +189,11 @@ export default class Suite implements IRunnable {
   }
 
   run() {
-    if ( this.metadata.status === "skipped" ) {
+    if (this.metadata.status === "skipped") {
       return this.runSkip();
     }
 
-    if ( this.metadata.status === "todo" ) {
+    if (this.metadata.status === "todo") {
       return this.runTodo();
     }
 
@@ -188,13 +201,12 @@ export default class Suite implements IRunnable {
 
     this.timeStart = Date.now();
 
-    const result = this.sequence.run( new ContextRef() );
+    const result = this.sequence.run(new ContextRef());
 
-    if ( isPromise( result ) ) {
-      return result.then( this.exit, this.exit );
+    if (isPromise(result)) {
+      return result.then(this.exit, this.exit);
     }
 
     return this.exit();
   }
-
 }

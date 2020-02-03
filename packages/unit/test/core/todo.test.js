@@ -1,107 +1,93 @@
 import Runner from "../../src/core/runner";
 
-describe( "unit", () => {
-
-  it( "todo", () => {
-
-    expect.assertions( 1 );
+describe("unit", () => {
+  it("todo", () => {
+    expect.assertions(1);
 
     const runner = Runner.init();
     const results = runner.listen();
     const t = runner.test;
 
-    t.todo( "test1" );
+    t.todo("test1");
 
-    t.todo( "test2", () => {
+    t.todo("test2", () => {
       /* istanbul ignore next */
-      expect( false ).toBe( true );
-    } );
+      expect(false).toBe(true);
+    });
 
-    return runner.run().then( () => {
-      expect( results.pop().status ).toBe( "todo" );
-    } );
+    return runner.run().then(() => {
+      expect(results.pop().status).toBe("todo");
+    });
+  });
 
-  } );
-
-  it( "todo in group", () => {
-
-    expect.assertions( 1 );
+  it("todo in group", () => {
+    expect.assertions(1);
 
     const runner = Runner.init();
     const results = runner.listen();
     const t = runner.test;
 
-    t.beforeEach( () => {
+    t.beforeEach(() => {
       /* istanbul ignore next */
-      expect( false ).toBe( true );
-    } );
+      expect(false).toBe(true);
+    });
 
-    t.group.todo( () => {
-
-      t.group( () => {
-
-        t( () => {
+    t.group.todo(() => {
+      t.group(() => {
+        t(() => {
           /* istanbul ignore next */
-          expect( false ).toBe( true );
-        } );
+          expect(false).toBe(true);
+        });
 
-        t( () => {
+        t(() => {
           /* istanbul ignore next */
-          expect( false ).toBe( true );
-        } );
+          expect(false).toBe(true);
+        });
+      });
 
-      } );
-
-      t( () => {
+      t(() => {
         /* istanbul ignore next */
-        expect( false ).toBe( true );
-      } );
+        expect(false).toBe(true);
+      });
 
-      t( () => {
+      t(() => {
         /* istanbul ignore next */
-        expect( false ).toBe( true );
-      } );
+        expect(false).toBe(true);
+      });
+    });
 
-    } );
-
-    t.afterEach( () => {
+    t.afterEach(() => {
       /* istanbul ignore next */
-      expect( false ).toBe( true );
-    } );
+      expect(false).toBe(true);
+    });
 
-    return runner.run().then( () => {
-      expect( results.pop().testCounts ).toEqual( {
+    return runner.run().then(() => {
+      expect(results.pop().testCounts).toEqual({
         failed: 0,
         passed: 0,
         skipped: 0,
         todo: 4,
-        total: 4
-      } );
-    } );
+        total: 4,
+      });
+    });
+  });
 
-  } );
+  it("failing in group + todo test", () => {
+    expect.assertions(1);
 
-  it( "failing in group + todo test", () => {
-
-    expect.assertions( 1 );
-
-    const runner = Runner.init( { allowNoPlan: true } );
+    const runner = Runner.init({ allowNoPlan: true });
     const results = runner.listen();
     const t = runner.test;
 
-    t.group.failing( () => {
-
-      t.todo( () => {
+    t.group.failing(() => {
+      t.todo(() => {
         /* istanbul ignore next */
-        expect( false ).toBe( true );
-      } );
+        expect(false).toBe(true);
+      });
+    });
 
-    } );
-
-    return runner.run().then( () => {
-      expect( results.pop().status ).toBe( "todo" );
-    } );
-
-  } );
-
-} );
+    return runner.run().then(() => {
+      expect(results.pop().status).toBe("todo");
+    });
+  });
+});

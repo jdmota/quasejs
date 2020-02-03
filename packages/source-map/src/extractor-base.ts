@@ -4,9 +4,9 @@ import { resolveAsUrl } from "@quase/path-url";
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
   // Matches /* ... */ comments
-  regex1 = new RegExp( "/\\*" + baseRegex + "\\s*\\*/" ),
+  regex1 = new RegExp("/\\*" + baseRegex + "\\s*\\*/"),
   // Matches // .... comments
-  regex2 = new RegExp( "//" + baseRegex + "($|\n|\r\n?)" ),
+  regex2 = new RegExp("//" + baseRegex + "($|\n|\r\n?)"),
   // Matches DataUrls
   regexDataUrl = /data:[^;\n]+;base64,(.*)/;
 
@@ -32,66 +32,73 @@ export type Original = {
 };
 
 export default class SourceMapExtractorBase {
+  getMapFromUrl(fileLocation: string, url: string): SourceMapInfo {
+    const dataUrlMatch = url.match(regexDataUrl);
 
-  getMapFromUrl( fileLocation: string, url: string ): SourceMapInfo {
-
-    const dataUrlMatch = url.match( regexDataUrl );
-
-    if ( dataUrlMatch ) {
+    if (dataUrlMatch) {
       return {
-        map: JSON.parse( encoding.decode( dataUrlMatch[ 1 ] ) ),
-        mapLocation: fileLocation
+        map: JSON.parse(encoding.decode(dataUrlMatch[1])),
+        mapLocation: fileLocation,
       };
     }
 
     return {
       map: null,
-      mapLocation: resolveAsUrl( fileLocation, url )
+      mapLocation: resolveAsUrl(fileLocation, url),
     };
   }
 
-  getMapFromFile( fileLocation: string, fileContent: string ): SourceMapInfo | null {
+  getMapFromFile(
+    fileLocation: string,
+    fileContent: string
+  ): SourceMapInfo | null {
+    const match = fileContent.match(regex1) || fileContent.match(regex2);
 
-    const match = fileContent.match( regex1 ) || fileContent.match( regex2 );
-
-    if ( !match ) {
+    if (!match) {
       return null;
     }
 
-    return this.getMapFromUrl( fileLocation, match[ 1 ] );
+    return this.getMapFromUrl(fileLocation, match[1]);
   }
 
-  async getOriginalLocationFromMap( map: RawSourceMap | SourceMapConsumer, mapLocation: string, generated: { line: number; column: number; bias?: number } ): Promise<Original | null> {
-
-    const consumer = map instanceof SourceMapConsumer ? map : await new SourceMapConsumer( map );
+  async getOriginalLocationFromMap(
+    map: RawSourceMap | SourceMapConsumer,
+    mapLocation: string,
+    generated: { line: number; column: number; bias?: number }
+  ): Promise<Original | null> {
+    const consumer =
+      map instanceof SourceMapConsumer ? map : await new SourceMapConsumer(map);
 
     const pos: {
       source: string | null;
       line: number | null;
       column: number | null;
       name: string | null;
-    } = consumer.originalPositionFor( generated );
+    } = consumer.originalPositionFor(generated);
 
     let result;
 
-    if ( pos.line != null ) {
-      const originalFile = pos.source ? resolveAsUrl( mapLocation, pos.source ) : null;
-      const originalCode = pos.source ? consumer.sourceContentFor( pos.source, true ) : null;
+    if (pos.line != null) {
+      const originalFile = pos.source
+        ? resolveAsUrl(mapLocation, pos.source)
+        : null;
+      const originalCode = pos.source
+        ? consumer.sourceContentFor(pos.source, true)
+        : null;
 
       result = {
         ...pos,
         originalFile,
-        originalCode
+        originalCode,
       };
     } else {
       result = null;
     }
 
-    if ( !( map instanceof SourceMapConsumer ) ) {
+    if (!(map instanceof SourceMapConsumer)) {
       consumer.destroy();
     }
 
     return result;
   }
-
 }

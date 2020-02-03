@@ -5,8 +5,10 @@
   "license": "MIT",
   "homepage": "https://github.com/quase/quasejs",
   "repository": "https://github.com/quase/quasejs/tree/master/packages/config",
-  "module": "src/index.ts",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js"
+  },
   "dependencies": {
     "find-up": "^4.1.0",
     "pkg-conf": "^3.1.0"

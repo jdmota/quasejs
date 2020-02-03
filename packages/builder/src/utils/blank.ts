@@ -1,3 +1,3 @@
 export default function() {
-  return Object.create( null );
+  return Object.create(null);
 }

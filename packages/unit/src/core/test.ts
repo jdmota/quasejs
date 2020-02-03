@@ -1,5 +1,17 @@
 import { getStack } from "@quase/error";
-import { Status, IRunnable, ITest, ITestResult, Deferred, IRunReturn, TestMetadata, PublicTestApi, NumOrVoid, TestStart, TestEnd } from "../types";
+import {
+  Status,
+  IRunnable,
+  ITest,
+  ITestResult,
+  Deferred,
+  IRunReturn,
+  TestMetadata,
+  PublicTestApi,
+  NumOrVoid,
+  TestStart,
+  TestEnd,
+} from "../types";
 import defer from "./util/defer";
 import isObservable from "./util/is-observable";
 import isPromise from "./util/is-promise";
@@ -14,7 +26,6 @@ import { InTestSequence } from "./sequence";
 import { ContextRef } from "./context";
 
 export class Runnable implements ITestResult, ITest {
-
   name: string;
   fullname: string[];
   parent: Suite;
@@ -53,8 +64,7 @@ export class Runnable implements ITestResult, ITest {
 
   snapshotsWaiting: Deferred<any>[];
 
-  constructor( placeholder: TestPlaceholder, parent: Suite ) {
-
+  constructor(placeholder: TestPlaceholder, parent: Suite) {
     this.name = placeholder.name;
     this.fullname = placeholder.fullname;
     this.parent = parent;
@@ -99,201 +109,216 @@ export class Runnable implements ITestResult, ITest {
 
     this.snapshotsWaiting = [];
 
-    this.globalsCheck = new GlobalEnv( this.runner.globals );
+    this.globalsCheck = new GlobalEnv(this.runner.globals);
 
     this.finished = false;
 
     this.deferred = null;
 
     const _this: any = this;
-    _this.run = this.run.bind( this );
-    _this.exit = this.exit.bind( this );
-    _this.exitError = this.exitError.bind( this );
+    _this.run = this.run.bind(this);
+    _this.exit = this.exit.bind(this);
+    _this.exitError = this.exitError.bind(this);
   }
 
   clone() {
-    return new Runnable( this.placeholder, this.parent );
+    return new Runnable(this.placeholder, this.parent);
   }
 
-  assertCall( name: string ) {
-    if ( this.finished ) {
+  assertCall(name: string) {
+    if (this.finished) {
       this.addError(
-        new Error( `You should not call .${name}() after the test has finished.` ),
-        getStack( 3 )
+        new Error(
+          `You should not call .${name}() after the test has finished.`
+        ),
+        getStack(3)
       );
       return false;
     }
     return true;
   }
 
-  publicApi( context: ContextRef ): PublicTestApi {
+  publicApi(context: ContextRef): PublicTestApi {
     return {
-      plan: this.plan.bind( this ),
-      incCount: this.incCount.bind( this ),
-      skip: this.skip.bind( this ),
-      retries: this.retries.bind( this ),
-      retryDelay: this.retryDelay.bind( this ),
-      reruns: this.defineReruns.bind( this ),
-      rerunDelay: this.rerunDelay.bind( this ),
-      timeout: this.timeout.bind( this ),
-      slow: this.defineSlow.bind( this ),
-      log: this.log.bind( this ),
-      matchesSnapshot: this.matchesSnapshot.bind( this ),
+      plan: this.plan.bind(this),
+      incCount: this.incCount.bind(this),
+      skip: this.skip.bind(this),
+      retries: this.retries.bind(this),
+      retryDelay: this.retryDelay.bind(this),
+      reruns: this.defineReruns.bind(this),
+      rerunDelay: this.rerunDelay.bind(this),
+      timeout: this.timeout.bind(this),
+      slow: this.defineSlow.bind(this),
+      log: this.log.bind(this),
+      matchesSnapshot: this.matchesSnapshot.bind(this),
       get context() {
         return context.get();
       },
-      set context( context ) {
-        context.set( context );
-      }
+      set context(context) {
+        context.set(context);
+      },
     };
   }
 
-  log( ...args: unknown[] ) {
-    if ( args.length > 0 ) {
+  log(...args: unknown[]) {
+    if (args.length > 0) {
       this.logs.push(
-        args.map(
-          value => ( typeof value === "string" ? value : this.runner.format( value ) )
-        ).join( " " )
+        args
+          .map(value =>
+            typeof value === "string" ? value : this.runner.format(value)
+          )
+          .join(" ")
       );
     }
   }
 
-  matchesSnapshot( something: unknown, key?: string ) {
+  matchesSnapshot(something: unknown, key?: string) {
     const deferred = defer<void>();
-    this.snapshotsWaiting.push( deferred );
+    this.snapshotsWaiting.push(deferred);
     this.incCount();
     this.runner.matchesSnapshot(
       something,
-      getStack( 2 ),
-      `${this.fullname.join( " " )}${key ? ` ${key}` : ""}`,
+      getStack(2),
+      `${this.fullname.join(" ")}${key ? ` ${key}` : ""}`,
       deferred
     );
     return deferred.promise;
   }
 
-  plan( n: number ) {
-    if ( this.assertCall( "plan" ) ) {
-      assertNumber( n );
+  plan(n: number) {
+    if (this.assertCall("plan")) {
+      assertNumber(n);
       this.didPlan = true;
       this.planned = n;
-      this.planStack = getStack( 2 );
+      this.planStack = getStack(2);
     }
   }
 
   incCount() {
-    if ( this.assertCall( "incCount" ) ) {
+    if (this.assertCall("incCount")) {
       this.assertionCount++;
     }
   }
 
-  skip( reason?: string ) {
-    if ( this.assertCall( "skip" ) ) {
+  skip(reason?: string) {
+    if (this.assertCall("skip")) {
       this.status = "skipped";
-      throw new SkipError( reason );
+      throw new SkipError(reason);
     }
   }
 
-  retries( n: NumOrVoid ) {
-    if ( this.metadata.type !== "test" ) {
-      throw new Error( ".retries() is not available for hooks" );
+  retries(n: NumOrVoid) {
+    if (this.metadata.type !== "test") {
+      throw new Error(".retries() is not available for hooks");
     }
-    if ( this.assertCall( "retries" ) ) {
-      if ( n === undefined ) {
+    if (this.assertCall("retries")) {
+      if (n === undefined) {
         return this.maxRetries;
       }
-      assertNumber( n );
+      assertNumber(n);
       this.maxRetries = n;
     }
   }
 
-  retryDelay( n: NumOrVoid ) {
-    if ( this.metadata.type !== "test" ) {
-      throw new Error( ".retryDelay() is not available for hooks" );
+  retryDelay(n: NumOrVoid) {
+    if (this.metadata.type !== "test") {
+      throw new Error(".retryDelay() is not available for hooks");
     }
-    if ( this.assertCall( "retryDelay" ) ) {
-      if ( n === undefined ) {
+    if (this.assertCall("retryDelay")) {
+      if (n === undefined) {
         return this.retryDelayValue;
       }
-      assertDelay( n );
+      assertDelay(n);
       this.retryDelayValue = n;
     }
   }
 
-  defineReruns( n: NumOrVoid ) {
-    if ( this.metadata.type !== "test" ) {
-      throw new Error( ".reruns() is not available for hooks" );
+  defineReruns(n: NumOrVoid) {
+    if (this.metadata.type !== "test") {
+      throw new Error(".reruns() is not available for hooks");
     }
-    if ( this.assertCall( "reruns" ) ) {
-      if ( n === undefined ) {
+    if (this.assertCall("reruns")) {
+      if (n === undefined) {
         return this.reruns;
       }
-      assertNumber( n );
+      assertNumber(n);
       this.reruns = n;
     }
   }
 
-  rerunDelay( n: NumOrVoid ) {
-    if ( this.metadata.type !== "test" ) {
-      throw new Error( ".rerunDelay() is not available for hooks" );
+  rerunDelay(n: NumOrVoid) {
+    if (this.metadata.type !== "test") {
+      throw new Error(".rerunDelay() is not available for hooks");
     }
-    if ( this.assertCall( "rerunDelay" ) ) {
-      if ( n === undefined ) {
+    if (this.assertCall("rerunDelay")) {
+      if (n === undefined) {
         return this.rerunDelayValue;
       }
-      assertDelay( n );
+      assertDelay(n);
       this.rerunDelayValue = n;
     }
   }
 
-  timeout( n: NumOrVoid ) {
-    if ( this.assertCall( "timeout" ) ) {
-      if ( n === undefined ) {
+  timeout(n: NumOrVoid) {
+    if (this.assertCall("timeout")) {
+      if (n === undefined) {
         return this.maxTimeout;
       }
-      assertTimeout( n );
+      assertTimeout(n);
       this.maxTimeout = n;
-      this.timeoutStack = getStack( 2 );
+      this.timeoutStack = getStack(2);
     }
   }
 
-  defineSlow( n: NumOrVoid ) {
-    if ( this.assertCall( "slow" ) ) {
-      if ( n === undefined ) {
+  defineSlow(n: NumOrVoid) {
+    if (this.assertCall("slow")) {
+      if (n === undefined) {
         return this.minSlow;
       }
-      assertNumber( n );
+      assertNumber(n);
       this.minSlow = n;
     }
   }
 
-  addError( e: any, stack?: string ) {
-    const err = this.runner.processError( e, stack );
-    if ( this.finished ) {
-      if ( this.status !== "failed" ) {
-        this.runner.otherError( err );
+  addError(e: any, stack?: string) {
+    const err = this.runner.processError(e, stack);
+    if (this.finished) {
+      if (this.status !== "failed") {
+        this.runner.otherError(err);
       }
       return;
     }
-    if ( err instanceof SkipError || err.name === "SkipError" ) {
+    if (err instanceof SkipError || err.name === "SkipError") {
       this.skipReason = err.message;
       return;
     }
-    this.errors.push( err );
-    this.assertions.push( err );
+    this.errors.push(err);
+    this.assertions.push(err);
   }
 
   checkPlanCount() {
-    if ( this.errors.length ) {
+    if (this.errors.length) {
       return;
     }
-    if ( this.didPlan && this.planned !== this.assertionCount ) {
+    if (this.didPlan && this.planned !== this.assertionCount) {
       this.addError(
-        new Error( "Planned " + this.planned + " but " + this.assertionCount + " assertions were run." ),
+        new Error(
+          "Planned " +
+            this.planned +
+            " but " +
+            this.assertionCount +
+            " assertions were run."
+        ),
         this.planStack
       );
-    } else if ( !this.didPlan && this.assertionCount === 0 && !this.metadata.allowNoPlan && this.metadata.type === "test" ) {
+    } else if (
+      !this.didPlan &&
+      this.assertionCount === 0 &&
+      !this.metadata.allowNoPlan &&
+      this.metadata.type === "test"
+    ) {
       this.addError(
-        new Error( "No assertions were run." ),
+        new Error("No assertions were run."),
         this.placeholder.defaultStack
       );
     }
@@ -304,45 +329,45 @@ export class Runnable implements ITestResult, ITest {
     return this;
   }
 
-  exitError( error: any ) {
-    this.addError( error );
+  exitError(error: any) {
+    this.addError(error);
     return this.exit();
   }
 
   checkFailure() {
-    if ( this.errors.length ) {
+    if (this.errors.length) {
       this.status = "failed";
     } else {
       this.status = this.status || "passed";
     }
 
-    if ( this.status === "failed" && this.metadata.type !== "test" ) {
+    if (this.status === "failed" && this.metadata.type !== "test") {
       this.failedBecauseOfHook = { level: this.level };
     }
   }
 
   exit() {
-    if ( this.finished ) {
+    if (this.finished) {
       return this;
     }
 
-    if ( this.timeStart ) {
+    if (this.timeStart) {
       this.runtime = Date.now() - this.timeStart;
     }
 
-    if ( this.timeoutId ) {
-      clearTimeout( this.timeoutId );
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
     }
 
     this.slow = this.minSlow ? this.runtime >= this.minSlow : false;
 
-    if ( !this.status ) {
+    if (!this.status) {
       const e = this.globalsCheck.check();
-      if ( e ) {
-        this.addError( e );
+      if (e) {
+        this.addError(e);
       }
 
-      if ( !this.errors.length ) {
+      if (!this.errors.length) {
         this.checkPlanCount();
       }
     }
@@ -350,22 +375,24 @@ export class Runnable implements ITestResult, ITest {
     this.finished = true;
     this.checkFailure();
 
-    if ( this.snapshotsWaiting.length ) {
-      return Promise.all( this.snapshotsWaiting.map( d => d.promise ) ).then( errors => {
-        for ( const error of errors ) {
-          if ( error ) {
-            this.errors.push( error );
+    if (this.snapshotsWaiting.length) {
+      return Promise.all(this.snapshotsWaiting.map(d => d.promise)).then(
+        errors => {
+          for (const error of errors) {
+            if (error) {
+              this.errors.push(error);
+            }
           }
+          this.checkFailure();
+          return this;
         }
-        this.checkFailure();
-        return this;
-      } );
+      );
     }
 
     return this;
   }
 
-  runSkip( reason?: string ) {
+  runSkip(reason?: string) {
     this.status = "skipped";
     this.skipReason = reason;
     return this.skipOrTodoExit();
@@ -376,12 +403,12 @@ export class Runnable implements ITestResult, ITest {
     return this.skipOrTodoExit();
   }
 
-  run( context: ContextRef ) {
-    if ( this.metadata.status === "skipped" ) {
+  run(context: ContextRef) {
+    if (this.metadata.status === "skipped") {
       return this.runSkip();
     }
 
-    if ( this.metadata.status === "todo" ) {
+    if (this.metadata.status === "todo") {
       return this.runTodo();
     }
 
@@ -391,52 +418,50 @@ export class Runnable implements ITestResult, ITest {
 
     this.timeStart = Date.now();
 
-    if ( this.globalsCheck ) {
+    if (this.globalsCheck) {
       this.globalsCheck.start();
     }
 
     try {
-      ret = callback( this.publicApi( context ) );
-    } catch ( e ) {
+      ret = callback(this.publicApi(context));
+    } catch (e) {
       error = e;
     }
 
-    if ( error ) {
-      return this.exitError( error );
+    if (error) {
+      return this.exitError(error);
     }
 
-    if ( this.maxTimeout && this.runner.options.timeouts ) {
-      this.timeoutId = setTimeout( () => {
-        this.addError( new Error( "Timeout exceeded." ), this.timeoutStack );
+    if (this.maxTimeout && this.runner.options.timeouts) {
+      this.timeoutId = setTimeout(() => {
+        this.addError(new Error("Timeout exceeded."), this.timeoutStack);
 
         const d = this.deferred;
-        if ( d ) {
+        if (d) {
           this.deferred = null;
           d.resolve();
         }
-      }, this.maxTimeout );
+      }, this.maxTimeout);
     }
 
     let promise;
 
-    if ( isObservable( ret ) ) {
-      promise = observableToPromise( ret );
-    } else if ( isPromise( ret ) ) {
+    if (isObservable(ret)) {
+      promise = observableToPromise(ret);
+    } else if (isPromise(ret)) {
       promise = ret;
     }
 
-    if ( promise ) {
-      const d = this.deferred = defer();
-      return Promise.race( [ promise, d.promise ] ).then( this.exit, this.exitError );
+    if (promise) {
+      const d = (this.deferred = defer());
+      return Promise.race([promise, d.promise]).then(this.exit, this.exitError);
     }
 
     return this.exit();
   }
-
 }
 
 export default class Test implements ITestResult, IRunnable {
-
   name: string;
   fullname: string[];
   status: Status | undefined;
@@ -466,8 +491,11 @@ export default class Test implements ITestResult, IRunnable {
   testStartInfo: TestStart | null;
   testEndInfo: TestEnd | null;
 
-  constructor( placeholder: TestPlaceholder, runnable: Runnable | InTestSequence, parent: Suite ) {
-
+  constructor(
+    placeholder: TestPlaceholder,
+    runnable: Runnable | InTestSequence,
+    parent: Suite
+  ) {
     this.name = placeholder.name;
     this.fullname = placeholder.fullname;
 
@@ -488,7 +516,7 @@ export default class Test implements ITestResult, IRunnable {
     this.failedBecauseOfHook = null;
     this.skipReason = undefined;
 
-    parent.tests.push( this );
+    parent.tests.push(this);
 
     this.placeholder = placeholder;
 
@@ -510,12 +538,12 @@ export default class Test implements ITestResult, IRunnable {
     this.testEndInfo = null;
 
     const _this: any = this;
-    _this.run = this.run.bind( this );
-    _this.end = this.end.bind( this );
+    _this.run = this.run.bind(this);
+    _this.end = this.end.bind(this);
   }
 
   start() {
-    this.runner.testStart( this );
+    this.runner.testStart(this);
   }
 
   copyFromRunnable() {
@@ -529,35 +557,38 @@ export default class Test implements ITestResult, IRunnable {
     this.skipReason = this.runnable.skipReason;
   }
 
-  end( context: ContextRef, copyContext: ContextRef ): IRunReturn<Test> {
+  end(context: ContextRef, copyContext: ContextRef): IRunReturn<Test> {
     this.copyFromRunnable();
 
-    if ( this.runner.options.logHeapUsage ) {
-      if ( global.gc ) {
+    if (this.runner.options.logHeapUsage) {
+      if (global.gc) {
         global.gc();
       }
       this.memoryUsage = process.memoryUsage().heapUsed;
     }
 
-    if ( this.metadata.status === "failing" ) {
-      if ( this.status === "failed" ) {
+    if (this.metadata.status === "failing") {
+      if (this.status === "failed") {
         this.status = "passed";
         this.errors.length = 0;
-      } else if ( this.status === "passed" ) {
+      } else if (this.status === "passed") {
         this.status = "failed";
         this.errors.push(
           this.runner.processError(
-            new Error( "Test was expected to fail, but succeeded, you should stop marking the test as failing." ),
+            new Error(
+              "Test was expected to fail, but succeeded, you should stop marking the test as failing."
+            ),
             this.placeholder.defaultStack
           )
         );
       }
     }
 
-    if ( this.currentRetry === 0 && this.currentRerun === 0 ) { // Only set these after the first run
+    if (this.currentRetry === 0 && this.currentRerun === 0) {
+      // Only set these after the first run
       const runnable = this.runnable;
 
-      if ( runnable instanceof InTestSequence ) {
+      if (runnable instanceof InTestSequence) {
         this.maxRetries = runnable.middleRunnable.maxRetries;
         this.retryDelayValue = runnable.middleRunnable.retryDelayValue;
         this.reruns = runnable.middleRunnable.reruns;
@@ -570,41 +601,41 @@ export default class Test implements ITestResult, IRunnable {
       }
     }
 
-    if ( this.status === "passed" ) {
-      if ( this.currentRerun < this.reruns ) {
+    if (this.status === "passed") {
+      if (this.currentRerun < this.reruns) {
         this.currentRetry = 0;
         this.currentRerun++;
         this.runnable = this.runnable.clone();
-        return new Promise( resolve => {
-          setTimeout( () => resolve( this.runTry( context ) ), this.rerunDelayValue );
-        } );
+        return new Promise(resolve => {
+          setTimeout(() => resolve(this.runTry(context)), this.rerunDelayValue);
+        });
       }
     }
 
-    if ( this.status === "failed" && !this.failedBecauseOfHook ) {
-      if ( this.currentRetry < this.maxRetries ) {
+    if (this.status === "failed" && !this.failedBecauseOfHook) {
+      if (this.currentRetry < this.maxRetries) {
         this.currentRetry++;
         this.runnable = this.runnable.clone();
-        return new Promise( resolve => {
-          setTimeout( () => resolve( this.runTry( context ) ), this.retryDelayValue );
-        } );
+        return new Promise(resolve => {
+          setTimeout(() => resolve(this.runTry(context)), this.retryDelayValue);
+        });
       }
     }
 
-    if ( this.metadata.type !== "test" ) {
+    if (this.metadata.type !== "test") {
       // To share context between before/after hooks
-      context.set( copyContext.get() );
+      context.set(copyContext.get());
     }
 
-    this.runner.testEnd( this );
+    this.runner.testEnd(this);
     return this;
   }
 
-  runSkip( reason?: string ) {
+  runSkip(reason?: string) {
     this.start();
-    this.runnable.runSkip( reason );
+    this.runnable.runSkip(reason);
     this.copyFromRunnable();
-    this.runner.testEnd( this );
+    this.runner.testEnd(this);
     return this;
   }
 
@@ -612,22 +643,21 @@ export default class Test implements ITestResult, IRunnable {
     this.start();
     this.runnable.runTodo();
     this.copyFromRunnable();
-    this.runner.testEnd( this );
+    this.runner.testEnd(this);
     return this;
   }
 
-  runTry( context: ContextRef ): IRunReturn<Test> {
+  runTry(context: ContextRef): IRunReturn<Test> {
     const copyContext = context.copy();
-    const run = this.runnable.run( copyContext );
-    if ( isPromise( run ) ) {
-      return run.then( () => this.end( context, copyContext ) );
+    const run = this.runnable.run(copyContext);
+    if (isPromise(run)) {
+      return run.then(() => this.end(context, copyContext));
     }
-    return this.end( context, copyContext );
+    return this.end(context, copyContext);
   }
 
-  run( context: ContextRef ) {
+  run(context: ContextRef) {
     this.start();
-    return this.runTry( context );
+    return this.runTry(context);
   }
-
 }
