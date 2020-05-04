@@ -1,17 +1,15 @@
-import { error } from "./error";
+import { error } from "../../runtime/error";
+import { Tokenizer as RuntimeTokenizer } from "../../runtime/tokenizer";
+import {
+  Position as RuntimePosition,
+  Location as RuntimeLocation,
+} from "../../runtime/tokenizer";
 
 /* eslint default-case: 0, no-fallthrough: 0 */
 
-export type Position = {
-  pos: number;
-  line: number;
-  column: number;
-};
+export type Position = RuntimePosition;
 
-export type Location = {
-  start: Position;
-  end: Position;
-};
+export type Location = RuntimeLocation;
 
 export type Comment = {
   type: "CommentBlock" | "CommentLine";
@@ -19,159 +17,99 @@ export type Comment = {
   loc: Location;
 };
 
-export const FAKE_LOC = {
-  start: {
-    pos: 0,
-    line: 0,
-    column: 0,
-  },
-  end: {
-    pos: 0,
-    line: 0,
-    column: 0,
-  },
+const idStart = /[_a-z]/i;
+const idChars = /[_0-9a-z]/i;
+const hexDigit = /[0-9a-f]/i;
+
+const escapeToValue: { [key: string]: string } = {
+  b: "\b",
+  t: "\t",
+  n: "\n",
+  f: "\f",
+  r: "\r",
+  "'": "'",
+  "\\": "\\",
 };
 
 const lineBreak = /\r\n?|\n/;
 const lineBreakG = new RegExp(lineBreak.source, "g");
 
-export class Tokenizer<Token> {
-  input: string;
-  inputLen: number;
-  comments: Comment[];
-  pos: number;
-  _lineStart: number;
-  _curLine: number;
-  _start: Position;
-  _lastToken: Token;
-  _eof: Token;
+export type IdToken = {
+  id: 1;
+  label: "id";
+  image: string;
+};
+
+export type StringToken = {
+  id: 2;
+  label: "string";
+  image: string;
+  value: string;
+};
+
+export type RegexpToken = {
+  id: 3;
+  label: "regexp";
+  image: string;
+  pattern: string;
+  flags: string;
+};
+
+export type ActionToken = {
+  id: 4;
+  label: "action";
+  image: string;
+  value: string;
+};
+
+export type OtherToken = {
+  id: 5;
+  label: string;
+  image: string;
+};
+
+export type Token =
+  | IdToken
+  | StringToken
+  | RegexpToken
+  | ActionToken
+  | OtherToken
+  | typeof RuntimeTokenizer.EOF;
+
+export class GrammarTokenizer extends RuntimeTokenizer<Token, string> {
+  private comments: Comment[];
+  private lastToken: Token | null;
 
   constructor(input: string) {
-    this.input = input;
-    this.inputLen = input.length;
+    super(input);
     this.comments = [];
-    this.pos = 0;
-    this._lineStart = 0;
-    this._curLine = 1;
-    this._start = this.curPosition();
-    this._lastToken = this.initial();
-    this._eof = this.eof();
+    this.lastToken = null;
   }
 
-  error(message: string) {
-    throw error(message, this._start);
-  }
-
-  unexpectedChar() {
-    throw this.error(`Unexpected character '${this.charAt(this.pos)}'`);
-  }
-
-  getAllTokens(): Token[] {
-    const tokens = [];
-    while (this._lastToken !== this._eof) {
-      tokens.push(this.nextToken());
-    }
-    return tokens;
-  }
-
-  getComments(): Comment[] {
+  getComments(): readonly Comment[] {
     return this.comments;
   }
 
-  currToken(): Token {
-    return this._lastToken;
-  }
-
-  curPosition(): Position {
-    return {
-      pos: this.pos,
-      line: this._curLine,
-      column: this.pos - this._lineStart,
-    };
-  }
-
-  loc() {
-    return {
-      start: this._start,
-      end: this.curPosition(),
-    };
-  }
-
-  nextLine() {
-    this._lineStart = this.pos;
-    this._curLine++;
-  }
-
-  codeAt(pos: number) {
-    return this.input.charCodeAt(pos);
-  }
-
-  charAt(pos: number) {
-    return this.input.charAt(pos);
-  }
-
-  initial(): Token {
-    throw new Error("Abstract");
-  }
-
-  eof(): Token {
-    throw new Error("Abstract");
-  }
-
-  identifier(_word: string): Token {
-    throw new Error("Abstract");
-  }
-
-  readToken(): Token {
-    throw new Error("Abstract");
-  }
-
-  nextToken(): Token {
+  // Override
+  nextToken() {
     this.performSkip();
-    this._start = this.curPosition();
-    if (this.pos >= this.inputLen) {
-      this._lastToken = this._eof;
-    } else {
-      this._lastToken = this.readToken();
-    }
-    return this._lastToken;
+    this.lastToken = super.nextToken();
+    return this.lastToken;
   }
 
-  isNewLine(code: number): boolean {
+  private error(message: string) {
+    throw error(message, this.curPosition());
+  }
+
+  private charAt(index: number) {
+    return this.input.charAt(index);
+  }
+
+  private isNewLine(code: number): boolean {
     return code === 10 || code === 13;
   }
 
-  isIdentifierStart(code: number): boolean {
-    if (code < 65) return code === 36; // 36 -> $
-    if (code < 91) return true; // 65-90 -> A-Z
-    if (code < 97) return code === 95; // 95 -> _
-    if (code < 123) return true; // 97-122 -> a-z
-    return false;
-  }
-
-  isIdentifierChar(code: number): boolean {
-    if (code < 48) return code === 36; // 36 -> $
-    if (code < 58) return true; // 48-57 -> 0-9
-    return this.isIdentifierStart(code);
-  }
-
-  consumeNewLine(): number {
-    const start = this.pos;
-    const code = this.codeAt(this.pos);
-    switch (code) {
-      case 13: // '\r' carriage return
-        // If the next char is '\n', move to pos+1 and let the next branch handle it
-        if (this.codeAt(this.pos + 1) === 10) {
-          this.pos++;
-        }
-      case 10: // '\n' line feed
-        this.pos++;
-        this.nextLine();
-    }
-    return this.pos - start;
-  }
-
-  skip(): boolean {
+  private skip(): boolean {
     const code = this.codeAt(this.pos);
     switch (code) {
       case 13: // '\r' carriage return
@@ -202,7 +140,7 @@ export class Tokenizer<Token> {
     return false;
   }
 
-  performSkip(): void {
+  private performSkip(): void {
     while (this.pos < this.inputLen) {
       if (!this.skip()) {
         break;
@@ -210,7 +148,7 @@ export class Tokenizer<Token> {
     }
   }
 
-  skipLineComment(): void {
+  private skipLineComment(): void {
     const start = this.curPosition();
 
     let ch = this.codeAt((this.pos += 2));
@@ -228,7 +166,7 @@ export class Tokenizer<Token> {
     );
   }
 
-  skipBlockComment(): void {
+  private skipBlockComment(): void {
     const start = this.curPosition();
 
     const end = this.input.indexOf("*/", (this.pos += 2));
@@ -250,7 +188,12 @@ export class Tokenizer<Token> {
     this.pushComment(true, comment, start, this.curPosition());
   }
 
-  pushComment(block: boolean, value: string, start: Position, end: Position) {
+  private pushComment(
+    block: boolean,
+    value: string,
+    start: Position,
+    end: Position
+  ) {
     this.comments.push({
       type: block ? "CommentBlock" : "CommentLine",
       value,
@@ -261,10 +204,18 @@ export class Tokenizer<Token> {
     });
   }
 
-  readWord(): string {
+  private readIdentifier(): Token {
+    return {
+      id: 1,
+      label: "id",
+      image: this.readWord(),
+    };
+  }
+
+  private readWord() {
     const start = this.pos;
     while (this.pos < this.inputLen) {
-      if (this.isIdentifierChar(this.codeAt(this.pos))) {
+      if (idChars.test(this.charAt(this.pos))) {
         this.pos++;
       } else {
         break;
@@ -273,7 +224,254 @@ export class Tokenizer<Token> {
     return this.input.slice(start, this.pos);
   }
 
-  readIdentifier(): Token {
-    return this.identifier(this.readWord());
+  private readHex() {
+    let hex = "";
+    while (true) {
+      const c = this.charAt(this.pos);
+
+      if (hexDigit.test(c)) {
+        hex += c;
+        this.pos++;
+
+        if (hex.length > 6) {
+          throw this.error("Invalid unicode escape sequence");
+        }
+      } else {
+        break;
+      }
+    }
+
+    if (hex.length === 0) {
+      throw this.error("Invalid unicode escape sequence");
+    }
+
+    return String.fromCodePoint(Number.parseInt(hex, 16));
+  }
+
+  private readString(): StringToken {
+    const start = this.pos;
+    this.pos++;
+
+    let value = "";
+
+    while (true) {
+      const c = this.charAt(this.pos);
+
+      // End of input or new line
+      if (this.pos >= this.inputLen || this.isNewLine(c.charCodeAt(0))) {
+        throw this.error("Unterminated string");
+      }
+
+      // String close
+      if (c === "'") {
+        if (this.pos - start === 1) {
+          throw this.error("Empty string");
+        }
+        this.pos++;
+        break;
+      }
+
+      // Escape
+      if (c === "\\") {
+        this.pos++;
+        const c = this.charAt(this.pos);
+
+        if (c === "u") {
+          this.pos++;
+          value += this.readHex();
+        } else {
+          const v = escapeToValue[c];
+          if (v) {
+            value += v;
+            this.pos++;
+          } else {
+            throw this.error("Invalid escape sequence");
+          }
+        }
+      } else {
+        value += c;
+        this.pos++;
+      }
+    }
+
+    return {
+      id: 2,
+      label: "string",
+      value,
+      image: this.input.slice(start, this.pos),
+    };
+  }
+
+  private readRegexp(): RegexpToken {
+    const start = this.pos;
+    let escaped = false;
+    let inClass = false;
+
+    this.pos++;
+
+    while (true) {
+      const c = this.codeAt(this.pos);
+
+      if (this.pos >= this.inputLen || this.isNewLine(c)) {
+        throw this.error("Unterminated regular expression");
+      }
+
+      if (escaped) {
+        escaped = false;
+      } else {
+        if (c === 91) {
+          // "["
+          inClass = true;
+        } else if (c === 93 && inClass) {
+          // "]"
+          inClass = false;
+        } else if (c === 47 && !inClass) {
+          // "/"
+          this.pos++;
+          break;
+        }
+        escaped = c === 92; // "\\"
+      }
+      this.pos++;
+    }
+
+    const pattern = this.input.slice(start + 1, this.pos - 1);
+
+    const flags = this.readWord();
+    if (flags) {
+      const validFlags = /^[gmsiyu]*$/;
+      if (!validFlags.test(flags)) {
+        throw this.error("Invalid regular expression flag");
+      }
+    }
+
+    return {
+      id: 3,
+      label: "regexp",
+      pattern,
+      flags,
+      image: this.input.slice(start, this.pos),
+    };
+  }
+
+  private readAction(): ActionToken {
+    const start = this.pos;
+    const stack: string[] = ["action"];
+    this.pos++;
+
+    let char;
+    while (stack.length) {
+      if (this.pos >= this.inputLen) {
+        throw this.error("Unterminated action");
+      }
+
+      char = this.charAt(this.pos);
+
+      switch (char) {
+        case "{":
+          stack.push("{");
+          break;
+        case "}": {
+          const top = stack.pop();
+          if (top === "{" || top === "action") {
+            break;
+          }
+          throw this.unexpected();
+        }
+        case '"':
+        case "'":
+        case "`": {
+          const top = stack[stack.length - 1];
+          if (top === char) {
+            stack.pop(); // End of string
+          } else {
+            switch (top) {
+              case '"':
+              case "'":
+              case "`":
+                break; // Still in string
+              default:
+                stack.push(char); // Start of string
+            }
+          }
+          break;
+        }
+        case "\\": {
+          this.pos++;
+          break;
+        }
+        default:
+      }
+
+      this.pos++;
+    }
+
+    return {
+      id: 4,
+      label: "action",
+      value: this.input.slice(start + 1, this.pos - 1),
+      image: this.input.slice(start, this.pos),
+    };
+  }
+
+  // Override
+  readToken(): Token {
+    const char = this.charAt(this.pos);
+
+    if (char === "'") {
+      return this.readString();
+    }
+
+    if (char === "/") {
+      return this.readRegexp();
+    }
+
+    if (idStart.test(char)) {
+      return this.readIdentifier();
+    }
+
+    if (char === "{") {
+      return this.readAction();
+    }
+
+    if (char === "-" && this.charAt(this.pos + 1) === ">") {
+      this.pos += 2;
+      return {
+        id: 5,
+        label: "->",
+        image: "->",
+      };
+    }
+
+    switch (char) {
+      case "(":
+      case ")":
+      case "|":
+      case "?":
+      case "*":
+      case "+":
+        if (this.charAt(this.pos + 1) === "=") {
+          this.pos += 2;
+          return {
+            id: 5,
+            label: "+=",
+            image: "+=",
+          };
+        }
+      case ":": // eslint-disable-line no-fallthrough
+      case "=":
+      case ";":
+      case "@":
+      case ".":
+        this.pos++;
+        return {
+          id: 5,
+          label: char,
+          image: char,
+        };
+      default:
+    }
+
+    throw this.unexpected();
   }
 }

@@ -10,7 +10,7 @@ import {
   Expression,
   Assertion,
 } from "regexp-tree/ast"; // eslint-disable-line import/no-unresolved
-import { RegexpNode } from "./parser/grammar-parser";
+import { RegexpNode } from "./parser";
 import { Frag, Automaton } from "./automaton";
 import { MIN_CHAR, MAX_CHAR } from "./constants";
 

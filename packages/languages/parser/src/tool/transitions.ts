@@ -1,4 +1,4 @@
-import { Rule } from "./parser/grammar-parser";
+import { Rule } from "./parser";
 
 export abstract class Transition {
   isEpsilon: boolean;

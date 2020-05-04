@@ -11,7 +11,7 @@ import {
   ActionNode,
   Named,
   Dot,
-} from "./parser/grammar-parser";
+} from "./parser";
 import { printLoc } from "./utils";
 import Grammar, { LexerTokens } from "./grammar";
 import { Automaton, Frag } from "./automaton";

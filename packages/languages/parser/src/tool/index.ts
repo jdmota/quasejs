@@ -2,7 +2,7 @@ import Grammar, { Options } from "./grammar";
 import { Factory } from "./factory";
 import { NfaToDfa, DfaMinimizer } from "./optimizer";
 import { Analyser } from "./analysis";
-import { ParserRule, LexerRule } from "./parser/grammar-parser";
+import { ParserRule, LexerRule } from "./parser";
 import { DFA } from "./abstract-optimizer";
 import { DState } from "./state";
 import { CodeGenerator } from "./code-gen";

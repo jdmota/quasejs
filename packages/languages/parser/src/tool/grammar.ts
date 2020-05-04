@@ -8,7 +8,7 @@ import GrammarParser, {
   Node,
   Thing,
   Dot,
-} from "./parser/grammar-parser";
+} from "./parser";
 import { printLoc } from "./utils";
 
 export type Options = {

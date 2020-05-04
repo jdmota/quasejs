@@ -13,7 +13,7 @@ import { DState } from "./state";
 import { DFA } from "./abstract-optimizer";
 import { Analyser, GoTo } from "./analysis";
 import Grammar, { LexerTokens } from "./grammar";
-import { ParserRule, LexerRule } from "./parser/grammar-parser";
+import { ParserRule, LexerRule } from "./parser";
 
 export class CodeGenerator {
   grammar: Grammar;

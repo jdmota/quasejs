@@ -5,8 +5,8 @@ export function positionToString(pos: Position) {
 }
 
 class ErrorWithLocation extends Error {
-  originalMessage: string;
-  loc: Position;
+  public readonly originalMessage: string;
+  public readonly loc: Position;
 
   constructor(message: string, loc: Position) {
     super(`${message} (at ${positionToString(loc)})`);

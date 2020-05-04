@@ -1,8 +1,7 @@
+import fs from "fs";
+import path from "path";
+import makeDir from "make-dir";
 import tool from "./tool";
-
-const fs = require("fs");
-const path = require("path");
-const makeDir = require("make-dir");
 
 /* eslint no-console: 0 */
 export default function (args: string[]) {

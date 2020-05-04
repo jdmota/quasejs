@@ -6,7 +6,7 @@ import {
   RuleTransition,
   NamedTransition,
 } from "./transitions";
-import { Rule } from "./parser/grammar-parser";
+import { Rule } from "./parser";
 
 const EPSILON = new EpsilonTransition();
 

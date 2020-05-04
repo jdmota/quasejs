@@ -35,7 +35,6 @@ export const FAKE_LOC = {
 export class Tokenizer<$Tokens extends Token, $Channels extends string> {
   input: string;
   inputLen: number;
-  comments: Comment[];
   pos: number;
   current: number;
   _lineStart: number;
@@ -54,7 +53,6 @@ export class Tokenizer<$Tokens extends Token, $Channels extends string> {
   constructor(input: string) {
     this.input = input;
     this.inputLen = input.length;
-    this.comments = [];
     this.pos = 0;
     this.current = this.codeAt(this.pos);
     this._lineStart = 0;

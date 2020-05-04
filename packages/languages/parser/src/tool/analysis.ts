@@ -12,7 +12,7 @@ import { MapKeyToSet } from "./utils/map-key-to-set";
 import { MapKeyToValue } from "./utils/map-key-to-value";
 import { MapRangeToValue } from "./utils/map-range-to-value";
 import { MapRangeToSet } from "./utils/map-range-to-set";
-import { Rule, ParserRule, LexerRule } from "./parser/grammar-parser";
+import { Rule, ParserRule, LexerRule } from "./parser";
 
 export class Context {
   parent: Context | null;
@@ -224,7 +224,7 @@ export class Analyser {
       const newCtx = ctx ? new Context(ctx) : null;
 
       const result = this._analyse(
-        this.initialStates.get(transition.rule) as DState,
+        this.initialStates.get(transition.rule)!!,
         newCtx
       );
       set.importFrom(result.set);
