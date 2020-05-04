@@ -1,24 +1,15 @@
-// Adapted from parcel-bundler's logger
-import { formatError, Error2 } from "../utils/error";
-
-const colorette = require("colorette");
-const readline = require("readline");
-const stripAnsi = require("strip-ansi");
-const ora = require("ora");
-const path = require("path");
-const fs = require("fs");
-
-const supportsEmoji =
-  process.platform !== "win32" || process.env.TERM === "xterm-256color";
-
-// Fallback symbols for Windows from https://en.wikipedia.org/wiki/Code_page_437
-const emoji = {
-  progress: supportsEmoji ? "⏳" : "∞",
-  success: supportsEmoji ? "✨" : "√",
-  error: supportsEmoji ? "🚨" : "×",
-  warning: supportsEmoji ? "⚠️" : "‼",
-  info: supportsEmoji ? "ℹ" : "i",
-};
+import fs from "fs-extra";
+import path from "path";
+import readline from "readline";
+import colorette from "colorette";
+import ora from "ora";
+import stripAnsi from "strip-ansi";
+import {
+  formatDiagnostic,
+  Diagnostic,
+  createDiagnosticFromAny,
+} from "../utils/error";
+import emoji from "../utils/emoji";
 
 // Pad a string with spaces on either side
 function pad(text: string, length: number, align: "left" | "right" = "left") {
@@ -50,17 +41,15 @@ function countLines(message: string) {
 type LoggerOpts = {
   logLevel?: number;
   color?: boolean;
-  emoji?: any;
   isTest?: boolean;
 };
 
 export default class Logger {
   lines: number;
-  spinner: any;
-  logFile: any | null;
+  spinner: ora.Ora | null;
+  logFile: fs.WriteStream | null;
   logLevel: number;
   color: boolean;
-  emoji: any;
   isTest: boolean;
 
   constructor(options: LoggerOpts = {}) {
@@ -68,20 +57,26 @@ export default class Logger {
     this.spinner = null;
     this.logFile = null;
 
-    this.logLevel = options.logLevel == null ? 3 : Number(options.logLevel);
+    this.logLevel = options.logLevel == null ? 3 : options.logLevel;
     this.color = colorette.options.enabled =
       typeof options.color === "boolean"
         ? options.color
         : colorette.options.enabled;
-    this.emoji = options.emoji || emoji;
     this.isTest = !!options.isTest;
   }
 
-  _log(message: string) {
+  write(message: string, persistent = false) {
+    if (!persistent) {
+      this.lines += countLines(message);
+    }
+    this.stopSpinner();
+
     if (this.logLevel > 3) {
       message = `[${new Date().toLocaleTimeString()}]: ${message}`;
     }
+
     console.log(message); // eslint-disable-line no-console
+
     if (this.logLevel > 4) {
       if (!this.logFile) {
         this.logFile = fs.createWriteStream(
@@ -90,28 +85,6 @@ export default class Logger {
       }
       this.logFile.write(stripAnsi(message) + "\n");
     }
-  }
-
-  _writeError(
-    err: string | Error2,
-    emoji: string,
-    color: (msg: string) => string
-  ) {
-    const { message, stack } = formatError(err);
-    this.write(color(`${emoji}  ${message}`));
-    if (stack) {
-      if (!this.isTest || (typeof err !== "string" && err.codeFrame)) {
-        this.write(stack);
-      }
-    }
-  }
-
-  write(message: string, persistent = false) {
-    if (!persistent) {
-      this.lines += countLines(message);
-    }
-    this.stopSpinner();
-    this._log(message);
   }
 
   log(message: string) {
@@ -126,27 +99,46 @@ export default class Logger {
     }
   }
 
-  info(message: string) {
-    this.log(`${this.emoji.info}  ${colorette.bold(colorette.blue(message))}`);
-  }
-
   success(message: string) {
-    this.log(
-      `${this.emoji.success}  ${colorette.bold(colorette.green(message))}`
-    );
-  }
-
-  warn(err: string | Error) {
-    if (this.logLevel > 1) {
-      this._writeError(err, this.emoji.warning, colorette.yellow);
+    if (this.logLevel > 2) {
+      this.write(
+        `${emoji.success}  ${colorette.bold(colorette.green(message))}`
+      );
     }
   }
 
-  error(err: string | Error) {
+  diagnostic(diagnostic: Diagnostic) {
+    switch (diagnostic.category) {
+      case "info":
+        if (this.logLevel > 2) this.write(formatDiagnostic(diagnostic));
+        break;
+      case "warn":
+        if (this.logLevel > 1) this.write(formatDiagnostic(diagnostic));
+        break;
+      case "error":
+        if (this.logLevel > 0) this.write(formatDiagnostic(diagnostic));
+        break;
+      default: {
+        const _: never = diagnostic.category;
+      }
+    }
+  }
+
+  info(message: string | Error) {
+    if (this.logLevel > 2) {
+      this.diagnostic(createDiagnosticFromAny(message, "info"));
+    }
+  }
+
+  warn(warning: string | Error) {
+    if (this.logLevel > 1) {
+      this.diagnostic(createDiagnosticFromAny(warning, "warn"));
+    }
+  }
+
+  error(error: string | Error) {
     if (this.logLevel > 0) {
-      this._writeError(err, this.emoji.error, m =>
-        colorette.bold(colorette.red(m))
-      );
+      this.diagnostic(createDiagnosticFromAny(error, "error"));
     }
   }
 
@@ -156,7 +148,7 @@ export default class Logger {
     }
 
     if (this.logLevel > 3) {
-      return this.log(message);
+      return this.write(message);
     }
 
     const styledMessage = colorette.bold(colorette.gray(message));
@@ -166,7 +158,7 @@ export default class Logger {
       this.spinner = ora({
         text: styledMessage,
         stream: process.stdout,
-        enabled: this.isTest ? false : undefined,
+        isEnabled: this.isTest ? false : undefined,
       }).start();
     }
   }
@@ -194,6 +186,8 @@ export default class Logger {
   }
 
   table(columns: { align: "left" | "right" }[], table: (string | number)[][]) {
+    if (this.logLevel <= 2) return;
+
     // Measure column widths
     const colWidths: number[] = [];
     for (let row of table) {
@@ -214,7 +208,7 @@ export default class Logger {
             columns[i] ? columns[i].align : undefined
           )} `
       );
-      this.log(items.join(""));
+      this.write(items.join(""));
     }
   }
 }

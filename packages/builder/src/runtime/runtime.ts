@@ -76,7 +76,18 @@ type GlobalThis = {
     new (url: string): WebSocket;
   };
   importScripts?: Function;
-  __quase_builder__?: any;
+  __quase_builder__?: {
+    r: {
+      (id: string): Exported;
+      r(id: string): unknown;
+    };
+    i: (id: string) => Promise<Exported>;
+    q:
+      | {
+          push: (arg: [O<ModuleFn>, RuntimeManifest | undefined]) => void;
+        }
+      | [O<ModuleFn>, RuntimeManifest | undefined][];
+  };
 };
 
 (function(global: GlobalThis, nodeRequire: false | NodeRequire) {
@@ -86,15 +97,15 @@ type GlobalThis = {
   const { document, location, importScripts } = global;
   const isBrowser = $_WITH_BROWSER && global.window === global;
 
-  const blank = () => Object.create(NULL);
+  const blank = <T>() => Object.create(NULL) as O<T>;
 
-  const modules = blank() as O<Exported | undefined>;
-  const fnModules = blank() as O<ModuleFn | null | undefined>; // Functions that load the module
-  const fileImports = blank() as O<Exported | null | undefined>; // Files that were imported already
-  const fetches = blank() as O<Promise<Exported | null> | undefined>; // Fetches
+  const modules = blank<Exported | undefined>();
+  const fnModules = blank<ModuleFn | null | undefined>(); // Functions that load the module
+  const fileImports = blank<Exported | null | undefined>(); // Files that were imported already
+  const fetches = blank<Promise<Exported | null> | undefined>(); // Fetches
 
   const publicPath = $_PUBLIC_PATH as string;
-  const moduleToAssets = blank() as O<string[] | undefined>;
+  const moduleToAssets = blank<string[] | undefined>();
 
   const hmr = $_HMR as HmrOpts | null;
   const hmrOps = hmr ? makeHmr(hmr) : null;
@@ -124,11 +135,10 @@ type GlobalThis = {
     };
 
     const hmrRequireAsync = (parentApi: HotApiInterface | null) => {
-      return (id: string) => {
-        return requireAsync(id).then(e => {
-          getHotApi(id).addRequiredBy(parentApi);
-          return e;
-        });
+      return async (id: string) => {
+        const e = await requireAsync(id);
+        getHotApi(id).addRequiredBy(parentApi);
+        return e;
       };
     };
 
@@ -199,19 +209,21 @@ type GlobalThis = {
         }
       }
 
-      load(notifyAncestors: boolean): Promise<HmrLoad> {
-        return requireAsync(this.id).then(
-          () => ({
+      async load(notifyAncestors: boolean): Promise<HmrLoad> {
+        try {
+          await requireAsync(this.id);
+          return {
             api: this,
             error: null,
             notifyAncestors,
-          }),
-          (error: Error) => ({
+          };
+        } catch (error) {
+          return {
             api: this,
             error,
             notifyAncestors,
-          })
-        );
+          };
+        }
       }
 
       reload() {
@@ -370,7 +382,7 @@ type GlobalThis = {
     };
 
     // Adapted from https://github.com/parcel-bundler/parcel
-    const createErrorOverlay = (error: string) => {
+    const createErrorOverlay = (errors: string[]) => {
       if (!document) {
         return;
       }
@@ -382,7 +394,7 @@ type GlobalThis = {
 
       // Html encode
       const errorText = document.createElement("pre");
-      errorText.innerText = error;
+      errorText.innerText = errors.join("\n");
 
       overlay.innerHTML = `<div style="background:black;font-size:16px;color:white;position:fixed;height:100%;width:100%;top:0px;left:0px;padding:30px;opacity:0.85; font-family:Menlo,Consolas,monospace;z-index: 9999;">
           <span style="background:red;padding:2px 4px;border-radius:2px;">ERROR</span>
@@ -414,11 +426,11 @@ type GlobalThis = {
               return hmrUpdate(data.update);
             });
             break;
-          case "error":
-            console.error("[quase-builder] 🚨", data.error);
+          case "errors":
+            console.error("[quase-builder] 🚨", data.errors);
             state.success = false;
             updateUI();
-            createErrorOverlay(data.error);
+            createErrorOverlay(data.errors);
             break;
           default:
         }
@@ -561,10 +573,11 @@ type GlobalThis = {
     return e.__esModule === false ? e.default : e;
   };
 
-  function requireAsync(id: string) {
-    return Promise.all(
+  async function requireAsync(id: string) {
+    await Promise.all(
       exists(id) ? [] : (moduleToAssets[id] || []).map(importFileAsync)
-    ).then(() => load(id));
+    );
+    return load(id);
   }
 
   function importFileSync(file: string) {

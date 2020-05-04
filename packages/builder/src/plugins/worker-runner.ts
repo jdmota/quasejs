@@ -1,34 +1,32 @@
 import {
   ToWrite,
-  TransformableAsset,
   FinalAsset,
   WatchedFileInfo,
+  ImmutableAssets,
 } from "../types";
-import { BuilderUtil, ModuleContext } from "./context";
+import { BuilderUtil, TransformContext } from "./context";
 import { UserConfig } from "../builder/user-config";
 import { PluginsRunner } from "./runner";
-import { deserialize, serialize } from "../utils/serialization";
 
 function reviveBuilderUtil(value: any): BuilderUtil {
   return Object.assign(Object.create(BuilderUtil.prototype), value);
 }
 
-function reviveModuleContext(value: any): ModuleContext {
-  return Object.assign(Object.create(ModuleContext.prototype), value);
+function reviveTransformContext(value: any): TransformContext {
+  return Object.assign(Object.create(TransformContext.prototype), value);
 }
 
 export const workerMethods: (keyof IPluginsRunnerInWorker)[] = [
-  "pipeline",
+  "transform",
   "renderAsset",
 ];
 
 export interface IPluginsRunnerInWorker {
-  pipeline(
-    asset: SharedArrayBuffer | null,
-    ctx: ModuleContext
+  transform(
+    ctx: TransformContext
   ): Promise<{
-    result: TransformableAsset;
-    files: Map<string, WatchedFileInfo>;
+    assets: ImmutableAssets;
+    files: ReadonlyMap<string, WatchedFileInfo>;
   }>;
   renderAsset(
     asset: FinalAsset,
@@ -36,7 +34,7 @@ export interface IPluginsRunnerInWorker {
     util: BuilderUtil
   ): Promise<{
     result: ToWrite;
-    files: Map<string, WatchedFileInfo>;
+    files: ReadonlyMap<string, WatchedFileInfo>;
   }>;
 }
 
@@ -53,13 +51,12 @@ export class PluginsRunnerInWorker implements IPluginsRunnerInWorker {
     await this.runner.packagers.init(packagers, cwd);
   }
 
-  async pipeline(buffer: SharedArrayBuffer | null, _ctx: ModuleContext) {
-    const asset = buffer ? deserialize<TransformableAsset>(buffer) : null;
-    const ctx = reviveModuleContext(_ctx);
-    const result = await this.runner.pipeline(asset, ctx);
+  async transform(_ctx: TransformContext) {
+    const ctx = reviveTransformContext(_ctx);
+    const assets = await this.runner.transform(ctx);
     return {
-      result: result, // TODO serialize( result ),
-      files: ctx.files,
+      assets,
+      files: ctx.getFiles(),
     };
   }
 
@@ -72,7 +69,7 @@ export class PluginsRunnerInWorker implements IPluginsRunnerInWorker {
     const result = await this.runner.renderAsset(asset, hashIds, util);
     return {
       result,
-      files: util.files,
+      files: util.getFiles(),
     };
   }
 }

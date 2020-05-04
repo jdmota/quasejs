@@ -1,50 +1,145 @@
+import { GraphNode, Graph } from "./graph";
+import { LinkedList } from "./linked-list";
+import { Diagnostic, createDiagnosticFromAny } from "./error";
+import { ValOrError } from "../types";
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-export type CValue<T> = Readonly<[Readonly<T>, null] | [null, Error]>;
+enum State {
+  PENDING,
+  RUNNING,
+  ERRORED,
+  DONE,
+  DELETED,
+}
 
-function copySet<T>(a: Set<T>, b: Set<T>) {
+export const ComputationState = State;
+
+export type ComputationRunId = {
+  readonly __opaque__: unique symbol;
+};
+
+function transferSetItems<T>(a: Set<T>, b: Set<T>) {
   for (const e of a) {
     b.add(e);
   }
   a.clear();
 }
 
-export abstract class Computation<T> {
-  private deleted: boolean;
-  private runId: {} | null;
-  private running: Promise<CValue<T>> | null;
-  private value: Readonly<T> | null;
-  private oldValue: Readonly<T> | null;
-  private error: any;
-  protected registry: ComputationRegistry;
-  protected subscribers: Set<Computation<any>>;
-  protected oldSubscribers: Set<Computation<any>>;
-  protected dependencies: Set<Computation<any>>;
+export abstract class ComputationDependency<
+  G extends Graph,
+  T
+> extends GraphNode<G> {
+  protected subscribers: Set<Computation<G, any>>;
+  protected oldSubscribers: Set<Computation<G, any>>;
 
-  constructor(registry: ComputationRegistry) {
-    this.deleted = false;
+  constructor(graph: G) {
+    super(graph);
+    this.subscribers = new Set();
+    this.oldSubscribers = new Set();
+  }
+
+  protected equals(old: T, val: T) {
+    return old === val;
+  }
+
+  protected onValue(old: T | null, val: T) {
+    if (old != null && this.equals(old, val)) {
+      transferSetItems(this.oldSubscribers, this.subscribers);
+    } else {
+      this.invalidateSubs(this.oldSubscribers);
+    }
+  }
+
+  subscribe(sub: Computation<G, any>) {
+    this.subscribers.add(sub);
+    this.oldSubscribers.delete(sub);
+    this.onInEdgeAddition();
+  }
+
+  unsubscribe(sub: Computation<G, any>) {
+    this.subscribers.delete(sub);
+    this.oldSubscribers.delete(sub);
+    this.onInEdgeRemoval();
+  }
+
+  invalidate() {
+    transferSetItems(this.subscribers, this.oldSubscribers);
+    this.onInvalidate(null);
+  }
+
+  protected onInvalidate(_oldValue: T | null) {}
+
+  protected invalidateSubs(subs: ReadonlySet<Computation<G, any>>) {
+    for (const sub of subs) {
+      sub.invalidate();
+    }
+  }
+
+  isNodeOrphan() {
+    return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
+  }
+
+  protected onInEdgeAddition() {}
+
+  protected onInEdgeRemoval() {
+    if (this.isNodeOrphan()) {
+      this.graph.removeNode(this);
+    }
+  }
+
+  destroy() {
+    this.invalidateSubs(this.oldSubscribers);
+    this.invalidateSubs(this.subscribers);
+    this.onDestroy();
+  }
+
+  protected onDestroy() {}
+
+  abstract get(): Promise<ValOrError<T>>;
+}
+
+// TODO serialization?
+
+export abstract class Computation<
+  G extends Graph,
+  T
+> extends ComputationDependency<G, T> {
+  protected registry: ComputationRegistry<G>;
+  private state: State;
+  private runId: ComputationRunId | null;
+  private running: Promise<ValOrError<T>> | null;
+  private value: T | null;
+  private oldValue: T | null;
+  private error: unknown;
+  private dependencies: Set<ComputationDependency<G, any>>;
+
+  constructor(registry: ComputationRegistry<G>) {
+    super(registry.graph);
+    this.registry = registry;
+    this.state = State.PENDING;
     this.runId = null;
     this.running = null;
     this.value = null;
     this.oldValue = null;
     this.error = null;
-    this.registry = registry;
-    this.subscribers = new Set();
-    this.oldSubscribers = new Set();
     this.dependencies = new Set();
-    this.registry.markPending(this);
+    this.mark(State.PENDING);
   }
 
-  subscribe(sub: Computation<any>) {
-    this.subscribers.add(sub);
-    this.oldSubscribers.delete(sub);
+  protected onInEdgeRemoval() {
+    // TODO???? or schedule deletion...
+    // Deleting unreferenced computations happens in "registry.run"
+  }
+
+  subscribe(sub: Computation<G, any>) {
+    super.subscribe(sub);
     sub.dependencies.add(this);
   }
 
-  unsubscribe(sub: Computation<any>) {
-    this.subscribers.delete(sub);
-    this.oldSubscribers.delete(sub);
+  unsubscribe(sub: Computation<G, any>) {
     sub.dependencies.delete(this);
+    super.unsubscribe(sub);
   }
 
   peekValue() {
@@ -61,83 +156,76 @@ export abstract class Computation<T> {
     throw new Error("Assertion error: no error");
   }
 
-  protected equals(old: T, val: T) {
-    return old === val;
-  }
+  protected onDone(_val: T) {}
 
-  protected after(result: CValue<T>, runId: {}) {
+  private after(result: ValOrError<T>, runId: ComputationRunId) {
     const [_value, err] = result;
     if (this.runId === runId) {
       if (err) {
         this.error = err;
-        this.registry.markErrored(this);
+        this.mark(State.ERRORED);
       } else {
         const value = _value!;
-
-        if (this.oldValue != null && this.equals(this.oldValue, value)) {
-          copySet(this.oldSubscribers, this.subscribers);
-        } else {
-          this.invalidateSubs(this.oldSubscribers);
-        }
-
+        this.onValue(this.oldValue, value);
         this.value = value;
         this.oldValue = null;
         this.error = null;
-        this.registry.markDone(this);
+        this.mark(State.DONE);
+
+        this.onDone(value);
       }
     }
     return result;
   }
 
-  getDep<T>(dep: Computation<T>) {
-    dep.subscribe(this);
-    return dep.get();
+  protected getDep<T>(
+    dep: ComputationDependency<G, T>,
+    runId: ComputationRunId
+  ) {
+    if (runId === this.runId) {
+      dep.subscribe(this);
+      return dep.get();
+    }
+    throw new Error("Computation was cancelled. Cannot get a new dependency.");
   }
 
-  async get(): Promise<CValue<T>> {
-    if (this.deleted) {
-      return [null, new Error("That computation was deleted")];
+  async get(): Promise<ValOrError<T>> {
+    if (this.state === State.DELETED) {
+      return [null, new Error("Cannot run a deleted computation")];
     }
     if (!this.running) {
-      const runId = (this.runId = {});
-      const isRunning = () => {
-        if (runId !== this.runId) {
-          throw new Error("Computation was cancelled");
-        }
-      };
-
-      this.running = this.run(this.oldValue, isRunning).then(
+      const runId = (this.runId = {} as ComputationRunId);
+      this.mark(State.RUNNING);
+      this.running = this.run(this.oldValue, runId).then(
         v => this.after(v, runId),
         e => this.after([null, e], runId)
       );
-      this.registry.markRunning(this);
     }
     return this.running;
   }
 
   protected abstract run(
-    _: T | null,
-    isRunning: () => void
-  ): Promise<CValue<T>>;
+    oldValue: T | null,
+    runId: ComputationRunId
+  ): Promise<ValOrError<T>>;
+
+  /*protected onInvalidate(oldValue: T | null) {
+    this.oldValue = oldValue;
+  }*/
 
   invalidate() {
+    this.mark(State.PENDING);
+
     const { value } = this;
     this.runId = null;
     this.running = null;
     this.error = null;
     this.value = null;
     if (value) {
-      this.oldValue = value;
+      this.onInvalidate(value);
     }
-    copySet(this.subscribers, this.oldSubscribers);
     this.disconnectFromDeps();
-    this.registry.markPending(this);
-  }
-
-  private invalidateSubs(subs: ReadonlySet<Computation<any>>) {
-    for (const sub of subs) {
-      sub.invalidate();
-    }
+    super.invalidate();
   }
 
   private disconnectFromDeps() {
@@ -147,60 +235,70 @@ export abstract class Computation<T> {
   }
 
   destroy() {
-    this.deleted = true;
+    if (this.state === State.DELETED) {
+      return;
+    }
+    this.mark(State.DELETED);
     this.runId = null;
     this.running = null;
     this.value = null;
     this.oldValue = null;
     this.error = null;
     this.disconnectFromDeps();
-    this.invalidateSubs(this.oldSubscribers);
-    this.invalidateSubs(this.subscribers);
-    this.registry.markDestroyed(this);
+    super.destroy();
+  }
+
+  private mark(state: State) {
+    if (this.state === State.DELETED) {
+      return;
+    }
+    this.registry.computations[this.state].delete(this);
+    if (state !== State.DELETED) {
+      this.registry.computations[state].add(this);
+    }
+    this.state = state;
+  }
+
+  runOrDel() {
+    if (this.isNodeOrphan()) {
+      this.graph.removeNode(this);
+    } else {
+      this.get();
+    }
   }
 }
 
-export class ComputationRegistry {
-  private pending: Set<Computation<any>>;
-  private errored: Set<Computation<any>>;
-  private running: Set<Computation<any>>;
+export class ComputationRegistry<G extends Graph> {
+  readonly graph: G;
+  readonly computations: readonly [
+    Set<Computation<G, any>>,
+    Set<Computation<G, any>>,
+    Set<Computation<G, any>>,
+    Set<Computation<G, any>>
+  ];
+  private pending: Set<Computation<G, any>>;
+  private errored: Set<Computation<G, any>>;
+  private running: Set<Computation<G, any>>;
   private interrupted: boolean;
+  private otherPromises: LinkedList<Promise<Diagnostic | void>>;
 
-  constructor() {
-    this.pending = new Set();
-    this.errored = new Set();
-    this.running = new Set();
+  constructor(graph: G) {
+    this.graph = graph;
+    this.computations = [new Set(), new Set(), new Set(), new Set()];
+    this.pending = this.computations[State.PENDING];
+    this.errored = this.computations[State.ERRORED];
+    this.running = this.computations[State.RUNNING];
     this.interrupted = false;
+    this.otherPromises = new LinkedList();
   }
 
-  markPending(computation: Computation<any>) {
-    this.pending.add(computation);
-    this.running.delete(computation);
-    this.errored.delete(computation);
-  }
-
-  markRunning(computation: Computation<any>) {
-    this.pending.delete(computation);
-    this.running.add(computation);
-    this.errored.delete(computation);
-  }
-
-  markErrored(computation: Computation<any>) {
-    this.pending.delete(computation);
-    this.running.delete(computation);
-    this.errored.add(computation);
-  }
-
-  markDone(computation: Computation<any>) {
-    this.pending.delete(computation);
-    this.running.delete(computation);
-    this.errored.delete(computation);
-  }
-
-  markDestroyed(computation: Computation<any>) {
-    this.pending.delete(computation);
-    this.running.delete(computation);
-    this.errored.delete(computation);
+  addOtherJob(
+    prev: Promise<Diagnostic | void> = Promise.resolve(),
+    fn: () => void
+  ) {
+    const next = prev.then(fn).catch(createDiagnosticFromAny);
+    this.otherPromises.add(next);
+    return next;
   }
 
   interrupt() {
@@ -211,14 +309,17 @@ export class ComputationRegistry {
     return this.interrupted;
   }
 
-  isPending() {
+  private hasPending() {
     return (
       !this.interrupted && (this.pending.size > 0 || this.running.size > 0)
     );
   }
 
+  // TODO topological order
+  // maybe do one pass first to mark as MAYBE_DIRTY
+  // what if a computation is running and adds a NEW dependency on something that is MAYBE_DIRTY? needs to wait?
   async run() {
-    const errors: any[] = [];
+    const errors: Diagnostic[] = [];
 
     this.interrupted = false;
 
@@ -226,9 +327,9 @@ export class ComputationRegistry {
       c.invalidate();
     }
 
-    while (this.isPending()) {
+    while (this.hasPending()) {
       for (const c of this.pending) {
-        c.get();
+        c.runOrDel();
       }
 
       for (const c of this.running) {
@@ -238,7 +339,20 @@ export class ComputationRegistry {
     }
 
     for (const c of this.errored) {
-      errors.push(c.peekError());
+      errors.push(createDiagnosticFromAny(c.peekError()));
+    }
+
+    if (this.interrupted) {
+      return errors;
+    }
+
+    for (const otherPromise of this.otherPromises.iterateAndRemove()) {
+      const error = await otherPromise;
+      if (error) errors.push(error);
+
+      if (this.interrupted) {
+        return errors;
+      }
     }
 
     return errors;

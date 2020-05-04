@@ -1,20 +1,19 @@
-const crypto = require("crypto");
+import crypto from "crypto";
+import { ImmutableData, Data } from "../types";
 
-type Data = string | Buffer | Uint8Array;
-
-function h(input: Data) {
+function h(input: ImmutableData) {
   return crypto
     .createHash("md5")
-    .update(input)
+    .update(input as Data)
     .digest("hex");
 }
 
-export default function(input: Data) {
+export default function(input: ImmutableData) {
   return h(input).slice(0, 10);
 }
 
 export function hashName(
-  input: Data,
+  input: ImmutableData,
   usedIds: Set<string>,
   len: number
 ): string {

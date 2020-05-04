@@ -1,4 +1,7 @@
+import path from "path";
 import Reporter from "./reporter";
+import { Options } from "./types";
+import { isAbsolute, resolvePath } from "./utils/path";
 
 export const schema = `
 type B @default(false) = boolean;
@@ -46,16 +49,22 @@ type Schema {
   performance: PerformanceOptions;
   optimization: OptimizationOptions;
   serviceWorker: ServiceWorkerOptions;
-  reporter: ( string | Function | [ string | Function, Object ] )?;
-  resolvers: any[] @mergeStrategy("concat");
+  plugins: any[] @mergeStrategy("concat");
   transformers: any[] @mergeStrategy("concat");
-  checkers: any[] @mergeStrategy("concat");
   packagers: any[] @mergeStrategy("concat");
   _debug: B;
 }
 `;
 
-export function handleOptions(options: any) {
+export function normalizeOptions(options: any) {
+  if (!isAbsolute(options.cwd)) {
+    throw new Error(`cwd option should be absolute`);
+  }
+
+  options.publicPath = options.publicPath
+    ? options.publicPath.replace(/\/+$/, "") + "/"
+    : "";
+
   if (!options.reporter) {
     options.reporter = Reporter;
   }
@@ -73,5 +82,25 @@ export function handleOptions(options: any) {
     minify: b(options.optimization.minify),
   };
 
-  return options;
+  // TODO relax this?
+  if (options.watch) {
+    options.optimization.hashId = false;
+  }
+
+  // TODO
+  let dest = "";
+
+  options.serviceWorker.staticFileGlobs = options.serviceWorker.staticFileGlobs.map(
+    (p: string) => path.join(dest, p)
+  );
+  options.serviceWorker.stripPrefixMulti[
+    `${dest}${path.sep}`.replace(/\\/g, "/")
+  ] = options.publicPath;
+  options.serviceWorker.filename = options.serviceWorker.filename
+    ? resolvePath(options.serviceWorker.filename, dest)
+    : "";
+
+  return {
+    ...options,
+  } as Options;
 }

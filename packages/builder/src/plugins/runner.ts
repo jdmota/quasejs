@@ -1,27 +1,20 @@
-import { error } from "../utils/error";
+import { createDiagnostic } from "../utils/error";
 import {
-  TransformableAsset,
+  MutableAsset,
   GenerateOutput,
   FinalAsset,
   ToWrite,
-  Transforms,
-  Resolver,
   Transformer,
   Packager,
   Plugin,
+  ImmutableAssets,
+  ImmutableAsset,
 } from "../types";
-import { BuilderUtil, ModuleContext } from "./context";
+import { BuilderUtil, TransformContext } from "./context";
 import { getType } from "../utils/path";
+import { isObject, typeOf } from "../utils/index";
 import { UserConfig } from "../builder/user-config";
 import { PluginRegistry } from "./plugin-registry";
-
-function isObject(obj: unknown): boolean {
-  return typeof obj === "object" && obj != null;
-}
-
-function typeOf(obj: unknown) {
-  return obj === null ? "null" : typeof obj;
-}
 
 function validate(
   hook: string,
@@ -29,105 +22,181 @@ function validate(
   actual: unknown,
   name: string | null
 ) {
-  error({
+  throw createDiagnostic({
+    category: "error",
     message: `'${hook}' expected ${expected}${
       actual ? ` but got ${typeOf(actual)}` : ""
     }${name ? ` on plugin ${name}` : ""}`,
-    noStack: true,
   });
 }
 
-type GenerateFn = (asset: TransformableAsset) => Promise<GenerateOutput>;
-type TransformOutput = { result: TransformableAsset; generate: GenerateFn };
+type GenerateFn = (asset: MutableAsset) => Promise<GenerateOutput>;
+type TransformOutput = { results: MutableAsset[]; generate: GenerateFn };
 
 export class PluginsRunner {
   config: UserConfig;
-  resolvers: PluginRegistry<Resolver>;
   transformers: PluginRegistry<Transformer>;
   packagers: PluginRegistry<Packager>;
 
   constructor(config: UserConfig) {
     this.config = config;
-    this.resolvers = new PluginRegistry();
     this.transformers = new PluginRegistry();
     this.packagers = new PluginRegistry();
   }
 
-  private async load(ctx: ModuleContext) {
+  private async load(ctx: TransformContext) {
     try {
-      return await ctx.readFile(ctx.path);
+      return await ctx.readFile(ctx.request.path);
     } catch (err) {
       if (err.code === "ENOENT") {
-        throw error({
-          message: `Could not find ${ctx.path}`,
-          noStack: true,
+        throw createDiagnostic({
+          category: "error",
+          message: `Could not find ${ctx.request.path}`,
         });
       }
       throw err;
     }
   }
 
-  private async getTransformers(
-    ctx: ModuleContext
-  ): Promise<Plugin<Transformer>[]> {
-    const transforms: Plugin<Transformer>[] = [];
-    for (const t of ctx.transforms) {
-      const p = this.transformers.get(t);
-      if (!p) {
-        throw new Error(`No plugin called ${t}`);
-      }
-      transforms.push(p);
-    }
-    return transforms;
-  }
-
-  async pipeline(
-    asset: TransformableAsset | null,
-    ctx: ModuleContext
-  ): Promise<TransformableAsset> {
-    const transformersJob = this.getTransformers(ctx);
-
-    if (asset == null) {
-      asset = {
-        type: getType(ctx.path),
+  async transform(ctx: TransformContext): Promise<ImmutableAssets> {
+    const assets = await this.transformHelper(
+      {
+        id: null,
+        type: getType(ctx.request.path),
         data: await this.load(ctx),
         ast: null,
         map: null,
-        depsInfo: null,
+        dependencies: [],
+        importedNames: [],
+        exportedNames: [],
         meta: {},
-      };
+        target: ctx.request.target,
+        env: ctx.request.env ? [...ctx.request.env] : null,
+        sideEffects: null,
+        inline: null,
+        isolated: null,
+        splittable: null,
+      },
+      ctx
+    );
+
+    const usedIds = new Set<string>();
+    const missingIds = new Map<string, number>();
+
+    const assetsWithId: ImmutableAsset[] = [];
+
+    for (const asset of assets) {
+      let id = asset.id;
+
+      if (id) {
+        if (usedIds.has(id)) {
+          throw createDiagnostic({
+            category: "error",
+            message: `Duplicate asset id ${JSON.stringify(id)}`,
+          });
+        } else {
+          usedIds.add(id);
+        }
+      } else {
+        const uuid = (missingIds.get(asset.type) || 0) + 1;
+        id = `$/${asset.type}/${uuid}`;
+        missingIds.set(asset.type, uuid);
+        usedIds.add(id);
+      }
+
+      assetsWithId.push({
+        ...asset,
+        id,
+      });
     }
 
-    const transformers = await transformersJob;
+    return assetsWithId;
+  }
 
-    let previousGenerate: GenerateFn | null = null;
+  private async transformHelper(
+    initialAsset: MutableAsset,
+    ctx: TransformContext
+  ) {
+    const initialType = initialAsset.type;
+    const finalAssets = [];
+    let pending1 = [initialAsset];
+    let pending2 = [];
 
-    for (const p of transformers) {
-      const o: TransformOutput = await this.transform(
-        asset,
-        p,
-        previousGenerate,
-        ctx
-      );
-      asset = o.result;
-      previousGenerate = o.generate;
+    while (pending1.length > 0) {
+      for (const asset of pending1) {
+        const results = await this.transformPipeline(asset, ctx);
+        for (const a of results) {
+          if (a.type === initialType) {
+            finalAssets.push(a);
+          } else {
+            pending2.push(a);
+          }
+        }
+      }
+
+      pending1 = pending2;
+      pending2 = [];
     }
 
-    /* if ( asset.ast && previousGenerate ) {
-      const output = await previousGenerate( asset );
-      asset.data = output.data;
-      asset.map = output.map;
-    } */
-
-    return asset;
+    return finalAssets;
   }
 
   // Based on parcel-bundler
-  private async transform(
-    asset: TransformableAsset,
+  private async transformPipeline(
+    initialAsset: MutableAsset,
+    ctx: TransformContext
+  ) {
+    const initialType = initialAsset.type;
+    const finalAssets = [];
+    let pending1 = [initialAsset];
+    let pending2 = [];
+    let previousGenerate: GenerateFn = () => {
+      throw createDiagnostic({
+        category: "error",
+        message: `Assertion error: No generate method for initial asset`,
+      });
+    };
+
+    for (const p of transformers) {
+      for (const asset of pending1) {
+        if (asset.type === initialType) {
+          const { results, generate } = await this.runTransformer(
+            asset,
+            p,
+            previousGenerate,
+            ctx
+          );
+          previousGenerate = generate;
+          for (const a of results) {
+            pending2.push(a);
+          }
+        } else {
+          finalAssets.push(asset);
+        }
+      }
+
+      pending1 = pending2;
+      pending2 = [];
+    }
+
+    for (const asset of pending1) {
+      if (asset.ast) {
+        const output = await previousGenerate(asset);
+        asset.data = output.data;
+        asset.map = output.map;
+      }
+      finalAssets.push(asset);
+    }
+
+    return finalAssets;
+  }
+
+  // Based on parcel-bundler
+  private async runTransformer(
+    asset: MutableAsset,
     { name, plugin, options }: Plugin<Transformer>,
-    previousGenerate: GenerateFn | null,
-    ctx: ModuleContext
+    previousGenerate: GenerateFn,
+    ctx: TransformContext
   ): Promise<TransformOutput> {
     if (!plugin.transform) {
       throw new Error(`Plugin ${name} does not have a transform function`);
@@ -136,8 +205,7 @@ export class PluginsRunner {
     // Reuse ast or generate code to re-parse
     if (
       asset.ast &&
-      (!plugin.canReuseAST || !plugin.canReuseAST(options, asset.ast)) &&
-      previousGenerate
+      (!plugin.canReuseAST || !plugin.canReuseAST(options, asset.ast))
     ) {
       const output = await previousGenerate(asset);
       asset.data = output.data;
@@ -150,65 +218,26 @@ export class PluginsRunner {
       asset.ast = await plugin.parse(options, asset, ctx);
     }
 
-    const result = await plugin.transform(options, asset, ctx);
+    const results = await plugin.transform(options, asset, ctx);
 
     // Create a generate function that can be called later
-    const generate = async (
-      input: TransformableAsset
+    const generate: GenerateFn = async (
+      input: MutableAsset
     ): Promise<GenerateOutput> => {
       if (plugin.generate) {
         return plugin.generate(options, input, ctx);
       }
 
-      throw error({
-        message: `Asset has an AST but no generate method is available on the transform (${ctx.path})`,
-        noStack: true,
+      throw createDiagnostic({
+        category: "error",
+        message: `Asset has an AST but no generate method is available on the transform`,
       });
     };
 
     return {
-      result,
+      results,
       generate,
     };
-  }
-
-  private validateResolve(
-    actual: any,
-    name: string | null
-  ): { path: string; transforms?: Transforms } | false {
-    if (actual === false) {
-      return actual;
-    }
-    if (typeof actual === "string") {
-      return {
-        path: actual,
-      };
-    }
-    if (isObject(actual)) {
-      return actual;
-    }
-    throw validate(
-      "resolve",
-      "string | false | { path: string, transforms: string[][] }",
-      actual,
-      name
-    );
-  }
-
-  async resolve(
-    imported: string,
-    module: ModuleContext
-  ): Promise<{ path: string; transforms?: Transforms } | false> {
-    for (const { name, plugin, options } of this.resolvers.list()) {
-      const fn = plugin.resolve;
-      if (fn) {
-        const result = await fn(options, imported, module);
-        if (result != null) {
-          return this.validateResolve(result, name);
-        }
-      }
-    }
-    return false;
   }
 
   private validateRenderAsset(actual: any, name: string | null): any {

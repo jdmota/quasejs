@@ -2,8 +2,8 @@
 import {
   ComputationRegistry,
   Computation,
-  CValue,
 } from "../src/utils/computation-registry";
+import { ValOrError } from "../src/types";
 
 function defer<T>(): {
   promise: Promise<T>;
@@ -67,10 +67,10 @@ class C extends Computation<{ n: number }> {
     const fn = this.fn;
     try {
       const n: number = await fn(this);
-      const ret = [{ n }, null] as CValue<{ n: number }>;
+      const ret = [{ n }, null] as ValOrError<{ n: number }>;
       return ret;
     } catch (error) {
-      const ret = [null, error] as CValue<{ n: number }>;
+      const ret = [null, error] as ValOrError<{ n: number }>;
       return ret;
     }
   }
@@ -611,7 +611,7 @@ describe("computations", () => {
     const r = new ComputationRegistry();
 
     class C2 extends Computation<void> {
-      async run(_: void, _2: () => void): Promise<CValue<void>> {
+      async run(_: void, _2: () => void): Promise<ValOrError<void>> {
         throw new Error("Error");
       }
     }

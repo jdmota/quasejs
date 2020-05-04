@@ -1,10 +1,16 @@
-import { Options, WatchedFiles, TransformableAsset } from "../types";
-import { ModuleInfo } from "../module/module";
+import fs from "fs-extra";
+import { joinSourceMaps } from "@quase/source-map";
+import {
+  Options,
+  WatchedFiles,
+  AssetRequest,
+  DependencyRequest,
+  WatchedFileInfo,
+  DepRequestAndParent,
+} from "../types";
 import { resolvePath, makeAbsolute } from "../utils/path";
 import { get } from "../utils/get";
-import { joinSourceMaps } from "@quase/source-map";
-import fs from "fs-extra";
-import { deserialize } from "../utils/serialization";
+import { createDiagnostic, DiagnosticOpts } from "../utils/error";
 
 const ONLY_EXISTANCE: Readonly<{ onlyExistance: true }> = {
   onlyExistance: true,
@@ -12,8 +18,8 @@ const ONLY_EXISTANCE: Readonly<{ onlyExistance: true }> = {
 
 export class BuilderUtil {
   readonly builderOptions: any;
-  readonly files: WatchedFiles;
   readonly warnings: string[];
+  private readonly files: WatchedFiles;
 
   constructor(builderOptions: Options, files?: WatchedFiles) {
     const {
@@ -42,12 +48,16 @@ export class BuilderUtil {
     this.warnings = [];
   }
 
-  get<K, V>(map: ReadonlyMap<K, V>, key: K): V {
-    return get(map, key);
-  }
-
   warn(text: string) {
     this.warnings.push(text);
+  }
+
+  createDiagnostic(diagnostic: DiagnosticOpts) {
+    return createDiagnostic(diagnostic);
+  }
+
+  get<K, V>(map: ReadonlyMap<K, V>, key: K): V {
+    return get(map, key);
   }
 
   joinSourceMaps(maps: any[]) {
@@ -84,7 +94,7 @@ export class BuilderUtil {
   }
 
   wrapInJsString(string: string): string {
-    return /("|'|\\)/.test(string) ? JSON.stringify(string) : `'${string}'`;
+    return JSON.stringify(string);
   }
 
   registerFile(
@@ -102,6 +112,10 @@ export class BuilderUtil {
     } else if (!onlyExistance && curr) {
       curr.onlyExistance = false;
     }
+  }
+
+  getFiles(): ReadonlyMap<string, WatchedFileInfo> {
+    return this.files;
   }
 
   stat(file: string) {
@@ -145,33 +159,31 @@ export class BuilderUtil {
     }
   }
 
-  dataToString(data: string | Buffer | Uint8Array) {
+  dataToString(data: string | Buffer | Uint8Array): string {
+    if (data instanceof Buffer) {
+      return data.toString();
+    }
     if (data instanceof Uint8Array) {
       return Buffer.from(data).toString();
     }
-    return data.toString();
-  }
-
-  /* deserialize<T>( buffer: SharedArrayBuffer ): T {
-    return deserialize( buffer );
-  } */
-
-  deserializeAsset(buffer: SharedArrayBuffer): Readonly<TransformableAsset> {
-    return deserialize(buffer);
+    return data;
   }
 }
 
-export class ModuleContext extends BuilderUtil {
-  readonly id: string;
-  readonly path: string;
-  readonly relativePath: string;
-  readonly transforms: Readonly<string[]>;
+export class TransformContext extends BuilderUtil {
+  readonly request: AssetRequest;
 
-  constructor(builderOptions: Options, m: ModuleInfo, files?: WatchedFiles) {
-    super(builderOptions, files);
-    this.id = m.id;
-    this.path = m.path;
-    this.relativePath = m.relativePath;
-    this.transforms = m.transforms;
+  constructor(builderOptions: Options, request: AssetRequest) {
+    super(builderOptions);
+    this.request = request;
+  }
+}
+
+export class ResolveContext extends BuilderUtil {
+  readonly request: DepRequestAndParent;
+
+  constructor(builderOptions: Options, request: DepRequestAndParent) {
+    super(builderOptions);
+    this.request = request;
   }
 }
