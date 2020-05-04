@@ -305,7 +305,7 @@ function mainVisitor(t: BabelTypes, fn: Fn, path: BabelPath) {
   );
 }
 
-export default function({ types: t }: { types: BabelTypes }) {
+export default function ({ types: t }: { types: BabelTypes }) {
   return {
     inherits: jsx,
     visitor: {

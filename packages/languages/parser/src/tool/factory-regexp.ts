@@ -117,8 +117,9 @@ export class FactoryRegexp {
         }
         // TODO more?
         throw new Error(
-          `Repetition range {${quantifier.from},${quantifier.to ||
-            ""}} is not supported yet`
+          `Repetition range {${quantifier.from},${
+            quantifier.to || ""
+          }} is not supported yet`
         );
       default:
         throw new Error(`Repetition of kind ${kind} is not supported`);

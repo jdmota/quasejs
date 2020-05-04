@@ -112,7 +112,7 @@ async function printCommitLog(opts: Options) {
   }
 }
 
-export default async function(opts: Options) {
+export default async function (opts: Options) {
   const pkg = opts.pkg;
   const oldVersion = pkg.version;
 

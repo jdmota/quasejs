@@ -1,8 +1,9 @@
 *.txt
 *.log
 __dev__
-.yarn/unplugged
-.yarn/build-state.yml
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
 coverage
 dist
 node_modules

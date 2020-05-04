@@ -5,13 +5,13 @@ type Win = Window & {
   Node: typeof Node; // eslint-disable-line no-undef
 };
 
-(function(factory) {
+(function (factory) {
   if (typeof module !== "undefined" && module.exports) {
     module.exports = factory;
   } else {
     factory(window as Win); // eslint-disable-line no-undef
   }
-})(function(win: Win) {
+})(function (win: Win) {
   const doc = win.document;
 
   class Template {

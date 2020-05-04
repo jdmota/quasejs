@@ -5,7 +5,7 @@ import util from "util";
 
 let installed = false;
 
-export default function() {
+export default function () {
   if (installed) {
     return;
   }

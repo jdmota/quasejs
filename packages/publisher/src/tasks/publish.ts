@@ -89,7 +89,7 @@ const handleError = (
   return throwError(err);
 };
 
-export default function(task: any, opts: Options) {
+export default function (task: any, opts: Options) {
   return from(
     publish({
       history: opts.history,

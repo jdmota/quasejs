@@ -5,7 +5,7 @@ const path = require("path");
 const makeDir = require("make-dir");
 
 /* eslint no-console: 0 */
-export default function(args: string[]) {
+export default function (args: string[]) {
   if (args.length !== 2) {
     console.error("Usage: quase-parser-generator <grammar file> <output>");
     return;

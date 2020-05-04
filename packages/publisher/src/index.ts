@@ -318,7 +318,7 @@ export async function publish(
   console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 }
 
-export default async function(
+export default async function (
   opts: ProvidedOptions,
   historyReady: (h: History) => void
 ) {

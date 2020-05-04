@@ -18,7 +18,7 @@ function r(request, basedir) {
   });
 }
 
-module.exports = function(request, options) {
+module.exports = function (request, options) {
   let basedir = options.basedir;
   if (basedir.charAt(basedir.length - 1) !== "/") {
     basedir = `${basedir}/`;

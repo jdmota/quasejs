@@ -34,7 +34,7 @@ export function enable() {
   hook.enable();
 }
 
-export default function() {
+export default function () {
   hook.disable();
 
   const array: WhyIsRunning = [];

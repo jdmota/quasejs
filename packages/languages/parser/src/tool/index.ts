@@ -8,7 +8,7 @@ import { DState } from "./state";
 import { CodeGenerator } from "./code-gen";
 import { Frag } from "./automaton";
 
-export default function(grammarText: string, options?: Options) {
+export default function (grammarText: string, options?: Options) {
   // Init
 
   const grammar = new Grammar(grammarText, options);

@@ -65,7 +65,7 @@ export function cliValidate(opts: any): CliOptions {
   return compiledSchema.validateAndMerge({}, opts);
 }
 
-export default function(
+export default function (
   options: CliOptions,
   slashSlash?: string[] | undefined,
   configLocation?: string | undefined

@@ -13,6 +13,7 @@
   ],
   "typescript.validate.enable": true,
   "typescript.tsdk": ".vscode/pnpify/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
   "prettier.prettierPath": ".vscode/pnpify/prettier/index.js",
   "[javascript]": {
     "editor.formatOnSave": true

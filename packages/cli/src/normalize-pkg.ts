@@ -39,7 +39,7 @@ function handleBinField(data: any): any {
   return data.bin;
 }
 
-export default function(pkg: any): Pkg {
+export default function (pkg: any): Pkg {
   pkg = pkg || {};
   return {
     name: handleNameField(pkg),

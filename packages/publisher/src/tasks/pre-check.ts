@@ -6,7 +6,7 @@ import * as version from "../util/version";
 
 // Adapted from https://github.com/sindresorhus/np
 
-export default function(opts: Options) {
+export default function (opts: Options) {
   const pkg = opts.pkg;
 
   const tasks = [

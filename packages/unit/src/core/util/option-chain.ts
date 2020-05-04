@@ -7,13 +7,13 @@
 
 const noop = () => {};
 
-export default function(options: any, fn: any, ctx: any, objTarget?: any) {
+export default function (options: any, fn: any, ctx: any, objTarget?: any) {
   function extend(target: any, data: any, ctx?: any) {
     Object.keys(options.methods).forEach(key => {
       Object.defineProperty(target, key, {
         enumerable: true,
         configurable: true,
-        get: function() {
+        get: function () {
           return wrap(data, options.methods[key], ctx || this);
         },
       });
@@ -22,7 +22,7 @@ export default function(options: any, fn: any, ctx: any, objTarget?: any) {
     Object.defineProperty(target, "runner", {
       enumerable: true,
       configurable: true,
-      get: function() {
+      get: function () {
         return ctx || this;
       },
     });

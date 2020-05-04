@@ -1,6 +1,6 @@
 import { Deferred } from "../../types";
 
-export default function<T>(): Deferred<T> {
+export default function <T>(): Deferred<T> {
   let resolve, reject;
   return {
     promise: new Promise((a, b) => {
