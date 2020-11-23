@@ -42,7 +42,8 @@ class ProxyImpl<R extends IRunnableResult, T extends GenericRunnable<R>>
   }
 }
 
-class Proxy extends ProxyImpl<IRunnableResult, IRunnable>
+class Proxy
+  extends ProxyImpl<IRunnableResult, IRunnable>
   implements IRunnable {}
 
 class ClonableProxy extends ProxyImpl<ITestResult, ITest> implements ITest {
@@ -185,7 +186,8 @@ abstract class SequenceImpl<
   abstract addResult(_result: R): void;
 }
 
-export class Sequence extends SequenceImpl<IRunnableResult, IRunnable>
+export class Sequence
+  extends SequenceImpl<IRunnableResult, IRunnable>
   implements IRunnableResult, IRunnable {
   static proxy(
     context: ContextRef,
@@ -220,7 +222,8 @@ export class Sequence extends SequenceImpl<IRunnableResult, IRunnable>
   }
 }
 
-export class InTestSequence extends SequenceImpl<ITestResult, ITest>
+export class InTestSequence
+  extends SequenceImpl<ITestResult, ITest>
   implements ITestResult, ITest {
   slow: boolean;
   metadata: TestMetadata;

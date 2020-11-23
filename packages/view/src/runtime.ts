@@ -346,7 +346,7 @@ type Win = Window & {
 
   const modules = Object.create(null);
 
-  function define(name: string, clazz: Function) {
+  function define(name: string, clazz: CustomElementConstructor) {
     if (modules[name]) {
       throw new Error("QuaseView: module " + name + " already defined");
     }
