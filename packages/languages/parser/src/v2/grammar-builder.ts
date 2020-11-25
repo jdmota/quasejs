@@ -1,4 +1,6 @@
-export type FieldRules = FieldRule | FieldMultipleRule | FieldSpreadRule;
+export type FieldRules = FieldRule | FieldMultipleRule;
+
+export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
 
 export type NamedRule = {
   name: string;
@@ -12,7 +14,6 @@ export type Rule =
   | Repeat1Rule
   | OptionalRule
   | IdRule
-  | MemberRule
   | EmptyRule
   | EofRule
   | StringRule
@@ -91,20 +92,6 @@ function id(id: string): IdRule {
   };
 }
 
-export type MemberRule = {
-  readonly type: "member";
-  readonly parent: MemberRule | IdRule;
-  readonly id: string;
-};
-
-function member(parent: MemberRule | IdRule, id: string): MemberRule {
-  return {
-    type: "member",
-    parent,
-    id,
-  };
-}
-
 export type EmptyRule = {
   readonly type: "empty";
 };
@@ -152,10 +139,10 @@ function regexp(regexp: RegExp): RegExpRule {
 export type FieldRule = {
   readonly type: "field";
   readonly name: string;
-  readonly rule: Rule;
+  readonly rule: ValueRules;
 };
 
-function field(name: string, rule: Rule): FieldRule {
+function field(name: string, rule: ValueRules): FieldRule {
   return {
     type: "field",
     name,
@@ -166,26 +153,12 @@ function field(name: string, rule: Rule): FieldRule {
 export type FieldMultipleRule = {
   readonly type: "field_multiple";
   readonly name: string;
-  readonly rule: Rule;
+  readonly rule: ValueRules;
 };
 
-function fieldMultiple(name: string, rule: Rule): FieldMultipleRule {
+function fieldMultiple(name: string, rule: ValueRules): FieldMultipleRule {
   return {
     type: "field_multiple",
-    name,
-    rule,
-  };
-}
-
-export type FieldSpreadRule = {
-  readonly type: "field_spread";
-  readonly name: string;
-  readonly rule: Rule;
-};
-
-function fieldSpread(name: string, rule: Rule): FieldSpreadRule {
-  return {
-    type: "field_spread",
     name,
     rule,
   };
@@ -214,12 +187,10 @@ export const builder = {
   repeat1,
   optional,
   id,
-  member,
   empty,
   eof,
   string,
   regexp,
   field,
   fieldMultiple,
-  fieldSpread,
 };
