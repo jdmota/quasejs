@@ -1,11 +1,4 @@
-export type FieldRules = FieldRule | FieldMultipleRule;
-
 export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
-
-export type NamedRule = {
-  name: string;
-  rule: Rule;
-};
 
 export type Rule =
   | SeqRule
@@ -18,7 +11,9 @@ export type Rule =
   | EofRule
   | StringRule
   | RegExpRule
-  | FieldRules;
+  | FieldRule
+  | ActionRule
+  | PredicateRule;
 
 export type SeqRule = {
   readonly type: "seq";
@@ -140,6 +135,7 @@ export type FieldRule = {
   readonly type: "field";
   readonly name: string;
   readonly rule: ValueRules;
+  readonly multiple: boolean;
 };
 
 function field(name: string, rule: ValueRules): FieldRule {
@@ -147,25 +143,41 @@ function field(name: string, rule: ValueRules): FieldRule {
     type: "field",
     name,
     rule,
+    multiple: false,
   };
 }
 
-export type FieldMultipleRule = {
-  readonly type: "field_multiple";
-  readonly name: string;
-  readonly rule: ValueRules;
-};
-
-function fieldMultiple(name: string, rule: ValueRules): FieldMultipleRule {
+function fieldMultiple(name: string, rule: ValueRules): FieldRule {
   return {
-    type: "field_multiple",
+    type: "field",
     name,
     rule,
+    multiple: true,
   };
 }
 
-function action() {
-  // TODO
+export type ActionRule = {
+  readonly type: "action";
+  readonly action: string;
+};
+
+function action(action: string): ActionRule {
+  return {
+    type: "action",
+    action,
+  };
+}
+
+export type PredicateRule = {
+  readonly type: "predicate";
+  readonly predicate: string;
+};
+
+function predicate(predicate: string): PredicateRule {
+  return {
+    type: "predicate",
+    predicate,
+  };
 }
 
 function precedenceLeftAssoc(number: number, rule: Rule) {
@@ -193,4 +205,6 @@ export const builder = {
   regexp,
   field,
   fieldMultiple,
+  action,
+  predicate,
 };

@@ -1,33 +1,29 @@
-import {
-  Rule,
-  FieldRules,
-  NamedRule,
-  SeqRule,
-  ChoiceRule,
-  EmptyRule,
-  EofRule,
-  FieldMultipleRule,
-  FieldRule,
-  IdRule,
-  OptionalRule,
-  Repeat1Rule,
-  RepeatRule,
-  StringRule,
-  RegExpRule,
-} from "./grammar-builder";
+import { Rule, FieldRule } from "./grammar-builder";
 
-class Fields {
+export type ReadonlyFieldStoreValue = {
+  readonly name: string;
+  readonly fields: readonly FieldRule[];
+  readonly optional: boolean;
+  readonly multiple: boolean;
+};
+
+type FieldStoreValue = {
+  name: string;
+  fields: FieldRule[];
+  optional: boolean;
+  multiple: boolean;
+};
+
+export interface ReadonlyFieldsStore {
+  isOptional(name: string): boolean;
+  [Symbol.iterator](): IterableIterator<ReadonlyFieldStoreValue>;
+}
+
+class FieldsStore implements ReadonlyFieldsStore {
   private readonly fields;
 
   constructor() {
-    this.fields = new Map<
-      string,
-      {
-        name: string;
-        fields: FieldRules[];
-        optional: boolean;
-      }
-    >();
+    this.fields = new Map<string, FieldStoreValue>();
   }
 
   isOptional(name: string): boolean {
@@ -35,13 +31,14 @@ class Fields {
     return f ? f.optional : true;
   }
 
-  set(name: string, fields: readonly FieldRules[], optional: boolean) {
+  set(name: string, fields: readonly FieldRule[], optional: boolean) {
     const current = this.fields.get(name);
     if (current == null) {
       this.fields.set(name, {
         name,
         fields: [...fields],
         optional,
+        multiple: false,
       });
     } else {
       for (const f of fields) {
@@ -57,37 +54,40 @@ class Fields {
     }
   }
 
-  importFrom(store: Fields) {
+  importFrom(store: ReadonlyFieldsStore) {
     for (const { name, fields, optional } of store) {
       this.set(name, fields, optional);
     }
   }
 
-  [Symbol.iterator](): IterableIterator<{
-    readonly name: string;
-    readonly fields: readonly FieldRules[];
-    readonly optional: boolean;
-  }> {
+  [Symbol.iterator](): IterableIterator<ReadonlyFieldStoreValue> {
     return this.fields.values();
+  }
+
+  finalize(): ReadonlyFieldsStore {
+    for (const f of this.fields.values()) {
+      f.multiple = f.fields.some(f => f.multiple);
+      f.optional = f.optional && !f.multiple;
+    }
+    return this;
   }
 }
 
-export function getFields(rule: Rule): Fields {
+function getFieldsHelper(rule: Rule): FieldsStore {
+  const store = new FieldsStore();
   switch (rule.type) {
     case "seq": {
-      const store = new Fields();
       for (const r of rule.rules) {
-        for (const { name, fields, optional } of getFields(r)) {
+        for (const { name, fields, optional } of getFieldsHelper(r)) {
           store.set(name, fields, optional && store.isOptional(name));
         }
       }
       return store;
     }
     case "choice": {
-      const store = new Fields();
       const counts: { [key: string]: number } = {};
       for (const r of rule.rules) {
-        for (const { name, fields, optional } of getFields(r)) {
+        for (const { name, fields, optional } of getFieldsHelper(r)) {
           store.set(name, fields, optional);
           counts[name] = (counts[name] || 0) + 1;
         }
@@ -103,14 +103,12 @@ export function getFields(rule: Rule): Fields {
     }
     case "optional":
     case "repeat": {
-      const store = new Fields();
-      store.importFrom(getFields(rule.rule));
+      store.importFrom(getFieldsHelper(rule.rule));
       store.markAllOptional();
       return store;
     }
     case "repeat1": {
-      const store = new Fields();
-      store.importFrom(getFields(rule.rule));
+      store.importFrom(getFieldsHelper(rule.rule));
       return store;
     }
     case "id":
@@ -118,12 +116,28 @@ export function getFields(rule: Rule): Fields {
     case "eof":
     case "string":
     case "regexp":
-      return new Fields();
-    case "field":
-    case "field_multiple": {
-      const store = new Fields();
+    case "action":
+    case "predicate":
+      return store;
+    case "field": {
       store.set(rule.name, [rule], false);
       return store;
     }
   }
+}
+
+export function getFields(rule: Rule): ReadonlyFieldsStore {
+  return getFieldsHelper(rule).finalize();
+}
+
+export function checkAmbiguousFields(store: ReadonlyFieldsStore): string[] {
+  const ambiguous: string[] = [];
+  for (const { name, fields } of store) {
+    const multiple = fields.some(f => f.multiple);
+    const single = fields.some(f => !f.multiple);
+    if (single && multiple) {
+      ambiguous.push(name);
+    }
+  }
+  return ambiguous;
 }
