@@ -2264,7 +2264,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["@quase/parser", "workspace:packages/languages/parser"],
             ["make-dir", "npm:3.0.0"],
-            ["regexp-tree", "npm:0.1.17"]
+            ["regexp-tree", "npm:0.1.21"]
           ],
           "linkType": "SOFT",
         }]
@@ -10719,10 +10719,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]
       ]],
       ["regexp-tree", [
-        ["npm:0.1.17", {
-          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/regexp-tree-npm-0.1.17-eb3648b85b-7.zip/node_modules/regexp-tree/",
+        ["npm:0.1.21", {
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/regexp-tree-npm-0.1.21-50647dc49c-7.zip/node_modules/regexp-tree/",
           "packageDependencies": [
-            ["regexp-tree", "npm:0.1.17"]
+            ["regexp-tree", "npm:0.1.21"]
           ],
           "linkType": "HARD",
         }]

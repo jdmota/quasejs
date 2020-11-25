@@ -1,5 +1,7 @@
-import { builder } from "./grammar-builder";
-import { getFields } from "./grammar-checker";
+import { builder } from "./grammar/grammar-builder";
+import { getFields } from "./grammar/grammar-checker";
+import { Grammar } from "./grammar/grammar";
+import { generateTypes } from "./generators/generate-types";
 
 const {
   seq,
@@ -18,3 +20,14 @@ const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
 
 console.log(getFields(ruleA));
 console.log(getFields(ruleB));
+
+const grammar = new Grammar(
+  "grammarName",
+  new Map([
+    ["A", ruleA],
+    ["B", ruleB],
+  ])
+);
+
+console.log(generateTypes(grammar));
+console.log(grammar.ambiguousFields);

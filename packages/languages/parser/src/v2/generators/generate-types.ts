@@ -1,8 +1,8 @@
-import { Grammar } from "./grammar";
+import { Grammar } from "../grammar/grammar";
 import {
   ReadonlyFieldsStore,
   ReadonlyFieldStoreValue,
-} from "./grammar-checker";
+} from "../grammar/grammar-checker";
 
 function generateFieldType({
   fields,
@@ -25,10 +25,10 @@ function generateRuleType(
   store: ReadonlyFieldsStore
 ) {
   const fields = Array.from(store).map(
-    field => `  ${field.name}: ${generateFieldType(field)};s`
+    field => `  ${field.name}: ${generateFieldType(field)};`
   );
   return {
-    typeName: `${grammar.name}${name}`,
+    typeName: name,
     typeDefinition: [
       `{`,
       `  $type: "${name}";`,
@@ -58,7 +58,7 @@ export function generateTypes(grammar: Grammar) {
     lines.push(`export type ${typeName} = ${typeDefinition};`);
   }
 
-  lines.push(`export type $Nodes = ${rulesTypeNames.join("|")}`);
+  lines.push(`export type $Nodes = ${rulesTypeNames.join("|")};`);
 
   lines.push(``);
   return lines.join(`\n`);
