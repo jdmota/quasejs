@@ -1,4 +1,4 @@
-import { Rule } from "./grammar-builder";
+import { AnyRule } from "./grammar-builder";
 import {
   ReadonlyFieldsStore,
   getFields,
@@ -7,11 +7,11 @@ import {
 
 export class Grammar {
   readonly name: string;
-  readonly rules: ReadonlyMap<string, Rule>;
+  readonly rules: ReadonlyMap<string, AnyRule>;
   readonly fields: ReadonlyMap<string, ReadonlyFieldsStore>;
   readonly ambiguousFields: ReadonlyMap<string, string[]>;
 
-  constructor(name: string, rules: ReadonlyMap<string, Rule>) {
+  constructor(name: string, rules: ReadonlyMap<string, AnyRule>) {
     const fields = Array.from(rules).map(
       ([name, rule]) => [name, getFields(rule)] as const
     );

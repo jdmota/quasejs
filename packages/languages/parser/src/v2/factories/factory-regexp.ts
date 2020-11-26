@@ -5,32 +5,59 @@ import type {
   ClassRange,
   CharacterClass,
   Alternative,
+  Disjunction,
   Group,
   Backreference,
   Repetition,
-  Expression,
   Assertion,
+  Expression,
 } from "regexp-tree/ast";
 import { Frag, Automaton } from "../automaton/automaton";
 import { MIN_CHAR, MAX_CHAR } from "../constants";
 
 declare module "regexp-tree/ast" {
   interface SimpleChar extends Base<"Char"> {
-    value: string;
-    kind: "simple";
-    escaped?: true;
     codePoint: number;
   }
   interface SpecialChar extends Base<"Char"> {
-    value: string;
-    kind: "meta" | "control" | "hex" | "decimal" | "oct" | "unicode";
     codePoint: number;
+  }
+  interface Disjunction extends Base<"Disjunction"> {
+    left: Expression | null;
+    right: Expression | null;
+  }
+  interface NoncapturingGroup extends Base<"Group"> {
+    name?: string;
   }
 }
 
+interface AstClassMap {
+  RegExp: AstRegExp;
+  Disjunction: Disjunction;
+  Alternative: Alternative;
+  Assertion: Assertion;
+  Char: Char;
+  CharacterClass: CharacterClass;
+  ClassRange: ClassRange;
+  Backreference: Backreference;
+  Group: Group;
+  Repetition: Repetition;
+  // Quantifier: Quantifier;
+}
+
+type AstClass = keyof AstClassMap;
+type AstNode = AstClassMap[AstClass];
+type Gen = { [key in keyof AstClassMap]: (node: AstClassMap[key]) => Frag };
+
 const WS = [" ", "\t", "\r", "\n", "\v", "\f"].map(c => c.charCodeAt(0));
 
-export class FactoryRegexp {
+function disjunctionToList(node: Disjunction): (Expression | null)[] {
+  return node.left?.type === "Disjunction"
+    ? [...disjunctionToList(node.left), node.right]
+    : [node.left, node.right];
+}
+
+export class FactoryRegexp implements Gen {
   readonly automaton: Automaton;
 
   constructor(automaton: Automaton) {
@@ -48,7 +75,7 @@ export class FactoryRegexp {
     const { codePoint, value, kind } = char;
     if (value === "\\s") {
       const frags = WS.map(c => this.c(c));
-      return this.automaton.choice(...frags);
+      return this.automaton.choice(frags);
     }
     if (codePoint == null || Number.isNaN(codePoint)) {
       throw new Error(
@@ -60,7 +87,7 @@ export class FactoryRegexp {
 
   CharacterClass({ negative, expressions }: CharacterClass) {
     if (negative) {
-      const list = (expressions || []).map(e =>
+      const list = expressions.map(e =>
         e.type === "ClassRange"
           ? ([e.from.codePoint, e.to.codePoint] as const)
           : ([e.codePoint, e.codePoint] as const)
@@ -70,8 +97,8 @@ export class FactoryRegexp {
       _in.addNotRangeSet(list, _out, MIN_CHAR, MAX_CHAR);
       return { in: _in, out: _out };
     }
-    const fragments = (expressions || []).map(e => this.gen(e));
-    return this.automaton.choice(...fragments);
+    const fragments = expressions.map(e => this.gen(e));
+    return this.automaton.choice(fragments);
   }
 
   ClassRange({ from, to }: ClassRange) {
@@ -82,22 +109,24 @@ export class FactoryRegexp {
   }
 
   Alternative({ expressions }: Alternative) {
-    const fragments = (expressions || []).map(e => this.gen(e));
-    return this.automaton.seq(...fragments);
+    const fragments = expressions.map(e => this.gen(e));
+    return this.automaton.seq(fragments);
   }
 
-  Disjunction({ left, right }: { left: Expression; right: Expression }) {
-    return this.automaton.choice(this.gen(left), this.gen(right));
+  Disjunction(node: Disjunction) {
+    // DO NOT use use "expressions", the type definition of Disjunction is wrong
+    const fragments = disjunctionToList(node).map(e => this.gen(e));
+    return this.automaton.choice(fragments);
   }
 
-  Group({ expression, capturing, name }: Group & { name?: string }) {
+  Group({ expression, capturing, name }: Group) {
     if (capturing && name) {
       throw new Error(`Named group capturing is not supported`);
     }
     return this.gen(expression);
   }
 
-  Backreference(_: Backreference) {
+  Backreference(_: Backreference): Frag {
     throw new Error(`Backreferences are not supported`);
   }
 
@@ -123,7 +152,7 @@ export class FactoryRegexp {
         if (quantifier.from === 0 && quantifier.to === 1) {
           return this.automaton.optional(this.gen(expression));
         }
-        // TODO more?
+        // TODO
         throw new Error(
           `Repetition range {${quantifier.from},${
             quantifier.to || ""
@@ -134,7 +163,7 @@ export class FactoryRegexp {
     }
   }
 
-  Assertion(_: Assertion) {
+  Assertion(_: Assertion): Frag {
     throw new Error(`Assertions are not supported`);
   }
 
@@ -145,19 +174,14 @@ export class FactoryRegexp {
     return this.gen(node.body);
   }
 
-  gen(node: any): Frag {
-    if (!node) {
-      throw new Error("node is undefined");
+  gen(node: AstNode | null): Frag {
+    if (node) {
+      return this[node.type](node as any);
     }
-    // @ts-ignore
-    if (!this[node.type]) {
-      throw new Error(`${node.type} is not supported`);
-    }
-    // @ts-ignore
-    return this[node.type](node);
+    return this.automaton.empty();
   }
 }
 
 export function regexpToAutomaton(factory: FactoryRegexp, rawRegExp: string) {
-  return factory.gen(parseRegexp(rawRegExp));
+  return factory.RegExp(parseRegexp(rawRegExp));
 }

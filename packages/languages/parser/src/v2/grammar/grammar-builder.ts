@@ -1,26 +1,30 @@
-export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
+export interface RuleMap {
+  seq: SeqRule;
+  choice: ChoiceRule;
+  repeat: RepeatRule;
+  repeat1: Repeat1Rule;
+  optional: OptionalRule;
+  id: IdRule;
+  empty: EmptyRule;
+  eof: EofRule;
+  string: StringRule;
+  regexp: RegExpRule;
+  field: FieldRule;
+  action: ActionRule;
+  predicate: PredicateRule;
+}
 
-export type Rule =
-  | SeqRule
-  | ChoiceRule
-  | RepeatRule
-  | Repeat1Rule
-  | OptionalRule
-  | IdRule
-  | EmptyRule
-  | EofRule
-  | StringRule
-  | RegExpRule
-  | FieldRule
-  | ActionRule
-  | PredicateRule;
+export type RuleNames = keyof RuleMap;
+export type AnyRule = RuleMap[RuleNames];
+
+export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
 
 export type SeqRule = {
   readonly type: "seq";
-  readonly rules: Rule[];
+  readonly rules: AnyRule[];
 };
 
-function seq(...rules: Rule[]): SeqRule {
+function seq(...rules: AnyRule[]): SeqRule {
   return {
     type: "seq",
     rules,
@@ -29,10 +33,10 @@ function seq(...rules: Rule[]): SeqRule {
 
 export type ChoiceRule = {
   readonly type: "choice";
-  readonly rules: Rule[];
+  readonly rules: AnyRule[];
 };
 
-function choice(...rules: Rule[]): ChoiceRule {
+function choice(...rules: AnyRule[]): ChoiceRule {
   return {
     type: "choice",
     rules,
@@ -41,10 +45,10 @@ function choice(...rules: Rule[]): ChoiceRule {
 
 export type RepeatRule = {
   readonly type: "repeat";
-  readonly rule: Rule;
+  readonly rule: AnyRule;
 };
 
-function repeat(rule: Rule): RepeatRule {
+function repeat(rule: AnyRule): RepeatRule {
   return {
     type: "repeat",
     rule,
@@ -53,10 +57,10 @@ function repeat(rule: Rule): RepeatRule {
 
 export type Repeat1Rule = {
   readonly type: "repeat1";
-  readonly rule: Rule;
+  readonly rule: AnyRule;
 };
 
-function repeat1(rule: Rule): Repeat1Rule {
+function repeat1(rule: AnyRule): Repeat1Rule {
   return {
     type: "repeat1",
     rule,
@@ -65,10 +69,10 @@ function repeat1(rule: Rule): Repeat1Rule {
 
 export type OptionalRule = {
   readonly type: "optional";
-  readonly rule: Rule;
+  readonly rule: AnyRule;
 };
 
-function optional(rule: Rule): OptionalRule {
+function optional(rule: AnyRule): OptionalRule {
   return {
     type: "optional",
     rule,
@@ -180,11 +184,11 @@ function predicate(predicate: string): PredicateRule {
   };
 }
 
-function precedenceLeftAssoc(number: number, rule: Rule) {
+function precedenceLeftAssoc(number: number, rule: AnyRule) {
   // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 
-function precedenceRightAssoc(number: number, rule: Rule) {
+function precedenceRightAssoc(number: number, rule: AnyRule) {
   // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 

@@ -28,7 +28,7 @@ export class Automaton {
     return frag;
   }
 
-  seq(...fragments: Frag[]): Frag {
+  seq(fragments: Frag[]): Frag {
     let first: State | null = null;
     let last: State | null = first;
     for (const fragment of fragments) {
@@ -46,7 +46,7 @@ export class Automaton {
     };
   }
 
-  choice(...fragments: Frag[]): Frag {
+  choice(fragments: Frag[]): Frag {
     const frag = {
       in: this.newState(),
       out: this.newState(),

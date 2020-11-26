@@ -1,4 +1,4 @@
-import { Rule, FieldRule } from "./grammar-builder";
+import { AnyRule, FieldRule } from "./grammar-builder";
 
 export type ReadonlyFieldStoreValue = {
   readonly name: string;
@@ -73,7 +73,7 @@ class FieldsStore implements ReadonlyFieldsStore {
   }
 }
 
-function getFieldsHelper(rule: Rule): FieldsStore {
+function getFieldsHelper(rule: AnyRule): FieldsStore {
   const store = new FieldsStore();
   switch (rule.type) {
     case "seq": {
@@ -126,7 +126,7 @@ function getFieldsHelper(rule: Rule): FieldsStore {
   }
 }
 
-export function getFields(rule: Rule): ReadonlyFieldsStore {
+export function getFields(rule: AnyRule): ReadonlyFieldsStore {
   return getFieldsHelper(rule).finalize();
 }
 
