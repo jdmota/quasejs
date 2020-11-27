@@ -8,10 +8,15 @@ import {
 export class Grammar {
   readonly name: string;
   readonly rules: ReadonlyMap<string, AnyRule>;
+  readonly startRule: string;
   readonly fields: ReadonlyMap<string, ReadonlyFieldsStore>;
   readonly ambiguousFields: ReadonlyMap<string, string[]>;
 
-  constructor(name: string, rules: ReadonlyMap<string, AnyRule>) {
+  constructor(
+    name: string,
+    rules: ReadonlyMap<string, AnyRule>,
+    startRule: string
+  ) {
     const fields = Array.from(rules).map(
       ([name, rule]) => [name, getFields(rule)] as const
     );
@@ -20,7 +25,16 @@ export class Grammar {
     );
     this.name = name;
     this.rules = rules;
+    this.startRule = startRule;
     this.fields = new Map(fields);
     this.ambiguousFields = new Map(ambiguousFields);
+  }
+
+  getRule(ruleName: string) {
+    const rule = this.rules.get(ruleName);
+    if (rule == null) {
+      throw new Error(`No rule called ${ruleName}`);
+    }
+    return rule;
   }
 }

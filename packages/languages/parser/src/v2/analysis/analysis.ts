@@ -1,6 +1,6 @@
 import { DState } from "../automaton/state";
 import {
-  Transition,
+  AnyTransition,
   RuleTransition,
   PredicateTransition,
   RangeTransition,
@@ -15,17 +15,17 @@ import { MapRangeToSet } from "../utils/map-range-to-set";
 import type { AnyRule } from "../grammar/grammar-builder";
 
 export class Context {
-  parent: Context | null;
-  size: number;
+  readonly parent: Context | null;
+  readonly parents: number;
 
   constructor(parent: Context | null) {
     this.parent = parent;
-    this.size = parent ? parent.size + 1 : 0;
+    this.parents = parent ? parent.parents + 1 : 0;
   }
 }
 
 export type Look = RangeTransition | PredicateTransition | EOFTransition;
-export type GoTo = [Transition, DState] | null;
+export type GoTo = [AnyTransition, DState] | null;
 
 class LookSet {
   transitions: MapKeyToValue<PredicateTransition | EOFTransition, null>;
@@ -100,22 +100,28 @@ function sortConflicts(a: GoTo, b: GoTo) {
   return -1;
 }
 
+type RuleName = string;
+
 export class Analyser {
-  initialStates: Map<Rule, DState>;
-  finalStates: Map<DState, Rule | null>;
-  follows: Map<Rule, Set<DState>>;
-  lookahead: Map<DState, LookSet>;
-  conflicts: string[];
+  readonly startRule: RuleName;
+  readonly initialStates: Map<RuleName, DState>;
+  readonly finalStates: Map<DState, RuleName | null>;
+  readonly follows: Map<RuleName, Set<DState>>;
+  readonly lookahead: Map<DState, LookSet>;
+  readonly conflicts: string[];
 
   constructor({
+    startRule,
     initialStates,
     finalStates,
     follows,
   }: {
-    initialStates: Map<Rule, DState>;
-    finalStates: Map<DState, Rule | null>;
-    follows: Map<Rule, Set<DState>>;
+    startRule: RuleName;
+    initialStates: Map<RuleName, DState>;
+    finalStates: Map<DState, RuleName | null>;
+    follows: Map<RuleName, Set<DState>>;
   }) {
+    this.startRule = startRule;
     this.initialStates = initialStates;
     this.finalStates = finalStates;
     this.follows = follows;
@@ -137,18 +143,11 @@ export class Analyser {
     };
   }
 
-  testConflict(
-    rule: ParserRule | LexerRule | null,
-    state: DState,
-    look: Look,
-    set: Set<GoTo>
-  ) {
+  testConflict(ruleName: RuleName, state: DState, look: Look, set: Set<GoTo>) {
     const arr = Array.from(set).sort(sortConflicts);
     if (arr.length > 1) {
       this.conflicts.push(
-        `In ${rule ? `rule ${rule.name}` : "lexer"}, in state ${
-          state.id
-        }, when seeing ${look}, multiple choices: ` +
+        `In rule ${ruleName}, in state ${state.id}, when seeing ${look}, multiple choices: ` +
           `${arr
             .map(goto => (goto ? `${goto[0]} to ${goto[1].id}` : "leave"))
             .join("; ")}`
@@ -162,7 +161,7 @@ export class Analyser {
   _analyseFinalState(state: DState, ctx: Context | null, set: LookSet) {
     let ret = false;
     if (ctx) {
-      if (ctx.size === 0) {
+      if (ctx.parents === 0) {
         // EOF
         set.add(new EOFTransition());
       }
@@ -178,7 +177,7 @@ export class Analyser {
         set.importFrom(result.set);
         ret = result.ret || ret;
       }
-      if (rule && rule.modifiers.start) {
+      if (rule === this.startRule) {
         // EOF
         set.add(new EOFTransition());
       }
@@ -215,7 +214,7 @@ export class Analyser {
   }
 
   _analyseTransition(
-    transition: Transition,
+    transition: AnyTransition,
     dest: DState,
     ctx: Context | null,
     set: LookSet
@@ -224,7 +223,7 @@ export class Analyser {
       const newCtx = ctx ? new Context(ctx) : null;
 
       const result = this._analyse(
-        this.initialStates.get(transition.rule)!!,
+        this.initialStates.get(transition.ruleName)!!,
         newCtx
       );
       set.importFrom(result.set);
@@ -256,10 +255,10 @@ export class Analyser {
   }
 
   analyse(state: DState, ctx: Context | null) {
-    const lookData: LookData = new LookData(); // look<A, B> -> if we see A, go to B
+    const lookData = new LookData(); // look<A, B> -> if we see A, go to B
 
     if (this.finalStates.has(state)) {
-      const set: LookSet = new LookSet();
+      const set = new LookSet();
       this._analyseFinalState(state, ctx, set);
       for (const look of set) {
         lookData.add(look, null);
@@ -267,7 +266,7 @@ export class Analyser {
     }
 
     for (const [transition, dest] of state) {
-      const set: LookSet = new LookSet();
+      const set = new LookSet();
       this._analyseTransition(transition, dest, ctx, set);
       for (const look of set) {
         lookData.add(look, [transition, dest]);

@@ -11,9 +11,9 @@ type MapEntry<K, V> = {
 const TABLE_SIZE = 10;
 
 export class MapKeyToSet<K extends MapKey, V> {
-  table: (MapEntry<K, Set<V>>[] | undefined)[];
+  private table: (MapEntry<K, Set<V>>[] | undefined)[];
+  private EMPTY_SET: Set<V>;
   size: number;
-  EMPTY_SET: Set<V>;
 
   constructor() {
     this.table = [];
@@ -21,7 +21,7 @@ export class MapKeyToSet<K extends MapKey, V> {
     this.EMPTY_SET = new Set();
   }
 
-  _entry(key: K) {
+  private _entry(key: K) {
     const idx = Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {

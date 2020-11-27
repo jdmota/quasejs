@@ -8,7 +8,7 @@ type Node<T> = {
 };
 
 export class MapRangeToValue<T> {
-  head: Node<T> | null;
+  private head: Node<T> | null;
   size: number;
 
   constructor() {
@@ -58,7 +58,7 @@ export class MapRangeToValue<T> {
     }
   }
 
-  _insertBefore(node: Node<T>, before: Node<T>) {
+  private _insertBefore(node: Node<T>, before: Node<T>) {
     node.prev = before.prev;
     before.prev = node;
     node.next = before;
@@ -69,7 +69,7 @@ export class MapRangeToValue<T> {
     }
   }
 
-  _insertAfter(node: Node<T>, after: Node<T>) {
+  private _insertAfter(node: Node<T>, after: Node<T>) {
     node.next = after.next;
     after.next = node;
     node.prev = after;
@@ -78,7 +78,7 @@ export class MapRangeToValue<T> {
     }
   }
 
-  _node(from: number, to: number, value: T): Node<T> {
+  private _node(from: number, to: number, value: T): Node<T> {
     return {
       range: { from, to },
       value,

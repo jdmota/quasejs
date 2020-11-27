@@ -1,4 +1,15 @@
-export abstract class Transition {
+export type AnyTransition =
+  | EpsilonTransition
+  | RuleTransition
+  | PredicateTransition
+  | ActionTransition
+  | PrecedenceTransition
+  | RangeTransition
+  | TokenFinalTransition
+  | EOFTransition
+  | NamedTransition;
+
+abstract class Transition {
   readonly isEpsilon: boolean;
 
   constructor(isEpsilon: boolean = false) {

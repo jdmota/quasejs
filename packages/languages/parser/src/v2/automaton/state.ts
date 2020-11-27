@@ -1,4 +1,8 @@
-import { Transition, EpsilonTransition, RangeTransition } from "./transitions";
+import {
+  AnyTransition,
+  EpsilonTransition,
+  RangeTransition,
+} from "./transitions";
 import { MapKeyToSet } from "../utils/map-key-to-set";
 import { MapRangeToSet } from "../utils/map-range-to-set";
 import { MapKeyToValue } from "../utils/map-key-to-value";
@@ -8,7 +12,7 @@ const EPSILON = new EpsilonTransition();
 
 export class State {
   readonly id: number;
-  readonly mapKeyToSet: MapKeyToSet<Transition, State>;
+  readonly mapKeyToSet: MapKeyToSet<AnyTransition, State>;
   readonly mapRangeToSet: MapRangeToSet<State>;
 
   constructor(id: number) {
@@ -17,7 +21,7 @@ export class State {
     this.mapRangeToSet = new MapRangeToSet();
   }
 
-  addTransition(transition: Transition, dest: State) {
+  addTransition(transition: AnyTransition, dest: State) {
     this.mapKeyToSet.add(transition, new Set([dest]));
   }
 
@@ -60,7 +64,7 @@ export class State {
 // Deterministic state
 export class DState {
   readonly id: number;
-  readonly transitionsMap: MapKeyToValue<Transition, DState>;
+  readonly transitionsMap: MapKeyToValue<AnyTransition, DState>;
   readonly rangeList: MapRangeToValue<DState>;
   inTransitions: number;
 
@@ -71,7 +75,7 @@ export class DState {
     this.inTransitions = 0;
   }
 
-  addTransition(transition: Transition, dest: DState) {
+  addTransition(transition: AnyTransition, dest: DState) {
     let added = false;
     if (transition instanceof RangeTransition) {
       added = this.rangeList.addRange(transition.from, transition.to, dest);

@@ -11,7 +11,7 @@ type MapEntry<K, V> = {
 const TABLE_SIZE = 10;
 
 export class MapKeyToValue<K extends MapKey, V> {
-  table: (MapEntry<K, V>[] | undefined)[];
+  private table: (MapEntry<K, V>[] | undefined)[];
   size: number;
 
   constructor() {
@@ -19,7 +19,7 @@ export class MapKeyToValue<K extends MapKey, V> {
     this.size = 0;
   }
 
-  _entry(key: K) {
+  private _entry(key: K) {
     const idx = Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {

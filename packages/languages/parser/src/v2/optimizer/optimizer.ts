@@ -1,6 +1,6 @@
 import { State, DState } from "../automaton/state";
 import {
-  Transition,
+  AnyTransition,
   EpsilonTransition,
   RuleTransition,
   NamedTransition,
@@ -10,12 +10,12 @@ import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 
 const EPSILON = new EpsilonTransition();
 
-export class NfaToDfa extends AbstractNfaToDfa<State, DState, Transition> {
+export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
   newDFAState(id: number): DState {
     return new DState(id);
   }
 
-  addTransition(state: DState, transition: Transition, dest: DState) {
+  addTransition(state: DState, transition: AnyTransition, dest: DState) {
     state.addTransition(transition, dest);
   }
 
@@ -38,7 +38,7 @@ export class NfaToDfa extends AbstractNfaToDfa<State, DState, Transition> {
   }
 }
 
-export class DfaMinimizer extends AbstractDfaMinimizer<DState, Transition> {
+export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
   readonly follows: Map<AnyRule, Set<DState>>;
 
   constructor() {
@@ -59,7 +59,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, Transition> {
     return new DState(id);
   }
 
-  addTransition(state: DState, transition: Transition, dest: DState): void {
+  addTransition(state: DState, transition: AnyTransition, dest: DState): void {
     state.addTransition(transition, dest);
     throw new Error("TODO");
     /*if (transition instanceof RuleTransition) {
@@ -74,7 +74,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, Transition> {
 
   getTransitions(
     state: DState
-  ): IterableIterator<readonly [Transition, DState]> {
+  ): IterableIterator<readonly [AnyTransition, DState]> {
     return state[Symbol.iterator]();
   }
 

@@ -17,7 +17,7 @@ function rangeComparator(
 }
 
 export class MapRangeToSet<T> {
-  head: Node<T> | null;
+  private head: Node<T> | null;
   size: number;
 
   constructor() {
@@ -105,7 +105,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  _insertBefore(node: Node<T>, before: Node<T>) {
+  private _insertBefore(node: Node<T>, before: Node<T>) {
     node.prev = before.prev;
     before.prev = node;
     node.next = before;
@@ -116,7 +116,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  _insertAfter(node: Node<T>, after: Node<T>) {
+  private _insertAfter(node: Node<T>, after: Node<T>) {
     node.next = after.next;
     after.next = node;
     node.prev = after;
@@ -125,7 +125,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  _connect(a: Node<T> | null, b: Node<T>) {
+  private _connect(a: Node<T> | null, b: Node<T>) {
     if (a) {
       a.next = b;
       b.prev = a;
@@ -137,7 +137,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  _node(from: number, to: number, value: Set<T>): Node<T> {
+  private _node(from: number, to: number, value: Set<T>): Node<T> {
     return {
       range: { from, to },
       value,
@@ -146,7 +146,7 @@ export class MapRangeToSet<T> {
     };
   }
 
-  _intersection(current: Node<T>, newNode: Node<T>) {
+  private _intersection(current: Node<T>, newNode: Node<T>) {
     const a = current.range;
     const b = newNode.range;
 
@@ -186,7 +186,7 @@ export class MapRangeToSet<T> {
     };
   }
 
-  _clone(value: Set<T>, newValue?: Set<T>): Set<T> {
+  private _clone(value: Set<T>, newValue?: Set<T>): Set<T> {
     const clone = new Set(value);
     if (newValue) {
       for (const v of newValue) {

@@ -26,7 +26,8 @@ const grammar = new Grammar(
   new Map([
     ["A", ruleA],
     ["B", ruleB],
-  ])
+  ]),
+  "A"
 );
 
 console.log(generateTypes(grammar));
