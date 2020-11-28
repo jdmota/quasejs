@@ -1,18 +1,18 @@
 export type AnyTransition =
   | EpsilonTransition
   | RuleTransition
-  | PredicateTransition
   | ActionTransition
+  | PredicateTransition
   | PrecedenceTransition
   | RangeTransition
-  | TokenFinalTransition
   | EOFTransition
-  | NamedTransition;
+  | ReturnTransition
+  | FieldTransition;
 
-abstract class Transition {
-  readonly isEpsilon: boolean;
+abstract class Transition<E extends boolean> {
+  readonly isEpsilon: E;
 
-  constructor(isEpsilon: boolean = false) {
+  constructor(isEpsilon: E) {
     this.isEpsilon = isEpsilon;
   }
 
@@ -21,9 +21,15 @@ abstract class Transition {
   abstract toString(): string;
 }
 
-abstract class AbstractEpsilonTransition extends Transition {
+abstract class AbstractEpsilonTransition extends Transition<true> {
   constructor() {
     super(true);
+  }
+}
+
+abstract class AbstractNotEpsilonTransition extends Transition<false> {
+  constructor() {
+    super(false);
   }
 }
 
@@ -41,7 +47,7 @@ export class EpsilonTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class RuleTransition extends Transition {
+export class RuleTransition extends AbstractNotEpsilonTransition {
   readonly ruleName: string;
 
   constructor(ruleName: string) {
@@ -111,7 +117,7 @@ export class PrecedenceTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class RangeTransition extends Transition {
+export class RangeTransition extends AbstractNotEpsilonTransition {
   readonly from: number;
   readonly to: number;
 
@@ -122,7 +128,7 @@ export class RangeTransition extends Transition {
   }
 
   hashCode() {
-    return 5;
+    return 5 * this.from * this.to;
   }
 
   equals(other: unknown): other is RangeTransition {
@@ -138,34 +144,9 @@ export class RangeTransition extends Transition {
   }
 }
 
-export class TokenFinalTransition extends AbstractEpsilonTransition {
-  readonly id: number;
-
-  constructor(id: number) {
-    super();
-    this.id = id;
-  }
-
-  hashCode() {
-    return 6 * this.id;
-  }
-
-  equals(other: unknown): other is TokenFinalTransition {
-    return other instanceof TokenFinalTransition && other.id === this.id;
-  }
-
-  toString() {
-    return `[TokenFinal ${this.id}]`;
-  }
-}
-
-export class EOFTransition extends Transition {
-  hashCode() {
-    return 7;
-  }
-
-  equals(other: unknown): other is EOFTransition {
-    return other instanceof EOFTransition;
+export class EOFTransition extends RangeTransition {
+  constructor() {
+    super(-1, -1);
   }
 
   toString() {
@@ -173,36 +154,47 @@ export class EOFTransition extends Transition {
   }
 }
 
-export class NamedTransition extends Transition {
-  readonly name: string;
-  readonly multiple: boolean;
-  readonly subTransition: RangeTransition | RuleTransition;
-
-  constructor(
-    name: string,
-    multiple: boolean,
-    subTransition: RangeTransition | RuleTransition
-  ) {
+export class ReturnTransition extends AbstractEpsilonTransition {
+  constructor() {
     super();
-    this.name = name;
-    this.multiple = multiple;
-    this.subTransition = subTransition;
   }
 
   hashCode() {
-    return 8 * this.subTransition.hashCode();
+    return 6;
   }
 
-  equals(other: unknown): other is NamedTransition {
+  equals(other: unknown): other is ReturnTransition {
+    return other instanceof ReturnTransition;
+  }
+
+  toString() {
+    return `[Return]`;
+  }
+}
+
+export class FieldTransition extends AbstractEpsilonTransition {
+  readonly name: string;
+  readonly multiple: boolean;
+
+  constructor(name: string, multiple: boolean) {
+    super();
+    this.name = name;
+    this.multiple = multiple;
+  }
+
+  hashCode() {
+    return 7 * this.name.length;
+  }
+
+  equals(other: unknown): other is FieldTransition {
     return (
-      other instanceof NamedTransition &&
+      other instanceof FieldTransition &&
       other.name === this.name &&
-      other.multiple === this.multiple &&
-      other.subTransition.equals(this.subTransition)
+      other.multiple === this.multiple
     );
   }
 
   toString() {
-    return `[${this.name}=${this.subTransition.toString()}]`;
+    return `[${this.name}${this.multiple ? "+=" : ""}...]`;
   }
 }

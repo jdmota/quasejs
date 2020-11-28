@@ -2,7 +2,7 @@ type Range = { from: number; to: number };
 
 type Node<T> = {
   range: Range;
-  value: Set<T>;
+  value: ReadonlySet<T>;
   prev: Node<T> | null;
   next: Node<T> | null;
 };
@@ -43,9 +43,9 @@ export class MapRangeToSet<T> {
     }
   }
 
-  addRange(from: number, to: number, value: Set<T>) {
+  addRange(from: number, to: number, value: ReadonlySet<T>) {
     let curr = this.head;
-    let node = this._node(from, to, value);
+    let node = this.node(from, to, value);
 
     if (curr == null) {
       this.head = node;
@@ -55,7 +55,7 @@ export class MapRangeToSet<T> {
 
     while (true) {
       if (node.range.to < curr.range.from) {
-        this._insertBefore(node, curr);
+        this.insertBefore(node, curr);
         this.size++;
         return;
       }
@@ -65,47 +65,47 @@ export class MapRangeToSet<T> {
           curr = curr.next;
           continue;
         } else {
-          this._insertAfter(node, curr);
+          this.insertAfter(node, curr);
           this.size++;
           return;
         }
       }
 
-      const { left, middle, right } = this._intersection(curr, node);
+      const { left, middle, right } = this.intersection(curr, node);
 
       if (left) {
-        this._connect(curr.prev, left);
-        this._connect(left, middle);
+        this.connect(curr.prev, left);
+        this.connect(left, middle);
         this.size++;
       } else {
-        this._connect(curr.prev, middle);
+        this.connect(curr.prev, middle);
       }
 
       if (right) {
         if (curr.next) {
           if (right.range.to < curr.next.range.from) {
-            this._connect(middle, right);
-            this._connect(right, curr.next);
+            this.connect(middle, right);
+            this.connect(right, curr.next);
           } else {
-            this._connect(middle, curr.next);
+            this.connect(middle, curr.next);
             curr = curr.next;
             node = right;
             continue;
           }
         } else {
-          this._connect(middle, right);
+          this.connect(middle, right);
         }
         this.size++;
       } else {
         if (curr.next) {
-          this._connect(middle, curr.next);
+          this.connect(middle, curr.next);
         }
       }
       return;
     }
   }
 
-  private _insertBefore(node: Node<T>, before: Node<T>) {
+  private insertBefore(node: Node<T>, before: Node<T>) {
     node.prev = before.prev;
     before.prev = node;
     node.next = before;
@@ -116,7 +116,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  private _insertAfter(node: Node<T>, after: Node<T>) {
+  private insertAfter(node: Node<T>, after: Node<T>) {
     node.next = after.next;
     after.next = node;
     node.prev = after;
@@ -125,7 +125,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  private _connect(a: Node<T> | null, b: Node<T>) {
+  private connect(a: Node<T> | null, b: Node<T>) {
     if (a) {
       a.next = b;
       b.prev = a;
@@ -137,7 +137,7 @@ export class MapRangeToSet<T> {
     }
   }
 
-  private _node(from: number, to: number, value: Set<T>): Node<T> {
+  private node(from: number, to: number, value: ReadonlySet<T>): Node<T> {
     return {
       range: { from, to },
       value,
@@ -146,7 +146,7 @@ export class MapRangeToSet<T> {
     };
   }
 
-  private _intersection(current: Node<T>, newNode: Node<T>) {
+  private intersection(current: Node<T>, newNode: Node<T>) {
     const a = current.range;
     const b = newNode.range;
 
@@ -155,27 +155,27 @@ export class MapRangeToSet<T> {
 
     // Left
     if (a.from !== b.from) {
-      left = this._node(
+      left = this.node(
         Math.min(a.from, b.from),
         Math.max(a.from, b.from) - 1,
-        this._clone(a.from < b.from ? current.value : newNode.value)
+        this.clone(a.from < b.from ? current.value : newNode.value)
       );
     }
 
     // Middle (intersection)
 
-    const middle = this._node(
+    const middle = this.node(
       Math.max(a.from, b.from),
       Math.min(a.to, b.to),
-      this._clone(current.value, newNode.value)
+      this.clone(current.value, newNode.value)
     );
 
     // Right
     if (a.to !== b.to) {
-      right = this._node(
+      right = this.node(
         Math.min(a.to, b.to) + 1,
         Math.max(a.to, b.to),
-        this._clone(a.to < b.to ? newNode.value : current.value)
+        this.clone(a.to < b.to ? newNode.value : current.value)
       );
     }
 
@@ -186,7 +186,10 @@ export class MapRangeToSet<T> {
     };
   }
 
-  private _clone(value: Set<T>, newValue?: Set<T>): Set<T> {
+  private clone(
+    value: ReadonlySet<T>,
+    newValue?: ReadonlySet<T>
+  ): ReadonlySet<T> {
     const clone = new Set(value);
     if (newValue) {
       for (const v of newValue) {

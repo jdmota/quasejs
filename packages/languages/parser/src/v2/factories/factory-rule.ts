@@ -19,17 +19,21 @@ import { Frag, Automaton } from "../automaton/automaton";
 import {
   ActionTransition,
   EOFTransition,
-  NamedTransition,
   RuleTransition,
+  ReturnTransition,
+  FieldTransition,
 } from "../automaton/transitions";
+import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 
 type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
 
 export class FactoryRule implements Gen {
   readonly automaton: Automaton;
+  readonly factoryRegexp: FactoryRegexp;
 
   constructor(automaton: Automaton) {
     this.automaton = automaton;
+    this.factoryRegexp = new FactoryRegexp(this.automaton);
   }
 
   seq(node: SeqRule): Frag {
@@ -77,34 +81,35 @@ export class FactoryRule implements Gen {
   }
 
   string(node: StringRule): Frag {
-    throw new Error(`TODO`);
+    const start = this.automaton.newState();
+    let end = start;
+
+    for (const char of node.string) {
+      const newEnd = this.automaton.newState();
+      const code = char.codePointAt(0)!!;
+      end.addNumber(code, newEnd);
+      end = newEnd;
+    }
+
+    return {
+      in: start,
+      out: end,
+    };
   }
 
   regexp(node: RegExpRule): Frag {
-    throw new Error(`TODO`);
+    return regexpToAutomaton(this.factoryRegexp, node.regexp);
   }
 
   field(node: FieldRule): Frag {
     const fragItem = this.gen(node.rule);
-
-    let subTransition;
-    for (const [transition] of fragItem.in) {
-      subTransition = transition;
-      break;
-    }
-
-    const start = this.automaton.newState();
     const end = this.automaton.newState();
-    start.addTransition(
-      new NamedTransition(
-        node.name,
-        node.multiple,
-        subTransition as any // TODO
-      ),
+    fragItem.out.addTransition(
+      new FieldTransition(node.name, node.multiple),
       end
     );
     return {
-      in: start,
+      in: fragItem.in,
       out: end,
     };
   }

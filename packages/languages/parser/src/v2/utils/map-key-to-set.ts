@@ -21,7 +21,7 @@ export class MapKeyToSet<K extends MapKey, V> {
     this.EMPTY_SET = new Set();
   }
 
-  private _entry(key: K) {
+  private entry(key: K) {
     const idx = Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
@@ -34,15 +34,15 @@ export class MapKeyToSet<K extends MapKey, V> {
   }
 
   get(key: K): Set<V> {
-    const { entry } = this._entry(key);
+    const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
     }
     return this.EMPTY_SET;
   }
 
-  add(key: K, value: Set<V>) {
-    const { entry, list } = this._entry(key);
+  add(key: K, value: ReadonlySet<V>) {
+    const { entry, list } = this.entry(key);
     if (entry) {
       for (const v of value) {
         entry.value.add(v);
@@ -50,14 +50,14 @@ export class MapKeyToSet<K extends MapKey, V> {
     } else {
       list.push({
         key,
-        value,
+        value: new Set(value),
       });
       this.size++;
     }
   }
 
   addOne(key: K, value: V) {
-    const { entry, list } = this._entry(key);
+    const { entry, list } = this.entry(key);
     if (entry) {
       entry.value.add(value);
     } else {

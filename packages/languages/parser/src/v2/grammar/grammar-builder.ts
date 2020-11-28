@@ -19,6 +19,14 @@ export type AnyRule = RuleMap[RuleNames];
 
 export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
 
+export type RuleDeclaration = {
+  readonly type: "rule";
+  readonly name: string;
+  readonly rule: AnyRule;
+  // TODO readonly arguments: [];
+  // TODO readonly return: null;
+};
+
 export type SeqRule = {
   readonly type: "seq";
   readonly rules: AnyRule[];
@@ -125,10 +133,10 @@ function string(string: string): StringRule {
 
 export type RegExpRule = {
   readonly type: "regexp";
-  readonly regexp: RegExp;
+  readonly regexp: string;
 };
 
-function regexp(regexp: RegExp): RegExpRule {
+function regexp(regexp: string): RegExpRule {
   return {
     type: "regexp",
     regexp,

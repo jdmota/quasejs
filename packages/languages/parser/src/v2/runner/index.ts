@@ -1,9 +1,17 @@
 import type { Grammar } from "../grammar/grammar";
+import { never } from "../utils";
 
 type SomeTransition =
   | {
       type: "string";
       string: string;
+    }
+  | {
+      type: "eof";
+    }
+  | {
+      type: "rule";
+      name: string;
     }
   | {
       type: "field";
@@ -27,7 +35,7 @@ type SomeTransition =
     };
 
 type SomeState = {
-  transitions: ReadonlyMap<string, SomeState>;
+  transitions: [SomeTransition, SomeState][];
 };
 
 class InputState {
@@ -50,38 +58,44 @@ class InputState {
   }
 }
 
-type StackNode<T> = {
-  data: T;
-  parent: StackNode<T> | null;
-};
+type StackData = { readonly [key: string]: unknown };
 
 class Stack {
-  private last: StackNode<any> | null;
+  readonly parent: Stack | null;
+  readonly data: StackData;
+  readonly returnValue: StackData;
 
-  constructor(last: StackNode<any> | null) {
-    this.last = last;
+  constructor(parent: Stack | null, data: StackData, returnValue: StackData) {
+    this.parent = parent;
+    this.data = data;
+    this.returnValue = returnValue;
   }
 
-  push(data: any) {
-    const node = {
-      data,
-      parent: this.last,
-    };
-    this.last = node;
-    return node;
+  static new() {
+    return new Stack(null, {}, {});
+  }
+
+  push() {
+    return new Stack(this, {}, {});
   }
 
   pop() {
-    const last = this.last;
-    if (last == null) {
+    const parent = this.parent;
+    if (parent == null) {
       throw new Error("Empty stack");
     }
-    this.last = last.parent;
-    return last.data;
+    return new Stack(parent.parent, parent.data, this.data);
   }
 
-  clone() {
-    return new Stack(this.last);
+  field(name: string, value: unknown) {
+    return new Stack(
+      this.parent,
+      {
+        ...this.data,
+        [name]: value,
+      },
+      this.returnValue
+    );
   }
 }
 
@@ -89,23 +103,64 @@ function matches(current: string, transition: string) {
   return current === transition; // TODO
 }
 
+type MachineState = readonly [SomeState, InputState, Stack];
+
 function run(state: SomeState, input: InputState, stack: Stack) {
-  let prev: [SomeState, InputState, Stack][] = [[state, input, stack]];
-  let next: [SomeState, InputState, Stack][] = [];
-  let oks: [SomeState, InputState, Stack][] = [];
-  let errors: [SomeState, InputState, Stack][] = [];
+  let prev: MachineState[] = [[state, input, stack]];
+  let next: MachineState[] = [];
+  let oks: MachineState[] = [];
+  let errors: MachineState[] = [];
 
   while (true) {
     for (const [state, input, stack] of prev) {
       for (const [transition, dest] of state.transitions) {
-        if (matches(input.get(), transition)) {
-          if (input.end) {
-            oks.push([dest, input, stack]);
-          } else {
-            next.push([dest, input.move(), stack]);
+        switch (transition.type) {
+          case "string": {
+            if (!input.end && matches(input.get(), transition.string)) {
+              next.push([dest, input.move(), stack]);
+            } else {
+              errors.push([dest, input, stack]);
+            }
+            break;
           }
-        } else {
-          errors.push([dest, input, stack]);
+          case "eof": {
+            if (input.end) {
+              oks.push([dest, input, stack]);
+            } else {
+              errors.push([dest, input, stack]);
+            }
+            break;
+          }
+          case "rule": {
+            next.push([dest, input, stack.push()]);
+            break;
+          }
+          case "field": {
+            next.push([
+              dest,
+              input,
+              stack.field(transition.name, stack.returnValue),
+            ]);
+            break;
+          }
+          case "action": {
+            next.push([dest, input, stack]);
+            break;
+          }
+          case "return": {
+            next.push([dest, input, stack.pop()]);
+            break;
+          }
+          case "predicate": {
+            next.push([dest, input, stack]);
+            break;
+          }
+          case "precedence": {
+            next.push([dest, input, stack]);
+            break;
+          }
+          default:
+            never(transition);
         }
       }
     }
@@ -127,42 +182,36 @@ function run(state: SomeState, input: InputState, stack: Stack) {
 }
 
 const example: SomeState = {
-  transitions: new Map([
+  transitions: [
     [
-      "a",
+      { type: "string", string: "a" },
       {
-        transitions: new Map([
+        transitions: [
           [
-            "b",
+            { type: "string", string: "b" },
             {
-              transitions: new Map([
+              transitions: [
                 [
-                  "c",
-                  { transitions: new Map([["", { transitions: new Map() }]]) },
+                  { type: "string", string: "c" },
+                  { transitions: [[{ type: "eof" }, { transitions: [] }]] },
                 ],
-              ]),
+              ],
             },
           ],
-        ]),
+        ],
       },
     ],
-  ]),
+  ],
 };
 
 console.log("Start");
-console.log("Ok", run(example, new InputState("abc", 0), new Stack(null)).oks);
-console.log(
-  "Error",
-  run(example, new InputState("ab", 0), new Stack(null)).errors
-);
-console.log(
-  "Error",
-  run(example, new InputState("ac", 0), new Stack(null)).errors
-);
+console.log("Ok", run(example, new InputState("abc", 0), Stack.new()).oks);
+console.log("Error", run(example, new InputState("ab", 0), Stack.new()).errors);
+console.log("Error", run(example, new InputState("ac", 0), Stack.new()).errors);
 
 export function parse(grammar: Grammar, input: string) {
   const start = grammar.getRule(grammar.startRule);
-  run({ transitions: new Map() }, new InputState(input, 0), new Stack(null));
+  run({ transitions: [] }, new InputState(input, 0), Stack.new());
   // TODO expect eof
 }
 
