@@ -19,7 +19,7 @@ export class MapKeyToValue<K extends MapKey, V> {
     this.size = 0;
   }
 
-  private _entry(key: K) {
+  private entry(key: K) {
     const idx = Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
@@ -32,7 +32,7 @@ export class MapKeyToValue<K extends MapKey, V> {
   }
 
   get(key: K): V | null {
-    const { entry } = this._entry(key);
+    const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
     }
@@ -40,7 +40,7 @@ export class MapKeyToValue<K extends MapKey, V> {
   }
 
   add(key: K, value: V) {
-    const { entry, list } = this._entry(key);
+    const { entry, list } = this.entry(key);
     if (entry) {
       if (entry.value === value) {
         return false;
@@ -53,6 +53,20 @@ export class MapKeyToValue<K extends MapKey, V> {
     });
     this.size++;
     return true;
+  }
+
+  computeIfAbsent(key: K, fn: () => V): V {
+    const { entry, list } = this.entry(key);
+    if (entry) {
+      return entry.value;
+    }
+    const value = fn();
+    list.push({
+      key,
+      value,
+    });
+    this.size++;
+    return value;
   }
 
   *[Symbol.iterator]() {

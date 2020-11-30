@@ -3,22 +3,71 @@ import {
   AnyTransition,
   RuleTransition,
   RangeTransition,
-  EOFTransition,
   ReturnTransition,
 } from "../automaton/transitions";
 import { RangeSet } from "../utils/range-set";
 import { MapRangeToSet } from "../utils/map-range-to-set";
+import { MapKeyToValue } from "../utils/map-key-to-value";
 import { never } from "../utils";
 
-type GoTo = readonly [AnyTransition, DState] | null;
 type RuleName = string;
+type GoTo = readonly [AnyTransition, DState] | null;
+type FollowInfo = {
+  readonly caller: RuleName;
+  readonly enterState: DState;
+  readonly followingState: DState;
+};
+type FollowLookahead = {
+  readonly stack: FollowStack;
+  readonly ranges: RangeSet;
+};
+
+class FollowStack {
+  readonly parent: FollowStack | null;
+  readonly followInfo: FollowInfo;
+  private cachedHashCode: number;
+
+  constructor(parent: FollowStack | null, followInfo: FollowInfo) {
+    this.parent = parent;
+    this.followInfo = followInfo;
+    this.cachedHashCode = 0;
+  }
+
+  hashCode(): number {
+    if (this.cachedHashCode === 0) {
+      const parent = this.parent == null ? 1 : this.parent.hashCode();
+      const { caller, enterState, followingState } = this.followInfo;
+      this.cachedHashCode =
+        parent * caller.length * enterState.id * followingState.id;
+    }
+    return this.cachedHashCode;
+  }
+
+  equals(other: unknown): boolean {
+    if (this === other) {
+      return true;
+    }
+    if (other instanceof FollowStack) {
+      if (
+        this.followInfo.caller !== other.followInfo.caller ||
+        this.followInfo.enterState !== other.followInfo.enterState ||
+        this.followInfo.followingState !== other.followInfo.followingState
+      ) {
+        return false;
+      }
+      if (this.parent === null) {
+        return other.parent === null;
+      }
+      return this.parent.equals(other.parent);
+    }
+    return false;
+  }
+}
 
 export class Analyser {
   readonly startRule: RuleName;
   readonly initialStates: Map<RuleName, DState>;
-  readonly follows: Map<RuleName, Set<DState>>;
-  readonly lookahead: Map<DState, RangeSet>;
-  readonly conflicts: string[];
+  readonly follows: Map<RuleName, FollowInfo[]>;
 
   constructor({
     startRule,
@@ -27,66 +76,38 @@ export class Analyser {
   }: {
     startRule: RuleName;
     initialStates: Map<RuleName, DState>;
-    follows: Map<RuleName, Set<DState>>;
+    follows: Map<RuleName, FollowInfo[]>;
   }) {
     this.startRule = startRule;
     this.initialStates = initialStates;
     this.follows = follows;
-    this.lookahead = new Map();
-    this.conflicts = [];
   }
 
-  lookaheadForState(state: DState) {
-    let set = this.lookahead.get(state);
-    let existed = true;
-    if (!set) {
-      set = new RangeSet();
-      existed = false;
-      this.lookahead.set(state, set);
-    }
-    return {
-      set,
-      existed,
-    };
-  }
-
-  testConflict(
-    ruleName: RuleName,
-    state: DState,
-    look: RangeTransition,
-    set: Set<GoTo>
+  private analyzeFollows(
+    caller: RuleName,
+    followStack: FollowStack | null,
+    result: FollowLookahead[] = [],
+    seen: Set<RuleName> = new Set()
   ) {
-    const arr = Array.from(set);
-    if (arr.length > 1) {
-      this.conflicts.push(
-        `In rule ${ruleName}, in state ${state.id}, when seeing ${look}, multiple choices: ` +
-          `${arr
-            .map(goto => (goto ? `${goto[0]} to ${goto[1].id}` : "leave"))
-            .join("; ")}`
-      );
-    } else if (arr.length === 0) {
-      throw new Error("Assertion error");
-    }
-    return arr[0];
-  }
+    if (seen.has(caller)) return result;
+    seen.add(caller);
 
-  private analyzeFollows(currentRule: RuleName, set: RangeSet) {
-    // TODO analyze "follows" of the "follows"
-    let returns = false;
-    const f = this.follows.get(currentRule);
-    if (f && f.size > 0) {
-      for (const dest of f) {
-        returns = this.analyzeState(dest, set, new Set()) || returns;
+    const f = this.follows.get(caller);
+    if (f && f.length > 0) {
+      for (const info of f) {
+        const set = new RangeSet();
+        const returns = this.analyzeState(info.followingState, set, new Set());
+        if (returns) {
+          const newFollowStack = new FollowStack(followStack, info);
+          result.push({
+            stack: newFollowStack,
+            ranges: set,
+          });
+          this.analyzeFollows(info.caller, newFollowStack, result, seen);
+        }
       }
-      if (currentRule === this.startRule) {
-        // EOF
-        set.add(new EOFTransition());
-      }
-    } else {
-      // EOF
-      set.add(new EOFTransition());
     }
-    return returns;
+    return result;
   }
 
   private analyzeState(
@@ -134,33 +155,54 @@ export class Analyser {
     never(transition);
   }
 
+  // Analysis assumes that "return" transitions are added and that
+  // the initial rule is adapted to include the EOFTransition
+
   analyze(rule: RuleName, state: DState) {
-    const lookData = new MapRangeToSet<GoTo>(); // look<A, B> -> if we see A, go to B
+    // Prevent stack overflow
     const seen = new Set<DState>();
     seen.add(state);
 
-    let returns = false;
+    // Results
+    const lookahead = new MapRangeToSet<GoTo>(); // Given a range, go to destination indicated by GoTo
+    const followsLookahead = new MapKeyToValue<
+      FollowStack,
+      MapRangeToSet<GoTo>
+    >(); // Given a stack, and a range, go to destination indicated by GoTo
+
+    // For each transition on this state,
+    // compute the conditions for that transition to be performed
     for (const tuple of state) {
       const [transition, dest] = tuple;
       const goto = new Set([tuple]);
-      const set = new RangeSet();
-      returns = this.analyzeTransition(transition, dest, set, seen) || returns;
-      for (const look of set) {
-        lookData.addRange(look.from, look.to, goto);
+
+      // Compute lookahead without stack check
+      const ranges = new RangeSet();
+      const returns = this.analyzeTransition(transition, dest, ranges, seen);
+
+      for (const look of ranges) {
+        lookahead.addRange(look.from, look.to, goto);
+      }
+
+      // If the analysis reached the end of the rule,
+      // We need to consider where the rule is used, and potentially the stack
+      if (returns) {
+        const follows = this.analyzeFollows(rule, null);
+        for (const { stack, ranges } of follows) {
+          const lookahead = followsLookahead.computeIfAbsent(
+            stack,
+            () => new MapRangeToSet()
+          );
+          for (const look of ranges) {
+            lookahead.addRange(look.from, look.to, goto);
+          }
+        }
       }
     }
 
-    if (returns) {
-      // TODO during runtime, we might be able to refine the decisions based on the stack
-      // so A (in look<A, B>) should include a stack check
-      const gotos = new Set(state);
-      const set = new RangeSet();
-      this.analyzeFollows(rule, set);
-      for (const look of set) {
-        lookData.addRange(look.from, look.to, gotos);
-      }
-    }
-
-    return lookData;
+    return {
+      lookahead,
+      followsLookahead,
+    };
   }
 }

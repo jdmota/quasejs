@@ -12,11 +12,15 @@ export class Grammar {
   readonly fields: ReadonlyMap<string, ReadonlyFieldsStore>;
   readonly ambiguousFields: ReadonlyMap<string, string[]>;
 
-  constructor(
-    name: string,
-    rules: ReadonlyMap<string, AnyRule>,
-    startRule: string
-  ) {
+  constructor({
+    name,
+    rules,
+    startRule,
+  }: {
+    name: string;
+    rules: ReadonlyMap<string, AnyRule>;
+    startRule: string;
+  }) {
     const fields = Array.from(rules).map(
       ([name, rule]) => [name, getFields(rule)] as const
     );
