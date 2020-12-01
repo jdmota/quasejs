@@ -1,10 +1,5 @@
 import { State, DState } from "../automaton/state";
-import {
-  AnyTransition,
-  EpsilonTransition,
-  RuleTransition,
-  NamedTransition,
-} from "../automaton/transitions";
+import { AnyTransition, EpsilonTransition } from "../automaton/transitions";
 import type { AnyRule } from "../grammar/grammar-builder";
 import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 
@@ -19,7 +14,7 @@ export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
     state.addTransition(transition, dest);
   }
 
-  getEpsilonStates(state: State): State[] | Set<State> {
+  getEpsilonStates(state: State) {
     return state.mapKeyToSet.get(EPSILON);
   }
 

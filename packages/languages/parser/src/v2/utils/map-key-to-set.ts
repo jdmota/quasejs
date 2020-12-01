@@ -12,7 +12,7 @@ const TABLE_SIZE = 10;
 
 export class MapKeyToSet<K extends MapKey, V> {
   private table: (MapEntry<K, Set<V>>[] | undefined)[];
-  private EMPTY_SET: Set<V>;
+  private EMPTY_SET: ReadonlySet<V>;
   size: number;
 
   constructor() {
@@ -33,7 +33,7 @@ export class MapKeyToSet<K extends MapKey, V> {
     };
   }
 
-  get(key: K): Set<V> {
+  get(key: K): ReadonlySet<V> {
     const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
@@ -69,7 +69,7 @@ export class MapKeyToSet<K extends MapKey, V> {
     }
   }
 
-  *[Symbol.iterator]() {
+  *[Symbol.iterator](): IterableIterator<readonly [K, ReadonlySet<V>]> {
     let idx = 0;
     let listIdx = 0;
     while (idx < this.table.length) {

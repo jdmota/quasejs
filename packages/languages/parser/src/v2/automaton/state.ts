@@ -50,8 +50,9 @@ export class State {
     this.mapRangeToSet.addRange(min, max, new Set([dest]));
   }
 
-  *[Symbol.iterator]() {
-    // IterableIterator<readonly [Transition, Set<State>]>
+  *[Symbol.iterator](): IterableIterator<
+    readonly [AnyTransition, ReadonlySet<State>]
+  > {
     for (const step of this.mapKeyToSet) {
       yield step;
     }
@@ -89,6 +90,16 @@ export class DState {
 
   transitionAmount() {
     return this.transitionsMap.size + this.rangeList.size;
+  }
+
+  *destinations() {
+    // IterableIterator<DState>
+    for (const [_, value] of this.transitionsMap) {
+      yield value;
+    }
+    for (const [_, value] of this.rangeList) {
+      yield value;
+    }
   }
 
   *[Symbol.iterator]() {

@@ -1,13 +1,13 @@
-type NFA<NFAState> = {
+type NFA<NFAState> = Readonly<{
   start: NFAState;
-  acceptingSet: Set<NFAState>;
-};
+  acceptingSet: ReadonlySet<NFAState>;
+}>;
 
-export type DFA<DFAState> = {
-  states: DFAState[];
+export type DFA<DFAState> = Readonly<{
+  states: readonly DFAState[];
   start: DFAState;
-  acceptingSet: Set<DFAState>;
-};
+  acceptingSet: ReadonlySet<DFAState>;
+}>;
 
 type BaseState = {
   id: number;
@@ -20,8 +20,8 @@ export abstract class AbstractNfaToDfa<
   DFAState extends BaseState,
   Transition
 > {
-  private closures: Map<NFAState, Set<NFAState>>;
-  private oldAcceptingSet: Set<NFAState>;
+  private closures: Map<NFAState, ReadonlySet<NFAState>>;
+  private oldAcceptingSet: ReadonlySet<NFAState>;
   private states: DFAState[];
   private closuseStrToState: Map<string, DFAState>;
   private acceptingSet: Set<DFAState>;
@@ -42,24 +42,27 @@ export abstract class AbstractNfaToDfa<
     dest: DFAState
   ): void;
 
-  abstract getEpsilonStates(state: NFAState): NFAState[] | Set<NFAState>;
+  abstract getEpsilonStates(
+    state: NFAState
+  ): readonly NFAState[] | ReadonlySet<NFAState>;
 
   abstract combinations(
     closure: NFAState[]
-  ): IterableIterator<readonly [Transition, Set<NFAState>]>;
+  ): IterableIterator<readonly [Transition, ReadonlySet<NFAState>]>;
 
-  getEpsilonClosure(state: NFAState): Set<NFAState> {
-    let closure = this.closures.get(state);
-    if (!closure) {
-      closure = new Set([state]);
-      this.closures.set(state, closure);
+  getEpsilonClosure(state: NFAState): ReadonlySet<NFAState> {
+    const cache = this.closures.get(state);
+    if (cache) {
+      return cache;
+    }
+    const closure = new Set([state]);
+    this.closures.set(state, closure);
 
-      for (const nextState of this.getEpsilonStates(state)) {
-        if (!closure.has(nextState)) {
-          closure.add(nextState);
-          for (const s of this.getEpsilonClosure(nextState)) {
-            closure.add(s);
-          }
+    for (const nextState of this.getEpsilonStates(state)) {
+      if (!closure.has(nextState)) {
+        closure.add(nextState);
+        for (const s of this.getEpsilonClosure(nextState)) {
+          closure.add(s);
         }
       }
     }
@@ -82,7 +85,7 @@ export abstract class AbstractNfaToDfa<
       }
 
       for (const [transition, set] of this.combinations(closure)) {
-        const closure: Set<NFAState> = new Set();
+        const closure = new Set<NFAState>();
         for (const s of set) {
           for (const s2 of this.getEpsilonClosure(s)) {
             closure.add(s2);
@@ -116,6 +119,8 @@ export abstract class AbstractNfaToDfa<
     };
   }
 }
+
+type StatePair<S> = readonly [S, S];
 
 export abstract class AbstractDfaMinimizer<
   DFAState extends BaseState,
@@ -151,14 +156,14 @@ export abstract class AbstractDfaMinimizer<
       pairsTable[id][id] = false;
     }
 
-    let notMarked: [DFAState, DFAState][] = [];
-    let notMarked2: [DFAState, DFAState][] = [];
+    let notMarked: StatePair<DFAState>[] = [];
+    let notMarked2: StatePair<DFAState>[] = [];
 
     // Mark all pairs p, q where p is final and q is not
     // Note: (1,1) belongs to the diagonal, so we can start with p=2
     for (let pId = 2; pId <= numberOfStates; pId++) {
       for (let qId = 1; qId < pId; qId++) {
-        const pair: [DFAState, DFAState] = [oldStates[pId], oldStates[qId]];
+        const pair = [oldStates[pId], oldStates[qId]] as const;
         const [p, q] = pair;
         const mark = oldAcceptingSet.has(p) !== oldAcceptingSet.has(q);
         pairsTable[pId][qId] = mark;

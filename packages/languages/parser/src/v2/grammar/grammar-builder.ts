@@ -17,7 +17,16 @@ export interface RuleMap {
 export type RuleNames = keyof RuleMap;
 export type AnyRule = RuleMap[RuleNames];
 
-export type ValueRules = IdRule | EmptyRule | EofRule | StringRule | RegExpRule;
+export type TokenRules = EofRule | StringRule | RegExpRule;
+
+export type ValueRules = IdRule | EmptyRule | TokenRules;
+
+export type RuleModifiers = {
+  readonly start: boolean;
+  readonly inline: boolean;
+  readonly noSkips: boolean;
+  readonly skip: boolean;
+};
 
 export type RuleDeclaration = {
   readonly type: "rule";
@@ -25,7 +34,21 @@ export type RuleDeclaration = {
   readonly rule: AnyRule;
   // TODO readonly arguments: [];
   // TODO readonly return: null;
+  readonly modifiers: RuleModifiers;
 };
+
+function rule(
+  name: string,
+  rule: AnyRule,
+  modifiers: RuleModifiers
+): RuleDeclaration {
+  return {
+    type: "rule",
+    name,
+    rule,
+    modifiers,
+  };
+}
 
 export type SeqRule = {
   readonly type: "seq";
@@ -205,6 +228,7 @@ function precedenceDynamic() {
 }
 
 export const builder = {
+  rule,
   seq,
   choice,
   repeat,

@@ -1,4 +1,5 @@
-import { AnyRule, FieldRule } from "./grammar-builder";
+import { never } from "../utils";
+import { AnyRule, FieldRule, TokenRules } from "./grammar-builder";
 
 export type ReadonlyFieldStoreValue = {
   readonly name: string;
@@ -140,4 +141,51 @@ export function checkAmbiguousFields(store: ReadonlyFieldsStore): string[] {
     }
   }
   return ambiguous;
+}
+
+function gatherTokensHelper(rule: AnyRule, tokens: TokenRules[]) {
+  switch (rule.type) {
+    case "seq":
+      for (const r of rule.rules) {
+        gatherTokensHelper(r, tokens);
+      }
+      break;
+    case "choice":
+      for (const r of rule.rules) {
+        gatherTokensHelper(r, tokens);
+      }
+      break;
+    case "repeat":
+      gatherTokensHelper(rule.rule, tokens);
+      break;
+    case "repeat1":
+      gatherTokensHelper(rule.rule, tokens);
+      break;
+    case "optional":
+      gatherTokensHelper(rule.rule, tokens);
+      break;
+    case "field":
+      gatherTokensHelper(rule.rule, tokens);
+      break;
+    case "eof":
+    case "string":
+    case "regexp":
+      tokens.push(rule);
+      break;
+    case "id":
+    case "empty":
+    case "action":
+    case "predicate":
+      break;
+    default:
+      never(rule);
+  }
+}
+
+export function gatherTokens(rules: AnyRule[]) {
+  const tokens: TokenRules[] = [];
+  for (const rule of rules) {
+    gatherTokensHelper(rule, tokens);
+  }
+  return tokens;
 }

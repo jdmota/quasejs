@@ -14,6 +14,7 @@ import {
   RepeatRule,
   SeqRule,
   StringRule,
+  RuleDeclaration,
 } from "../grammar/grammar-builder";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
@@ -130,5 +131,35 @@ export class FactoryRule implements Gen {
 
   gen(node: AnyRule): Frag {
     return this[node.type](node as any);
+  }
+
+  genRule(rule: RuleDeclaration): Frag {
+    const ruleFrag = this.gen(rule.rule);
+    let start = ruleFrag.in;
+    let end = ruleFrag.out;
+
+    if (rule.modifiers.inline) {
+    }
+
+    if (rule.modifiers.noSkips) {
+    }
+
+    if (rule.modifiers.skip) {
+    }
+
+    if (rule.modifiers.start) {
+      const newEnd = this.automaton.newState();
+      end.addTransition(new EOFTransition(), newEnd);
+      end = newEnd;
+    } else {
+      const newEnd = this.automaton.newState();
+      end.addTransition(new ReturnTransition(), newEnd);
+      end = newEnd;
+    }
+
+    return {
+      in: start,
+      out: end,
+    };
   }
 }
