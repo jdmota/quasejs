@@ -1,13 +1,13 @@
 // Based on https://en.wikipedia.org/wiki/Path-based_strong_component_algorithm
 
-type ComponentEdge<T, S> = readonly [S, T, S];
+export type BaseComponentEdge<T, S> = readonly [S, T, S];
 
 export class BaseComponent<T, S> {
   readonly id: number;
   readonly states: S[];
   readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
-  readonly outEdges: ComponentEdge<T, S>[];
-  readonly inEdges: ComponentEdge<T, S>[];
+  readonly outEdges: BaseComponentEdge<T, S>[];
+  readonly inEdges: BaseComponentEdge<T, S>[];
   readonly headers: Set<S>;
 
   constructor(
@@ -30,10 +30,15 @@ export class BaseComponent<T, S> {
 
   *[Symbol.iterator]() {
     for (const [_, transition, dest] of this.outEdges) {
-      yield [transition, dest] as const;
+      yield [transition, this.stateToComponent.get(dest)!!] as const;
     }
   }
 }
+
+type SCCResult<T, S> = {
+  readonly components: readonly BaseComponent<T, S>[];
+  readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
+};
 
 export abstract class BaseSCC<T, S> {
   abstract inEdgesAmount(state: S): number;
@@ -59,7 +64,7 @@ export abstract class BaseSCC<T, S> {
     }
   }
 
-  process(states: readonly S[]): readonly BaseComponent<T, S>[] {
+  process(states: readonly S[]): SCCResult<T, S> {
     const s: S[] = [];
     const p: S[] = [];
     let c = 0;
@@ -67,7 +72,7 @@ export abstract class BaseSCC<T, S> {
     const components: BaseComponent<T, S>[] = [];
     const stateToComponent = new Map<S, BaseComponent<T, S>>();
 
-    function search(v: S) {
+    function search(self: BaseSCC<T, S>, v: S) {
       // 1. Set the preorder number of v to C, and increment C
       order.set(v, c);
       c++;
@@ -77,11 +82,11 @@ export abstract class BaseSCC<T, S> {
       p.push(v);
 
       // 3. For each edge from v to a neighboring vertex w
-      for (const w of this.destinations(v)) {
+      for (const w of self.destinations(v)) {
         const preorder = order.get(w);
         if (preorder == null) {
           // If the preorder number of w has not yet been assigned, recursively search w
-          search(w);
+          search(self, w);
         } else {
           // Otherwise, if w has not yet been assigned to a strongly connected component:
           if (!stateToComponent.has(v)) {
@@ -97,7 +102,7 @@ export abstract class BaseSCC<T, S> {
       if (v === p[p.length - 1]) {
         // Pop vertices from S until v has been popped, and assign the popped vertices to a new component
         const component = new BaseComponent<T, S>(
-          this.components.length,
+          components.length,
           stateToComponent
         );
         do {
@@ -115,7 +120,7 @@ export abstract class BaseSCC<T, S> {
 
     for (const state of states) {
       if (!order.has(state)) {
-        search(state);
+        search(this, state);
       }
     }
 
@@ -123,6 +128,9 @@ export abstract class BaseSCC<T, S> {
       this.connect(c, stateToComponent);
     }
 
-    return components;
+    return {
+      components,
+      stateToComponent,
+    };
   }
 }

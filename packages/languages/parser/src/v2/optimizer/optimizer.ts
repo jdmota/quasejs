@@ -56,7 +56,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
 
   addTransition(state: DState, transition: AnyTransition, dest: DState): void {
     state.addTransition(transition, dest);
-    throw new Error("TODO");
+    // throw new Error("TODO");
     /*if (transition instanceof RuleTransition) {
       this._addFollow(transition.rule, dest);
     } else if (
