@@ -1,7 +1,69 @@
 import { DState } from "../../automaton/state";
 import { AnyTransition } from "../../automaton/transitions";
+import { first } from "../../utils";
 import { BaseComponent, BaseSCC } from "./strongly-connected-components";
 import { BaseTopologicalOrder } from "./topological-order";
+
+abstract class CFGNode {
+  readonly inEdges: CFGEdge[];
+  readonly outEdges: CFGEdge[];
+  constructor() {
+    this.inEdges = [];
+    this.outEdges = [];
+  }
+  addOutEdge(edge: CFGEdge): void {
+    this.outEdges.push(edge);
+    edge.dest.inEdges.push(edge);
+  }
+}
+
+interface CFGEdge {
+  readonly start: CFGNode;
+  readonly dest: CFGNode;
+}
+
+class CFGForwardEdge implements CFGEdge {
+  readonly start: CFGNode;
+  readonly transition: AnyTransition;
+  readonly dest: CFGNode;
+  constructor(start: CFGNode, transition: AnyTransition, dest: CFGNode) {
+    this.start = start;
+    this.transition = transition;
+    this.dest = dest;
+  }
+}
+
+class CFGBackEdge implements CFGEdge {
+  readonly start: CFGNode;
+  readonly transition: AnyTransition;
+  readonly dest: CFGNode;
+  constructor(start: CFGNode, transition: AnyTransition, dest: CFGNode) {
+    this.start = start;
+    this.transition = transition;
+    this.dest = dest;
+  }
+}
+
+class CFGDispatchEdge implements CFGEdge {
+  readonly start: CFGMultiEntry;
+  readonly previous: CFGNode;
+  readonly dest: CFGNode;
+  constructor(start: CFGMultiEntry, previous: CFGNode, dest: CFGNode) {
+    this.start = start;
+    this.previous = previous;
+    this.dest = dest;
+  }
+}
+
+class CFGState extends CFGNode {
+  readonly state: DState;
+  constructor(state: DState) {
+    super();
+    this.state = state;
+  }
+}
+
+class CFGMultiEntry extends CFGNode {}
 
 // Based on https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
 
@@ -18,16 +80,88 @@ class TopologicalOrder extends BaseTopologicalOrder<Component> {
 type Component = BaseComponent<AnyTransition, DState>;
 
 class ConnectedComponents extends BaseSCC<AnyTransition, DState> {
-  inEdgesAmount(state: DState): number {
+  inEdgesAmount(state: DState) {
     return state.inTransitions;
   }
 
-  destinations(state: DState): IterableIterator<DState> {
+  destinations(state: DState) {
     return state.destinations();
   }
 
-  outEdges(state: DState): IterableIterator<readonly [AnyTransition, DState]> {
+  outEdges(state: DState) {
     return state[Symbol.iterator]();
+  }
+}
+
+class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
+  private readonly headers: ReadonlySet<DState>;
+
+  constructor(headers: ReadonlySet<DState>) {
+    super();
+    this.headers = headers;
+  }
+
+  inEdgesAmount(state: DState) {
+    return state.inTransitions;
+  }
+
+  *destinations(state: DState) {
+    for (const dest of state.destinations()) {
+      if (!this.headers.has(dest)) {
+        yield dest;
+      }
+    }
+  }
+
+  *outEdges(state: DState) {
+    for (const [transition, dest] of state) {
+      if (!this.headers.has(dest)) {
+        yield [transition, dest] as const;
+      }
+    }
+  }
+}
+
+class DFAtoCFG {
+  process(start: DState, states: Iterable<DState>) {
+    const scc = new ConnectedComponents();
+    const { start: initialComponent, components } = scc.process(start, states);
+    const componentToEntryNode = new Map<Component, CFGNode>();
+    const nodes = new Map<DState, CFGNode>();
+    const seen = new Set<DState>();
+
+    for (const s of states) {
+      nodes.set(s, new CFGState(s));
+    }
+
+    for (const c of components) {
+      // The entries are the nodes reachable from outside of the SCC
+      // If there is more than one, we have a multiple-entry loop
+      if (c.entries.size > 1) {
+        const node = new CFGMultiEntry();
+        for (const [previous, _, entry] of c.inEdges) {
+          node.addOutEdge(
+            new CFGDispatchEdge(node, nodes.get(previous)!!, nodes.get(entry)!!)
+          );
+        }
+        componentToEntryNode.set(c, node);
+      } else {
+        const node = nodes.get(first(c.entries))!!;
+        componentToEntryNode.set(c, node);
+      }
+    }
+
+    function visit(state: DState) {
+      seen.add(state);
+      const node = nodes.get(state)!!;
+      for (const [t, dest] of state) {
+        if (seen.has(dest)) {
+          node.addOutEdge(new CFGBackEdge(node, t, nodes.get(dest)!!));
+        } else {
+          node.addOutEdge(new CFGForwardEdge(node, t, nodes.get(dest)!!));
+        }
+      }
+    }
   }
 }
 
@@ -136,18 +270,21 @@ export class CfgToCode {
 
   private handleSingleEntryLoop(component: Component): CodeBlock {
     // c.headers.size === 1
-    const nonHeaders = component.states.filter(s => component.headers.has(s));
+    const headers = component.entries;
+    const nonHeaders = component.states.filter(s => headers.has(s));
+    const scc = new ConnectedComponentsForLoop(headers);
+    const block = this.processStates(scc, nonHeaders);
     // TODO
     return {
       type: "loop_block",
       label: "",
-      block: this.empty,
+      block,
     };
   }
 
   private handleMultipleEntryLoop(component: Component): CodeBlock {
     // c.headers.size > 1
-    const nonHeaders = component.states.filter(s => component.headers.has(s));
+    const nonHeaders = component.states.filter(s => component.entries.has(s));
     // TODO
     return {
       type: "loop_block",
@@ -208,7 +345,7 @@ export class CfgToCode {
     if (c.states.length > 1) {
       // The loop headers are the nodes reachable from outside of the SCC
       // If there is more than one, we have a multiple-entry loop
-      if (c.headers.size > 1) {
+      if (c.entries.size > 1) {
         return this.handleMultipleEntryLoop(c);
       } else {
         return this.handleSingleEntryLoop(c);
@@ -218,9 +355,12 @@ export class CfgToCode {
     }
   }
 
-  process(states: Iterable<DState>): CodeBlock {
+  private processStates(
+    scc: BaseSCC<AnyTransition, DState>,
+    states: Iterable<DState>
+  ): CodeBlock {
     // The graph of the strongly connected components forms a DAG
-    const { components } = new ConnectedComponents().process(states);
+    const { components } = scc.process(states);
     const topologicalOrder = new TopologicalOrder().kahnsAlgorithm(components);
 
     let lastBlock = this.empty;
@@ -234,5 +374,9 @@ export class CfgToCode {
     }
 
     return lastBlock;
+  }
+
+  process(states: Iterable<DState>): CodeBlock {
+    return this.processStates(new ConnectedComponents(), states);
   }
 }

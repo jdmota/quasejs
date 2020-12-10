@@ -94,21 +94,21 @@ export class DState {
 
   *destinations() {
     // IterableIterator<DState>
-    for (const [_, value] of this.transitionsMap) {
-      yield value;
+    for (const [_, dest] of this.transitionsMap) {
+      yield dest;
     }
-    for (const [_, value] of this.rangeList) {
-      yield value;
+    for (const [_, dest] of this.rangeList) {
+      yield dest;
     }
   }
 
   *[Symbol.iterator]() {
-    // IterableIterator<readonly [Transition, DState]>
-    for (const value of this.transitionsMap) {
-      yield value;
+    // IterableIterator<readonly [AnyTransition, DState]>
+    for (const pair of this.transitionsMap) {
+      yield pair;
     }
-    for (const [range, value] of this.rangeList) {
-      yield [new RangeTransition(range.from, range.to), value] as const;
+    for (const [range, dest] of this.rangeList) {
+      yield [new RangeTransition(range.from, range.to), dest] as const;
     }
   }
 }
