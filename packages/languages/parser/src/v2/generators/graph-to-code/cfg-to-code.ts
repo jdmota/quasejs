@@ -37,6 +37,7 @@ export type CodeBlock =
   | SwitchBlock
   | ScopeBlock
   | LoopBlock
+  | ContinueBlock
   | BreakScopeBlock
   | BreakCaseBlock
   | EmptyBlock;
@@ -64,7 +65,13 @@ export type ScopeBlock = {
 
 export type LoopBlock = {
   type: "loop_block";
+  label: string;
   block: CodeBlock;
+};
+
+export type ContinueBlock = {
+  type: "continue_block";
+  label: string;
 };
 
 export type BreakScopeBlock = {
@@ -128,13 +135,25 @@ export class CfgToCode {
   }
 
   private handleSingleEntryLoop(component: Component): CodeBlock {
+    // c.headers.size === 1
+    const nonHeaders = component.states.filter(s => component.headers.has(s));
     // TODO
-    return this.empty;
+    return {
+      type: "loop_block",
+      label: "",
+      block: this.empty,
+    };
   }
 
   private handleMultipleEntryLoop(component: Component): CodeBlock {
+    // c.headers.size > 1
+    const nonHeaders = component.states.filter(s => component.headers.has(s));
     // TODO
-    return this.empty;
+    return {
+      type: "loop_block",
+      label: "",
+      block: this.empty,
+    };
   }
 
   private handleSequentialCode(component: Component): CodeBlock {
@@ -199,7 +218,7 @@ export class CfgToCode {
     }
   }
 
-  process(states: readonly DState[]): CodeBlock {
+  process(states: Iterable<DState>): CodeBlock {
     // The graph of the strongly connected components forms a DAG
     const { components } = new ConnectedComponents().process(states);
     const topologicalOrder = new TopologicalOrder().kahnsAlgorithm(components);

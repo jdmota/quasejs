@@ -64,7 +64,7 @@ export abstract class BaseSCC<T, S> {
     }
   }
 
-  process(states: readonly S[]): SCCResult<T, S> {
+  process(states: Iterable<S>): SCCResult<T, S> {
     const s: S[] = [];
     const p: S[] = [];
     let c = 0;

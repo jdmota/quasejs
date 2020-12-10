@@ -25,7 +25,13 @@ export class CodeToString {
           `${indent}}while(0);`,
         ].join("\n");
       case "loop_block":
-        return "TODO_loop();";
+        return [
+          `${indent}${block.label}:while(1){`,
+          this.render(indent + "  ", block.block),
+          `${indent}}`,
+        ].join("\n");
+      case "continue_block":
+        return `${indent}continue ${block.label};`;
       case "break_case_block":
         return `${indent}break;`;
       case "break_scope_block":
