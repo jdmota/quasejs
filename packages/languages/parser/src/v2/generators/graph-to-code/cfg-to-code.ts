@@ -94,11 +94,11 @@ class ConnectedComponents extends BaseSCC<AnyTransition, DState> {
 }
 
 class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
-  private readonly headers: ReadonlySet<DState>;
+  private readonly entries: ReadonlySet<DState>;
 
-  constructor(headers: ReadonlySet<DState>) {
+  constructor(entries: ReadonlySet<DState>) {
     super();
-    this.headers = headers;
+    this.entries = entries;
   }
 
   inEdgesAmount(state: DState) {
@@ -107,7 +107,7 @@ class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
 
   *destinations(state: DState) {
     for (const dest of state.destinations()) {
-      if (!this.headers.has(dest)) {
+      if (!this.entries.has(dest)) {
         yield dest;
       }
     }
@@ -115,7 +115,7 @@ class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
 
   *outEdges(state: DState) {
     for (const [transition, dest] of state) {
-      if (!this.headers.has(dest)) {
+      if (!this.entries.has(dest)) {
         yield [transition, dest] as const;
       }
     }
@@ -125,15 +125,19 @@ class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
 class DFAtoCFG {
   process(start: DState, states: Iterable<DState>) {
     const scc = new ConnectedComponents();
-    const { start: initialComponent, components } = scc.process(start, states);
-    const componentToEntryNode = new Map<Component, CFGNode>();
+    const { components, stateToComponent } = scc.process(states);
+    const initialComponent = stateToComponent.get(start)!!;
+
+    const componentToEntry = new Map<Component, CFGNode>();
     const nodes = new Map<DState, CFGNode>();
     const seen = new Set<DState>();
 
+    // Associate each DState with a CFGState
     for (const s of states) {
       nodes.set(s, new CFGState(s));
     }
 
+    // Compute the entries of each component
     for (const c of components) {
       // The entries are the nodes reachable from outside of the SCC
       // If there is more than one, we have a multiple-entry loop
@@ -144,10 +148,30 @@ class DFAtoCFG {
             new CFGDispatchEdge(node, nodes.get(previous)!!, nodes.get(entry)!!)
           );
         }
-        componentToEntryNode.set(c, node);
+        componentToEntry.set(c, node);
       } else {
-        const node = nodes.get(first(c.entries))!!;
-        componentToEntryNode.set(c, node);
+        if (c === initialComponent) {
+          // c.entries.size === 0
+          const node = nodes.get(start)!!;
+          componentToEntry.set(c, node);
+        } else {
+          const node = nodes.get(first(c.entries))!!;
+          componentToEntry.set(c, node);
+        }
+      }
+    }
+
+    // Connect the exits of each component to the entries of the destination components
+    for (const c of components) {
+      for (const [exit, transition, dest] of c.outEdges) {
+        const exitNode = nodes.get(exit)!!;
+        exitNode.addOutEdge(
+          new CFGForwardEdge(
+            exitNode,
+            transition,
+            componentToEntry.get(stateToComponent.get(dest)!!)!!
+          )
+        );
       }
     }
 
@@ -272,13 +296,13 @@ export class CfgToCode {
     // c.headers.size === 1
     const headers = component.entries;
     const nonHeaders = component.states.filter(s => headers.has(s));
-    const scc = new ConnectedComponentsForLoop(headers);
-    const block = this.processStates(scc, nonHeaders);
+    //const scc = new ConnectedComponentsForLoop(headers);
+    //const block = this.processStates(scc, nonHeaders);
     // TODO
     return {
       type: "loop_block",
       label: "",
-      block,
+      block: this.empty,
     };
   }
 
@@ -342,6 +366,8 @@ export class CfgToCode {
     this.processed.add(c);
 
     // SCCs with more than one element are loops
+    // or with a state that can transit to itself
+    // FIXME
     if (c.states.length > 1) {
       // The loop headers are the nodes reachable from outside of the SCC
       // If there is more than one, we have a multiple-entry loop

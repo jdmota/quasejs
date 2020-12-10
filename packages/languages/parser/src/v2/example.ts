@@ -18,7 +18,11 @@ const {
   fieldMultiple,
 } = builder;
 
-const ruleA = seq(choice(string("A"), string("B")), string("C"));
+const ruleA = seq(
+  choice(string("A"), string("B")),
+  string("C"),
+  repeat(string("D"))
+);
 
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
 

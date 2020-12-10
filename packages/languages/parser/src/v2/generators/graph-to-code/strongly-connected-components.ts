@@ -8,8 +8,10 @@ export class BaseComponent<T, S> {
   readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
   readonly outEdges: BaseComponentEdge<T, S>[];
   readonly inEdges: BaseComponentEdge<T, S>[];
-  // Entry points of this component (nodes reachable from outside or the start node)
+  // Entry points (nodes reachable from outside)
   readonly entries: Set<S>;
+  // Exit points (nodes that reach the outside)
+  readonly exits: Set<S>;
 
   constructor(
     id: number,
@@ -21,21 +23,7 @@ export class BaseComponent<T, S> {
     this.outEdges = [];
     this.inEdges = [];
     this.entries = new Set();
-  }
-
-  isLoop(scc: BaseSCC<T, S>) {
-    // SCCs with more than one element are loops
-    // (unless a state has a transition to itself)
-    if (this.states.length > 1) {
-      return true;
-    }
-    const state = this.states[0];
-    for (const dest of scc.destinations(state)) {
-      if (dest === state) {
-        return true;
-      }
-    }
-    return false;
+    this.exits = new Set();
   }
 
   *destinations() {
@@ -52,7 +40,7 @@ export class BaseComponent<T, S> {
 }
 
 type SCCResult<T, S> = {
-  readonly start: BaseComponent<T, S>;
+  // readonly start: BaseComponent<T, S>;
   readonly components: readonly BaseComponent<T, S>[];
   readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
 };
@@ -74,6 +62,7 @@ export abstract class BaseSCC<T, S> {
         if (component !== otherComponent) {
           const tuple = [state, transition, dest] as const;
           component.outEdges.push(tuple);
+          component.exits.add(state);
           otherComponent.inEdges.push(tuple);
           otherComponent.entries.add(dest);
         }
@@ -81,7 +70,7 @@ export abstract class BaseSCC<T, S> {
     }
   }
 
-  process(start: S, states: Iterable<S>): SCCResult<T, S> {
+  process(states: Iterable<S>): SCCResult<T, S> {
     const s: S[] = [];
     const p: S[] = [];
     let c = 0;
@@ -146,13 +135,13 @@ export abstract class BaseSCC<T, S> {
     }
 
     // initialComponent.headers.length === 0
-    const initialComponent = stateToComponent.get(start)!!;
-    initialComponent.entries.add(start);
+    // const initialComponent = stateToComponent.get(start)!!;
+    // initialComponent.entries.add(start);
     // initialComponent.headers.length === 1
     // initialComponent.inEdges.length === 0
 
     return {
-      start: initialComponent,
+      // start: initialComponent,
       components,
       stateToComponent,
     };
