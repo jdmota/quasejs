@@ -1,25 +1,25 @@
 // Based on https://en.wikipedia.org/wiki/Path-based_strong_component_algorithm
 
-export type BaseComponentEdge<T, S> = readonly [S, T, S];
+export type BaseComponentEdge<T, N> = readonly [N, T, N];
 
-export class BaseComponent<T, S> {
+export class BaseComponent<T, N> {
   readonly id: number;
-  readonly states: S[];
-  readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
-  readonly outEdges: BaseComponentEdge<T, S>[];
-  readonly inEdges: BaseComponentEdge<T, S>[];
+  readonly nodes: Set<N>;
+  readonly nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>;
+  readonly outEdges: BaseComponentEdge<T, N>[];
+  readonly inEdges: BaseComponentEdge<T, N>[];
   // Entry points (nodes reachable from outside)
-  readonly entries: Set<S>;
+  readonly entries: Set<N>;
   // Exit points (nodes that reach the outside)
-  readonly exits: Set<S>;
+  readonly exits: Set<N>;
 
   constructor(
     id: number,
-    stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>
+    nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>
   ) {
     this.id = id;
-    this.states = [];
-    this.stateToComponent = stateToComponent;
+    this.nodes = new Set();
+    this.nodeToComponent = nodeToComponent;
     this.outEdges = [];
     this.inEdges = [];
     this.entries = new Set();
@@ -28,41 +28,38 @@ export class BaseComponent<T, S> {
 
   *destinations() {
     for (const [_, _2, dest] of this.outEdges) {
-      yield this.stateToComponent.get(dest)!!;
+      yield this.nodeToComponent.get(dest)!!;
     }
   }
 
   *[Symbol.iterator]() {
     for (const [_, transition, dest] of this.outEdges) {
-      yield [transition, this.stateToComponent.get(dest)!!] as const;
+      yield [transition, this.nodeToComponent.get(dest)!!] as const;
     }
   }
 }
 
-type SCCResult<T, S> = {
-  // readonly start: BaseComponent<T, S>;
-  readonly components: readonly BaseComponent<T, S>[];
-  readonly stateToComponent: ReadonlyMap<S, BaseComponent<T, S>>;
+type SCCResult<T, N> = {
+  readonly components: readonly BaseComponent<T, N>[];
+  readonly nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>;
 };
 
-export abstract class BaseSCC<T, S> {
-  abstract inEdgesAmount(state: S): number;
+export abstract class BaseSCC<T, N> {
+  abstract destinations(node: N): IterableIterator<N>;
 
-  abstract destinations(state: S): IterableIterator<S>;
-
-  abstract outEdges(state: S): IterableIterator<readonly [T, S]>;
+  abstract outEdges(node: N): IterableIterator<readonly [T, N]>;
 
   private connect(
-    component: BaseComponent<T, S>,
-    stateToComponent: Map<S, BaseComponent<T, S>>
+    component: BaseComponent<T, N>,
+    nodeToComponent: Map<N, BaseComponent<T, N>>
   ) {
-    for (const state of component.states) {
-      for (const [transition, dest] of this.outEdges(state)) {
-        const otherComponent = stateToComponent.get(dest)!!;
+    for (const node of component.nodes) {
+      for (const [transition, dest] of this.outEdges(node)) {
+        const otherComponent = nodeToComponent.get(dest)!!;
         if (component !== otherComponent) {
-          const tuple = [state, transition, dest] as const;
+          const tuple = [node, transition, dest] as const;
           component.outEdges.push(tuple);
-          component.exits.add(state);
+          component.exits.add(node);
           otherComponent.inEdges.push(tuple);
           otherComponent.entries.add(dest);
         }
@@ -70,15 +67,15 @@ export abstract class BaseSCC<T, S> {
     }
   }
 
-  process(states: Iterable<S>): SCCResult<T, S> {
-    const s: S[] = [];
-    const p: S[] = [];
+  process(nodes: Iterable<N>): SCCResult<T, N> {
+    const s: N[] = [];
+    const p: N[] = [];
     let c = 0;
-    const order = new Map<S, number>();
-    const components: BaseComponent<T, S>[] = [];
-    const stateToComponent = new Map<S, BaseComponent<T, S>>();
+    const order = new Map<N, number>();
+    const components: BaseComponent<T, N>[] = [];
+    const nodeToComponent = new Map<N, BaseComponent<T, N>>();
 
-    function search(self: BaseSCC<T, S>, v: S) {
+    function search(self: BaseSCC<T, N>, v: N) {
       // 1. Set the preorder number of v to C, and increment C
       order.set(v, c);
       c++;
@@ -95,7 +92,7 @@ export abstract class BaseSCC<T, S> {
           search(self, w);
         } else {
           // Otherwise, if w has not yet been assigned to a strongly connected component:
-          if (!stateToComponent.has(v)) {
+          if (!nodeToComponent.has(v)) {
             // Repeatedly pop vertices from P until the top element of P has a preorder number less than or equal to the preorder number of w
             while (order.get(p[p.length - 1])!! > preorder) {
               p.pop();
@@ -107,14 +104,14 @@ export abstract class BaseSCC<T, S> {
       // 4. If v is the top element of P
       if (v === p[p.length - 1]) {
         // Pop vertices from S until v has been popped, and assign the popped vertices to a new component
-        const component = new BaseComponent<T, S>(
+        const component = new BaseComponent<T, N>(
           components.length,
-          stateToComponent
+          nodeToComponent
         );
         do {
           const x = s.pop()!!;
-          component.states.push(x);
-          stateToComponent.set(x, component);
+          component.nodes.add(x);
+          nodeToComponent.set(x, component);
           if (x === v) break;
         } while (true);
         components.push(component);
@@ -124,26 +121,19 @@ export abstract class BaseSCC<T, S> {
       }
     }
 
-    for (const state of states) {
-      if (!order.has(state)) {
-        search(this, state);
+    for (const node of nodes) {
+      if (!order.has(node)) {
+        search(this, node);
       }
     }
 
     for (const c of components) {
-      this.connect(c, stateToComponent);
+      this.connect(c, nodeToComponent);
     }
 
-    // initialComponent.headers.length === 0
-    // const initialComponent = stateToComponent.get(start)!!;
-    // initialComponent.entries.add(start);
-    // initialComponent.headers.length === 1
-    // initialComponent.inEdges.length === 0
-
     return {
-      // start: initialComponent,
       components,
-      stateToComponent,
+      nodeToComponent: nodeToComponent,
     };
   }
 }

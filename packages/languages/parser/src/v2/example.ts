@@ -3,7 +3,7 @@ import { builder } from "./grammar/grammar-builder";
 import { Automaton, Frag } from "./automaton/automaton";
 import { FactoryRule } from "./factories/factory-rule";
 import { NfaToDfa, DfaMinimizer } from "./optimizer/optimizer";
-import { CfgToCode } from "./generators/graph-to-code/cfg-to-code";
+import { CfgToCode, CfgToCode2 } from "./generators/graph-to-code/cfg-to-code";
 import { CodeToString } from "./generators/graph-to-code/code-to-string";
 import { formatRule } from "./formaters/formater";
 
@@ -44,7 +44,7 @@ function minimize(frag: Frag) {
 
 const minimized = minimize(frag);
 
-const cfgToCode = new CfgToCode(minimized);
+const cfgToCode = new CfgToCode2(minimized);
 const codeToString = new CodeToString();
 
 const code = cfgToCode.process();

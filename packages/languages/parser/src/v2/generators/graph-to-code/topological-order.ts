@@ -16,39 +16,39 @@ class Queue<V> {
 
   dequeue() {
     if (!this.head) return null;
-    const state = this.head.value;
+    const value = this.head.value;
     this.head = this.head.next;
     if (!this.head) this.tail = null;
-    return state;
+    return value;
   }
 }
 
-// Assuming the states considered form a DAG
+// Assuming the nodes considered form a DAG
 
-export abstract class BaseTopologicalOrder<State> {
-  abstract inEdgesAmount(state: State): number;
+export abstract class BaseTopologicalOrder<Node> {
+  abstract inEdgesAmount(node: Node): number;
 
-  abstract destinations(state: State): IterableIterator<State>;
+  abstract destinations(node: Node): IterableIterator<Node>;
 
-  *depthFirstAlgorithm(states: readonly State[]) {
-    const marked = new Set<State>();
-    const reversedOrder: State[] = [];
+  *depthFirstAlgorithm(nodes: readonly Node[]) {
+    const marked = new Set<Node>();
+    const reversedOrder: Node[] = [];
 
-    for (const state of states) {
-      visit(this, state);
+    for (const node of nodes) {
+      visit(this, node);
     }
 
-    function visit(self: BaseTopologicalOrder<State>, state: State) {
-      if (marked.has(state)) {
+    function visit(self: BaseTopologicalOrder<Node>, node: Node) {
+      if (marked.has(node)) {
         return;
       }
 
-      for (const dest of self.destinations(state)) {
+      for (const dest of self.destinations(node)) {
         visit(self, dest);
       }
 
-      marked.add(state);
-      reversedOrder.push(state);
+      marked.add(node);
+      reversedOrder.push(node);
     }
 
     let i = reversedOrder.length;
@@ -57,11 +57,11 @@ export abstract class BaseTopologicalOrder<State> {
     }
   }
 
-  *kahnsAlgorithm(states: readonly State[]) {
-    const queue = new Queue<State>();
-    const inEdgesMap = new Map<State, number>();
+  *kahnsAlgorithm(nodes: readonly Node[]) {
+    const queue = new Queue<Node>();
+    const inEdgesMap = new Map<Node, number>();
 
-    for (const s of states) {
+    for (const s of nodes) {
       const inEdges = this.inEdgesAmount(s);
       inEdgesMap.set(s, inEdges);
       if (inEdges === 0) {
@@ -70,11 +70,11 @@ export abstract class BaseTopologicalOrder<State> {
     }
 
     while (true) {
-      const state = queue.dequeue();
-      if (!state) break;
-      yield state;
+      const node = queue.dequeue();
+      if (!node) break;
+      yield node;
 
-      for (const dest of this.destinations(state)) {
+      for (const dest of this.destinations(node)) {
         const inEdges = inEdgesMap.get(dest)!! - 1;
         inEdgesMap.set(dest, inEdges);
         if (inEdges === 0) {
