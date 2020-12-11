@@ -66,10 +66,10 @@ type CFGStateOpts = Readonly<{
 }>;
 
 class CFGState extends CFGNode {
-  state: DState;
+  //state: DState;
   constructor(state: DState, { entry, start, end }: CFGStateOpts) {
     super();
-    this.state = state;
+    //this.state = state;
     this.entry = entry;
     this.start = start;
     this.end = end;
@@ -121,13 +121,17 @@ class CFGScc extends BaseSCC<CFGEdge, CFGNode> {
     this.nodes = nodes;
   }
 
-  private considerEdge(edge: CFGEdge) {
+  private considerInEdge(edge: CFGEdge) {
+    return edge.type === "forward" && this.nodes.has(edge.start);
+  }
+
+  private considerOutEdge(edge: CFGEdge) {
     return edge.type === "forward" && this.nodes.has(edge.dest);
   }
 
   *inEdges(node: CFGNode) {
     for (const edge of node.inEdges) {
-      if (this.considerEdge(edge)) {
+      if (this.considerInEdge(edge)) {
         yield edge;
       }
     }
@@ -135,7 +139,7 @@ class CFGScc extends BaseSCC<CFGEdge, CFGNode> {
 
   *destinations(node: CFGNode) {
     for (const edge of node.outEdges) {
-      if (this.considerEdge(edge)) {
+      if (this.considerOutEdge(edge)) {
         yield edge.dest;
       }
     }
@@ -143,7 +147,7 @@ class CFGScc extends BaseSCC<CFGEdge, CFGNode> {
 
   *outEdges(node: CFGNode) {
     for (const edge of node.outEdges) {
-      if (this.considerEdge(edge)) {
+      if (this.considerOutEdge(edge)) {
         yield [edge, edge.dest] as const;
       }
     }
@@ -160,35 +164,6 @@ class SccTopologicalOrder extends BaseTopologicalOrder<CFGComponent> {
   }
 }
 
-class ConnectedComponentsForLoop extends BaseSCC<AnyTransition, DState> {
-  private readonly entries: ReadonlySet<DState>;
-
-  constructor(entries: ReadonlySet<DState>) {
-    super();
-    this.entries = entries;
-  }
-
-  inEdgesAmount(state: DState) {
-    return state.inTransitions;
-  }
-
-  *destinations(state: DState) {
-    for (const dest of state.destinations()) {
-      if (!this.entries.has(dest)) {
-        yield dest;
-      }
-    }
-  }
-
-  *outEdges(state: DState) {
-    for (const [transition, dest] of state) {
-      if (!this.entries.has(dest)) {
-        yield [transition, dest] as const;
-      }
-    }
-  }
-}
-
 type OrderedCFGNodes = CFGNode | OrderedCFGNodes[];
 
 class DFAtoCFG {
@@ -201,6 +176,7 @@ class DFAtoCFG {
 
     // Associate each DState with a CFGState
     for (const s of states) {
+      if (s.id === 0) continue;
       nodes.set(
         s,
         new CFGState(s, {
@@ -211,8 +187,8 @@ class DFAtoCFG {
       );
     }
 
-    for (const node of nodes.values()) {
-      for (const [transition, dest] of node.state) {
+    for (const [state, node] of nodes) {
+      for (const [transition, dest] of state) {
         new CFGEdge(node, transition, nodes.get(dest)!!, "forward").connect();
       }
     }
@@ -237,6 +213,8 @@ class DFAtoCFG {
       components
     );
     const orderedNodes: OrderedCFGNodes[] = [];
+
+    console.log(components);
 
     for (const c of topologicalOrder) {
       // A SCC with more than one element is a loop
@@ -295,7 +273,15 @@ class DFAtoCFG {
           }
         }
 
-        orderedNodes.push(this.process(loopStart, c.nodes));
+        console.log("loop");
+        console.log(loopStart);
+        console.log(c.nodes);
+
+        // FIXME the end node gets lost??...
+
+        const nodesToConsiderNow = new Set(c.nodes);
+        nodesToConsiderNow.add(loopStart); // Make sure the multi-entry node is in this set
+        orderedNodes.push(this.process(loopStart, nodesToConsiderNow));
       } else {
         // Not a loop unless the state has a transition to itself
         const node = first(c.nodes);
@@ -559,7 +545,9 @@ export class CfgToCode2 {
   process() {
     const dfaToCfg = new DFAtoCFG();
     const { start, nodes } = dfaToCfg.convert(this.dfa);
+    console.log(nodes);
     const ordered = dfaToCfg.process(start, nodes);
+    console.log(ordered);
     return this.processList(ordered);
   }
 }
