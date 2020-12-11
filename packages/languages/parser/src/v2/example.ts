@@ -21,7 +21,7 @@ const {
 const ruleA = seq(
   choice(string("A"), string("B")),
   string("C"),
-  repeat(string("D"))
+  repeat(seq(string("D"), string("E")))
 );
 
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
@@ -42,12 +42,12 @@ function minimize(frag: Frag) {
   );
 }
 
-const cfgToCode = new CfgToCode();
-const codeToString = new CodeToString();
-
 const minimized = minimize(frag);
 
-const code = cfgToCode.process(minimized.states.slice(1));
+const cfgToCode = new CfgToCode(minimized);
+const codeToString = new CodeToString();
+
+const code = cfgToCode.process();
 
 console.log(formatRule(ruleA));
 console.log();

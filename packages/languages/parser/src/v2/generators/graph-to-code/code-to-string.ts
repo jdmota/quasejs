@@ -2,10 +2,10 @@ import { never } from "../../utils";
 import { CodeBlock } from "./cfg-to-code";
 
 export class CodeToString {
-  render(indent: string, block: CodeBlock) {
+  render(indent: string, block: CodeBlock): string {
     switch (block.type) {
       case "expect_block":
-        return `expect(${block.transition});`;
+        return `${indent}expect(${block.transition});`;
       case "seq_block":
         return block.blocks.map(b => this.render(indent, b)).join("\n");
       case "switch_block":
@@ -36,6 +36,8 @@ export class CodeToString {
         return `${indent}break;`;
       case "break_scope_block":
         return `${indent}break ${block.label};`;
+      case "return_block":
+        return `${indent}return;`;
       case "empty_block":
         return "";
       default:
