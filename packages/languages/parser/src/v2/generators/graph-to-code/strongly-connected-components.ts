@@ -5,69 +5,45 @@ export type BaseComponentEdge<T, N> = readonly [N, T, N];
 export class BaseComponent<T, N> {
   readonly id: number;
   readonly nodes: Set<N>;
-  readonly nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>;
-  readonly outEdges: BaseComponentEdge<T, N>[];
-  readonly inEdges: BaseComponentEdge<T, N>[];
+  inEdgesAmount: number;
+  readonly destinations: BaseComponent<T, N>[];
   // Entry points (nodes reachable from outside)
   readonly entries: Set<N>;
-  // Exit points (nodes that reach the outside)
-  readonly exits: Set<N>;
 
-  constructor(
-    id: number,
-    nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>
-  ) {
+  constructor(id: number) {
     this.id = id;
     this.nodes = new Set();
-    this.nodeToComponent = nodeToComponent;
-    this.outEdges = [];
-    this.inEdges = [];
+    this.inEdgesAmount = 0;
+    this.destinations = [];
     this.entries = new Set();
-    this.exits = new Set();
-  }
-
-  *destinations() {
-    for (const [_, _2, dest] of this.outEdges) {
-      yield this.nodeToComponent.get(dest)!!;
-    }
-  }
-
-  *[Symbol.iterator]() {
-    for (const [_, transition, dest] of this.outEdges) {
-      yield [transition, this.nodeToComponent.get(dest)!!] as const;
-    }
   }
 }
 
-type SCCResult<T, N> = {
+/*type SCCResult<T, N> = {
   readonly components: readonly BaseComponent<T, N>[];
   readonly nodeToComponent: ReadonlyMap<N, BaseComponent<T, N>>;
-};
+};*/
 
 export abstract class BaseSCC<T, N> {
-  abstract destinations(node: N): IterableIterator<N>;
-
-  abstract outEdges(node: N): IterableIterator<readonly [T, N]>;
+  abstract destinations(node: N): Iterable<N>;
 
   private connect(
     component: BaseComponent<T, N>,
     nodeToComponent: Map<N, BaseComponent<T, N>>
   ) {
     for (const node of component.nodes) {
-      for (const [transition, dest] of this.outEdges(node)) {
+      for (const dest of this.destinations(node)) {
         const otherComponent = nodeToComponent.get(dest)!!;
         if (component !== otherComponent) {
-          const tuple = [node, transition, dest] as const;
-          component.outEdges.push(tuple);
-          component.exits.add(node);
-          otherComponent.inEdges.push(tuple);
+          component.destinations.push(otherComponent);
+          otherComponent.inEdgesAmount++;
           otherComponent.entries.add(dest);
         }
       }
     }
   }
 
-  process(nodes: Iterable<N>): SCCResult<T, N> {
+  process(nodes: Iterable<N>) {
     const s: N[] = [];
     const p: N[] = [];
     let c = 0;
@@ -92,7 +68,7 @@ export abstract class BaseSCC<T, N> {
           search(self, w);
         } else {
           // Otherwise, if w has not yet been assigned to a strongly connected component:
-          if (!nodeToComponent.has(v)) {
+          if (!nodeToComponent.has(w)) {
             // Repeatedly pop vertices from P until the top element of P has a preorder number less than or equal to the preorder number of w
             while (order.get(p[p.length - 1])!! > preorder) {
               p.pop();
@@ -104,10 +80,7 @@ export abstract class BaseSCC<T, N> {
       // 4. If v is the top element of P
       if (v === p[p.length - 1]) {
         // Pop vertices from S until v has been popped, and assign the popped vertices to a new component
-        const component = new BaseComponent<T, N>(
-          components.length,
-          nodeToComponent
-        );
+        const component = new BaseComponent<T, N>(components.length);
         do {
           const x = s.pop()!!;
           component.nodes.add(x);
@@ -131,9 +104,6 @@ export abstract class BaseSCC<T, N> {
       this.connect(c, nodeToComponent);
     }
 
-    return {
-      components,
-      nodeToComponent: nodeToComponent,
-    };
+    return components;
   }
 }

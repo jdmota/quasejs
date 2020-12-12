@@ -8,16 +8,20 @@ export class CodeToString {
         return `${indent}expect(${block.transition});`;
       case "seq_block":
         return block.blocks.map(b => this.render(indent, b)).join("\n");
-      case "switch_block":
+      case "decision_block": {
+        const hasDefault = block.choices.some(([t]) => t == null);
         return [
           `${indent}switch(current()){`,
-          ...block.choices.map(
-            ([t, d]) =>
-              `${indent}  case ${t}:\n${this.render(`${indent}    `, d)}`
+          ...block.choices.map(([t, d]) =>
+            t == null
+              ? `${indent}  default:\n${this.render(`${indent}    `, d)}`
+              : `${indent}  case ${t}:\n${this.render(`${indent}    `, d)}`
           ),
-          `${indent}  default:\n${indent}    unexpected();`,
-          `${indent}}`,
+          hasDefault
+            ? `${indent}}`
+            : `${indent}  default:\n${indent}    unexpected();\n${indent}}`,
         ].join("\n");
+      }
       case "scope_block":
         return [
           `${indent}${block.label}:do{`,

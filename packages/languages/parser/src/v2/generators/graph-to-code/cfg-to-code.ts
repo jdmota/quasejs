@@ -5,7 +5,7 @@ import { first } from "../../utils";
 import { BaseComponent, BaseSCC } from "./strongly-connected-components";
 import { BaseTopologicalOrder } from "./topological-order";
 
-abstract class CFGNode {
+class CFGNode {
   inEdges: Set<CFGEdge>;
   outEdges: Set<CFGEdge>;
   entry: boolean;
@@ -17,6 +17,16 @@ abstract class CFGNode {
     this.entry = false;
     this.start = false;
     this.end = false;
+  }
+
+  forwardPredecessors() {
+    let count = 0;
+    for (const edge of this.inEdges) {
+      if (edge.type === "forward") {
+        count++;
+      }
+    }
+    return count;
   }
 }
 
@@ -59,58 +69,6 @@ class CFGEdge {
   }
 }
 
-type CFGStateOpts = Readonly<{
-  entry: boolean;
-  start: boolean;
-  end: boolean;
-}>;
-
-class CFGState extends CFGNode {
-  //state: DState;
-  constructor(state: DState, { entry, start, end }: CFGStateOpts) {
-    super();
-    //this.state = state;
-    this.entry = entry;
-    this.start = start;
-    this.end = end;
-  }
-}
-
-class CFGMultiEntry extends CFGNode {
-  constructor() {
-    super();
-    this.entry = true;
-  }
-}
-
-// Based on https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
-
-class TopologicalOrder extends BaseTopologicalOrder<Component> {
-  inEdgesAmount(component: Component): number {
-    return component.inEdges.length;
-  }
-
-  destinations(component: Component): IterableIterator<Component> {
-    return component.destinations();
-  }
-}
-
-type Component = BaseComponent<AnyTransition, DState>;
-
-class ConnectedComponents extends BaseSCC<AnyTransition, DState> {
-  inEdgesAmount(state: DState) {
-    return state.inTransitions;
-  }
-
-  destinations(state: DState) {
-    return state.destinations();
-  }
-
-  outEdges(state: DState) {
-    return state[Symbol.iterator]();
-  }
-}
-
 type CFGComponent = BaseComponent<CFGEdge, CFGNode>;
 
 class CFGScc extends BaseSCC<CFGEdge, CFGNode> {
@@ -144,23 +102,15 @@ class CFGScc extends BaseSCC<CFGEdge, CFGNode> {
       }
     }
   }
-
-  *outEdges(node: CFGNode) {
-    for (const edge of node.outEdges) {
-      if (this.considerOutEdge(edge)) {
-        yield [edge, edge.dest] as const;
-      }
-    }
-  }
 }
 
 class SccTopologicalOrder extends BaseTopologicalOrder<CFGComponent> {
   inEdgesAmount(component: CFGComponent) {
-    return component.inEdges.length;
+    return component.inEdgesAmount;
   }
 
   destinations(component: CFGComponent) {
-    return component.destinations();
+    return component.destinations;
   }
 }
 
@@ -172,19 +122,16 @@ class DFAtoCFG {
     states,
     acceptingSet,
   }: DFA<DState>): { start: CFGNode; nodes: ReadonlySet<CFGNode> } {
-    const nodes = new Map<DState, CFGState>();
+    const nodes = new Map<DState, CFGNode>();
 
     // Associate each DState with a CFGState
     for (const s of states) {
       if (s.id === 0) continue;
-      nodes.set(
-        s,
-        new CFGState(s, {
-          entry: false,
-          start: s === start,
-          end: acceptingSet.has(s),
-        })
-      );
+      const node = new CFGNode();
+      node.entry = false;
+      node.start = s === start;
+      node.end = acceptingSet.has(s);
+      nodes.set(s, node);
     }
 
     for (const [state, node] of nodes) {
@@ -208,15 +155,10 @@ class DFAtoCFG {
     // The result is a reducible CFG
     // The function returns the nodes in topological order keeping nodes that are part of loops together
     const scc = new CFGScc(nodes);
-    const { components } = scc.process(nodes);
-    const topologicalOrder = new SccTopologicalOrder().kahnsAlgorithm(
-      components
-    );
+    const components = new SccTopologicalOrder().process(scc.process(nodes));
     const orderedNodes: OrderedCFGNodes[] = [];
 
-    console.log(components);
-
-    for (const c of topologicalOrder) {
+    for (const c of components) {
       // A SCC with more than one element is a loop
       if (c.nodes.size > 1) {
         let loopStart: CFGNode;
@@ -250,7 +192,8 @@ class DFAtoCFG {
 
           // If there is more than one entry, we have a multiple-entry loop
           if (c.entries.size > 1) {
-            loopStart = new CFGMultiEntry();
+            loopStart = new CFGNode();
+            loopStart.entry = true;
             // Add edges from the multi-entry to the current entries
             for (const currentEntry of c.entries) {
               new CFGEdge(
@@ -272,12 +215,6 @@ class DFAtoCFG {
             loopStart.entry = true;
           }
         }
-
-        console.log("loop");
-        console.log(loopStart);
-        console.log(c.nodes);
-
-        // FIXME the end node gets lost??...
 
         const nodesToConsiderNow = new Set(c.nodes);
         nodesToConsiderNow.add(loopStart); // Make sure the multi-entry node is in this set
@@ -301,7 +238,7 @@ class DFAtoCFG {
 export type CodeBlock =
   | ExpectBlock
   | SeqBlock
-  | SwitchBlock
+  | DecisionBlock
   | ScopeBlock
   | LoopBlock
   | ContinueBlock
@@ -320,9 +257,9 @@ export type SeqBlock = {
   blocks: CodeBlock[];
 };
 
-export type SwitchBlock = {
-  type: "switch_block";
-  choices: [AnyTransition, CodeBlock][];
+export type DecisionBlock = {
+  type: "decision_block";
+  choices: [AnyTransition | null, CodeBlock][];
 };
 
 export type ScopeBlock = {
@@ -359,26 +296,97 @@ export type EmptyBlock = {
   type: "empty_block";
 };
 
-export class CfgToCode2 {
+const empty: CodeBlock = {
+  type: "empty_block",
+};
+
+const breakCase: CodeBlock = {
+  type: "break_case_block",
+};
+
+function isBreakFlow(block: CodeBlock) {
+  const { type } = block;
+  return (
+    type === "break_scope_block" ||
+    type === "break_case_block" ||
+    type === "continue_block" ||
+    type === "return_block"
+  );
+}
+
+function removeLastBlock(
+  block: CodeBlock,
+  fn: (b: CodeBlock) => boolean
+): CodeBlock {
+  if (block.type === "seq_block") {
+    const { blocks } = block;
+    const lastIdx = blocks.length - 1;
+    const last = blocks[lastIdx];
+    if (fn(last)) {
+      return makeSeq(blocks.slice(0, lastIdx));
+    }
+    return block;
+  }
+  if (fn(block)) {
+    return empty;
+  }
+  return block;
+}
+
+function makeSeq(_blocks: CodeBlock[]): CodeBlock {
+  const blocks = _blocks
+    .flatMap(b => (b.type === "seq_block" ? b.blocks : b))
+    .filter(b => b.type !== "empty_block");
+  switch (blocks.length) {
+    case 0:
+      return empty;
+    case 1:
+      return blocks[0];
+    default: {
+      const firstBreakOrContinue = blocks.findIndex(isBreakFlow);
+      return {
+        type: "seq_block",
+        blocks:
+          firstBreakOrContinue === -1
+            ? blocks
+            : blocks.slice(0, firstBreakOrContinue + 1),
+      };
+    }
+  }
+}
+
+function makeScope(label: string, _block: CodeBlock): CodeBlock {
+  const block = removeLastBlock(
+    _block,
+    b => b.type === "break_scope_block" && b.label === label
+  );
+  if (block.type === "empty_block") {
+    return empty;
+  }
+  return {
+    type: "scope_block",
+    label,
+    block,
+  };
+}
+
+function makeLoop(label: string, block: CodeBlock): CodeBlock {
+  if (block.type === "empty_block") {
+    throw new Error(`Empty infinite loop?`);
+  }
+  return {
+    type: "loop_block",
+    label,
+    block,
+  };
+}
+
+export class CfgToCode {
   private readonly processed = new Set<OrderedCFGNodes>();
-  private readonly scopeLabels = new Map<OrderedCFGNodes, string>();
-  private readonly loopLabels = new Map<OrderedCFGNodes, string>();
+  private readonly scopeLabels = new Map<CFGNode, string>();
+  private readonly loopLabels = new Map<CFGNode, string>();
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
-
-  private readonly empty: CodeBlock = {
-    type: "empty_block",
-  };
-
-  private readonly breakCase: CodeBlock = {
-    type: "break_case_block",
-  };
-
-  private readonly dfa: DFA<DState>;
-
-  constructor(dfa: DFA<DState>) {
-    this.dfa = dfa;
-  }
 
   private getScopeLabel(nodes: OrderedCFGNodes) {
     let n = nodes;
@@ -402,44 +410,13 @@ export class CfgToCode2 {
     return label;
   }
 
-  private makeSeq(_blocks: CodeBlock[]): CodeBlock {
-    const blocks = _blocks.filter(b => b.type !== "empty_block");
-    switch (blocks.length) {
-      case 0:
-        return this.empty;
-      case 1:
-        return blocks[0];
-      default:
-        return {
-          type: "seq_block",
-          blocks,
-        };
-    }
-  }
-
-  private makeScope(label: string, block: CodeBlock): CodeBlock {
-    if (block.type === "empty_block") {
-      return this.empty;
-    }
-    return {
-      type: "scope_block",
-      label,
-      block,
-    };
-  }
-
   private handleLoop(nodes: OrderedCFGNodes[]): CodeBlock {
-    const label = this.getLoopLabel(nodes);
-    return {
-      type: "loop_block",
-      label,
-      block: this.processList(nodes),
-    };
+    return makeLoop(this.getLoopLabel(nodes), this.processList(nodes));
   }
 
   private handleNode(node: CFGNode): CodeBlock {
     const isFinal = node.end;
-    const choices: [AnyTransition, CodeBlock, boolean][] = [];
+    const choices: [AnyTransition | null, CodeBlock][] = [];
     let isLoop = false;
 
     for (const { transition, dest, type } of node.outEdges) {
@@ -449,57 +426,67 @@ export class CfgToCode2 {
         }
         choices.push([
           transition,
-          {
-            type: "continue_block",
-            label: this.getLoopLabel(dest),
-          },
-          false,
+          makeSeq([
+            {
+              type: "expect_block",
+              transition,
+            },
+            {
+              type: "continue_block",
+              label: this.getLoopLabel(dest),
+            },
+          ]),
         ]);
       } else {
-        // TODO nest if there is only one forward predecessor
+        // TODO dest.forwardPredecessors()
         if (dest.inEdges.size === 1) {
           // Nest the code
-          choices.push([transition, this.handleNodes(dest), true]);
+          choices.push([
+            transition,
+            makeSeq([
+              {
+                type: "expect_block",
+                transition,
+              },
+              this.handleNodes(dest),
+            ]),
+          ]);
         } else {
           choices.push([
             transition,
-            {
-              type: "break_scope_block",
-              label: this.getScopeLabel(dest),
-            },
-            false,
+            makeSeq([
+              {
+                type: "expect_block",
+                transition,
+              },
+              {
+                type: "break_scope_block",
+                label: this.getScopeLabel(dest),
+              },
+            ]),
           ]);
         }
       }
     }
 
     if (isFinal) {
-      choices.push([new EpsilonTransition(), { type: "return_block" }, false]);
+      choices.push([null, { type: "return_block" }]);
     }
 
     let block: CodeBlock;
     switch (choices.length) {
       case 0:
-        block = this.empty;
+        block = empty;
         break;
       case 1: {
-        const [transition, dest] = choices[0];
-        block = this.makeSeq([
-          {
-            type: "expect_block",
-            transition,
-          },
-          dest,
-        ]);
+        const [_, dest] = choices[0];
+        block = dest;
         break;
       }
       default:
         block = {
-          type: "switch_block",
-          choices: choices.map(([t, d, breakCase]) => [
-            t,
-            breakCase ? this.makeSeq([d, this.breakCase]) : d,
-          ]),
+          type: "decision_block",
+          choices: choices.map(([t, d]) => [t, makeSeq([d, breakCase])]),
         };
     }
 
@@ -508,7 +495,7 @@ export class CfgToCode2 {
       block = {
         type: "loop_block",
         label,
-        block: this.makeSeq([
+        block: makeSeq([
           block,
           {
             type: "break_scope_block",
@@ -531,236 +518,21 @@ export class CfgToCode2 {
   }
 
   private processList(ordered: OrderedCFGNodes[]) {
-    let lastBlock = this.empty;
+    let lastBlock = empty;
     for (const nodes of ordered) {
       if (this.processed.has(nodes)) continue;
-      lastBlock = this.makeSeq([
-        this.makeScope(this.getScopeLabel(nodes), lastBlock),
+      lastBlock = makeSeq([
+        makeScope(this.getScopeLabel(nodes), lastBlock),
         this.handleNodes(nodes),
       ]);
     }
     return lastBlock;
   }
 
-  process() {
+  process(dfa: DFA<DState>) {
     const dfaToCfg = new DFAtoCFG();
-    const { start, nodes } = dfaToCfg.convert(this.dfa);
-    console.log(nodes);
+    const { start, nodes } = dfaToCfg.convert(dfa);
     const ordered = dfaToCfg.process(start, nodes);
-    console.log(ordered);
     return this.processList(ordered);
-  }
-}
-
-export class CfgToCode {
-  private readonly processed = new Set<Component>();
-  private readonly scopeLabels = new Map<Component, string>();
-  private readonly loopLabels = new Map<Component, string>();
-  private scopeLabelUuid = 1;
-  private loopLabelUuid = 1;
-
-  private readonly empty: CodeBlock = {
-    type: "empty_block",
-  };
-
-  private readonly breakCase: CodeBlock = {
-    type: "break_case_block",
-  };
-
-  private readonly dfa: DFA<DState>;
-
-  constructor(dfa: DFA<DState>) {
-    this.dfa = dfa;
-  }
-
-  private getScopeLabel(c: Component) {
-    const curr = this.scopeLabels.get(c);
-    if (curr) return curr;
-    const label = `s${this.scopeLabelUuid++}`;
-    this.scopeLabels.set(c, label);
-    return label;
-  }
-
-  private getLoopLabel(c: Component) {
-    const curr = this.loopLabels.get(c);
-    if (curr) return curr;
-    const label = `l${this.loopLabelUuid++}`;
-    this.loopLabels.set(c, label);
-    return label;
-  }
-
-  private makeSeq(_blocks: CodeBlock[]): CodeBlock {
-    const blocks = _blocks.filter(b => b.type !== "empty_block");
-    switch (blocks.length) {
-      case 0:
-        return this.empty;
-      case 1:
-        return blocks[0];
-      default:
-        return {
-          type: "seq_block",
-          blocks,
-        };
-    }
-  }
-
-  private makeScope(label: string, block: CodeBlock): CodeBlock {
-    if (block.type === "empty_block") {
-      return this.empty;
-    }
-    return {
-      type: "scope_block",
-      label,
-      block,
-    };
-  }
-
-  private handleSingleEntryLoop(component: Component): CodeBlock {
-    // c.headers.size === 1
-    //const headers = component.entries;
-    //const nonHeaders = component.nodes.filter(s => headers.has(s));
-    //const scc = new ConnectedComponentsForLoop(headers);
-    //const block = this.processStates(scc, nonHeaders);
-    // TODO
-    return this.empty;
-  }
-
-  private handleMultipleEntryLoop(component: Component): CodeBlock {
-    // c.headers.size > 1
-    //const nonHeaders = component.nodes.filter(s => component.entries.has(s));
-    // TODO
-    return this.empty;
-  }
-
-  private handleSequentialCode(component: Component): CodeBlock {
-    // component.states.length === 1
-    const state = first(component.nodes);
-    const choices: [AnyTransition, CodeBlock, boolean][] = [];
-    const isFinal = this.dfa.acceptingSet.has(state);
-    let loopLabel: string | undefined = undefined;
-
-    for (const [transition, dest] of state) {
-      if (state === dest) {
-        loopLabel = this.getLoopLabel(component);
-        choices.push([
-          transition,
-          {
-            type: "continue_block",
-            label: loopLabel,
-          },
-          false,
-        ]);
-      } else {
-        const destComponent = component.nodeToComponent.get(dest)!!;
-        if (dest.inTransitions === 1) {
-          // Nest the code
-          choices.push([transition, this.handleComponent(destComponent), true]);
-        } else {
-          // FIXME if this goes to a loop header, it needs to be a continue
-          choices.push([
-            transition,
-            {
-              type: "break_scope_block",
-              label: this.getScopeLabel(destComponent),
-            },
-            false,
-          ]);
-        }
-      }
-    }
-
-    if (isFinal) {
-      choices.push([new EpsilonTransition(), { type: "return_block" }, false]);
-    }
-
-    let block: CodeBlock;
-    switch (choices.length) {
-      case 0:
-        block = this.empty;
-        break;
-      case 1: {
-        const [transition, dest] = choices[0];
-        block = this.makeSeq([
-          {
-            type: "expect_block",
-            transition,
-          },
-          dest,
-        ]);
-        break;
-      }
-      default:
-        block = {
-          type: "switch_block",
-          choices: choices.map(([t, d, breakCase]) => [
-            t,
-            breakCase ? this.makeSeq([d, this.breakCase]) : d,
-          ]),
-        };
-    }
-
-    if (loopLabel) {
-      block = {
-        type: "loop_block",
-        label: loopLabel,
-        block: this.makeSeq([
-          block,
-          {
-            type: "break_scope_block",
-            label: loopLabel,
-          },
-        ]),
-      };
-    }
-
-    return block;
-  }
-
-  private handleComponent(c: Component) {
-    this.processed.add(c);
-
-    // SCCs with more than one element are loops
-    // or with a state that can transit to itself
-    // FIXME
-    if (c.nodes.size > 1) {
-      // The loop headers are the nodes reachable from outside of the SCC
-      // If there is more than one, we have a multiple-entry loop
-      if (c.entries.size > 1) {
-        return this.handleMultipleEntryLoop(c);
-      } else {
-        // FIXME the number of entries might be zero if this is the start component
-        return this.handleSingleEntryLoop(c);
-      }
-    } else {
-      return this.handleSequentialCode(c);
-    }
-  }
-
-  private processStates(
-    scc: BaseSCC<AnyTransition, DState>,
-    states: Iterable<DState>
-  ): CodeBlock {
-    // The graph of the strongly connected components forms a DAG
-    const { components } = scc.process(states);
-    const topologicalOrder = new TopologicalOrder().kahnsAlgorithm(components);
-
-    let lastBlock = this.empty;
-
-    for (const c of topologicalOrder) {
-      if (this.processed.has(c)) continue;
-      lastBlock = this.makeSeq([
-        this.makeScope(this.getScopeLabel(c), lastBlock),
-        this.handleComponent(c),
-      ]);
-    }
-
-    return lastBlock;
-  }
-
-  process(): CodeBlock {
-    return this.processStates(
-      new ConnectedComponents(),
-      this.dfa.states.slice(1)
-    );
   }
 }

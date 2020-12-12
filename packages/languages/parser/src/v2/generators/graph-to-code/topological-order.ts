@@ -28,36 +28,9 @@ class Queue<V> {
 export abstract class BaseTopologicalOrder<Node> {
   abstract inEdgesAmount(node: Node): number;
 
-  abstract destinations(node: Node): IterableIterator<Node>;
+  abstract destinations(node: Node): Iterable<Node>;
 
-  *depthFirstAlgorithm(nodes: readonly Node[]) {
-    const marked = new Set<Node>();
-    const reversedOrder: Node[] = [];
-
-    for (const node of nodes) {
-      visit(this, node);
-    }
-
-    function visit(self: BaseTopologicalOrder<Node>, node: Node) {
-      if (marked.has(node)) {
-        return;
-      }
-
-      for (const dest of self.destinations(node)) {
-        visit(self, dest);
-      }
-
-      marked.add(node);
-      reversedOrder.push(node);
-    }
-
-    let i = reversedOrder.length;
-    while (i--) {
-      yield reversedOrder[i];
-    }
-  }
-
-  *kahnsAlgorithm(nodes: readonly Node[]) {
+  *process(nodes: readonly Node[]) {
     const queue = new Queue<Node>();
     const inEdgesMap = new Map<Node, number>();
 
