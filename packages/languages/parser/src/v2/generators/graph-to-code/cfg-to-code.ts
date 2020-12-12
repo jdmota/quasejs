@@ -114,7 +114,47 @@ class SccTopologicalOrder extends BaseTopologicalOrder<CFGComponent> {
   }
 }
 
-type OrderedCFGNodes = CFGNode | OrderedCFGNodes[];
+type CFGNodeOrGroup = CFGNode | CFGGroup;
+
+class CFGGroup {
+  parent: CFGGroup | null;
+  parentIdx: number | null;
+  readonly entry: CFGNode;
+  readonly contents: CFGNodeOrGroup[];
+  constructor(
+    parent: CFGGroup | null,
+    parentIdx: number | null,
+    entry: CFGNode,
+    contents: CFGNodeOrGroup[]
+  ) {
+    this.parent = parent;
+    this.parentIdx = parentIdx;
+    this.entry = entry;
+    this.contents = contents;
+  }
+  forwardPredecessors() {
+    return this.entry.forwardPredecessors();
+  }
+  find(target: CFGNode, startIdx = 0): CFGNodeOrGroup {
+    const { parent, parentIdx, contents } = this;
+    for (let i = startIdx; i < contents.length; i++) {
+      const nodes = contents[i];
+      if (nodes instanceof CFGGroup) {
+        if (nodes.entry === target) {
+          return nodes;
+        }
+      } else {
+        if (nodes === target) {
+          return nodes;
+        }
+      }
+    }
+    if (parent == null || parentIdx == null) {
+      throw new Error(`CFGGroup.find`);
+    }
+    return parent.find(target, parentIdx);
+  }
+}
 
 class DFAtoCFG {
   convert({
@@ -146,7 +186,7 @@ class DFAtoCFG {
     };
   }
 
-  process(start: CFGNode, nodes: ReadonlySet<CFGNode>): OrderedCFGNodes[] {
+  process(start: CFGNode, nodes: ReadonlySet<CFGNode>): CFGGroup {
     // What this function does:
     // 1. Compute multi-entry loops and add the dispatch nodes
     // 2. Distinguish forward edges from back edges
@@ -156,7 +196,7 @@ class DFAtoCFG {
     // The function returns the nodes in topological order keeping nodes that are part of loops together
     const scc = new CFGScc(nodes);
     const components = new SccTopologicalOrder().process(scc.process(nodes));
-    const orderedNodes: OrderedCFGNodes[] = [];
+    const group = new CFGGroup(null, null, start, []);
 
     for (const c of components) {
       // A SCC with more than one element is a loop
@@ -218,7 +258,11 @@ class DFAtoCFG {
 
         const nodesToConsiderNow = new Set(c.nodes);
         nodesToConsiderNow.add(loopStart); // Make sure the multi-entry node is in this set
-        orderedNodes.push(this.process(loopStart, nodesToConsiderNow));
+
+        const innerGroup = this.process(loopStart, nodesToConsiderNow);
+        innerGroup.parent = group;
+        innerGroup.parentIdx = group.contents.length;
+        group.contents.push(innerGroup);
       } else {
         // Not a loop unless the state has a transition to itself
         const node = first(c.nodes);
@@ -228,10 +272,10 @@ class DFAtoCFG {
             edge.type = "back";
           }
         }
-        orderedNodes.push(node);
+        group.contents.push(node);
       }
     }
-    return orderedNodes;
+    return group;
   }
 }
 
@@ -296,11 +340,11 @@ export type EmptyBlock = {
   type: "empty_block";
 };
 
-const empty: CodeBlock = {
+const empty: EmptyBlock = {
   type: "empty_block",
 };
 
-const breakCase: CodeBlock = {
+const breakCase: BreakCaseBlock = {
   type: "break_case_block",
 };
 
@@ -382,15 +426,15 @@ function makeLoop(label: string, block: CodeBlock): CodeBlock {
 }
 
 export class CfgToCode {
-  private readonly processed = new Set<OrderedCFGNodes>();
+  private readonly processed = new Set<CFGNodeOrGroup>();
   private readonly scopeLabels = new Map<CFGNode, string>();
   private readonly loopLabels = new Map<CFGNode, string>();
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
 
-  private getScopeLabel(nodes: OrderedCFGNodes) {
+  private getScopeLabel(nodes: CFGNodeOrGroup) {
     let n = nodes;
-    while (Array.isArray(n)) n = n[0];
+    while (n instanceof CFGGroup) n = n.entry;
 
     const curr = this.scopeLabels.get(n);
     if (curr) return curr;
@@ -399,9 +443,9 @@ export class CfgToCode {
     return label;
   }
 
-  private getLoopLabel(nodes: OrderedCFGNodes) {
+  private getLoopLabel(nodes: CFGNodeOrGroup) {
     let n = nodes;
-    while (Array.isArray(n)) n = n[0];
+    while (n instanceof CFGGroup) n = n.entry;
 
     const curr = this.loopLabels.get(n);
     if (curr) return curr;
@@ -410,11 +454,8 @@ export class CfgToCode {
     return label;
   }
 
-  private handleLoop(nodes: OrderedCFGNodes[]): CodeBlock {
-    return makeLoop(this.getLoopLabel(nodes), this.processList(nodes));
-  }
-
-  private handleNode(node: CFGNode): CodeBlock {
+  // TODO optimize diamonds to reduce the number of necessary scopes
+  private handleNode(node: CFGNode, parent: CFGGroup): CodeBlock {
     const isFinal = node.end;
     const choices: [AnyTransition | null, CodeBlock][] = [];
     let isLoop = false;
@@ -438,8 +479,8 @@ export class CfgToCode {
           ]),
         ]);
       } else {
-        // TODO dest.forwardPredecessors()
-        if (dest.inEdges.size === 1) {
+        const destGroup = parent.find(dest);
+        if (destGroup.forwardPredecessors() === 1) {
           // Nest the code
           choices.push([
             transition,
@@ -448,7 +489,7 @@ export class CfgToCode {
                 type: "expect_block",
                 transition,
               },
-              this.handleNodes(dest),
+              this.handleNodes(destGroup, parent),
             ]),
           ]);
         } else {
@@ -508,22 +549,26 @@ export class CfgToCode {
     return block;
   }
 
-  private handleNodes(nodes: OrderedCFGNodes) {
+  private handleLoop(group: CFGGroup): CodeBlock {
+    return makeLoop(this.getLoopLabel(group), this.processGroup(group));
+  }
+
+  private handleNodes(nodes: CFGNodeOrGroup, parent: CFGGroup) {
     this.processed.add(nodes);
-    if (Array.isArray(nodes)) {
+    if (nodes instanceof CFGGroup) {
       return this.handleLoop(nodes);
     } else {
-      return this.handleNode(nodes);
+      return this.handleNode(nodes, parent);
     }
   }
 
-  private processList(ordered: OrderedCFGNodes[]) {
-    let lastBlock = empty;
-    for (const nodes of ordered) {
+  private processGroup(ordered: CFGGroup) {
+    let lastBlock: CodeBlock = empty;
+    for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
       lastBlock = makeSeq([
         makeScope(this.getScopeLabel(nodes), lastBlock),
-        this.handleNodes(nodes),
+        this.handleNodes(nodes, ordered),
       ]);
     }
     return lastBlock;
@@ -533,6 +578,6 @@ export class CfgToCode {
     const dfaToCfg = new DFAtoCFG();
     const { start, nodes } = dfaToCfg.convert(dfa);
     const ordered = dfaToCfg.process(start, nodes);
-    return this.processList(ordered);
+    return this.processGroup(ordered);
   }
 }

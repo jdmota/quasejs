@@ -18,13 +18,28 @@ const {
   fieldMultiple,
 } = builder;
 
-const ruleA = seq(
-  choice(string("A"), string("B")),
-  string("C"),
-  repeat(seq(string("D"), string("E")))
+const ruleA =
+  choice(
+    seq(string("A"), string("B"), string("C")),
+    seq(string("A"), string("D"))
+  ) ||
+  seq(
+    choice(string("A"), string("B")),
+    string("C"),
+    repeat(seq(string("D"), string("E"))),
+    repeat(string("F"))
+  );
+
+const ruleB = seq(
+  choice(
+    seq(string("A"), repeat(seq(string("B"), string("D")))),
+    seq(string("A"), repeat(seq(string("C"), string("D"))))
+  )
 );
 
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
+
+console.log("Starting...");
 
 const automaton = new Automaton();
 const ruleFactory = new FactoryRule(automaton);
