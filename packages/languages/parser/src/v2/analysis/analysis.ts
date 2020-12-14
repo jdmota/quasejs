@@ -4,19 +4,81 @@ import {
   RuleTransition,
   RangeTransition,
   ReturnTransition,
+  PredicateTransition,
 } from "../automaton/transitions";
+import { never } from "../utils";
 import { RangeSet } from "../utils/range-set";
 import { MapRangeToSet } from "../utils/map-range-to-set";
 import { MapKeyToValue } from "../utils/map-key-to-value";
-import { never } from "../utils";
+import { MapKeyToSet } from "../utils/map-key-to-set";
+
+type RangeDecision = {
+  type: "range_decision";
+  from: number;
+  to: number;
+  lookahead: number;
+};
+
+type PredicateDecision = {
+  type: "predicate_decision";
+  transition: PredicateTransition;
+};
+
+type StackDecision = {
+  type: "stack_decision";
+  stack: FollowStack;
+};
+
+type DecisionDestination = {
+  transition: AnyTransition;
+  state: DState;
+};
+
+type Decision = RangeDecision | PredicateDecision | StackDecision;
+type Decisions = Decision[];
+
+class DecisionNode {}
+
+class DecisionList {}
+
+class DecisionsTree {
+  rangeToDecisions = new MapRangeToSet<DecisionDestination>();
+  predicatesToDecisions = new MapKeyToSet<
+    PredicateTransition,
+    DecisionDestination
+  >();
+  stackToDecisions = new MapKeyToSet<FollowStack, DecisionDestination>();
+
+  addDecision(decision: Decision, goto: DecisionDestination) {
+    switch (decision.type) {
+      case "range_decision":
+        this.rangeToDecisions.addRange(
+          decision.from,
+          decision.to,
+          new Set([goto])
+        );
+        break;
+      case "predicate_decision":
+        this.predicatesToDecisions.addOne(decision.transition, goto);
+        break;
+      case "stack_decision":
+        this.stackToDecisions.addOne(decision.stack, goto);
+        break;
+      default:
+        never(decision);
+    }
+  }
+}
 
 type RuleName = string;
 type GoTo = readonly [AnyTransition, DState] | null;
+
 type FollowInfo = {
   readonly caller: RuleName;
   readonly enterState: DState;
   readonly followingState: DState;
 };
+
 type FollowLookahead = {
   readonly stack: FollowStack;
   readonly ranges: RangeSet;
@@ -204,5 +266,126 @@ export class Analyser {
       lookahead,
       followsLookahead,
     };
+  }
+}
+
+class StackFrame {
+  readonly parent: StackFrame | null;
+  readonly thisRule: RuleName;
+  readonly state: DState;
+
+  constructor(parent: StackFrame | null, thisRule: RuleName, state: DState) {
+    this.parent = parent;
+    this.thisRule = thisRule;
+    this.state = state;
+  }
+
+  move(state: DState) {
+    return new StackFrame(this.parent, this.thisRule, state);
+  }
+}
+
+type AnalyzerFollow = {
+  readonly rule: RuleName;
+  readonly enterState: DState;
+  readonly exitState: DState;
+};
+
+export class Analyser2 {
+  readonly startRule: RuleName;
+  readonly initialStates: Map<RuleName, DState>;
+  readonly follows: Map<RuleName, AnalyzerFollow[]>;
+
+  constructor({
+    startRule,
+    initialStates,
+    follows,
+  }: {
+    startRule: RuleName;
+    initialStates: Map<RuleName, DState>;
+    follows: Map<RuleName, AnalyzerFollow[]>;
+  }) {
+    this.startRule = startRule;
+    this.initialStates = initialStates;
+    this.follows = follows;
+  }
+
+  // new AnalyzerStack(null, ruleName, state)
+  private analyzeHelper(
+    stack: StackFrame,
+    lookahead: [RangeTransition, StackFrame][]
+  ) {
+    const seen = new Set<DState>();
+    let prev: StackFrame[] = [stack];
+    let next: StackFrame[] = [];
+
+    while (prev.length) {
+      for (const stack of prev) {
+        if (seen.has(stack.state)) continue;
+        seen.add(stack.state);
+
+        for (const [transition, dest] of stack.state) {
+          if (transition instanceof RuleTransition) {
+            next.push(
+              new StackFrame(
+                stack.move(dest),
+                transition.ruleName,
+                this.initialStates.get(transition.ruleName)!!
+              )
+            );
+          } else if (transition instanceof ReturnTransition) {
+            if (stack.parent) {
+              next.push(stack.parent);
+            } else {
+              const f = this.follows.get(stack.thisRule);
+              if (f && f.length > 0) {
+                for (const info of f) {
+                  next.push(new StackFrame(null, info.rule, info.enterState));
+                }
+              }
+            }
+          } else if (transition instanceof RangeTransition) {
+            lookahead.push([transition, stack.move(dest)]);
+          } else {
+            next.push(stack.move(dest));
+          }
+        }
+      }
+      prev = next;
+      next = [];
+    }
+  }
+
+  analyze(ruleName: RuleName, state: DState) {
+    const stack = new StackFrame(null, ruleName, state);
+
+    for (const [transition, dest] of state) {
+      const lookahead: [RangeTransition, StackFrame][] = [];
+
+      if (transition instanceof RuleTransition) {
+        this.analyzeHelper(
+          new StackFrame(
+            stack.move(dest),
+            transition.ruleName,
+            this.initialStates.get(transition.ruleName)!!
+          ),
+          lookahead
+        );
+      } else if (transition instanceof ReturnTransition) {
+        const f = this.follows.get(stack.thisRule);
+        if (f && f.length > 0) {
+          for (const info of f) {
+            this.analyzeHelper(
+              new StackFrame(null, info.rule, info.enterState),
+              lookahead
+            );
+          }
+        }
+      } else if (transition instanceof RangeTransition) {
+        lookahead.push([transition, stack.move(dest)]);
+      } else {
+        this.analyzeHelper(stack.move(dest), lookahead);
+      }
+    }
   }
 }

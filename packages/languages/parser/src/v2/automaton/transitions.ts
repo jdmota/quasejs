@@ -82,6 +82,20 @@ export class PredicateTransition extends AbstractEpsilonTransition {
   }
 }
 
+export class PrecedenceTransition extends PredicateTransition {
+  hashCode() {
+    return 3;
+  }
+
+  equals(other: unknown): other is PrecedenceTransition {
+    return other instanceof PrecedenceTransition && other === this;
+  }
+
+  toString() {
+    return `[Precedence]`;
+  }
+}
+
 export class ActionTransition extends AbstractEpsilonTransition {
   readonly code: string;
 
@@ -91,7 +105,7 @@ export class ActionTransition extends AbstractEpsilonTransition {
   }
 
   hashCode() {
-    return 3;
+    return 4;
   }
 
   equals(other: unknown): other is ActionTransition {
@@ -100,20 +114,6 @@ export class ActionTransition extends AbstractEpsilonTransition {
 
   toString() {
     return `[Action]`;
-  }
-}
-
-export class PrecedenceTransition extends AbstractEpsilonTransition {
-  hashCode() {
-    return 4;
-  }
-
-  equals(other: unknown): other is PrecedenceTransition {
-    return other instanceof PrecedenceTransition && other === this;
-  }
-
-  toString() {
-    return `[Precedence]`;
   }
 }
 

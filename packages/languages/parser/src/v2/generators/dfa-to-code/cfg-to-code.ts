@@ -15,54 +15,54 @@ export type CodeBlock =
   | ReturnBlock
   | EmptyBlock;
 
-export type ExpectBlock = {
+export type ExpectBlock = Readonly<{
   type: "expect_block";
   transition: AnyTransition;
-};
+}>;
 
-export type SeqBlock = {
+export type SeqBlock = Readonly<{
   type: "seq_block";
   blocks: CodeBlock[];
-};
+}>;
 
-export type DecisionBlock = {
+export type DecisionBlock = Readonly<{
   type: "decision_block";
   choices: [AnyTransition | null, CodeBlock][];
-};
+}>;
 
-export type ScopeBlock = {
+export type ScopeBlock = Readonly<{
   type: "scope_block";
   label: string;
   block: CodeBlock;
-};
+}>;
 
-export type LoopBlock = {
+export type LoopBlock = Readonly<{
   type: "loop_block";
   label: string;
   block: CodeBlock;
-};
+}>;
 
-export type ContinueBlock = {
+export type ContinueBlock = Readonly<{
   type: "continue_block";
   label: string;
-};
+}>;
 
-export type BreakScopeBlock = {
+export type BreakScopeBlock = Readonly<{
   type: "break_scope_block";
   label: string;
-};
+}>;
 
-export type BreakCaseBlock = {
+export type BreakCaseBlock = Readonly<{
   type: "break_case_block";
-};
+}>;
 
-export type ReturnBlock = {
+export type ReturnBlock = Readonly<{
   type: "return_block";
-};
+}>;
 
-export type EmptyBlock = {
+export type EmptyBlock = Readonly<{
   type: "empty_block";
-};
+}>;
 
 const empty: EmptyBlock = {
   type: "empty_block",
