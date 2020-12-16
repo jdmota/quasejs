@@ -3,9 +3,10 @@ import { builder } from "./grammar/grammar-builder";
 import { Automaton, Frag } from "./automaton/automaton";
 import { FactoryRule } from "./factories/factory-rule";
 import { NfaToDfa, DfaMinimizer } from "./optimizer/optimizer";
-import { CfgToCode } from "./generators/graph-to-code/cfg-to-code";
-import { CodeToString } from "./generators/graph-to-code/code-to-string";
+import { CfgToCode } from "./generators/dfa-to-code/cfg-to-code";
+import { CodeToString } from "./generators/dfa-to-code/code-to-string";
 import { formatRule } from "./formaters/formater";
+import { Analyzer } from "./analysis/analysis";
 
 const {
   seq,
@@ -58,6 +59,14 @@ function minimize(frag: Frag) {
 }
 
 const minimized = minimize(frag);
+
+const analyzer = new Analyzer({
+  startRule: "",
+  initialStates: new Map(),
+  follows: new Map(),
+});
+
+console.log(analyzer.analyze("", minimized.start).toString());
 
 const cfgToCode = new CfgToCode();
 const codeToString = new CodeToString();

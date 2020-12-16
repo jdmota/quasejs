@@ -4,103 +4,96 @@ import {
   RuleTransition,
   RangeTransition,
   ReturnTransition,
-  PredicateTransition,
 } from "../automaton/transitions";
-import { never } from "../utils";
-import { RangeSet } from "../utils/range-set";
-import { MapRangeToSet } from "../utils/map-range-to-set";
 import { MapKeyToValue } from "../utils/map-key-to-value";
 import { MapKeyToSet } from "../utils/map-key-to-set";
 
-type RangeDecision = {
-  type: "range_decision";
-  from: number;
-  to: number;
-  lookahead: number;
-};
+type RuleName = string;
 
-type PredicateDecision = {
-  type: "predicate_decision";
-  transition: PredicateTransition;
-};
+class DecisionNode {
+  // Map the decision to make (i.e. the transition to perform)
+  // to points where the analysis stopped when computing the lookahead of this decision
+  readonly gotos: MapKeyToSet<AnyTransition, StackFrame>;
+  readonly children: DecisionsTree;
+  readonly ll: number;
 
-type StackDecision = {
-  type: "stack_decision";
-  stack: FollowStack;
-};
+  constructor(ll: number) {
+    this.ll = ll;
+    this.children = new DecisionsTree(ll + 1);
+    this.gotos = new MapKeyToSet<AnyTransition, StackFrame>();
+  }
 
-type DecisionDestination = {
-  transition: AnyTransition;
-  state: DState;
-};
+  addGoto(goto: AnyTransition, leftIn: StackFrame) {
+    this.gotos.addOne(goto, leftIn);
+  }
 
-type Decision = RangeDecision | PredicateDecision | StackDecision;
-type Decisions = Decision[];
+  isAmbiguous() {
+    return this.gotos.size > 1;
+  }
 
-class DecisionNode {}
-
-class DecisionList {}
+  toString(indent = "") {
+    let str = `DecisionNode {\n`;
+    for (const [key, _] of this.gotos) {
+      str += `${indent}  ${key},\n`;
+    }
+    str += `${this.children.toString(`${indent}  `)},\n`;
+    return str + `${indent}}`;
+  }
+}
 
 class DecisionsTree {
-  rangeToDecisions = new MapRangeToSet<DecisionDestination>();
-  predicatesToDecisions = new MapKeyToSet<
-    PredicateTransition,
-    DecisionDestination
-  >();
-  stackToDecisions = new MapKeyToSet<FollowStack, DecisionDestination>();
+  private map = new MapKeyToValue<RangeTransition, DecisionNode>();
+  readonly ll: number;
 
-  addDecision(decision: Decision, goto: DecisionDestination) {
-    switch (decision.type) {
-      case "range_decision":
-        this.rangeToDecisions.addRange(
-          decision.from,
-          decision.to,
-          new Set([goto])
-        );
-        break;
-      case "predicate_decision":
-        this.predicatesToDecisions.addOne(decision.transition, goto);
-        break;
-      case "stack_decision":
-        this.stackToDecisions.addOne(decision.stack, goto);
-        break;
-      default:
-        never(decision);
+  constructor(ll: number) {
+    this.ll = ll;
+  }
+
+  addDecision(what: RangeTransition, goto: AnyTransition, leftIn: StackFrame) {
+    const node = this.map.computeIfAbsent(
+      what,
+      () => new DecisionNode(this.ll)
+    );
+    node.addGoto(goto, leftIn);
+    return node;
+  }
+
+  toString(indent = "") {
+    let str = `${indent}DecisionTree (ll: ${this.ll}) {\n`;
+    for (const [key, value] of this.map) {
+      str += `${indent}  ${key}: ${value.toString(`${indent}  `)},\n`;
+    }
+    return str + `${indent}}`;
+  }
+
+  *nodes() {
+    for (const [_, node] of this.map) {
+      yield node;
     }
   }
 }
 
-type RuleName = string;
-type GoTo = readonly [AnyTransition, DState] | null;
-
-type FollowInfo = {
-  readonly caller: RuleName;
-  readonly enterState: DState;
-  readonly followingState: DState;
-};
-
-type FollowLookahead = {
-  readonly stack: FollowStack;
-  readonly ranges: RangeSet;
-};
-
 class FollowStack {
-  readonly parent: FollowStack | null;
-  readonly followInfo: FollowInfo;
+  readonly child: FollowStack | null;
+  readonly thisRule: RuleName;
+  readonly enterState: DState;
   private cachedHashCode: number;
 
-  constructor(parent: FollowStack | null, followInfo: FollowInfo) {
-    this.parent = parent;
-    this.followInfo = followInfo;
+  constructor(
+    child: FollowStack | null,
+    thisRule: RuleName,
+    exitState: DState
+  ) {
+    this.child = child;
+    this.thisRule = thisRule;
+    this.enterState = exitState;
     this.cachedHashCode = 0;
   }
 
   hashCode(): number {
     if (this.cachedHashCode === 0) {
-      const parent = this.parent == null ? 1 : this.parent.hashCode();
-      const { caller, enterState, followingState } = this.followInfo;
-      this.cachedHashCode =
-        parent * caller.length * enterState.id * followingState.id;
+      const child = this.child == null ? 1 : this.child.hashCode();
+      this.cachedHashCode = child * this.thisRule.length * this.enterState.id;
     }
     return this.cachedHashCode;
   }
@@ -111,161 +104,22 @@ class FollowStack {
     }
     if (other instanceof FollowStack) {
       if (
-        this.followInfo.caller !== other.followInfo.caller ||
-        this.followInfo.enterState !== other.followInfo.enterState ||
-        this.followInfo.followingState !== other.followInfo.followingState
+        this.thisRule !== other.thisRule ||
+        this.enterState !== other.enterState
       ) {
         return false;
       }
-      if (this.parent === null) {
-        return other.parent === null;
+      if (this.child === null) {
+        return other.child === null;
       }
-      return this.parent.equals(other.parent);
+      return this.child.equals(other.child);
     }
     return false;
   }
-}
 
-export class Analyser {
-  readonly startRule: RuleName;
-  readonly initialStates: Map<RuleName, DState>;
-  readonly follows: Map<RuleName, FollowInfo[]>;
-
-  constructor({
-    startRule,
-    initialStates,
-    follows,
-  }: {
-    startRule: RuleName;
-    initialStates: Map<RuleName, DState>;
-    follows: Map<RuleName, FollowInfo[]>;
-  }) {
-    this.startRule = startRule;
-    this.initialStates = initialStates;
-    this.follows = follows;
-  }
-
-  private analyzeFollows(
-    caller: RuleName,
-    followStack: FollowStack | null,
-    result: FollowLookahead[] = [],
-    seen: Set<RuleName> = new Set()
-  ) {
-    if (seen.has(caller)) return result;
-    seen.add(caller);
-
-    const f = this.follows.get(caller);
-    if (f && f.length > 0) {
-      for (const info of f) {
-        const set = new RangeSet();
-        const returns = this.analyzeState(info.followingState, set, new Set());
-        if (returns) {
-          const newFollowStack = new FollowStack(followStack, info);
-          result.push({
-            stack: newFollowStack,
-            ranges: set,
-          });
-          this.analyzeFollows(info.caller, newFollowStack, result, seen);
-        }
-      }
-    }
-    return result;
-  }
-
-  private analyzeState(
-    state: DState,
-    set: RangeSet,
-    seen: Set<DState>
-  ): boolean {
-    if (seen.has(state)) return false;
-    seen.add(state);
-
-    let returns = false;
-    for (const [transition, dest] of state) {
-      returns = this.analyzeTransition(transition, dest, set, seen) || returns;
-    }
-    return returns;
-  }
-
-  // TODO cache stuff
-
-  // Returns true if analysis should continue to the "caller" rule
-  private analyzeTransition(
-    transition: AnyTransition,
-    dest: DState,
-    set: RangeSet,
-    seen: Set<DState>
-  ): boolean {
-    if (transition instanceof RuleTransition) {
-      const result = this.analyzeState(
-        this.initialStates.get(transition.ruleName)!!,
-        set,
-        seen
-      );
-      return result ? this.analyzeState(dest, set, seen) : result;
-    }
-    if (transition instanceof RangeTransition) {
-      set.add(transition);
-      return false;
-    }
-    if (transition instanceof ReturnTransition) {
-      return true;
-    }
-    if (transition.isEpsilon) {
-      return this.analyzeState(dest, set, seen);
-    }
-    never(transition);
-  }
-
-  // Analysis assumes that "return" transitions are added and that
-  // the initial rule is adapted to include the EOFTransition
-
-  analyze(rule: RuleName, state: DState) {
-    // Prevent stack overflow
-    const seen = new Set<DState>();
-    seen.add(state);
-
-    // Results
-    const lookahead = new MapRangeToSet<GoTo>(); // Given a range, go to destination indicated by GoTo
-    const followsLookahead = new MapKeyToValue<
-      FollowStack,
-      MapRangeToSet<GoTo>
-    >(); // Given a stack, and a range, go to destination indicated by GoTo
-
-    // For each transition on this state,
-    // compute the conditions for that transition to be performed
-    for (const tuple of state) {
-      const [transition, dest] = tuple;
-      const goto = new Set([tuple]);
-
-      // Compute lookahead without stack check
-      const ranges = new RangeSet();
-      const returns = this.analyzeTransition(transition, dest, ranges, seen);
-
-      for (const look of ranges) {
-        lookahead.addRange(look.from, look.to, goto);
-      }
-
-      // If the analysis reached the end of the rule,
-      // We need to consider where the rule is used, and potentially the stack
-      if (returns) {
-        const follows = this.analyzeFollows(rule, null);
-        for (const { stack, ranges } of follows) {
-          const lookahead = followsLookahead.computeIfAbsent(
-            stack,
-            () => new MapRangeToSet()
-          );
-          for (const look of ranges) {
-            lookahead.addRange(look.from, look.to, goto);
-          }
-        }
-      }
-    }
-
-    return {
-      lookahead,
-      followsLookahead,
-    };
+  toString() {
+    const { child } = this;
+    return `${this.thisRule}${child ? `,${child}` : ""}`;
   }
 }
 
@@ -273,15 +127,22 @@ class StackFrame {
   readonly parent: StackFrame | null;
   readonly thisRule: RuleName;
   readonly state: DState;
+  readonly follows: FollowStack | null;
 
-  constructor(parent: StackFrame | null, thisRule: RuleName, state: DState) {
+  constructor(
+    parent: StackFrame | null,
+    thisRule: RuleName,
+    state: DState,
+    follows: FollowStack | null
+  ) {
     this.parent = parent;
     this.thisRule = thisRule;
     this.state = state;
+    this.follows = follows;
   }
 
   move(state: DState) {
-    return new StackFrame(this.parent, this.thisRule, state);
+    return new StackFrame(this.parent, this.thisRule, state, this.follows);
   }
 }
 
@@ -291,7 +152,9 @@ type AnalyzerFollow = {
   readonly exitState: DState;
 };
 
-export class Analyser2 {
+// TODO cache stuff
+
+export class Analyzer {
   readonly startRule: RuleName;
   readonly initialStates: Map<RuleName, DState>;
   readonly follows: Map<RuleName, AnalyzerFollow[]>;
@@ -310,12 +173,11 @@ export class Analyser2 {
     this.follows = follows;
   }
 
-  // new AnalyzerStack(null, ruleName, state)
   private analyzeHelper(
+    seen: Set<DState>,
     stack: StackFrame,
     lookahead: [RangeTransition, StackFrame][]
   ) {
-    const seen = new Set<DState>();
     let prev: StackFrame[] = [stack];
     let next: StackFrame[] = [];
 
@@ -330,7 +192,8 @@ export class Analyser2 {
               new StackFrame(
                 stack.move(dest),
                 transition.ruleName,
-                this.initialStates.get(transition.ruleName)!!
+                this.initialStates.get(transition.ruleName)!!,
+                stack.follows
               )
             );
           } else if (transition instanceof ReturnTransition) {
@@ -340,7 +203,14 @@ export class Analyser2 {
               const f = this.follows.get(stack.thisRule);
               if (f && f.length > 0) {
                 for (const info of f) {
-                  next.push(new StackFrame(null, info.rule, info.enterState));
+                  next.push(
+                    new StackFrame(
+                      null,
+                      info.rule,
+                      info.enterState,
+                      new FollowStack(stack.follows, info.rule, info.enterState)
+                    )
+                  );
                 }
               }
             }
@@ -356,36 +226,73 @@ export class Analyser2 {
     }
   }
 
-  analyze(ruleName: RuleName, state: DState) {
-    const stack = new StackFrame(null, ruleName, state);
+  analyze(ruleName: RuleName, state: DState, maxLL = 1) {
+    const seen = new Set<DState>();
+    const stack = new StackFrame(null, ruleName, state, null);
+    const decisions = new DecisionsTree(1);
 
-    for (const [transition, dest] of state) {
+    for (const [goto, dest] of state) {
       const lookahead: [RangeTransition, StackFrame][] = [];
 
-      if (transition instanceof RuleTransition) {
+      if (goto instanceof RuleTransition) {
         this.analyzeHelper(
+          seen,
           new StackFrame(
             stack.move(dest),
-            transition.ruleName,
-            this.initialStates.get(transition.ruleName)!!
+            goto.ruleName,
+            this.initialStates.get(goto.ruleName)!!,
+            null
           ),
           lookahead
         );
-      } else if (transition instanceof ReturnTransition) {
+      } else if (goto instanceof ReturnTransition) {
         const f = this.follows.get(stack.thisRule);
         if (f && f.length > 0) {
           for (const info of f) {
             this.analyzeHelper(
-              new StackFrame(null, info.rule, info.enterState),
+              seen,
+              new StackFrame(null, info.rule, info.enterState, null),
               lookahead
             );
           }
         }
-      } else if (transition instanceof RangeTransition) {
-        lookahead.push([transition, stack.move(dest)]);
+      } else if (goto instanceof RangeTransition) {
+        lookahead.push([goto, stack.move(dest)]);
       } else {
-        this.analyzeHelper(stack.move(dest), lookahead);
+        this.analyzeHelper(seen, stack.move(dest), lookahead);
+      }
+
+      for (const [what, stack] of lookahead) {
+        decisions.addDecision(what, goto, stack);
       }
     }
+
+    let currentLL = 1;
+    let trees = [decisions];
+
+    while (trees.length > 0 && currentLL <= maxLL) {
+      const moreTrees = [];
+
+      for (const tree of trees) {
+        for (const node of tree.nodes()) {
+          if (!node.isAmbiguous()) continue;
+          for (const [goto, stacks] of node.gotos) {
+            const lookahead: [RangeTransition, StackFrame][] = [];
+            for (const stack of stacks) {
+              this.analyzeHelper(seen, stack, lookahead);
+            }
+            for (const [what, stack] of lookahead) {
+              node.children.addDecision(what, goto, stack);
+            }
+          }
+          moreTrees.push(node.children);
+        }
+      }
+
+      trees = moreTrees;
+      currentLL++;
+    }
+
+    return decisions;
   }
 }
