@@ -1,5 +1,12 @@
 import { never } from "../utils";
-import { AnyRule, FieldRule, TokenRules } from "./grammar-builder";
+import { Grammar } from "./grammar";
+import {
+  AnyRule,
+  FieldRule,
+  IdRule,
+  RuleDeclaration,
+  TokenRules,
+} from "./grammar-builder";
 
 export type ReadonlyFieldStoreValue = {
   readonly name: string;
@@ -112,6 +119,7 @@ function getFieldsHelper(rule: AnyRule): FieldsStore {
       store.importFrom(getFieldsHelper(rule.rule));
       return store;
     }
+    case "select":
     case "id":
     case "empty":
     case "eof":
@@ -124,6 +132,8 @@ function getFieldsHelper(rule: AnyRule): FieldsStore {
       store.set(rule.name, [rule], false);
       return store;
     }
+    default:
+      never(rule);
   }
 }
 
@@ -143,39 +153,42 @@ export function checkAmbiguousFields(store: ReadonlyFieldsStore): string[] {
   return ambiguous;
 }
 
-function gatherTokensHelper(rule: AnyRule, tokens: TokenRules[]) {
+function visit(rule: AnyRule, fn: (rule: AnyRule) => void) {
   switch (rule.type) {
     case "seq":
       for (const r of rule.rules) {
-        gatherTokensHelper(r, tokens);
+        visit(r, fn);
       }
       break;
     case "choice":
       for (const r of rule.rules) {
-        gatherTokensHelper(r, tokens);
+        visit(r, fn);
       }
       break;
     case "repeat":
-      gatherTokensHelper(rule.rule, tokens);
+      visit(rule.rule, fn);
       break;
     case "repeat1":
-      gatherTokensHelper(rule.rule, tokens);
+      visit(rule.rule, fn);
       break;
     case "optional":
-      gatherTokensHelper(rule.rule, tokens);
+      visit(rule.rule, fn);
       break;
     case "field":
-      gatherTokensHelper(rule.rule, tokens);
+      visit(rule.rule, fn);
+      break;
+    case "select":
+      fn(rule);
+      visit(rule.parent, fn);
       break;
     case "eof":
     case "string":
     case "regexp":
-      tokens.push(rule);
-      break;
     case "id":
     case "empty":
     case "action":
     case "predicate":
+      fn(rule);
       break;
     default:
       never(rule);
@@ -184,8 +197,69 @@ function gatherTokensHelper(rule: AnyRule, tokens: TokenRules[]) {
 
 export function gatherTokens(rules: AnyRule[]) {
   const tokens: TokenRules[] = [];
+  const visitor = (rule: AnyRule) => {
+    if (
+      rule.type === "string" ||
+      rule.type === "regexp" ||
+      rule.type === "eof"
+    ) {
+      tokens.push(rule);
+    }
+  };
   for (const rule of rules) {
-    gatherTokensHelper(rule, tokens);
+    visit(rule, visitor);
   }
   return tokens;
+}
+
+export function gatherRuleIds(rules: ReadonlyMap<string, RuleDeclaration>) {
+  const ids: IdRule[] = [];
+  const visitor = (rule: AnyRule) => {
+    if (rule.type === "id") {
+      ids.push(rule);
+    }
+  };
+  for (const rule of rules.values()) {
+    visit(rule.rule, visitor);
+  }
+  return ids;
+}
+
+export function typecheck(grammar: Grammar) {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  for (const [ruleName, store] of grammar.fields) {
+    const fields = checkAmbiguousFields(store);
+    if (fields.length > 0) {
+      warnings.push(
+        `In rule ${ruleName}, the fields ${fields
+          .map(f => `"${f}"`)
+          .join(", ")} are using at the same time = and +=`
+      );
+    }
+  }
+
+  switch (grammar.startRules.length) {
+    case 0:
+      errors.push("Missing start rule");
+      break;
+    case 1:
+      // OK
+      break;
+    default:
+      errors.push("Multiple start rules");
+  }
+
+  const ids = gatherRuleIds(grammar.rules);
+  for (const id of ids) {
+    if (!grammar.rules.has(id.id)) {
+      errors.push(`Undefined rule ${id.id}`);
+    }
+  }
+
+  return {
+    errors,
+    warnings,
+  };
 }

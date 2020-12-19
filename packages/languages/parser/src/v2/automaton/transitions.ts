@@ -1,3 +1,5 @@
+import { AnyCode, FieldRule } from "../grammar/grammar-builder";
+
 export type AnyTransition =
   | EpsilonTransition
   | RuleTransition
@@ -155,8 +157,11 @@ export class EOFTransition extends RangeTransition {
 }
 
 export class ReturnTransition extends AbstractEpsilonTransition {
-  constructor() {
+  readonly returnCode: AnyCode | null;
+
+  constructor(returnCode: AnyCode | null) {
     super();
+    this.returnCode = returnCode;
   }
 
   hashCode() {
@@ -164,7 +169,9 @@ export class ReturnTransition extends AbstractEpsilonTransition {
   }
 
   equals(other: unknown): other is ReturnTransition {
-    return other instanceof ReturnTransition;
+    return (
+      other instanceof ReturnTransition && other.returnCode === this.returnCode
+    );
   }
 
   toString() {
@@ -173,28 +180,22 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 }
 
 export class FieldTransition extends AbstractEpsilonTransition {
-  readonly name: string;
-  readonly multiple: boolean;
+  readonly field: FieldRule;
 
-  constructor(name: string, multiple: boolean) {
+  constructor(field: FieldRule) {
     super();
-    this.name = name;
-    this.multiple = multiple;
+    this.field = field;
   }
 
   hashCode() {
-    return 7 * this.name.length;
+    return 7 * this.field.name.length;
   }
 
   equals(other: unknown): other is FieldTransition {
-    return (
-      other instanceof FieldTransition &&
-      other.name === this.name &&
-      other.multiple === this.multiple
-    );
+    return other instanceof FieldTransition && other.field === this.field;
   }
 
   toString() {
-    return `[${this.name}${this.multiple ? "+=" : ""}...]`;
+    return `[${this.field.name}${this.field.multiple ? "+=" : ""}...]`;
   }
 }

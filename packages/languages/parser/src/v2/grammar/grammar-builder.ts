@@ -5,6 +5,7 @@ export interface RuleMap {
   repeat1: Repeat1Rule;
   optional: OptionalRule;
   id: IdRule;
+  select: SelectRule;
   empty: EmptyRule;
   eof: EofRule;
   string: StringRule;
@@ -19,13 +20,13 @@ export type AnyRule = RuleMap[RuleNames];
 
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type ValueRules = IdRule | EmptyRule | TokenRules;
+export type ValueRules = IdRule | SelectRule | EmptyRule | TokenRules;
 
 export type RuleModifiers = {
-  readonly start: boolean;
-  readonly inline: boolean;
-  readonly noSkips: boolean;
-  readonly skip: boolean;
+  readonly start?: boolean;
+  readonly inline?: boolean;
+  readonly noSkips?: boolean;
+  readonly skip?: boolean;
 };
 
 export type RuleDeclaration = {
@@ -33,20 +34,22 @@ export type RuleDeclaration = {
   readonly name: string;
   readonly rule: AnyRule;
   // TODO readonly arguments: [];
-  // TODO readonly return: null;
+  readonly return: AnyCode | null;
   readonly modifiers: RuleModifiers;
 };
 
 function rule(
   name: string,
   rule: AnyRule,
-  modifiers: RuleModifiers
+  modifiers: RuleModifiers,
+  returnCode: AnyCode | null
 ): RuleDeclaration {
   return {
     type: "rule",
     name,
     rule,
     modifiers,
+    return: returnCode,
   };
 }
 
@@ -119,6 +122,20 @@ function id(id: string): IdRule {
   return {
     type: "id",
     id,
+  };
+}
+
+export type SelectRule = {
+  readonly type: "select";
+  readonly parent: ValueRules;
+  readonly field: string;
+};
+
+function select(parent: ValueRules, field: string): SelectRule {
+  return {
+    type: "select",
+    parent,
+    field,
   };
 }
 
@@ -235,6 +252,7 @@ export const builder = {
   repeat1,
   optional,
   id,
+  select,
   empty,
   eof,
   string,
@@ -243,4 +261,50 @@ export const builder = {
   fieldMultiple,
   action,
   predicate,
+};
+
+export type AnyCode = IdCode | SelectCode | ObjectCode;
+
+export type IdCode = {
+  readonly type: "id";
+  readonly name: string;
+};
+
+export type SelectCode = {
+  readonly type: "select";
+  readonly parent: AnyCode;
+  readonly field: string;
+};
+
+export type ObjectCode = {
+  readonly type: "object";
+  readonly fields: readonly (readonly [string, AnyCode])[];
+};
+
+export interface CodeMap {
+  id: IdCode;
+  select: SelectCode;
+  object: ObjectCode;
+}
+
+export const exprBuilder = {
+  id(name: string): IdCode {
+    return {
+      type: "id",
+      name,
+    };
+  },
+  select(parent: AnyCode, field: string): SelectCode {
+    return {
+      type: "select",
+      parent,
+      field,
+    };
+  },
+  object(fields: { [key: string]: AnyCode }): ObjectCode {
+    return {
+      type: "object",
+      fields: Object.entries(fields),
+    };
+  },
 };

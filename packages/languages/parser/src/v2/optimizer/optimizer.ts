@@ -1,5 +1,10 @@
+import { AnalyzerFollow } from "../analysis/analysis";
 import { State, DState } from "../automaton/state";
-import { AnyTransition, EpsilonTransition } from "../automaton/transitions";
+import {
+  AnyTransition,
+  EpsilonTransition,
+  RuleTransition,
+} from "../automaton/transitions";
 import type { AnyRule } from "../grammar/grammar-builder";
 import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 
@@ -34,20 +39,17 @@ export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
 }
 
 export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
-  readonly follows: Map<AnyRule, Set<DState>>;
+  private readonly follows: Map<string, AnalyzerFollow[]>;
+  private currentProcessedRule: string;
 
-  constructor() {
+  constructor(follows: Map<string, AnalyzerFollow[]>) {
     super();
-    this.follows = new Map();
+    this.follows = follows;
+    this.currentProcessedRule = "";
   }
 
-  _addFollow(rule: AnyRule, dest: DState) {
-    const set = this.follows.get(rule);
-    if (set) {
-      set.add(dest);
-    } else {
-      this.follows.set(rule, new Set([dest]));
-    }
+  setCurrentRule(name: string) {
+    this.currentProcessedRule = name;
   }
 
   newDFAState(id: number): DState {
@@ -56,15 +58,21 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
 
   addTransition(state: DState, transition: AnyTransition, dest: DState): void {
     state.addTransition(transition, dest);
-    // throw new Error("TODO");
-    /*if (transition instanceof RuleTransition) {
-      this._addFollow(transition.rule, dest);
-    } else if (
-      transition instanceof NamedTransition &&
-      transition.subTransition instanceof RuleTransition
-    ) {
-      this._addFollow(transition.subTransition.rule, dest);
-    }*/
+
+    if (transition instanceof RuleTransition) {
+      const rule = transition.ruleName;
+      const array = this.follows.get(rule);
+      const info = {
+        rule: this.currentProcessedRule,
+        enterState: state,
+        exitState: dest,
+      };
+      if (array) {
+        array.push(info);
+      } else {
+        this.follows.set(rule, [info]);
+      }
+    }
   }
 
   getTransitions(

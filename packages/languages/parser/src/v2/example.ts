@@ -1,12 +1,6 @@
 import { inspect } from "util";
 import { builder } from "./grammar/grammar-builder";
-import { Automaton, Frag } from "./automaton/automaton";
-import { FactoryRule } from "./factories/factory-rule";
-import { NfaToDfa, DfaMinimizer } from "./optimizer/optimizer";
-import { CfgToCode } from "./generators/dfa-to-code/cfg-to-code";
-import { CodeToString } from "./generators/dfa-to-code/code-to-string";
-import { formatRule } from "./formaters/formater";
-import { Analyzer } from "./analysis/analysis";
+import { tool } from "./tool";
 
 const {
   seq,
@@ -17,13 +11,14 @@ const {
   repeat1,
   field,
   fieldMultiple,
+  rule,
 } = builder;
 
 const ruleA =
   choice(
     seq(string("A"), string("B"), string("C")),
     seq(string("A"), string("D"))
-  ) ||
+  ) &&
   seq(
     choice(string("A"), string("B")),
     string("C"),
@@ -42,37 +37,20 @@ const ruleB = seq(
 
 console.log("Starting...");
 
-const automaton = new Automaton();
-const ruleFactory = new FactoryRule(automaton);
-const frag = ruleFactory.gen(ruleA);
+// TODO ideas:
+// Longest or shortest match
+// Greedy or non-greedy
+// Prefer or avoid
+// Accept or reject
+// Precedence
 
-const nfaToDfa = new NfaToDfa();
-const dfaMinimzer = new DfaMinimizer();
-
-function minimize(frag: Frag) {
-  return dfaMinimzer.minimize(
-    nfaToDfa.do({
-      start: frag.in,
-      acceptingSet: new Set([frag.out]),
-    })
-  );
-}
-
-const minimized = minimize(frag);
-
-const analyzer = new Analyzer({
-  startRule: "",
-  initialStates: new Map(),
-  follows: new Map(),
+const result = tool({
+  name: "my_grammar",
+  rules: [rule("A", ruleA, { start: true }, null)],
 });
 
-console.log(analyzer.analyze("", minimized.start).toString());
-
-const cfgToCode = new CfgToCode();
-const codeToString = new CodeToString();
-
-const code = cfgToCode.process(minimized);
-
-console.log(formatRule(ruleA));
-console.log();
-console.log(codeToString.render("", code));
+if (result) {
+  for (const code of result.values()) {
+    console.log(code);
+  }
+}

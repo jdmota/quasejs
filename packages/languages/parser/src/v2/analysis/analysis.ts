@@ -146,7 +146,7 @@ class StackFrame {
   }
 }
 
-type AnalyzerFollow = {
+export type AnalyzerFollow = {
   readonly rule: RuleName;
   readonly enterState: DState;
   readonly exitState: DState;

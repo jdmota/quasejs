@@ -3,7 +3,6 @@ import { RuleDeclaration, TokenRules } from "./grammar-builder";
 import {
   ReadonlyFieldsStore,
   getFields,
-  checkAmbiguousFields,
   gatherTokens,
 } from "./grammar-checker";
 
@@ -12,22 +11,17 @@ export class Grammar {
   readonly rules: ReadonlyMap<string, RuleDeclaration>;
   readonly startRules: RuleDeclaration[];
   readonly fields: ReadonlyMap<string, ReadonlyFieldsStore>;
-  readonly ambiguousFields: ReadonlyMap<string, string[]>;
   readonly tokens: ReadonlyMap<TokenRules, number>;
   readonly tokenIds: readonly [number, number];
 
-  constructor({ name, rules }: { name: string; rules: RuleDeclaration[] }) {
+  constructor(name: string, rules: readonly RuleDeclaration[]) {
     const fields = rules.map(
       rule => [rule.name, getFields(rule.rule)] as const
-    );
-    const ambiguousFields = fields.map(
-      ([name, store]) => [name, checkAmbiguousFields(store)] as const
     );
     this.name = name;
     this.rules = new Map(rules.map(r => [r.name, r]));
     this.startRules = rules.filter(r => r.modifiers.start);
     this.fields = new Map(fields);
-    this.ambiguousFields = new Map(ambiguousFields);
 
     // Gather tokens and assign ids
     const tokensList = gatherTokens(rules.map(r => r.rule));
@@ -63,5 +57,12 @@ export class Grammar {
       throw new Error(`No rule called ${ruleName}`);
     }
     return rule;
+  }
+
+  startRule() {
+    if (this.startRules.length === 1) {
+      return this.startRules[0];
+    }
+    throw new Error(`Expected 1 start rule, found ${this.startRules.length}`);
   }
 }

@@ -15,6 +15,7 @@ import {
   SeqRule,
   StringRule,
   RuleDeclaration,
+  SelectRule,
 } from "../grammar/grammar-builder";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
@@ -71,6 +72,10 @@ export class FactoryRule implements Gen {
     };
   }
 
+  select(node: SelectRule) {
+    return this.gen(node.parent);
+  }
+
   eof(_: EofRule): Frag {
     const start = this.automaton.newState();
     const end = this.automaton.newState();
@@ -105,10 +110,7 @@ export class FactoryRule implements Gen {
   field(node: FieldRule): Frag {
     const fragItem = this.gen(node.rule);
     const end = this.automaton.newState();
-    fragItem.out.addTransition(
-      new FieldTransition(node.name, node.multiple),
-      end
-    );
+    fragItem.out.addTransition(new FieldTransition(node), end);
     return {
       in: fragItem.in,
       out: end,
@@ -139,23 +141,26 @@ export class FactoryRule implements Gen {
     let end = ruleFrag.out;
 
     if (rule.modifiers.inline) {
+      // TODO
     }
 
     if (rule.modifiers.noSkips) {
+      // TODO
     }
 
     if (rule.modifiers.skip) {
+      // TODO
     }
 
     if (rule.modifiers.start) {
       const newEnd = this.automaton.newState();
       end.addTransition(new EOFTransition(), newEnd);
       end = newEnd;
-    } else {
-      const newEnd = this.automaton.newState();
-      end.addTransition(new ReturnTransition(), newEnd);
-      end = newEnd;
     }
+
+    const newEnd = this.automaton.newState();
+    end.addTransition(new ReturnTransition(rule.return), newEnd);
+    end = newEnd;
 
     return {
       in: start,

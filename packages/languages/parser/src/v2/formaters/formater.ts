@@ -1,7 +1,7 @@
 import { AnyRule } from "../grammar/grammar-builder";
 import { never } from "../utils";
 
-export function formatRule(rule: AnyRule) {
+export function formatRule(rule: AnyRule): string {
   switch (rule.type) {
     case "seq":
       return rule.rules.map(r => formatRule(r)).join(" ");
@@ -19,6 +19,8 @@ export function formatRule(rule: AnyRule) {
       return `/${rule.regexp}/`;
     case "id":
       return `${rule.id}`;
+    case "select":
+      return `${formatRule(rule.parent)}.${rule.field}`;
     case "empty":
       return "EPSILON";
     case "eof":
