@@ -1,18 +1,11 @@
-type Node = {
-  loc: {
-    start: {
-      line: number;
-      column: number;
-    };
-    end: {
-      line: number;
-      column: number;
-    };
-  };
-};
+import type { Location } from "../runtime/input";
 
-export function printLoc(node: Node) {
-  return `${node.loc.start.line}:${node.loc.start.column}-${node.loc.end.line}:${node.loc.end.column}`;
+export function printLoc(loc: Location) {
+  return `${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column}`;
+}
+
+export function locSuffix(loc: Location | null) {
+  return loc ? ` (at ${printLoc(loc)})` : "";
 }
 
 export function never(_: never): never {

@@ -1,4 +1,4 @@
-import { never } from "../utils";
+import { locSuffix, never } from "../utils";
 import { Grammar } from "./grammar";
 import {
   AnyRule,
@@ -254,7 +254,7 @@ export function typecheck(grammar: Grammar) {
   const ids = gatherRuleIds(grammar.rules);
   for (const id of ids) {
     if (!grammar.rules.has(id.id)) {
-      errors.push(`Undefined rule ${id.id}`);
+      errors.push(`Undefined rule ${id.id}${locSuffix(id.loc)}`);
     }
   }
 
