@@ -3,7 +3,7 @@ import { Automaton, Frag } from "./automaton/automaton";
 import { DState } from "./automaton/state";
 import { FactoryRule } from "./factories/factory-rule";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
-import { CodeToString } from "./generators/dfa-to-code/code-to-string";
+import { CodeToString } from "./generators/generate-parser";
 import { Grammar } from "./grammar/grammar";
 import { RuleDeclaration } from "./grammar/grammar-builder";
 import { typecheck } from "./grammar/grammar-checker";

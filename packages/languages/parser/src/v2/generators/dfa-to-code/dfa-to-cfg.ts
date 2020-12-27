@@ -6,14 +6,14 @@ import { BaseComponent, BaseSCC } from "./strongly-connected-components";
 import { BaseTopologicalOrder } from "./topological-order";
 
 export class CFGNode {
-  state: DState | null;
-  inEdges: Set<CFGEdge>;
-  outEdges: Set<CFGEdge>;
+  readonly state: DState | null;
+  readonly inEdges: Set<CFGEdge>;
+  readonly outEdges: Set<CFGEdge>;
   entry: boolean;
   start: boolean;
   end: boolean;
-  constructor() {
-    this.state = null;
+  constructor(state: DState | null) {
+    this.state = state; // state is only null for dispatch nodes
     this.inEdges = new Set();
     this.outEdges = new Set();
     this.entry = false;
@@ -169,8 +169,7 @@ export class DFAtoCFG {
     // Associate each DState with a CFGState
     for (const s of states) {
       if (s.id === 0) continue;
-      const node = new CFGNode();
-      node.state = s;
+      const node = new CFGNode(s);
       node.entry = false;
       node.start = s === start;
       node.end = acceptingSet.has(s);
@@ -235,7 +234,7 @@ export class DFAtoCFG {
 
           // If there is more than one entry, we have a multiple-entry loop
           if (c.entries.size > 1) {
-            loopStart = new CFGNode();
+            loopStart = new CFGNode(null);
             loopStart.entry = true;
             // Add edges from the multi-entry to the current entries
             for (const currentEntry of c.entries) {

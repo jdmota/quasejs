@@ -1,7 +1,12 @@
 import { DState } from "../../automaton/state";
-import { AnyTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
-import { CFGGroup, CFGNode, CFGNodeOrGroup, DFAtoCFG } from "./dfa-to-cfg";
+import {
+  CFGEdge,
+  CFGGroup,
+  CFGNode,
+  CFGNodeOrGroup,
+  DFAtoCFG,
+} from "./dfa-to-cfg";
 
 export type CodeBlock =
   | ExpectBlock
@@ -17,7 +22,7 @@ export type CodeBlock =
 
 export type ExpectBlock = Readonly<{
   type: "expect_block";
-  transition: AnyTransition;
+  edge: CFGEdge;
 }>;
 
 export type SeqBlock = Readonly<{
@@ -27,7 +32,8 @@ export type SeqBlock = Readonly<{
 
 export type DecisionBlock = Readonly<{
   type: "decision_block";
-  choices: [AnyTransition | null, CodeBlock][];
+  choices: [CFGEdge | null, CodeBlock][];
+  node: CFGNode;
 }>;
 
 export type ScopeBlock = Readonly<{
@@ -181,20 +187,21 @@ export class CfgToCode {
   // TODO optimize diamonds to reduce the number of necessary scopes
   private handleNode(node: CFGNode, parent: CFGGroup): CodeBlock {
     const isFinal = node.end;
-    const choices: [AnyTransition | null, CodeBlock][] = [];
+    const choices: [CFGEdge | null, CodeBlock][] = [];
     let isLoop = false;
 
-    for (const { transition, dest, type } of node.outEdges) {
+    for (const outEdge of node.outEdges) {
+      const { dest, type } = outEdge;
       if (type === "back") {
         if (node === dest) {
           isLoop = true;
         }
         choices.push([
-          transition,
+          outEdge,
           makeSeq([
             {
               type: "expect_block",
-              transition,
+              edge: outEdge,
             },
             {
               type: "continue_block",
@@ -207,22 +214,22 @@ export class CfgToCode {
         if (destGroup.forwardPredecessors() === 1) {
           // Nest the code
           choices.push([
-            transition,
+            outEdge,
             makeSeq([
               {
                 type: "expect_block",
-                transition,
+                edge: outEdge,
               },
               this.handleNodes(destGroup, parent),
             ]),
           ]);
         } else {
           choices.push([
-            transition,
+            outEdge,
             makeSeq([
               {
                 type: "expect_block",
-                transition,
+                edge: outEdge,
               },
               {
                 type: "break_scope_block",
@@ -252,6 +259,7 @@ export class CfgToCode {
         block = {
           type: "decision_block",
           choices: choices.map(([t, d]) => [t, makeSeq([d, breakCase])]),
+          node,
         };
     }
 
