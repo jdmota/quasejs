@@ -37,6 +37,12 @@ const ruleB = seq(
 
 console.log("Starting...");
 
+// TODO plan:
+// Instead of starting by doing a lot of optimizations,
+// we should first program the recognizer with optimized prediction
+
+// TODO plan: start with a top-down parser, and when dealing with ambiguity, use Earley parser or LR(*)?
+
 // TODO ideas:
 // Longest or shortest match
 // Greedy or non-greedy
@@ -46,7 +52,7 @@ console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  rules: [rule("A", ruleA, { start: true }, null)],
+  rules: [rule("A", ruleA, [], { start: true }, null)],
 });
 
 if (result) {

@@ -1,4 +1,5 @@
 import type { Location } from "../runtime/input";
+import { never } from "../utils";
 
 export interface RuleMap {
   seq: SeqRule;
@@ -6,23 +7,40 @@ export interface RuleMap {
   repeat: RepeatRule;
   repeat1: Repeat1Rule;
   optional: OptionalRule;
-  id: IdRule;
-  select: SelectRule;
   empty: EmptyRule;
   eof: EofRule;
   string: StringRule;
   regexp: RegExpRule;
+  id: IdRule;
+  select: SelectRule;
+  call: CallRule;
+  predicate: PredicateRule;
   field: FieldRule;
   action: ActionRule;
-  predicate: PredicateRule;
 }
 
 export type RuleNames = keyof RuleMap;
 export type AnyRule = RuleMap[RuleNames];
 
+export interface ExprMap {
+  id: IdExpr;
+  select: SelectExpr;
+  call: CallExpr;
+  object: ObjectExpr;
+  field: FieldExpr;
+}
+
+export type ExprNames = keyof ExprMap;
+export type AnyExpr = ExprMap[ExprNames];
+
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type ValueRules = IdRule | SelectRule | EmptyRule | TokenRules;
+export type Assignables =
+  | EmptyRule
+  | TokenRules
+  | IdRule
+  | SelectRule
+  | CallRule;
 
 export type RuleModifiers = {
   readonly start?: boolean;
@@ -35,8 +53,8 @@ export type RuleDeclaration = {
   readonly type: "rule";
   readonly name: string;
   readonly rule: AnyRule;
-  // TODO readonly arguments: [];
-  readonly return: AnyCode | null;
+  readonly args: readonly string[];
+  readonly return: AnyExpr | null;
   readonly modifiers: RuleModifiers;
   loc: Location | null;
 };
@@ -44,13 +62,15 @@ export type RuleDeclaration = {
 function rule(
   name: string,
   rule: AnyRule,
+  args: readonly string[],
   modifiers: RuleModifiers,
-  returnCode: AnyCode | null
+  returnCode: AnyExpr | null
 ): RuleDeclaration {
   return {
     type: "rule",
     name,
     rule,
+    args,
     modifiers,
     return: returnCode,
     loc: null,
@@ -127,6 +147,22 @@ function optional(rule: AnyRule): OptionalRule {
   };
 }
 
+export type CallRule = {
+  readonly type: "call";
+  readonly id: string;
+  readonly args: readonly AnyExpr[];
+  loc: Location | null;
+};
+
+function call(id: string, args: readonly AnyExpr[]): CallRule {
+  return {
+    type: "call",
+    id,
+    args,
+    loc: null,
+  };
+}
+
 export type IdRule = {
   readonly type: "id";
   readonly id: string;
@@ -143,12 +179,12 @@ function id(id: string): IdRule {
 
 export type SelectRule = {
   readonly type: "select";
-  readonly parent: ValueRules;
+  readonly parent: Assignables;
   readonly field: string;
   loc: Location | null;
 };
 
-function select(parent: ValueRules, field: string): SelectRule {
+function select(parent: Assignables, field: string): SelectRule {
   return {
     type: "select",
     parent,
@@ -212,12 +248,12 @@ function regexp(regexp: string): RegExpRule {
 export type FieldRule = {
   readonly type: "field";
   readonly name: string;
-  readonly rule: ValueRules;
+  readonly rule: Assignables;
   readonly multiple: boolean;
   loc: Location | null;
 };
 
-function field(name: string, rule: ValueRules): FieldRule {
+function field(name: string, rule: Assignables): FieldRule {
   return {
     type: "field",
     name,
@@ -227,7 +263,7 @@ function field(name: string, rule: ValueRules): FieldRule {
   };
 }
 
-function fieldMultiple(name: string, rule: ValueRules): FieldRule {
+function fieldMultiple(name: string, rule: Assignables): FieldRule {
   return {
     type: "field",
     name,
@@ -237,30 +273,16 @@ function fieldMultiple(name: string, rule: ValueRules): FieldRule {
   };
 }
 
-export type ActionRule = {
-  readonly type: "action";
-  readonly action: string;
-  loc: Location | null;
-};
-
-function action(action: string): ActionRule {
-  return {
-    type: "action",
-    action,
-    loc: null,
-  };
-}
-
 export type PredicateRule = {
   readonly type: "predicate";
-  readonly predicate: string;
+  readonly code: AnyExpr;
   loc: Location | null;
 };
 
-function predicate(predicate: string): PredicateRule {
+function predicate(code: AnyExpr): PredicateRule {
   return {
     type: "predicate",
-    predicate,
+    code,
     loc: null,
   };
 }
@@ -273,17 +295,115 @@ function precedenceRightAssoc(number: number, rule: AnyRule) {
   // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 
-function precedenceDynamic() {
-  // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
+export type ActionRule = {
+  readonly type: "action";
+  readonly code: AnyExpr;
+  loc: Location | null;
+};
+
+function action(code: AnyExpr): ActionRule {
+  return {
+    type: "action",
+    code,
+    loc: null,
+  };
+}
+
+export type IdExpr = {
+  readonly type: "idExpr";
+  readonly id: string;
+  loc: Location | null;
+};
+
+function idExpr(id: string): IdExpr {
+  return {
+    type: "idExpr",
+    id,
+    loc: null,
+  };
+}
+
+export type SelectExpr = {
+  readonly type: "selectExpr";
+  readonly parent: AnyExpr;
+  readonly field: string;
+  loc: Location | null;
+};
+
+function selectExpr(parent: AnyExpr, field: string): SelectExpr {
+  return {
+    type: "selectExpr",
+    parent,
+    field,
+    loc: null,
+  };
+}
+
+export type ObjectExpr = {
+  readonly type: "objectExpr";
+  readonly fields: readonly (readonly [string, AnyExpr])[];
+};
+
+function objectExpr(fields: { [key: string]: AnyExpr }): ObjectExpr {
+  return {
+    type: "objectExpr",
+    fields: Object.entries(fields),
+  };
+}
+
+export type CallExpr = {
+  readonly type: "callExpr";
+  readonly id: string;
+  readonly args: readonly AnyExpr[];
+  loc: Location | null;
+};
+
+function callExpr(id: string, args: readonly AnyExpr[]): CallExpr {
+  return {
+    type: "callExpr",
+    id,
+    args,
+    loc: null,
+  };
+}
+
+export type FieldExpr = {
+  readonly type: "fieldExpr";
+  readonly name: string;
+  readonly expr: AnyExpr;
+  readonly multiple: boolean;
+  loc: Location | null;
+};
+
+function fieldExpr(name: string, expr: AnyExpr): FieldExpr {
+  return {
+    type: "fieldExpr",
+    name,
+    expr,
+    multiple: false,
+    loc: null,
+  };
+}
+
+function fieldMultipleExpr(name: string, expr: AnyExpr): FieldExpr {
+  return {
+    type: "fieldExpr",
+    name,
+    expr,
+    multiple: true,
+    loc: null,
+  };
 }
 
 export const builder = {
+  // Rules
   rule,
   seq,
   choice,
   repeat,
   repeat1,
   optional,
+  call,
   id,
   select,
   empty,
@@ -292,52 +412,110 @@ export const builder = {
   regexp,
   field,
   fieldMultiple,
-  action,
   predicate,
+  action,
+  // Expressions
+  idExpr,
+  selectExpr,
+  objectExpr,
+  callExpr,
+  fieldExpr,
+  fieldMultipleExpr,
 };
 
-export type AnyCode = IdCode | SelectCode | ObjectCode;
+// Utils
 
-export type IdCode = {
-  readonly type: "id";
-  readonly name: string;
-};
-
-export type SelectCode = {
-  readonly type: "select";
-  readonly parent: AnyCode;
-  readonly field: string;
-};
-
-export type ObjectCode = {
-  readonly type: "object";
-  readonly fields: readonly (readonly [string, AnyCode])[];
-};
-
-export interface CodeMap {
-  id: IdCode;
-  select: SelectCode;
-  object: ObjectCode;
+export function sameAssignable(
+  value1: Assignables,
+  value2: Assignables
+): boolean {
+  if (value1 === value2) {
+    return true;
+  }
+  switch (value1.type) {
+    case "string":
+      return value1.type === value2.type && value1.string === value2.string;
+    case "regexp":
+      return value1.type === value2.type && value1.regexp === value2.regexp;
+    case "id":
+      return value1.type === value2.type && value1.id === value2.id;
+    case "call":
+      return (
+        value1.type === value2.type &&
+        value1.id === value2.id &&
+        sameArgs(value1.args, value2.args)
+      );
+    case "select":
+      return (
+        value1.type === value2.type &&
+        value1.field === value2.field &&
+        sameAssignable(value1.parent, value2.parent)
+      );
+    case "empty":
+    case "eof":
+      return value1.type === value2.type;
+    default:
+      return never(value1);
+  }
 }
 
-export const exprBuilder = {
-  id(name: string): IdCode {
-    return {
-      type: "id",
-      name,
-    };
-  },
-  select(parent: AnyCode, field: string): SelectCode {
-    return {
-      type: "select",
-      parent,
-      field,
-    };
-  },
-  object(fields: { [key: string]: AnyCode }): ObjectCode {
-    return {
-      type: "object",
-      fields: Object.entries(fields),
-    };
-  },
-};
+export function sameExpr(value1: AnyExpr, value2: AnyExpr): boolean {
+  if (value1 === value2) {
+    return true;
+  }
+  switch (value1.type) {
+    case "idExpr":
+      return value1.type === value2.type && value1.id === value2.id;
+    case "callExpr":
+      return (
+        value1.type === value2.type &&
+        value1.id === value2.id &&
+        sameArgs(value1.args, value2.args)
+      );
+    case "selectExpr":
+      return (
+        value1.type === value2.type &&
+        value1.field === value2.field &&
+        sameExpr(value1.parent, value2.parent)
+      );
+    case "objectExpr":
+      if (
+        value1.type === value2.type &&
+        value1.fields.length === value2.fields.length
+      ) {
+        for (let i = 0; i < value1.fields.length; i++) {
+          const field1 = value1.fields[i];
+          const field2 = value2.fields[i];
+          if (field1[0] !== field2[0] || !sameExpr(field1[1], field2[1])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    case "fieldExpr":
+      return (
+        value1.type === value2.type &&
+        value1.name === value2.name &&
+        value1.multiple === value2.multiple &&
+        sameExpr(value1.expr, value2.expr)
+      );
+    default:
+      return never(value1);
+  }
+}
+
+export function sameArgs(args1: readonly AnyExpr[], args2: readonly AnyExpr[]) {
+  if (args1 === args2) {
+    return true;
+  }
+  if (args1.length !== args2.length) {
+    return false;
+  }
+  for (let i = 0; i < args1.length; i++) {
+    if (!sameExpr(args1[i], args2[i])) {
+      return false;
+    }
+  }
+  return true;
+}

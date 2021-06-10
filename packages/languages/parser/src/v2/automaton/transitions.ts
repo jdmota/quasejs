@@ -1,4 +1,10 @@
-import { AnyCode, FieldRule } from "../grammar/grammar-builder";
+import {
+  sameArgs,
+  sameAssignable,
+  FieldRule,
+  sameExpr,
+  AnyExpr,
+} from "../grammar/grammar-builder";
 
 export type AnyTransition =
   | EpsilonTransition
@@ -51,10 +57,12 @@ export class EpsilonTransition extends AbstractEpsilonTransition {
 
 export class RuleTransition extends AbstractNotEpsilonTransition {
   readonly ruleName: string;
+  readonly args: readonly AnyExpr[];
 
-  constructor(ruleName: string) {
+  constructor(ruleName: string, args: readonly AnyExpr[]) {
     super();
     this.ruleName = ruleName;
+    this.args = args;
   }
 
   hashCode() {
@@ -62,7 +70,11 @@ export class RuleTransition extends AbstractNotEpsilonTransition {
   }
 
   equals(other: unknown): other is RuleTransition {
-    return other instanceof RuleTransition && other.ruleName === this.ruleName;
+    return (
+      other instanceof RuleTransition &&
+      this.ruleName === other.ruleName &&
+      sameArgs(this.args, other.args)
+    );
   }
 
   toString() {
@@ -70,6 +82,7 @@ export class RuleTransition extends AbstractNotEpsilonTransition {
   }
 }
 
+// TODO
 export class PredicateTransition extends AbstractEpsilonTransition {
   hashCode() {
     return 2;
@@ -84,13 +97,14 @@ export class PredicateTransition extends AbstractEpsilonTransition {
   }
 }
 
+// TODO
 export class PrecedenceTransition extends PredicateTransition {
   hashCode() {
     return 3;
   }
 
   equals(other: unknown): other is PrecedenceTransition {
-    return other instanceof PrecedenceTransition && other === this;
+    return other instanceof PrecedenceTransition && this === other;
   }
 
   toString() {
@@ -99,9 +113,9 @@ export class PrecedenceTransition extends PredicateTransition {
 }
 
 export class ActionTransition extends AbstractEpsilonTransition {
-  readonly code: string;
+  readonly code: AnyExpr;
 
-  constructor(code: string) {
+  constructor(code: AnyExpr) {
     super();
     this.code = code;
   }
@@ -111,7 +125,7 @@ export class ActionTransition extends AbstractEpsilonTransition {
   }
 
   equals(other: unknown): other is ActionTransition {
-    return other instanceof ActionTransition && other.code === this.code;
+    return other instanceof ActionTransition && sameExpr(this.code, other.code);
   }
 
   toString() {
@@ -157,9 +171,9 @@ export class EOFTransition extends RangeTransition {
 }
 
 export class ReturnTransition extends AbstractEpsilonTransition {
-  readonly returnCode: AnyCode | null;
+  readonly returnCode: AnyExpr | null;
 
-  constructor(returnCode: AnyCode | null) {
+  constructor(returnCode: AnyExpr | null) {
     super();
     this.returnCode = returnCode;
   }
@@ -170,7 +184,10 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 
   equals(other: unknown): other is ReturnTransition {
     return (
-      other instanceof ReturnTransition && other.returnCode === this.returnCode
+      other instanceof ReturnTransition &&
+      (this.returnCode == null || other.returnCode == null
+        ? this.returnCode === other.returnCode
+        : sameExpr(this.returnCode, other.returnCode))
     );
   }
 
@@ -180,22 +197,27 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 }
 
 export class FieldTransition extends AbstractEpsilonTransition {
-  readonly field: FieldRule;
+  readonly node: FieldRule;
 
-  constructor(field: FieldRule) {
+  constructor(node: FieldRule) {
     super();
-    this.field = field;
+    this.node = node;
   }
 
   hashCode() {
-    return 7 * this.field.name.length;
+    return 7 * this.node.name.length;
   }
 
   equals(other: unknown): other is FieldTransition {
-    return other instanceof FieldTransition && other.field === this.field;
+    return (
+      other instanceof FieldTransition &&
+      this.node.name === other.node.name &&
+      this.node.multiple === other.node.multiple &&
+      sameAssignable(this.node.rule, other.node.rule)
+    );
   }
 
   toString() {
-    return `[${this.field.name}${this.field.multiple ? "+=" : ""}...]`;
+    return `[${this.node.name}${this.node.multiple ? "+=" : ""}...]`;
   }
 }

@@ -121,6 +121,7 @@ function getFieldsHelper(rule: AnyRule): FieldsStore {
     }
     case "select":
     case "id":
+    case "call":
     case "empty":
     case "eof":
     case "string":
@@ -185,6 +186,7 @@ function visit(rule: AnyRule, fn: (rule: AnyRule) => void) {
     case "string":
     case "regexp":
     case "id":
+    case "call":
     case "empty":
     case "action":
     case "predicate":

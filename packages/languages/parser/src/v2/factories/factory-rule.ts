@@ -16,6 +16,7 @@ import {
   StringRule,
   RuleDeclaration,
   SelectRule,
+  CallRule,
 } from "../grammar/grammar-builder";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
@@ -62,10 +63,20 @@ export class FactoryRule implements Gen {
     return this.automaton.empty();
   }
 
+  call(node: CallRule): Frag {
+    const start = this.automaton.newState();
+    const end = this.automaton.newState();
+    start.addTransition(new RuleTransition(node.id, node.args), end);
+    return {
+      in: start,
+      out: end,
+    };
+  }
+
   id(node: IdRule): Frag {
     const start = this.automaton.newState();
     const end = this.automaton.newState();
-    start.addTransition(new RuleTransition(node.id), end);
+    start.addTransition(new RuleTransition(node.id, []), end);
     return {
       in: start,
       out: end,
@@ -120,7 +131,7 @@ export class FactoryRule implements Gen {
   action(node: ActionRule): Frag {
     const start = this.automaton.newState();
     const end = this.automaton.newState();
-    start.addTransition(new ActionTransition(node.action), end);
+    start.addTransition(new ActionTransition(node.code), end);
     return {
       in: start,
       out: end,
