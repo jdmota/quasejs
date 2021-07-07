@@ -3,9 +3,8 @@ import { State, DState } from "../automaton/state";
 import {
   AnyTransition,
   EpsilonTransition,
-  RuleTransition,
+  CallTransition,
 } from "../automaton/transitions";
-import type { AnyRule } from "../grammar/grammar-builder";
 import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 
 const EPSILON = new EpsilonTransition();
@@ -59,7 +58,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
   addTransition(state: DState, transition: AnyTransition, dest: DState): void {
     state.addTransition(transition, dest);
 
-    if (transition instanceof RuleTransition) {
+    if (transition instanceof CallTransition) {
       const rule = transition.ruleName;
       const array = this.follows.get(rule);
       const info = {

@@ -8,11 +8,10 @@ import {
 
 export type AnyTransition =
   | EpsilonTransition
-  | RuleTransition
+  | CallTransition
   | ActionTransition
   | PredicateTransition
   | RangeTransition
-  | EOFTransition
   | ReturnTransition
   | FieldTransition;
 
@@ -61,7 +60,7 @@ export class EpsilonTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class RuleTransition extends AbstractNotEpsilonTransition {
+export class CallTransition extends AbstractNotEpsilonTransition {
   readonly ruleName: string;
   readonly args: readonly ExprRule[];
 
@@ -75,9 +74,9 @@ export class RuleTransition extends AbstractNotEpsilonTransition {
     return 1;
   }
 
-  equals(other: unknown): other is RuleTransition {
+  equals(other: unknown): other is CallTransition {
     return (
-      other instanceof RuleTransition &&
+      other instanceof CallTransition &&
       this.ruleName === other.ruleName &&
       sameArgs(this.args, other.args)
     );
@@ -159,16 +158,6 @@ export class RangeTransition extends AbstractNotEpsilonTransition {
 
   toString() {
     return `[Range [${this.from},${this.to}]]`;
-  }
-}
-
-export class EOFTransition extends RangeTransition {
-  constructor() {
-    super(-1, -1);
-  }
-
-  toString() {
-    return `[EOF]`;
   }
 }
 

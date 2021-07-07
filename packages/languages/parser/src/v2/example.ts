@@ -52,11 +52,13 @@ console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  rules: [rule("A", ruleA, [], { start: true }, null)],
+  decls: [rule("A", ruleA, [], { start: true }, null)],
 });
 
 if (result) {
-  for (const code of result.values()) {
+  for (const [name, code] of result) {
+    console.log(name);
     console.log(code);
+    console.log();
   }
 }

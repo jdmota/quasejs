@@ -68,14 +68,13 @@ function rule(
 }
 
 export type TokenModifiers = {
-  readonly skip?: boolean;
+  readonly type: "normal" | "skip" | "fragment";
 };
 
 export type TokenDeclaration = {
   readonly type: "token";
   readonly name: string;
   readonly rule: AnyRule;
-  readonly args: readonly string[];
   readonly return: ExprRule | null;
   readonly modifiers: TokenModifiers;
   loc: Location | null;
@@ -84,7 +83,6 @@ export type TokenDeclaration = {
 function token(
   name: string,
   rule: AnyRule,
-  args: readonly string[],
   modifiers: TokenModifiers,
   returnCode: ExprRule | null
 ): TokenDeclaration {
@@ -92,7 +90,6 @@ function token(
     type: "token",
     name,
     rule,
-    args,
     modifiers,
     return: returnCode,
     loc: null,

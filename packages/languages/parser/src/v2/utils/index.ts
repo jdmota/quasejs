@@ -24,3 +24,9 @@ export function first<T>(it: Iterable<T>): T {
   }
   throw new Error("Iterable has zero elements");
 }
+
+export function assertion(bool: boolean) {
+  if (!bool) {
+    throw new Error("Assertion error");
+  }
+}

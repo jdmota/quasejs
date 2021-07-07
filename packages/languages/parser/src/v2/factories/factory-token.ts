@@ -14,13 +14,12 @@ import {
   RepeatRule,
   SeqRule,
   StringRule,
-  RuleDeclaration,
   SelectRule,
   CallRule,
   ObjectRule,
   Call2Rule,
-  TokenRules,
   TokenDeclaration,
+  TokenRules,
 } from "../grammar/grammar-builder";
 import { Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
@@ -31,19 +30,19 @@ import {
   FieldTransition,
   PredicateTransition,
   RangeTransition,
-  AnyTransition,
 } from "../automaton/transitions";
+import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 import { Location } from "../../runtime/tokenizer";
-import { assertion, never } from "../utils";
+import { never, assertion } from "../utils";
 
 type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
 
-export class FactoryRule implements Gen {
+export class FactoryToken implements Gen {
   readonly grammar: Grammar;
-  readonly rule: RuleDeclaration;
+  readonly rule: TokenDeclaration;
   readonly automaton: Automaton;
 
-  constructor(grammar: Grammar, rule: RuleDeclaration, automaton: Automaton) {
+  constructor(grammar: Grammar, rule: TokenDeclaration, automaton: Automaton) {
     this.grammar = grammar;
     this.rule = rule;
     this.automaton = automaton;
@@ -51,15 +50,47 @@ export class FactoryRule implements Gen {
 
   static process(
     grammar: Grammar,
-    rule: RuleDeclaration,
+    token: TokenRules | TokenDeclaration,
     automaton: Automaton
   ) {
-    return new FactoryRule(grammar, rule, automaton).genRule(rule);
+    switch (token.type) {
+      case "string":
+        return FactoryToken.string(automaton, token);
+      case "regexp":
+        return FactoryToken.regexp(automaton, token);
+      case "eof":
+        return FactoryToken.eof(automaton, token);
+      case "token":
+        return new FactoryToken(grammar, token, automaton).genToken(token);
+      default:
+        never(token);
+    }
   }
 
-  private token(node: TokenRules | TokenDeclaration) {
-    const id = this.grammar.tokenId(node);
-    return this.automaton.single(new RangeTransition(id, id));
+  static eof(automaton: Automaton, node: EofRule): Frag {
+    return automaton.single(new RangeTransition(-1, -1).setLoc(node.loc));
+  }
+
+  static string(automaton: Automaton, node: StringRule): Frag {
+    const start = automaton.newState();
+    let end = start;
+
+    for (const char of node.string) {
+      const newEnd = automaton.newState();
+      const code = char.codePointAt(0)!!;
+      end.addNumber(code, newEnd);
+      end = newEnd;
+    }
+
+    return {
+      start: start,
+      end: end,
+    };
+  }
+
+  static regexp(automaton: Automaton, node: RegExpRule): Frag {
+    const factoryRegexp = new FactoryRegexp(automaton);
+    return regexpToAutomaton(factoryRegexp, node.regexp);
   }
 
   private action(node: ExprRule): Frag {
@@ -96,12 +127,12 @@ export class FactoryRule implements Gen {
       case "local":
         assertion(false);
       case "rule":
-        return this.automaton.single(
-          new CallTransition(node.id, node.args).setLoc(node.loc)
-        );
+        assertion(false);
       case "token":
         assertion(node.args.length === 0);
-        return this.token(resolved.decl);
+        return this.automaton.single(
+          new CallTransition(node.id, []).setLoc(node.loc)
+        );
       default:
         never(resolved);
     }
@@ -113,26 +144,26 @@ export class FactoryRule implements Gen {
       case "local":
         return this.action(node);
       case "rule":
+        assertion(false);
+      case "token":
         return this.automaton.single(
           new CallTransition(node.id, []).setLoc(node.loc)
         );
-      case "token":
-        return this.token(resolved.decl);
       default:
         never(resolved);
     }
   }
 
+  eof(node: EofRule): Frag {
+    return FactoryToken.eof(this.automaton, node);
+  }
+
   string(node: StringRule): Frag {
-    return this.token(node);
+    return FactoryToken.string(this.automaton, node);
   }
 
   regexp(node: RegExpRule): Frag {
-    return this.token(node);
-  }
-
-  eof(node: EofRule): Frag {
-    return this.token(node);
+    return FactoryToken.regexp(this.automaton, node);
   }
 
   field(node: FieldRule): Frag {
@@ -167,26 +198,12 @@ export class FactoryRule implements Gen {
     return this[node.type](node as any);
   }
 
-  genRule(rule: RuleDeclaration): Frag {
+  genToken(rule: TokenDeclaration): Frag {
     let { start, end } = this.gen(rule.rule);
-
-    if (rule.modifiers.inline) {
-      // TODO
-    }
-
-    if (rule.modifiers.noSkips) {
-      // TODO
-    }
 
     const loc: Location | null = rule.loc
       ? { start: rule.loc.end, end: rule.loc.end }
       : null;
-
-    if (rule.modifiers.start) {
-      const newEnd = this.automaton.newState();
-      end.addTransition(new RangeTransition(-1, -1).setLoc(loc), newEnd);
-      end = newEnd;
-    }
 
     const newEnd = this.automaton.newState();
     end.addTransition(new ReturnTransition(rule.return).setLoc(loc), newEnd);

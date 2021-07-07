@@ -1,7 +1,7 @@
 import { DState } from "../automaton/state";
 import {
   AnyTransition,
-  RuleTransition,
+  CallTransition,
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions";
@@ -136,7 +136,7 @@ export class Analyser {
     set: RangeSet,
     seen: Set<DState>
   ): boolean {
-    if (transition instanceof RuleTransition) {
+    if (transition instanceof CallTransition) {
       const result = this.analyzeState(
         this.initialStates.get(transition.ruleName)!!,
         set,

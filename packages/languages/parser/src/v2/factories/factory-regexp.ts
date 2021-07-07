@@ -65,10 +65,10 @@ export class FactoryRegexp implements Gen {
   }
 
   c(code: number): Frag {
-    const _in = this.automaton.newState();
-    const _out = this.automaton.newState();
-    _in.addNumber(code, _out);
-    return { in: _in, out: _out };
+    const start = this.automaton.newState();
+    const end = this.automaton.newState();
+    start.addNumber(code, end);
+    return { start, end };
   }
 
   Char(char: Char) {
@@ -92,20 +92,20 @@ export class FactoryRegexp implements Gen {
           ? ([e.from.codePoint, e.to.codePoint] as const)
           : ([e.codePoint, e.codePoint] as const)
       );
-      const _in = this.automaton.newState();
-      const _out = this.automaton.newState();
-      _in.addNotRangeSet(list, _out, MIN_CHAR, MAX_CHAR);
-      return { in: _in, out: _out };
+      const start = this.automaton.newState();
+      const end = this.automaton.newState();
+      start.addNotRangeSet(list, end, MIN_CHAR, MAX_CHAR);
+      return { start, end };
     }
     const fragments = expressions.map(e => this.gen(e));
     return this.automaton.choice(fragments);
   }
 
   ClassRange({ from, to }: ClassRange) {
-    const _in = this.automaton.newState();
-    const _out = this.automaton.newState();
-    _in.addRange(from.codePoint, to.codePoint, _out);
-    return { in: _in, out: _out };
+    const start = this.automaton.newState();
+    const end = this.automaton.newState();
+    start.addRange(from.codePoint, to.codePoint, end);
+    return { start, end };
   }
 
   Alternative({ expressions }: Alternative) {

@@ -1,5 +1,10 @@
 import { locSuffix, locSuffix2, never } from "../utils";
-import { Declaration, RuleDeclaration } from "./grammar-builder";
+import {
+  Declaration,
+  RuleDeclaration,
+  TokenDeclaration,
+  TokenRules,
+} from "./grammar-builder";
 import {
   ReferencesCollector,
   TokensCollector,
@@ -44,42 +49,77 @@ export function createGrammar(
 
   // For each declaration...
   for (const { decl, locals } of rules.values()) {
-    // Detect undefined references
+    // Detect duplicate arguments in rules
+    if (decl.type === "rule") {
+      const seenArgs = new Set<string>();
+      for (const arg of decl.args) {
+        if (seenArgs.has(arg)) {
+          errors.push(
+            `Duplicate argument ${arg} in declaration ${decl.name}${locSuffix(
+              decl.loc
+            )}`
+          );
+        } else {
+          seenArgs.add(arg);
+        }
+      }
+    }
+
+    // Detect undefined references and wrong number of arguments
     const references = new ReferencesCollector().run([decl]);
     for (const ref of references) {
       const id = ref.id;
       const isLocal = locals.has(id);
+      const referenced = rules.get(id);
       switch (ref.type) {
         case "call":
           if (isLocal) {
             errors.push(`${id} is a variable here, not a rule`);
-          } else if (!rules.has(id)) {
+          } else if (!referenced) {
             errors.push(`Cannot find rule ${id}${locSuffix(ref.loc)}`);
+          } else {
+            const expected =
+              referenced.decl.type === "rule" ? referenced.decl.args.length : 0;
+            if (expected !== ref.args.length) {
+              errors.push(
+                `${id} expected ${expected} arguments but got ${
+                  ref.args.length
+                }${locSuffix(ref.loc)}`
+              );
+            }
           }
           break;
         case "id":
-          if (!isLocal && !rules.has(id)) {
+          if (!isLocal && !referenced) {
             errors.push(
-              `Cannot find rule or variable ${id}${locSuffix(ref.loc)}`
+              `Cannot find rule, token or variable ${id}${locSuffix(ref.loc)}`
             );
           }
           break;
         default:
           never(ref);
       }
-    }
-
-    // Detect duplicate arguments
-    const seenArgs = new Set<string>();
-    for (const arg of decl.args) {
-      if (seenArgs.has(arg)) {
-        errors.push(
-          `Duplicate argument ${arg} in declaration ${decl.name}${locSuffix(
-            decl.loc
-          )}`
-        );
-      } else {
-        seenArgs.add(arg);
+      // Detect if we are referencing a fragment/skip token from a rule declaration
+      // or a rule from a token declaration
+      if (!isLocal && referenced) {
+        if (decl.type === "rule") {
+          if (
+            referenced.decl.type === "token" &&
+            referenced.decl.modifiers.type !== "normal"
+          ) {
+            errors.push(
+              `Cannot reference token ${id} with type "${
+                referenced.decl.modifiers.type
+              }" from rule declaration${locSuffix(ref.loc)}`
+            );
+          }
+        } else {
+          if (referenced.decl.type === "rule") {
+            errors.push(
+              `Cannot reference rule ${id} from token rule${locSuffix(ref.loc)}`
+            );
+          }
+        }
       }
     }
   }
@@ -100,10 +140,13 @@ export function createGrammar(
 }
 
 export class Grammar {
-  readonly name: string;
-  readonly rules: ReadonlyMap<string, { decl: Declaration; locals: Locals }>;
-  readonly tokens: TokensStore;
-  readonly startRule: RuleDeclaration;
+  private readonly name: string;
+  private readonly rules: ReadonlyMap<
+    string,
+    { decl: Declaration; locals: Locals }
+  >;
+  private readonly tokens: TokensStore;
+  private readonly startRule: RuleDeclaration;
 
   constructor(
     name: string,
@@ -117,6 +160,10 @@ export class Grammar {
     this.startRule = startRule;
   }
 
+  getStart() {
+    return this.startRule;
+  }
+
   getRule(ruleName: string) {
     const rule = this.rules.get(ruleName);
     if (rule == null) {
@@ -124,4 +171,48 @@ export class Grammar {
     }
     return rule;
   }
+
+  tokenId(token: TokenRules | TokenDeclaration) {
+    return this.tokens.get(token);
+  }
+
+  resolve(decl: Declaration, id: string): ResolvedId {
+    const { locals } = this.getRule(decl.name);
+    if (locals.has(id)) {
+      return { type: "local", decl: null };
+    }
+    const referenced = this.getRule(id);
+    if (referenced.decl.type === "rule") {
+      return { type: "rule", decl: referenced.decl };
+    }
+    return { type: "token", decl: referenced.decl };
+  }
+
+  *getRules() {
+    for (const { decl } of this.rules.values()) {
+      if (decl.type === "rule") {
+        yield decl;
+      }
+    }
+  }
+
+  *getTokens() {
+    for (const token of this.tokens) {
+      yield token;
+    }
+  }
 }
+
+type ResolvedId =
+  | {
+      readonly type: "local";
+      readonly decl: null;
+    }
+  | {
+      readonly type: "rule";
+      readonly decl: RuleDeclaration;
+    }
+  | {
+      readonly type: "token";
+      readonly decl: TokenDeclaration;
+    };

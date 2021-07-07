@@ -2,7 +2,7 @@ import { never } from "../utils";
 import { CodeBlock } from "./dfa-to-code/cfg-to-code";
 
 export class CodeToString {
-  render(indent: string, block: CodeBlock): string {
+  static render(indent: string, block: CodeBlock): string {
     switch (block.type) {
       case "expect_block":
         return `${indent}expect(${block.edge.transition});`;

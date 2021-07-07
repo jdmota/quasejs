@@ -15,7 +15,7 @@ import {
 import {
   AnyTransition,
   EpsilonTransition,
-  RuleTransition,
+  CallTransition,
   PredicateTransition,
   ActionTransition,
   RangeTransition,
@@ -200,7 +200,7 @@ export class LocalsCollector extends AutomatonVisitor<
       expect<
         | ActionTransition
         | EpsilonTransition
-        | RuleTransition
+        | CallTransition
         | PredicateTransition
         | RangeTransition
         | ReturnTransition
@@ -266,7 +266,7 @@ class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
       return NullType.SINGLETON;
     } else if (transition instanceof RangeTransition) {
       return new FreeType(); // TODO
-    } else if (transition instanceof RuleTransition) {
+    } else if (transition instanceof CallTransition) {
       const ruleAnalyzer = this.inferrer.rules.get(transition.ruleName);
       if (ruleAnalyzer) {
         return ruleAnalyzer.returnType;
@@ -294,7 +294,7 @@ class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
       pre.propagateTo(post);
     } else if (transition instanceof RangeTransition) {
       pre.propagateTo(post);
-    } else if (transition instanceof RuleTransition) {
+    } else if (transition instanceof CallTransition) {
       const ruleAnalyzer = this.inferrer.rules.get(transition.ruleName);
       if (ruleAnalyzer) {
         const expectedArgs = ruleAnalyzer.argTypes;

@@ -1,7 +1,7 @@
 import { DState } from "../automaton/state";
 import {
   AnyTransition,
-  RuleTransition,
+  CallTransition,
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions";
@@ -187,7 +187,7 @@ export class Analyzer {
         seen.add(stack.state);
 
         for (const [transition, dest] of stack.state) {
-          if (transition instanceof RuleTransition) {
+          if (transition instanceof CallTransition) {
             next.push(
               new StackFrame(
                 stack.move(dest),
@@ -234,7 +234,7 @@ export class Analyzer {
     for (const [goto, dest] of state) {
       const lookahead: [RangeTransition, StackFrame][] = [];
 
-      if (goto instanceof RuleTransition) {
+      if (goto instanceof CallTransition) {
         this.analyzeHelper(
           seen,
           new StackFrame(

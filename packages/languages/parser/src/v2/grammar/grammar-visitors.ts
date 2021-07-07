@@ -135,13 +135,6 @@ export class LocalsCollector extends RuleVisitor<Set<string>, Locals> {
     }
     super.rule(node);
   }
-
-  token(node: TokenDeclaration) {
-    for (const arg of node.args) {
-      this.data.add(arg);
-    }
-    super.token(node);
-  }
 }
 
 export class TokensCollector extends RuleVisitor<TokensStore> {
