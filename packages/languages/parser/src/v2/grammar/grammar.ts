@@ -1,68 +1,127 @@
-import { never } from "../utils";
-import { RuleDeclaration, TokenRules } from "./grammar-builder";
+import { locSuffix, locSuffix2, never } from "../utils";
+import { Declaration, RuleDeclaration } from "./grammar-builder";
 import {
-  ReadonlyFieldsStore,
-  getFields,
-  gatherTokens,
-} from "./grammar-checker";
+  ReferencesCollector,
+  TokensCollector,
+  Locals,
+  LocalsCollector,
+} from "./grammar-visitors";
+import { TokensStore } from "./tokens";
+
+type GrammarOrError =
+  | { grammar: Grammar; errors: null }
+  | { grammar: null; errors: string[] };
+
+export function createGrammar(
+  name: string,
+  decls: readonly Declaration[]
+): GrammarOrError {
+  const errors = [];
+
+  // Detect duplicate rules
+  const rules = new Map<string, { decl: Declaration; locals: Locals }>();
+  for (const rule of decls) {
+    const curr = rules.get(rule.name);
+    if (curr) {
+      errors.push(
+        `Duplicate rule ${rule.name}${locSuffix2(curr.decl.loc, rule.loc)}`
+      );
+    } else {
+      rules.set(rule.name, {
+        decl: rule,
+        locals: new LocalsCollector().run([rule]),
+      });
+    }
+  }
+
+  // Find start rule
+  const startRules = decls.filter(
+    (r): r is RuleDeclaration => r.type === "rule" && !!r.modifiers.start
+  );
+  if (startRules.length !== 1) {
+    errors.push(`Expected 1 start rule, found ${startRules.length}`);
+  }
+
+  // For each declaration...
+  for (const { decl, locals } of rules.values()) {
+    // Detect undefined references
+    const references = new ReferencesCollector().run([decl]);
+    for (const ref of references) {
+      const id = ref.id;
+      const isLocal = locals.has(id);
+      switch (ref.type) {
+        case "call":
+          if (isLocal) {
+            errors.push(`${id} is a variable here, not a rule`);
+          } else if (!rules.has(id)) {
+            errors.push(`Cannot find rule ${id}${locSuffix(ref.loc)}`);
+          }
+          break;
+        case "id":
+          if (!isLocal && !rules.has(id)) {
+            errors.push(
+              `Cannot find rule or variable ${id}${locSuffix(ref.loc)}`
+            );
+          }
+          break;
+        default:
+          never(ref);
+      }
+    }
+
+    // Detect duplicate arguments
+    const seenArgs = new Set<string>();
+    for (const arg of decl.args) {
+      if (seenArgs.has(arg)) {
+        errors.push(
+          `Duplicate argument ${arg} in declaration ${decl.name}${locSuffix(
+            decl.loc
+          )}`
+        );
+      } else {
+        seenArgs.add(arg);
+      }
+    }
+  }
+
+  if (errors.length === 0) {
+    const tokens = new TokensCollector().run(decls);
+    const startRule = startRules[0];
+
+    return {
+      grammar: new Grammar(name, rules, tokens, startRule),
+      errors: null,
+    };
+  }
+  return {
+    grammar: null,
+    errors,
+  };
+}
 
 export class Grammar {
   readonly name: string;
-  readonly rules: ReadonlyMap<string, RuleDeclaration>;
-  readonly startRules: RuleDeclaration[];
-  readonly fields: ReadonlyMap<string, ReadonlyFieldsStore>;
-  readonly tokens: ReadonlyMap<TokenRules, number>;
-  readonly tokenIds: readonly [number, number];
+  readonly rules: ReadonlyMap<string, { decl: Declaration; locals: Locals }>;
+  readonly tokens: TokensStore;
+  readonly startRule: RuleDeclaration;
 
-  constructor(name: string, rules: readonly RuleDeclaration[]) {
-    const fields = rules.map(
-      rule => [rule.name, getFields(rule.rule)] as const
-    );
+  constructor(
+    name: string,
+    rules: ReadonlyMap<string, { decl: Declaration; locals: Locals }>,
+    tokens: TokensStore,
+    startRule: RuleDeclaration
+  ) {
     this.name = name;
-    this.rules = new Map(rules.map(r => [r.name, r]));
-    this.startRules = rules.filter(r => r.modifiers.start);
-    this.fields = new Map(fields);
-
-    // Gather tokens and assign ids
-    const tokensList = gatherTokens(rules.map(r => r.rule));
-    const tokens = new Map<TokenRules, number>();
-    const nameToId = new Map<string, number>([["eof", 0]]);
-    let lastTokenId = 1;
-    for (const t of tokensList) {
-      const name = this.tokenName(t);
-      const id = nameToId.get(name) ?? lastTokenId++;
-      nameToId.set(name, id);
-      tokens.set(t, id);
-    }
+    this.rules = rules;
     this.tokens = tokens;
-    this.tokenIds = [0, lastTokenId - 1];
-  }
-
-  tokenName(token: TokenRules) {
-    switch (token.type) {
-      case "eof":
-        return "eof";
-      case "string":
-        return `str:${token.string}`;
-      case "regexp":
-        return `regexp:${token.regexp}`;
-      default:
-        never(token);
-    }
+    this.startRule = startRule;
   }
 
   getRule(ruleName: string) {
     const rule = this.rules.get(ruleName);
     if (rule == null) {
-      throw new Error(`No rule called ${ruleName}`);
+      throw new Error(`Internal error: No rule called ${ruleName}`);
     }
     return rule;
-  }
-
-  startRule() {
-    if (this.startRules.length === 1) {
-      return this.startRules[0];
-    }
-    throw new Error(`Expected 1 start rule, found ${this.startRules.length}`);
   }
 }

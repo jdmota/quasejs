@@ -1,9 +1,9 @@
+import type { Location } from "../runtime/input";
 import {
   sameArgs,
   sameAssignable,
+  ExprRule,
   FieldRule,
-  sameExpr,
-  AnyExpr,
 } from "../grammar/grammar-builder";
 
 export type AnyTransition =
@@ -11,7 +11,6 @@ export type AnyTransition =
   | RuleTransition
   | ActionTransition
   | PredicateTransition
-  | PrecedenceTransition
   | RangeTransition
   | EOFTransition
   | ReturnTransition
@@ -19,14 +18,21 @@ export type AnyTransition =
 
 abstract class Transition<E extends boolean> {
   readonly isEpsilon: E;
+  loc: Location | null;
 
   constructor(isEpsilon: E) {
     this.isEpsilon = isEpsilon;
+    this.loc = null;
   }
 
   abstract hashCode(): number;
   abstract equals(other: unknown): boolean;
   abstract toString(): string;
+
+  setLoc(loc: Location | null) {
+    this.loc = loc;
+    return this;
+  }
 }
 
 abstract class AbstractEpsilonTransition extends Transition<true> {
@@ -57,9 +63,9 @@ export class EpsilonTransition extends AbstractEpsilonTransition {
 
 export class RuleTransition extends AbstractNotEpsilonTransition {
   readonly ruleName: string;
-  readonly args: readonly AnyExpr[];
+  readonly args: readonly ExprRule[];
 
-  constructor(ruleName: string, args: readonly AnyExpr[]) {
+  constructor(ruleName: string, args: readonly ExprRule[]) {
     super();
     this.ruleName = ruleName;
     this.args = args;
@@ -82,14 +88,23 @@ export class RuleTransition extends AbstractNotEpsilonTransition {
   }
 }
 
-// TODO
 export class PredicateTransition extends AbstractEpsilonTransition {
+  readonly code: ExprRule;
+
+  constructor(code: ExprRule) {
+    super();
+    this.code = code;
+  }
+
   hashCode() {
     return 2;
   }
 
   equals(other: unknown): other is PredicateTransition {
-    return other instanceof PredicateTransition && other === this;
+    return (
+      other instanceof PredicateTransition &&
+      sameAssignable(this.code, other.code)
+    );
   }
 
   toString() {
@@ -97,25 +112,10 @@ export class PredicateTransition extends AbstractEpsilonTransition {
   }
 }
 
-// TODO
-export class PrecedenceTransition extends PredicateTransition {
-  hashCode() {
-    return 3;
-  }
-
-  equals(other: unknown): other is PrecedenceTransition {
-    return other instanceof PrecedenceTransition && this === other;
-  }
-
-  toString() {
-    return `[Precedence]`;
-  }
-}
-
 export class ActionTransition extends AbstractEpsilonTransition {
-  readonly code: AnyExpr;
+  readonly code: ExprRule;
 
-  constructor(code: AnyExpr) {
+  constructor(code: ExprRule) {
     super();
     this.code = code;
   }
@@ -125,7 +125,9 @@ export class ActionTransition extends AbstractEpsilonTransition {
   }
 
   equals(other: unknown): other is ActionTransition {
-    return other instanceof ActionTransition && sameExpr(this.code, other.code);
+    return (
+      other instanceof ActionTransition && sameAssignable(this.code, other.code)
+    );
   }
 
   toString() {
@@ -171,9 +173,9 @@ export class EOFTransition extends RangeTransition {
 }
 
 export class ReturnTransition extends AbstractEpsilonTransition {
-  readonly returnCode: AnyExpr | null;
+  readonly returnCode: ExprRule | null;
 
-  constructor(returnCode: AnyExpr | null) {
+  constructor(returnCode: ExprRule | null) {
     super();
     this.returnCode = returnCode;
   }
@@ -187,7 +189,7 @@ export class ReturnTransition extends AbstractEpsilonTransition {
       other instanceof ReturnTransition &&
       (this.returnCode == null || other.returnCode == null
         ? this.returnCode === other.returnCode
-        : sameExpr(this.returnCode, other.returnCode))
+        : sameAssignable(this.returnCode, other.returnCode))
     );
   }
 
@@ -197,27 +199,31 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 }
 
 export class FieldTransition extends AbstractEpsilonTransition {
+  readonly name: string;
+  readonly multiple: boolean;
   readonly node: FieldRule;
 
   constructor(node: FieldRule) {
     super();
+    this.name = node.name;
+    this.multiple = node.multiple;
     this.node = node;
   }
 
   hashCode() {
-    return 7 * this.node.name.length;
+    return 7 * this.name.length;
   }
 
   equals(other: unknown): other is FieldTransition {
     return (
       other instanceof FieldTransition &&
-      this.node.name === other.node.name &&
-      this.node.multiple === other.node.multiple &&
+      this.name === other.name &&
+      this.multiple === other.multiple &&
       sameAssignable(this.node.rule, other.node.rule)
     );
   }
 
   toString() {
-    return `[${this.node.name}${this.node.multiple ? "+=" : ""}...]`;
+    return `[${this.name}${this.multiple ? "+=" : ""}...]`;
   }
 }

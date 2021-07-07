@@ -1,20 +1,29 @@
+import type { Location } from "../runtime/input";
 import { DFA } from "../optimizer/abstract-optimizer";
 import { DState } from "../automaton/state";
 import { expect, never } from "../utils";
-import { AnyExpr, RuleDeclaration } from "./grammar-builder";
+import {
+  AnyExpr,
+  Assignables,
+  CallExpr,
+  FieldExpr,
+  IdExpr,
+  ObjectExpr,
+  RuleDeclaration,
+  SelectExpr,
+} from "./grammar-builder";
 import {
   AnyTransition,
   EpsilonTransition,
   RuleTransition,
   PredicateTransition,
-  PrecedenceTransition,
   ActionTransition,
   RangeTransition,
   ReturnTransition,
   FieldTransition,
 } from "../automaton/transitions";
 
-class Type {
+abstract class Type {
   readonly supertypes = new Set<Type>();
   subtypeOf(other: Type) {
     this.supertypes.add(other);
@@ -29,26 +38,54 @@ class ObjectType extends Type {
   }
 }
 
-const TOP = new Type();
+class TopType extends Type {
+  static SINGLETON = new TopType();
+  private constructor() {
+    super();
+  }
+}
 
-const NULL = new Type();
-NULL.subtypeOf(TOP);
+class NullType extends Type {
+  static SINGLETON = new NullType();
+  private constructor() {
+    super();
+  }
+}
 
-const BOTTOM = new Type();
-BOTTOM.subtypeOf(TOP);
-BOTTOM.subtypeOf(NULL);
+class BooleanType extends Type {
+  static SINGLETON = new BooleanType();
+  private constructor() {
+    super();
+  }
+}
+
+class IntType extends Type {
+  static SINGLETON = new IntType();
+  private constructor() {
+    super();
+  }
+}
+
+class BottomType extends Type {
+  static SINGLETON = new BottomType();
+  private constructor() {
+    super();
+  }
+}
+
+class FreeType extends Type {}
 
 class Store {
   private readonly map: Map<string, Type> = new Map();
 
   constructor(names: readonly string[]) {
     for (const name of names) {
-      this.map.set(name, new Type());
+      this.map.set(name, new FreeType());
     }
   }
 
   get(name: string) {
-    return this.map.get(name) || BOTTOM;
+    return this.map.get(name) || BottomType.SINGLETON;
   }
 
   propagateTo(other: Store) {
@@ -98,26 +135,73 @@ abstract class AutomatonVisitor<T, R extends RuleWithAutomaton> {
   }
 }
 
-class LocalsCollector extends AutomatonVisitor<
+abstract class ExprVisitor {
+  id(expr: IdExpr) {}
+
+  /*field(expr: FieldExpr) {
+    this.run(expr.expr);
+  }*/
+
+  select(expr: SelectExpr) {
+    this.run(expr.parent);
+  }
+
+  call(expr: CallExpr) {
+    for (const arg of expr.args) {
+      this.run(arg);
+    }
+  }
+
+  object(expr: ObjectExpr) {
+    for (const [name, field] of expr.fields) {
+      this.run(field);
+    }
+  }
+
+  run(expr: AnyExpr) {
+    switch (expr.type) {
+      case "idExpr":
+        this.id(expr);
+        break;
+      /*case "fieldExpr":
+        this.field(expr);
+        break;*/
+      case "selectExpr":
+        this.select(expr);
+        break;
+      case "callExpr":
+        this.call(expr);
+        break;
+      case "objectExpr":
+        this.object(expr);
+        break;
+      default:
+        never(expr);
+    }
+  }
+}
+
+export class LocalsCollector extends AutomatonVisitor<
   readonly string[],
   RuleWithAutomaton
 > {
   private readonly locals = new Set<string>();
 
   fn(preState: DState, transition: AnyTransition, postState: DState): void {
-    if (transition instanceof ActionTransition) {
+    /*if (transition instanceof ActionTransition) {
       const { code } = transition;
       if (code.type == "fieldExpr") {
         this.locals.add(code.name);
       }
-    } else if (transition instanceof FieldTransition) {
-      this.locals.add(transition.node.name);
+    } else */
+    if (transition instanceof FieldTransition) {
+      this.locals.add(transition.name);
     } else {
       expect<
+        | ActionTransition
         | EpsilonTransition
         | RuleTransition
         | PredicateTransition
-        | PrecedenceTransition
         | RangeTransition
         | ReturnTransition
       >(transition);
@@ -130,21 +214,41 @@ class LocalsCollector extends AutomatonVisitor<
   }
 }
 
-class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
-  private readonly stateToStore = new Map<DState, Store>();
+// TODO
+class ExprAnalyzer extends ExprVisitor {
   private readonly exprTypes = new Map<AnyExpr, Type>();
-  private readonly returnType = new Type();
-  private readonly argTypes: readonly {
+
+  exprType(expr: AnyExpr) {
+    let type = this.exprTypes.get(expr);
+    if (type == null) {
+      type = new FreeType();
+      this.exprTypes.set(expr, type);
+    }
+    return type;
+  }
+}
+
+class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
+  readonly returnType = new FreeType();
+  readonly argTypes: readonly {
     readonly name: string;
     readonly type: Type;
   }[];
+
+  private readonly exprAnalyzer = new ExprAnalyzer();
+  private readonly stateToStore = new Map<DState, Store>();
   private readonly fields: readonly string[];
   private readonly locals: readonly string[];
+  private readonly inferrer: GrammarTypesInfer;
 
-  constructor(rule: RuleWithAutomaton) {
+  constructor(inferrer: GrammarTypesInfer, rule: RuleWithAutomaton) {
     super(rule);
+    this.inferrer = inferrer;
     this.fields = new LocalsCollector(rule).run();
-    this.argTypes = rule.rule.args.map(name => ({ name, type: new Type() }));
+    this.argTypes = rule.rule.args.map(name => ({
+      name,
+      type: new FreeType(),
+    }));
     this.locals = [...rule.rule.args, ...this.fields];
   }
 
@@ -157,13 +261,29 @@ class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
     return store;
   }
 
-  private exprType(expr: AnyExpr) {
-    let type = this.exprTypes.get(expr);
-    if (type == null) {
-      type = new Type();
-      this.exprTypes.set(expr, type);
+  private transitionType(transition: AnyTransition) {
+    if (transition instanceof EpsilonTransition) {
+      return NullType.SINGLETON;
+    } else if (transition instanceof RangeTransition) {
+      return new FreeType(); // TODO
+    } else if (transition instanceof RuleTransition) {
+      const ruleAnalyzer = this.inferrer.rules.get(transition.ruleName);
+      if (ruleAnalyzer) {
+        return ruleAnalyzer.returnType;
+      } else {
+        return BottomType.SINGLETON;
+      }
+    } else if (transition instanceof PredicateTransition) {
+      throw new Error("");
+    } else if (transition instanceof ActionTransition) {
+      return this.exprAnalyzer.exprType(transition.code);
+    } else if (transition instanceof ReturnTransition) {
+      throw new Error("");
+    } else if (transition instanceof FieldTransition) {
+      throw new Error("");
+    } else {
+      never(transition);
     }
-    return type;
   }
 
   fn(preState: DState, transition: AnyTransition, postState: DState): void {
@@ -174,23 +294,47 @@ class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
       pre.propagateTo(post);
     } else if (transition instanceof RangeTransition) {
       pre.propagateTo(post);
-    } else if (transition instanceof PredicateTransition) {
-      pre.propagateTo(post);
-    } else if (transition instanceof PrecedenceTransition) {
-      pre.propagateTo(post);
     } else if (transition instanceof RuleTransition) {
-      // TODO analyze
+      const ruleAnalyzer = this.inferrer.rules.get(transition.ruleName);
+      if (ruleAnalyzer) {
+        const expectedArgs = ruleAnalyzer.argTypes;
+        const actualArgs = transition.args;
+        for (let i = 0; i < actualArgs.length; i++) {
+          const arg = actualArgs[i];
+          this.exprAnalyzer.run(arg);
+          this.exprAnalyzer
+            .exprType(arg)
+            .subtypeOf(expectedArgs[i]?.type ?? TopType.SINGLETON);
+        }
+        if (expectedArgs.length !== actualArgs.length) {
+          this.inferrer.addError(
+            `Rule ${transition.ruleName} expects ${expectedArgs.length} arguments, got ${actualArgs.length}`,
+            transition.loc
+          );
+        }
+      } else {
+        this.inferrer.addError(
+          `Rule ${transition.ruleName} is not defined`,
+          transition.loc
+        );
+      }
+    } else if (transition instanceof PredicateTransition) {
+      this.exprAnalyzer.run(transition.code);
+      this.exprAnalyzer
+        .exprType(transition.code)
+        .subtypeOf(BooleanType.SINGLETON);
+      pre.propagateTo(post);
     } else if (transition instanceof ActionTransition) {
-      // TODO analyze code expr
+      this.exprAnalyzer.run(transition.code);
     } else if (transition instanceof ReturnTransition) {
-      // TODO analyze code expr
       const { returnCode } = transition;
       if (returnCode == null) {
         this.returnType.subtypeOf(
           new ObjectType(locals.map(id => [id, pre.get(id)]))
         );
       } else {
-        this.returnType.subtypeOf(this.exprType(returnCode));
+        this.exprAnalyzer.run(returnCode);
+        this.returnType.subtypeOf(this.exprAnalyzer.exprType(returnCode));
       }
     } else if (transition instanceof FieldTransition) {
       // TODO analyze
@@ -214,13 +358,19 @@ class RuleAnalyzer extends AutomatonVisitor<void, RuleWithAutomaton> {
 }
 
 export class GrammarTypesInfer {
-  private readonly rules: readonly RuleWithAutomaton[];
+  private readonly errors: (readonly [string, Location | null])[];
+  readonly rules: ReadonlyMap<string, RuleAnalyzer>;
 
   constructor(rules: readonly RuleWithAutomaton[]) {
-    this.rules = rules;
+    this.errors = [];
+    this.rules = new Map(
+      rules.map(rule => [rule.rule.name, new RuleAnalyzer(this, rule)])
+    );
   }
 
-  infer(rule: RuleWithAutomatonAndTypes) {
-    new RuleAnalyzer(rule).run();
+  addError(message: string, loc: Location | null) {
+    this.errors.push([message, loc]);
   }
+
+  infer(rule: RuleWithAutomatonAndTypes) {}
 }

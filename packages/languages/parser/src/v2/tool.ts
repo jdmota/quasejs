@@ -35,7 +35,7 @@ export function tool(opts: ToolInput) {
   }
 
   // Init factory
-  const ruleFactory = new FactoryRule(new Automaton());
+  const ruleFactory = new FactoryRule();
 
   // Init information the analyzer will need
   const initialStates = new Map<string, DState>();
@@ -65,7 +65,7 @@ export function tool(opts: ToolInput) {
 
   // Init analyzer
   const analyzer = new Analyzer({
-    startRule: grammar.startRule().name,
+    startRule: grammar.startRule.name,
     initialStates,
     follows,
   });

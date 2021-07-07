@@ -11,42 +11,32 @@ export interface RuleMap {
   eof: EofRule;
   string: StringRule;
   regexp: RegExpRule;
+  object: ObjectRule;
   id: IdRule;
   select: SelectRule;
   call: CallRule;
+  call2: Call2Rule;
   predicate: PredicateRule;
   field: FieldRule;
-  action: ActionRule;
 }
+
+export type Declaration = RuleDeclaration | TokenDeclaration;
+
+export type References = CallRule | IdRule;
 
 export type RuleNames = keyof RuleMap;
 export type AnyRule = RuleMap[RuleNames];
 
-export interface ExprMap {
-  id: IdExpr;
-  select: SelectExpr;
-  call: CallExpr;
-  object: ObjectExpr;
-  field: FieldExpr;
-}
-
-export type ExprNames = keyof ExprMap;
-export type AnyExpr = ExprMap[ExprNames];
-
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type Assignables =
-  | EmptyRule
-  | TokenRules
-  | IdRule
-  | SelectRule
-  | CallRule;
+export type ExprRule = IdRule | SelectRule | ObjectRule | Call2Rule;
+
+export type Assignables = EmptyRule | TokenRules | CallRule | ExprRule;
 
 export type RuleModifiers = {
   readonly start?: boolean;
-  readonly inline?: boolean;
   readonly noSkips?: boolean;
-  readonly skip?: boolean;
+  readonly inline?: boolean;
 };
 
 export type RuleDeclaration = {
@@ -54,7 +44,7 @@ export type RuleDeclaration = {
   readonly name: string;
   readonly rule: AnyRule;
   readonly args: readonly string[];
-  readonly return: AnyExpr | null;
+  readonly return: ExprRule | null;
   readonly modifiers: RuleModifiers;
   loc: Location | null;
 };
@@ -64,10 +54,42 @@ function rule(
   rule: AnyRule,
   args: readonly string[],
   modifiers: RuleModifiers,
-  returnCode: AnyExpr | null
+  returnCode: ExprRule | null
 ): RuleDeclaration {
   return {
     type: "rule",
+    name,
+    rule,
+    args,
+    modifiers,
+    return: returnCode,
+    loc: null,
+  };
+}
+
+export type TokenModifiers = {
+  readonly skip?: boolean;
+};
+
+export type TokenDeclaration = {
+  readonly type: "token";
+  readonly name: string;
+  readonly rule: AnyRule;
+  readonly args: readonly string[];
+  readonly return: ExprRule | null;
+  readonly modifiers: TokenModifiers;
+  loc: Location | null;
+};
+
+function token(
+  name: string,
+  rule: AnyRule,
+  args: readonly string[],
+  modifiers: TokenModifiers,
+  returnCode: ExprRule | null
+): TokenDeclaration {
+  return {
+    type: "token",
     name,
     rule,
     args,
@@ -150,13 +172,29 @@ function optional(rule: AnyRule): OptionalRule {
 export type CallRule = {
   readonly type: "call";
   readonly id: string;
-  readonly args: readonly AnyExpr[];
+  readonly args: readonly ExprRule[];
   loc: Location | null;
 };
 
-function call(id: string, args: readonly AnyExpr[]): CallRule {
+function call(id: string, args: readonly ExprRule[]): CallRule {
   return {
     type: "call",
+    id,
+    args,
+    loc: null,
+  };
+}
+
+export type Call2Rule = {
+  readonly type: "call2";
+  readonly id: string;
+  readonly args: readonly ExprRule[];
+  loc: Location | null;
+};
+
+function call2(id: string, args: readonly ExprRule[]): Call2Rule {
+  return {
+    type: "call2",
     id,
     args,
     loc: null,
@@ -179,12 +217,12 @@ function id(id: string): IdRule {
 
 export type SelectRule = {
   readonly type: "select";
-  readonly parent: Assignables;
+  readonly parent: ExprRule;
   readonly field: string;
   loc: Location | null;
 };
 
-function select(parent: Assignables, field: string): SelectRule {
+function select(parent: ExprRule, field: string): SelectRule {
   return {
     type: "select",
     parent,
@@ -275,11 +313,11 @@ function fieldMultiple(name: string, rule: Assignables): FieldRule {
 
 export type PredicateRule = {
   readonly type: "predicate";
-  readonly code: AnyExpr;
+  readonly code: ExprRule;
   loc: Location | null;
 };
 
-function predicate(code: AnyExpr): PredicateRule {
+function predicate(code: ExprRule): PredicateRule {
   return {
     type: "predicate",
     code,
@@ -295,115 +333,30 @@ function precedenceRightAssoc(number: number, rule: AnyRule) {
   // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 
-export type ActionRule = {
-  readonly type: "action";
-  readonly code: AnyExpr;
+export type ObjectRule = {
+  readonly type: "object";
+  readonly fields: readonly (readonly [string, ExprRule])[];
   loc: Location | null;
 };
 
-function action(code: AnyExpr): ActionRule {
+function object(fields: { [key: string]: ExprRule }): ObjectRule {
   return {
-    type: "action",
-    code,
-    loc: null,
-  };
-}
-
-export type IdExpr = {
-  readonly type: "idExpr";
-  readonly id: string;
-  loc: Location | null;
-};
-
-function idExpr(id: string): IdExpr {
-  return {
-    type: "idExpr",
-    id,
-    loc: null,
-  };
-}
-
-export type SelectExpr = {
-  readonly type: "selectExpr";
-  readonly parent: AnyExpr;
-  readonly field: string;
-  loc: Location | null;
-};
-
-function selectExpr(parent: AnyExpr, field: string): SelectExpr {
-  return {
-    type: "selectExpr",
-    parent,
-    field,
-    loc: null,
-  };
-}
-
-export type ObjectExpr = {
-  readonly type: "objectExpr";
-  readonly fields: readonly (readonly [string, AnyExpr])[];
-};
-
-function objectExpr(fields: { [key: string]: AnyExpr }): ObjectExpr {
-  return {
-    type: "objectExpr",
+    type: "object",
     fields: Object.entries(fields),
-  };
-}
-
-export type CallExpr = {
-  readonly type: "callExpr";
-  readonly id: string;
-  readonly args: readonly AnyExpr[];
-  loc: Location | null;
-};
-
-function callExpr(id: string, args: readonly AnyExpr[]): CallExpr {
-  return {
-    type: "callExpr",
-    id,
-    args,
-    loc: null,
-  };
-}
-
-export type FieldExpr = {
-  readonly type: "fieldExpr";
-  readonly name: string;
-  readonly expr: AnyExpr;
-  readonly multiple: boolean;
-  loc: Location | null;
-};
-
-function fieldExpr(name: string, expr: AnyExpr): FieldExpr {
-  return {
-    type: "fieldExpr",
-    name,
-    expr,
-    multiple: false,
-    loc: null,
-  };
-}
-
-function fieldMultipleExpr(name: string, expr: AnyExpr): FieldExpr {
-  return {
-    type: "fieldExpr",
-    name,
-    expr,
-    multiple: true,
     loc: null,
   };
 }
 
 export const builder = {
-  // Rules
   rule,
+  token,
   seq,
   choice,
   repeat,
   repeat1,
   optional,
   call,
+  call2,
   id,
   select,
   empty,
@@ -413,14 +366,7 @@ export const builder = {
   field,
   fieldMultiple,
   predicate,
-  action,
-  // Expressions
-  idExpr,
-  selectExpr,
-  objectExpr,
-  callExpr,
-  fieldExpr,
-  fieldMultipleExpr,
+  object,
 };
 
 // Utils
@@ -440,6 +386,7 @@ export function sameAssignable(
     case "id":
       return value1.type === value2.type && value1.id === value2.id;
     case "call":
+    case "call2":
       return (
         value1.type === value2.type &&
         value1.id === value2.id &&
@@ -454,31 +401,7 @@ export function sameAssignable(
     case "empty":
     case "eof":
       return value1.type === value2.type;
-    default:
-      return never(value1);
-  }
-}
-
-export function sameExpr(value1: AnyExpr, value2: AnyExpr): boolean {
-  if (value1 === value2) {
-    return true;
-  }
-  switch (value1.type) {
-    case "idExpr":
-      return value1.type === value2.type && value1.id === value2.id;
-    case "callExpr":
-      return (
-        value1.type === value2.type &&
-        value1.id === value2.id &&
-        sameArgs(value1.args, value2.args)
-      );
-    case "selectExpr":
-      return (
-        value1.type === value2.type &&
-        value1.field === value2.field &&
-        sameExpr(value1.parent, value2.parent)
-      );
-    case "objectExpr":
+    case "object":
       if (
         value1.type === value2.type &&
         value1.fields.length === value2.fields.length
@@ -486,26 +409,25 @@ export function sameExpr(value1: AnyExpr, value2: AnyExpr): boolean {
         for (let i = 0; i < value1.fields.length; i++) {
           const field1 = value1.fields[i];
           const field2 = value2.fields[i];
-          if (field1[0] !== field2[0] || !sameExpr(field1[1], field2[1])) {
+          if (
+            field1[0] !== field2[0] ||
+            !sameAssignable(field1[1], field2[1])
+          ) {
             return false;
           }
         }
         return true;
       }
       return false;
-    case "fieldExpr":
-      return (
-        value1.type === value2.type &&
-        value1.name === value2.name &&
-        value1.multiple === value2.multiple &&
-        sameExpr(value1.expr, value2.expr)
-      );
     default:
-      return never(value1);
+      never(value1);
   }
 }
 
-export function sameArgs(args1: readonly AnyExpr[], args2: readonly AnyExpr[]) {
+export function sameArgs(
+  args1: readonly ExprRule[],
+  args2: readonly ExprRule[]
+) {
   if (args1 === args2) {
     return true;
   }
@@ -513,7 +435,7 @@ export function sameArgs(args1: readonly AnyExpr[], args2: readonly AnyExpr[]) {
     return false;
   }
   for (let i = 0; i < args1.length; i++) {
-    if (!sameExpr(args1[i], args2[i])) {
+    if (!sameAssignable(args1[i], args2[i])) {
       return false;
     }
   }
