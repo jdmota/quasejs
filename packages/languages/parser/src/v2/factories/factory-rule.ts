@@ -91,36 +91,24 @@ export class FactoryRule implements Gen {
   }
 
   call(node: CallRule): Frag {
-    const resolved = this.grammar.resolve(this.rule, node.id);
-    switch (resolved.type) {
-      case "local":
-        assertion(false);
+    const decl = this.grammar.getRule(node.id).decl;
+    switch (decl.type) {
       case "rule":
+        assertion(node.args.length === decl.args.length);
         return this.automaton.single(
           new CallTransition(node.id, node.args).setLoc(node.loc)
         );
       case "token":
+        assertion(decl.modifiers.type === "normal");
         assertion(node.args.length === 0);
-        return this.token(resolved.decl);
+        return this.token(decl);
       default:
-        never(resolved);
+        never(decl);
     }
   }
 
   id(node: IdRule): Frag {
-    const resolved = this.grammar.resolve(this.rule, node.id);
-    switch (resolved.type) {
-      case "local":
-        return this.action(node);
-      case "rule":
-        return this.automaton.single(
-          new CallTransition(node.id, []).setLoc(node.loc)
-        );
-      case "token":
-        return this.token(resolved.decl);
-      default:
-        never(resolved);
-    }
+    return this.action(node);
   }
 
   string(node: StringRule): Frag {

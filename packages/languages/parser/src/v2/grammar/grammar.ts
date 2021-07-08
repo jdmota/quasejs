@@ -1,5 +1,6 @@
 import { locSuffix, locSuffix2, never } from "../utils";
 import {
+  builder,
   Declaration,
   RuleDeclaration,
   TokenDeclaration,
@@ -69,13 +70,10 @@ export function createGrammar(
     const references = new ReferencesCollector().run([decl]);
     for (const ref of references) {
       const id = ref.id;
-      const isLocal = locals.has(id);
-      const referenced = rules.get(id);
       switch (ref.type) {
         case "call":
-          if (isLocal) {
-            errors.push(`${id} is a variable here, not a rule`);
-          } else if (!referenced) {
+          const referenced = rules.get(id);
+          if (!referenced) {
             errors.push(`Cannot find rule ${id}${locSuffix(ref.loc)}`);
           } else {
             const expected =
@@ -87,39 +85,38 @@ export function createGrammar(
                 }${locSuffix(ref.loc)}`
               );
             }
+
+            // Detect if we are referencing a fragment/skip token from a rule declaration
+            // or a rule from a token declaration
+            if (decl.type === "rule") {
+              if (
+                referenced.decl.type === "token" &&
+                referenced.decl.modifiers.type !== "normal"
+              ) {
+                errors.push(
+                  `Cannot reference token ${id} with type "${
+                    referenced.decl.modifiers.type
+                  }" from rule declaration${locSuffix(ref.loc)}`
+                );
+              }
+            } else {
+              if (referenced.decl.type === "rule") {
+                errors.push(
+                  `Cannot reference rule ${id} from token rule${locSuffix(
+                    ref.loc
+                  )}`
+                );
+              }
+            }
           }
           break;
         case "id":
-          if (!isLocal && !referenced) {
-            errors.push(
-              `Cannot find rule, token or variable ${id}${locSuffix(ref.loc)}`
-            );
+          if (!locals.has(id)) {
+            errors.push(`Cannot find variable ${id}${locSuffix(ref.loc)}`);
           }
           break;
         default:
           never(ref);
-      }
-      // Detect if we are referencing a fragment/skip token from a rule declaration
-      // or a rule from a token declaration
-      if (!isLocal && referenced) {
-        if (decl.type === "rule") {
-          if (
-            referenced.decl.type === "token" &&
-            referenced.decl.modifiers.type !== "normal"
-          ) {
-            errors.push(
-              `Cannot reference token ${id} with type "${
-                referenced.decl.modifiers.type
-              }" from rule declaration${locSuffix(ref.loc)}`
-            );
-          }
-        } else {
-          if (referenced.decl.type === "rule") {
-            errors.push(
-              `Cannot reference rule ${id} from token rule${locSuffix(ref.loc)}`
-            );
-          }
-        }
       }
     }
   }
@@ -127,6 +124,7 @@ export function createGrammar(
   if (errors.length === 0) {
     const tokens = new TokensCollector().run(decls);
     const startRule = startRules[0];
+    const lexer = tokens.createLexer();
 
     return {
       grammar: new Grammar(name, rules, tokens, startRule),
@@ -176,18 +174,6 @@ export class Grammar {
     return this.tokens.get(token);
   }
 
-  resolve(decl: Declaration, id: string): ResolvedId {
-    const { locals } = this.getRule(decl.name);
-    if (locals.has(id)) {
-      return { type: "local", decl: null };
-    }
-    const referenced = this.getRule(id);
-    if (referenced.decl.type === "rule") {
-      return { type: "rule", decl: referenced.decl };
-    }
-    return { type: "token", decl: referenced.decl };
-  }
-
   *getRules() {
     for (const { decl } of this.rules.values()) {
       if (decl.type === "rule") {
@@ -202,17 +188,3 @@ export class Grammar {
     }
   }
 }
-
-type ResolvedId =
-  | {
-      readonly type: "local";
-      readonly decl: null;
-    }
-  | {
-      readonly type: "rule";
-      readonly decl: RuleDeclaration;
-    }
-  | {
-      readonly type: "token";
-      readonly decl: TokenDeclaration;
-    };

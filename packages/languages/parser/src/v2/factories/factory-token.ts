@@ -122,10 +122,8 @@ export class FactoryToken implements Gen {
   }
 
   call(node: CallRule): Frag {
-    const resolved = this.grammar.resolve(this.rule, node.id);
-    switch (resolved.type) {
-      case "local":
-        assertion(false);
+    const decl = this.grammar.getRule(node.id).decl;
+    switch (decl.type) {
       case "rule":
         assertion(false);
       case "token":
@@ -134,24 +132,12 @@ export class FactoryToken implements Gen {
           new CallTransition(node.id, []).setLoc(node.loc)
         );
       default:
-        never(resolved);
+        never(decl);
     }
   }
 
   id(node: IdRule): Frag {
-    const resolved = this.grammar.resolve(this.rule, node.id);
-    switch (resolved.type) {
-      case "local":
-        return this.action(node);
-      case "rule":
-        assertion(false);
-      case "token":
-        return this.automaton.single(
-          new CallTransition(node.id, []).setLoc(node.loc)
-        );
-      default:
-        never(resolved);
-    }
+    return this.action(node);
   }
 
   eof(node: EofRule): Frag {

@@ -43,4 +43,38 @@ export class TokensStore {
   [Symbol.iterator]() {
     return this.tokens.values();
   }
+
+  // TODO
+  createLexer() {
+    const tokens = [];
+    for (const [, token] of this.tokens) {
+      const fieldIdSet = builder.field("id", builder.int(this.get(token)));
+      switch (token.type) {
+        case "token":
+          if (token.modifiers.type === "normal") {
+            tokens.push(
+              token.return
+                ? builder.seq(token.rule, token.return, fieldIdSet)
+                : builder.seq(token.rule, fieldIdSet)
+            );
+          }
+          break;
+        case "string":
+        case "regexp":
+        case "eof":
+          tokens.push(builder.seq(token, fieldIdSet));
+          break;
+        default:
+          never(token);
+      }
+    }
+    return builder.token(
+      "#lexer",
+      builder.choice(...tokens),
+      {
+        type: "normal",
+      },
+      builder.id("id")
+    );
+  }
 }

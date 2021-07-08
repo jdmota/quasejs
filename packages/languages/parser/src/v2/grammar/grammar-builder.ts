@@ -12,6 +12,7 @@ export interface RuleMap {
   string: StringRule;
   regexp: RegExpRule;
   object: ObjectRule;
+  int: IntRule;
   id: IdRule;
   select: SelectRule;
   call: CallRule;
@@ -29,7 +30,7 @@ export type AnyRule = RuleMap[RuleNames];
 
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type ExprRule = IdRule | SelectRule | ObjectRule | Call2Rule;
+export type ExprRule = IdRule | SelectRule | ObjectRule | IntRule | Call2Rule;
 
 export type Assignables = EmptyRule | TokenRules | CallRule | ExprRule;
 
@@ -330,6 +331,20 @@ function precedenceRightAssoc(number: number, rule: AnyRule) {
   // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 
+export type IntRule = {
+  readonly type: "int";
+  readonly value: number;
+  loc: Location | null;
+};
+
+function int(value: number): IntRule {
+  return {
+    type: "int",
+    value,
+    loc: null,
+  };
+}
+
 export type ObjectRule = {
   readonly type: "object";
   readonly fields: readonly (readonly [string, ExprRule])[];
@@ -360,10 +375,11 @@ export const builder = {
   eof,
   string,
   regexp,
+  int,
+  object,
   field,
   fieldMultiple,
   predicate,
-  object,
 };
 
 // Utils
@@ -382,6 +398,8 @@ export function sameAssignable(
       return value1.type === value2.type && value1.regexp === value2.regexp;
     case "id":
       return value1.type === value2.type && value1.id === value2.id;
+    case "int":
+      return value1.type === value2.type && value1.value === value2.value;
     case "call":
     case "call2":
       return (

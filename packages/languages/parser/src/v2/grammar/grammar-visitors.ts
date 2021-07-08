@@ -91,10 +91,16 @@ export abstract class RuleVisitor<
 
   rule(node: RuleDeclaration) {
     this.visit(node.rule);
+    if (node.return != null) {
+      this.visit(node.return);
+    }
   }
 
   token(node: TokenDeclaration) {
     this.visit(node.rule);
+    if (node.return != null) {
+      this.visit(node.return);
+    }
   }
 
   visit(node: AnyRule) {

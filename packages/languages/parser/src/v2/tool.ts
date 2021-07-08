@@ -4,7 +4,7 @@ import { DState } from "./automaton/state";
 import { FactoryRule } from "./factories/factory-rule";
 import { FactoryToken } from "./factories/factory-token";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
-import { CodeToString } from "./generators/generate-parser";
+import { ParserGenerator } from "./generators/generate-parser";
 import { createGrammar } from "./grammar/grammar";
 import { Declaration } from "./grammar/grammar-builder";
 import { DFA } from "./optimizer/abstract-optimizer";
@@ -63,7 +63,9 @@ export function tool(opts: ToolInput) {
     const automaton = minimize(name, frag);
     automatons.set(name, automaton);
     initialStates.set(name, automaton.start);
-    tokenFrags.push(frag);
+    if (token.type !== "token" || token.modifiers.type === "normal") {
+      tokenFrags.push(frag);
+    }
   }
 
   // Lexer
@@ -74,7 +76,6 @@ export function tool(opts: ToolInput) {
 
   // Init analyzer
   const analyzer = new Analyzer({
-    startRule: grammar.getStart().name,
     initialStates,
     follows,
   });
@@ -86,9 +87,10 @@ export function tool(opts: ToolInput) {
   }
 
   // Produce code
+  const codeGen = new ParserGenerator(analyzer);
   const code = new Map<string, string>();
   for (const [name, block] of codeBlocks) {
-    code.set(name, CodeToString.render("", block));
+    code.set(name, codeGen.process(block));
   }
 
   return code;

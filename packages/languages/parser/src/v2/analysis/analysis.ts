@@ -31,22 +31,34 @@ class DecisionNode {
     return this.gotos.size > 1;
   }
 
+  first() {
+    for (const [t] of this.gotos) {
+      return t;
+    }
+    throw new Error("0 gotos?");
+  }
+
   toString(indent = "") {
     let str = `DecisionNode {\n`;
-    for (const [key, _] of this.gotos) {
-      str += `${indent}  ${key},\n`;
+    for (const [key, value] of this.gotos) {
+      str += `${indent}  (${key}, [${Array.from(value).map(s =>
+        s.follows?.toString()
+      )}])\n`;
     }
-    str += `${this.children.toString(`${indent}  `)},\n`;
+    str += `${this.children.toString(`${indent}  `)}\n`;
     return str + `${indent}}`;
   }
 }
 
 class DecisionsTree {
-  private map = new MapKeyToValue<RangeTransition, DecisionNode>();
   readonly ll: number;
+  // TODO is it possible for conflicts to exists here?
+  private map = new MapKeyToValue<RangeTransition, DecisionNode>();
+  private onlyUnitRanges: boolean;
 
   constructor(ll: number) {
     this.ll = ll;
+    this.onlyUnitRanges = true;
   }
 
   addDecision(what: RangeTransition, goto: AnyTransition, leftIn: StackFrame) {
@@ -55,7 +67,14 @@ class DecisionsTree {
       () => new DecisionNode(this.ll)
     );
     node.addGoto(goto, leftIn);
+    if (what.from !== what.to) {
+      this.onlyUnitRanges = false;
+    }
     return node;
+  }
+
+  hasOnlyUnitRanges() {
+    return this.onlyUnitRanges;
   }
 
   toString(indent = "") {
@@ -64,6 +83,14 @@ class DecisionsTree {
       str += `${indent}  ${key}: ${value.toString(`${indent}  `)},\n`;
     }
     return str + `${indent}}`;
+  }
+
+  invert(): MapKeyToValue<AnyTransition, RangeTransition> {
+    const map = new MapKeyToValue<AnyTransition, RangeTransition>();
+    for (const [range, node] of this.map) {
+      map.add(node.first(), range);
+    }
+    return map;
   }
 
   *nodes() {
@@ -144,6 +171,10 @@ class StackFrame {
   move(state: DState) {
     return new StackFrame(this.parent, this.thisRule, state, this.follows);
   }
+
+  toString() {
+    return `Stack {rule=${this.thisRule}, state=${this.state.id}}`;
+  }
 }
 
 export type AnalyzerFollow = {
@@ -155,20 +186,16 @@ export type AnalyzerFollow = {
 // TODO cache stuff
 
 export class Analyzer {
-  readonly startRule: RuleName;
   readonly initialStates: Map<RuleName, DState>;
   readonly follows: Map<RuleName, AnalyzerFollow[]>;
 
   constructor({
-    startRule,
     initialStates,
     follows,
   }: {
-    startRule: RuleName;
     initialStates: Map<RuleName, DState>;
     follows: Map<RuleName, AnalyzerFollow[]>;
   }) {
-    this.startRule = startRule;
     this.initialStates = initialStates;
     this.follows = follows;
   }
