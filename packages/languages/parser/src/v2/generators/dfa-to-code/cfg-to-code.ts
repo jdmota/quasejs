@@ -1,5 +1,6 @@
 import { DState } from "../../automaton/state";
 import { DFA } from "../../optimizer/abstract-optimizer";
+import { assertion, never } from "../../utils";
 import {
   CFGEdge,
   CFGGroup,
@@ -84,8 +85,7 @@ function isBreakFlow(block: CodeBlock) {
 export function endsWithFlowBreak(block: CodeBlock): boolean {
   if (block.type === "seq_block") {
     const { blocks } = block;
-    const lastIdx = blocks.length - 1;
-    const last = blocks[lastIdx];
+    const last = blocks[blocks.length - 1];
     return isBreakFlow(last);
   }
   if (block.type === "decision_block") {
@@ -97,52 +97,53 @@ export function endsWithFlowBreak(block: CodeBlock): boolean {
   return isBreakFlow(block);
 }
 
-// Returns the original block if the optimization failed
+type IntRef = { value: number };
+
 // The optimization removes "breaks" with this label if they are the last statement
-// for every path in this block
-function removeBreaksOf(block: CodeBlock, label: Label): CodeBlock {
-  const fn = (b: CodeBlock) => b.type === "break_block" && b.label === label;
-
-  if (block.type === "seq_block") {
-    const { blocks } = block;
-    const lastIdx = blocks.length - 1;
-    const last = blocks[lastIdx];
-    if (fn(last)) {
-      return makeSeq(blocks.slice(0, lastIdx));
+function removeBreaksOf(
+  block: CodeBlock,
+  label: Label,
+  removed: IntRef
+): CodeBlock {
+  switch (block.type) {
+    case "scope_block":
+      return {
+        type: "scope_block",
+        label,
+        block: removeBreaksOf(block.block, label, removed),
+      };
+    case "seq_block": {
+      const { blocks } = block;
+      const lastIdx = blocks.length - 1;
+      const last = blocks[lastIdx];
+      const optimizedLast = removeBreaksOf(last, label, removed);
+      if (optimizedLast === last) return block; // Short path
+      return makeSeq([...blocks.slice(0, lastIdx), optimizedLast]);
     }
-    return block;
+    case "decision_block":
+      return {
+        type: "decision_block",
+        choices: block.choices.map(([edge, choice]) => [
+          edge,
+          removeBreaksOf(choice, label, removed),
+        ]),
+        default: block.default
+          ? removeBreaksOf(block.default, label, removed)
+          : null,
+        node: block.node,
+      };
+    case "break_block":
+      removed.value++;
+      return block.label === label ? empty : block;
+    case "continue_block":
+    case "return_block":
+    case "loop_block":
+    case "expect_block":
+    case "empty_block":
+      return block;
+    default:
+      never(block);
   }
-
-  // Diamond optimization
-  if (block.type === "decision_block") {
-    const newChoices: [CFGEdge, CodeBlock][] = [];
-    let newDefaultChoice: CodeBlock | null = null;
-    for (const [edge, choice] of block.choices) {
-      const newChoice = removeBreaksOf(choice, label);
-      if (newChoice === choice) {
-        return block; // Optimization failed
-      }
-      newChoices.push([edge, newChoice]);
-    }
-    if (block.default) {
-      newDefaultChoice = removeBreaksOf(block.default, label);
-      if (newDefaultChoice === block.default) {
-        return block; // Optimization failed
-      }
-    }
-    return {
-      type: "decision_block",
-      choices: newChoices,
-      default: newDefaultChoice,
-      node: block.node,
-    };
-  }
-
-  if (fn(block)) {
-    return empty;
-  }
-
-  return block;
 }
 
 function makeSeq(_blocks: CodeBlock[]): CodeBlock {
@@ -167,18 +168,6 @@ function makeSeq(_blocks: CodeBlock[]): CodeBlock {
   }
 }
 
-function makeScope(label: Label, block: CodeBlock): CodeBlock {
-  const optimized = removeBreaksOf(block, label);
-  if (optimized.type === "empty_block") {
-    return empty;
-  }
-  return {
-    type: "scope_block",
-    label,
-    block: optimized,
-  };
-}
-
 function makeLoop(label: Label, block: CodeBlock): CodeBlock {
   if (block.type === "empty_block") {
     throw new Error(`Empty infinite loop?`);
@@ -196,6 +185,24 @@ export class CfgToCode {
   private readonly loopLabels = new Map<CFGNode, number>();
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
+  private usedScopeLabels = new Map<string, number>();
+
+  private createScopeBreak(label: string): BreakScopeBlock {
+    const curr = this.usedScopeLabels.get(label) ?? 0;
+    this.usedScopeLabels.set(label, curr + 1);
+    return {
+      type: "break_block",
+      label,
+    };
+  }
+
+  private unuseScopeBreaks(label: string, amount: number): number {
+    const currAmount = this.usedScopeLabels.get(label) ?? 0;
+    const newAmount = currAmount - amount;
+    assertion(newAmount >= 0);
+    this.usedScopeLabels.set(label, newAmount);
+    return newAmount;
+  }
 
   private getScopeLabel(nodes: CFGNodeOrGroup): string {
     let n = nodes;
@@ -217,6 +224,23 @@ export class CfgToCode {
     const label = this.loopLabelUuid++;
     this.loopLabels.set(n, label);
     return `l${label}`;
+  }
+
+  private surroundWithScope(label: Label, block: CodeBlock): CodeBlock {
+    const removed = { value: 0 };
+    const optimized = removeBreaksOf(block, label, removed);
+    const usedLabels = this.unuseScopeBreaks(label, removed.value);
+    if (optimized.type === "empty_block") {
+      return empty;
+    }
+    if (usedLabels === 0) {
+      return optimized;
+    }
+    return {
+      type: "scope_block",
+      label,
+      block: optimized,
+    };
   }
 
   private handleNode(node: CFGNode, parent: CFGGroup): CodeBlock {
@@ -266,10 +290,7 @@ export class CfgToCode {
                 type: "expect_block",
                 edge: outEdge,
               },
-              {
-                type: "break_block",
-                label: this.getScopeLabel(dest),
-              },
+              this.createScopeBreak(this.getScopeLabel(dest)),
             ]),
           ]);
         }
@@ -305,13 +326,7 @@ export class CfgToCode {
       block = {
         type: "loop_block",
         label,
-        block: makeSeq([
-          block,
-          {
-            type: "break_block",
-            label,
-          },
-        ]),
+        block: makeSeq([block, this.createScopeBreak(label)]),
       };
     }
 
@@ -336,7 +351,7 @@ export class CfgToCode {
     for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
       lastBlock = makeSeq([
-        makeScope(this.getScopeLabel(nodes), lastBlock),
+        this.surroundWithScope(this.getScopeLabel(nodes), lastBlock),
         this.handleNodes(nodes, ordered),
       ]);
     }
