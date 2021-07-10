@@ -46,6 +46,8 @@ export class CFGEdge {
   transition: AnyTransition;
   dest: CFGNode;
   type: "forward" | "back";
+  originalDest: CFGNode | null;
+
   constructor(
     start: CFGNode,
     transition: AnyTransition,
@@ -56,6 +58,7 @@ export class CFGEdge {
     this.transition = transition;
     this.dest = dest;
     this.type = type;
+    this.originalDest = null;
   }
 
   connect() {
@@ -63,11 +66,12 @@ export class CFGEdge {
     this.dest.inEdges.add(this);
   }
 
-  changeDestination(replacement: CFGNode) {
+  redirectToDispatchNode(replacement: CFGNode) {
     const original = this.dest;
     original.inEdges.delete(this);
     replacement.inEdges.add(this);
     this.dest = replacement;
+    this.originalDest = original;
   }
 }
 
@@ -248,7 +252,7 @@ export class DFAtoCFG {
 
             // Now take the in-edges of the entries and connect them to the dispatch node
             for (const edge of entriesInEdges) {
-              edge.changeDestination(loopStart);
+              edge.redirectToDispatchNode(loopStart);
             }
           } else {
             // c.entries.size === 1

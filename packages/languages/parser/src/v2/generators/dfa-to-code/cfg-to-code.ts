@@ -16,11 +16,10 @@ export type CodeBlock =
   | LoopBlock
   | ContinueBlock
   | BreakScopeBlock
-  | BreakCaseBlock
   | ReturnBlock
   | EmptyBlock;
 
-type Label = number;
+type Label = string;
 
 export type ExpectBlock = Readonly<{
   type: "expect_block";
@@ -34,7 +33,8 @@ export type SeqBlock = Readonly<{
 
 export type DecisionBlock = Readonly<{
   type: "decision_block";
-  choices: [CFGEdge | null, CodeBlock][];
+  choices: [CFGEdge, CodeBlock][];
+  default: CodeBlock | null;
   node: CFGNode;
 }>;
 
@@ -60,10 +60,6 @@ export type BreakScopeBlock = Readonly<{
   label: Label;
 }>;
 
-export type BreakCaseBlock = Readonly<{
-  type: "break_case_block";
-}>;
-
 export type ReturnBlock = Readonly<{
   type: "return_block";
 }>;
@@ -76,30 +72,29 @@ const empty: EmptyBlock = {
   type: "empty_block",
 };
 
-const breakCase: BreakCaseBlock = {
-  type: "break_case_block",
-};
-
 function isBreakFlow(block: CodeBlock) {
   const { type } = block;
   return (
-    type === "break_case_block" ||
     type === "break_block" ||
     type === "continue_block" ||
     type === "return_block"
   );
 }
 
-export function removeBreaksWithoutLabel(block: CodeBlock): CodeBlock {
+export function endsWithFlowBreak(block: CodeBlock): boolean {
   if (block.type === "seq_block") {
     const { blocks } = block;
     const lastIdx = blocks.length - 1;
     const last = blocks[lastIdx];
-    if (last.type === "break_case_block") {
-      return makeSeq(blocks.slice(0, lastIdx));
-    }
+    return isBreakFlow(last);
   }
-  return block;
+  if (block.type === "decision_block") {
+    return (
+      block.choices.every(([_, c]) => endsWithFlowBreak(c)) &&
+      (block.default == null || endsWithFlowBreak(block.default))
+    );
+  }
+  return isBreakFlow(block);
 }
 
 // Returns the original block if the optimization failed
@@ -120,17 +115,25 @@ function removeBreaksOf(block: CodeBlock, label: Label): CodeBlock {
 
   // Diamond optimization
   if (block.type === "decision_block") {
-    const newChoices: [CFGEdge | null, CodeBlock][] = [];
+    const newChoices: [CFGEdge, CodeBlock][] = [];
+    let newDefaultChoice: CodeBlock | null = null;
     for (const [edge, choice] of block.choices) {
       const newChoice = removeBreaksOf(choice, label);
       if (newChoice === choice) {
         return block; // Optimization failed
       }
-      newChoices.push([edge, makeSeq([newChoice, breakCase])]);
+      newChoices.push([edge, newChoice]);
+    }
+    if (block.default) {
+      newDefaultChoice = removeBreaksOf(block.default, label);
+      if (newDefaultChoice === block.default) {
+        return block; // Optimization failed
+      }
     }
     return {
       type: "decision_block",
       choices: newChoices,
+      default: newDefaultChoice,
       node: block.node,
     };
   }
@@ -166,13 +169,13 @@ function makeSeq(_blocks: CodeBlock[]): CodeBlock {
 
 function makeScope(label: Label, block: CodeBlock): CodeBlock {
   const optimized = removeBreaksOf(block, label);
-  if (optimized !== block || optimized === empty) {
-    return optimized;
+  if (optimized.type === "empty_block") {
+    return empty;
   }
   return {
     type: "scope_block",
     label,
-    block,
+    block: optimized,
   };
 }
 
@@ -189,23 +192,37 @@ function makeLoop(label: Label, block: CodeBlock): CodeBlock {
 
 export class CfgToCode {
   private readonly processed = new Set<CFGNodeOrGroup>();
-  private readonly labels = new Map<CFGNode, number>();
-  private labelUuid = 1;
+  private readonly scopeLabels = new Map<CFGNode, number>();
+  private readonly loopLabels = new Map<CFGNode, number>();
+  private scopeLabelUuid = 1;
+  private loopLabelUuid = 1;
 
-  private getLabel(nodes: CFGNodeOrGroup) {
+  private getScopeLabel(nodes: CFGNodeOrGroup): string {
     let n = nodes;
     while (n instanceof CFGGroup) n = n.entry;
 
-    const curr = this.labels.get(n);
-    if (curr) return curr;
-    const label = this.labelUuid++;
-    this.labels.set(n, label);
-    return label;
+    const curr = this.scopeLabels.get(n);
+    if (curr) return `s${curr}`;
+    const label = this.scopeLabelUuid++;
+    this.scopeLabels.set(n, label);
+    return `s${label}`;
+  }
+
+  private getLoopLabel(nodes: CFGNodeOrGroup): string {
+    let n = nodes;
+    while (n instanceof CFGGroup) n = n.entry;
+
+    const curr = this.loopLabels.get(n);
+    if (curr) return `l${curr}`;
+    const label = this.loopLabelUuid++;
+    this.loopLabels.set(n, label);
+    return `l${label}`;
   }
 
   private handleNode(node: CFGNode, parent: CFGGroup): CodeBlock {
     const isFinal = node.end;
-    const choices: [CFGEdge | null, CodeBlock][] = [];
+    const choices: [CFGEdge, CodeBlock][] = [];
+    let defaultChoice: CodeBlock | null = null;
     let isLoop = false;
 
     for (const outEdge of node.outEdges) {
@@ -223,7 +240,7 @@ export class CfgToCode {
             },
             {
               type: "continue_block",
-              label: this.getLabel(dest),
+              label: this.getLoopLabel(dest),
             },
           ]),
         ]);
@@ -251,7 +268,7 @@ export class CfgToCode {
               },
               {
                 type: "break_block",
-                label: this.getLabel(dest),
+                label: this.getScopeLabel(dest),
               },
             ]),
           ]);
@@ -260,29 +277,31 @@ export class CfgToCode {
     }
 
     if (isFinal) {
-      choices.push([null, { type: "return_block" }]);
+      defaultChoice = { type: "return_block" };
     }
 
     let block: CodeBlock;
     switch (choices.length) {
       case 0:
-        block = empty;
+        block = defaultChoice ?? empty;
         break;
-      case 1: {
-        const [_, dest] = choices[0];
-        block = dest;
-        break;
-      }
+      case 1:
+        if (defaultChoice == null) {
+          const [_, dest] = choices[0];
+          block = dest;
+          break;
+        }
       default:
         block = {
           type: "decision_block",
-          choices: choices.map(([t, d]) => [t, makeSeq([d, breakCase])]),
+          choices,
+          default: defaultChoice,
           node,
         };
     }
 
     if (isLoop) {
-      const label = this.getLabel(node);
+      const label = this.getLoopLabel(node);
       block = {
         type: "loop_block",
         label,
@@ -300,7 +319,7 @@ export class CfgToCode {
   }
 
   private handleLoop(group: CFGGroup): CodeBlock {
-    return makeLoop(this.getLabel(group), this.processGroup(group));
+    return makeLoop(this.getLoopLabel(group), this.processGroup(group));
   }
 
   private handleNodes(nodes: CFGNodeOrGroup, parent: CFGGroup) {
@@ -317,7 +336,7 @@ export class CfgToCode {
     for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
       lastBlock = makeSeq([
-        makeScope(this.getLabel(nodes), lastBlock),
+        makeScope(this.getScopeLabel(nodes), lastBlock),
         this.handleNodes(nodes, ordered),
       ]);
     }

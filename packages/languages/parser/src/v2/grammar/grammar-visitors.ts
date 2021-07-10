@@ -22,6 +22,7 @@ import {
   TokenDeclaration,
   Declaration,
   References,
+  IntRule,
 } from "./grammar-builder";
 import { TokensStore } from "./tokens";
 
@@ -73,6 +74,8 @@ export abstract class RuleVisitor<
 
   object(node: ObjectRule) {}
 
+  int(node: IntRule) {}
+
   id(node: IdRule) {}
 
   select(node: SelectRule) {
@@ -123,21 +126,35 @@ export abstract class RuleVisitor<
   }
 }
 
-export type Locals = ReadonlySet<string>;
+export type FieldsAndArgs = {
+  fields: ReadonlySet<string>;
+  args: ReadonlySet<string>;
+};
 
-export class LocalsCollector extends RuleVisitor<Set<string>, Locals> {
+type MutableFieldsAndArgs = {
+  fields: Set<string>;
+  args: Set<string>;
+};
+
+export class LocalsCollector extends RuleVisitor<
+  MutableFieldsAndArgs,
+  FieldsAndArgs
+> {
   constructor() {
-    super(new Set());
+    super({
+      fields: new Set(),
+      args: new Set(),
+    });
   }
 
   field(node: FieldRule) {
-    this.data.add(node.name);
+    this.data.fields.add(node.name);
     super.field(node);
   }
 
   rule(node: RuleDeclaration) {
     for (const arg of node.args) {
-      this.data.add(arg);
+      this.data.args.add(arg);
     }
     super.rule(node);
   }

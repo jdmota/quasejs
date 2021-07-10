@@ -20,11 +20,19 @@ const ruleA =
     seq(string("A"), string("D"))
   ) &&
   seq(
+    optional(string("O")),
     choice(string("A"), string("B")),
     string("C"),
     repeat(seq(string("D"), string("E"))),
-    repeat(string("F"))
+    repeat(string("F")),
+    optional(string("O"))
   );
+
+// && optional(string("O"));
+
+// TODO refactor out the last statements that are equal at the end
+// TODO the automaton optimization performs in essence left-refactoring, but we could also think about refactoring common right-parts (see issue above)
+// TODO maybe to accomplish this, we can create an automaton minimization algorithm that only trying to perform the "left-refactoring" (with the epsilon closures and stuff) if there are conflicts, this way, we can handle the above issues, and generate code that is more similar to the original grammar
 
 const ruleB = seq(
   choice(
@@ -56,8 +64,8 @@ const result = tool({
 });
 
 if (result) {
-  for (const [name, code] of result) {
-    console.log(name);
+  for (const [rule, code] of result) {
+    console.log(rule.name);
     console.log(code);
     console.log();
   }

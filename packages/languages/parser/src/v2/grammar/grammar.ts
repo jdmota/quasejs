@@ -9,7 +9,7 @@ import {
 import {
   ReferencesCollector,
   TokensCollector,
-  Locals,
+  FieldsAndArgs,
   LocalsCollector,
 } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
@@ -25,7 +25,7 @@ export function createGrammar(
   const errors = [];
 
   // Detect duplicate rules
-  const rules = new Map<string, { decl: Declaration; locals: Locals }>();
+  const rules = new Map<string, { decl: Declaration; locals: FieldsAndArgs }>();
   for (const rule of decls) {
     const curr = rules.get(rule.name);
     if (curr) {
@@ -111,7 +111,7 @@ export function createGrammar(
           }
           break;
         case "id":
-          if (!locals.has(id)) {
+          if (!locals.args.has(id) && !locals.fields.has(id)) {
             errors.push(`Cannot find variable ${id}${locSuffix(ref.loc)}`);
           }
           break;
@@ -141,14 +141,14 @@ export class Grammar {
   private readonly name: string;
   private readonly rules: ReadonlyMap<
     string,
-    { decl: Declaration; locals: Locals }
+    { decl: Declaration; locals: FieldsAndArgs }
   >;
   private readonly tokens: TokensStore;
   private readonly startRule: RuleDeclaration;
 
   constructor(
     name: string,
-    rules: ReadonlyMap<string, { decl: Declaration; locals: Locals }>,
+    rules: ReadonlyMap<string, { decl: Declaration; locals: FieldsAndArgs }>,
     tokens: TokensStore,
     startRule: RuleDeclaration
   ) {
