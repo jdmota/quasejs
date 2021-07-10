@@ -48,17 +48,19 @@ class DecisionNode {
     str += `${this.children.toString(`${indent}  `)}\n`;
     return str + `${indent}}`;
   }
+
+  [Symbol.iterator]() {
+    return this.gotos[Symbol.iterator]();
+  }
 }
 
 class DecisionsTree {
   readonly ll: number;
   // TODO is it possible for conflicts to exists here?
   private map = new MapKeyToValue<RangeTransition, DecisionNode>();
-  private onlyUnitRanges: boolean;
 
   constructor(ll: number) {
     this.ll = ll;
-    this.onlyUnitRanges = true;
   }
 
   addDecision(what: RangeTransition, goto: AnyTransition, leftIn: StackFrame) {
@@ -67,14 +69,7 @@ class DecisionsTree {
       () => new DecisionNode(this.ll)
     );
     node.addGoto(goto, leftIn);
-    if (what.from !== what.to) {
-      this.onlyUnitRanges = false;
-    }
     return node;
-  }
-
-  hasOnlyUnitRanges() {
-    return this.onlyUnitRanges;
   }
 
   toString(indent = "") {
@@ -85,12 +80,21 @@ class DecisionsTree {
     return str + `${indent}}`;
   }
 
-  invert(): MapKeyToValue<AnyTransition, RangeTransition> {
-    const map = new MapKeyToValue<AnyTransition, RangeTransition>();
+  invert() {
+    const map = new MapKeyToSet<AnyTransition, RangeTransition>();
+    let compatibleWithSwitch = true;
     for (const [range, node] of this.map) {
-      map.add(node.first(), range);
+      for (const [goto] of node) {
+        const ranges = map.addOne(goto, range);
+        if (ranges > 1 || range.from !== range.to) {
+          compatibleWithSwitch = false;
+        }
+      }
     }
-    return map;
+    return {
+      map,
+      compatibleWithSwitch,
+    };
   }
 
   *nodes() {

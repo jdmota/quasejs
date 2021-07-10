@@ -9,6 +9,8 @@ import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
 
 const EPSILON = new EpsilonTransition();
 
+const IGNORE_EPSILON = false;
+
 export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
   newDFAState(id: number): DState {
     return new DState(id);
@@ -19,14 +21,14 @@ export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
   }
 
   getEpsilonStates(state: State) {
-    return state.mapKeyToSet.get(EPSILON);
+    return IGNORE_EPSILON ? new Set<State>() : state.mapKeyToSet.get(EPSILON);
   }
 
   combinations(closure: State[]) {
     const combination = new State(0);
     for (const state of closure) {
       for (const [transition, set] of state.mapKeyToSet) {
-        if (transition instanceof EpsilonTransition) {
+        if (!IGNORE_EPSILON && transition instanceof EpsilonTransition) {
           continue;
         }
         combination.mapKeyToSet.add(transition, set);

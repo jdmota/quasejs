@@ -21,6 +21,7 @@ import {
   Call2Rule,
   TokenRules,
   TokenDeclaration,
+  IntRule,
 } from "../grammar/grammar-builder";
 import { Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
@@ -134,6 +135,10 @@ export class FactoryRule implements Gen {
   }
 
   select(node: SelectRule) {
+    return this.action(node);
+  }
+
+  int(node: IntRule) {
     return this.action(node);
   }
 

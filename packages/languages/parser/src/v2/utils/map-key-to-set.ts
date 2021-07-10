@@ -60,12 +60,14 @@ export class MapKeyToSet<K extends MapKey, V> {
     const { entry, list } = this.entry(key);
     if (entry) {
       entry.value.add(value);
+      return entry.value.size;
     } else {
       list.push({
         key,
         value: new Set([value]),
       });
       this.size++;
+      return 1;
     }
   }
 

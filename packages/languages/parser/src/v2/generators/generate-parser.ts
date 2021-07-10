@@ -55,8 +55,17 @@ export class ParserGenerator {
     return localVar;
   }
 
-  private renderCondition(t: RangeTransition) {
-    const { from, to } = t;
+  private renderConditions(set: ReadonlySet<RangeTransition>) {
+    if (set.size === 0) {
+      return "false";
+    }
+    return Array.from(set)
+      .map(r => this.renderCondition(r))
+      .join(" || ");
+  }
+
+  private renderCondition(r: RangeTransition) {
+    const { from, to } = r;
     this.markLocal("$c");
     return from === to ? `$c === ${from}` : `${from} <= $c && $c <= ${to}`;
   }
@@ -85,40 +94,40 @@ export class ParserGenerator {
   private renderTransition(t: AnyTransition): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
-        return `this.expect(${t.from})`;
+        return `this.expect(${t.from});`;
       }
-      return `this.expect2(${t.from}, ${t.to})`;
+      return `this.expect2(${t.from}, ${t.to});`;
     }
     if (t instanceof CallTransition) {
       return `this.rule${t.ruleName}(${t.args
         .map(a => this.renderCode(a))
-        .join(", ")})`;
+        .join(", ")});`;
     }
     if (t instanceof FieldTransition) {
-      return "TODO field";
+      return "TODO field;";
     }
     if (t instanceof ActionTransition) {
       return `${this.renderCode(t.code)};`;
     }
     if (t instanceof PredicateTransition) {
-      return "TODO predicate";
+      return "TODO predicate;";
     }
     if (t instanceof ReturnTransition) {
       const { returnCode } = t;
       if (returnCode == null) {
-        return `return {${this.rule.args.join(", ")}}`;
+        return `return {${this.rule.args.join(", ")}};`;
       }
-      return `return ${this.renderCode(returnCode)}`;
+      return `return ${this.renderCode(returnCode)};`;
     }
     if (t instanceof EpsilonTransition) {
-      return "";
+      return "// EPSILON";
     }
     never(t);
   }
 
   private markTransitionAfterDispatch(indent: string, edge: CFGEdge) {
     return edge.originalDest
-      ? `${indent}    ${this.markLocal(
+      ? `${indent}  ${this.markLocal(
           `$d${this.nodeId(edge.dest)}`
         )} = ${this.nodeId(edge.originalDest)};`
       : "";
@@ -127,7 +136,7 @@ export class ParserGenerator {
   private r(indent: string, block: CodeBlock): string {
     switch (block.type) {
       case "expect_block":
-        return `${indent}${this.renderTransition(block.edge.transition)};`;
+        return `${indent}${this.renderTransition(block.edge.transition)}`;
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
@@ -144,6 +153,7 @@ export class ParserGenerator {
                 this.r(`${indent}    `, d)
               );
             }),
+            `${indent}}`,
           ]);
         }
         const decisions = this.analyzer.analyze(
@@ -151,21 +161,21 @@ export class ParserGenerator {
           block.node.state
         );
         const choices = decisions.invert();
-        if (block.choices.length >= 2 && decisions.hasOnlyUnitRanges()) {
+        if (block.choices.length >= 2 && choices.compatibleWithSwitch) {
           return lines([
             `${indent}switch(this.current()){`,
             ...block.choices.map(([t, d]) => {
-              const range = choices.get(t.transition);
-              if (range) {
-                assertion(range.from === range.to);
-                return lines([
-                  `${indent}  case ${range.from}:`,
-                  this.r(`${indent}    `, d),
-                  endsWithFlowBreak(d) ? "" : `${indent}    break;`,
-                  this.markTransitionAfterDispatch(indent, t),
-                ]);
-              }
-              return "";
+              const ranges = choices.map.get(t.transition);
+              assertion(ranges.size === 1);
+              const range = ranges.values().next().value as RangeTransition;
+              assertion(range instanceof RangeTransition);
+              assertion(range.from === range.to);
+              return lines([
+                `${indent}  case ${range.from}:`,
+                this.r(`${indent}    `, d),
+                this.markTransitionAfterDispatch(indent, t),
+                endsWithFlowBreak(d) ? "" : `${indent}    break;`,
+              ]);
             }),
             `${indent}  default:\n` +
               (block.default
@@ -179,15 +189,13 @@ export class ParserGenerator {
           lines(
             [
               ...block.choices.map(([t, d]) => {
-                const range = choices.get(t.transition);
-                return range
-                  ? lines([
-                      `if(${this.renderCondition(range)}){`,
-                      this.r(`${indent}  `, d),
-                      `${indent}}`,
-                      this.markTransitionAfterDispatch(indent, t),
-                    ])
-                  : "";
+                const ranges = choices.map.get(t.transition);
+                return lines([
+                  `if(${this.renderConditions(ranges)}){`,
+                  this.r(`${indent}  `, d),
+                  this.markTransitionAfterDispatch(indent, t),
+                  `${indent}}`,
+                ]);
               }),
               `{\n${
                 block.default
@@ -226,15 +234,13 @@ export class ParserGenerator {
   }
 
   process(block: CodeBlock) {
+    const rendered = this.r("  ", block);
     const args = this.rule.args.join(",");
     const vars = [
       ...Array.from(this.internalVars).map(v => `${v}=-2`),
       ...Array.from(this.locals.fields).map(f => `${f}=null`),
     ];
     const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";
-    return `rule${this.rule.name}(${args}) {${decls}\n${this.r(
-      "  ",
-      block
-    )}\n}`;
+    return `rule${this.rule.name}(${args}) {${decls}\n${rendered}\n}`;
   }
 }
