@@ -60,12 +60,16 @@ console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  decls: [rule("A", ruleA, [], { start: true }, null)],
+  ruleDecls: [rule("A", ruleA, [], { start: true }, null)],
+  tokenDecls: [],
 });
 
 if (result) {
-  for (const [rule, code] of result) {
-    console.log(rule.name);
+  for (const [, code] of result.tokenCode) {
+    console.log(code);
+    console.log();
+  }
+  for (const [, code] of result.ruleCode) {
     console.log(code);
     console.log();
   }

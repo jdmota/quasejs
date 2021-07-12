@@ -9,7 +9,12 @@ import {
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions";
-import { ExprRule, RuleDeclaration } from "../grammar/grammar-builder";
+import { Grammar } from "../grammar/grammar";
+import {
+  Declaration,
+  ExprRule,
+  RuleDeclaration,
+} from "../grammar/grammar-builder";
 import { FieldsAndArgs } from "../grammar/grammar-visitors";
 import { assertion, never } from "../utils";
 import { CodeBlock, endsWithFlowBreak } from "./dfa-to-code/cfg-to-code";
@@ -20,18 +25,21 @@ function lines(arr: readonly (string | undefined)[], separator = "\n"): string {
 }
 
 export class ParserGenerator {
-  readonly analyzer: Analyzer;
-  readonly rule: RuleDeclaration;
-  readonly locals: FieldsAndArgs;
+  private readonly grammar: Grammar;
+  private readonly analyzer: Analyzer;
+  private readonly rule: Declaration;
+  private readonly locals: FieldsAndArgs;
   private nodes: Map<CFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
 
   constructor(
+    grammar: Grammar,
     analyzer: Analyzer,
-    rule: RuleDeclaration,
+    rule: Declaration,
     locals: FieldsAndArgs
   ) {
+    this.grammar = grammar;
     this.analyzer = analyzer;
     this.rule = rule;
     this.locals = locals;
@@ -99,7 +107,8 @@ export class ParserGenerator {
       return `this.expect2(${t.from}, ${t.to});`;
     }
     if (t instanceof CallTransition) {
-      return `this.rule${t.ruleName}(${t.args
+      const type = this.grammar.getRule(t.ruleName).decl.type;
+      return `this.${type}${t.ruleName}(${t.args
         .map(a => this.renderCode(a))
         .join(", ")});`;
     }
@@ -115,7 +124,7 @@ export class ParserGenerator {
     if (t instanceof ReturnTransition) {
       const { returnCode } = t;
       if (returnCode == null) {
-        return `return {${this.rule.args.join(", ")}};`;
+        return `return {${Array.from(this.locals.fields).join(", ")}};`;
       }
       return `return ${this.renderCode(returnCode)};`;
     }
@@ -235,12 +244,12 @@ export class ParserGenerator {
 
   process(block: CodeBlock) {
     const rendered = this.r("  ", block);
-    const args = this.rule.args.join(",");
+    const args = this.rule.type === "rule" ? this.rule.args.join(",") : "";
     const vars = [
       ...Array.from(this.internalVars).map(v => `${v}=-2`),
       ...Array.from(this.locals.fields).map(f => `${f}=null`),
     ];
     const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";
-    return `rule${this.rule.name}(${args}) {${decls}\n${rendered}\n}`;
+    return `${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n}`;
   }
 }

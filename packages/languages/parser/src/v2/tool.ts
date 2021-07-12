@@ -17,11 +17,12 @@ import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 
 type ToolInput = {
   readonly name: string;
-  readonly decls: readonly Declaration[];
+  readonly ruleDecls: readonly RuleDeclaration[];
+  readonly tokenDecls: readonly TokenDeclaration[];
 };
 
 export function tool(opts: ToolInput) {
-  const result = createGrammar(opts.name, opts.decls);
+  const result = createGrammar(opts.name, opts.ruleDecls, opts.tokenDecls);
 
   if (result.errors) {
     for (const error of result.errors) {
@@ -62,20 +63,13 @@ export function tool(opts: ToolInput) {
   }
 
   // Process tokens
-  const tokenAutomatons = new Map<TokenRules | TokenDeclaration, DFA<DState>>();
-  const tokenFrags: Frag[] = [];
-  for (const [name, token] of grammar.getTokens()) {
+  const tokenAutomatons = new Map<TokenDeclaration, DFA<DState>>();
+  for (const token of grammar.getTokens()) {
     const frag = FactoryToken.process(grammar, token, tokensAutomaton);
-    const automaton = minimize(name, frag);
+    const automaton = minimize(token.name, frag);
     tokenAutomatons.set(token, automaton);
-    initialStates.set(name, automaton.start);
-    if (token.type !== "token" || token.modifiers.type === "normal") {
-      tokenFrags.push(frag);
-    }
+    initialStates.set(token.name, automaton.start);
   }
-
-  // Create lexer
-  const lexerAutomaton = minimize("#lexer", tokensAutomaton.choice(tokenFrags));
 
   // Init analyzer
   const analyzer = new Analyzer({
@@ -83,18 +77,19 @@ export function tool(opts: ToolInput) {
     follows,
   });
 
-  // Create code blocks for rules
-  const codeBlocks = new Map<RuleDeclaration, CodeBlock>();
-  for (const [rule, automaton] of ruleAutomatons) {
-    codeBlocks.set(rule, new CfgToCode().process(automaton));
+  // Create code blocks for tokens
+  const tokenCodeBlocks = new Map<TokenDeclaration, CodeBlock>();
+  for (const [token, automaton] of tokenAutomatons) {
+    tokenCodeBlocks.set(token, new CfgToCode().process(automaton));
   }
 
-  // Produce code for rules
-  const code = new Map<RuleDeclaration, string>();
-  for (const [rule, block] of codeBlocks) {
-    code.set(
+  // Produce code for tokens
+  const tokenCode = new Map<TokenDeclaration, string>();
+  for (const [rule, block] of tokenCodeBlocks) {
+    tokenCode.set(
       rule,
       new ParserGenerator(
+        grammar,
         analyzer,
         rule,
         grammar.getRule(rule.name).locals
@@ -102,5 +97,25 @@ export function tool(opts: ToolInput) {
     );
   }
 
-  return code;
+  // Create code blocks for rules
+  const ruleCodeBlocks = new Map<RuleDeclaration, CodeBlock>();
+  for (const [rule, automaton] of ruleAutomatons) {
+    ruleCodeBlocks.set(rule, new CfgToCode().process(automaton));
+  }
+
+  // Produce code for rules
+  const ruleCode = new Map<RuleDeclaration, string>();
+  for (const [rule, block] of ruleCodeBlocks) {
+    ruleCode.set(
+      rule,
+      new ParserGenerator(
+        grammar,
+        analyzer,
+        rule,
+        grammar.getRule(rule.name).locals
+      ).process(block)
+    );
+  }
+
+  return { tokenCode, ruleCode };
 }

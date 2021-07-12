@@ -110,15 +110,34 @@ export abstract class RuleVisitor<
     this[node.type](node as any);
   }
 
-  run(decls: readonly Declaration[]): ReadonlyData {
+  visitRuleDecls(decls: readonly RuleDeclaration[]) {
     for (const decl of decls) {
-      if (decl.type === "rule") {
-        this.rule(decl);
-      } else {
-        this.token(decl);
-      }
+      this.rule(decl);
     }
-    return this.data;
+    return this;
+  }
+
+  visitTokenDecls(decls: readonly TokenDeclaration[]) {
+    for (const decl of decls) {
+      this.token(decl);
+    }
+    return this;
+  }
+
+  visitDecl(decl: Declaration) {
+    if (decl.type === "rule") {
+      this.rule(decl);
+    } else {
+      this.token(decl);
+    }
+    return this;
+  }
+
+  visitAllDecls(decls: readonly Declaration[]) {
+    for (const decl of decls) {
+      this.visitDecl(decl);
+    }
+    return this;
   }
 
   get(): ReadonlyData {

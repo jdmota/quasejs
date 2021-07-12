@@ -1,6 +1,5 @@
 import { locSuffix, locSuffix2, never } from "../utils";
 import {
-  builder,
   Declaration,
   RuleDeclaration,
   TokenDeclaration,
@@ -20,9 +19,16 @@ type GrammarOrError =
 
 export function createGrammar(
   name: string,
-  decls: readonly Declaration[]
+  ruleDecls: readonly RuleDeclaration[],
+  tokenDecls: readonly TokenDeclaration[]
 ): GrammarOrError {
   const errors = [];
+  const tokens = new TokensCollector()
+    .visitRuleDecls(ruleDecls)
+    .visitTokenDecls(tokenDecls)
+    .get();
+  const lexer = tokens.createLexer();
+  const decls = [...ruleDecls, lexer, ...Array.from(tokens)];
 
   // Detect duplicate rules
   const rules = new Map<string, { decl: Declaration; locals: FieldsAndArgs }>();
@@ -35,7 +41,7 @@ export function createGrammar(
     } else {
       rules.set(rule.name, {
         decl: rule,
-        locals: new LocalsCollector().run([rule]),
+        locals: new LocalsCollector().visitDecl(rule).get(),
       });
     }
   }
@@ -67,7 +73,7 @@ export function createGrammar(
     }
 
     // Detect undefined references and wrong number of arguments
-    const references = new ReferencesCollector().run([decl]);
+    const references = new ReferencesCollector().visitDecl(decl).get();
     for (const ref of references) {
       const id = ref.id;
       switch (ref.type) {
@@ -122,12 +128,8 @@ export function createGrammar(
   }
 
   if (errors.length === 0) {
-    const tokens = new TokensCollector().run(decls);
-    const startRule = startRules[0];
-    const lexer = tokens.createLexer();
-
     return {
-      grammar: new Grammar(name, rules, tokens, startRule),
+      grammar: new Grammar(name, rules, tokens, startRules[0]),
       errors: null,
     };
   }
@@ -183,8 +185,10 @@ export class Grammar {
   }
 
   *getTokens() {
-    for (const token of this.tokens) {
-      yield token;
+    for (const { decl } of this.rules.values()) {
+      if (decl.type === "token") {
+        yield decl;
+      }
     }
   }
 }

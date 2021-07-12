@@ -2,11 +2,10 @@ import { never } from "../utils";
 import { builder, TokenDeclaration, TokenRules } from "./grammar-builder";
 
 export class TokensStore {
-  private readonly tokenIds = new Map<string, number>();
-  private readonly tokens: (readonly [
+  private readonly tokens = new Map<
     string,
-    TokenRules | TokenDeclaration
-  ])[] = [];
+    { token: TokenDeclaration; id: number }
+  >();
   private uuid: number = -1;
 
   constructor() {
@@ -14,18 +13,17 @@ export class TokensStore {
   }
 
   get(token: TokenRules | TokenDeclaration): number {
-    const name = this.getName(token);
-    const curr = this.tokenIds.get(name);
+    const name = this.uniqName(token);
+    const curr = this.tokens.get(name);
     if (curr == null) {
       const id = this.uuid++;
-      this.tokenIds.set(name, id);
-      this.tokens.push([name, token]);
+      this.tokens.set(name, { id, token: this.ensureDeclaration(id, token) });
       return id;
     }
-    return curr;
+    return curr.id;
   }
 
-  getName(token: TokenRules | TokenDeclaration) {
+  private uniqName(token: TokenRules | TokenDeclaration) {
     switch (token.type) {
       case "string":
         return `#string:${token.string}`;
@@ -40,41 +38,53 @@ export class TokensStore {
     }
   }
 
-  [Symbol.iterator]() {
-    return this.tokens.values();
+  *[Symbol.iterator]() {
+    for (const { token } of this.tokens.values()) {
+      yield token;
+    }
   }
 
-  // TODO
+  private ensureDeclaration(
+    id: number,
+    token: TokenRules | TokenDeclaration
+  ): TokenDeclaration {
+    switch (token.type) {
+      case "string":
+      case "regexp":
+      case "eof":
+        return builder.token(`\$${id}`, token, { type: "normal" }, null);
+      case "token":
+        return token;
+      default:
+        never(token);
+    }
+  }
+
+  // TODO text extraction
   createLexer() {
     const tokens = [];
-    for (const [, token] of this.tokens) {
-      const fieldIdSet = builder.field("id", builder.int(this.get(token)));
-      switch (token.type) {
-        case "token":
-          if (token.modifiers.type === "normal") {
-            tokens.push(
-              token.return
-                ? builder.seq(token.rule, token.return, fieldIdSet)
-                : builder.seq(token.rule, fieldIdSet)
-            );
-          }
-          break;
-        case "string":
-        case "regexp":
-        case "eof":
-          tokens.push(builder.seq(token, fieldIdSet));
-          break;
-        default:
-          never(token);
+    for (const [, { id, token }] of this.tokens) {
+      const idNode = builder.int(id);
+      const fieldIdSet = builder.field("id", idNode);
+      if (token.modifiers.type === "normal") {
+        tokens.push(
+          token.return
+            ? builder.seq(
+                token.rule,
+                fieldIdSet,
+                builder.field("token", token.return)
+              )
+            : builder.seq(token.rule, fieldIdSet)
+        );
       }
     }
     return builder.token(
-      "#lexer",
+      "$lexer",
       builder.choice(...tokens),
       {
         type: "normal",
       },
-      builder.id("id")
+      builder.object({ id: builder.id("id"), token: builder.id("token") })
     );
   }
 }
