@@ -5,12 +5,7 @@ import {
   TokenDeclaration,
   TokenRules,
 } from "./grammar-builder";
-import {
-  ReferencesCollector,
-  TokensCollector,
-  FieldsAndArgs,
-  LocalsCollector,
-} from "./grammar-visitors";
+import { ReferencesCollector, TokensCollector } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
 
 type GrammarOrError =
@@ -31,18 +26,15 @@ export function createGrammar(
   const decls = [...ruleDecls, lexer, ...Array.from(tokens)];
 
   // Detect duplicate rules
-  const rules = new Map<string, { decl: Declaration; locals: FieldsAndArgs }>();
+  const rules = new Map<string, Declaration>();
   for (const rule of decls) {
     const curr = rules.get(rule.name);
     if (curr) {
       errors.push(
-        `Duplicate rule ${rule.name}${locSuffix2(curr.decl.loc, rule.loc)}`
+        `Duplicate rule ${rule.name}${locSuffix2(curr.loc, rule.loc)}`
       );
     } else {
-      rules.set(rule.name, {
-        decl: rule,
-        locals: new LocalsCollector().visitDecl(rule).get(),
-      });
+      rules.set(rule.name, rule);
     }
   }
 
@@ -55,7 +47,7 @@ export function createGrammar(
   }
 
   // For each declaration...
-  for (const { decl, locals } of rules.values()) {
+  for (const decl of rules.values()) {
     // Detect duplicate arguments in rules
     if (decl.type === "rule") {
       const seenArgs = new Set<string>();
@@ -83,7 +75,7 @@ export function createGrammar(
             errors.push(`Cannot find rule ${id}${locSuffix(ref.loc)}`);
           } else {
             const expected =
-              referenced.decl.type === "rule" ? referenced.decl.args.length : 0;
+              referenced.type === "rule" ? referenced.args.length : 0;
             if (expected !== ref.args.length) {
               errors.push(
                 `${id} expected ${expected} arguments but got ${
@@ -96,17 +88,17 @@ export function createGrammar(
             // or a rule from a token declaration
             if (decl.type === "rule") {
               if (
-                referenced.decl.type === "token" &&
-                referenced.decl.modifiers.type !== "normal"
+                referenced.type === "token" &&
+                referenced.modifiers.type !== "normal"
               ) {
                 errors.push(
                   `Cannot reference token ${id} with type "${
-                    referenced.decl.modifiers.type
+                    referenced.modifiers.type
                   }" from rule declaration${locSuffix(ref.loc)}`
                 );
               }
             } else {
-              if (referenced.decl.type === "rule") {
+              if (referenced.type === "rule") {
                 errors.push(
                   `Cannot reference rule ${id} from token rule${locSuffix(
                     ref.loc
@@ -117,7 +109,10 @@ export function createGrammar(
           }
           break;
         case "id":
-          if (!locals.args.has(id) && !locals.fields.has(id)) {
+          if (
+            !decl.locals.includes(id) &&
+            (decl.type === "token" || !decl.args.includes(id))
+          ) {
             errors.push(`Cannot find variable ${id}${locSuffix(ref.loc)}`);
           }
           break;
@@ -141,16 +136,13 @@ export function createGrammar(
 
 export class Grammar {
   private readonly name: string;
-  private readonly rules: ReadonlyMap<
-    string,
-    { decl: Declaration; locals: FieldsAndArgs }
-  >;
+  private readonly rules: ReadonlyMap<string, Declaration>;
   private readonly tokens: TokensStore;
   private readonly startRule: RuleDeclaration;
 
   constructor(
     name: string,
-    rules: ReadonlyMap<string, { decl: Declaration; locals: FieldsAndArgs }>,
+    rules: ReadonlyMap<string, Declaration>,
     tokens: TokensStore,
     startRule: RuleDeclaration
   ) {
@@ -177,7 +169,7 @@ export class Grammar {
   }
 
   *getRules() {
-    for (const { decl } of this.rules.values()) {
+    for (const decl of this.rules.values()) {
       if (decl.type === "rule") {
         yield decl;
       }
@@ -185,7 +177,7 @@ export class Grammar {
   }
 
   *getTokens() {
-    for (const { decl } of this.rules.values()) {
+    for (const decl of this.rules.values()) {
       if (decl.type === "token") {
         yield decl;
       }

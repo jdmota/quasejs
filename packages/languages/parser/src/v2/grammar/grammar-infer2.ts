@@ -1,5 +1,3 @@
-import type { Location } from "../runtime/input";
-import { expect, never } from "../utils";
 import {
   RuleMap,
   Assignables,
@@ -21,8 +19,8 @@ import {
   AnyRule,
   Call2Rule,
   ObjectRule,
+  IntRule,
 } from "./grammar-builder";
-import { LocalsCollector, RuleVisitor } from "./grammar-visitors";
 
 abstract class Type {
   readonly supertypes = new Set<Type>();
@@ -101,7 +99,7 @@ type RuleAnalyzer<T> = {
 };
 
 class GrammarVisitor implements RuleAnalyzer<Store> {
-  private readonly locals: readonly string[];
+  private readonly rule: RuleDeclaration;
   private readonly stores = new Map<AnyRule, Store>();
   private readonly valueTypes = new Map<Assignables, Type>();
 
@@ -112,17 +110,17 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
   }[];
 
   constructor(rule: RuleDeclaration) {
+    this.rule = rule;
     this.argTypes = rule.args.map(name => ({
       name,
       type: new FreeType(),
     }));
-    this.locals = new LocalsCollector().run([rule]);
   }
 
   private store(rule: AnyRule) {
     let store = this.stores.get(rule);
     if (store == null) {
-      store = new Store(this.locals);
+      store = new Store(this.rule.locals);
       this.stores.set(rule, store);
     }
     return store;
@@ -176,7 +174,6 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
 
   empty(pre: Store, node: EmptyRule, post: Store) {
     pre.propagateTo(post);
-    this.valueType(node).subtypeOf(NullType.SINGLETON);
   }
 
   eof(pre: Store, node: EofRule, post: Store) {
@@ -202,6 +199,11 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
   id(pre: Store, node: IdRule, post: Store) {
     pre.propagateTo(post);
     this.valueType(node).subtypeOf(pre.get(node.id));
+  }
+
+  int(pre: Store, node: IntRule, post: Store) {
+    pre.propagateTo(post);
+    // TODO
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
@@ -230,7 +232,7 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
     // TODO
   }
 
-  rule(rule: RuleDeclaration) {
+  run(rule: RuleDeclaration) {
     const pre = new Store([]); // TODO
     const post = new Store([]); // TODO
     this.visit(pre, rule.rule, post);

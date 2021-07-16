@@ -1,5 +1,6 @@
 import type { Location } from "../runtime/input";
 import { never } from "../utils";
+import { LocalsCollector } from "./grammar-visitors";
 
 export interface RuleMap {
   seq: SeqRule;
@@ -32,7 +33,7 @@ export type TokenRules = EofRule | StringRule | RegExpRule;
 
 export type ExprRule = IdRule | SelectRule | ObjectRule | IntRule | Call2Rule;
 
-export type Assignables = EmptyRule | TokenRules | CallRule | ExprRule;
+export type Assignables = TokenRules | CallRule | ExprRule;
 
 export type RuleModifiers = {
   readonly start?: boolean;
@@ -45,8 +46,9 @@ export type RuleDeclaration = {
   readonly name: string;
   readonly rule: AnyRule;
   readonly args: readonly string[];
-  readonly return: ExprRule | null;
+  readonly return: ExprRule;
   readonly modifiers: RuleModifiers;
+  readonly locals: readonly string[];
   loc: Location | null;
 };
 
@@ -57,13 +59,15 @@ function rule(
   modifiers: RuleModifiers,
   returnCode: ExprRule | null
 ): RuleDeclaration {
+  const locals = new LocalsCollector().run(rule);
   return {
     type: "rule",
     name,
     rule,
     args,
     modifiers,
-    return: returnCode,
+    return: returnCode ?? builder.object(locals.map(l => [l, builder.id(l)])),
+    locals,
     loc: null,
   };
 }
@@ -76,8 +80,9 @@ export type TokenDeclaration = {
   readonly type: "token";
   readonly name: string;
   readonly rule: AnyRule;
-  readonly return: ExprRule | null;
+  readonly return: ExprRule;
   readonly modifiers: TokenModifiers;
+  readonly locals: readonly string[];
   loc: Location | null;
 };
 
@@ -87,12 +92,14 @@ function token(
   modifiers: TokenModifiers,
   returnCode: ExprRule | null
 ): TokenDeclaration {
+  const locals = new LocalsCollector().run(rule);
   return {
     type: "token",
     name,
     rule,
     modifiers,
-    return: returnCode,
+    return: returnCode ?? builder.object(locals.map(l => [l, builder.id(l)])),
+    locals,
     loc: null,
   };
 }
@@ -351,10 +358,10 @@ export type ObjectRule = {
   loc: Location | null;
 };
 
-function object(fields: { [key: string]: ExprRule }): ObjectRule {
+function object(fields: readonly (readonly [string, ExprRule])[]): ObjectRule {
   return {
     type: "object",
-    fields: Object.entries(fields),
+    fields,
     loc: null,
   };
 }
@@ -413,7 +420,6 @@ export function sameAssignable(
         value1.field === value2.field &&
         sameAssignable(value1.parent, value2.parent)
       );
-    case "empty":
     case "eof":
       return value1.type === value2.type;
     case "object":

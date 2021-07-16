@@ -162,9 +162,9 @@ export class RangeTransition extends AbstractNotEpsilonTransition {
 }
 
 export class ReturnTransition extends AbstractEpsilonTransition {
-  readonly returnCode: ExprRule | null;
+  readonly returnCode: ExprRule;
 
-  constructor(returnCode: ExprRule | null) {
+  constructor(returnCode: ExprRule) {
     super();
     this.returnCode = returnCode;
   }
@@ -176,9 +176,7 @@ export class ReturnTransition extends AbstractEpsilonTransition {
   equals(other: unknown): other is ReturnTransition {
     return (
       other instanceof ReturnTransition &&
-      (this.returnCode == null || other.returnCode == null
-        ? this.returnCode === other.returnCode
-        : sameAssignable(this.returnCode, other.returnCode))
+      sameAssignable(this.returnCode, other.returnCode)
     );
   }
 

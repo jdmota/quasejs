@@ -10,11 +10,7 @@ import {
   ReturnTransition,
 } from "../automaton/transitions";
 import { Grammar } from "../grammar/grammar";
-import {
-  Declaration,
-  ExprRule,
-  RuleDeclaration,
-} from "../grammar/grammar-builder";
+import { Declaration, ExprRule } from "../grammar/grammar-builder";
 import { FieldsAndArgs } from "../grammar/grammar-visitors";
 import { assertion, never } from "../utils";
 import { CodeBlock, endsWithFlowBreak } from "./dfa-to-code/cfg-to-code";
@@ -107,7 +103,7 @@ export class ParserGenerator {
       return `this.expect2(${t.from}, ${t.to});`;
     }
     if (t instanceof CallTransition) {
-      const type = this.grammar.getRule(t.ruleName).decl.type;
+      const type = this.grammar.getRule(t.ruleName).type;
       return `this.${type}${t.ruleName}(${t.args
         .map(a => this.renderCode(a))
         .join(", ")});`;
@@ -122,11 +118,7 @@ export class ParserGenerator {
       return "TODO predicate;";
     }
     if (t instanceof ReturnTransition) {
-      const { returnCode } = t;
-      if (returnCode == null) {
-        return `return {${Array.from(this.locals.fields).join(", ")}};`;
-      }
-      return `return ${this.renderCode(returnCode)};`;
+      return `return ${this.renderCode(t.returnCode)};`;
     }
     if (t instanceof EpsilonTransition) {
       return "// EPSILON";

@@ -32,7 +32,6 @@ import {
   FieldTransition,
   PredicateTransition,
   RangeTransition,
-  AnyTransition,
 } from "../automaton/transitions";
 import { Location } from "../../runtime/tokenizer";
 import { assertion, never } from "../utils";
@@ -92,7 +91,7 @@ export class FactoryRule implements Gen {
   }
 
   call(node: CallRule): Frag {
-    const decl = this.grammar.getRule(node.id).decl;
+    const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(node.args.length === decl.args.length);

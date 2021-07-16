@@ -145,37 +145,19 @@ export abstract class RuleVisitor<
   }
 }
 
-export type FieldsAndArgs = {
-  fields: ReadonlySet<string>;
-  args: ReadonlySet<string>;
-};
-
-type MutableFieldsAndArgs = {
-  fields: Set<string>;
-  args: Set<string>;
-};
-
-export class LocalsCollector extends RuleVisitor<
-  MutableFieldsAndArgs,
-  FieldsAndArgs
-> {
+export class LocalsCollector extends RuleVisitor<string[], readonly string[]> {
   constructor() {
-    super({
-      fields: new Set(),
-      args: new Set(),
-    });
+    super([]);
   }
 
   field(node: FieldRule) {
-    this.data.fields.add(node.name);
+    this.data.push(node.name);
     super.field(node);
   }
 
-  rule(node: RuleDeclaration) {
-    for (const arg of node.args) {
-      this.data.args.add(arg);
-    }
-    super.rule(node);
+  run(node: AnyRule) {
+    this.visit(node);
+    return this.get();
   }
 }
 

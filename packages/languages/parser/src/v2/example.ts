@@ -30,6 +30,11 @@ const ruleA =
 
 // && optional(string("O"));
 
+// TODO plan before plan
+// - decide how to handle field setting
+// - text and locations extraction
+// - infer types
+
 // TODO refactor out the last statements that are equal at the end
 // TODO the automaton optimization performs in essence left-refactoring, but we could also think about refactoring common right-parts (see issue above)
 // TODO maybe to accomplish this, we can create an automaton minimization algorithm that only trying to perform the "left-refactoring" (with the epsilon closures and stuff) if there are conflicts, this way, we can handle the above issues, and generate code that is more similar to the original grammar

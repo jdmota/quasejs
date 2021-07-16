@@ -123,7 +123,7 @@ export class FactoryToken implements Gen {
   }
 
   call(node: CallRule): Frag {
-    const decl = this.grammar.getRule(node.id).decl;
+    const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(false);
