@@ -128,6 +128,10 @@ function prefixLocals<T extends AnyRule>(prefix: string, rule: T): T {
   return setLoc(prefixLocalsObj[rule.type](prefix, rule as any) as T, rule.loc);
 }
 
+function idToVar(id: number) {
+  return `\$${id}`.replace("-", "_");
+}
+
 export class TokensStore {
   private readonly tokens = new Map<
     string,
@@ -179,7 +183,7 @@ export class TokensStore {
       case "string":
       case "regexp":
       case "eof":
-        return builder.token(`\$${id}`, token, { type: "normal" }, null);
+        return builder.token(idToVar(id), token, { type: "normal" }, null);
       case "token":
         return token;
       default:
@@ -194,14 +198,12 @@ export class TokensStore {
       const idNode = builder.int(id);
       const fieldIdSet = builder.field("id", idNode);
       if (token.modifiers.type === "normal") {
+        const prefix = idToVar(id) + "_";
         tokens.push(
-          prefixLocals(
-            `$${id}_`,
-            builder.seq(
-              token.rule,
-              fieldIdSet,
-              builder.field("token", token.return)
-            )
+          builder.seq(
+            prefixLocals(prefix, token.rule),
+            fieldIdSet,
+            builder.field("token", prefixLocals(prefix, token.return))
           )
         );
       }

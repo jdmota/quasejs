@@ -88,12 +88,7 @@ export function tool(opts: ToolInput) {
   for (const [rule, block] of tokenCodeBlocks) {
     tokenCode.set(
       rule,
-      new ParserGenerator(
-        grammar,
-        analyzer,
-        rule,
-        grammar.getRule(rule.name).locals
-      ).process(block)
+      new ParserGenerator(grammar, analyzer, rule).process(block)
     );
   }
 
@@ -108,12 +103,7 @@ export function tool(opts: ToolInput) {
   for (const [rule, block] of ruleCodeBlocks) {
     ruleCode.set(
       rule,
-      new ParserGenerator(
-        grammar,
-        analyzer,
-        rule,
-        grammar.getRule(rule.name).locals
-      ).process(block)
+      new ParserGenerator(grammar, analyzer, rule).process(block)
     );
   }
 

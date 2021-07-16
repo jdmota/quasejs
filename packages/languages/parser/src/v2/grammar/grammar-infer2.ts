@@ -77,7 +77,7 @@ class FreeType extends Type {}
 class Store {
   private readonly map: Map<string, Type> = new Map();
 
-  constructor(names: readonly string[]) {
+  constructor(names: ReadonlySet<string>) {
     for (const name of names) {
       this.map.set(name, new FreeType());
     }
@@ -139,7 +139,8 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
     let lastPre = pre;
     for (let i = 0; i < node.rules.length; i++) {
       const thisPre = lastPre;
-      const thisPost = i === node.rules.length - 1 ? post : new Store([]);
+      const thisPost =
+        i === node.rules.length - 1 ? post : new Store(new Set());
       this.visit(thisPre, node.rules[i], thisPost);
       lastPre = thisPost;
     }
@@ -207,7 +208,7 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
-    const middlePost = new Store([]);
+    const middlePost = new Store(new Set());
     this.visit(pre, node.parent, middlePost);
     //
     middlePost.propagateTo(post);
@@ -233,8 +234,8 @@ class GrammarVisitor implements RuleAnalyzer<Store> {
   }
 
   run(rule: RuleDeclaration) {
-    const pre = new Store([]); // TODO
-    const post = new Store([]); // TODO
+    const pre = new Store(new Set()); // TODO
+    const post = new Store(new Set()); // TODO
     this.visit(pre, rule.rule, post);
   }
 

@@ -48,7 +48,7 @@ export type RuleDeclaration = {
   readonly args: readonly string[];
   readonly return: ExprRule;
   readonly modifiers: RuleModifiers;
-  readonly locals: readonly string[];
+  readonly locals: ReadonlySet<string>;
   loc: Location | null;
 };
 
@@ -66,7 +66,9 @@ function rule(
     rule,
     args,
     modifiers,
-    return: returnCode ?? builder.object(locals.map(l => [l, builder.id(l)])),
+    return:
+      returnCode ??
+      builder.object(Array.from(locals).map(l => [l, builder.id(l)])),
     locals,
     loc: null,
   };
@@ -82,7 +84,7 @@ export type TokenDeclaration = {
   readonly rule: AnyRule;
   readonly return: ExprRule;
   readonly modifiers: TokenModifiers;
-  readonly locals: readonly string[];
+  readonly locals: ReadonlySet<string>;
   loc: Location | null;
 };
 
@@ -98,7 +100,9 @@ function token(
     name,
     rule,
     modifiers,
-    return: returnCode ?? builder.object(locals.map(l => [l, builder.id(l)])),
+    return:
+      returnCode ??
+      builder.object(Array.from(locals).map(l => [l, builder.id(l)])),
     locals,
     loc: null,
   };

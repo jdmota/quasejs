@@ -11,7 +11,6 @@ import {
 } from "../automaton/transitions";
 import { Grammar } from "../grammar/grammar";
 import { Declaration, ExprRule } from "../grammar/grammar-builder";
-import { FieldsAndArgs } from "../grammar/grammar-visitors";
 import { assertion, never } from "../utils";
 import { CodeBlock, endsWithFlowBreak } from "./dfa-to-code/cfg-to-code";
 import { CFGEdge, CFGNode, DispatchTransition } from "./dfa-to-code/dfa-to-cfg";
@@ -24,21 +23,14 @@ export class ParserGenerator {
   private readonly grammar: Grammar;
   private readonly analyzer: Analyzer;
   private readonly rule: Declaration;
-  private readonly locals: FieldsAndArgs;
   private nodes: Map<CFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
 
-  constructor(
-    grammar: Grammar,
-    analyzer: Analyzer,
-    rule: Declaration,
-    locals: FieldsAndArgs
-  ) {
+  constructor(grammar: Grammar, analyzer: Analyzer, rule: Declaration) {
     this.grammar = grammar;
     this.analyzer = analyzer;
     this.rule = rule;
-    this.locals = locals;
     this.nodes = new Map();
     this.nodeUuid = 1;
     this.internalVars = new Set();
@@ -83,9 +75,15 @@ export class ParserGenerator {
       case "int":
         return `${code.value}`;
       case "object":
-        return `{${code.fields
-          .map(([k, v]) => `${k}: ${this.renderCode(v)}`)
-          .join(", ")}}`;
+        return code.fields.length === 0
+          ? "EMPTY_OBJ"
+          : `{${code.fields
+              .map(([k, v]) =>
+                v.type === "id" && v.id === k
+                  ? k
+                  : `${k}: ${this.renderCode(v)}`
+              )
+              .join(", ")}}`;
       case "call2":
         return `this.external.${code.id}(${code.args
           .map(e => this.renderCode(e))
@@ -239,7 +237,7 @@ export class ParserGenerator {
     const args = this.rule.type === "rule" ? this.rule.args.join(",") : "";
     const vars = [
       ...Array.from(this.internalVars).map(v => `${v}=-2`),
-      ...Array.from(this.locals.fields).map(f => `${f}=null`),
+      ...Array.from(this.rule.locals).map(f => `${f}=null`),
     ];
     const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";
     return `${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n}`;
