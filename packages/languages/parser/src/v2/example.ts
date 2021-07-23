@@ -31,8 +31,6 @@ const ruleA =
 // && optional(string("O"));
 
 // TODO plan before plan
-// - decide how to handle field setting
-// - text and locations extraction
 // - infer types
 
 // TODO refactor out the last statements that are equal at the end

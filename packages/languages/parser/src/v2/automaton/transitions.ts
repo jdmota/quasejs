@@ -15,7 +15,12 @@ export type AnyTransition =
   | ReturnTransition
   | FieldTransition;
 
-abstract class Transition<E extends boolean> {
+export type AssignableTransition =
+  | ActionTransition
+  | RangeTransition
+  | CallTransition;
+
+export abstract class Transition<E extends boolean> {
   readonly isEpsilon: E;
   loc: Location | null;
 
@@ -188,13 +193,17 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 export class FieldTransition extends AbstractEpsilonTransition {
   readonly name: string;
   readonly multiple: boolean;
-  readonly node: FieldRule;
+  readonly transition: AssignableTransition;
 
-  constructor(node: FieldRule) {
+  constructor(
+    name: string,
+    multiple: boolean,
+    transition: AssignableTransition
+  ) {
     super();
-    this.name = node.name;
-    this.multiple = node.multiple;
-    this.node = node;
+    this.name = name;
+    this.multiple = multiple;
+    this.transition = transition;
   }
 
   hashCode() {
@@ -206,7 +215,7 @@ export class FieldTransition extends AbstractEpsilonTransition {
       other instanceof FieldTransition &&
       this.name === other.name &&
       this.multiple === other.multiple &&
-      sameAssignable(this.node.rule, other.node.rule)
+      this.transition.equals(other.transition)
     );
   }
 

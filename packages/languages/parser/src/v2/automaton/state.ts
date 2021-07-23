@@ -23,18 +23,22 @@ export class State {
 
   addTransition(transition: AnyTransition, dest: State) {
     this.mapKeyToSet.add(transition, new Set([dest]));
+    return dest;
   }
 
   addEpsilon(dest: State) {
     this.mapKeyToSet.add(EPSILON, new Set([dest]));
+    return dest;
   }
 
   addNumber(number: number, dest: State) {
     this.mapRangeToSet.addRange(number, number, new Set([dest]));
+    return dest;
   }
 
   addRange(from: number, to: number, dest: State) {
     this.mapRangeToSet.addRange(from, to, new Set([dest]));
+    return dest;
   }
 
   addNotRangeSet(
@@ -44,10 +48,12 @@ export class State {
     max: number
   ) {
     this.mapRangeToSet.addNotRangeSet(set, new Set([dest]), min, max);
+    return dest;
   }
 
   addWildcard(dest: State, min: number, max: number) {
     this.mapRangeToSet.addRange(min, max, new Set([dest]));
+    return dest;
   }
 
   *[Symbol.iterator](): IterableIterator<
@@ -92,8 +98,7 @@ export class DState {
     return this.transitionsMap.size + this.rangeList.size;
   }
 
-  *destinations() {
-    // IterableIterator<DState>
+  *destinations(): IterableIterator<DState> {
     for (const [_, dest] of this.transitionsMap) {
       yield dest;
     }
@@ -102,8 +107,7 @@ export class DState {
     }
   }
 
-  *[Symbol.iterator]() {
-    // IterableIterator<readonly [AnyTransition, DState]>
+  *[Symbol.iterator](): IterableIterator<readonly [AnyTransition, DState]> {
     for (const pair of this.transitionsMap) {
       yield pair;
     }

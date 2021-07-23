@@ -1,52 +1,32 @@
 import {
-  AnyRule,
-  ExprRule,
-  RuleMap,
-  ChoiceRule,
-  EmptyRule,
-  EofRule,
-  FieldRule,
-  IdRule,
-  OptionalRule,
-  PredicateRule,
-  RegExpRule,
-  Repeat1Rule,
-  RepeatRule,
-  SeqRule,
-  StringRule,
   RuleDeclaration,
-  SelectRule,
+  Assignables,
+  FieldRule,
   CallRule,
-  ObjectRule,
-  Call2Rule,
+  StringRule,
+  RegExpRule,
+  EofRule,
   TokenRules,
-  TokenDeclaration,
-  IntRule,
 } from "../grammar/grammar-builder";
 import { Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
-  ActionTransition,
   CallTransition,
   ReturnTransition,
-  FieldTransition,
-  PredicateTransition,
   RangeTransition,
+  AssignableTransition,
+  FieldTransition,
 } from "../automaton/transitions";
 import { Location } from "../../runtime/tokenizer";
 import { assertion, never } from "../utils";
+import { AbstractFactory } from "./abstract-factory";
 
-type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
-
-export class FactoryRule implements Gen {
-  readonly grammar: Grammar;
+export class FactoryRule extends AbstractFactory {
   readonly rule: RuleDeclaration;
-  readonly automaton: Automaton;
 
   constructor(grammar: Grammar, rule: RuleDeclaration, automaton: Automaton) {
-    this.grammar = grammar;
+    super(grammar, automaton);
     this.rule = rule;
-    this.automaton = automaton;
   }
 
   static process(
@@ -57,106 +37,66 @@ export class FactoryRule implements Gen {
     return new FactoryRule(grammar, rule, automaton).genRule(rule);
   }
 
-  private token(node: TokenRules | TokenDeclaration) {
-    const id = this.grammar.tokenId(node);
-    return this.automaton.single(new RangeTransition(id, id));
-  }
-
-  private action(node: ExprRule): Frag {
-    return this.automaton.single(new ActionTransition(node).setLoc(node.loc));
-  }
-
-  seq(node: SeqRule): Frag {
-    return this.automaton.seq(node.rules.map(r => this.gen(r)));
-  }
-
-  choice(node: ChoiceRule): Frag {
-    return this.automaton.choice(node.rules.map(r => this.gen(r)));
-  }
-
-  repeat(node: RepeatRule): Frag {
-    return this.automaton.repeat(this.gen(node.rule));
-  }
-
-  repeat1(node: Repeat1Rule): Frag {
-    return this.automaton.repeat1(this.gen(node.rule));
-  }
-
-  optional(node: OptionalRule): Frag {
-    return this.automaton.optional(this.gen(node.rule));
-  }
-
-  empty(_: EmptyRule): Frag {
-    return this.automaton.empty();
-  }
-
-  call(node: CallRule): Frag {
+  protected callTransition(node: CallRule): CallTransition | RangeTransition {
     const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(node.args.length === decl.args.length);
-        return this.automaton.single(
-          new CallTransition(node.id, node.args).setLoc(node.loc)
-        );
+        return new CallTransition(node.id, node.args).setLoc(node.loc);
       case "token":
         assertion(decl.modifiers.type === "normal");
         assertion(node.args.length === 0);
-        return this.token(decl);
+        const id = this.grammar.tokenId(decl);
+        return new RangeTransition(id, id);
       default:
         never(decl);
     }
   }
 
-  id(node: IdRule): Frag {
-    return this.action(node);
+  private token(node: TokenRules) {
+    const id = this.grammar.tokenId(node);
+    return new RangeTransition(id, id);
   }
 
-  string(node: StringRule): Frag {
-    return this.token(node);
-  }
-
-  regexp(node: RegExpRule): Frag {
-    return this.token(node);
-  }
-
-  eof(node: EofRule): Frag {
-    return this.token(node);
+  private assignablesToTransition(node: Assignables): AssignableTransition {
+    switch (node.type) {
+      case "string":
+      case "regexp":
+      case "eof":
+        return this.token(node);
+      case "call":
+        return this.callTransition(node);
+      default:
+        return this.actionTransition(node);
+    }
   }
 
   field(node: FieldRule): Frag {
-    const fragItem = this.gen(node.rule);
+    const transition = this.assignablesToTransition(node.rule);
+    const fragItem = this.automaton.single(transition);
     const end = this.automaton.newState();
-    fragItem.end.addTransition(new FieldTransition(node).setLoc(node.loc), end);
+    fragItem.end.addTransition(
+      new FieldTransition(node.name, node.multiple, transition).setLoc(
+        node.loc
+      ),
+      end
+    );
     return {
       start: fragItem.start,
-      end: end,
+      end,
     };
   }
 
-  select(node: SelectRule) {
-    return this.action(node);
+  string(node: StringRule): Frag {
+    return this.automaton.single(this.token(node));
   }
 
-  int(node: IntRule) {
-    return this.action(node);
+  regexp(node: RegExpRule): Frag {
+    return this.automaton.single(this.token(node));
   }
 
-  object(node: ObjectRule) {
-    return this.action(node);
-  }
-
-  call2(node: Call2Rule) {
-    return this.action(node);
-  }
-
-  predicate(node: PredicateRule): Frag {
-    return this.automaton.single(
-      new PredicateTransition(node.code).setLoc(node.loc)
-    );
-  }
-
-  gen(node: AnyRule): Frag {
-    return this[node.type](node as any);
+  eof(node: EofRule): Frag {
+    return this.automaton.single(this.token(node));
   }
 
   genRule(rule: RuleDeclaration): Frag {

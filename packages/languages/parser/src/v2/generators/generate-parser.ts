@@ -11,8 +11,12 @@ import {
 } from "../automaton/transitions";
 import { Grammar } from "../grammar/grammar";
 import { Declaration, ExprRule } from "../grammar/grammar-builder";
-import { assertion, never } from "../utils";
-import { CodeBlock, endsWithFlowBreak } from "./dfa-to-code/cfg-to-code";
+import { any, assertion, find, never } from "../utils";
+import {
+  CodeBlock,
+  endsWithFlowBreak,
+  ExpectBlock,
+} from "./dfa-to-code/cfg-to-code";
 import { CFGEdge, CFGNode, DispatchTransition } from "./dfa-to-code/dfa-to-cfg";
 
 function lines(arr: readonly (string | undefined)[], separator = "\n"): string {
@@ -93,30 +97,62 @@ export class ParserGenerator {
     }
   }
 
+  private renderField(t: FieldTransition, what: string) {
+    return t.multiple
+      ? `(${t.name} = ${t.name} || []).push(${what})`
+      : `${t.name} = ${what}`;
+  }
+
+  // This method detects if we need to same a value for later assignment
+  // And optimizes code such as "$val = 2; field = $val;" to "field = 2;"
+  private renderExpectBlock(indent: string, block: ExpectBlock): string {
+    const t = block.edge.transition;
+    if (t instanceof FieldTransition && block.edge.start.outEdges.size === 1) {
+      // This field assignment was rendered before
+      return "";
+    }
+    const followingField = find(block.edge.dest.outEdges, ({ transition: f }) =>
+      f instanceof FieldTransition && f.transition === t ? f : null
+    );
+    const hasOnlyOneTransitionNext = block.edge.dest.outEdges.size === 1;
+    if (followingField) {
+      if (hasOnlyOneTransitionNext) {
+        return `${indent}${this.renderField(
+          followingField,
+          this.renderTransition(t)
+        )};`;
+      }
+      return `${indent}${this.markLocal("$val")} = ${this.renderTransition(
+        t
+      )};`;
+    }
+    return `${indent}${this.renderTransition(t)};`;
+  }
+
   private renderTransition(t: AnyTransition): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
-        return `this.expect(${t.from});`;
+        return `this.expect(${t.from})`;
       }
-      return `this.expect2(${t.from}, ${t.to});`;
+      return `this.expect2(${t.from}, ${t.to})`;
     }
     if (t instanceof CallTransition) {
       const type = this.grammar.getRule(t.ruleName).type;
       return `this.${type}${t.ruleName}(${t.args
         .map(a => this.renderCode(a))
-        .join(", ")});`;
+        .join(", ")})`;
     }
     if (t instanceof FieldTransition) {
-      return "TODO field;";
+      return this.renderField(t, this.markLocal("$val"));
     }
     if (t instanceof ActionTransition) {
-      return `${this.renderCode(t.code)};`;
+      return this.renderCode(t.code);
     }
     if (t instanceof PredicateTransition) {
-      return "TODO predicate;";
+      return "// TODO predicate";
     }
     if (t instanceof ReturnTransition) {
-      return `return ${this.renderCode(t.returnCode)};`;
+      return `return ${this.renderCode(t.returnCode)}`;
     }
     if (t instanceof EpsilonTransition) {
       return "// EPSILON";
@@ -135,7 +171,7 @@ export class ParserGenerator {
   private r(indent: string, block: CodeBlock): string {
     switch (block.type) {
       case "expect_block":
-        return `${indent}${this.renderTransition(block.edge.transition)}`;
+        return this.renderExpectBlock(indent, block);
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
@@ -236,7 +272,7 @@ export class ParserGenerator {
     const rendered = this.r("  ", block);
     const args = this.rule.type === "rule" ? this.rule.args.join(",") : "";
     const vars = [
-      ...Array.from(this.internalVars).map(v => `${v}=-2`),
+      ...Array.from(this.internalVars),
       ...Array.from(this.rule.locals).map(f => `${f}=null`),
     ];
     const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";

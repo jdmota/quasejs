@@ -1,5 +1,30 @@
 import type { Location } from "../runtime/input";
 
+export function find<A, B>(
+  it: Iterable<A>,
+  fn: (val: A) => B | null
+): B | null {
+  for (const val of it) {
+    const val2 = fn(val);
+    if (val2 != null) return val2;
+  }
+  return null;
+}
+
+export function any<T>(it: Iterable<T>, fn: (val: T) => boolean): boolean {
+  for (const val of it) {
+    if (fn(val)) return true;
+  }
+  return false;
+}
+
+export function all<T>(it: Iterable<T>, fn: (val: T) => boolean): boolean {
+  for (const val of it) {
+    if (!fn(val)) return false;
+  }
+  return true;
+}
+
 export function printLoc(loc: Location) {
   return `${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column}`;
 }

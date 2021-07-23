@@ -1,52 +1,33 @@
 import {
-  AnyRule,
-  ExprRule,
-  RuleMap,
-  ChoiceRule,
-  EmptyRule,
   EofRule,
   FieldRule,
-  IdRule,
-  OptionalRule,
-  PredicateRule,
   RegExpRule,
-  Repeat1Rule,
-  RepeatRule,
-  SeqRule,
   StringRule,
-  SelectRule,
-  CallRule,
-  ObjectRule,
-  Call2Rule,
   TokenDeclaration,
   TokenRules,
-  IntRule,
+  CallRule,
+  builder,
 } from "../grammar/grammar-builder";
 import { Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
-  ActionTransition,
   CallTransition,
   ReturnTransition,
   FieldTransition,
-  PredicateTransition,
   RangeTransition,
+  ActionTransition,
 } from "../automaton/transitions";
 import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 import { Location } from "../../runtime/tokenizer";
 import { never, assertion } from "../utils";
+import { AbstractFactory } from "./abstract-factory";
 
-type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
-
-export class FactoryToken implements Gen {
-  readonly grammar: Grammar;
+export class FactoryToken extends AbstractFactory {
   readonly rule: TokenDeclaration;
-  readonly automaton: Automaton;
 
   constructor(grammar: Grammar, rule: TokenDeclaration, automaton: Automaton) {
-    this.grammar = grammar;
+    super(grammar, automaton);
     this.rule = rule;
-    this.automaton = automaton;
   }
 
   static process(
@@ -94,55 +75,76 @@ export class FactoryToken implements Gen {
     return regexpToAutomaton(factoryRegexp, node.regexp);
   }
 
-  private action(node: ExprRule): Frag {
-    return this.automaton.single(new ActionTransition(node).setLoc(node.loc));
-  }
-
-  seq(node: SeqRule): Frag {
-    return this.automaton.seq(node.rules.map(r => this.gen(r)));
-  }
-
-  choice(node: ChoiceRule): Frag {
-    return this.automaton.choice(node.rules.map(r => this.gen(r)));
-  }
-
-  repeat(node: RepeatRule): Frag {
-    return this.automaton.repeat(this.gen(node.rule));
-  }
-
-  repeat1(node: Repeat1Rule): Frag {
-    return this.automaton.repeat1(this.gen(node.rule));
-  }
-
-  optional(node: OptionalRule): Frag {
-    return this.automaton.optional(this.gen(node.rule));
-  }
-
-  empty(_: EmptyRule): Frag {
-    return this.automaton.empty();
-  }
-
-  call(node: CallRule): Frag {
+  protected callTransition(node: CallRule): CallTransition {
     const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(false);
       case "token":
         assertion(node.args.length === 0);
-        return this.automaton.single(
-          new CallTransition(node.id, []).setLoc(node.loc)
-        );
+        return new CallTransition(node.id, []).setLoc(node.loc);
       default:
         never(decl);
     }
   }
 
-  id(node: IdRule): Frag {
-    return this.action(node);
-  }
-
-  eof(node: EofRule): Frag {
-    return FactoryToken.eof(this.automaton, node);
+  field(node: FieldRule): Frag {
+    const innerRule = node.rule;
+    if (
+      innerRule.type === "string" ||
+      innerRule.type === "regexp" ||
+      innerRule.type === "eof"
+    ) {
+      const fragment = FactoryToken.process(
+        this.grammar,
+        innerRule,
+        this.automaton
+      );
+      const start = this.automaton.newState();
+      // $startLoc = $getLoc();
+      const getStartLoc = new ActionTransition(
+        builder.call2("$getLoc", [])
+      ).setLoc(node.loc);
+      start
+        .addTransition(getStartLoc, this.automaton.newState())
+        .addTransition(
+          new FieldTransition("$startLoc", false, getStartLoc).setLoc(node.loc),
+          fragment.start
+        );
+      // ?? = $getText($startLoc);
+      const getText = new ActionTransition(
+        builder.call2("$getText", [builder.id("$startLoc")])
+      ).setLoc(node.loc);
+      const end = fragment.end
+        .addTransition(getText, this.automaton.newState())
+        .addTransition(
+          new FieldTransition(node.name, node.multiple, getText).setLoc(
+            node.loc
+          ),
+          this.automaton.newState()
+        );
+      return {
+        start,
+        end,
+      };
+    } else {
+      const transition =
+        innerRule.type === "call"
+          ? this.callTransition(innerRule)
+          : this.actionTransition(innerRule);
+      const fragItem = this.automaton.single(transition);
+      const end = this.automaton.newState();
+      fragItem.end.addTransition(
+        new FieldTransition(node.name, node.multiple, transition).setLoc(
+          node.loc
+        ),
+        end
+      );
+      return {
+        start: fragItem.start,
+        end,
+      };
+    }
   }
 
   string(node: StringRule): Frag {
@@ -153,40 +155,8 @@ export class FactoryToken implements Gen {
     return FactoryToken.regexp(this.automaton, node);
   }
 
-  field(node: FieldRule): Frag {
-    const fragItem = this.gen(node.rule);
-    const end = this.automaton.newState();
-    fragItem.end.addTransition(new FieldTransition(node).setLoc(node.loc), end);
-    return {
-      start: fragItem.start,
-      end: end,
-    };
-  }
-
-  select(node: SelectRule) {
-    return this.action(node);
-  }
-
-  int(node: IntRule) {
-    return this.action(node);
-  }
-
-  object(node: ObjectRule) {
-    return this.action(node);
-  }
-
-  call2(node: Call2Rule) {
-    return this.action(node);
-  }
-
-  predicate(node: PredicateRule): Frag {
-    return this.automaton.single(
-      new PredicateTransition(node.code).setLoc(node.loc)
-    );
-  }
-
-  gen(node: AnyRule): Frag {
-    return this[node.type](node as any);
+  eof(node: EofRule): Frag {
+    return FactoryToken.eof(this.automaton, node);
   }
 
   genToken(rule: TokenDeclaration): Frag {
