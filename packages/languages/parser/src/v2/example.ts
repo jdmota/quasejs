@@ -12,6 +12,8 @@ const {
   field,
   fieldMultiple,
   rule,
+  object,
+  int,
 } = builder;
 
 const ruleA =
@@ -25,13 +27,11 @@ const ruleA =
     string("C"),
     repeat(seq(string("D"), string("E"))),
     repeat(string("F")),
-    optional(string("O"))
+    optional(string("O")),
+    field("my_obj", object([["id", int(10)]]))
   );
 
 // && optional(string("O"));
-
-// TODO plan before plan
-// - infer types
 
 // TODO refactor out the last statements that are equal at the end
 // TODO the automaton optimization performs in essence left-refactoring, but we could also think about refactoring common right-parts (see issue above)

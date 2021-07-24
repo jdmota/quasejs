@@ -12,6 +12,7 @@ import {
   TokenDeclaration,
   TokenRules,
 } from "./grammar/grammar-builder";
+import { GrammarTypesInfer } from "./grammar/grammar-infer2";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 
@@ -106,6 +107,12 @@ export function tool(opts: ToolInput) {
       new ParserGenerator(grammar, analyzer, rule).process(block)
     );
   }
+
+  const infer = new GrammarTypesInfer(grammar);
+  for (const rule of grammar.getRules()) {
+    infer.run(rule);
+  }
+  infer.debug();
 
   return { tokenCode, ruleCode };
 }
