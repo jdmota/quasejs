@@ -12,7 +12,9 @@ const {
   field,
   fieldMultiple,
   rule,
+  id,
   object,
+  select,
   int,
 } = builder;
 
@@ -28,7 +30,9 @@ const ruleA =
     repeat(seq(string("D"), string("E"))),
     repeat(string("F")),
     optional(string("O")),
-    field("my_obj", object([["id", int(10)]]))
+    field("my_obj", object([["id", int(10)]])),
+    select(id("my_obj"), "id"),
+    select(id("my_obj"), "id2")
   );
 
 // && optional(string("O"));

@@ -110,7 +110,7 @@ export function createGrammar(
           break;
         case "id":
           if (
-            !decl.locals.includes(id) &&
+            !decl.locals.has(id) &&
             (decl.type === "token" || !decl.args.includes(id))
           ) {
             errors.push(`Cannot find variable ${id}${locSuffix(ref.loc)}`);
