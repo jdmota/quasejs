@@ -278,7 +278,7 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
   }
 
   debug() {
-    const { subtypes, supertypes } = this.simplify();
+    // const { subtypes, supertypes } = this.simplify();
 
     console.log("---- SINGLETON TYPES ----");
     for (const [name, type] of Object.entries(this.registry.t)) {
@@ -302,7 +302,7 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
     }*/
 
     console.log("---- NORMALIZED ----");
-    for (const [type, supers] of supertypes) {
+    /*for (const [type, supers] of supertypes) {
       const subs = subtypes.get(type)!!;
       if (supers.size > 0 || subs.size > 0) {
         const subsArr = Array.from(subs);
@@ -313,10 +313,46 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
         console.log("supers", supersArr.map(t => t.simpleFormat()).join(" & "));
         console.log(
           subsArr.every(sub =>
-            supersArr.some(superr => isSubtype(sub, superr, subtypes))
+            supersArr.some(superr =>
+              isSubtype(sub, superr, subtypes, this.registry)
+            )
+          )
+        );
+        // FIXME: why is this giving false for ReadonlyObjectType {id: FreeType {}} and ReadonlyObjectType {id: FreeType {}}?
+        console.log(
+          subsArr.every(sub =>
+            supersArr.every(superr =>
+              isSubtype(sub, superr, subtypes, this.registry)
+            )
           )
         );
       }
+    }*/
+    for (const type of this.registry) {
+      const subsArr = Array.from(this.registry.getSubs(type));
+      const supersArr = Array.from(this.registry.getSupers(type));
+      const normalizedArr = Array.from(this.registry.getNormalized(type));
+      console.log(type.simpleFormat());
+      console.log(normalizedArr.map(t => t.simpleFormat()).join(" | "));
+      /*console.log(
+        "subs",
+        subsArr
+          .filter(t => !isFreeType(t))
+          .map(t => t.simpleFormat())
+          .join(" | ")
+      );*/
+      console.log(
+        "supers",
+        supersArr
+          .filter(t => !isFreeType(t))
+          .map(t => t.simpleFormat())
+          .join(" & ")
+      );
+      console.log(
+        normalizedArr.every(sub =>
+          supersArr.every(superr => isSubtype(sub, superr, this.registry))
+        )
+      );
     }
 
     console.log("--------");

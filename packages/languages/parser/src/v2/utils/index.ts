@@ -43,11 +43,14 @@ export function never(_: never): never {
 
 export function expect<T>(_: T) {}
 
-export function first<T>(it: Iterable<T>): T {
+export function first<T>(it: Iterable<T>, defaultt: T | null = null): T {
   for (const value of it) {
     return value;
   }
-  throw new Error("Iterable has zero elements");
+  if (defaultt == null) {
+    throw new Error("Iterable has zero elements");
+  }
+  return defaultt;
 }
 
 export function assertion(bool: boolean) {
