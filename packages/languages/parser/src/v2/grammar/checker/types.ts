@@ -26,12 +26,12 @@ abstract class Type {
   }
 }
 
-class ReadonlyObjectType<T extends Type> extends Type {
+class ReadonlyObjectType extends Type {
   // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ReadonlyObjectType";
 
-  readonly fields: ReadonlyMap<string, T>;
-  constructor(fields: readonly (readonly [string, T])[]) {
+  readonly fields: ReadonlyMap<string, AnyType>;
+  constructor(fields: readonly (readonly [string, AnyType])[]) {
     super();
     this.fields = new Map(fields);
   }
@@ -42,12 +42,12 @@ class ReadonlyObjectType<T extends Type> extends Type {
   }
 }
 
-class ReadonlyArrayType<T extends Type> extends Type {
+class ReadonlyArrayType extends Type {
   // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ReadonlyArrayType";
 
-  readonly component: T;
-  constructor(component: T) {
+  readonly component: AnyType;
+  constructor(component: AnyType) {
     super();
     this.component = component;
   }
@@ -56,12 +56,12 @@ class ReadonlyArrayType<T extends Type> extends Type {
   }
 }
 
-class ArrayType<T extends Type> extends Type {
+class ArrayType extends Type {
   // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ArrayType";
 
-  readonly component: T;
-  constructor(component: T) {
+  readonly component: AnyType;
+  constructor(component: AnyType) {
     super();
     this.component = component;
   }
@@ -312,9 +312,9 @@ export class TypesRegistry {
 }
 
 export type AnyType =
-  | ReadonlyObjectType<AnyType>
-  | ReadonlyArrayType<AnyType>
-  | ArrayType<AnyType>
+  | ReadonlyObjectType
+  | ReadonlyArrayType
+  | ArrayType
   | TopType
   | NullType
   | StringType
@@ -322,19 +322,6 @@ export type AnyType =
   | IntType
   | BottomType
   | FreeType;
-
-export type AnyTypeExceptFree =
-  | ReadonlyObjectType<AnyTypeExceptFree>
-  | ReadonlyArrayType<AnyTypeExceptFree>
-  | ArrayType<AnyTypeExceptFree>
-  | TopType
-  | NullType
-  | StringType
-  | BooleanType
-  | IntType
-  | BottomType;
-
-export type AnyTypeMinusFree = Exclude<AnyType, FreeType>;
 
 export type { FreeType };
 
@@ -368,7 +355,6 @@ function handleSubtypingImplications(
 export function isSubtype(
   a: AnyType,
   b: AnyType,
-  // free: ReadonlyMap<AnyType, ReadonlySet<AnyTypeMinusFree>>,
   registry: TypesRegistry
 ): boolean {
   // Short-path: Every type is a subtype of itself

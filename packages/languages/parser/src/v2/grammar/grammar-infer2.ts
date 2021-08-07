@@ -23,13 +23,7 @@ import {
   IntRule,
 } from "./grammar-builder";
 import { GrammarFormatter } from "./grammar-formatter";
-import {
-  TypesRegistry,
-  AnyType,
-  isFreeType,
-  isSubtype,
-  AnyTypeMinusFree,
-} from "./checker/types";
+import { TypesRegistry, AnyType, isFreeType, isSubtype } from "./checker/types";
 
 class Store {
   private readonly map: Map<string, AnyType> = new Map();
@@ -318,7 +312,6 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
             )
           )
         );
-        // FIXME: why is this giving false for ReadonlyObjectType {id: FreeType {}} and ReadonlyObjectType {id: FreeType {}}?
         console.log(
           subsArr.every(sub =>
             supersArr.every(superr =>
@@ -356,72 +349,5 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
     }
 
     console.log("--------");
-  }
-
-  // TODO report errors
-  simplify() {
-    const supertypes = new Map<AnyType, ReadonlySet<AnyTypeMinusFree>>();
-    const subtypes = new Map<AnyType, ReadonlySet<AnyTypeMinusFree>>();
-    const inJob = new Set<AnyType>();
-
-    const getSuperTypes = (
-      t: AnyType
-    ): ReadonlySet<AnyTypeMinusFree> | null => {
-      const cache = supertypes.get(t);
-      if (cache) return cache;
-      if (inJob.has(t)) return null;
-      inJob.add(t);
-
-      const result = new Set<AnyTypeMinusFree>();
-      for (const type of this.registry.getSupers(t)) {
-        if (isFreeType(type)) {
-          const supersuper = getSuperTypes(type);
-          if (supersuper) {
-            for (const type2 of supersuper) result.add(type2);
-          }
-        } else {
-          result.add(type);
-        }
-      }
-      result.delete(this.registry.t.top);
-
-      inJob.delete(t);
-      supertypes.set(t, result);
-      return result;
-    };
-
-    const getSubTypes = (t: AnyType): ReadonlySet<AnyTypeMinusFree> | null => {
-      const cache = subtypes.get(t);
-      if (cache) return cache;
-      if (inJob.has(t)) return null;
-      inJob.add(t);
-
-      const result = new Set<AnyTypeMinusFree>();
-      for (const type of this.registry.getSubs(t)) {
-        if (isFreeType(type)) {
-          const subsub = getSubTypes(type);
-          if (subsub) {
-            for (const type2 of subsub) result.add(type2);
-          }
-        } else {
-          result.add(type);
-        }
-      }
-      result.delete(this.registry.t.bottom);
-
-      inJob.delete(t);
-      subtypes.set(t, result);
-      return result;
-    };
-
-    for (const t of this.registry) {
-      getSuperTypes(t);
-    }
-
-    for (const t of this.registry) {
-      getSubTypes(t);
-    }
-
-    return { supertypes, subtypes };
   }
 }
