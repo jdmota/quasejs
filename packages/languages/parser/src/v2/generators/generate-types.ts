@@ -55,9 +55,9 @@ function toTypescript(
     case "BottomType":
       return "never";
     case "ReadonlyObjectType":
-      return `{ ${type.fields
+      return `Readonly<{ ${type.fields
         .map(([k, v]) => `${k}: ${toTypescript(v, names)}`)
-        .join(", ")} }`;
+        .join(", ")} }>`;
     case "ReadonlyArrayType":
       return `readonly ${toTypescript(type.component, names)}[]`;
     case "ArrayType":
@@ -66,6 +66,10 @@ function toTypescript(
       return `(${Array.from(type.types)
         .map(t => toTypescript(t, names))
         .join(" | ")})`;
+    case "IntersectionType":
+      return `(${Array.from(type.types)
+        .map(t => toTypescript(t, names))
+        .join(" & ")})`;
     case "RecursiveRef":
       return nonNull(names.get(type.get()));
     default:
@@ -80,15 +84,16 @@ export function generateTypes(grammar: Grammar) {
     `export type $Location = {start:$Position;end:$Position;};`,
   ];
 
+  const { lower } = grammar.inferrer.normalizer;
   const { ruleInterfaces, tokenInterfaces } = grammar.getInterfaces();
   const names = new Map<AnyNormalizedType, string>();
   const astNodes = [];
 
   for (const [rule, { argTypes, returnType }] of ruleInterfaces) {
     const normalizedArgs = Array.from(argTypes).map(
-      ([name, type]) => [name, grammar.normalizeType(type)] as const
+      ([name, type]) => [name, lower.normalize(type)] as const
     );
-    const normalizedReturn = grammar.normalizeType(returnType);
+    const normalizedReturn = lower.normalize(returnType);
 
     normalizedArgs.forEach(([name, type]) =>
       names.set(type, `${rule.name}_${name}`)
@@ -98,7 +103,7 @@ export function generateTypes(grammar: Grammar) {
   }
 
   let recRefId = 1;
-  for (const recRef of grammar.usedRecursiveRefs()) {
+  for (const recRef of lower.getUsedRecursiveRefs()) {
     names.set(recRef.get(), `$rec${recRefId++}`);
   }
 

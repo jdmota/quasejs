@@ -88,7 +88,7 @@ type RuleAnalyzer<T> = {
 
 export class TypesInferrer implements RuleAnalyzer<Store> {
   private readonly registry = new TypesRegistry();
-  private readonly normalizer = new Normalizer(this.registry);
+  public readonly normalizer = new Normalizer(this.registry);
   private readonly formatter = new GrammarFormatter();
   private readonly typeChecker = new TypeChecker(
     this.registry,
@@ -328,13 +328,5 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     console.log("---- ERRORS ----");*/
 
     this.typeChecker.check(errors);
-  }
-
-  normalize(type: AnyType) {
-    return this.normalizer.normalize(type);
-  }
-
-  usedRecursiveRefs() {
-    return this.normalizer.getUsedRecursiveRefs();
   }
 }

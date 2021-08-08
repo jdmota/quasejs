@@ -1,5 +1,5 @@
 import { assertion, first, never, nonNull } from "../../utils";
-import { AnyType, isFreeType, TypesRegistry } from "./types";
+import { AnyType, FreeType, isFreeType, TypesRegistry } from "./types";
 
 abstract class NormalizedType {
   abstract format(): string;
@@ -131,6 +131,22 @@ class UnionType extends NormalizedType {
   }
 }
 
+class IntersectionType extends NormalizedType {
+  readonly clazz = "IntersectionType";
+
+  readonly types: ReadonlySet<AnyNormalizedType>;
+  constructor(types: ReadonlySet<AnyNormalizedType>) {
+    super();
+    this.types = types;
+  }
+
+  format(): string {
+    return `(${Array.from(this.types)
+      .map(t => t.format())
+      .join(" & ")})`;
+  }
+}
+
 export type AnyNormalizedType =
   | RecursiveRef
   | ReadonlyObjectType
@@ -142,10 +158,11 @@ export type AnyNormalizedType =
   | BooleanType
   | NullType
   | BottomType
-  | UnionType;
+  | UnionType
+  | IntersectionType;
 
-export class Normalizer {
-  private readonly registry: TypesRegistry;
+abstract class AbstractNormalizer {
+  protected readonly registry: TypesRegistry;
   private readonly cache = new Map<AnyType, AnyNormalizedType>();
   private readonly processing = new Map<AnyType, RecursiveRef>();
   private readonly usedRecursiveRefs = new Set<RecursiveRef>();
@@ -179,6 +196,8 @@ export class Normalizer {
     return normalized;
   }
 
+  protected abstract normalizeFree(type: FreeType): AnyNormalizedType;
+
   private _normalize(type: AnyType): AnyNormalizedType {
     switch (type.clazz) {
       case "TopType":
@@ -202,15 +221,20 @@ export class Normalizer {
       case "ArrayType":
         return new ArrayType(this.normalize(type.component));
       case "FreeType":
-        const set = new Set<AnyNormalizedType>();
-        for (const sub of this.registry.getSubs(type)) {
-          if (isFreeType(sub)) continue;
-          set.add(this.normalize(sub));
-        }
-        return this.union(set);
+        return this.normalizeFree(type);
       default:
         never(type);
     }
+  }
+}
+
+export class LowerBoundNormalizer extends AbstractNormalizer {
+  protected normalizeFree(type: FreeType) {
+    const set = new Set<AnyNormalizedType>();
+    for (const sub of this.registry.getLowerBound(type)) {
+      set.add(this.normalize(sub));
+    }
+    return this.union(set);
   }
 
   private union(set: ReadonlySet<AnyNormalizedType>) {
@@ -221,5 +245,34 @@ export class Normalizer {
       return first(set);
     }
     return new UnionType(set);
+  }
+}
+
+export class UpperBoundNormalizer extends AbstractNormalizer {
+  protected normalizeFree(type: FreeType) {
+    const set = new Set<AnyNormalizedType>();
+    for (const sub of this.registry.getUpperBound(type)) {
+      set.add(this.normalize(sub));
+    }
+    return this.intersection(set);
+  }
+
+  private intersection(set: ReadonlySet<AnyNormalizedType>) {
+    if (set.size === 0) {
+      return new TopType();
+    }
+    if (set.size === 1) {
+      return first(set);
+    }
+    return new IntersectionType(set);
+  }
+}
+
+export class Normalizer {
+  readonly lower: LowerBoundNormalizer;
+  readonly upper: UpperBoundNormalizer;
+  constructor(registry: TypesRegistry) {
+    this.lower = new LowerBoundNormalizer(registry);
+    this.upper = new UpperBoundNormalizer(registry);
   }
 }

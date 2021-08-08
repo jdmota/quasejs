@@ -18,8 +18,12 @@ export class TypeChecker {
     this.formatter = formatter;
   }
 
-  private format(type: AnyType) {
-    return this.normalizer.normalize(type).format();
+  private formatLower(type: AnyType) {
+    return this.normalizer.lower.normalize(type).format();
+  }
+
+  private formatUpper(type: AnyType) {
+    return this.normalizer.upper.normalize(type).format();
   }
 
   check(errors: GrammarError[]) {
@@ -27,9 +31,11 @@ export class TypeChecker {
       if (!isSubtype(a, b, this.registry)) {
         errors.push(
           err(
-            `${this.format(a)} is not a subtype of ${this.format(b)} in ${
-              nodeA ? this.formatter.visit(nodeA) : null
-            } and ${nodeB ? this.formatter.visit(nodeB) : null}`,
+            `${this.formatLower(a)} is not a subtype of ${this.formatUpper(
+              b
+            )} in ${nodeA ? this.formatter.visit(nodeA) : null} and ${
+              nodeB ? this.formatter.visit(nodeB) : null
+            }`,
             nodeB?.loc
           )
         );

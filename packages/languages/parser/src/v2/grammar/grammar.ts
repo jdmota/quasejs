@@ -215,7 +215,7 @@ export class Grammar {
   private readonly rules: ReadonlyMap<string, Declaration>;
   private readonly tokens: TokensStore;
   private readonly startRule: RuleDeclaration;
-  private readonly inferrer: TypesInferrer;
+  public readonly inferrer: TypesInferrer;
   private readonly interfaces: Interfaces;
 
   constructor(
@@ -272,13 +272,5 @@ export class Grammar {
 
   getInterfaces() {
     return this.interfaces;
-  }
-
-  normalizeType(type: AnyType) {
-    return this.inferrer.normalize(type);
-  }
-
-  usedRecursiveRefs() {
-    return this.inferrer.usedRecursiveRefs();
   }
 }

@@ -245,14 +245,14 @@ export class TypesRegistry {
     return this.subs.get(t);
   }
 
-  *getUpperBound(t: FreeType): Iterable<AnyType> {
+  *getUpperBound(t: FreeType): Iterable<AnyTypeExceptFree> {
     for (const sup of this.getSupers(t)) {
       if (sup instanceof FreeType) continue;
       yield sup;
     }
   }
 
-  *getLowerBound(t: FreeType): Iterable<AnyType> {
+  *getLowerBound(t: FreeType): Iterable<AnyTypeExceptFree> {
     for (const sub of this.getSubs(t)) {
       if (sub instanceof FreeType) continue;
       yield sub;
@@ -302,8 +302,10 @@ export class TypesRegistry {
   }
 }
 
-// TODO when normalizing, support generic types!
-// TODO use type variable concept in arguments of the rules
+// TODO better errors (the location of errors)
+// TODO always choose the lower bound except for atoms! but in that case, we should not include the transitive lower bound of atoms!
+// TODO how to support generic types?
+// TODO use type variable concept in arguments of the rules?
 
 function handleSubtypingImplications(
   registry: TypesRegistry,
@@ -351,7 +353,7 @@ function isSubtype2(
   // BOTTOM is a subtype of any type
   if (a instanceof BottomType) return true;
 
-  // For all...
+  /*// For all...
   if (a instanceof FreeType) {
     return all(registry.getLowerBound(a), typeA =>
       isSubtype2(registry, set, typeA, b)
@@ -365,6 +367,10 @@ function isSubtype2(
     return any(registry.getLowerBound(b), typeB =>
       isSubtype2(registry, set, a, typeB)
     );
+  }*/
+
+  if (a instanceof FreeType || b instanceof FreeType) {
+    return true;
   }
 
   // TOP is only a subtype of TOP
