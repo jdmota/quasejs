@@ -18,14 +18,17 @@ import { AnyType } from "./type-checker/types";
 
 export type GrammarError = Readonly<{
   message: string;
-  loc: Location | null;
+  loc: Location | undefined | null;
 }>;
 
 type GrammarOrErrors =
   | Readonly<{ grammar: Grammar; errors: null }>
   | Readonly<{ grammar: null; errors: readonly GrammarError[] }>;
 
-export function err(message: string, loc: Location | null): GrammarError {
+export function err(
+  message: string,
+  loc: Location | undefined | null
+): GrammarError {
   return {
     message,
     loc,

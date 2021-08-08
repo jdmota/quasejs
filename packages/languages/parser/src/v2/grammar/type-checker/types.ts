@@ -163,6 +163,14 @@ class MapSet<K, V> {
     }
     return newPairs;
   }
+
+  *[Symbol.iterator]() {
+    for (const [key, set] of this.map) {
+      for (const value of set) {
+        yield [key, value] as const;
+      }
+    }
+  }
 }
 
 export function isFreeType(t: AnyType): t is FreeType {
@@ -187,29 +195,24 @@ export type { FreeType };
 
 export class TypesRegistry {
   private readonly allTypes = new Set<AnyType>();
+  private readonly locations = new Map<AnyType, AnyRule>();
   private readonly toCheck: [AnyType, AnyTypeExceptFree, AnyRule][] = [];
   private readonly supers = new MapSet<AnyType, AnyType>();
   private readonly subs = new MapSet<AnyType, AnyType>();
-  readonly t = {
-    top: new TopType(),
-    null: new NullType(),
-    string: new StringType(),
-    boolean: new BooleanType(),
-    int: new IntType(),
-    bottom: new BottomType(),
-  };
 
-  private save<T extends AnyType>(t: T): T {
+  private save<T extends AnyTypeExceptFree>(t: T, node: AnyRule): T {
+    this.allTypes.add(t);
+    this.supers.add(t, t);
+    this.subs.add(t, t);
+    this.locations.set(t, node);
+    return t;
+  }
+
+  private saveFree<T extends FreeType>(t: T): T {
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
     return t;
-  }
-
-  constructor() {
-    for (const t of Object.values(this.t)) {
-      this.save(t);
-    }
   }
 
   subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
@@ -242,27 +245,49 @@ export class TypesRegistry {
     return this.subs.get(t);
   }
 
-  *getNormalized(t: FreeType): Iterable<AnyType> {
+  *getUpperBound(t: FreeType): Iterable<AnyType> {
+    for (const sup of this.getSupers(t)) {
+      if (sup instanceof FreeType) continue;
+      yield sup;
+    }
+  }
+
+  *getLowerBound(t: FreeType): Iterable<AnyType> {
     for (const sub of this.getSubs(t)) {
       if (sub instanceof FreeType) continue;
       yield sub;
     }
   }
 
+  null(node: AnyRule) {
+    return this.save(new NullType(), node);
+  }
+
+  string(node: AnyRule) {
+    return this.save(new StringType(), node);
+  }
+
+  int(node: AnyRule) {
+    return this.save(new IntType(), node);
+  }
+
   free() {
-    return this.save(new FreeType());
+    return this.saveFree(new FreeType());
   }
 
-  readonlyObject(fields: readonly (readonly [string, AnyType])[]) {
-    return this.save(new ReadonlyObjectType(fields));
+  readonlyObject(
+    fields: readonly (readonly [string, AnyType])[],
+    node: AnyRule
+  ) {
+    return this.save(new ReadonlyObjectType(fields), node);
   }
 
-  readonlyArray(component: AnyType) {
-    return this.save(new ReadonlyArrayType(component));
+  readonlyArray(component: AnyType, node: AnyRule) {
+    return this.save(new ReadonlyArrayType(component), node);
   }
 
-  array(component: AnyType) {
-    return this.save(new ArrayType(component));
+  array(component: AnyType, node: AnyRule) {
+    return this.save(new ArrayType(component), node);
   }
 
   [Symbol.iterator]() {
@@ -270,13 +295,15 @@ export class TypesRegistry {
   }
 
   *getChecks() {
-    for (const check of this.toCheck) {
-      yield check;
+    for (const [a, b] of this.supers) {
+      if (a instanceof FreeType || b instanceof FreeType) continue;
+      yield [a, b, this.locations.get(a), this.locations.get(b)] as const;
     }
   }
 }
 
 // TODO when normalizing, support generic types!
+// TODO use type variable concept in arguments of the rules
 
 function handleSubtypingImplications(
   registry: TypesRegistry,
@@ -306,11 +333,15 @@ function handleSubtypingImplications(
   }
 }
 
-export function isSubtype(
+function isSubtype2(
+  registry: TypesRegistry,
+  set: MapSet<AnyType, AnyType>,
   a: AnyType,
-  b: AnyType,
-  registry: TypesRegistry
+  b: AnyType
 ): boolean {
+  if (set.test(a, b)) return true;
+  set.add(a, b);
+
   // Short-path: Every type is a subtype of itself
   if (a === b) return true;
 
@@ -322,15 +353,17 @@ export function isSubtype(
 
   // For all...
   if (a instanceof FreeType) {
-    return all(registry.getNormalized(a), typeA =>
-      isSubtype(typeA, b, registry)
+    return all(registry.getLowerBound(a), typeA =>
+      isSubtype2(registry, set, typeA, b)
     );
+    // FIXME this is wrong, maybe, it depends on how this type is initialized...
+    // I mean, if we always choose the lower bound, I guess it is fine...
   }
 
   // For any...
   if (b instanceof FreeType) {
-    return any(registry.getNormalized(b), typeB =>
-      isSubtype(a, typeB, registry)
+    return any(registry.getLowerBound(b), typeB =>
+      isSubtype2(registry, set, a, typeB)
     );
   }
 
@@ -349,7 +382,7 @@ export function isSubtype(
     if (b instanceof ReadonlyObjectType) {
       for (const [key, typeB] of b.fields) {
         const typeA = a.fields.get(key);
-        if (typeA == null || !isSubtype(typeA, typeB, registry)) {
+        if (typeA == null || !isSubtype2(registry, set, typeA, typeB)) {
           return false;
         }
       }
@@ -362,7 +395,7 @@ export function isSubtype(
   if (a instanceof ReadonlyArrayType) {
     return (
       b instanceof ReadonlyArrayType &&
-      isSubtype(a.component, b.component, registry)
+      isSubtype2(registry, set, a.component, b.component)
     );
   }
 
@@ -370,12 +403,20 @@ export function isSubtype(
   if (a instanceof ArrayType) {
     return (
       (b instanceof ArrayType &&
-        isSubtype(a.component, b.component, registry) &&
-        isSubtype(b.component, a.component, registry)) ||
+        isSubtype2(registry, set, a.component, b.component) &&
+        isSubtype2(registry, set, b.component, a.component)) ||
       (b instanceof ReadonlyArrayType &&
-        isSubtype(a.component, b.component, registry))
+        isSubtype2(registry, set, a.component, b.component))
     );
   }
 
   never(a);
+}
+
+export function isSubtype(
+  a: AnyType,
+  b: AnyType,
+  registry: TypesRegistry
+): boolean {
+  return isSubtype2(registry, new MapSet(), a, b);
 }

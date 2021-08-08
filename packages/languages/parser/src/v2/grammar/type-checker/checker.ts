@@ -18,19 +18,19 @@ export class TypeChecker {
     this.formatter = formatter;
   }
 
-  private normalize(type: AnyType) {
-    return this.normalizer.normalize(type).toTypescript();
+  private format(type: AnyType) {
+    return this.normalizer.normalize(type).format();
   }
 
   check(errors: GrammarError[]) {
-    for (const [a, b, node] of this.registry.getChecks()) {
+    for (const [a, b, nodeA, nodeB] of this.registry.getChecks()) {
       if (!isSubtype(a, b, this.registry)) {
         errors.push(
           err(
-            `${this.normalize(a)} is not a subtype of ${this.normalize(b)} in ${
-              node ? this.formatter.visit(node) : null
-            }`,
-            node?.loc
+            `${this.format(a)} is not a subtype of ${this.format(b)} in ${
+              nodeA ? this.formatter.visit(nodeA) : null
+            } and ${nodeB ? this.formatter.visit(nodeB) : null}`,
+            nodeB?.loc
           )
         );
       }

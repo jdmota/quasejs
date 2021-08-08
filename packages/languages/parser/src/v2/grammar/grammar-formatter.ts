@@ -62,9 +62,9 @@ export class GrammarFormatter implements IGrammarFormatter {
   }
 
   object(node: ObjectRule) {
-    return `obj{${node.fields
+    return `{ ${node.fields
       .map(([k, v]) => `${k}: ${this.visit(v)}`)
-      .join(", ")}}`;
+      .join(", ")} }`;
   }
 
   id(node: IdRule) {

@@ -215,7 +215,7 @@ export class Normalizer {
 
   private union(set: ReadonlySet<AnyNormalizedType>) {
     if (set.size === 0) {
-      return this.normalize(this.registry.t.bottom);
+      return new BottomType();
     }
     if (set.size === 1) {
       return first(set);

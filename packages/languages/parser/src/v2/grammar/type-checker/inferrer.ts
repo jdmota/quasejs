@@ -180,7 +180,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
   eof(pre: Store, node: EofRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.t.null, this.valueType(node), node);
+    this.registry.subtype(this.registry.null(node), this.valueType(node), node);
   }
 
   string(pre: Store, node: StringRule, post: Store) {
@@ -202,7 +202,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     );
     this.registry.subtype(
       this.registry.readonlyObject(
-        node.fields.map(([k, v]) => [k, this.valueType(v)])
+        node.fields.map(([k, v]) => [k, this.valueType(v)]),
+        node
       ),
       this.valueType(node),
       node
@@ -216,7 +217,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
   int(pre: Store, node: IntRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.t.int, this.valueType(node), node);
+    this.registry.subtype(this.registry.int(node), this.valueType(node), node);
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
@@ -227,7 +228,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     postExpr.propagateTo(post);
     this.registry.subtype(
       this.valueType(node.parent),
-      this.registry.readonlyObject([[node.field, this.valueType(node)]]),
+      this.registry.readonlyObject([[node.field, this.valueType(node)]], node),
       node
     );
   }
@@ -250,7 +251,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     if (node.multiple) {
       this.registry.subtype(
         postExpr.get(node.name),
-        this.registry.array(this.valueType(node.rule)),
+        this.registry.array(this.valueType(node.rule), node),
         node
       );
       postExpr.propagateTo(post);
@@ -274,9 +275,9 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
     for (const [name, [{ multiple }]] of rule.fields) {
       if (multiple) {
-        preRule.set(name, this.registry.array(this.registry.free()));
+        preRule.set(name, this.registry.array(this.registry.free(), rule.rule));
       } else {
-        preRule.set(name, this.registry.t.null);
+        preRule.set(name, this.registry.null(rule.rule));
       }
     }
 
