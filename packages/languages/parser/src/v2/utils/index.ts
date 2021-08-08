@@ -58,3 +58,10 @@ export function assertion(bool: boolean) {
     throw new Error("Assertion error");
   }
 }
+
+export function nonNull<T>(val: T | undefined | null): T {
+  if (val == null) {
+    throw new Error("Value is null");
+  }
+  return val;
+}

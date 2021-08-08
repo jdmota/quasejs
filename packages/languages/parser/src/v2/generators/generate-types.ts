@@ -1,10 +1,8 @@
 import { Grammar } from "../grammar/grammar";
-import {
-  ReadonlyFieldsStore,
-  ReadonlyFieldStoreValue,
-} from "../grammar/grammar-checker";
+import { AnyNormalizedType } from "../grammar/type-checker/normalizer";
+import { never, nonNull } from "../utils";
 
-function generateFieldType({
+/*function generateFieldType({
   fields,
   optional,
   multiple,
@@ -17,9 +15,9 @@ function generateFieldType({
     : optional
     ? `${baseType}|null`
     : baseType;
-}
+}*/
 
-function generateRuleType(
+/*function generateRuleType(
   grammar: Grammar,
   name: string,
   store: ReadonlyFieldsStore
@@ -37,6 +35,42 @@ function generateRuleType(
       `}`,
     ].join("\n"),
   };
+}*/
+
+function toTypescript(
+  type: AnyNormalizedType,
+  names: ReadonlyMap<AnyNormalizedType, string>
+): string {
+  switch (type.clazz) {
+    case "TopType":
+      return "unknown";
+    case "StringType":
+      return "string";
+    case "IntType":
+      return "int";
+    case "NullType":
+      return "null";
+    case "BooleanType":
+      return "boolean";
+    case "BottomType":
+      return "never";
+    case "ReadonlyObjectType":
+      return `{ ${type.fields
+        .map(([k, v]) => `${k}: ${toTypescript(v, names)}`)
+        .join(", ")} }`;
+    case "ReadonlyArrayType":
+      return `readonly ${toTypescript(type.component, names)}[]`;
+    case "ArrayType":
+      return `${toTypescript(type.component, names)}[]`;
+    case "UnionType":
+      return `(${Array.from(type.types)
+        .map(t => toTypescript(t, names))
+        .join(" | ")})`;
+    case "RecursiveRef":
+      return nonNull(names.get(type.get()));
+    default:
+      never(type);
+  }
 }
 
 export function generateTypes(grammar: Grammar) {
@@ -46,19 +80,36 @@ export function generateTypes(grammar: Grammar) {
     `export type $Location = {start:$Position;end:$Position;};`,
   ];
 
-  const rulesTypeNames: string[] = [];
+  const { ruleInterfaces, tokenInterfaces } = grammar.getInterfaces();
+  const names = new Map<AnyNormalizedType, string>();
+  const astNodes = [];
 
-  for (const [name, fields] of grammar.fields) {
-    const { typeName, typeDefinition } = generateRuleType(
-      grammar,
-      name,
-      fields
+  for (const [rule, { argTypes, returnType }] of ruleInterfaces) {
+    const normalizedArgs = Array.from(argTypes).map(
+      ([name, type]) => [name, grammar.normalizeType(type)] as const
     );
-    rulesTypeNames.push(typeName);
-    lines.push(`export type ${typeName} = ${typeDefinition};`);
+    const normalizedReturn = grammar.normalizeType(returnType);
+
+    normalizedArgs.forEach(([name, type]) =>
+      names.set(type, `${rule.name}_${name}`)
+    );
+    names.set(normalizedReturn, rule.name);
+    astNodes.push(rule.name);
   }
 
-  lines.push(`export type $Nodes = ${rulesTypeNames.join("|")};`);
+  let recRefId = 1;
+  for (const recRef of grammar.usedRecursiveRefs()) {
+    names.set(recRef.get(), `$rec${recRefId++}`);
+  }
+
+  for (const [type, name] of names) {
+    lines.push(`type ${name} = ${toTypescript(type, names)};`);
+  }
+
+  lines.push(`export type $Nodes = ${astNodes.join("|")};`);
+
+  // TODO token rules
+  // TODO grammar class interface with external calls as well
 
   lines.push(``);
   return lines.join(`\n`);

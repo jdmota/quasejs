@@ -1,6 +1,6 @@
 import { AnyType, isSubtype, TypesRegistry } from "./types";
 import { GrammarFormatter } from "../grammar-formatter";
-import { Normalizer } from "./normalize";
+import { Normalizer } from "./normalizer";
 import { err, GrammarError } from "../grammar";
 
 export class TypeChecker {

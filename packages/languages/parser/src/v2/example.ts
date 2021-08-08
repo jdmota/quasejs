@@ -80,4 +80,6 @@ if (result) {
     console.log(code);
     console.log();
   }
+  console.log(result.types);
+  console.log();
 }

@@ -5,6 +5,7 @@ import { FactoryRule } from "./factories/factory-rule";
 import { FactoryToken } from "./factories/factory-token";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
 import { ParserGenerator } from "./generators/generate-parser";
+import { generateTypes } from "./generators/generate-types";
 import { createGrammar } from "./grammar/grammar";
 import {
   Declaration,
@@ -108,5 +109,7 @@ export function tool(opts: ToolInput) {
     );
   }
 
-  return { tokenCode, ruleCode };
+  const types = generateTypes(grammar);
+
+  return { tokenCode, ruleCode, types };
 }

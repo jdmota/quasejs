@@ -24,7 +24,7 @@ import {
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
 import { TypesRegistry, AnyType, FreeType } from "./types";
-import { Normalizer } from "./normalize";
+import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
 
 class Store {
@@ -72,6 +72,15 @@ class Store {
     }
   }
 }
+
+export type RuleDeclarationInterface = Readonly<{
+  argTypes: ReadonlyMap<string, AnyType>;
+  returnType: AnyType;
+}>;
+
+export type TokenDeclarationInterface = Readonly<{
+  returnType: AnyType;
+}>;
 
 type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pre: T, node: RuleMap[key], post: T) => void;
@@ -255,7 +264,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     // TODO
   }
 
-  run(rule: RuleDeclaration) {
+  run(rule: RuleDeclaration): RuleDeclarationInterface {
+    const argTypes = new Map<string, AnyType>();
     const [preRule, postRule] = this.store(rule.rule);
 
     for (const { arg } of new Set(rule.args)) {
@@ -277,6 +287,11 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     postRule.propagateTo(preReturn);
 
     this.visit(rule.return);
+
+    return {
+      argTypes,
+      returnType: this.valueType(rule.return),
+    };
   }
 
   visit(node: AnyRule) {
@@ -312,5 +327,13 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     console.log("---- ERRORS ----");*/
 
     this.typeChecker.check(errors);
+  }
+
+  normalize(type: AnyType) {
+    return this.normalizer.normalize(type);
+  }
+
+  usedRecursiveRefs() {
+    return this.normalizer.getUsedRecursiveRefs();
   }
 }

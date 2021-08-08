@@ -1,36 +1,40 @@
-import { first, never } from "../../utils";
+import { assertion, first, never, nonNull } from "../../utils";
 import { AnyType, isFreeType, TypesRegistry } from "./types";
 
 abstract class NormalizedType {
-  abstract toTypescript(): string;
+  abstract format(): string;
 }
 
-class AliasType extends NormalizedType {
-  readonly clazz = "AliasType";
+class RecursiveRef extends NormalizedType {
+  readonly clazz = "RecursiveRef";
 
-  readonly id: string;
-  constructor(id: string) {
-    super();
-    this.id = id;
+  private type: AnyNormalizedType | null = null;
+
+  ensure(type: AnyNormalizedType) {
+    this.type = type;
   }
 
-  toTypescript() {
-    return this.id;
+  get() {
+    return nonNull(this.type);
+  }
+
+  format() {
+    return `recursive`;
   }
 }
 
 class ReadonlyObjectType extends NormalizedType {
   readonly clazz = "ReadonlyObjectType";
 
-  readonly fields: readonly (readonly [string, NormalizedType])[];
-  constructor(fields: readonly (readonly [string, NormalizedType])[]) {
+  readonly fields: readonly (readonly [string, AnyNormalizedType])[];
+  constructor(fields: readonly (readonly [string, AnyNormalizedType])[]) {
     super();
     this.fields = fields;
   }
 
-  toTypescript(): string {
+  format(): string {
     return `{ ${this.fields
-      .map(([k, v]) => `${k}: ${v.toTypescript()}`)
+      .map(([k, v]) => `${k}: ${v.format()}`)
       .join(", ")} }`;
   }
 }
@@ -38,35 +42,35 @@ class ReadonlyObjectType extends NormalizedType {
 class ReadonlyArrayType extends NormalizedType {
   readonly clazz = "ReadonlyArrayType";
 
-  readonly component: NormalizedType;
-  constructor(component: NormalizedType) {
+  readonly component: AnyNormalizedType;
+  constructor(component: AnyNormalizedType) {
     super();
     this.component = component;
   }
 
-  toTypescript(): string {
-    return `readonly ${this.component.toTypescript()}[]`;
+  format(): string {
+    return `readonly ${this.component.format()}[]`;
   }
 }
 
 class ArrayType extends NormalizedType {
   readonly clazz = "ArrayType";
 
-  readonly component: NormalizedType;
-  constructor(component: NormalizedType) {
+  readonly component: AnyNormalizedType;
+  constructor(component: AnyNormalizedType) {
     super();
     this.component = component;
   }
 
-  toTypescript(): string {
-    return `${this.component.toTypescript()}[]`;
+  format(): string {
+    return `${this.component.format()}[]`;
   }
 }
 
 class TopType extends NormalizedType {
   readonly clazz = "TopType";
 
-  toTypescript(): string {
+  format(): string {
     return "unknown";
   }
 }
@@ -74,7 +78,7 @@ class TopType extends NormalizedType {
 class NullType extends NormalizedType {
   readonly clazz = "NullType";
 
-  toTypescript(): string {
+  format(): string {
     return "null";
   }
 }
@@ -82,7 +86,7 @@ class NullType extends NormalizedType {
 class StringType extends NormalizedType {
   readonly clazz = "StringType";
 
-  toTypescript(): string {
+  format(): string {
     return "string";
   }
 }
@@ -90,7 +94,7 @@ class StringType extends NormalizedType {
 class BooleanType extends NormalizedType {
   readonly clazz = "BooleanType";
 
-  toTypescript(): string {
+  format(): string {
     return "boolean";
   }
 }
@@ -98,7 +102,7 @@ class BooleanType extends NormalizedType {
 class IntType extends NormalizedType {
   readonly clazz = "IntType";
 
-  toTypescript(): string {
+  format(): string {
     return "number";
   }
 }
@@ -106,7 +110,7 @@ class IntType extends NormalizedType {
 class BottomType extends NormalizedType {
   readonly clazz = "BottomType";
 
-  toTypescript(): string {
+  format(): string {
     return "never";
   }
 }
@@ -114,44 +118,68 @@ class BottomType extends NormalizedType {
 class UnionType extends NormalizedType {
   readonly clazz = "UnionType";
 
-  readonly types: ReadonlySet<NormalizedType>;
-  constructor(types: ReadonlySet<NormalizedType>) {
+  readonly types: ReadonlySet<AnyNormalizedType>;
+  constructor(types: ReadonlySet<AnyNormalizedType>) {
     super();
     this.types = types;
   }
 
-  toTypescript(): string {
+  format(): string {
     return `(${Array.from(this.types)
-      .map(t => t.toTypescript())
+      .map(t => t.format())
       .join(" | ")})`;
   }
 }
 
+export type AnyNormalizedType =
+  | RecursiveRef
+  | ReadonlyObjectType
+  | ReadonlyArrayType
+  | ArrayType
+  | TopType
+  | StringType
+  | IntType
+  | BooleanType
+  | NullType
+  | BottomType
+  | UnionType;
+
 export class Normalizer {
   private readonly registry: TypesRegistry;
-  private readonly cache = new Map<AnyType, NormalizedType>();
-  private readonly processing = new Set<AnyType>();
+  private readonly cache = new Map<AnyType, AnyNormalizedType>();
+  private readonly processing = new Map<AnyType, RecursiveRef>();
+  private readonly usedRecursiveRefs = new Set<RecursiveRef>();
 
   constructor(registry: TypesRegistry) {
     this.registry = registry;
   }
 
+  getUsedRecursiveRefs(): ReadonlySet<RecursiveRef> {
+    return this.usedRecursiveRefs;
+  }
+
   normalize(type: AnyType) {
-    const inCache = this.cache.get(type);
-    // If it was already normalized
-    if (inCache) return inCache;
-    // Not sure if it is possible in this setting, but avoid recursive types...
-    if (this.processing.has(type)) this.normalize(this.registry.t.top);
+    const cached = this.cache.get(type);
+    // If it was already normalized...
+    if (cached) return cached;
+    // Avoid infinite recursion...
+    let rec = this.processing.get(type);
+    if (rec) {
+      this.usedRecursiveRefs.add(rec);
+      return rec;
+    }
+    rec = new RecursiveRef();
+    this.processing.set(type, rec);
     // Normalize the type...
-    this.processing.add(type);
     const normalized = this._normalize(type);
+    // Store the results...
+    rec.ensure(normalized);
     this.processing.delete(type);
-    // Store the result in the cache...
     this.cache.set(type, normalized);
     return normalized;
   }
 
-  private _normalize(type: AnyType): NormalizedType {
+  private _normalize(type: AnyType): AnyNormalizedType {
     switch (type.clazz) {
       case "TopType":
         return new TopType();
@@ -174,7 +202,7 @@ export class Normalizer {
       case "ArrayType":
         return new ArrayType(this.normalize(type.component));
       case "FreeType":
-        const set = new Set<NormalizedType>();
+        const set = new Set<AnyNormalizedType>();
         for (const sub of this.registry.getSubs(type)) {
           if (isFreeType(sub)) continue;
           set.add(this.normalize(sub));
@@ -185,7 +213,7 @@ export class Normalizer {
     }
   }
 
-  private union(set: ReadonlySet<NormalizedType>) {
+  private union(set: ReadonlySet<AnyNormalizedType>) {
     if (set.size === 0) {
       return this.normalize(this.registry.t.bottom);
     }

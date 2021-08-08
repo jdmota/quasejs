@@ -276,6 +276,8 @@ export class TypesRegistry {
   }
 }
 
+// TODO when normalizing, support generic types!
+
 function handleSubtypingImplications(
   registry: TypesRegistry,
   a: AnyType,

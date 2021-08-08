@@ -9,7 +9,12 @@ import {
 } from "./grammar-builder";
 import { ReferencesCollector, TokensCollector } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
-import { TypesInferrer } from "./type-checker/inferrer";
+import {
+  RuleDeclarationInterface,
+  TokenDeclarationInterface,
+  TypesInferrer,
+} from "./type-checker/inferrer";
+import { AnyType } from "./type-checker/types";
 
 export type GrammarError = Readonly<{
   message: string;
@@ -107,16 +112,17 @@ export function createGrammar(
       }
     }
 
-    // Detect undefined references and wrong number of arguments
     const references = new ReferencesCollector().visitDecl(decl).get();
     for (const ref of references) {
       const id = ref.id;
       switch (ref.type) {
         case "call":
           const referenced = rules.get(id);
+          // Detect undefined references
           if (!referenced) {
             errors.push(err(`Cannot find rule ${id}`, ref.loc));
           } else {
+            // Detect wrong number of arguments
             const expected =
               referenced.type === "rule" ? referenced.args.length : 0;
             if (expected !== ref.args.length) {
@@ -165,20 +171,28 @@ export function createGrammar(
     }
   }
 
+  const inferrer = new TypesInferrer();
+  const ruleInterfaces = new Map<RuleDeclaration, RuleDeclarationInterface>();
+  const tokenInterfaces = new Map<
+    TokenDeclaration,
+    TokenDeclarationInterface
+  >();
   if (errors.length === 0) {
-    const infer = new TypesInferrer();
     for (const rule of rules.values()) {
       if (rule.type === "rule") {
-        infer.run(rule);
+        ruleInterfaces.set(rule, inferrer.run(rule));
       }
       // TODO for token rules
     }
-    infer.check(errors);
+    inferrer.check(errors);
   }
 
   if (errors.length === 0) {
     return {
-      grammar: new Grammar(name, rules, tokens, startRules[0]),
+      grammar: new Grammar(name, rules, tokens, startRules[0], inferrer, {
+        ruleInterfaces,
+        tokenInterfaces,
+      }),
       errors: null,
     };
   }
@@ -188,22 +202,33 @@ export function createGrammar(
   };
 }
 
+type Interfaces = Readonly<{
+  ruleInterfaces: ReadonlyMap<RuleDeclaration, RuleDeclarationInterface>;
+  tokenInterfaces: ReadonlyMap<TokenDeclaration, TokenDeclarationInterface>;
+}>;
+
 export class Grammar {
   private readonly name: string;
   private readonly rules: ReadonlyMap<string, Declaration>;
   private readonly tokens: TokensStore;
   private readonly startRule: RuleDeclaration;
+  private readonly inferrer: TypesInferrer;
+  private readonly interfaces: Interfaces;
 
   constructor(
     name: string,
     rules: ReadonlyMap<string, Declaration>,
     tokens: TokensStore,
-    startRule: RuleDeclaration
+    startRule: RuleDeclaration,
+    inferrer: TypesInferrer,
+    interfaces: Interfaces
   ) {
     this.name = name;
     this.rules = rules;
     this.tokens = tokens;
     this.startRule = startRule;
+    this.inferrer = inferrer;
+    this.interfaces = interfaces;
   }
 
   getStart() {
@@ -236,5 +261,21 @@ export class Grammar {
         yield decl;
       }
     }
+  }
+
+  getDecls() {
+    return this.rules.values();
+  }
+
+  getInterfaces() {
+    return this.interfaces;
+  }
+
+  normalizeType(type: AnyType) {
+    return this.inferrer.normalize(type);
+  }
+
+  usedRecursiveRefs() {
+    return this.inferrer.usedRecursiveRefs();
   }
 }
