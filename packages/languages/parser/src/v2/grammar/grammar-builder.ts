@@ -1,6 +1,6 @@
 import type { Location } from "../runtime/input";
 import { never } from "../utils";
-import { LocalsCollector } from "./grammar-visitors";
+import { FieldsCollector } from "./grammar-visitors";
 
 export interface RuleMap {
   seq: SeqRule;
@@ -45,21 +45,33 @@ export type RuleDeclaration = {
   readonly type: "rule";
   readonly name: string;
   readonly rule: AnyRule;
-  readonly args: readonly string[];
+  readonly args: readonly RuleDeclarationArg[];
   readonly return: ExprRule;
   readonly modifiers: RuleModifiers;
-  readonly locals: ReadonlySet<string>;
+  readonly fields: ReadonlyMap<string, FieldRule[]>;
   loc: Location | null;
 };
+
+export type RuleDeclarationArg = {
+  readonly type: "ruleArg";
+  readonly arg: string;
+};
+
+function ruleArg(arg: string): RuleDeclarationArg {
+  return {
+    type: "ruleArg",
+    arg,
+  };
+}
 
 function rule(
   name: string,
   rule: AnyRule,
-  args: readonly string[],
+  args: readonly RuleDeclarationArg[],
   modifiers: RuleModifiers,
   returnCode: ExprRule | null
 ): RuleDeclaration {
-  const locals = new LocalsCollector().run(rule);
+  const fields = new FieldsCollector().run(rule);
   return {
     type: "rule",
     name,
@@ -68,11 +80,13 @@ function rule(
     modifiers,
     return:
       returnCode ??
-      builder.object(Array.from(locals).map(l => [l, builder.id(l)])),
-    locals,
+      builder.object(Array.from(fields.keys()).map(f => [f, builder.id(f)])),
+    fields,
     loc: null,
   };
 }
+
+rule.arg = ruleArg;
 
 export type TokenModifiers = {
   readonly type: "normal" | "skip" | "fragment";
@@ -84,7 +98,7 @@ export type TokenDeclaration = {
   readonly rule: AnyRule;
   readonly return: ExprRule;
   readonly modifiers: TokenModifiers;
-  readonly locals: ReadonlySet<string>;
+  readonly fields: ReadonlyMap<string, FieldRule[]>;
   loc: Location | null;
 };
 
@@ -94,7 +108,7 @@ function token(
   modifiers: TokenModifiers,
   returnCode: ExprRule | null
 ): TokenDeclaration {
-  const locals = new LocalsCollector().run(rule);
+  const fields = new FieldsCollector().run(rule);
   return {
     type: "token",
     name,
@@ -102,8 +116,8 @@ function token(
     modifiers,
     return:
       returnCode ??
-      builder.object(Array.from(locals).map(l => [l, builder.id(l)])),
-    locals,
+      builder.object(Array.from(fields.keys()).map(f => [f, builder.id(f)])),
+    fields,
     loc: null,
   };
 }

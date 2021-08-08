@@ -270,10 +270,13 @@ export class ParserGenerator {
 
   process(block: CodeBlock) {
     const rendered = this.r("  ", block);
-    const args = this.rule.type === "rule" ? this.rule.args.join(",") : "";
+    const args =
+      this.rule.type === "rule" ? this.rule.args.map(a => a.arg).join(",") : "";
     const vars = [
       ...Array.from(this.internalVars),
-      ...Array.from(this.rule.locals).map(f => `${f}=null`),
+      ...Array.from(this.rule.fields).map(([name, [{ multiple }]]) =>
+        multiple ? `${name}=[]` : `${name}=null`
+      ),
     ];
     const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";
     return `${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n}`;

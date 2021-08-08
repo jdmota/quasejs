@@ -145,16 +145,18 @@ export abstract class RuleVisitor<
   }
 }
 
-export class LocalsCollector extends RuleVisitor<
-  Set<string>,
-  ReadonlySet<string>
+export class FieldsCollector extends RuleVisitor<
+  Map<string, FieldRule[]>,
+  ReadonlyMap<string, FieldRule[]>
 > {
   constructor() {
-    super(new Set());
+    super(new Map());
   }
 
   field(node: FieldRule) {
-    this.data.add(node.name);
+    const array = this.data.get(node.name) ?? [];
+    array.push(node);
+    this.data.set(node.name, array);
     super.field(node);
   }
 

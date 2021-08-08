@@ -12,9 +12,9 @@ import {
   TokenDeclaration,
   TokenRules,
 } from "./grammar/grammar-builder";
-import { TypesInferrer } from "./grammar/type-checker/inferrer";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
+import { locSuffix } from "./utils";
 
 type ToolInput = {
   readonly name: string;
@@ -26,8 +26,8 @@ export function tool(opts: ToolInput) {
   const result = createGrammar(opts.name, opts.ruleDecls, opts.tokenDecls);
 
   if (result.errors) {
-    for (const error of result.errors) {
-      console.error(`Error in grammar ${opts.name}: ${error}`);
+    for (const { message, loc } of result.errors) {
+      console.error(message, locSuffix(loc));
     }
     return null;
   }
@@ -107,12 +107,6 @@ export function tool(opts: ToolInput) {
       new ParserGenerator(grammar, analyzer, rule).process(block)
     );
   }
-
-  const infer = new TypesInferrer(grammar);
-  for (const rule of grammar.getRules()) {
-    infer.run(rule);
-  }
-  infer.debug();
 
   return { tokenCode, ruleCode };
 }

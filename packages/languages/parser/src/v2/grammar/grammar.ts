@@ -1,23 +1,38 @@
+import { Location } from "../runtime/input";
 import { locSuffix, locSuffix2, never } from "../utils";
 import {
   Declaration,
+  FieldRule,
   RuleDeclaration,
   TokenDeclaration,
   TokenRules,
 } from "./grammar-builder";
 import { ReferencesCollector, TokensCollector } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
+import { TypesInferrer } from "./type-checker/inferrer";
 
-type GrammarOrError =
-  | { grammar: Grammar; errors: null }
-  | { grammar: null; errors: string[] };
+export type GrammarError = Readonly<{
+  message: string;
+  loc: Location | null;
+}>;
+
+type GrammarOrErrors =
+  | Readonly<{ grammar: Grammar; errors: null }>
+  | Readonly<{ grammar: null; errors: readonly GrammarError[] }>;
+
+export function err(message: string, loc: Location | null): GrammarError {
+  return {
+    message,
+    loc,
+  };
+}
 
 export function createGrammar(
   name: string,
   ruleDecls: readonly RuleDeclaration[],
   tokenDecls: readonly TokenDeclaration[]
-): GrammarOrError {
-  const errors = [];
+): GrammarOrErrors {
+  const errors: GrammarError[] = [];
   const tokens = new TokensCollector()
     .visitRuleDecls(ruleDecls)
     .visitTokenDecls(tokenDecls)
@@ -31,7 +46,7 @@ export function createGrammar(
     const curr = rules.get(rule.name);
     if (curr) {
       errors.push(
-        `Duplicate rule ${rule.name}${locSuffix2(curr.loc, rule.loc)}`
+        err(`Duplicate rule ${rule.name}${locSuffix(curr.loc)}`, rule.loc)
       );
     } else {
       rules.set(rule.name, rule);
@@ -43,23 +58,51 @@ export function createGrammar(
     (r): r is RuleDeclaration => r.type === "rule" && !!r.modifiers.start
   );
   if (startRules.length !== 1) {
-    errors.push(`Expected 1 start rule, found ${startRules.length}`);
+    errors.push(err(`Expected 1 start rule, found ${startRules.length}`, null));
   }
 
   // For each declaration...
   for (const decl of rules.values()) {
-    // Detect duplicate arguments in rules
     if (decl.type === "rule") {
+      // Detect duplicate arguments in rules
       const seenArgs = new Set<string>();
-      for (const arg of decl.args) {
+      for (const { arg } of decl.args) {
         if (seenArgs.has(arg)) {
           errors.push(
-            `Duplicate argument ${arg} in declaration ${decl.name}${locSuffix(
+            err(
+              `Duplicate argument ${arg} in declaration ${decl.name}`,
               decl.loc
-            )}`
+            )
           );
         } else {
           seenArgs.add(arg);
+        }
+      }
+
+      // Detect conflicts between arguments and fields
+      for (const [name, fields] of decl.fields) {
+        if (seenArgs.has(name)) {
+          errors.push(
+            err(`Conflict between argument and field`, fields[0].loc)
+          );
+        }
+      }
+    }
+
+    // Detect ambiguity between single value fields or array fields
+    for (const [name, fields] of decl.fields) {
+      let multiple: boolean | null = null;
+      for (const field of fields) {
+        if (multiple == null) {
+          multiple = field.multiple;
+        } else if (field.multiple != multiple) {
+          errors.push(
+            err(
+              `Field ${name} must be an array or a single value, not both`,
+              decl.loc
+            )
+          );
+          break;
         }
       }
     }
@@ -72,15 +115,16 @@ export function createGrammar(
         case "call":
           const referenced = rules.get(id);
           if (!referenced) {
-            errors.push(`Cannot find rule ${id}${locSuffix(ref.loc)}`);
+            errors.push(err(`Cannot find rule ${id}`, ref.loc));
           } else {
             const expected =
               referenced.type === "rule" ? referenced.args.length : 0;
             if (expected !== ref.args.length) {
               errors.push(
-                `${id} expected ${expected} arguments but got ${
-                  ref.args.length
-                }${locSuffix(ref.loc)}`
+                err(
+                  `${id} expected ${expected} arguments but got ${ref.args.length}`,
+                  ref.loc
+                )
               );
             }
 
@@ -92,17 +136,16 @@ export function createGrammar(
                 referenced.modifiers.type !== "normal"
               ) {
                 errors.push(
-                  `Cannot reference token ${id} with type "${
-                    referenced.modifiers.type
-                  }" from rule declaration${locSuffix(ref.loc)}`
+                  err(
+                    `Cannot reference token ${id} with type "${referenced.modifiers.type}" from rule declaration`,
+                    ref.loc
+                  )
                 );
               }
             } else {
               if (referenced.type === "rule") {
                 errors.push(
-                  `Cannot reference rule ${id} from token rule${locSuffix(
-                    ref.loc
-                  )}`
+                  err(`Cannot reference rule ${id} from token rule`, ref.loc)
                 );
               }
             }
@@ -110,16 +153,27 @@ export function createGrammar(
           break;
         case "id":
           if (
-            !decl.locals.has(id) &&
-            (decl.type === "token" || !decl.args.includes(id))
+            !decl.fields.has(id) &&
+            (decl.type === "token" || !decl.args.find(a => a.arg === id))
           ) {
-            errors.push(`Cannot find variable ${id}${locSuffix(ref.loc)}`);
+            errors.push(err(`Cannot find variable ${id}`, ref.loc));
           }
           break;
         default:
           never(ref);
       }
     }
+  }
+
+  if (errors.length === 0) {
+    const infer = new TypesInferrer();
+    for (const rule of rules.values()) {
+      if (rule.type === "rule") {
+        infer.run(rule);
+      }
+      // TODO for token rules
+    }
+    infer.check(errors);
   }
 
   if (errors.length === 0) {

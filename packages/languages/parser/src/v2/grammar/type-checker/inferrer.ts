@@ -1,4 +1,4 @@
-import { Grammar } from "../grammar";
+import { GrammarError } from "../grammar";
 import {
   RuleMap,
   Assignables,
@@ -23,13 +23,7 @@ import {
   IntRule,
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
-import {
-  TypesRegistry,
-  AnyType,
-  isFreeType,
-  isSubtype,
-  FreeType,
-} from "./types";
+import { TypesRegistry, AnyType, FreeType } from "./types";
 import { Normalizer } from "./normalize";
 import { TypeChecker } from "./checker";
 
@@ -84,7 +78,6 @@ type RuleAnalyzer<T> = {
 };
 
 export class TypesInferrer implements RuleAnalyzer<Store> {
-  private readonly grammar: Grammar;
   private readonly registry = new TypesRegistry();
   private readonly normalizer = new Normalizer(this.registry);
   private readonly formatter = new GrammarFormatter();
@@ -96,10 +89,6 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
   private readonly stores = new Map<AnyRule, readonly [Store, Store]>();
   private readonly valueTypes = new Map<Assignables, AnyType>();
-
-  constructor(grammar: Grammar) {
-    this.grammar = grammar;
-  }
 
   private store(rule: AnyRule) {
     let pair = this.stores.get(rule);
@@ -269,11 +258,16 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   run(rule: RuleDeclaration) {
     const [preRule, postRule] = this.store(rule.rule);
 
-    for (const arg of rule.args) {
+    for (const { arg } of new Set(rule.args)) {
       preRule.set(arg, this.registry.free());
     }
-    for (const local of rule.locals) {
-      preRule.set(local, this.registry.t.null);
+
+    for (const [name, [{ multiple }]] of rule.fields) {
+      if (multiple) {
+        preRule.set(name, this.registry.array(this.registry.free()));
+      } else {
+        preRule.set(name, this.registry.t.null);
+      }
     }
 
     this.visit(rule.rule);
@@ -290,7 +284,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this[node.type](pre, node as any, post);
   }
 
-  debug() {
+  check(errors: GrammarError[]) {
     /*console.log("---- STORES ----");
     for (const [rule, [pre, post]] of this.stores) {
       console.log(new GrammarFormatter().visit(rule));
@@ -307,7 +301,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       );
     }*/
 
-    console.log("---- NORMALIZED ----");
+    /*console.log("---- NORMALIZED ----");
 
     for (const type of this.registry) {
       //const supersArr = Array.from(this.registry.getSupers(type));
@@ -315,10 +309,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       console.log(this.normalizer.normalize(type).toTypescript());
     }
 
-    console.log("---- ERRORS ----");
+    console.log("---- ERRORS ----");*/
 
-    this.typeChecker.check();
-
-    console.log("--------");
+    this.typeChecker.check(errors);
   }
 }

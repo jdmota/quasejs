@@ -1,7 +1,7 @@
 import { AnyType, isSubtype, TypesRegistry } from "./types";
-import { printLoc } from "../../utils";
 import { GrammarFormatter } from "../grammar-formatter";
 import { Normalizer } from "./normalize";
+import { err, GrammarError } from "../grammar";
 
 export class TypeChecker {
   private readonly registry: TypesRegistry;
@@ -22,15 +22,16 @@ export class TypeChecker {
     return this.normalizer.normalize(type).toTypescript();
   }
 
-  check() {
+  check(errors: GrammarError[]) {
     for (const [a, b, node] of this.registry.getChecks()) {
       if (!isSubtype(a, b, this.registry)) {
-        console.log(
-          this.normalize(a),
-          "is not a subtype of",
-          this.normalize(b),
-          "in",
-          node ? this.formatter.visit(node) : null
+        errors.push(
+          err(
+            `${this.normalize(a)} is not a subtype of ${this.normalize(b)} in ${
+              node ? this.formatter.visit(node) : null
+            }`,
+            node?.loc
+          )
         );
       }
     }
