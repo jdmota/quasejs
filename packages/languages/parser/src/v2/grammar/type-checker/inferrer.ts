@@ -1,4 +1,4 @@
-import { Grammar } from "./grammar";
+import { Grammar } from "../grammar";
 import {
   RuleMap,
   Assignables,
@@ -21,17 +21,17 @@ import {
   Call2Rule,
   ObjectRule,
   IntRule,
-} from "./grammar-builder";
-import { GrammarFormatter } from "./grammar-formatter";
+} from "../grammar-builder";
+import { GrammarFormatter } from "../grammar-formatter";
 import {
   TypesRegistry,
   AnyType,
   isFreeType,
   isSubtype,
   FreeType,
-} from "./checker/types";
-import { Normalizer } from "./checker/normalize";
-import { TypeChecker } from "./checker/checks";
+} from "./types";
+import { Normalizer } from "./normalize";
+import { TypeChecker } from "./checker";
 
 class Store {
   private readonly map: Map<string, FreeType> = new Map();
@@ -83,7 +83,7 @@ type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pre: T, node: RuleMap[key], post: T) => void;
 };
 
-export class GrammarTypesInfer implements RuleAnalyzer<Store> {
+export class TypesInferrer implements RuleAnalyzer<Store> {
   private readonly grammar: Grammar;
   private readonly registry = new TypesRegistry();
   private readonly normalizer = new Normalizer(this.registry);

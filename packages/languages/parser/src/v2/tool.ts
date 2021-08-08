@@ -12,7 +12,7 @@ import {
   TokenDeclaration,
   TokenRules,
 } from "./grammar/grammar-builder";
-import { GrammarTypesInfer } from "./grammar/grammar-infer2";
+import { TypesInferrer } from "./grammar/type-checker/inferrer";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 
@@ -108,7 +108,7 @@ export function tool(opts: ToolInput) {
     );
   }
 
-  const infer = new GrammarTypesInfer(grammar);
+  const infer = new TypesInferrer(grammar);
   for (const rule of grammar.getRules()) {
     infer.run(rule);
   }
