@@ -23,17 +23,25 @@ import {
   IntRule,
 } from "./grammar-builder";
 import { GrammarFormatter } from "./grammar-formatter";
-import { TypesRegistry, AnyType, isFreeType, isSubtype } from "./checker/types";
+import {
+  TypesRegistry,
+  AnyType,
+  isFreeType,
+  isSubtype,
+  FreeType,
+} from "./checker/types";
+import { Normalizer } from "./checker/normalize";
+import { TypeChecker } from "./checker/checks";
 
 class Store {
-  private readonly map: Map<string, AnyType> = new Map();
+  private readonly map: Map<string, FreeType> = new Map();
   private readonly registry: TypesRegistry;
   constructor(registry: TypesRegistry) {
     this.registry = registry;
   }
 
   set(name: string, type: AnyType) {
-    this.registry.subtype(type, this.get(name));
+    this.registry.subtype(type, this.get(name), null);
   }
 
   get(name: string) {
@@ -78,6 +86,14 @@ type RuleAnalyzer<T> = {
 export class GrammarTypesInfer implements RuleAnalyzer<Store> {
   private readonly grammar: Grammar;
   private readonly registry = new TypesRegistry();
+  private readonly normalizer = new Normalizer(this.registry);
+  private readonly formatter = new GrammarFormatter();
+  private readonly typeChecker = new TypeChecker(
+    this.registry,
+    this.normalizer,
+    this.formatter
+  );
+
   private readonly stores = new Map<AnyRule, readonly [Store, Store]>();
   private readonly valueTypes = new Map<Assignables, AnyType>();
 
@@ -166,7 +182,7 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
 
   eof(pre: Store, node: EofRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.t.null, this.valueType(node));
+    this.registry.subtype(this.registry.t.null, this.valueType(node), node);
   }
 
   string(pre: Store, node: StringRule, post: Store) {
@@ -190,18 +206,19 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
       this.registry.readonlyObject(
         node.fields.map(([k, v]) => [k, this.valueType(v)])
       ),
-      this.valueType(node)
+      this.valueType(node),
+      node
     );
   }
 
   id(pre: Store, node: IdRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(pre.get(node.id), this.valueType(node));
+    this.registry.subtype(pre.get(node.id), this.valueType(node), node);
   }
 
   int(pre: Store, node: IntRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.t.int, this.valueType(node));
+    this.registry.subtype(this.registry.t.int, this.valueType(node), node);
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
@@ -212,7 +229,8 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
     postExpr.propagateTo(post);
     this.registry.subtype(
       this.valueType(node.parent),
-      this.registry.readonlyObject([[node.field, this.valueType(node)]])
+      this.registry.readonlyObject([[node.field, this.valueType(node)]]),
+      node
     );
   }
 
@@ -234,7 +252,8 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
     if (node.multiple) {
       this.registry.subtype(
         postExpr.get(node.name),
-        this.registry.array(this.valueType(node.rule))
+        this.registry.array(this.valueType(node.rule)),
+        node
       );
       postExpr.propagateTo(post);
     } else {
@@ -272,13 +291,6 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
   }
 
   debug() {
-    // const { subtypes, supertypes } = this.simplify();
-
-    console.log("---- SINGLETON TYPES ----");
-    for (const [name, type] of Object.entries(this.registry.t)) {
-      console.log(name, type.toString());
-    }
-
     /*console.log("---- STORES ----");
     for (const [rule, [pre, post]] of this.stores) {
       console.log(new GrammarFormatter().visit(rule));
@@ -296,57 +308,16 @@ export class GrammarTypesInfer implements RuleAnalyzer<Store> {
     }*/
 
     console.log("---- NORMALIZED ----");
-    /*for (const [type, supers] of supertypes) {
-      const subs = subtypes.get(type)!!;
-      if (supers.size > 0 || subs.size > 0) {
-        const subsArr = Array.from(subs);
-        const supersArr = Array.from(supers);
-        if (supersArr.length === 0) supersArr.push(this.registry.t.top);
-        console.log(type.simpleFormat());
-        console.log("subs", subsArr.map(t => t.simpleFormat()).join(" | "));
-        console.log("supers", supersArr.map(t => t.simpleFormat()).join(" & "));
-        console.log(
-          subsArr.every(sub =>
-            supersArr.some(superr =>
-              isSubtype(sub, superr, subtypes, this.registry)
-            )
-          )
-        );
-        console.log(
-          subsArr.every(sub =>
-            supersArr.every(superr =>
-              isSubtype(sub, superr, subtypes, this.registry)
-            )
-          )
-        );
-      }
-    }*/
+
     for (const type of this.registry) {
-      const subsArr = Array.from(this.registry.getSubs(type));
-      const supersArr = Array.from(this.registry.getSupers(type));
-      const normalizedArr = Array.from(this.registry.getNormalized(type));
-      console.log(type.simpleFormat());
-      console.log(normalizedArr.map(t => t.simpleFormat()).join(" | "));
-      /*console.log(
-        "subs",
-        subsArr
-          .filter(t => !isFreeType(t))
-          .map(t => t.simpleFormat())
-          .join(" | ")
-      );*/
-      console.log(
-        "supers",
-        supersArr
-          .filter(t => !isFreeType(t))
-          .map(t => t.simpleFormat())
-          .join(" & ")
-      );
-      console.log(
-        normalizedArr.every(sub =>
-          supersArr.every(superr => isSubtype(sub, superr, this.registry))
-        )
-      );
+      //const supersArr = Array.from(this.registry.getSupers(type));
+      //console.log(type.simpleFormat());
+      console.log(this.normalizer.normalize(type).toTypescript());
     }
+
+    console.log("---- ERRORS ----");
+
+    this.typeChecker.check();
 
     console.log("--------");
   }

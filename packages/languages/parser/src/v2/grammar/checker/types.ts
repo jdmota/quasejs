@@ -1,4 +1,8 @@
+import { Location } from "../../runtime/input";
 import { all, any, first, never } from "../../utils";
+import { AnyRule } from "../grammar-builder";
+
+// https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
 
 abstract class Type {
   formatMeta(seen: Set<Type>): string {
@@ -27,7 +31,6 @@ abstract class Type {
 }
 
 class ReadonlyObjectType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ReadonlyObjectType";
 
   readonly fields: ReadonlyMap<string, AnyType>;
@@ -43,7 +46,6 @@ class ReadonlyObjectType extends Type {
 }
 
 class ReadonlyArrayType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ReadonlyArrayType";
 
   readonly component: AnyType;
@@ -57,7 +59,6 @@ class ReadonlyArrayType extends Type {
 }
 
 class ArrayType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "ArrayType";
 
   readonly component: AnyType;
@@ -71,37 +72,30 @@ class ArrayType extends Type {
 }
 
 class TopType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "TopType";
 }
 
 class NullType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "NullType";
 }
 
 class StringType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "StringType";
 }
 
 class BooleanType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "BooleanType";
 }
 
 class IntType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "IntType";
 }
 
 class BottomType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "BottomType";
 }
 
 class IntersectionType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "IntersectionType";
 
   readonly types: ReadonlySet<Type>;
@@ -117,7 +111,6 @@ class IntersectionType extends Type {
 }
 
 class UnionType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "UnionType";
 
   readonly types: ReadonlySet<Type>;
@@ -133,25 +126,7 @@ class UnionType extends Type {
 }
 
 class FreeType extends Type {
-  // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
   readonly clazz = "FreeType";
-}
-
-class DefaultMap<K, V> extends Map<K, V> {
-  private readonly fn: (key: K) => V;
-  constructor(fn: (key: K) => V) {
-    super();
-    this.fn = fn;
-  }
-
-  get(key: K): V {
-    let val = super.get(key);
-    if (val == null) {
-      val = this.fn(key);
-      this.set(key, val);
-    }
-    return val;
-  }
 }
 
 class MapSet<K, V> {
@@ -194,8 +169,25 @@ export function isFreeType(t: AnyType): t is FreeType {
   return t instanceof FreeType;
 }
 
+export type AnyType =
+  | ReadonlyObjectType
+  | ReadonlyArrayType
+  | ArrayType
+  | TopType
+  | NullType
+  | StringType
+  | BooleanType
+  | IntType
+  | BottomType
+  | FreeType;
+
+type AnyTypeExceptFree = Exclude<AnyType, FreeType>;
+
+export type { FreeType };
+
 export class TypesRegistry {
   private readonly allTypes = new Set<AnyType>();
+  private readonly toCheck: [AnyType, AnyTypeExceptFree, AnyRule][] = [];
   private readonly supers = new MapSet<AnyType, AnyType>();
   private readonly subs = new MapSet<AnyType, AnyType>();
   readonly t = {
@@ -220,7 +212,11 @@ export class TypesRegistry {
     }
   }
 
-  subtype(a: AnyType, b: AnyType) {
+  subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
+    if (node != null && !isFreeType(b)) {
+      this.toCheck.push([a, b, node]);
+    }
+
     // Short-path
     if (this.supers.test(a, b)) return;
 
@@ -234,7 +230,7 @@ export class TypesRegistry {
 
     // Handle subtyping relationships of the components
     for (const [a, b] of newPairs) {
-      handleSubtypingImplications(a, b, this);
+      handleSubtypingImplications(this, a, b, node);
     }
   }
 
@@ -246,47 +242,10 @@ export class TypesRegistry {
     return this.subs.get(t);
   }
 
-  *getNormalized(t: AnyType): Iterable<AnyType> {
-    switch (t.clazz) {
-      case "TopType":
-      case "StringType":
-      case "IntType":
-      case "NullType":
-      case "BooleanType":
-      case "BottomType":
-        yield t;
-        break;
-      case "ReadonlyObjectType":
-        yield new ReadonlyObjectType(
-          Array.from(t.fields).map(([k, v]) => [
-            k,
-            first(this.getNormalized(v), this.t.bottom),
-          ])
-        ); // TODO
-        break;
-      case "ReadonlyArrayType":
-        yield new ReadonlyArrayType(
-          first(this.getNormalized(t.component), this.t.bottom)
-        ); // TODO
-        break;
-      case "ArrayType":
-        yield new ArrayType(
-          first(this.getNormalized(t.component), this.t.bottom)
-        ); // TODO
-        break;
-      case "FreeType":
-        let hasElements = false;
-        for (const sub of this.getSubs(t)) {
-          if (sub instanceof FreeType) continue;
-          for (const normalized of this.getNormalized(sub)) {
-            yield normalized;
-            hasElements = true;
-          }
-        }
-        if (!hasElements) yield this.t.bottom;
-        break;
-      default:
-        never(t);
+  *getNormalized(t: FreeType): Iterable<AnyType> {
+    for (const sub of this.getSubs(t)) {
+      if (sub instanceof FreeType) continue;
+      yield sub;
     }
   }
 
@@ -309,45 +268,38 @@ export class TypesRegistry {
   [Symbol.iterator]() {
     return this.allTypes.values();
   }
+
+  *getChecks() {
+    for (const check of this.toCheck) {
+      yield check;
+    }
+  }
 }
 
-export type AnyType =
-  | ReadonlyObjectType
-  | ReadonlyArrayType
-  | ArrayType
-  | TopType
-  | NullType
-  | StringType
-  | BooleanType
-  | IntType
-  | BottomType
-  | FreeType;
-
-export type { FreeType };
-
 function handleSubtypingImplications(
+  registry: TypesRegistry,
   a: AnyType,
   b: AnyType,
-  registry: TypesRegistry
+  node: AnyRule | null
 ) {
   if (a instanceof ReadonlyObjectType) {
     if (b instanceof ReadonlyObjectType) {
       for (const [key, typeB] of b.fields) {
         const typeA = a.fields.get(key);
         if (typeA != null) {
-          registry.subtype(typeA, typeB);
+          registry.subtype(typeA, typeB, node);
         }
       }
     }
   } else if (a instanceof ReadonlyArrayType) {
     if (b instanceof ReadonlyArrayType) {
-      registry.subtype(a.component, b.component);
+      registry.subtype(a.component, b.component, node);
     }
   } else if (a instanceof ArrayType) {
     if (b instanceof ArrayType) {
-      registry.subtype(a.component, b.component);
+      registry.subtype(a.component, b.component, node);
     } else if (b instanceof ReadonlyArrayType) {
-      registry.subtype(a.component, b.component);
+      registry.subtype(a.component, b.component, node);
     }
   }
 }
@@ -425,8 +377,3 @@ export function isSubtype(
 
   never(a);
 }
-
-export function areSubtypesOfAll(
-  subs: ReadonlySet<AnyType>,
-  supers: ReadonlySet<AnyType>
-) {}
