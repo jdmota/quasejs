@@ -301,32 +301,6 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   check(errors: GrammarError[]) {
-    /*console.log("---- STORES ----");
-    for (const [rule, [pre, post]] of this.stores) {
-      console.log(new GrammarFormatter().visit(rule));
-      console.log("PRE:", pre.toString(normalized));
-      console.log("POST:", post.toString(normalized));
-    }*/
-
-    /*console.log("---- VALUES ----");
-    for (const [value, type] of this.valueTypes) {
-      console.log(
-        new GrammarFormatter().visit(value),
-        // type.toString(),
-        normalized.get(type)?.toString()
-      );
-    }*/
-
-    /*console.log("---- NORMALIZED ----");
-
-    for (const type of this.registry) {
-      //const supersArr = Array.from(this.registry.getSupers(type));
-      //console.log(type.simpleFormat());
-      console.log(this.normalizer.normalize(type).toTypescript());
-    }
-
-    console.log("---- ERRORS ----");*/
-
     this.typeChecker.check(errors);
   }
 }

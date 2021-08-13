@@ -304,8 +304,6 @@ export class TypesRegistry {
 
 // TODO better errors (the location of errors)
 // TODO always choose the lower bound except for atoms! but in that case, we should not include the transitive lower bound of atoms!
-// TODO how to support generic types?
-// TODO use type variable concept in arguments of the rules?
 
 function handleSubtypingImplications(
   registry: TypesRegistry,
