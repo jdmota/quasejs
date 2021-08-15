@@ -125,8 +125,18 @@ class UnionType extends Type {
   }
 }
 
+export enum FreeTypePreference {
+  NONE = 0,
+  GENERAL = 1,
+  SPECIFIC = 2,
+}
+
 class FreeType extends Type {
   readonly clazz = "FreeType";
+
+  constructor(public readonly preference: FreeTypePreference) {
+    super();
+  }
 }
 
 class MapSet<K, V> {
@@ -150,7 +160,15 @@ class MapSet<K, V> {
   }
 
   addManyToMany(keys: Iterable<K>, values: Iterable<V>) {
-    const newPairs = [];
+    for (const key of keys) {
+      const set = this.get(key);
+      for (const val of values) {
+        set.add(val);
+      }
+    }
+  }
+
+  addManyToMany2(keys: Iterable<K>, values: Iterable<V>, newPairs: [K, V][]) {
     for (const key of keys) {
       const set = this.get(key);
       for (const val of values) {
@@ -161,7 +179,6 @@ class MapSet<K, V> {
         }
       }
     }
-    return newPairs;
   }
 
   *[Symbol.iterator]() {
@@ -196,15 +213,19 @@ export type { FreeType };
 export class TypesRegistry {
   private readonly allTypes = new Set<AnyType>();
   private readonly locations = new Map<AnyType, AnyRule>();
-  private readonly toCheck: [AnyType, AnyTypeExceptFree, AnyRule][] = [];
   private readonly supers = new MapSet<AnyType, AnyType>();
   private readonly subs = new MapSet<AnyType, AnyType>();
+  private readonly boundedSupers = new MapSet<AnyType, AnyType>();
+  private readonly boundedSubs = new MapSet<AnyType, AnyType>();
 
   private save<T extends AnyTypeExceptFree>(t: T, node: AnyRule): T {
+    this.locations.set(t, node);
+    //
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
-    this.locations.set(t, node);
+    this.boundedSupers.add(t, t);
+    this.boundedSubs.add(t, t);
     return t;
   }
 
@@ -212,23 +233,19 @@ export class TypesRegistry {
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
+    this.boundedSupers.add(t, t);
+    this.boundedSubs.add(t, t);
     return t;
   }
 
   subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
-    if (node != null && !isFreeType(b)) {
-      this.toCheck.push([a, b, node]);
-    }
-
     // Short-path
     if (this.supers.test(a, b)) return;
 
     // We register here the subtypying relationships
     // including those that can be obtained by transitivity
-    const newPairs = this.supers.addManyToMany(
-      this.subs.get(a),
-      this.supers.get(b)
-    );
+    const newPairs: [AnyType, AnyType][] = [];
+    this.supers.addManyToMany2(this.subs.get(a), this.supers.get(b), newPairs);
     this.subs.addManyToMany(this.supers.get(b), this.subs.get(a));
 
     // Handle subtyping relationships of the components
@@ -271,8 +288,12 @@ export class TypesRegistry {
     return this.save(new IntType(), node);
   }
 
-  free() {
-    return this.saveFree(new FreeType());
+  boolean(node: AnyRule) {
+    return this.save(new BooleanType(), node);
+  }
+
+  free(preference: FreeTypePreference) {
+    return this.saveFree(new FreeType(preference));
   }
 
   readonlyObject(

@@ -1,4 +1,4 @@
-import { GrammarError } from "../grammar";
+import { Grammar, GrammarError } from "../grammar";
 import {
   RuleMap,
   Assignables,
@@ -21,64 +21,28 @@ import {
   Call2Rule,
   ObjectRule,
   IntRule,
+  TokenDeclaration,
+  Declaration,
+  ExprRule,
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
-import { TypesRegistry, AnyType, FreeType } from "./types";
+import { TypesRegistry, AnyType, FreeType, FreeTypePreference } from "./types";
 import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
+import { Store } from "./store";
 
-class Store {
-  private readonly map: Map<string, FreeType> = new Map();
-  private readonly registry: TypesRegistry;
-  constructor(registry: TypesRegistry) {
-    this.registry = registry;
-  }
-
-  set(name: string, type: AnyType) {
-    this.registry.subtype(type, this.get(name), null);
-  }
-
-  get(name: string) {
-    const curr = this.map.get(name);
-    if (curr) return curr;
-    const type = this.registry.free();
-    this.map.set(name, type);
-    return type;
-  }
-
-  propagateTo(other: Store) {
-    for (const [name, type] of this.map) {
-      other.set(name, type);
-    }
-  }
-
-  propagateToExcept(other: Store, except: string) {
-    for (const [name, type] of this.map) {
-      if (name !== except) {
-        other.set(name, type);
-      }
-    }
-  }
-
-  toString(normalized: ReadonlyMap<AnyType, AnyType> = new Map()) {
-    return `Store {${Array.from(this.map).map(
-      ([k, v]) => `${k}: ${normalized.get(v) ?? v}`
-    )}}`;
-  }
-
-  takeTypes(set: Set<AnyType>) {
-    for (const [_, type] of this.map) {
-      set.add(type);
-    }
-  }
-}
-
-export type RuleDeclarationInterface = Readonly<{
+export type RuleDeclInterface = Readonly<{
   argTypes: ReadonlyMap<string, AnyType>;
   returnType: AnyType;
 }>;
 
-export type TokenDeclarationInterface = Readonly<{
+export type TokenDeclInterface = Readonly<{
+  argTypes: ReadonlyMap<string, AnyType>; // Empty map
+  returnType: AnyType;
+}>;
+
+export type ExternalCallInterface = Readonly<{
+  argTypes: AnyType[];
   returnType: AnyType;
 }>;
 
@@ -96,6 +60,86 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this.formatter
   );
 
+  private readonly ruleDeclTypes = new Map<
+    RuleDeclaration,
+    RuleDeclInterface
+  >();
+  private readonly tokenDeclTypes = new Map<
+    TokenDeclaration,
+    TokenDeclInterface
+  >();
+  private readonly externalCallTypes = new Map<string, ExternalCallInterface>();
+
+  constructor(private readonly grammar: Grammar) {}
+
+  public getRuleInterfaces(): ReadonlyMap<RuleDeclaration, RuleDeclInterface> {
+    return this.ruleDeclTypes;
+  }
+
+  public getTokenInterfaces(): ReadonlyMap<
+    TokenDeclaration,
+    TokenDeclInterface
+  > {
+    return this.tokenDeclTypes;
+  }
+
+  public getExternalCallInterfaces(): ReadonlyMap<
+    string,
+    ExternalCallInterface
+  > {
+    return this.externalCallTypes;
+  }
+
+  public declInterface(decl: Declaration) {
+    if (decl.type === "rule") {
+      return this.ruleDeclInterface(decl);
+    }
+    return this.tokenDeclInterface(decl);
+  }
+
+  public ruleDeclInterface(rule: RuleDeclaration) {
+    let inter = this.ruleDeclTypes.get(rule);
+    if (!inter) {
+      inter = {
+        argTypes: new Map(
+          rule.args.map(arg => [
+            arg.arg,
+            this.registry.free(FreeTypePreference.GENERAL),
+          ])
+        ),
+        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+      };
+      this.ruleDeclTypes.set(rule, inter);
+    }
+    return inter;
+  }
+
+  public tokenDeclInterface(rule: TokenDeclaration) {
+    let inter = this.tokenDeclTypes.get(rule);
+    if (!inter) {
+      inter = {
+        argTypes: new Map(),
+        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+      };
+      this.tokenDeclTypes.set(rule, inter);
+    }
+    return inter;
+  }
+
+  public externalCallInterface(call: Call2Rule) {
+    let inter = this.externalCallTypes.get(call.id);
+    if (!inter) {
+      inter = {
+        argTypes: call.args.map(_ =>
+          this.registry.free(FreeTypePreference.GENERAL)
+        ),
+        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+      };
+      this.externalCallTypes.set(call.id, inter);
+    }
+    return inter;
+  }
+
   private readonly stores = new Map<AnyRule, readonly [Store, Store]>();
   private readonly valueTypes = new Map<Assignables, AnyType>();
 
@@ -111,7 +155,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   private valueType(value: Assignables) {
     let type = this.valueTypes.get(value);
     if (type == null) {
-      type = this.registry.free();
+      type = this.registry.free(FreeTypePreference.NONE);
       this.valueTypes.set(value, type);
     }
     return type;
@@ -194,7 +238,6 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   object(pre: Store, node: ObjectRule, post: Store) {
-    pre.propagateTo(post);
     this.visitSeq(
       pre,
       node.fields.map(([_, v]) => v),
@@ -234,13 +277,36 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   call2(pre: Store, node: Call2Rule, post: Store) {
-    // TODO
-    pre.propagateTo(post);
+    const { argTypes, returnType } = this.externalCallInterface(node);
+    this.visitSeq(pre, node.args, post);
+    this.handleCall(argTypes.values(), node.args.values(), returnType, node);
   }
 
   call(pre: Store, node: CallRule, post: Store) {
-    // TODO
-    pre.propagateTo(post);
+    const { argTypes, returnType } = this.declInterface(
+      this.grammar.getRule(node.id)
+    );
+    this.visitSeq(pre, node.args, post);
+    this.handleCall(argTypes.values(), node.args.values(), returnType, node);
+  }
+
+  private handleCall(
+    argTypes: IterableIterator<AnyType>,
+    exprs: IterableIterator<ExprRule>,
+    returnType: AnyType,
+    node: CallRule | Call2Rule
+  ) {
+    while (true) {
+      const expected = argTypes.next();
+      const expr = exprs.next();
+      if (expected.done || expr.done) break;
+      this.registry.subtype(
+        this.valueType(expr.value),
+        expected.value,
+        expr.value
+      );
+    }
+    this.registry.subtype(returnType, this.valueType(node), node);
   }
 
   field(pre: Store, node: FieldRule, post: Store) {
@@ -262,20 +328,35 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   predicate(pre: Store, node: PredicateRule, post: Store) {
-    // TODO
+    const [preExpr, postExpr] = this.store(node.code);
+    pre.propagateTo(preExpr);
+    this.visit(node.code);
+    postExpr.propagateTo(post);
+    //
+    this.registry.subtype(
+      this.registry.boolean(node.code),
+      this.valueType(node.code),
+      node.code
+    );
   }
 
-  run(rule: RuleDeclaration): RuleDeclarationInterface {
-    const argTypes = new Map<string, AnyType>();
+  run(rule: RuleDeclaration) {
+    const { argTypes, returnType } = this.ruleDeclInterface(rule);
     const [preRule, postRule] = this.store(rule.rule);
 
-    for (const { arg } of new Set(rule.args)) {
-      preRule.set(arg, this.registry.free());
+    for (const [name, type] of argTypes) {
+      preRule.set(name, type);
     }
 
     for (const [name, [{ multiple }]] of rule.fields) {
       if (multiple) {
-        preRule.set(name, this.registry.array(this.registry.free(), rule.rule));
+        preRule.set(
+          name,
+          this.registry.array(
+            this.registry.free(FreeTypePreference.NONE),
+            rule.rule
+          )
+        );
       } else {
         preRule.set(name, this.registry.null(rule.rule));
       }
@@ -284,15 +365,9 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this.visit(rule.rule);
 
     const [preReturn, _] = this.store(rule.return);
-
     postRule.propagateTo(preReturn);
-
     this.visit(rule.return);
-
-    return {
-      argTypes,
-      returnType: this.valueType(rule.return),
-    };
+    this.registry.subtype(this.valueType(rule.return), returnType, rule.return);
   }
 
   visit(node: AnyRule) {

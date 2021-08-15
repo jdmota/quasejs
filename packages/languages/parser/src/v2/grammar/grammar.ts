@@ -1,17 +1,23 @@
 import { Location } from "../runtime/input";
-import { locSuffix, locSuffix2, never } from "../utils";
+import { first, locSuffix, locSuffix2, never } from "../utils";
 import {
   Declaration,
   FieldRule,
   RuleDeclaration,
+  RuleDeclarationArg,
   TokenDeclaration,
   TokenRules,
 } from "./grammar-builder";
-import { ReferencesCollector, TokensCollector } from "./grammar-visitors";
+import {
+  ExternalCallsCollector,
+  ReferencesCollector,
+  TokensCollector,
+} from "./grammar-visitors";
 import { TokensStore } from "./tokens";
 import {
-  RuleDeclarationInterface,
-  TokenDeclarationInterface,
+  RuleDeclInterface,
+  TokenDeclInterface,
+  ExternalCallInterface,
   TypesInferrer,
 } from "./type-checker/inferrer";
 import { AnyType } from "./type-checker/types";
@@ -19,19 +25,30 @@ import { AnyType } from "./type-checker/types";
 export type GrammarError = Readonly<{
   message: string;
   loc: Location | undefined | null;
+  loc2: Location | undefined | null;
 }>;
 
 type GrammarOrErrors =
-  | Readonly<{ grammar: Grammar; errors: null }>
-  | Readonly<{ grammar: null; errors: readonly GrammarError[] }>;
+  | Readonly<{
+      grammar: Grammar;
+      inferrer: TypesInferrer;
+      errors: null;
+    }>
+  | Readonly<{
+      grammar: null;
+      inferrer: null;
+      errors: readonly GrammarError[];
+    }>;
 
 export function err(
   message: string,
-  loc: Location | undefined | null
+  loc: Location | undefined | null,
+  loc2: Location | undefined | null = null
 ): GrammarError {
   return {
     message,
     loc,
+    loc2,
   };
 }
 
@@ -47,15 +64,14 @@ export function createGrammar(
     .get();
   const lexer = tokens.createLexer();
   const decls = [...ruleDecls, lexer, ...Array.from(tokens)];
+  const externalCalls = new ExternalCallsCollector();
 
   // Detect duplicate rules
   const rules = new Map<string, Declaration>();
   for (const rule of decls) {
     const curr = rules.get(rule.name);
     if (curr) {
-      errors.push(
-        err(`Duplicate rule ${rule.name}${locSuffix(curr.loc)}`, rule.loc)
-      );
+      errors.push(err(`Duplicate rule ${rule.name}`, curr.loc, rule.loc));
     } else {
       rules.set(rule.name, rule);
     }
@@ -71,27 +87,36 @@ export function createGrammar(
 
   // For each declaration...
   for (const decl of rules.values()) {
+    externalCalls.visitDecl(decl);
+
     if (decl.type === "rule") {
       // Detect duplicate arguments in rules
-      const seenArgs = new Set<string>();
-      for (const { arg } of decl.args) {
-        if (seenArgs.has(arg)) {
+      const seenArgs = new Map<string, RuleDeclarationArg>();
+      for (const arg of decl.args) {
+        const seenArg = seenArgs.get(arg.arg);
+        if (seenArg) {
           errors.push(
             err(
-              `Duplicate argument ${arg} in declaration ${decl.name}`,
-              decl.loc
+              `Duplicate argument ${arg.arg} in declaration ${decl.name}`,
+              seenArg.loc,
+              arg.loc
             )
           );
         } else {
-          seenArgs.add(arg);
+          seenArgs.set(arg.arg, arg);
         }
       }
 
       // Detect conflicts between arguments and fields
       for (const [name, fields] of decl.fields) {
-        if (seenArgs.has(name)) {
+        const seenArg = seenArgs.get(name);
+        if (seenArg) {
           errors.push(
-            err(`Conflict between argument and field`, fields[0].loc)
+            err(
+              `Field cannot have the same name as argument`,
+              seenArg.loc,
+              fields[0].loc
+            )
           );
         }
       }
@@ -174,64 +199,70 @@ export function createGrammar(
     }
   }
 
-  const inferrer = new TypesInferrer();
-  const ruleInterfaces = new Map<RuleDeclaration, RuleDeclarationInterface>();
-  const tokenInterfaces = new Map<
-    TokenDeclaration,
-    TokenDeclarationInterface
-  >();
+  // Check that the number of arguments for external calls is consistent
+  for (const [name, calls] of externalCalls.get()) {
+    let firstCall = null;
+    for (const call of calls) {
+      if (firstCall) {
+        if (firstCall.args.length !== call.args.length) {
+          errors.push(
+            err(
+              `Cannot infer number of arguments for external call ${name}`,
+              firstCall.loc,
+              call.loc
+            )
+          );
+          break;
+        }
+      } else {
+        firstCall = call;
+      }
+    }
+  }
+
   if (errors.length === 0) {
+    const grammar = new Grammar(name, rules, tokens, startRules[0]);
+    const inferrer = new TypesInferrer(grammar);
     for (const rule of rules.values()) {
       if (rule.type === "rule") {
-        ruleInterfaces.set(rule, inferrer.run(rule));
+        inferrer.run(rule);
       }
       // TODO for token rules
     }
     inferrer.check(errors);
+
+    if (errors.length === 0) {
+      return {
+        grammar,
+        inferrer,
+        errors: null,
+      };
+    }
   }
 
-  if (errors.length === 0) {
-    return {
-      grammar: new Grammar(name, rules, tokens, startRules[0], inferrer, {
-        ruleInterfaces,
-        tokenInterfaces,
-      }),
-      errors: null,
-    };
-  }
   return {
     grammar: null,
+    inferrer: null,
     errors,
   };
 }
 
-type Interfaces = Readonly<{
-  ruleInterfaces: ReadonlyMap<RuleDeclaration, RuleDeclarationInterface>;
-  tokenInterfaces: ReadonlyMap<TokenDeclaration, TokenDeclarationInterface>;
-}>;
-
 export class Grammar {
-  private readonly name: string;
+  public readonly name: string;
   private readonly rules: ReadonlyMap<string, Declaration>;
   private readonly tokens: TokensStore;
   private readonly startRule: RuleDeclaration;
-  public readonly inferrer: TypesInferrer;
-  private readonly interfaces: Interfaces;
 
   constructor(
     name: string,
     rules: ReadonlyMap<string, Declaration>,
     tokens: TokensStore,
-    startRule: RuleDeclaration,
-    inferrer: TypesInferrer,
-    interfaces: Interfaces
+    startRule: RuleDeclaration
   ) {
     this.name = name;
     this.rules = rules;
     this.tokens = tokens;
     this.startRule = startRule;
-    this.inferrer = inferrer;
-    this.interfaces = interfaces;
   }
 
   getStart() {
@@ -268,9 +299,5 @@ export class Grammar {
 
   getDecls() {
     return this.rules.values();
-  }
-
-  getInterfaces() {
-    return this.interfaces;
   }
 }

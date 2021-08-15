@@ -1,4 +1,5 @@
 import { DState } from "../../automaton/state";
+import { ReturnTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
 import { assertion, never } from "../../utils";
 import {
@@ -78,7 +79,9 @@ function isBreakFlow(block: CodeBlock) {
   return (
     type === "break_block" ||
     type === "continue_block" ||
-    type === "return_block"
+    type === "return_block" ||
+    (block.type === "expect_block" &&
+      block.edge.transition instanceof ReturnTransition)
   );
 }
 

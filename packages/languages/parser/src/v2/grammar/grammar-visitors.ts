@@ -72,7 +72,11 @@ export abstract class RuleVisitor<
 
   regexp(node: RegExpRule) {}
 
-  object(node: ObjectRule) {}
+  object(node: ObjectRule) {
+    for (const [_, expr] of node.fields) {
+      this.visit(expr);
+    }
+  }
 
   int(node: IntRule) {}
 
@@ -82,9 +86,17 @@ export abstract class RuleVisitor<
     this.visit(node.parent);
   }
 
-  call(node: CallRule) {}
+  call(node: CallRule) {
+    for (const arg of node.args) {
+      this.visit(arg);
+    }
+  }
 
-  call2(node: Call2Rule) {}
+  call2(node: Call2Rule) {
+    for (const arg of node.args) {
+      this.visit(arg);
+    }
+  }
 
   field(node: FieldRule) {
     this.visit(node.rule);
@@ -94,16 +106,12 @@ export abstract class RuleVisitor<
 
   rule(node: RuleDeclaration) {
     this.visit(node.rule);
-    if (node.return != null) {
-      this.visit(node.return);
-    }
+    this.visit(node.return);
   }
 
   token(node: TokenDeclaration) {
     this.visit(node.rule);
-    if (node.return != null) {
-      this.visit(node.return);
-    }
+    this.visit(node.return);
   }
 
   visit(node: AnyRule) {
@@ -208,5 +216,21 @@ export class ReferencesCollector extends RuleVisitor<
   id(node: IdRule) {
     this.data.push(node);
     super.id(node);
+  }
+}
+
+export class ExternalCallsCollector extends RuleVisitor<
+  Map<string, Call2Rule[]>,
+  ReadonlyMap<string, readonly Call2Rule[]>
+> {
+  constructor() {
+    super(new Map());
+  }
+
+  call2(node: Call2Rule) {
+    const array = this.data.get(node.id) ?? [];
+    array.push(node);
+    this.data.set(node.id, array);
+    super.call2(node);
   }
 }

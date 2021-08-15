@@ -55,12 +55,14 @@ export type RuleDeclaration = {
 export type RuleDeclarationArg = {
   readonly type: "ruleArg";
   readonly arg: string;
+  loc: Location | null;
 };
 
 function ruleArg(arg: string): RuleDeclarationArg {
   return {
     type: "ruleArg",
     arg,
+    loc: null,
   };
 }
 

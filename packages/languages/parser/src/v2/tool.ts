@@ -109,7 +109,7 @@ export function tool(opts: ToolInput) {
     );
   }
 
-  const types = generateTypes(grammar);
+  const types = generateTypes(grammar, result.inferrer);
 
   return { tokenCode, ruleCode, types };
 }

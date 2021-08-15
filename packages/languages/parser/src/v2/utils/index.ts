@@ -29,11 +29,14 @@ export function printLoc(loc: Location) {
   return `${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column}`;
 }
 
-export function locSuffix(loc: Location | null) {
+export function locSuffix(loc: Location | undefined | null) {
   return loc ? ` at ${printLoc(loc)}` : "";
 }
 
-export function locSuffix2(loc1: Location | null, loc2: Location | null) {
+export function locSuffix2(
+  loc1: Location | undefined | null,
+  loc2: Location | undefined | null
+) {
   return loc1 && loc2 ? ` at ${printLoc(loc1)} and ${printLoc(loc2)}` : "";
 }
 

@@ -1,41 +1,7 @@
 import { Grammar } from "../grammar/grammar";
+import { TypesInferrer } from "../grammar/type-checker/inferrer";
 import { AnyNormalizedType } from "../grammar/type-checker/normalizer";
 import { never, nonNull } from "../utils";
-
-/*function generateFieldType({
-  fields,
-  optional,
-  multiple,
-}: ReadonlyFieldStoreValue) {
-  const baseType = ``; // TODO
-  return multiple
-    ? baseType.includes("|")
-      ? `(${baseType})[]`
-      : `${baseType}[]`
-    : optional
-    ? `${baseType}|null`
-    : baseType;
-}*/
-
-/*function generateRuleType(
-  grammar: Grammar,
-  name: string,
-  store: ReadonlyFieldsStore
-) {
-  const fields = Array.from(store).map(
-    field => `  ${field.name}: ${generateFieldType(field)};`
-  );
-  return {
-    typeName: name,
-    typeDefinition: [
-      `{`,
-      `  $type: "${name}";`,
-      `  $loc: $Location;`,
-      ...fields,
-      `}`,
-    ].join("\n"),
-  };
-}*/
 
 function toTypescript(
   type: AnyNormalizedType,
@@ -55,6 +21,9 @@ function toTypescript(
     case "BottomType":
       return "never";
     case "ReadonlyObjectType":
+      if (type.fields.length === 0) {
+        return "Readonly<Record<string, never>>";
+      }
       return `Readonly<{ ${type.fields
         .map(([k, v]) => `${k}: ${toTypescript(v, names)}`)
         .join(", ")} }>`;
@@ -77,19 +46,18 @@ function toTypescript(
   }
 }
 
-export function generateTypes(grammar: Grammar) {
+export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   const lines = [
     `/* eslint-disable */`,
     `export type $Position = {pos:number;line:number;column:number;};`,
     `export type $Location = {start:$Position;end:$Position;};`,
   ];
 
-  const { lower } = grammar.inferrer.normalizer;
-  const { ruleInterfaces, tokenInterfaces } = grammar.getInterfaces();
+  const { lower } = inferrer.normalizer;
   const names = new Map<AnyNormalizedType, string>();
   const astNodes = [];
 
-  for (const [rule, { argTypes, returnType }] of ruleInterfaces) {
+  for (const [rule, { argTypes, returnType }] of inferrer.getRuleInterfaces()) {
     const normalizedArgs = Array.from(argTypes).map(
       ([name, type]) => [name, lower.normalize(type)] as const
     );
@@ -108,13 +76,28 @@ export function generateTypes(grammar: Grammar) {
   }
 
   for (const [type, name] of names) {
-    lines.push(`type ${name} = ${toTypescript(type, names)};`);
+    lines.push(`export type ${name} = ${toTypescript(type, names)};`);
   }
 
   lines.push(`export type $Nodes = ${astNodes.join("|")};`);
 
+  lines.push(`export type $ExternalCalls = {`);
+  for (const [
+    callName,
+    { argTypes, returnType },
+  ] of inferrer.getExternalCallInterfaces()) {
+    const normalizedArgs = argTypes.map(type => lower.normalize(type));
+    const normalizedReturn = lower.normalize(returnType);
+
+    lines.push(
+      `  ${callName}: (${normalizedArgs.map(
+        (type, i) => `a${i}: ${toTypescript(type, names)}`
+      )}) => ${toTypescript(normalizedReturn, names)};`
+    );
+  }
+  lines.push(`};`);
+
   // TODO token rules
-  // TODO grammar class interface with external calls as well
 
   lines.push(``);
   return lines.join(`\n`);

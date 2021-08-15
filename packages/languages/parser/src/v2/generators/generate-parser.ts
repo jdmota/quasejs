@@ -201,8 +201,11 @@ export class ParserGenerator {
             `${indent}switch(this.current()){`,
             ...block.choices.map(([t, d]) => {
               const ranges = choices.map.get(t.transition);
-              assertion(ranges.size === 1);
-              const range = ranges.values().next().value as RangeTransition;
+              assertion(ranges.size <= 1);
+              const range =
+                ranges.size === 0
+                  ? new RangeTransition(-1, -1)
+                  : (ranges.values().next().value as RangeTransition);
               assertion(range instanceof RangeTransition);
               assertion(range.from === range.to);
               return lines([
