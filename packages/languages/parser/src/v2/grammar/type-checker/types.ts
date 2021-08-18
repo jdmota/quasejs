@@ -1,6 +1,6 @@
-import { Location } from "../../runtime/input";
-import { all, any, first, never } from "../../utils";
+import { never } from "../../utils";
 import { AnyRule } from "../grammar-builder";
+import { ConstraintsGraph } from "./constraints-graph";
 
 // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
 
@@ -95,40 +95,14 @@ class BottomType extends Type {
   readonly clazz = "BottomType";
 }
 
-class IntersectionType extends Type {
-  readonly clazz = "IntersectionType";
-
-  readonly types: ReadonlySet<Type>;
-  constructor(types: ReadonlySet<Type>) {
-    super();
-    this.types = types;
-  }
-  formatMeta(seen: Set<Type>) {
-    return Array.from(this.types)
-      .map(t => t.format(seen))
-      .join(" & ");
-  }
-}
-
-class UnionType extends Type {
-  readonly clazz = "UnionType";
-
-  readonly types: ReadonlySet<Type>;
-  constructor(types: ReadonlySet<Type>) {
-    super();
-    this.types = types;
-  }
-  formatMeta(seen: Set<Type>) {
-    return Array.from(this.types)
-      .map(t => t.format(seen))
-      .join(" | ");
-  }
-}
-
 export enum FreeTypePreference {
   NONE = 0,
   GENERAL = 1,
   SPECIFIC = 2,
+}
+
+export function preference(type: AnyType) {
+  return isFreeType(type) ? type.preference : null;
 }
 
 class FreeType extends Type {
@@ -157,6 +131,20 @@ class MapSet<K, V> {
 
   add(key: K, val: V) {
     this.get(key).add(val);
+  }
+
+  addManyToOne(keys: Iterable<K>, value: V) {
+    for (const key of keys) {
+      const set = this.get(key);
+      set.add(value);
+    }
+  }
+
+  addOneToMany(key: K, values: Iterable<V>) {
+    const set = this.get(key);
+    for (const val of values) {
+      set.add(val);
+    }
   }
 
   addManyToMany(keys: Iterable<K>, values: Iterable<V>) {
@@ -211,12 +199,12 @@ type AnyTypeExceptFree = Exclude<AnyType, FreeType>;
 export type { FreeType };
 
 export class TypesRegistry {
+  readonly graph = new ConstraintsGraph();
+
   private readonly allTypes = new Set<AnyType>();
   private readonly locations = new Map<AnyType, AnyRule>();
   private readonly supers = new MapSet<AnyType, AnyType>();
   private readonly subs = new MapSet<AnyType, AnyType>();
-  private readonly boundedSupers = new MapSet<AnyType, AnyType>();
-  private readonly boundedSubs = new MapSet<AnyType, AnyType>();
 
   private save<T extends AnyTypeExceptFree>(t: T, node: AnyRule): T {
     this.locations.set(t, node);
@@ -224,8 +212,6 @@ export class TypesRegistry {
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
-    this.boundedSupers.add(t, t);
-    this.boundedSubs.add(t, t);
     return t;
   }
 
@@ -233,12 +219,12 @@ export class TypesRegistry {
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
-    this.boundedSupers.add(t, t);
-    this.boundedSubs.add(t, t);
     return t;
   }
 
   subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
+    this.graph.edge(a, node, b);
+
     // Short-path
     if (this.supers.test(a, b)) return;
 
@@ -254,27 +240,7 @@ export class TypesRegistry {
     }
   }
 
-  getSupers(t: AnyType): ReadonlySet<AnyType> {
-    return this.supers.get(t);
-  }
-
-  getSubs(t: AnyType): ReadonlySet<AnyType> {
-    return this.subs.get(t);
-  }
-
-  *getUpperBound(t: FreeType): Iterable<AnyTypeExceptFree> {
-    for (const sup of this.getSupers(t)) {
-      if (sup instanceof FreeType) continue;
-      yield sup;
-    }
-  }
-
-  *getLowerBound(t: FreeType): Iterable<AnyTypeExceptFree> {
-    for (const sub of this.getSubs(t)) {
-      if (sub instanceof FreeType) continue;
-      yield sub;
-    }
-  }
+  // TODO maybe we should use singletons
 
   null(node: AnyRule) {
     return this.save(new NullType(), node);

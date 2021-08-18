@@ -1,5 +1,11 @@
-import { assertion, first, never, nonNull } from "../../utils";
-import { AnyType, FreeType, isFreeType, TypesRegistry } from "./types";
+import { first, never, nonNull } from "../../utils";
+import {
+  AnyType,
+  FreeType,
+  FreeTypePreference,
+  preference,
+  TypesRegistry,
+} from "./types";
 
 abstract class NormalizedType {
   abstract format(): string;
@@ -115,6 +121,25 @@ class BottomType extends NormalizedType {
   }
 }
 
+let genericUuid = 1;
+
+class GenericType extends NormalizedType {
+  readonly clazz = "GenericType";
+  readonly id = genericUuid++;
+
+  constructor(
+    readonly lower: AnyNormalizedType,
+    readonly upper: AnyNormalizedType,
+    readonly preference: FreeTypePreference
+  ) {
+    super();
+  }
+
+  format(): string {
+    return `T${this.id}`;
+  }
+}
+
 class UnionType extends NormalizedType {
   readonly clazz = "UnionType";
 
@@ -158,10 +183,183 @@ export type AnyNormalizedType =
   | BooleanType
   | NullType
   | BottomType
+  | GenericType
   | UnionType
   | IntersectionType;
 
-abstract class AbstractNormalizer {
+class NormalizedRegistry {
+  private readonly cache = new Map<AnyType, AnyNormalizedType>();
+  private readonly processing = new Map<AnyType, RecursiveRef>();
+  private readonly usedRecursiveRefs = new Set<RecursiveRef>();
+
+  constructor(
+    private readonly _normalize: (type: AnyType) => AnyNormalizedType
+  ) {}
+
+  getUsedRecursiveRefs(): ReadonlySet<RecursiveRef> {
+    return this.usedRecursiveRefs;
+  }
+
+  normalize(type: AnyType) {
+    const cached = this.cache.get(type);
+    // If it was already normalized...
+    if (cached) return cached;
+    // Avoid infinite recursion...
+    let rec = this.processing.get(type);
+    if (rec) {
+      this.usedRecursiveRefs.add(rec);
+      return rec;
+    }
+    rec = new RecursiveRef();
+    this.processing.set(type, rec);
+    // Normalize the type...
+    const normalized = this._normalize(type);
+    // Store the results...
+    rec.ensure(normalized);
+    this.processing.delete(type);
+    this.cache.set(type, normalized);
+    return normalized;
+  }
+}
+
+export class Normalizer {
+  private readonly upperRegistry: NormalizedRegistry;
+  private readonly lowerRegistry: NormalizedRegistry;
+  private readonly exactRegistry: NormalizedRegistry;
+
+  constructor(private readonly registry: TypesRegistry) {
+    this.upperRegistry = new NormalizedRegistry(this._upper.bind(this));
+    this.lowerRegistry = new NormalizedRegistry(this._lower.bind(this));
+    this.exactRegistry = new NormalizedRegistry(this._exact.bind(this));
+  }
+
+  *usedRecursiveRefs() {
+    for (const rec of this.upperRegistry.getUsedRecursiveRefs()) {
+      yield rec;
+    }
+    for (const rec of this.lowerRegistry.getUsedRecursiveRefs()) {
+      yield rec;
+    }
+    for (const rec of this.exactRegistry.getUsedRecursiveRefs()) {
+      yield rec;
+    }
+  }
+
+  upper(type: AnyType) {
+    return this.upperRegistry.normalize(type);
+  }
+
+  lower(type: AnyType) {
+    return this.lowerRegistry.normalize(type);
+  }
+
+  exact(type: AnyType) {
+    return this.exactRegistry.normalize(type);
+  }
+
+  private _upper(type: AnyType): AnyNormalizedType {
+    switch (type.clazz) {
+      case "TopType":
+        return new TopType();
+      case "StringType":
+        return new StringType();
+      case "IntType":
+        return new IntType();
+      case "NullType":
+        return new NullType();
+      case "BooleanType":
+        return new BooleanType();
+      case "BottomType":
+        return new BottomType();
+      case "ReadonlyObjectType":
+        return new ReadonlyObjectType(
+          Array.from(type.fields).map(([k, v]) => [k, this.upper(v)])
+        );
+      case "ReadonlyArrayType":
+        return new ReadonlyArrayType(this.upper(type.component));
+      case "ArrayType":
+        return new ArrayType(this.exact(type.component));
+      case "FreeType": {
+        const set = new Set<AnyNormalizedType>();
+        for (const sub of this.registry.graph.upper(type)) {
+          set.add(preference(sub) == null ? this.upper(sub) : this.exact(sub));
+        }
+        return intersection(set);
+      }
+      default:
+        never(type);
+    }
+  }
+
+  private _lower(type: AnyType): AnyNormalizedType {
+    switch (type.clazz) {
+      case "TopType":
+        return new TopType();
+      case "StringType":
+        return new StringType();
+      case "IntType":
+        return new IntType();
+      case "NullType":
+        return new NullType();
+      case "BooleanType":
+        return new BooleanType();
+      case "BottomType":
+        return new BottomType();
+      case "ReadonlyObjectType":
+        return new ReadonlyObjectType(
+          Array.from(type.fields).map(([k, v]) => [k, this.lower(v)])
+        );
+      case "ReadonlyArrayType":
+        return new ReadonlyArrayType(this.lower(type.component));
+      case "ArrayType":
+        return new ArrayType(this.exact(type.component));
+      case "FreeType": {
+        const set = new Set<AnyNormalizedType>();
+        for (const sub of this.registry.graph.lower(type)) {
+          set.add(preference(sub) == null ? this.lower(sub) : this.exact(sub));
+        }
+        return union(set);
+      }
+      default:
+        never(type);
+    }
+  }
+
+  private _exact(type: AnyType): AnyNormalizedType {
+    switch (type.clazz) {
+      case "TopType":
+        return new TopType();
+      case "StringType":
+        return new StringType();
+      case "IntType":
+        return new IntType();
+      case "NullType":
+        return new NullType();
+      case "BooleanType":
+        return new BooleanType();
+      case "BottomType":
+        return new BottomType();
+      case "ReadonlyObjectType":
+        return new ReadonlyObjectType(
+          Array.from(type.fields).map(([k, v]) => [k, this.exact(v)])
+        );
+      case "ReadonlyArrayType":
+        return new ReadonlyArrayType(this.exact(type.component));
+      case "ArrayType":
+        return new ArrayType(this.exact(type.component));
+      case "FreeType":
+        return new GenericType(
+          this.lower(type),
+          this.upper(type),
+          type.preference
+        );
+      default:
+        never(type);
+    }
+  }
+}
+
+export class NewNormalizer {
   protected readonly registry: TypesRegistry;
   private readonly cache = new Map<AnyType, AnyNormalizedType>();
   private readonly processing = new Map<AnyType, RecursiveRef>();
@@ -196,7 +394,21 @@ abstract class AbstractNormalizer {
     return normalized;
   }
 
-  protected abstract normalizeFree(type: FreeType): AnyNormalizedType;
+  private lower(type: FreeType) {
+    const set = new Set<AnyNormalizedType>();
+    for (const sub of this.registry.graph.lower(type)) {
+      set.add(this.normalize(sub));
+    }
+    return union(set);
+  }
+
+  private upper(type: FreeType) {
+    const set = new Set<AnyNormalizedType>();
+    for (const sub of this.registry.graph.upper(type)) {
+      set.add(this.normalize(sub));
+    }
+    return intersection(set);
+  }
 
   private _normalize(type: AnyType): AnyNormalizedType {
     switch (type.clazz) {
@@ -221,58 +433,33 @@ abstract class AbstractNormalizer {
       case "ArrayType":
         return new ArrayType(this.normalize(type.component));
       case "FreeType":
-        return this.normalizeFree(type);
+        return new GenericType(
+          this.lower(type),
+          this.upper(type),
+          type.preference
+        );
       default:
         never(type);
     }
   }
 }
 
-export class LowerBoundNormalizer extends AbstractNormalizer {
-  protected normalizeFree(type: FreeType) {
-    const set = new Set<AnyNormalizedType>();
-    for (const sub of this.registry.getLowerBound(type)) {
-      set.add(this.normalize(sub));
-    }
-    return this.union(set);
+function union(set: ReadonlySet<AnyNormalizedType>) {
+  if (set.size === 0) {
+    return new BottomType();
   }
-
-  private union(set: ReadonlySet<AnyNormalizedType>) {
-    if (set.size === 0) {
-      return new BottomType();
-    }
-    if (set.size === 1) {
-      return first(set);
-    }
-    return new UnionType(set);
+  if (set.size === 1) {
+    return first(set);
   }
+  return new UnionType(set);
 }
 
-export class UpperBoundNormalizer extends AbstractNormalizer {
-  protected normalizeFree(type: FreeType) {
-    const set = new Set<AnyNormalizedType>();
-    for (const sub of this.registry.getUpperBound(type)) {
-      set.add(this.normalize(sub));
-    }
-    return this.intersection(set);
+function intersection(set: ReadonlySet<AnyNormalizedType>) {
+  if (set.size === 0) {
+    return new TopType();
   }
-
-  private intersection(set: ReadonlySet<AnyNormalizedType>) {
-    if (set.size === 0) {
-      return new TopType();
-    }
-    if (set.size === 1) {
-      return first(set);
-    }
-    return new IntersectionType(set);
+  if (set.size === 1) {
+    return first(set);
   }
-}
-
-export class Normalizer {
-  readonly lower: LowerBoundNormalizer;
-  readonly upper: UpperBoundNormalizer;
-  constructor(registry: TypesRegistry) {
-    this.lower = new LowerBoundNormalizer(registry);
-    this.upper = new UpperBoundNormalizer(registry);
-  }
+  return new IntersectionType(set);
 }

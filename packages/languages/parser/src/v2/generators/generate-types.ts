@@ -41,10 +41,16 @@ function toTypescript(
         .join(" & ")})`;
     case "RecursiveRef":
       return nonNull(names.get(type.get()));
+    case "GenericType":
+      const lower = toTypescript(type.lower, names);
+      const upper = toTypescript(type.upper, names);
+      return `T${type.id} /* [${lower}; ${upper}] */`;
     default:
       never(type);
   }
 }
+
+// TODO if a type is only used once, and we have a preference, choose that preference?
 
 export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   const lines = [
@@ -53,26 +59,26 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
     `export type $Location = {start:$Position;end:$Position;};`,
   ];
 
-  const { lower } = inferrer.normalizer;
+  const normalizer = inferrer.normalizer;
   const names = new Map<AnyNormalizedType, string>();
   const astNodes = [];
 
+  let recRefId = 1;
+  for (const recRef of normalizer.usedRecursiveRefs()) {
+    names.set(recRef.get(), `$rec${recRefId++}`);
+  }
+
   for (const [rule, { argTypes, returnType }] of inferrer.getRuleInterfaces()) {
     const normalizedArgs = Array.from(argTypes).map(
-      ([name, type]) => [name, lower.normalize(type)] as const
+      ([name, type]) => [name, normalizer.exact(type)] as const
     );
-    const normalizedReturn = lower.normalize(returnType);
+    const normalizedReturn = normalizer.exact(returnType);
 
     normalizedArgs.forEach(([name, type]) =>
       names.set(type, `${rule.name}_${name}`)
     );
     names.set(normalizedReturn, rule.name);
     astNodes.push(rule.name);
-  }
-
-  let recRefId = 1;
-  for (const recRef of lower.getUsedRecursiveRefs()) {
-    names.set(recRef.get(), `$rec${recRefId++}`);
   }
 
   for (const [type, name] of names) {
@@ -86,8 +92,17 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
     callName,
     { argTypes, returnType },
   ] of inferrer.getExternalCallInterfaces()) {
-    const normalizedArgs = argTypes.map(type => lower.normalize(type));
-    const normalizedReturn = lower.normalize(returnType);
+    // Even though for arguments we prefer more generic types,
+    // and for returns we prefer specific types,
+    // here we are defining the functional interface,
+    // so for the arguments we choose the lower bound,
+    // and for the return type we choose the upper bound.
+    // This allows implementations of this functional interface
+    // to choose a more generic type (above the lower bound)
+    // and a more specific type (below the upper bound)
+
+    const normalizedArgs = argTypes.map(type => normalizer.lower(type));
+    const normalizedReturn = normalizer.upper(returnType);
 
     lines.push(
       `  ${callName}: (${normalizedArgs.map(

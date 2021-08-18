@@ -1,5 +1,7 @@
 import type { Location } from "../runtime/input";
 
+export type Optional<T> = T | undefined | null;
+
 export function find<A, B>(
   it: Iterable<A>,
   fn: (val: A) => B | null
