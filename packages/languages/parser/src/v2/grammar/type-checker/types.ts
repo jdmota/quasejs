@@ -95,7 +95,15 @@ class BottomType extends Type {
   readonly clazz = "BottomType";
 }
 
-export enum FreeTypePreference {
+export function hasComponents(type: AnyType) {
+  return (
+    type.clazz === "ReadonlyArrayType" ||
+    type.clazz === "ReadonlyObjectType" ||
+    type.clazz === "ArrayType"
+  );
+}
+
+export enum TypePolarity {
   NONE = 0,
   GENERAL = 1,
   SPECIFIC = 2,
@@ -108,7 +116,7 @@ export function preference(type: AnyType) {
 class FreeType extends Type {
   readonly clazz = "FreeType";
 
-  constructor(public readonly preference: FreeTypePreference) {
+  constructor(public readonly preference: TypePolarity) {
     super();
   }
 }
@@ -258,7 +266,7 @@ export class TypesRegistry {
     return this.save(new BooleanType(), node);
   }
 
-  free(preference: FreeTypePreference) {
+  free(preference: TypePolarity) {
     return this.saveFree(new FreeType(preference));
   }
 

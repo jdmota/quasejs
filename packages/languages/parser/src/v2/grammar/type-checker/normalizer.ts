@@ -2,7 +2,8 @@ import { first, never, nonNull } from "../../utils";
 import {
   AnyType,
   FreeType,
-  FreeTypePreference,
+  TypePolarity,
+  hasComponents,
   preference,
   TypesRegistry,
 } from "./types";
@@ -130,7 +131,7 @@ class GenericType extends NormalizedType {
   constructor(
     readonly lower: AnyNormalizedType,
     readonly upper: AnyNormalizedType,
-    readonly preference: FreeTypePreference
+    readonly preference: TypePolarity
   ) {
     super();
   }
@@ -282,7 +283,7 @@ export class Normalizer {
       case "FreeType": {
         const set = new Set<AnyNormalizedType>();
         for (const sub of this.registry.graph.upper(type)) {
-          set.add(preference(sub) == null ? this.upper(sub) : this.exact(sub));
+          set.add(hasComponents(sub) ? this.upper(sub) : this.exact(sub));
         }
         return intersection(set);
       }
@@ -316,7 +317,7 @@ export class Normalizer {
       case "FreeType": {
         const set = new Set<AnyNormalizedType>();
         for (const sub of this.registry.graph.lower(type)) {
-          set.add(preference(sub) == null ? this.lower(sub) : this.exact(sub));
+          set.add(hasComponents(sub) ? this.lower(sub) : this.exact(sub));
         }
         return union(set);
       }
@@ -347,91 +348,6 @@ export class Normalizer {
         return new ReadonlyArrayType(this.exact(type.component));
       case "ArrayType":
         return new ArrayType(this.exact(type.component));
-      case "FreeType":
-        return new GenericType(
-          this.lower(type),
-          this.upper(type),
-          type.preference
-        );
-      default:
-        never(type);
-    }
-  }
-}
-
-export class NewNormalizer {
-  protected readonly registry: TypesRegistry;
-  private readonly cache = new Map<AnyType, AnyNormalizedType>();
-  private readonly processing = new Map<AnyType, RecursiveRef>();
-  private readonly usedRecursiveRefs = new Set<RecursiveRef>();
-
-  constructor(registry: TypesRegistry) {
-    this.registry = registry;
-  }
-
-  getUsedRecursiveRefs(): ReadonlySet<RecursiveRef> {
-    return this.usedRecursiveRefs;
-  }
-
-  normalize(type: AnyType) {
-    const cached = this.cache.get(type);
-    // If it was already normalized...
-    if (cached) return cached;
-    // Avoid infinite recursion...
-    let rec = this.processing.get(type);
-    if (rec) {
-      this.usedRecursiveRefs.add(rec);
-      return rec;
-    }
-    rec = new RecursiveRef();
-    this.processing.set(type, rec);
-    // Normalize the type...
-    const normalized = this._normalize(type);
-    // Store the results...
-    rec.ensure(normalized);
-    this.processing.delete(type);
-    this.cache.set(type, normalized);
-    return normalized;
-  }
-
-  private lower(type: FreeType) {
-    const set = new Set<AnyNormalizedType>();
-    for (const sub of this.registry.graph.lower(type)) {
-      set.add(this.normalize(sub));
-    }
-    return union(set);
-  }
-
-  private upper(type: FreeType) {
-    const set = new Set<AnyNormalizedType>();
-    for (const sub of this.registry.graph.upper(type)) {
-      set.add(this.normalize(sub));
-    }
-    return intersection(set);
-  }
-
-  private _normalize(type: AnyType): AnyNormalizedType {
-    switch (type.clazz) {
-      case "TopType":
-        return new TopType();
-      case "StringType":
-        return new StringType();
-      case "IntType":
-        return new IntType();
-      case "NullType":
-        return new NullType();
-      case "BooleanType":
-        return new BooleanType();
-      case "BottomType":
-        return new BottomType();
-      case "ReadonlyObjectType":
-        return new ReadonlyObjectType(
-          Array.from(type.fields).map(([k, v]) => [k, this.normalize(v)])
-        );
-      case "ReadonlyArrayType":
-        return new ReadonlyArrayType(this.normalize(type.component));
-      case "ArrayType":
-        return new ArrayType(this.normalize(type.component));
       case "FreeType":
         return new GenericType(
           this.lower(type),

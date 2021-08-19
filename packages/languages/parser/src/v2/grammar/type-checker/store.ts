@@ -1,4 +1,4 @@
-import { TypesRegistry, AnyType, FreeType, FreeTypePreference } from "./types";
+import { TypesRegistry, AnyType, FreeType, TypePolarity } from "./types";
 
 export class Store {
   private readonly map: Map<string, FreeType> = new Map();
@@ -14,7 +14,7 @@ export class Store {
   get(name: string) {
     const curr = this.map.get(name);
     if (curr) return curr;
-    const type = this.registry.free(FreeTypePreference.NONE);
+    const type = this.registry.free(TypePolarity.NONE);
     this.map.set(name, type);
     return type;
   }

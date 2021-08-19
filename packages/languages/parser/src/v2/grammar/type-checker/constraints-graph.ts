@@ -1,6 +1,6 @@
 import { expect, never } from "../../utils";
 import { AnyRule } from "../grammar-builder";
-import { AnyType, FreeTypePreference, preference } from "./types";
+import { AnyType, TypePolarity, preference } from "./types";
 
 class Edge<N, E> {
   constructor(
@@ -52,24 +52,29 @@ class Graph<N, E> {
   }
 }
 
+const EXPERIMENTAL = true;
+
 export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   private upperHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
     if (seen.has(type)) return;
     seen.add(type);
     const p = preference(type);
     switch (p) {
-      case FreeTypePreference.NONE:
+      case TypePolarity.NONE:
         for (const dest of this.outDest(type)) {
           this.upperHelper(dest, set, seen);
         }
         break;
-      case FreeTypePreference.GENERAL:
-        // set.add(type);
-        for (const dest of this.outDest(type)) {
-          this.upperHelper(dest, set, seen);
+      case TypePolarity.GENERAL:
+        if (EXPERIMENTAL) {
+          for (const dest of this.outDest(type)) {
+            this.upperHelper(dest, set, seen);
+          }
+        } else {
+          set.add(type);
         }
         break;
-      case FreeTypePreference.SPECIFIC:
+      case TypePolarity.SPECIFIC:
         set.add(type);
         break;
       case null:
@@ -85,18 +90,21 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     seen.add(type);
     const p = preference(type);
     switch (p) {
-      case FreeTypePreference.NONE:
+      case TypePolarity.NONE:
         for (const dest of this.inDest(type)) {
           this.lowerHelper(dest, set, seen);
         }
         break;
-      case FreeTypePreference.SPECIFIC:
-        // set.add(type);
-        for (const dest of this.inDest(type)) {
-          this.lowerHelper(dest, set, seen);
+      case TypePolarity.SPECIFIC:
+        if (EXPERIMENTAL) {
+          for (const dest of this.inDest(type)) {
+            this.lowerHelper(dest, set, seen);
+          }
+        } else {
+          set.add(type);
         }
         break;
-      case FreeTypePreference.GENERAL:
+      case TypePolarity.GENERAL:
         set.add(type);
         break;
       case null:

@@ -13,7 +13,7 @@ function toTypescript(
     case "StringType":
       return "string";
     case "IntType":
-      return "int";
+      return "number";
     case "NullType":
       return "null";
     case "BooleanType":
@@ -80,6 +80,8 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
     names.set(normalizedReturn, rule.name);
     astNodes.push(rule.name);
   }
+
+  // TODO Simplify: never <: T1 <: A <: unknown
 
   for (const [type, name] of names) {
     lines.push(`export type ${name} = ${toTypescript(type, names)};`);

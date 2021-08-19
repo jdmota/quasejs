@@ -26,7 +26,7 @@ import {
   ExprRule,
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
-import { TypesRegistry, AnyType, FreeType, FreeTypePreference } from "./types";
+import { TypesRegistry, AnyType, FreeType, TypePolarity } from "./types";
 import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
 import { Store } from "./store";
@@ -104,10 +104,10 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
         argTypes: new Map(
           rule.args.map(arg => [
             arg.arg,
-            this.registry.free(FreeTypePreference.GENERAL),
+            this.registry.free(TypePolarity.GENERAL),
           ])
         ),
-        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+        returnType: this.registry.free(TypePolarity.SPECIFIC),
       };
       this.ruleDeclTypes.set(rule, inter);
     }
@@ -119,7 +119,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     if (!inter) {
       inter = {
         argTypes: new Map(),
-        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+        returnType: this.registry.free(TypePolarity.SPECIFIC),
       };
       this.tokenDeclTypes.set(rule, inter);
     }
@@ -130,10 +130,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     let inter = this.externalCallTypes.get(call.id);
     if (!inter) {
       inter = {
-        argTypes: call.args.map(_ =>
-          this.registry.free(FreeTypePreference.GENERAL)
-        ),
-        returnType: this.registry.free(FreeTypePreference.SPECIFIC),
+        argTypes: call.args.map(_ => this.registry.free(TypePolarity.GENERAL)),
+        returnType: this.registry.free(TypePolarity.SPECIFIC),
       };
       this.externalCallTypes.set(call.id, inter);
     }
@@ -155,7 +153,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   private valueType(value: Assignables) {
     let type = this.valueTypes.get(value);
     if (type == null) {
-      type = this.registry.free(FreeTypePreference.NONE);
+      type = this.registry.free(TypePolarity.NONE);
       this.valueTypes.set(value, type);
     }
     return type;
@@ -352,10 +350,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       if (multiple) {
         preRule.set(
           name,
-          this.registry.array(
-            this.registry.free(FreeTypePreference.NONE),
-            rule.rule
-          )
+          this.registry.array(this.registry.free(TypePolarity.NONE), rule.rule)
         );
       } else {
         preRule.set(name, this.registry.null(rule.rule));
