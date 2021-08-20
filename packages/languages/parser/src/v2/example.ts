@@ -50,13 +50,60 @@ const ruleB = rule(
   null
 );
 
+const ruleC = rule(
+  "C",
+  choice(
+    field(
+      "ret",
+      object([
+        ["x", id("x")],
+        ["y", id("y")],
+      ])
+    ),
+    field(
+      "ret",
+      object([
+        ["x", id("y")],
+        ["y", id("x")],
+      ])
+    )
+  ),
+  [rule.arg("x"), rule.arg("y")],
+  {},
+  id("ret")
+);
+
+// FIXME we indeed need polarities in type components
+const ruleD = rule(
+  "D",
+  choice(
+    field(
+      "ret",
+      object([
+        ["x", select(id("arg"), "x")],
+        ["y", select(id("arg"), "y")],
+      ])
+    ),
+    field(
+      "ret",
+      object([
+        ["x", select(id("arg"), "y")],
+        ["y", select(id("arg"), "x")],
+      ])
+    )
+  ),
+  [rule.arg("arg")],
+  {},
+  id("ret")
+);
+
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
 
 console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  ruleDecls: [ruleA, ruleB],
+  ruleDecls: [ruleA, ruleB, ruleC, ruleD],
   tokenDecls: [],
 });
 
