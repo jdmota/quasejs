@@ -28,6 +28,8 @@ abstract class Type {
   toString() {
     return this.format(new Set());
   }
+
+  abstract setPolarity(polarity: TypePolarity, changed: Set<FreeType>): void;
 }
 
 class ReadonlyObjectType extends Type {
@@ -43,6 +45,12 @@ class ReadonlyObjectType extends Type {
       .map(([k, v]) => `${k}: ${v.format(seen)}`)
       .join(", ");
   }
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+    // TODO
+    for (const [field, type] of this.fields) {
+      type.setPolarity(polarity, changed);
+    }
+  }
 }
 
 class ReadonlyArrayType extends Type {
@@ -55,6 +63,9 @@ class ReadonlyArrayType extends Type {
   }
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
+  }
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+    // TODO
   }
 }
 
@@ -69,29 +80,36 @@ class ArrayType extends Type {
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+    // TODO
+  }
 }
 
-class TopType extends Type {
+abstract class AtomType extends Type {
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {}
+}
+
+class TopType extends AtomType {
   readonly clazz = "TopType";
 }
 
-class NullType extends Type {
+class NullType extends AtomType {
   readonly clazz = "NullType";
 }
 
-class StringType extends Type {
+class StringType extends AtomType {
   readonly clazz = "StringType";
 }
 
-class BooleanType extends Type {
+class BooleanType extends AtomType {
   readonly clazz = "BooleanType";
 }
 
-class IntType extends Type {
+class IntType extends AtomType {
   readonly clazz = "IntType";
 }
 
-class BottomType extends Type {
+class BottomType extends AtomType {
   readonly clazz = "BottomType";
 }
 
@@ -104,21 +122,38 @@ export function hasComponents(type: AnyType) {
 }
 
 export enum TypePolarity {
-  NONE = 0,
-  GENERAL = 1,
-  SPECIFIC = 2,
-  COMPONENT = 3,
+  NONE = 0, // 0b00
+  GENERAL = 1, // 0b01
+  SPECIFIC = 2, // 0b10
+  BIPOLAR = 3, // 0b11
 }
 
-export function preference(type: AnyType) {
-  return isFreeType(type) ? type.preference : null;
+export function polarity(type: AnyType) {
+  return isFreeType(type) ? type.polarity : null;
+}
+
+function isGeneral(type: FreeType) {
+  return (type.polarity & TypePolarity.GENERAL) !== 0;
+}
+
+function isSpecific(type: FreeType) {
+  return (type.polarity & TypePolarity.SPECIFIC) !== 0;
 }
 
 class FreeType extends Type {
   readonly clazz = "FreeType";
 
-  constructor(public readonly preference: TypePolarity) {
+  constructor(public polarity: TypePolarity) {
     super();
+  }
+
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+    const curr = this.polarity;
+    // Even though TS does not check this, we know this is safe
+    this.polarity |= polarity;
+    if (curr !== this.polarity) {
+      changed.add(this);
+    }
   }
 }
 
@@ -231,9 +266,6 @@ export class TypesRegistry {
     return t;
   }
 
-  // TODO keep in the graph all the transitive edges and literally ignore all neutral variables
-  // TODO except those in type components?
-
   subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
     this.graph.edge(a, node, b);
 
@@ -249,6 +281,29 @@ export class TypesRegistry {
     // Handle subtyping relationships of the components
     for (const [a, b] of newPairs) {
       handleSubtypingImplications(this, a, b, node);
+    }
+  }
+
+  propagatePolarities() {
+    // TODO propagate downwards the negative and upwards only the positive
+    let changed = new Set<FreeType>();
+
+    for (const [a, b] of this.supers) {
+      if (isFreeType(a) && a.polarity !== TypePolarity.NONE && !isFreeType(b)) {
+        b.setPolarity(a.polarity, changed);
+      }
+    }
+
+    while (changed.size > 0) {
+      const set = changed;
+      changed = new Set();
+      for (const a of set) {
+        for (const b of this.supers.get(a)) {
+          if (!isFreeType(b)) {
+            b.setPolarity(a.polarity, changed);
+          }
+        }
+      }
     }
   }
 
@@ -270,28 +325,23 @@ export class TypesRegistry {
     return this.save(new BooleanType(), node);
   }
 
-  free(preference: TypePolarity) {
+  free(preference: TypePolarity = TypePolarity.NONE) {
     return this.saveFree(new FreeType(preference));
   }
 
   readonlyObject(fields: readonly string[], node: AnyRule) {
     return this.save(
-      new ReadonlyObjectType(
-        fields.map(f => [f, this.free(TypePolarity.COMPONENT)])
-      ),
+      new ReadonlyObjectType(fields.map(f => [f, this.free()])),
       node
     );
   }
 
   readonlyArray(node: AnyRule) {
-    return this.save(
-      new ReadonlyArrayType(this.free(TypePolarity.COMPONENT)),
-      node
-    );
+    return this.save(new ReadonlyArrayType(this.free()), node);
   }
 
   array(node: AnyRule) {
-    return this.save(new ArrayType(this.free(TypePolarity.COMPONENT)), node);
+    return this.save(new ArrayType(this.free()), node);
   }
 
   [Symbol.iterator]() {

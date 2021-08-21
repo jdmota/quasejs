@@ -4,7 +4,7 @@ import {
   FreeType,
   TypePolarity,
   hasComponents,
-  preference,
+  polarity,
   TypesRegistry,
 } from "./types";
 
@@ -359,7 +359,7 @@ export class Normalizer {
         return new GenericType(
           this.lower(type),
           this.upper(type),
-          type.preference
+          type.polarity
         );
       default:
         never(type);

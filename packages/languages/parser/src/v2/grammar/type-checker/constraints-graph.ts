@@ -1,6 +1,6 @@
 import { expect, never } from "../../utils";
 import { AnyRule } from "../grammar-builder";
-import { AnyType, TypePolarity, preference } from "./types";
+import { AnyType, TypePolarity, polarity } from "./types";
 
 class Edge<N, E> {
   constructor(
@@ -58,7 +58,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   private upperHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
     if (seen.has(type)) return;
     seen.add(type);
-    const p = preference(type);
+    const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
         for (const dest of this.outDest(type)) {
@@ -75,11 +75,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
         }
         break;
       case TypePolarity.SPECIFIC:
-        set.add(type);
-        break;
-      case TypePolarity.COMPONENT:
-        set.add(type);
-        break;
+      case TypePolarity.BIPOLAR:
       case null:
         set.add(type);
         break;
@@ -91,7 +87,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   private lowerHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
     if (seen.has(type)) return;
     seen.add(type);
-    const p = preference(type);
+    const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
         for (const dest of this.inDest(type)) {
@@ -108,11 +104,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
         }
         break;
       case TypePolarity.GENERAL:
-        set.add(type);
-        break;
-      case TypePolarity.COMPONENT:
-        set.add(type);
-        break;
+      case TypePolarity.BIPOLAR:
       case null:
         set.add(type);
         break;

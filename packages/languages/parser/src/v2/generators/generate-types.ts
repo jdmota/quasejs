@@ -77,6 +77,8 @@ class Names {
 // TODO if a type is only used once, and we have a preference, choose that preference?
 
 export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
+  inferrer.registry.propagatePolarities();
+
   const lines = [
     `/* eslint-disable */`,
     `export type $Position = {pos:number;line:number;column:number;};`,

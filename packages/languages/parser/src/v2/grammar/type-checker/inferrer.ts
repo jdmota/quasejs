@@ -52,7 +52,7 @@ type RuleAnalyzer<T> = {
 };
 
 export class TypesInferrer implements RuleAnalyzer<Store> {
-  private readonly registry = new TypesRegistry();
+  public readonly registry = new TypesRegistry();
   public readonly normalizer = new Normalizer(this.registry);
   private readonly formatter = new GrammarFormatter();
   private readonly typeChecker = new TypeChecker(
@@ -154,7 +154,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   private exprType(value: Assignables) {
     let type = this.valueTypes.get(value);
     if (type == null) {
-      type = this.registry.free(TypePolarity.NONE);
+      type = this.registry.free();
       this.valueTypes.set(value, type);
     }
     return type;
