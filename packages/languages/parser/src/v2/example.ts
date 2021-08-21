@@ -73,7 +73,6 @@ const ruleC = rule(
   id("ret")
 );
 
-// FIXME we indeed need polarities in type components
 const ruleD = rule(
   "D",
   choice(

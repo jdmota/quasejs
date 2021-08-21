@@ -77,6 +77,9 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
       case TypePolarity.SPECIFIC:
         set.add(type);
         break;
+      case TypePolarity.COMPONENT:
+        set.add(type);
+        break;
       case null:
         set.add(type);
         break;
@@ -105,6 +108,9 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
         }
         break;
       case TypePolarity.GENERAL:
+        set.add(type);
+        break;
+      case TypePolarity.COMPONENT:
         set.add(type);
         break;
       case null:

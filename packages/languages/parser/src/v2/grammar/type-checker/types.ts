@@ -107,6 +107,7 @@ export enum TypePolarity {
   NONE = 0,
   GENERAL = 1,
   SPECIFIC = 2,
+  COMPONENT = 3,
 }
 
 export function preference(type: AnyType) {
@@ -230,6 +231,9 @@ export class TypesRegistry {
     return t;
   }
 
+  // TODO keep in the graph all the transitive edges and literally ignore all neutral variables
+  // TODO except those in type components?
+
   subtype(a: AnyType, b: AnyType, node: AnyRule | null) {
     this.graph.edge(a, node, b);
 
@@ -270,19 +274,24 @@ export class TypesRegistry {
     return this.saveFree(new FreeType(preference));
   }
 
-  readonlyObject(
-    fields: readonly (readonly [string, AnyType])[],
-    node: AnyRule
-  ) {
-    return this.save(new ReadonlyObjectType(fields), node);
+  readonlyObject(fields: readonly string[], node: AnyRule) {
+    return this.save(
+      new ReadonlyObjectType(
+        fields.map(f => [f, this.free(TypePolarity.COMPONENT)])
+      ),
+      node
+    );
   }
 
-  readonlyArray(component: AnyType, node: AnyRule) {
-    return this.save(new ReadonlyArrayType(component), node);
+  readonlyArray(node: AnyRule) {
+    return this.save(
+      new ReadonlyArrayType(this.free(TypePolarity.COMPONENT)),
+      node
+    );
   }
 
-  array(component: AnyType, node: AnyRule) {
-    return this.save(new ArrayType(component), node);
+  array(node: AnyRule) {
+    return this.save(new ArrayType(this.free(TypePolarity.COMPONENT)), node);
   }
 
   [Symbol.iterator]() {

@@ -30,6 +30,7 @@ import { TypesRegistry, AnyType, FreeType, TypePolarity } from "./types";
 import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
 import { Store } from "./store";
+import { nonNull } from "../../utils";
 
 export type RuleDeclInterface = Readonly<{
   argTypes: ReadonlyMap<string, AnyType>;
@@ -150,7 +151,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     return pair;
   }
 
-  private valueType(value: Assignables) {
+  private exprType(value: Assignables) {
     let type = this.valueTypes.get(value);
     if (type == null) {
       type = this.registry.free(TypePolarity.NONE);
@@ -222,7 +223,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
   eof(pre: Store, node: EofRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.null(node), this.valueType(node), node);
+    this.registry.subtype(this.registry.null(node), this.exprType(node), node);
   }
 
   string(pre: Store, node: StringRule, post: Store) {
@@ -241,24 +242,29 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       node.fields.map(([_, v]) => v),
       post
     );
-    this.registry.subtype(
-      this.registry.readonlyObject(
-        node.fields.map(([k, v]) => [k, this.valueType(v)]),
-        node
-      ),
-      this.valueType(node),
+
+    const objType = this.registry.readonlyObject(
+      node.fields.map(([k, _]) => k),
       node
     );
+    node.fields.forEach(([field, expr]) =>
+      this.registry.subtype(
+        this.exprType(expr),
+        nonNull(objType.fields.get(field)),
+        expr
+      )
+    );
+    this.registry.subtype(objType, this.exprType(node), node);
   }
 
   id(pre: Store, node: IdRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(pre.get(node.id), this.valueType(node), node);
+    this.registry.subtype(pre.get(node.id), this.exprType(node), node);
   }
 
   int(pre: Store, node: IntRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.int(node), this.valueType(node), node);
+    this.registry.subtype(this.registry.int(node), this.exprType(node), node);
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
@@ -267,11 +273,13 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this.visit(node.parent);
     //
     postExpr.propagateTo(post);
+    const objType = this.registry.readonlyObject([node.field], node);
     this.registry.subtype(
-      this.valueType(node.parent),
-      this.registry.readonlyObject([[node.field, this.valueType(node)]], node),
+      nonNull(objType.fields.get(node.field)),
+      this.exprType(node),
       node
     );
+    this.registry.subtype(this.exprType(node.parent), objType, node);
   }
 
   call2(pre: Store, node: Call2Rule, post: Store) {
@@ -299,12 +307,12 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       const expr = exprs.next();
       if (expected.done || expr.done) break;
       this.registry.subtype(
-        this.valueType(expr.value),
+        this.exprType(expr.value),
         expected.value,
         expr.value
       );
     }
-    this.registry.subtype(returnType, this.valueType(node), node);
+    this.registry.subtype(returnType, this.exprType(node), node);
   }
 
   field(pre: Store, node: FieldRule, post: Store) {
@@ -313,15 +321,17 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this.visit(node.rule);
     //
     if (node.multiple) {
+      const arrayType = this.registry.array(node);
       this.registry.subtype(
-        postExpr.get(node.name),
-        this.registry.array(this.valueType(node.rule), node),
+        this.exprType(node.rule),
+        arrayType.component,
         node
       );
+      this.registry.subtype(postExpr.get(node.name), arrayType, node);
       postExpr.propagateTo(post);
     } else {
       postExpr.propagateToExcept(post, node.name);
-      post.set(node.name, this.valueType(node.rule));
+      post.set(node.name, this.exprType(node.rule));
     }
   }
 
@@ -333,7 +343,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     //
     this.registry.subtype(
       this.registry.boolean(node.code),
-      this.valueType(node.code),
+      this.exprType(node.code),
       node.code
     );
   }
@@ -348,10 +358,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
     for (const [name, [{ multiple }]] of rule.fields) {
       if (multiple) {
-        preRule.set(
-          name,
-          this.registry.array(this.registry.free(TypePolarity.NONE), rule.rule)
-        );
+        preRule.set(name, this.registry.array(rule.rule));
       } else {
         preRule.set(name, this.registry.null(rule.rule));
       }
@@ -362,7 +369,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     const [preReturn, _] = this.store(rule.return);
     postRule.propagateTo(preReturn);
     this.visit(rule.return);
-    this.registry.subtype(this.valueType(rule.return), returnType, rule.return);
+    this.registry.subtype(this.exprType(rule.return), returnType, rule.return);
   }
 
   visit(node: AnyRule) {

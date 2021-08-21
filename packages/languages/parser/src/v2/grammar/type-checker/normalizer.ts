@@ -208,10 +208,10 @@ class NormalizedRegistry {
     // Avoid infinite recursion...
     let rec = this.processing.get(type);
     if (rec) {
-      this.usedRecursiveRefs.add(rec);
       return rec;
     }
     rec = new RecursiveRef();
+    this.usedRecursiveRefs.add(rec);
     this.processing.set(type, rec);
     // Normalize the type...
     const normalized = this._normalize(type);
@@ -222,6 +222,13 @@ class NormalizedRegistry {
     return normalized;
   }
 }
+
+// TODO i think the point here is that
+// we could choose the lower bound for every type
+// of course we dont want that because that is not useful
+// so we give polatiries to the types
+// now the issue is, if I decide to choose the lower bound of some type
+// I cannot cross a type that has choosen the upper bound
 
 export class Normalizer {
   private readonly upperRegistry: NormalizedRegistry;

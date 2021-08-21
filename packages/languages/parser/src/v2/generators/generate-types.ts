@@ -3,10 +3,7 @@ import { TypesInferrer } from "../grammar/type-checker/inferrer";
 import { AnyNormalizedType } from "../grammar/type-checker/normalizer";
 import { never, nonNull } from "../utils";
 
-function toTypescript(
-  type: AnyNormalizedType,
-  names: ReadonlyMap<AnyNormalizedType, string>
-): string {
+function toTypescript(type: AnyNormalizedType, names: Names): string {
   switch (type.clazz) {
     case "TopType":
       return "unknown";
@@ -40,13 +37,40 @@ function toTypescript(
         .map(t => toTypescript(t, names))
         .join(" & ")})`;
     case "RecursiveRef":
-      return nonNull(names.get(type.get()));
+      return names.get(type.get());
     case "GenericType":
       const lower = toTypescript(type.lower, names);
       const upper = toTypescript(type.upper, names);
       return `T${type.id} /* [${lower}; ${upper}] */`;
     default:
       never(type);
+  }
+}
+
+class Names {
+  private names = new Map<AnyNormalizedType, string>();
+  private uuid = 1;
+
+  get(type: AnyNormalizedType) {
+    let name = this.names.get(type);
+    if (name == null) {
+      name = `$rec${this.uuid++}`;
+      this.names.set(type, name);
+    }
+    return name;
+  }
+
+  set(type: AnyNormalizedType, proposal: string) {
+    let name = this.names.get(type);
+    if (name == null) {
+      name = proposal;
+      this.names.set(type, proposal);
+    }
+    return name;
+  }
+
+  [Symbol.iterator]() {
+    return this.names.entries();
   }
 }
 
@@ -60,13 +84,8 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   ];
 
   const normalizer = inferrer.normalizer;
-  const names = new Map<AnyNormalizedType, string>();
+  const names = new Names();
   const astNodes = [];
-
-  let recRefId = 1;
-  for (const recRef of normalizer.usedRecursiveRefs()) {
-    names.set(recRef.get(), `$rec${recRefId++}`);
-  }
 
   for (const [rule, { argTypes, returnType }] of inferrer.getRuleInterfaces()) {
     const normalizedArgs = Array.from(argTypes).map(
@@ -82,10 +101,6 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   }
 
   // TODO Simplify: never <: T1 <: A <: unknown
-
-  for (const [type, name] of names) {
-    lines.push(`export type ${name} = ${toTypescript(type, names)};`);
-  }
 
   lines.push(`export type $Nodes = ${astNodes.join("|")};`);
 
@@ -115,6 +130,10 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   lines.push(`};`);
 
   // TODO token rules
+
+  for (const [type, name] of names) {
+    lines.push(`export type ${name} = ${toTypescript(type, names)};`);
+  }
 
   lines.push(``);
   return lines.join(`\n`);
