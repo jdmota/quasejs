@@ -1,10 +1,8 @@
 import { first, never, nonNull } from "../../utils";
 import {
   AnyType,
-  FreeType,
   TypePolarity,
-  hasComponents,
-  polarity,
+  isConstructedType,
   TypesRegistry,
 } from "./types";
 
@@ -296,7 +294,7 @@ export class Normalizer {
       case "FreeType": {
         const set = new Set<AnyNormalizedType>();
         for (const sub of this.registry.graph.upper(type)) {
-          set.add(hasComponents(sub) ? this.upper(sub) : this.exact(sub));
+          set.add(isConstructedType(sub) ? this.upper(sub) : this.exact(sub));
         }
         return intersection(set);
       }
@@ -330,7 +328,7 @@ export class Normalizer {
       case "FreeType": {
         const set = new Set<AnyNormalizedType>();
         for (const sub of this.registry.graph.lower(type)) {
-          set.add(hasComponents(sub) ? this.lower(sub) : this.exact(sub));
+          set.add(isConstructedType(sub) ? this.lower(sub) : this.exact(sub));
         }
         return union(set);
       }

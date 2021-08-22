@@ -75,7 +75,8 @@ class Names {
 }
 
 // TODO need minimization on intersections
-// TODO to better choose generic types, we cannot just choose the lower bound...
+// TODO better choose generic types, we cannot just choose the lower bound...
+// TODO create function types and drop all together the lower/upper normalizations
 
 export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   inferrer.registry.propagatePolarities();

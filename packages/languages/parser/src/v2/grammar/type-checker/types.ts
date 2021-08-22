@@ -4,6 +4,8 @@ import { ConstraintsGraph } from "./constraints-graph";
 
 // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
 
+const EMPTY_FREE_TYPE_ARRAY: readonly FreeType[] = [];
+
 abstract class Type {
   formatMeta(seen: Set<Type>): string {
     return "";
@@ -28,16 +30,18 @@ abstract class Type {
   toString() {
     return this.format(new Set());
   }
-
-  abstract positiveTypes(set: Set<FreeType>): void;
-  abstract negativeTypes(set: Set<FreeType>): void;
 }
 
-class ReadonlyObjectType extends Type {
+abstract class ConstructedType extends Type {
+  abstract positiveTypes(): readonly FreeType[];
+  abstract negativeTypes(): readonly FreeType[];
+}
+
+class ReadonlyObjectType extends ConstructedType {
   readonly clazz = "ReadonlyObjectType";
 
-  readonly fields: ReadonlyMap<string, AnyType>;
-  constructor(fields: readonly (readonly [string, AnyType])[]) {
+  readonly fields: ReadonlyMap<string, FreeType>;
+  constructor(fields: readonly (readonly [string, FreeType])[]) {
     super();
     this.fields = new Map(fields);
   }
@@ -46,62 +50,53 @@ class ReadonlyObjectType extends Type {
       .map(([k, v]) => `${k}: ${v.format(seen)}`)
       .join(", ");
   }
-  positiveTypes(set: Set<FreeType>): void {
-    for (const type of this.fields.values()) {
-      type.positiveTypes(set);
-    }
+  positiveTypes(): readonly FreeType[] {
+    return Array.from(this.fields.values());
   }
-  negativeTypes(set: Set<FreeType>): void {
-    for (const type of this.fields.values()) {
-      type.negativeTypes(set);
-    }
+  negativeTypes(): readonly FreeType[] {
+    return EMPTY_FREE_TYPE_ARRAY;
   }
 }
 
-class ReadonlyArrayType extends Type {
+class ReadonlyArrayType extends ConstructedType {
   readonly clazz = "ReadonlyArrayType";
 
-  readonly component: AnyType;
-  constructor(component: AnyType) {
+  readonly component: FreeType;
+  constructor(component: FreeType) {
     super();
     this.component = component;
   }
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  positiveTypes(set: Set<FreeType>): void {
-    this.component.positiveTypes(set);
+  positiveTypes(): readonly FreeType[] {
+    return [this.component];
   }
-  negativeTypes(set: Set<FreeType>): void {
-    this.component.negativeTypes(set);
+  negativeTypes(): readonly FreeType[] {
+    return EMPTY_FREE_TYPE_ARRAY;
   }
 }
 
-class ArrayType extends Type {
+class ArrayType extends ConstructedType {
   readonly clazz = "ArrayType";
 
-  readonly component: AnyType;
-  constructor(component: AnyType) {
+  readonly component: FreeType;
+  constructor(component: FreeType) {
     super();
     this.component = component;
   }
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  positiveTypes(set: Set<FreeType>): void {
-    this.component.positiveTypes(set);
-    this.component.negativeTypes(set);
+  positiveTypes(): readonly FreeType[] {
+    return [this.component];
   }
-  negativeTypes(set: Set<FreeType>): void {
-    this.component.positiveTypes(set);
-    this.component.negativeTypes(set);
+  negativeTypes(): readonly FreeType[] {
+    return [this.component];
   }
 }
 
-abstract class AtomType extends Type {
-  positiveTypes(set: Set<FreeType>): void {}
-  negativeTypes(set: Set<FreeType>): void {}
-}
+abstract class AtomType extends Type {}
 
 class TopType extends AtomType {
   readonly clazz = "TopType";
@@ -127,7 +122,12 @@ class BottomType extends AtomType {
   readonly clazz = "BottomType";
 }
 
-export function hasComponents(type: AnyType) {
+export type AnyConstructedType =
+  | ReadonlyObjectType
+  | ReadonlyArrayType
+  | ArrayType;
+
+export function isConstructedType(type: AnyType): type is AnyConstructedType {
   return (
     type.clazz === "ReadonlyArrayType" ||
     type.clazz === "ReadonlyObjectType" ||
@@ -168,13 +168,6 @@ class FreeType extends Type {
     if (curr !== this.polarity) {
       changed.add(this);
     }
-  }
-  positiveTypes(set: Set<FreeType>): void {
-    set.add(this);
-  }
-  negativeTypes(set: Set<FreeType>): void {
-    // set.add(this);
-    // TODO should this be enabled or not? If it is, it seems to be creating bipolar type vars...
   }
 }
 
@@ -328,22 +321,12 @@ export class TypesRegistry {
 
       for (const a of prevPositive) {
         for (const b of this.subs.get(a)) {
-          if (!isFreeType(b)) {
-            const positiveVars = new Set<FreeType>();
-            const negativeVars = new Set<FreeType>();
-            b.positiveTypes(positiveVars);
-            b.negativeTypes(negativeVars);
-            for (const t of positiveVars) {
+          if (isConstructedType(b)) {
+            for (const t of b.positiveTypes()) {
               t.setPolarity(TypePolarity.POSITIVE, changedPositive);
-              if (t.polarity === TypePolarity.BIPOLAR) {
-                setTimeout(() => console.log(a, b, t, "+"));
-              }
             }
-            for (const t of negativeVars) {
+            for (const t of b.negativeTypes()) {
               t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
-              if (t.polarity === TypePolarity.BIPOLAR) {
-                setTimeout(() => console.log(a, b, t, "-"));
-              }
             }
           }
         }
@@ -351,22 +334,12 @@ export class TypesRegistry {
 
       for (const a of prevNegative) {
         for (const b of this.supers.get(a)) {
-          if (!isFreeType(b)) {
-            const positiveVars = new Set<FreeType>();
-            const negativeVars = new Set<FreeType>();
-            b.positiveTypes(positiveVars);
-            b.negativeTypes(negativeVars);
-            for (const t of positiveVars) {
+          if (isConstructedType(b)) {
+            for (const t of b.positiveTypes()) {
               t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
-              if (t.polarity === TypePolarity.BIPOLAR) {
-                setTimeout(() => console.log(a, b, t, "-"));
-              }
             }
-            for (const t of negativeVars) {
+            for (const t of b.negativeTypes()) {
               t.setPolarity(TypePolarity.POSITIVE, changedPositive);
-              if (t.polarity === TypePolarity.BIPOLAR) {
-                setTimeout(() => console.log(a, b, t, "+"));
-              }
             }
           }
         }
