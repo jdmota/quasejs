@@ -26,7 +26,7 @@ import {
   ExprRule,
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
-import { TypesRegistry, AnyType, FreeType, TypePolarity } from "./types";
+import { TypesRegistry, AnyType, TypePolarity, FreeType } from "./types";
 import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
 import { Store } from "./store";
@@ -39,11 +39,6 @@ export type RuleDeclInterface = Readonly<{
 
 export type TokenDeclInterface = Readonly<{
   argTypes: ReadonlyMap<string, AnyType>; // Empty map
-  returnType: AnyType;
-}>;
-
-export type ExternalCallInterface = Readonly<{
-  argTypes: AnyType[];
   returnType: AnyType;
 }>;
 
@@ -69,7 +64,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     TokenDeclaration,
     TokenDeclInterface
   >();
-  private readonly externalCallTypes = new Map<string, ExternalCallInterface>();
+  private readonly externalCallTypes = new Map<string, FreeType>();
 
   constructor(private readonly grammar: Grammar) {}
 
@@ -84,10 +79,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     return this.tokenDeclTypes;
   }
 
-  public getExternalCallInterfaces(): ReadonlyMap<
-    string,
-    ExternalCallInterface
-  > {
+  public getExternalCallInterfaces(): ReadonlyMap<string, FreeType> {
     return this.externalCallTypes;
   }
 
@@ -128,15 +120,15 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   public externalCallInterface(call: Call2Rule) {
-    let inter = this.externalCallTypes.get(call.id);
-    if (!inter) {
-      inter = {
-        argTypes: call.args.map(_ => this.registry.free(TypePolarity.NEGATIVE)),
-        returnType: this.registry.free(TypePolarity.POSITIVE),
-      };
-      this.externalCallTypes.set(call.id, inter);
+    let type = this.externalCallTypes.get(call.id);
+    if (!type) {
+      // These are functions that need to be provided
+      // so they are input to the parser
+      // thus having negative polarity
+      type = this.registry.free(TypePolarity.NEGATIVE);
+      this.externalCallTypes.set(call.id, type);
     }
-    return inter;
+    return type;
   }
 
   private readonly stores = new Map<AnyRule, readonly [Store, Store]>();
@@ -283,9 +275,14 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   call2(pre: Store, node: Call2Rule, post: Store) {
-    const { argTypes, returnType } = this.externalCallInterface(node);
     this.visitSeq(pre, node.args, post);
-    this.handleCall(argTypes.values(), node.args.values(), returnType, node);
+    //
+    const funcType = this.registry.function(node.args.length, node);
+    this.registry.subtype(this.externalCallInterface(node), funcType, node);
+    node.args.forEach((a, i) => {
+      this.registry.subtype(this.exprType(a), funcType.args[i], a);
+    });
+    this.registry.subtype(funcType.ret, this.exprType(node), node);
   }
 
   call(pre: Store, node: CallRule, post: Store) {
@@ -293,18 +290,12 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       this.grammar.getRule(node.id)
     );
     this.visitSeq(pre, node.args, post);
-    this.handleCall(argTypes.values(), node.args.values(), returnType, node);
-  }
-
-  private handleCall(
-    argTypes: IterableIterator<AnyType>,
-    exprs: IterableIterator<ExprRule>,
-    returnType: AnyType,
-    node: CallRule | Call2Rule
-  ) {
+    //
+    const argTypesIt = argTypes.values();
+    const exprsIt = node.args.values();
     while (true) {
-      const expected = argTypes.next();
-      const expr = exprs.next();
+      const expected = argTypesIt.next();
+      const expr = exprsIt.next();
       if (expected.done || expr.done) break;
       this.registry.subtype(
         this.exprType(expr.value),

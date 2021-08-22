@@ -28,6 +28,23 @@ class RecursiveRef extends NormalizedType {
   }
 }
 
+class FunctionType extends NormalizedType {
+  readonly clazz = "FunctionType";
+
+  constructor(
+    readonly args: readonly AnyNormalizedType[],
+    readonly ret: AnyNormalizedType
+  ) {
+    super();
+  }
+
+  format(): string {
+    return `(${this.args
+      .map(a => a.format())
+      .join(", ")}) => ${this.ret.format()}`;
+  }
+}
+
 class ReadonlyObjectType extends NormalizedType {
   readonly clazz = "ReadonlyObjectType";
 
@@ -173,6 +190,7 @@ class IntersectionType extends NormalizedType {
 
 export type AnyNormalizedType =
   | RecursiveRef
+  | FunctionType
   | ReadonlyObjectType
   | ReadonlyArrayType
   | ArrayType
@@ -229,145 +247,20 @@ class NormalizedRegistry {
 // I cannot cross a type that has choosen the upper bound
 
 export class Normalizer {
-  private readonly upperRegistry: NormalizedRegistry;
-  private readonly lowerRegistry: NormalizedRegistry;
-  private readonly exactRegistry: NormalizedRegistry;
   private readonly normalizeRegistry: NormalizedRegistry;
 
   constructor(private readonly registry: TypesRegistry) {
-    this.upperRegistry = new NormalizedRegistry(this._upper.bind(this));
-    this.lowerRegistry = new NormalizedRegistry(this._lower.bind(this));
-    this.exactRegistry = new NormalizedRegistry(this._exact.bind(this));
     this.normalizeRegistry = new NormalizedRegistry(this._normalize.bind(this));
   }
 
   *usedRecursiveRefs() {
-    for (const rec of this.upperRegistry.getUsedRecursiveRefs()) {
+    for (const rec of this.normalizeRegistry.getUsedRecursiveRefs()) {
       yield rec;
     }
-    for (const rec of this.lowerRegistry.getUsedRecursiveRefs()) {
-      yield rec;
-    }
-    for (const rec of this.exactRegistry.getUsedRecursiveRefs()) {
-      yield rec;
-    }
-  }
-
-  upper(type: AnyType) {
-    return this.upperRegistry.normalize(type);
-  }
-
-  lower(type: AnyType) {
-    return this.lowerRegistry.normalize(type);
-  }
-
-  exact(type: AnyType) {
-    return this.exactRegistry.normalize(type);
   }
 
   normalize(type: AnyType) {
     return this.normalizeRegistry.normalize(type);
-  }
-
-  private _upper(type: AnyType): AnyNormalizedType {
-    switch (type.clazz) {
-      case "TopType":
-        return new TopType();
-      case "StringType":
-        return new StringType();
-      case "IntType":
-        return new IntType();
-      case "NullType":
-        return new NullType();
-      case "BooleanType":
-        return new BooleanType();
-      case "BottomType":
-        return new BottomType();
-      case "ReadonlyObjectType":
-        return new ReadonlyObjectType(
-          Array.from(type.fields).map(([k, v]) => [k, this.upper(v)])
-        );
-      case "ReadonlyArrayType":
-        return new ReadonlyArrayType(this.upper(type.component));
-      case "ArrayType":
-        return new ArrayType(this.exact(type.component));
-      case "FreeType": {
-        const set = new Set<AnyNormalizedType>();
-        for (const sub of this.registry.graph.upper(type)) {
-          set.add(isConstructedType(sub) ? this.upper(sub) : this.exact(sub));
-        }
-        return intersection(set);
-      }
-      default:
-        never(type);
-    }
-  }
-
-  private _lower(type: AnyType): AnyNormalizedType {
-    switch (type.clazz) {
-      case "TopType":
-        return new TopType();
-      case "StringType":
-        return new StringType();
-      case "IntType":
-        return new IntType();
-      case "NullType":
-        return new NullType();
-      case "BooleanType":
-        return new BooleanType();
-      case "BottomType":
-        return new BottomType();
-      case "ReadonlyObjectType":
-        return new ReadonlyObjectType(
-          Array.from(type.fields).map(([k, v]) => [k, this.lower(v)])
-        );
-      case "ReadonlyArrayType":
-        return new ReadonlyArrayType(this.lower(type.component));
-      case "ArrayType":
-        return new ArrayType(this.exact(type.component));
-      case "FreeType": {
-        const set = new Set<AnyNormalizedType>();
-        for (const sub of this.registry.graph.lower(type)) {
-          set.add(isConstructedType(sub) ? this.lower(sub) : this.exact(sub));
-        }
-        return union(set);
-      }
-      default:
-        never(type);
-    }
-  }
-
-  private _exact(type: AnyType): AnyNormalizedType {
-    switch (type.clazz) {
-      case "TopType":
-        return new TopType();
-      case "StringType":
-        return new StringType();
-      case "IntType":
-        return new IntType();
-      case "NullType":
-        return new NullType();
-      case "BooleanType":
-        return new BooleanType();
-      case "BottomType":
-        return new BottomType();
-      case "ReadonlyObjectType":
-        return new ReadonlyObjectType(
-          Array.from(type.fields).map(([k, v]) => [k, this.exact(v)])
-        );
-      case "ReadonlyArrayType":
-        return new ReadonlyArrayType(this.exact(type.component));
-      case "ArrayType":
-        return new ArrayType(this.exact(type.component));
-      case "FreeType":
-        return new GenericType(
-          this.lower(type),
-          this.upper(type),
-          type.polarity
-        );
-      default:
-        never(type);
-    }
   }
 
   private _normalize(type: AnyType): AnyNormalizedType {
@@ -384,14 +277,19 @@ export class Normalizer {
         return new BooleanType();
       case "BottomType":
         return new BottomType();
+      case "FunctionType":
+        return new FunctionType(
+          type.args.map(a => this.normalize(a)),
+          this.normalize(type.ret)
+        );
       case "ReadonlyObjectType":
         return new ReadonlyObjectType(
-          Array.from(type.fields).map(([k, v]) => [k, this._normalize(v)])
+          Array.from(type.fields).map(([k, v]) => [k, this.normalize(v)])
         );
       case "ReadonlyArrayType":
-        return new ReadonlyArrayType(this._normalize(type.component));
+        return new ReadonlyArrayType(this.normalize(type.component));
       case "ArrayType":
-        return new ArrayType(this._normalize(type.component));
+        return new ArrayType(this.normalize(type.component));
       case "FreeType":
         switch (type.polarity) {
           case TypePolarity.NONE:

@@ -37,6 +37,21 @@ abstract class ConstructedType extends Type {
   abstract negativeTypes(): readonly FreeType[];
 }
 
+class FunctionType extends ConstructedType {
+  readonly clazz = "FunctionType";
+
+  constructor(readonly args: readonly FreeType[], readonly ret: FreeType) {
+    super();
+  }
+
+  positiveTypes(): readonly FreeType[] {
+    return [this.ret];
+  }
+  negativeTypes(): readonly FreeType[] {
+    return this.args;
+  }
+}
+
 class ReadonlyObjectType extends ConstructedType {
   readonly clazz = "ReadonlyObjectType";
 
@@ -123,12 +138,14 @@ class BottomType extends AtomType {
 }
 
 export type AnyConstructedType =
+  | FunctionType
   | ReadonlyObjectType
   | ReadonlyArrayType
   | ArrayType;
 
 export function isConstructedType(type: AnyType): type is AnyConstructedType {
   return (
+    type.clazz === "FunctionType" ||
     type.clazz === "ReadonlyArrayType" ||
     type.clazz === "ReadonlyObjectType" ||
     type.clazz === "ArrayType"
@@ -241,6 +258,7 @@ export function isFreeType(t: AnyType): t is FreeType {
 }
 
 export type AnyType =
+  | FunctionType
   | ReadonlyObjectType
   | ReadonlyArrayType
   | ArrayType
@@ -367,6 +385,14 @@ export class TypesRegistry {
 
   free(preference: TypePolarity = TypePolarity.NONE) {
     return this.saveFree(new FreeType(preference));
+  }
+
+  function(argNum: number, node: AnyRule) {
+    const args = [];
+    for (let i = 0; i < argNum; i++) {
+      args.push(this.free());
+    }
+    return this.save(new FunctionType(args, this.free()), node);
   }
 
   readonlyObject(fields: readonly string[], node: AnyRule) {
@@ -505,6 +531,16 @@ function isSubtype2(
         isSubtype2(registry, set, b.component, a.component)) ||
       (b instanceof ReadonlyArrayType &&
         isSubtype2(registry, set, a.component, b.component))
+    );
+  }
+
+  // T1 -> T2 is a subtype of T3 -> T4 if T3 <: T1 and T2 <: T3
+  if (a instanceof FunctionType) {
+    return (
+      b instanceof FunctionType &&
+      a.args.length === b.args.length &&
+      a.args.every((argA, i) => isSubtype2(registry, set, b.args[i], argA)) &&
+      isSubtype2(registry, set, a.ret, b.ret)
     );
   }
 

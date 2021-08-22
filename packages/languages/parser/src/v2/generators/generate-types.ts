@@ -17,6 +17,10 @@ function toTypescript(type: AnyNormalizedType, names: Names): string {
       return "boolean";
     case "BottomType":
       return "never";
+    case "FunctionType":
+      return `((${type.args
+        .map((a, i) => `arg${i}: ${toTypescript(a, names)}`)
+        .join(", ")}) => ${toTypescript(type.ret, names)})`;
     case "ReadonlyObjectType":
       if (type.fields.length === 0) {
         return "Readonly<Record<string, never>>";
@@ -76,7 +80,6 @@ class Names {
 
 // TODO need minimization on intersections
 // TODO better choose generic types, we cannot just choose the lower bound...
-// TODO create function types and drop all together the lower/upper normalizations
 
 export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   inferrer.registry.propagatePolarities();
@@ -107,26 +110,9 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   lines.push(`export type $Nodes = ${astNodes.join("|")};`);
 
   lines.push(`export type $ExternalCalls = {`);
-  for (const [
-    callName,
-    { argTypes, returnType },
-  ] of inferrer.getExternalCallInterfaces()) {
-    // Even though for arguments we prefer more generic types,
-    // and for returns we prefer specific types,
-    // here we are defining the functional interface,
-    // so for the arguments we choose the lower bound,
-    // and for the return type we choose the upper bound.
-    // This allows implementations of this functional interface
-    // to choose a more generic type (above the lower bound)
-    // and a more specific type (below the upper bound)
-
-    const normalizedArgs = argTypes.map(type => normalizer.lower(type));
-    const normalizedReturn = normalizer.upper(returnType);
-
+  for (const [callName, funcType] of inferrer.getExternalCallInterfaces()) {
     lines.push(
-      `  ${callName}: (${normalizedArgs.map(
-        (type, i) => `a${i}: ${toTypescript(type, names)}`
-      )}) => ${toTypescript(normalizedReturn, names)};`
+      `  ${callName}: ${toTypescript(normalizer.normalize(funcType), names)};`
     );
   }
   lines.push(`};`);
