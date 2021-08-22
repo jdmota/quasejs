@@ -74,7 +74,8 @@ class Names {
   }
 }
 
-// TODO if a type is only used once, and we have a preference, choose that preference?
+// TODO need minimization on intersections
+// TODO to better choose generic types, we cannot just choose the lower bound...
 
 export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
   inferrer.registry.propagatePolarities();
@@ -91,9 +92,9 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
 
   for (const [rule, { argTypes, returnType }] of inferrer.getRuleInterfaces()) {
     const normalizedArgs = Array.from(argTypes).map(
-      ([name, type]) => [name, normalizer.exact(type)] as const
+      ([name, type]) => [name, normalizer.normalize(type)] as const
     );
-    const normalizedReturn = normalizer.exact(returnType);
+    const normalizedReturn = normalizer.normalize(returnType);
 
     normalizedArgs.forEach(([name, type]) =>
       names.set(type, `${rule.name}_${name}`)
@@ -101,8 +102,6 @@ export function generateTypes(grammar: Grammar, inferrer: TypesInferrer) {
     names.set(normalizedReturn, rule.name);
     astNodes.push(rule.name);
   }
-
-  // TODO Simplify: never <: T1 <: A <: unknown
 
   lines.push(`export type $Nodes = ${astNodes.join("|")};`);
 

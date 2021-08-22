@@ -234,11 +234,13 @@ export class Normalizer {
   private readonly upperRegistry: NormalizedRegistry;
   private readonly lowerRegistry: NormalizedRegistry;
   private readonly exactRegistry: NormalizedRegistry;
+  private readonly normalizeRegistry: NormalizedRegistry;
 
   constructor(private readonly registry: TypesRegistry) {
     this.upperRegistry = new NormalizedRegistry(this._upper.bind(this));
     this.lowerRegistry = new NormalizedRegistry(this._lower.bind(this));
     this.exactRegistry = new NormalizedRegistry(this._exact.bind(this));
+    this.normalizeRegistry = new NormalizedRegistry(this._normalize.bind(this));
   }
 
   *usedRecursiveRefs() {
@@ -263,6 +265,10 @@ export class Normalizer {
 
   exact(type: AnyType) {
     return this.exactRegistry.normalize(type);
+  }
+
+  normalize(type: AnyType) {
+    return this.normalizeRegistry.normalize(type);
   }
 
   private _upper(type: AnyType): AnyNormalizedType {
@@ -361,6 +367,69 @@ export class Normalizer {
           this.upper(type),
           type.polarity
         );
+      default:
+        never(type);
+    }
+  }
+
+  private _normalize(type: AnyType): AnyNormalizedType {
+    switch (type.clazz) {
+      case "TopType":
+        return new TopType();
+      case "StringType":
+        return new StringType();
+      case "IntType":
+        return new IntType();
+      case "NullType":
+        return new NullType();
+      case "BooleanType":
+        return new BooleanType();
+      case "BottomType":
+        return new BottomType();
+      case "ReadonlyObjectType":
+        return new ReadonlyObjectType(
+          Array.from(type.fields).map(([k, v]) => [k, this._normalize(v)])
+        );
+      case "ReadonlyArrayType":
+        return new ReadonlyArrayType(this._normalize(type.component));
+      case "ArrayType":
+        return new ArrayType(this._normalize(type.component));
+      case "FreeType":
+        switch (type.polarity) {
+          case TypePolarity.NONE:
+            throw new Error("Cannot normalize type with no polarity");
+          case TypePolarity.POSITIVE: {
+            const set = new Set<AnyNormalizedType>();
+            for (const sub of this.registry.graph.lower(type)) {
+              set.add(this.normalize(sub));
+            }
+            return union(set);
+          }
+          case TypePolarity.NEGATIVE: {
+            const set = new Set<AnyNormalizedType>();
+            for (const sub of this.registry.graph.upper(type)) {
+              set.add(this.normalize(sub));
+            }
+            return intersection(set);
+          }
+          case TypePolarity.BIPOLAR: {
+            const lowerSet = new Set<AnyNormalizedType>();
+            for (const sub of this.registry.graph.lower(type)) {
+              lowerSet.add(this.normalize(sub));
+            }
+            const upperSet = new Set<AnyNormalizedType>();
+            for (const sub of this.registry.graph.upper(type)) {
+              upperSet.add(this.normalize(sub));
+            }
+            return new GenericType(
+              union(lowerSet),
+              intersection(upperSet),
+              type.polarity
+            );
+          }
+          default:
+            never(type.polarity);
+        }
       default:
         never(type);
     }

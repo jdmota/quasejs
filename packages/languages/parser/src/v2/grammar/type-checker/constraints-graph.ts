@@ -65,7 +65,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
           this.upperHelper(dest, set, seen);
         }
         break;
-      case TypePolarity.GENERAL:
+      case TypePolarity.NEGATIVE:
         if (EXPERIMENTAL) {
           for (const dest of this.outDest(type)) {
             this.upperHelper(dest, set, seen);
@@ -74,7 +74,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
           set.add(type);
         }
         break;
-      case TypePolarity.SPECIFIC:
+      case TypePolarity.POSITIVE:
       case TypePolarity.BIPOLAR:
       case null:
         set.add(type);
@@ -94,7 +94,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
           this.lowerHelper(dest, set, seen);
         }
         break;
-      case TypePolarity.SPECIFIC:
+      case TypePolarity.POSITIVE:
         if (EXPERIMENTAL) {
           for (const dest of this.inDest(type)) {
             this.lowerHelper(dest, set, seen);
@@ -103,7 +103,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
           set.add(type);
         }
         break;
-      case TypePolarity.GENERAL:
+      case TypePolarity.NEGATIVE:
       case TypePolarity.BIPOLAR:
       case null:
         set.add(type);

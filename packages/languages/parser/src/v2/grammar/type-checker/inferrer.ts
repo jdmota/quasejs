@@ -105,10 +105,10 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
         argTypes: new Map(
           rule.args.map(arg => [
             arg.arg,
-            this.registry.free(TypePolarity.GENERAL),
+            this.registry.free(TypePolarity.NEGATIVE),
           ])
         ),
-        returnType: this.registry.free(TypePolarity.SPECIFIC),
+        returnType: this.registry.free(TypePolarity.POSITIVE),
       };
       this.ruleDeclTypes.set(rule, inter);
     }
@@ -120,7 +120,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     if (!inter) {
       inter = {
         argTypes: new Map(),
-        returnType: this.registry.free(TypePolarity.SPECIFIC),
+        returnType: this.registry.free(TypePolarity.POSITIVE),
       };
       this.tokenDeclTypes.set(rule, inter);
     }
@@ -131,8 +131,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     let inter = this.externalCallTypes.get(call.id);
     if (!inter) {
       inter = {
-        argTypes: call.args.map(_ => this.registry.free(TypePolarity.GENERAL)),
-        returnType: this.registry.free(TypePolarity.SPECIFIC),
+        argTypes: call.args.map(_ => this.registry.free(TypePolarity.NEGATIVE)),
+        returnType: this.registry.free(TypePolarity.POSITIVE),
       };
       this.externalCallTypes.set(call.id, inter);
     }

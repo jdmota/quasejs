@@ -29,7 +29,8 @@ abstract class Type {
     return this.format(new Set());
   }
 
-  abstract setPolarity(polarity: TypePolarity, changed: Set<FreeType>): void;
+  abstract positiveTypes(set: Set<FreeType>): void;
+  abstract negativeTypes(set: Set<FreeType>): void;
 }
 
 class ReadonlyObjectType extends Type {
@@ -45,10 +46,14 @@ class ReadonlyObjectType extends Type {
       .map(([k, v]) => `${k}: ${v.format(seen)}`)
       .join(", ");
   }
-  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
-    // TODO
-    for (const [field, type] of this.fields) {
-      type.setPolarity(polarity, changed);
+  positiveTypes(set: Set<FreeType>): void {
+    for (const type of this.fields.values()) {
+      type.positiveTypes(set);
+    }
+  }
+  negativeTypes(set: Set<FreeType>): void {
+    for (const type of this.fields.values()) {
+      type.negativeTypes(set);
     }
   }
 }
@@ -64,8 +69,11 @@ class ReadonlyArrayType extends Type {
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
-    // TODO
+  positiveTypes(set: Set<FreeType>): void {
+    this.component.positiveTypes(set);
+  }
+  negativeTypes(set: Set<FreeType>): void {
+    this.component.negativeTypes(set);
   }
 }
 
@@ -80,13 +88,19 @@ class ArrayType extends Type {
   formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
-    // TODO
+  positiveTypes(set: Set<FreeType>): void {
+    this.component.positiveTypes(set);
+    this.component.negativeTypes(set);
+  }
+  negativeTypes(set: Set<FreeType>): void {
+    this.component.positiveTypes(set);
+    this.component.negativeTypes(set);
   }
 }
 
 abstract class AtomType extends Type {
-  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {}
+  positiveTypes(set: Set<FreeType>): void {}
+  negativeTypes(set: Set<FreeType>): void {}
 }
 
 class TopType extends AtomType {
@@ -123,8 +137,8 @@ export function hasComponents(type: AnyType) {
 
 export enum TypePolarity {
   NONE = 0, // 0b00
-  GENERAL = 1, // 0b01
-  SPECIFIC = 2, // 0b10
+  NEGATIVE = 1, // 0b01 - GENERAL - INPUT
+  POSITIVE = 2, // 0b10 - SPECIFIC - OUTPUT
   BIPOLAR = 3, // 0b11
 }
 
@@ -132,12 +146,12 @@ export function polarity(type: AnyType) {
   return isFreeType(type) ? type.polarity : null;
 }
 
-function isGeneral(type: FreeType) {
-  return (type.polarity & TypePolarity.GENERAL) !== 0;
+function isNegative(type: FreeType) {
+  return (type.polarity & TypePolarity.NEGATIVE) !== 0;
 }
 
-function isSpecific(type: FreeType) {
-  return (type.polarity & TypePolarity.SPECIFIC) !== 0;
+function isPositive(type: FreeType) {
+  return (type.polarity & TypePolarity.POSITIVE) !== 0;
 }
 
 class FreeType extends Type {
@@ -154,6 +168,13 @@ class FreeType extends Type {
     if (curr !== this.polarity) {
       changed.add(this);
     }
+  }
+  positiveTypes(set: Set<FreeType>): void {
+    set.add(this);
+  }
+  negativeTypes(set: Set<FreeType>): void {
+    // set.add(this);
+    // TODO should this be enabled or not? If it is, it seems to be creating bipolar type vars...
   }
 }
 
@@ -285,22 +306,68 @@ export class TypesRegistry {
   }
 
   propagatePolarities() {
-    // TODO propagate downwards the negative and upwards only the positive
-    let changed = new Set<FreeType>();
+    let changedPositive = new Set<FreeType>();
+    let changedNegative = new Set<FreeType>();
 
-    for (const [a, b] of this.supers) {
-      if (isFreeType(a) && a.polarity !== TypePolarity.NONE && !isFreeType(b)) {
-        b.setPolarity(a.polarity, changed);
+    for (const t of this.allTypes) {
+      if (isFreeType(t)) {
+        if (isPositive(t)) {
+          changedPositive.add(t);
+        }
+        if (isNegative(t)) {
+          changedNegative.add(t);
+        }
       }
     }
 
-    while (changed.size > 0) {
-      const set = changed;
-      changed = new Set();
-      for (const a of set) {
+    while (changedPositive.size > 0 || changedNegative.size > 0) {
+      const prevPositive = changedPositive;
+      changedPositive = new Set();
+      const prevNegative = changedNegative;
+      changedNegative = new Set();
+
+      for (const a of prevPositive) {
+        for (const b of this.subs.get(a)) {
+          if (!isFreeType(b)) {
+            const positiveVars = new Set<FreeType>();
+            const negativeVars = new Set<FreeType>();
+            b.positiveTypes(positiveVars);
+            b.negativeTypes(negativeVars);
+            for (const t of positiveVars) {
+              t.setPolarity(TypePolarity.POSITIVE, changedPositive);
+              if (t.polarity === TypePolarity.BIPOLAR) {
+                setTimeout(() => console.log(a, b, t, "+"));
+              }
+            }
+            for (const t of negativeVars) {
+              t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
+              if (t.polarity === TypePolarity.BIPOLAR) {
+                setTimeout(() => console.log(a, b, t, "-"));
+              }
+            }
+          }
+        }
+      }
+
+      for (const a of prevNegative) {
         for (const b of this.supers.get(a)) {
           if (!isFreeType(b)) {
-            b.setPolarity(a.polarity, changed);
+            const positiveVars = new Set<FreeType>();
+            const negativeVars = new Set<FreeType>();
+            b.positiveTypes(positiveVars);
+            b.negativeTypes(negativeVars);
+            for (const t of positiveVars) {
+              t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
+              if (t.polarity === TypePolarity.BIPOLAR) {
+                setTimeout(() => console.log(a, b, t, "-"));
+              }
+            }
+            for (const t of negativeVars) {
+              t.setPolarity(TypePolarity.POSITIVE, changedPositive);
+              if (t.polarity === TypePolarity.BIPOLAR) {
+                setTimeout(() => console.log(a, b, t, "+"));
+              }
+            }
           }
         }
       }
