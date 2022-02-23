@@ -1703,7 +1703,7 @@ __metadata:
   resolution: "@quase/parser@workspace:packages/languages/parser"
   dependencies:
     make-dir: ^3.0.0
-    regexp-tree: ^0.1.17
+    regexp-tree: 0.1.21
   bin:
     quase-parser-generator: bin/index.js
   languageName: unknown
@@ -9311,12 +9311,12 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"regexp-tree@npm:^0.1.17":
-  version: 0.1.17
-  resolution: "regexp-tree@npm:0.1.17"
+"regexp-tree@npm:0.1.21":
+  version: 0.1.21
+  resolution: "regexp-tree@npm:0.1.21"
   bin:
-    regexp-tree: ./bin/regexp-tree
-  checksum: 0fc2d2b5bcf9d5192d6a68997e9ace5c032924c4fc4ea1d643b307be9da387fbd2aac8bd5eab04eb7c7ddc09008a8b6efd8938d555a60dc1b4567bbbe0e26b40
+    regexp-tree: bin/regexp-tree
+  checksum: b101cb99d4c25e1eb22d7be764464cd414c495d572dcf4c436c05f48942cc885069d46d63cd350523ffd19c667a9be4d0b724ea672769d2602365fa5a917286b
   languageName: node
   linkType: hard
 

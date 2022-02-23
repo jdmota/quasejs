@@ -10,18 +10,16 @@ type MapEntry<K, V> = {
 
 const TABLE_SIZE = 10;
 
-export class MapKeyToSet<K extends MapKey, V> {
-  private table: (MapEntry<K, Set<V>>[] | undefined)[];
-  private EMPTY_SET: Set<V>;
+export class MapKeyToValue<K extends MapKey, V> {
+  private table: (MapEntry<K, V>[] | undefined)[];
   size: number;
 
   constructor() {
     this.table = [];
     this.size = 0;
-    this.EMPTY_SET = new Set();
   }
 
-  private _entry(key: K) {
+  private entry(key: K) {
     const idx = Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
@@ -33,40 +31,42 @@ export class MapKeyToSet<K extends MapKey, V> {
     };
   }
 
-  get(key: K): Set<V> {
-    const { entry } = this._entry(key);
+  get(key: K): V | null {
+    const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
     }
-    return this.EMPTY_SET;
+    return null;
   }
 
-  add(key: K, value: Set<V>) {
-    const { entry, list } = this._entry(key);
+  add(key: K, value: V) {
+    const { entry, list } = this.entry(key);
     if (entry) {
-      for (const v of value) {
-        entry.value.add(v);
+      if (entry.value === value) {
+        return false;
       }
-    } else {
-      list.push({
-        key,
-        value,
-      });
-      this.size++;
+      throw new Error(`Already exists key:${key} value:${value}`);
     }
+    list.push({
+      key,
+      value,
+    });
+    this.size++;
+    return true;
   }
 
-  addOne(key: K, value: V) {
-    const { entry, list } = this._entry(key);
+  computeIfAbsent(key: K, fn: () => V): V {
+    const { entry, list } = this.entry(key);
     if (entry) {
-      entry.value.add(value);
-    } else {
-      list.push({
-        key,
-        value: new Set([value]),
-      });
-      this.size++;
+      return entry.value;
     }
+    const value = fn();
+    list.push({
+      key,
+      value,
+    });
+    this.size++;
+    return value;
   }
 
   *[Symbol.iterator]() {
@@ -77,7 +77,7 @@ export class MapKeyToSet<K extends MapKey, V> {
       if (list) {
         while (listIdx < list.length) {
           const { key, value } = list[listIdx];
-          yield [key, value] as [K, Set<V>];
+          yield [key, value] as const;
           listIdx++;
         }
       }
