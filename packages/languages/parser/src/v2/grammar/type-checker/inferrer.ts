@@ -46,6 +46,19 @@ type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pre: T, node: RuleMap[key], post: T) => void;
 };
 
+function location(expr: AnyRule): string | null {
+  if (expr.type === "id") {
+    return expr.id;
+  }
+  if (expr.type === "select") {
+    const parent = location(expr.parent);
+    if (parent) {
+      return `${parent}.${expr.field}`;
+    }
+  }
+  return null;
+}
+
 export class TypesInferrer implements RuleAnalyzer<Store> {
   public readonly registry = new TypesRegistry();
   public readonly normalizer = new Normalizer(this.registry);
@@ -218,6 +231,11 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     this.registry.subtype(this.registry.null(node), this.exprType(node), node);
   }
 
+  int(pre: Store, node: IntRule, post: Store) {
+    pre.propagateTo(post);
+    this.registry.subtype(this.registry.int(node), this.exprType(node), node);
+  }
+
   string(pre: Store, node: StringRule, post: Store) {
     pre.propagateTo(post);
     // TODO
@@ -250,21 +268,16 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   id(pre: Store, node: IdRule, post: Store) {
-    pre.propagateTo(post);
     this.registry.subtype(pre.get(node.id), this.exprType(node), node);
-  }
-
-  int(pre: Store, node: IntRule, post: Store) {
     pre.propagateTo(post);
-    this.registry.subtype(this.registry.int(node), this.exprType(node), node);
   }
 
   select(pre: Store, node: SelectRule, post: Store) {
+    const loc = location(node);
     const [preExpr, postExpr] = this.store(node.parent);
     pre.propagateTo(preExpr);
     this.visit(node.parent);
     //
-    postExpr.propagateTo(post);
     const objType = this.registry.readonlyObject([node.field], node);
     this.registry.subtype(
       nonNull(objType.fields.get(node.field)),
@@ -272,6 +285,14 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
       node
     );
     this.registry.subtype(this.exprType(node.parent), objType, node);
+
+    // TODO this ends up not doing what I wanted
+    if (loc) {
+      this.registry.subtype(postExpr.get(loc), this.exprType(node), node);
+      this.registry.subtype(this.exprType(node), postExpr.get(loc), node);
+    }
+
+    postExpr.propagateTo(post);
   }
 
   call2(pre: Store, node: Call2Rule, post: Store) {
@@ -333,8 +354,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     postExpr.propagateTo(post);
     //
     this.registry.subtype(
-      this.registry.boolean(node.code),
       this.exprType(node.code),
+      this.registry.boolean(node.code),
       node.code
     );
   }

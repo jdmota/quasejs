@@ -104,6 +104,17 @@ const ruleE = rule(
   select(id("obj"), "num")
 );
 
+const ruleF = rule(
+  "F",
+  choice(
+    field("ret", object([["x", select(id("arg"), "x")]])),
+    field("ret", object([["x", select(id("arg"), "x")]]))
+  ),
+  [rule.arg("arg")],
+  {},
+  id("ret")
+);
+
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
 
 // { x: T1, y: T2 } <: return
@@ -172,11 +183,37 @@ const ruleE = rule(
 
 // If a <: T2 OR T1 <: T2 then a & T1 <: T2
 
+// obj <: {x: T1}
+// T1 <: obj.x
+
+// obj <: {x: T2}
+// T2 <: obj.x
+
+// TODO How to say that T1 = T2?
+
+// obj <: {x: T1+ & T2+}
+// T1+ | T2+ <: obj.x
+// T1+ <: obj.x (2) <: int
+
+// TODO if two types appear in an intersecion, and have the same polarity, and one of them has the subset of the constraints of the other, they can be merged?
+
+// export type D_arg = Readonly<{ y: $rec1 }> & Readonly<{ x: $rec2 }> & Readonly<{ x: $rec3 }> & Readonly<{ y: $rec4 }>;
+// export type D = Readonly<{ x: $rec2, y: $rec1 }> | Readonly<{ x: $rec4, y: $rec3 }>;
+
+// export type D_arg = Readonly<{ x: $rec2 & $rec3, y: $rec1 & $rec4 }>;
+// export type D = Readonly<{ x: $rec2, y: $rec1 }> | Readonly<{ x: $rec4, y: $rec3 }>;
+
+// TODO ok, when adding a new constraint, see if there is there one already similar, and just reuse it?
+
+// TODO 18Feb - let's do the following, when inferring constraints for obj.x, the component type should be equal to the type of this expression
+// TODO 18Feb - maybe the problem is that when making the type info "flow" from one store to another, we do not make the contents of objects flow as well...
+// TODO 18Feb - maybe the solution is just to simplify the generic entry types...
+
 console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  ruleDecls: [ruleA, ruleB, ruleC, ruleD, ruleE],
+  ruleDecls: [ruleA, ruleB, ruleC, ruleD, ruleE, ruleF],
   tokenDecls: [],
 });
 

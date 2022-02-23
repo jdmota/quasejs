@@ -145,8 +145,7 @@ class GenericType extends NormalizedType {
 
   constructor(
     readonly lower: AnyNormalizedType,
-    readonly upper: AnyNormalizedType,
-    readonly preference: TypePolarity
+    readonly upper: AnyNormalizedType
   ) {
     super();
   }
@@ -204,18 +203,18 @@ export type AnyNormalizedType =
   | UnionType
   | IntersectionType;
 
-class NormalizedRegistry {
+// TODO i think the point here is that
+// we could choose the lower bound for every type
+// of course we dont want that because that is not useful
+// so we give polatiries to the types
+// now the issue is, if I decide to choose the lower bound of some type
+// I cannot cross a type that has choosen the upper bound
+
+export class Normalizer {
+  constructor(private readonly registry: TypesRegistry) {}
+
   private readonly cache = new Map<AnyType, AnyNormalizedType>();
   private readonly processing = new Map<AnyType, RecursiveRef>();
-  private readonly usedRecursiveRefs = new Set<RecursiveRef>();
-
-  constructor(
-    private readonly _normalize: (type: AnyType) => AnyNormalizedType
-  ) {}
-
-  getUsedRecursiveRefs(): ReadonlySet<RecursiveRef> {
-    return this.usedRecursiveRefs;
-  }
 
   normalize(type: AnyType) {
     const cached = this.cache.get(type);
@@ -227,7 +226,6 @@ class NormalizedRegistry {
       return rec;
     }
     rec = new RecursiveRef();
-    this.usedRecursiveRefs.add(rec);
     this.processing.set(type, rec);
     // Normalize the type...
     const normalized = this._normalize(type);
@@ -236,31 +234,6 @@ class NormalizedRegistry {
     this.processing.delete(type);
     this.cache.set(type, normalized);
     return normalized;
-  }
-}
-
-// TODO i think the point here is that
-// we could choose the lower bound for every type
-// of course we dont want that because that is not useful
-// so we give polatiries to the types
-// now the issue is, if I decide to choose the lower bound of some type
-// I cannot cross a type that has choosen the upper bound
-
-export class Normalizer {
-  private readonly normalizeRegistry: NormalizedRegistry;
-
-  constructor(private readonly registry: TypesRegistry) {
-    this.normalizeRegistry = new NormalizedRegistry(this._normalize.bind(this));
-  }
-
-  *usedRecursiveRefs() {
-    for (const rec of this.normalizeRegistry.getUsedRecursiveRefs()) {
-      yield rec;
-    }
-  }
-
-  normalize(type: AnyType) {
-    return this.normalizeRegistry.normalize(type);
   }
 
   private _normalize(type: AnyType): AnyNormalizedType {
@@ -317,11 +290,7 @@ export class Normalizer {
             for (const sub of this.registry.graph.upper(type)) {
               upperSet.add(this.normalize(sub));
             }
-            return new GenericType(
-              union(lowerSet),
-              intersection(upperSet),
-              type.polarity
-            );
+            return new GenericType(union(lowerSet), intersection(upperSet));
           }
           default:
             never(type.polarity);
@@ -332,7 +301,39 @@ export class Normalizer {
   }
 }
 
-function union(set: ReadonlySet<AnyNormalizedType>) {
+function* unionSeq(set: ReadonlySet<AnyNormalizedType>) {
+  for (const t of set) {
+    if (t.clazz === "UnionType") {
+      for (const t2 of t.types) yield t2;
+    } else {
+      yield t;
+    }
+  }
+}
+
+// Sequence does not produce union types assuming "list" does not contain union types
+function* intersectionSeq(set: ReadonlySet<AnyNormalizedType>) {
+  for (const t of set) {
+    if (t.clazz === "IntersectionType") {
+      for (const t2 of t.types) yield t2;
+    } else {
+      yield t;
+    }
+  }
+}
+
+function union(originalSet: ReadonlySet<AnyNormalizedType>) {
+  const set = originalSet ?? new Set<AnyNormalizedType>();
+  /*outer: for (const t of unionSeq(originalSet)) {
+    for (const it of set) {
+      if (isSubtype(t, it)) break outer;
+    }
+    for (const it of set) {
+      if (isSubtype(it, t)) set.delete(it);
+    }
+    set.add(t);
+  }*/
+
   if (set.size === 0) {
     return new BottomType();
   }
@@ -342,7 +343,21 @@ function union(set: ReadonlySet<AnyNormalizedType>) {
   return new UnionType(set);
 }
 
-function intersection(set: ReadonlySet<AnyNormalizedType>) {
+function intersection(originalSet: ReadonlySet<AnyNormalizedType>) {
+  // TODO distribute unions over intersections
+  // TODO simplify some intersections
+
+  const set = originalSet ?? new Set<AnyNormalizedType>();
+  /*outer: for (const t of intersectionSeq(originalSet)) {
+    for (const it of set) {
+      if (isSubtype(it, t)) break outer;
+    }
+    for (const it of set) {
+      if (isSubtype(t, it)) set.delete(it);
+    }
+    set.add(t);
+  }*/
+
   if (set.size === 0) {
     return new TopType();
   }

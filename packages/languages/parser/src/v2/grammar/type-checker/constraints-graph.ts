@@ -1,6 +1,6 @@
 import { expect, never } from "../../utils";
 import { AnyRule } from "../grammar-builder";
-import { AnyType, TypePolarity, polarity } from "./types";
+import { AnyType, TypePolarity, polarity, FreeType } from "./types";
 
 class Edge<N, E> {
   constructor(
@@ -113,7 +113,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     }
   }
 
-  upper(type: AnyType) {
+  upper(type: FreeType) {
     const set = new Set<AnyType>();
     const seen = new Set<AnyType>([type]);
     for (const dest of this.outDest(type)) {
@@ -122,7 +122,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     return set;
   }
 
-  lower(type: AnyType) {
+  lower(type: FreeType) {
     const set = new Set<AnyType>();
     const seen = new Set<AnyType>([type]);
     for (const dest of this.inDest(type)) {

@@ -414,16 +414,26 @@ export class TypesRegistry {
     return this.allTypes.values();
   }
 
-  *getChecks() {
+  *getErrors(): Generator<
+    readonly [
+      AnyTypeExceptFree,
+      AnyTypeExceptFree,
+      AnyRule | undefined,
+      AnyRule | undefined
+    ],
+    void,
+    unknown
+  > {
     for (const [a, b] of this.supers) {
       if (a instanceof FreeType || b instanceof FreeType) continue;
-      yield [a, b, this.locations.get(a), this.locations.get(b)] as const;
+      if (!isSubtype(a, b, this)) {
+        yield [a, b, this.locations.get(a), this.locations.get(b)] as const;
+      }
     }
   }
 }
 
 // TODO better errors (the location of errors)
-// TODO always choose the lower bound except for atoms! but in that case, we should not include the transitive lower bound of atoms!
 
 function handleSubtypingImplications(
   registry: TypesRegistry,
@@ -450,6 +460,14 @@ function handleSubtypingImplications(
     } else if (b instanceof ReadonlyArrayType) {
       registry.subtype(a.component, b.component, node);
     }
+  } else if (a instanceof FunctionType) {
+    if (b instanceof FunctionType) {
+      const size = Math.min(a.args.length, b.args.length);
+      for (let i = 0; i < size; i++) {
+        registry.subtype(b.args[i], a.args[i], node);
+      }
+      registry.subtype(a.ret, b.ret, node);
+    }
   }
 }
 
@@ -471,23 +489,12 @@ function isSubtype2(
   // BOTTOM is a subtype of any type
   if (a instanceof BottomType) return true;
 
-  /*// For all...
-  if (a instanceof FreeType) {
-    return all(registry.getLowerBound(a), typeA =>
-      isSubtype2(registry, set, typeA, b)
-    );
-    // FIXME this is wrong, maybe, it depends on how this type is initialized...
-    // I mean, if we always choose the lower bound, I guess it is fine...
-  }
-
-  // For any...
-  if (b instanceof FreeType) {
-    return any(registry.getLowerBound(b), typeB =>
-      isSubtype2(registry, set, a, typeB)
-    );
-  }*/
-
   if (a instanceof FreeType || b instanceof FreeType) {
+    // At the entry we should not find free types
+    // They might appear when checking the components of object, array, etc. types
+    // Even in that case, we can just return true
+    // Subtyping constraints between components are added anyway by implication
+    // So they will be checked later anyway
     return true;
   }
 
@@ -534,7 +541,7 @@ function isSubtype2(
     );
   }
 
-  // T1 -> T2 is a subtype of T3 -> T4 if T3 <: T1 and T2 <: T3
+  // T1 -> T2 is a subtype of T3 -> T4 if T3 <: T1 and T2 <: T4
   if (a instanceof FunctionType) {
     return (
       b instanceof FunctionType &&
@@ -547,10 +554,6 @@ function isSubtype2(
   never(a);
 }
 
-export function isSubtype(
-  a: AnyType,
-  b: AnyType,
-  registry: TypesRegistry
-): boolean {
+function isSubtype(a: AnyType, b: AnyType, registry: TypesRegistry): boolean {
   return isSubtype2(registry, new MapSet(), a, b);
 }
