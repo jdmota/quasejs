@@ -1,0 +1,1 @@
+{"version":3,"sources":["../working/index.js","../working/a.js"],"names":[],"mappings":";sDAAO;;iECAQ,E","file":"index.js","sourcesContent":["import \"./a\";\n","export default 10;\n"]}

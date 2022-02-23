@@ -1,0 +1,1 @@
+{"version":3,"sources":["../files/index.js","../files/a.js","../files/b.js"],"names":["foo"],"mappings":";qBAAc;;AACA;;AADd;;AACA;;;;;;ACDO,MAAMA,GAAG,GAAG,EAAZ;;;;;;ACAA,MAAMA,GAAG,GAAG,EAAZ","file":"index.js","sourcesContent":["export * from \"./a\"; // eslint-disable-line\nexport * from \"./b\"; // eslint-disable-line\n","export const foo = 10;\n","export const foo = 20;\n"]}

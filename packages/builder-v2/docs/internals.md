@@ -1,0 +1,26 @@
+- Builder includes:
+    - Worker farm
+    - Graph
+      - ComputationRegistry
+    - Watcher
+    - HMRServer
+
+- Graph stores several nodes
+  - All nodes are instances of GraphNode
+    - ComputationDependency extends GraphNode
+      - FileDependency extends ComputationDependency
+      - Computation extends ComputationDependency
+        - ResolveComputation extends Computation
+        - TransformComputation extends Computation
+  - And they connect to each other in many ways
+
+- GraphNodes
+  - May have in edges
+  - May have out edges
+  - It is orphan if it has zero in edges
+    - Then it can be safely removed with graph.removeNode()
+  - destroy() is a clean up function
+    - Should remove out edges
+    - Should not be called directly
+  - onInEdgeAddition should be called when a new in edge is added
+  - onInEdgeRemoval should be called when a in edge is removed
