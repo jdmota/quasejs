@@ -1,0 +1,94 @@
+// https://www.microsoft.com/en-us/research/uploads/prod/2018/10/Burckhardt-Coppieters-OOPSLA2018-with-appendices.pdf
+// https://github.com/dotnet/orleans
+// https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/mcdirmid06superglue.pdf
+// https://www.informs-sim.org/wsc08papers/102.pdf
+// https://en.wikipedia.org/wiki/Incremental_computing
+// https://github.com/brownplt/flapjax
+
+fun transform(path) {
+  const data = await getFile(path);
+
+  return new {
+    dependencies: new [];
+  };
+}
+
+fun resolve(parent, specifier) {
+  return "";
+}
+
+// THIS IS WRONG
+// DEADLOCK if circular dependencies exist
+fun do(path) {
+  const asset = await transform(path);
+  const resolved = new [];
+
+  parallel dep of asset.dependencies {
+    const resolved = await resolve(path, dep);
+    resolved.push(await do(resolved));
+  }
+
+  return new {
+    path;
+    asset;
+    resolved;
+  };
+}
+
+do("entry");
+
+// Better?
+
+const modules = new Set();
+const transformJobs = new Set();
+
+transformJobs.add(transform("entry"));
+
+parallel t of transformJobs {
+  const asset = await t;
+  const resolved = new [];
+  parallel dep of asset.dependencies {
+    const resolved = await resolve(path, dep);
+    resolved.push(resolved);
+
+    transformJobs.add(transform(resolved));
+  }
+  modules.add(new {
+    asset;
+    resolved;
+  });
+}
+
+// In this system, if I call the same function with the same arguments, it gives the same result.
+
+##################
+
+val seen = {}
+val queue = {}
+
+seen.add("entry")
+queue.add("entry")
+
+fun async job(path) {
+  val data = read(path).await
+  val asset = transform(data).await
+  val resolved = Promise.all(
+    asset.dependencies.map(fun async (dep) {
+      const resolved = resolve(path, dep).await;
+      if (seen.add(resolved)) {
+        queue.add(job(resolved))
+      }
+      return resolved
+    })
+  ).await
+  return {
+    asset;
+    resolved;
+  }
+}
+
+for job in queue {
+  job.await
+}
+
+return modules

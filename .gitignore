@@ -1,4 +1,3 @@
-*.txt
 *.log
 __dev__
 .yarn/*
