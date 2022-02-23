@@ -1,0 +1,113 @@
+<!DOCTYPE html><html><head>
+    <title>Demo</title>
+    <meta charset="utf8">
+  </head>
+  <body>
+    <script src="./runtime.js"></script>
+
+    <quase-view>
+      <template>
+        <style>
+          span {
+            font-size: 14px;
+          }
+        </style>
+        <div class$="{{this.clazz}}">
+          My name is <span>{{this.name}}</span>
+        </div>
+        <quase-if if="{{this.if}}">
+          <template>Olá</template>
+        </quase-if>
+        <quase-if if="{{!this.if}}">
+          <template>Adeus</template>
+        </quase-if>
+        <quase-for>
+          <template prop="render1" args="c">
+            <quase-if>
+              <template prop="render2" args="d">
+                {{c}}{{d}}
+              </template>
+            </quase-if>
+          </template>
+        </quase-for>
+      </template>
+      <script>class Demo extends QuaseView {
+  static get props() {
+    return {
+      name: {
+        type: String,
+        value: ""
+      },
+      if: {
+        type: Boolean,
+        value: true
+      }
+    };
+  }
+
+  constructor() {
+    super();
+    this.name = "";
+    this.if = true;
+  }
+
+  _render(_0, _1) {
+    if (!_0._instances) _0._instances = [_0.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling, _0.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling, _0.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling, _0.firstChild.nextSibling.nextSibling.nextSibling, _0.firstChild.nextSibling.nextSibling.nextSibling.firstChild.nextSibling.firstChild, _0.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling, _0.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling];
+    var _2 = _0._instances[0];
+
+    _2.render = function () {};
+
+    var _3 = _0._instances[1];
+
+    _3.render = function () {};
+
+    var _4 = _0._instances[2];
+
+    _4.render1 = function (_0, _1, c) {
+      if (!_0._instances) _0._instances = [_0.firstChild.nextSibling];
+      var _2 = _0._instances[0];
+
+      _2.render2 = function (_0, _1, d) {
+        if (!_0._instances) _0._instances = [_0.firstChild];
+
+        var _2 = _1('\n                ' + c + d + '\n              ');
+
+        var _3 = _0._instances[0];
+        if (_3.nodeValue !== _2) _3.nodeValue = _2;
+      };
+    };
+
+    var _5 = _1(this.clazz);
+
+    var _6 = _0._instances[3];
+    if (_6.getAttribute('class') !== _5) if (_5 == null) {
+      _6.removeAttribute('class');
+    } else {
+      _6.setAttribute('class', _5);
+    }
+
+    var _7 = _1(this.name);
+
+    var _8 = _0._instances[4];
+    if (_8.nodeValue !== _7) _8.nodeValue = _7;
+    var _9 = this.if;
+    var _10 = _0._instances[5];
+    if (_10['if'] !== _9) _10['if'] = _9;
+
+    var _11 = !this.if;
+
+    var _12 = _0._instances[6];
+    if (_12['if'] !== _11) _12['if'] = _11;
+  }
+
+}
+
+QuaseView.define("x-demo", Demo);
+let a = "<\/script>";</script>
+    </quase-view>
+
+    <x-demo name="João Mota"></x-demo>
+
+
+
+</body></html>
