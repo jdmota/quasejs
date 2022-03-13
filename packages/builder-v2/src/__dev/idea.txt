@@ -92,3 +92,67 @@ for job in queue {
 }
 
 return modules
+
+// #### incremental computing
+
+Machine:
+
+read(x)
+write(x, y)
+call
+
+read_dep: what was read, which version it read
+write_dep: what was written, when it was written (version)
+data_info: what value it is, when it was written (version)
+
+timestamps for order?
+
+a = 0
+b = 0
+
+[a = 0, v1; b = 0, v1]
+
+a = 1
+
+[a = 1, v2; b = 0, v1]
+
+b = a + 2
+
+[a = 1, v2; b = 3, v2]
+
+a = b + 3
+
+[a = 6, v3; b = 3, v2]
+
+IDEA: I create a graph of write/read dependencies. I can make it more coarse grained by computing the components!
+For example, writing to a temporary variable and reading from it could be optimized by a direct read from the original variable.
+For example, calling a pure method, inside of it you might create a lot of variables, but at the end of the day, the outside world only matters about the input and then output. The inner graph of the call is a component!
+
+IMPERATIVE INCREMENTAL: «The idea is to record different versions (contents) that a modifiable may have and track dependences at the granularity of versions instead of modifiables themselves.»
+
+«The broad idea behind their framework is maintaining a global timeline of
+reads and writes using an order-maintenance data structure, so that they always know which
+readers will be affected by an inserted/deleted/updated writer. They also maintain a priority
+queue of all affected readers, which are prioritized by their timestamp in the global timeline»
+
+THE REAL problem why we don't apply incremental computing to an assembly language is because
+many commands require allocation new memory, for function calls for example.
+If we go to rerun an allocation, should that be a new allocation, or are we going to reuse the old one?
+That is why many incremental solutions end up using function calls as their "boundery", as their "grain".
+For example, when we make a function call, we allocate space for the arguments.
+If we reexecute it, should the allocation be the same or different?
+If it is the same, we might reuse a lot of things, or maybe not, because the new arguments might be very different.
+If the allocation is new, then we discard a big tree and reuse nothing.
+
+In fact, this maybe is not that different from the problem of conditionals: do we reuse the other branch or not?
+
+In fact, this might also be the problem of collections. Imagine a map operation on a list. Each element is independent from each other.
+But if we add an element in the middle, what happens? If we have read dependencies attached to the specific index, we might have issues
+because we might not be able to reuse previous computation.
+
+SOLUTION?: we might need to understand that we do not depend necessarely on the memory cell, but on the value ITSELF.
+
+This explains what it means to memomize a function call. Later on, we might allocate different memory cells for the parameters and etc...
+But in practise, we reuse the dependency graph of the last call module the actual cells used.
+
+SO, the trick in incremental computing seems to be that we need to look at the last produced dependency graphs and reuse one that we predict will be similar to the new one produced during the execution of this new call.
