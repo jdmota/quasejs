@@ -8,98 +8,104 @@ function add<T>(set: Set<T>, value: T): boolean {
   return set.size > size;
 }
 
-export class GraphNode<G extends Graph<E>, E> {
-  private readonly graph: G;
-  private outEdges: DefaultMap<E, Set<GraphNode<G, E>>>;
-  private inEdges: DefaultMap<E, Set<GraphNode<G, E>>>;
-  private inEdgesAmount: number;
+export function createGraphTemplate<N, E>() {
+  class GraphNode {
+    private readonly graph: Graph;
+    private readonly value: N;
+    private outEdges: DefaultMap<E, Set<GraphNode>>;
+    private inEdges: DefaultMap<E, Set<GraphNode>>;
+    private inEdgesAmount: number;
 
-  constructor(graph: G) {
-    this.graph = graph;
-    this.outEdges = new DefaultMap<E, Set<GraphNode<G, E>>>(defaultSet);
-    this.inEdges = new DefaultMap<E, Set<GraphNode<G, E>>>(defaultSet);
-    this.inEdgesAmount = 0;
-  }
-
-  protected onInEdgeAddition() {}
-
-  protected onInEdgeRemoval() {
-    if (this.isNodeOrphan()) {
-      this.graph.removeNode(this);
+    constructor(graph: Graph, value: N) {
+      this.graph = graph;
+      this.outEdges = new DefaultMap<E, Set<GraphNode>>(defaultSet);
+      this.inEdges = new DefaultMap<E, Set<GraphNode>>(defaultSet);
+      this.inEdgesAmount = 0;
+      this.value = value;
     }
-  }
 
-  static addEdge<G extends Graph<E>, E>(
-    from: GraphNode<G, E>,
-    edge: E,
-    to: GraphNode<G, E>
-  ) {
-    from.outEdges.get(edge).add(to);
-    if (add(to.inEdges.get(edge), from)) {
-      to.inEdgesAmount++;
-      to.onInEdgeAddition();
+    getValue(): N {
+      return this.value;
     }
-  }
 
-  static removeEdge<G extends Graph<E>, E>(
-    from: GraphNode<G, E>,
-    edge: E,
-    to: GraphNode<G, E>
-  ) {
-    from.outEdges.get(edge).delete(to);
-    if (to.inEdges.get(edge).delete(from)) {
-      to.inEdgesAmount--;
-      to.onInEdgeRemoval();
-    }
-  }
+    protected onInEdgeAddition() {}
 
-  getOutEdges() {
-    return this.outEdges.entries();
-  }
-
-  getInEdges() {
-    return this.inEdges.entries();
-  }
-
-  isNodeOrphan(): boolean {
-    return this.inEdgesAmount === 0;
-    /*for (const [, edges] of this.getInEdges()) {
-      if (edges.size > 0) {
-        return false;
-      }
-    }
-    return true;*/
-  }
-
-  destroy() {
-    for (const [edge, nodes] of this.getOutEdges()) {
-      for (const to of nodes) {
-        GraphNode.removeEdge(this, edge, to);
+    protected onInEdgeRemoval() {
+      if (this.isNodeOrphan()) {
+        this.graph.removeNode(this);
       }
     }
 
-    for (const [edge, nodes] of this.getInEdges()) {
-      for (const from of nodes) {
-        GraphNode.removeEdge(from, edge, this);
+    static addEdge(from: GraphNode, edge: E, to: GraphNode) {
+      from.outEdges.get(edge).add(to);
+      if (add(to.inEdges.get(edge), from)) {
+        to.inEdgesAmount++;
+        to.onInEdgeAddition();
+      }
+    }
+
+    static removeEdge(from: GraphNode, edge: E, to: GraphNode) {
+      from.outEdges.get(edge).delete(to);
+      if (to.inEdges.get(edge).delete(from)) {
+        to.inEdgesAmount--;
+        to.onInEdgeRemoval();
+      }
+    }
+
+    getOutEdges() {
+      return this.outEdges.entries();
+    }
+
+    getInEdges() {
+      return this.inEdges.entries();
+    }
+
+    isNodeOrphan(): boolean {
+      return this.inEdgesAmount === 0;
+      /*for (const [, edges] of this.getInEdges()) {
+        if (edges.size > 0) {
+          return false;
+        }
+      }
+      return true;*/
+    }
+
+    destroy() {
+      for (const [edge, nodes] of this.getOutEdges()) {
+        for (const to of nodes) {
+          GraphNode.removeEdge(this, edge, to);
+        }
+      }
+
+      for (const [edge, nodes] of this.getInEdges()) {
+        for (const from of nodes) {
+          GraphNode.removeEdge(from, edge, this);
+        }
       }
     }
   }
-}
 
-export class Graph<E> {
-  protected nodes: Set<GraphNode<Graph<E>, E>>;
+  class Graph {
+    protected nodes: Set<GraphNode>;
 
-  constructor() {
-    this.nodes = new Set();
+    constructor() {
+      this.nodes = new Set();
+    }
+
+    createNode(value: N) {
+      return new GraphNode(this, value);
+    }
+
+    addNode(node: GraphNode) {
+      this.nodes.add(node);
+      return node;
+    }
+
+    removeNode(node: GraphNode) {
+      this.nodes.delete(node);
+      node.destroy();
+    }
   }
 
-  addNode<T extends GraphNode<Graph<E>, E>>(node: T) {
-    this.nodes.add(node);
-    return node;
-  }
-
-  removeNode(node: GraphNode<Graph<E>, E>) {
-    this.nodes.delete(node);
-    node.destroy();
-  }
+  return () => new Graph();
 }
