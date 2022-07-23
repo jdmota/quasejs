@@ -12,14 +12,16 @@ export function createGraphTemplate<N, E>() {
   class GraphNode {
     private readonly graph: Graph;
     private readonly value: N;
-    private outEdges: DefaultMap<E, Set<GraphNode>>;
-    private inEdges: DefaultMap<E, Set<GraphNode>>;
+    private readonly outEdges: DefaultMap<E, Set<GraphNode>>;
+    private readonly inEdges: DefaultMap<E, Set<GraphNode>>;
+    private outEdgesAmount: number;
     private inEdgesAmount: number;
 
     constructor(graph: Graph, value: N) {
       this.graph = graph;
       this.outEdges = new DefaultMap<E, Set<GraphNode>>(defaultSet);
       this.inEdges = new DefaultMap<E, Set<GraphNode>>(defaultSet);
+      this.outEdgesAmount = 0;
       this.inEdgesAmount = 0;
       this.value = value;
     }
@@ -39,6 +41,7 @@ export function createGraphTemplate<N, E>() {
     static addEdge(from: GraphNode, edge: E, to: GraphNode) {
       from.outEdges.get(edge).add(to);
       if (add(to.inEdges.get(edge), from)) {
+        from.outEdgesAmount++;
         to.inEdgesAmount++;
         to.onInEdgeAddition();
       }
@@ -47,9 +50,18 @@ export function createGraphTemplate<N, E>() {
     static removeEdge(from: GraphNode, edge: E, to: GraphNode) {
       from.outEdges.get(edge).delete(to);
       if (to.inEdges.get(edge).delete(from)) {
+        from.outEdgesAmount--;
         to.inEdgesAmount--;
         to.onInEdgeRemoval();
       }
+    }
+
+    getOutCount() {
+      return this.outEdgesAmount;
+    }
+
+    getInCount() {
+      return this.inEdgesAmount;
     }
 
     getOutEdges() {
