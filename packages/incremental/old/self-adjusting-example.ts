@@ -252,3 +252,5 @@ run(Memory.new(3), [
 
 // edges from commands to commands
 // edges from commands to locations read
+
+export {};

@@ -140,6 +140,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ix", "npm:4.5.2"],\
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.2.0"],\
+            ["rxjs", "npm:7.5.6"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
           "linkType": "SOFT"\
@@ -11247,6 +11248,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ix", "npm:4.5.2"],\
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.2.0"],\
+            ["rxjs", "npm:7.5.6"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
           "linkType": "SOFT"\
@@ -11883,6 +11885,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["rxjs", "npm:6.5.4"],\
             ["tslib", "npm:1.14.1"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:7.5.6", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/rxjs-npm-7.5.6-8372315abc-8.zip/node_modules/rxjs/",\
+          "packageDependencies": [\
+            ["rxjs", "npm:7.5.6"],\
+            ["tslib", "npm:2.4.0"]\
           ],\
           "linkType": "HARD"\
         }]\

@@ -21,6 +21,10 @@ export class DefaultMap<K, V> {
     return this.map.get(key);
   }
 
+  set(key: K, value: V) {
+    this.map.set(key, value);
+  }
+
   delete(key: K) {
     return this.map.delete(key);
   }
