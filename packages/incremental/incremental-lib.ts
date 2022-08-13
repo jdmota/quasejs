@@ -25,30 +25,15 @@
 import { from } from "ix/asynciterable";
 import { filter, map } from "ix/asynciterable/operators";
 import { createGraphTemplate } from "./utils/graph";
-import { HashMap, ReadonlyHashMap } from "./utils/hash-map";
+import { Defer, createDefer, Notifier, createNotifier } from "./utils/deferred";
+import {
+  ValueDefinition,
+  HashMap,
+  ReadonlyHashMap,
+  ReadonlyHandlerHashMap,
+} from "./utils/hash-map";
 import { IdentityMap } from "./utils/identity-map";
 import { LinkedList, SpecialQueue } from "./utils/linked-list";
-
-type Defer<T> = {
-  readonly resolve: (value: T | PromiseLike<T>) => void;
-  readonly reject: (error: Error) => void;
-  readonly promise: Promise<T>;
-};
-
-function defer<T>(): Defer<T> {
-  let resolve, reject;
-  const promise = new Promise<T>((a, b) => {
-    resolve = a;
-    reject = b;
-  });
-  return {
-    //@ts-ignore
-    resolve,
-    //@ts-ignore
-    reject,
-    promise,
-  };
-}
 
 type JobPoolOptions<Req, Res> = {
   readonly exec: (req: Req) => Promise<Res>;
@@ -67,7 +52,7 @@ export class JobPool<Req, Res> {
     this.opts = opts;
     this.cache = new Map();
     this.pending = 0;
-    this.notify = defer();
+    this.notify = createDefer();
     this.buffer = [];
   }
 
@@ -104,7 +89,7 @@ export class JobPool<Req, Res> {
     let loop = true;
 
     while (loop) {
-      await (this.notify = defer()).promise;
+      await (this.notify = createDefer()).promise;
 
       while (this.buffer.length > 0) {
         const result = this.buffer.shift();
@@ -168,20 +153,20 @@ function deterministic<Arg, Ret>(
 
 type Result<T, E = unknown> =
   | {
-      type: "ok";
+      ok: true;
       value: T;
     }
   | {
-      type: "error";
+      ok: false;
       error: E;
     };
 
 function ok<T, E = unknown>(value: T): Result<T, E> {
-  return { type: "ok", value };
+  return { ok: true, value };
 }
 
 function error<T, E>(error: E): Result<T, E> {
-  return { type: "error", error };
+  return { ok: false, error };
 }
 
 enum State {
@@ -222,27 +207,9 @@ function transferSetItems<T>(from: Set<T>, to: Set<T>) {
   from.clear();
 }
 
-type ValueDefinition<T> = {
-  readonly equal: (a: T, b: T) => boolean;
-  readonly hash: (a: T) => number;
-  readonly serialize: (a: T) => Buffer;
-  readonly deserialize: (a: Buffer) => T;
-};
-
-const undefinedValue: ValueDefinition<undefined> = {
-  equal: (a, b) => true,
-  hash: a => 0,
-  serialize: () => Buffer.from([]),
-  deserialize: () => undefined,
-};
-
-const readonlyHashMapValue: ValueDefinition<ReadonlyHashMap<any, any>> = {
+const anyValue: ValueDefinition<any> = {
   equal: (a, b) => a === b,
-  hash: a => 0,
-  serialize: () => Buffer.from([]),
-  deserialize: () => {
-    throw new Error("never");
-  },
+  hash: _ => 0,
 };
 
 type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
@@ -257,15 +224,18 @@ type ComputationEvents<Ctx, Req, Res> = {
   readonly deleted: (request: Req) => void;
 };
 
+type DefaultComputationContext<Req> = {
+  readonly active: () => void;
+  readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
+  readonly compute: (dep: AnyComputation) => void;
+  readonly request: Req;
+};
+
 export type ComputationDefinition<Ctx, Req, Res> = {
   readonly exec: ComputationExec<Ctx, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
-  readonly makeContext: (ctx: {
-    readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
-    readonly compute: (dep: AnyComputation) => void;
-    readonly request: Req;
-  }) => Ctx;
+  readonly makeContext: (ctx: DefaultComputationContext<Req>) => Ctx;
   readonly events?: ComputationEvents<Ctx, Req, Res> | undefined;
 };
 
@@ -275,17 +245,25 @@ class Computation<Ctx, Req, Res> {
   public readonly registry: ComputationRegistry;
   public readonly definition: ComputationDefinition<Ctx, Req, Res>;
   public readonly request: Req;
+  // Current state
   private state: State;
   private runId: RunId | null;
   private running: Promise<Result<Res>> | null;
-  private result: Result<Res> | null;
+  // Dependencies
   private readonly dependencies: Set<AnyComputation>;
+  // The latest result that all subscribers saw
+  private result: Result<Res> | null;
   private readonly subscribers: Set<AnyComputation>;
+  // If not null, it means all oldSubscribers saw this value
+  // It is important to keep oldResult separate from result
+  // See invalidate()
+  private oldResult: Result<Res> | null;
   private readonly oldSubscribers: Set<AnyComputation>;
+  // Parent computations and derived computations
   private readonly owners: Set<AnyComputation>;
   private readonly owned: Set<AnyComputation>;
 
-  // Requirements of SpecialLinkedList
+  // Requirements of SpecialQueue
   public prev: AnyComputation | null;
   public next: AnyComputation | null;
 
@@ -300,9 +278,10 @@ class Computation<Ctx, Req, Res> {
     this.state = State.CREATING;
     this.runId = null;
     this.running = null;
-    this.result = null;
     this.dependencies = new Set();
+    this.result = null;
     this.subscribers = new Set();
+    this.oldResult = null;
     this.oldSubscribers = new Set();
     this.owners = new Set();
     this.owned = new Set();
@@ -318,21 +297,20 @@ class Computation<Ctx, Req, Res> {
   }
 
   peekError() {
-    if (this.result?.type === "error") {
+    if (this.result?.ok === false) {
       return this.result.error;
     }
     throw new Error("Assertion error: no error");
   }
 
   private equals(prev: Result<Res>, next: Result<Res>): boolean {
-    if (prev.type === "ok") {
+    if (prev.ok) {
       return (
-        next.type === "ok" &&
-        this.definition.responseDef.equal(prev.value, next.value)
+        next.ok && this.definition.responseDef.equal(prev.value, next.value)
       );
     }
-    if (prev.type === "error") {
-      return next.type === "error" && prev.error === next.error;
+    if (!prev.ok) {
+      return !next.ok && prev.error === next.error;
     }
     return false;
   }
@@ -364,9 +342,16 @@ class Computation<Ctx, Req, Res> {
     comp.owners.delete(this);
   }
 
+  private active(runId: RunId) {
+    if (runId !== this.runId) {
+      throw new Error("Computation was cancelled");
+    }
+  }
+
   private after(result: Result<Res>, runId: RunId): Result<Res> {
     if (this.runId === runId) {
-      const old = this.result;
+      const old = this.oldResult;
+      this.oldResult = null;
       this.result = result;
 
       if (old != null && this.equals(old, result)) {
@@ -376,7 +361,7 @@ class Computation<Ctx, Req, Res> {
         this.definition.events?.finished(this.request, result);
       }
 
-      this.mark(result.type === "error" ? State.ERRORED : State.DONE);
+      this.mark(result.ok ? State.DONE : State.ERRORED);
     }
     return result;
   }
@@ -385,18 +370,14 @@ class Computation<Ctx, Req, Res> {
     dep: Computation<any, any, T>,
     runId: RunId
   ): Promise<Result<T>> {
-    if (runId === this.runId) {
-      this.subscribe(dep);
-      return dep.run();
-    }
-    throw new Error("Computation was cancelled");
+    this.active(runId);
+    this.subscribe(dep);
+    return dep.run();
   }
 
   private compute(computation: AnyComputation, runId: RunId) {
-    if (runId === this.runId) {
-      this.own(computation);
-    }
-    throw new Error("Computation was cancelled");
+    this.active(runId);
+    this.own(computation);
   }
 
   private async run(): Promise<Result<Res>> {
@@ -407,6 +388,7 @@ class Computation<Ctx, Req, Res> {
       this.runId = runId;
       this.running = exec(
         this.definition.makeContext({
+          active: () => this.active(runId),
           get: dep => this.getDep(dep, runId),
           compute: c => this.compute(c, runId),
           request: this.request,
@@ -426,12 +408,26 @@ class Computation<Ctx, Req, Res> {
 
   invalidate() {
     this.inv();
+    // Invalidate previous execution
     this.runId = null;
     this.running = null;
+    // If a computation is invalidated, partially executed, and then invalidated again,
+    // oldResult will be null.
+    // This will cause computations that subcribed in between both invalidations
+    // to be propertly invalidated, preserving the invariant
+    // that all oldSubscribers should have seen the same oldResult, if not null.
+    this.oldResult = this.result;
+    this.result = null;
+    // Delay invalidation of subscribers
+    // by moving them to the list of oldSubscribers.
+    transferSetItems(this.subscribers, this.oldSubscribers);
+    // Disconnect from dependencies and derived computations.
+    // The connection might be restored after rerunning this computation.
+    // This is fine because our garbage collection of computations
+    // only occurs after everything is stable.
     this.disconnectFromDeps();
     this.disconnectFromOwned();
-    // Delay invalidation of subscribers
-    transferSetItems(this.subscribers, this.oldSubscribers);
+    // Update state
     this.mark(State.PENDING);
   }
 
@@ -458,6 +454,7 @@ class Computation<Ctx, Req, Res> {
     this.inv();
     this.runId = null;
     this.running = null;
+    this.oldResult = null;
     this.result = null;
     this.disconnectFromDeps();
     this.disconnectFromOwned();
@@ -511,6 +508,7 @@ type ComputationMapContext<Req> = {
 };
 
 type ComputationExitMapContext = {
+  readonly active: () => void;
   readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
 };
 
@@ -525,10 +523,9 @@ export type ComputationMapDefinition<Req, Res> = {
 };
 
 class ComputationMap<Req, Res> {
-  public readonly registry: ComputationRegistry;
-  public readonly definition: ComputationMapDefinition<Req, Res>;
-  private readonly resultsMap: HashMap<Req, Result<Res>>;
-  private readonly entry: Computation<
+  private readonly registry: ComputationRegistry;
+  private readonly definition: ComputationMapDefinition<Req, Res>;
+  private readonly entryDefinition: ComputationDefinition<
     ComputationMapEntryContext<Req>,
     undefined,
     undefined
@@ -538,13 +535,15 @@ class ComputationMap<Req, Res> {
     Req,
     Res
   >;
-  private readonly exit: Computation<
+  private readonly exitDefinition: ComputationDefinition<
     ComputationExitMapContext,
     undefined,
-    ReadonlyHashMap<Req, Result<Res>>
+    ReadonlyHandlerHashMap<Req, Result<Res>>
   >;
+  private readonly resultsMap: HashMap<Req, Result<Res>>;
   private readonly status: [number, number, number, number];
-  private deferred: Defer<null> | null;
+  private readonly notifier: Notifier<null>;
+  private lastSeen: ReadonlyHandlerHashMap<Req, Result<Res>> | null;
 
   constructor(
     registry: ComputationRegistry,
@@ -552,24 +551,15 @@ class ComputationMap<Req, Res> {
   ) {
     this.registry = registry;
     this.definition = definition;
-    this.resultsMap = new HashMap<Req, Result<Res>>(
-      this.definition.requestDef.hash,
-      this.definition.requestDef.equal
-    );
-    this.entry = registry.make(
-      {
-        exec: definition.entryExec,
-        requestDef: undefinedValue,
-        responseDef: undefinedValue,
-        makeContext: ctx => ({
-          get: ctx.get,
-          compute: req => ctx.compute(this.make(req)),
-        }),
-      },
-      undefined
-    );
-    this.status = [0, 0, 0, 0];
-    this.deferred = defer();
+    this.entryDefinition = {
+      exec: definition.entryExec,
+      requestDef: anyValue,
+      responseDef: anyValue,
+      makeContext: ctx => ({
+        get: ctx.get,
+        compute: req => ctx.compute(this.make(req)),
+      }),
+    };
     this.computationsDefinition = {
       exec: definition.exec,
       requestDef: definition.requestDef,
@@ -587,32 +577,58 @@ class ComputationMap<Req, Res> {
           if (to !== State.DELETED) {
             this.status[to]--;
           }
+          this.propagateChanges();
         },
         finished: (req, result) => {
           this.resultsMap.set(req, result);
-          this.propagateChanges();
         },
         deleted: req => {
           this.resultsMap.delete(req);
-          this.propagateChanges();
         },
       },
     };
-    this.exit = registry.make(
-      {
-        exec: async ctx => {
-          await ctx.get(this.entry);
-          await this.waitIsDone();
-          return ok(this.resultsMap);
-        },
-        requestDef: undefinedValue,
-        responseDef: readonlyHashMapValue,
-        makeContext: ctx => ({
-          get: ctx.get,
-        }),
+    this.resultsMap = new HashMap<Req, Result<Res>>(this.definition.requestDef);
+    this.status = [0, 0, 0, 0];
+    this.notifier = createNotifier();
+    this.lastSeen = null;
+    this.exitDefinition = {
+      exec: async ctx => {
+        // Wait for the entry computation to finish
+        await ctx.get(this.registry.make(this.entryDefinition, undefined));
+
+        // Wait for all derived computations to finish
+        while (!this.isDone()) {
+          // Ensure this running version is active before doing side-effects
+          ctx.active();
+          await this.notifier.wait();
+          // In case invalidations occured between notifier.done()
+          // and this computation resuming, keep waiting if !isDone()
+        }
+
+        return ok(this.resultsMap.getSnapshot());
       },
-      undefined
-    );
+      requestDef: anyValue,
+      responseDef: anyValue,
+      makeContext: ctx => ctx,
+      events: {
+        stateChange: (c, from, to) => {
+          // Upon invalidation, undo the effects
+          if (to === State.PENDING || to === State.DELETED) {
+            this.lastSeen = null;
+            this.notifier.cancel();
+          }
+          // TODO when deleted, we should stop referencing the old ComputationMap?
+          // TODO when creating, we should create a new ComputationMap?
+        },
+        finished: (request, result) => {
+          if (result.ok) {
+            // Record the last seen version of the results map
+            this.lastSeen = result.value;
+          }
+        },
+        deleted(request) {},
+      },
+    };
   }
 
   private make(request: Req) {
@@ -623,31 +639,21 @@ class ComputationMap<Req, Res> {
     return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
   }
 
-  private async waitIsDone() {
-    if (!this.isDone()) {
-      await (this.deferred = defer()).promise;
-    }
-  }
-
   private propagateChanges() {
-    //TODO what if exit is running? and waiting? or running a previous version? what if it did not start yet?
-    if (this.isDone()) {
-      const { deferred } = this;
-      if (deferred) {
-        this.deferred = null;
-        deferred.resolve(null);
-      }
+    if (this.lastSeen?.didChange()) {
+      this.getExitComputation().invalidate();
     }
-  }
 
-  destroy() {
-    this.registry.delete(this.entry);
-    this.registry.delete(this.exit);
+    if (this.isDone()) {
+      this.notifier.done(null);
+    }
   }
 
   getExitComputation() {
-    return this.exit;
+    return this.registry.make(this.exitDefinition, undefined);
   }
+
+  // TODO map and filter operations
 }
 
 export class ComputationRegistry {
@@ -685,10 +691,7 @@ export class ComputationRegistry {
     request: Req
   ): Computation<Ctx, Req, Res> {
     return this.map
-      .computeIfAbsent(
-        definition,
-        d => new HashMap(d.requestDef.hash, d.requestDef.equal)
-      )
+      .computeIfAbsent(definition, d => new HashMap(d.requestDef))
       .computeIfAbsent(
         request,
         request => new Computation(this, definition, request)
