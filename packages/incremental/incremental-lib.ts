@@ -620,6 +620,9 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
   }
 
   private isDone() {
+    // TODO cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
+    // In fact, since this will produce a graph (maybe a cyclic one)
+    // How to know if some computation should still exist??
     return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
   }
 
@@ -644,7 +647,10 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
     }
 
     ctx.active();
-    return ok(this.resultsMap.getSnapshot());
+    // Record the last seen version of the results map
+    // in the same tick when isDone()
+    this.lastSeen = this.resultsMap.getSnapshot();
+    return ok(this.lastSeen);
   }
 
   protected makeContext(runId: RunId): ComputationMapContext<Req> {
@@ -658,12 +664,7 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
   protected onFinish(
     req: undefined,
     result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>
-  ): void {
-    if (result.ok) {
-      // Record the last seen version of the results map
-      this.lastSeen = result.value;
-    }
-  }
+  ): void {}
 
   protected onDeleted(req: undefined): void {}
 
@@ -696,7 +697,7 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
       this.status[from]--;
     }
     if (to !== State.DELETED) {
-      this.status[to]--;
+      this.status[to]++;
     }
 
     // React to changes
@@ -765,7 +766,7 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
             this.status[from]--;
           }
           if (to !== State.DELETED) {
-            this.status[to]--;
+            this.status[to]++;
           }
           this.propagateChanges();
         },
