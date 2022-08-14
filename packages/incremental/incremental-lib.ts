@@ -212,78 +212,43 @@ const anyValue: ValueDefinition<any> = {
   hash: _ => 0,
 };
 
-type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
-
-export type ComputationDefinition<Ctx, Req, Res> = {
-  readonly create: (
-    registry: ComputationRegistry,
-    definition: ComputationDefinition<Ctx, Req, Res>,
-    request: Req
-  ) => Computation<Ctx, Req, Res>;
-  readonly requestDef: ValueDefinition<Req>;
-  readonly responseDef: ValueDefinition<Res>;
+export type ComputationDescription<C extends AnyRawComputation> = {
+  readonly create: (registry: ComputationRegistry) => C;
+  readonly equal: <O extends AnyRawComputation>(
+    other: ComputationDescription<O>
+  ) => boolean;
+  readonly hash: () => number;
 };
 
-type AnyComputation = Computation<any, any, any>;
+type AnyRawComputation = RawComputation<any, any>;
 
-abstract class Computation<Ctx, Req, Res> {
+abstract class RawComputation<Ctx, Res> {
   public readonly registry: ComputationRegistry;
-  public readonly definition: ComputationDefinition<Ctx, Req, Res>;
-  public readonly request: Req;
+  public readonly description: ComputationDescription<any>;
   // Current state
   private state: State;
   private runId: RunId | null;
   private running: Promise<Result<Res>> | null;
-  // Dependencies
-  private readonly dependencies: Set<AnyComputation>;
-  // The latest result that all subscribers saw
-  private result: Result<Res> | null;
-  private readonly subscribers: Set<AnyComputation>;
-  // If not null, it means all oldSubscribers saw this value
-  // It is important to keep oldResult separate from result
-  // See invalidate()
-  private oldResult: Result<Res> | null;
-  private readonly oldSubscribers: Set<AnyComputation>;
-
+  // Latest result
+  protected result: Result<Res> | null;
   // Requirements of SpecialQueue
   public prev: AnyComputation | null;
   public next: AnyComputation | null;
 
   constructor(
     registry: ComputationRegistry,
-    definition: ComputationDefinition<Ctx, Req, Res>,
-    request: Req
+    description: ComputationDescription<any>,
+    mark: boolean = true
   ) {
     this.registry = registry;
-    this.definition = definition;
-    this.request = request;
+    this.description = description;
     this.state = State.CREATING;
     this.runId = null;
     this.running = null;
-    this.dependencies = new Set();
     this.result = null;
-    this.subscribers = new Set();
-    this.oldResult = null;
-    this.oldSubscribers = new Set();
     this.prev = null;
     this.next = null;
-    this.mark(State.PENDING);
-  }
-
-  protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
-  protected abstract makeContext(runId: RunId): Ctx;
-
-  protected abstract onFinish(req: Req, result: Result<Res>): void;
-  protected abstract onDeleted(req: Req): void;
-  protected abstract onStateChange(
-    from: StateNotDeleted,
-    to: StateNotCreating
-  ): void;
-
-  protected inv() {
-    if (this.state === State.DELETED) {
-      throw new Error("Unexpected deleted computation");
-    }
+    if (mark) this.mark(State.PENDING);
   }
 
   peekError() {
@@ -293,11 +258,143 @@ abstract class Computation<Ctx, Req, Res> {
     throw new Error("Assertion error: no error");
   }
 
+  protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
+  protected abstract makeContext(runId: RunId): Ctx;
+  protected abstract isOrphan(): boolean;
+
+  protected inv() {
+    if (this.state === State.DELETED) {
+      throw new Error("Unexpected deleted computation");
+    }
+  }
+
+  protected active(runId: RunId) {
+    if (runId !== this.runId) {
+      throw new Error("Computation was cancelled");
+    }
+  }
+
+  protected onFinish(result: Result<Res>) {
+    this.result = result;
+  }
+
+  private after(result: Result<Res>, runId: RunId): Result<Res> {
+    if (this.runId === runId) {
+      this.onFinish(result);
+      this.mark(result.ok ? State.DONE : State.ERRORED);
+    }
+    return result;
+  }
+
+  protected async run(): Promise<Result<Res>> {
+    this.inv();
+    if (!this.running) {
+      const { exec } = this;
+      const runId = newRunId();
+      this.runId = runId;
+      this.running = exec(this.makeContext(runId)).then(
+        v => this.after(v, runId),
+        e => this.after(error(e), runId)
+      );
+      this.mark(State.RUNNING);
+    }
+    return this.running;
+  }
+
+  wait() {
+    return this.running;
+  }
+
+  protected onInvalidate() {
+    this.runId = null;
+    this.running = null;
+    this.result = null;
+  }
+
+  invalidate() {
+    this.inv();
+    this.onInvalidate();
+    this.mark(State.PENDING);
+  }
+
+  protected onDeleted() {
+    this.runId = null;
+    this.running = null;
+    this.result = null;
+  }
+
+  // pre: this.isOrphan()
+  destroy() {
+    this.inv();
+    this.onDeleted();
+    this.mark(State.DELETED);
+  }
+
+  protected abstract onStateChange(
+    from: StateNotDeleted,
+    to: StateNotCreating
+  ): void;
+
+  protected mark(state: StateNotCreating) {
+    const prevState = this.state;
+    if (prevState === State.DELETED) {
+      throw new Error("Unexpected deleted computation");
+    }
+    if (prevState !== State.CREATING) {
+      this.registry.computations[prevState].delete(this);
+    }
+    if (state === State.DELETED) {
+      this.registry.delete(this);
+    } else {
+      this.registry.computations[state].add(this);
+    }
+    this.state = state;
+    this.onStateChange(prevState, state);
+  }
+
+  maybeRun() {
+    if (this.isOrphan()) {
+      // this.destroy();
+    } else {
+      this.run();
+    }
+  }
+}
+
+type AnyComputation = Computation<any, any, any>;
+
+abstract class Computation<Ctx, Req, Res> extends RawComputation<Ctx, Res> {
+  public readonly request: Req;
+  // Dependencies
+  private readonly dependencies: Set<AnyComputation>;
+  // Subscribers that saw the latest result
+  private readonly subscribers: Set<AnyComputation>;
+  // If not null, it means all oldSubscribers saw this value
+  // It is important to keep oldResult separate from result
+  // See invalidate()
+  private oldResult: Result<Res> | null;
+  private readonly oldSubscribers: Set<AnyComputation>;
+
+  constructor(
+    registry: ComputationRegistry,
+    description: ComputationDescription<any>,
+    request: Req,
+    mark: boolean = true
+  ) {
+    super(registry, description, false);
+    this.request = request;
+    this.dependencies = new Set();
+    this.subscribers = new Set();
+    this.oldResult = null;
+    this.oldSubscribers = new Set();
+    if (mark) this.mark(State.PENDING);
+  }
+
+  protected abstract responseEqual(a: Res, b: Res): boolean;
+
   private equals(prev: Result<Res>, next: Result<Res>): boolean {
     if (prev.ok) {
-      return (
-        next.ok && this.definition.responseDef.equal(prev.value, next.value)
-      );
+      return next.ok && this.responseEqual(prev.value, next.value);
     }
     if (!prev.ok) {
       return !next.ok && prev.error === next.error;
@@ -319,28 +416,20 @@ abstract class Computation<Ctx, Req, Res> {
     dep.oldSubscribers.delete(this);
   }
 
-  protected active(runId: RunId) {
-    if (runId !== this.runId) {
-      throw new Error("Computation was cancelled");
+  protected onFinishNew(result: Result<Res>) {}
+
+  protected override onFinish(result: Result<Res>): void {
+    super.onFinish(result);
+
+    const old = this.oldResult;
+    this.oldResult = null;
+
+    if (old != null && this.equals(old, result)) {
+      transferSetItems(this.oldSubscribers, this.subscribers);
+    } else {
+      this.invalidateSubs(this.oldSubscribers);
+      this.onFinishNew(result);
     }
-  }
-
-  private after(result: Result<Res>, runId: RunId): Result<Res> {
-    if (this.runId === runId) {
-      const old = this.oldResult;
-      this.oldResult = null;
-      this.result = result;
-
-      if (old != null && this.equals(old, result)) {
-        transferSetItems(this.oldSubscribers, this.subscribers);
-      } else {
-        this.invalidateSubs(this.oldSubscribers);
-        this.onFinish(this.request, result);
-      }
-
-      this.mark(result.ok ? State.DONE : State.ERRORED);
-    }
-    return result;
   }
 
   protected getDep<T>(
@@ -350,49 +439,6 @@ abstract class Computation<Ctx, Req, Res> {
     this.active(runId);
     this.subscribe(dep);
     return dep.run();
-  }
-
-  private async run(): Promise<Result<Res>> {
-    this.inv();
-    if (!this.running) {
-      const { exec } = this;
-      const runId = newRunId();
-      this.runId = runId;
-      this.running = exec(this.makeContext(runId)).then(
-        v => this.after(v, runId),
-        e => this.after(error(e), runId)
-      );
-      this.mark(State.RUNNING);
-    }
-    return this.running;
-  }
-
-  wait() {
-    return this.running;
-  }
-
-  invalidate() {
-    this.inv();
-    // Invalidate previous execution
-    this.runId = null;
-    this.running = null;
-    // If a computation is invalidated, partially executed, and then invalidated again,
-    // oldResult will be null.
-    // This will cause computations that subcribed in between both invalidations
-    // to be propertly invalidated, preserving the invariant
-    // that all oldSubscribers should have seen the same oldResult, if not null.
-    this.oldResult = this.result;
-    this.result = null;
-    // Delay invalidation of subscribers
-    // by moving them to the list of oldSubscribers.
-    transferSetItems(this.subscribers, this.oldSubscribers);
-    // Disconnect from dependencies and children computations.
-    // The connection might be restored after rerunning this computation.
-    // This is fine because our garbage collection of computations
-    // only occurs after everything is stable.
-    this.disconnect();
-    // Update state
-    this.mark(State.PENDING);
   }
 
   private invalidateSubs(subs: ReadonlySet<AnyComputation>) {
@@ -407,45 +453,36 @@ abstract class Computation<Ctx, Req, Res> {
     }
   }
 
-  // pre: this.isOrphan()
-  destroy() {
-    this.inv();
-    this.runId = null;
-    this.running = null;
-    this.oldResult = null;
-    this.result = null;
+  protected override onInvalidate(): void {
+    const { result } = this;
+    // Invalidate run
+    super.onInvalidate();
+    // If a computation is invalidated, partially executed, and then invalidated again,
+    // oldResult will be null.
+    // This will cause computations that subcribed in between both invalidations
+    // to be propertly invalidated, preserving the invariant
+    // that all oldSubscribers should have seen the same oldResult, if not null.
+    this.oldResult = result;
+    // Delay invalidation of subscribers
+    // by moving them to the list of oldSubscribers.
+    transferSetItems(this.subscribers, this.oldSubscribers);
+    // Disconnect from dependencies and children computations.
+    // The connection might be restored after rerunning this computation.
+    // This is fine because our garbage collection of computations
+    // only occurs after everything is stable.
     this.disconnect();
-    this.onDeleted(this.request);
-    this.mark(State.DELETED);
   }
 
-  private mark(state: StateNotCreating) {
-    const prevState = this.state;
-    if (prevState === State.DELETED) {
-      throw new Error("Unexpected deleted computation");
-    }
-    if (prevState !== State.CREATING) {
-      this.registry.computations[prevState].delete(this);
-    }
-    if (state === State.DELETED) {
-      this.registry.delete(this);
-    } else {
-      this.registry.computations[state].add(this);
-    }
-    this.state = state;
-    this.onStateChange(prevState, state);
+  protected override onDeleted(): void {
+    super.onDeleted();
+    this.oldResult = null;
+    this.disconnect();
+    this.invalidateSubs(this.subscribers);
+    this.invalidateSubs(this.oldSubscribers);
   }
 
   protected isOrphan(): boolean {
     return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
-  }
-
-  maybeRun() {
-    if (this.isOrphan()) {
-      // this.destroy();
-    } else {
-      this.run();
-    }
   }
 }
 
@@ -459,14 +496,6 @@ abstract class ComputationWithChildren<Ctx, Req, Res> extends Computation<
   // Parent computations and children computations
   private readonly owners: Set<AnyComputationWithChildren> = new Set();
   private readonly owned: Set<AnyComputationWithChildren> = new Set();
-
-  constructor(
-    registry: ComputationRegistry,
-    definition: ComputationDefinition<Ctx, Req, Res>,
-    request: Req
-  ) {
-    super(registry, definition, request);
-  }
 
   own(comp: AnyComputationWithChildren) {
     this.inv();
@@ -486,7 +515,7 @@ abstract class ComputationWithChildren<Ctx, Req, Res> extends Computation<
     this.own(computation);
   }
 
-  protected disconnect() {
+  protected override disconnect() {
     super.disconnect();
 
     for (const owned of this.owned) {
@@ -494,7 +523,7 @@ abstract class ComputationWithChildren<Ctx, Req, Res> extends Computation<
     }
   }
 
-  protected isOrphan(): boolean {
+  protected override isOrphan(): boolean {
     return super.isOrphan() && this.owners.size === 0;
   }
 }
@@ -516,6 +545,8 @@ type ComputationMapContext<Req> = {
   readonly compute: (dep: Req) => void;
 };
 
+type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
+
 export type ComputationMapDefinition<Req, Res> = {
   readonly startExec: ComputationExec<
     ComputationMapStartContext<Req>,
@@ -535,16 +566,22 @@ class ComputationMapField<Req, Res> extends ComputationWithChildren<
 
   constructor(
     registry: ComputationRegistry,
-    definition: ComputationDefinition<
-      ComputationMapFieldContext<Req>,
-      Req,
-      Res
-    >,
+    description: ComputationDescription<any>,
     request: Req,
     source: ComputationMap<Req, Res>
   ) {
-    super(registry, definition, request);
+    super(registry, description, request, false);
     this.source = source;
+    this.mark(State.PENDING);
+  }
+
+  override subscribe(dep: AnyComputation): void {
+    // TODO split two kinds of computations
+    throw new Error("Cannot subscribe to this kind of computation");
+  }
+
+  protected override responseEqual(a: Res, b: Res): boolean {
+    return this.source.mapDefinition.responseDef.equal(a, b);
   }
 
   protected exec(ctx: ComputationMapFieldContext<Req>): Promise<Result<Res>> {
@@ -559,16 +596,46 @@ class ComputationMapField<Req, Res> extends ComputationWithChildren<
     };
   }
 
-  protected onFinish(req: Req, result: Result<Res>): void {
-    this.source.onFieldFinish(req, result);
+  protected override onFinishNew(result: Result<Res>): void {
+    super.onFinishNew(result);
+    this.source.onFieldFinishNew(this.request, result);
   }
 
-  protected onDeleted(req: Req): void {
-    this.source.onFieldDeleted(req);
+  protected override onDeleted(): void {
+    super.onDeleted();
+    this.source.onFieldDeleted(this.request);
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     this.source.onFieldStateChange(from, to);
+  }
+}
+
+class ComputationMapFieldDescription<Req, Res>
+  implements ComputationDescription<ComputationMapField<Req, Res>>
+{
+  private readonly request: Req;
+  private readonly source: ComputationMap<Req, Res>;
+
+  constructor(request: Req, source: ComputationMap<Req, Res>) {
+    this.request = request;
+    this.source = source;
+  }
+
+  create(registry: ComputationRegistry): ComputationMapField<Req, Res> {
+    return new ComputationMapField(registry, this, this.request, this.source);
+  }
+
+  equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
+    return (
+      other instanceof ComputationMapFieldDescription &&
+      this.source === other.source &&
+      this.source.mapDefinition.requestDef.equal(this.request, other.request)
+    );
+  }
+
+  hash() {
+    return this.source.mapDefinition.requestDef.hash(this.request);
   }
 }
 
@@ -577,12 +644,7 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
   undefined,
   ReadonlyHandlerHashMap<Req, Result<Res>>
 > {
-  private readonly mapDefinition: ComputationMapDefinition<Req, Res>;
-  private readonly fieldDefinition: ComputationDefinition<
-    ComputationMapFieldContext<Req>,
-    Req,
-    Res
-  >;
+  public readonly mapDefinition: ComputationMapDefinition<Req, Res>;
   private readonly resultsMap: HashMap<Req, Result<Res>>;
   private readonly status: [number, number, number, number];
   private readonly notifier: Notifier<null>;
@@ -590,37 +652,33 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
 
   constructor(
     registry: ComputationRegistry,
-    definition: ComputationDefinition<
-      ComputationMapContext<Req>,
-      undefined,
-      ReadonlyHandlerHashMap<Req, Result<Res>>
-    >,
-    request: undefined,
+    description: ComputationDescription<any>,
     mapDefinition: ComputationMapDefinition<Req, Res>
   ) {
-    super(registry, definition, request);
+    super(registry, description, undefined, false);
     this.mapDefinition = mapDefinition;
-    this.fieldDefinition = {
-      create: (registry, definition, request) =>
-        new ComputationMapField(registry, definition, request, this),
-      requestDef: mapDefinition.requestDef,
-      responseDef: mapDefinition.responseDef,
-    };
     this.resultsMap = new HashMap<Req, Result<Res>>(mapDefinition.requestDef);
     this.status = [0, 0, 0, 0];
     this.notifier = createNotifier();
     this.lastSeen = null;
+    this.mark(State.PENDING);
   }
 
-  make(request: Req) {
+  protected override responseEqual(
+    a: ReadonlyHandlerHashMap<Req, Result<Res>>,
+    b: ReadonlyHandlerHashMap<Req, Result<Res>>
+  ): boolean {
+    return false;
+  }
+
+  make(request: Req): AnyComputationWithChildren {
     return this.registry.make(
-      this.fieldDefinition,
-      request
-    ) as AnyComputationWithChildren;
+      new ComputationMapFieldDescription(request, this)
+    );
   }
 
   private isDone() {
-    // TODO cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
+    // TODO FIXME cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
     // In fact, since this will produce a graph (maybe a cyclic one)
     // How to know if some computation should still exist??
     return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
@@ -632,10 +690,14 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
     const { startExec } = this.mapDefinition;
 
     // Wait for the start computation to finish
-    await startExec({
+    const startResult = await startExec({
       get: ctx.get,
       compute: ctx.compute,
     });
+
+    if (!startResult.ok) {
+      return startResult;
+    }
 
     // Wait for all children computations to finish
     while (!this.isDone()) {
@@ -661,13 +723,6 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
     };
   }
 
-  protected onFinish(
-    req: undefined,
-    result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>
-  ): void {}
-
-  protected onDeleted(req: undefined): void {}
-
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     // Upon invalidation, undo the effects
     if (to === State.PENDING || to === State.DELETED) {
@@ -681,7 +736,7 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
     return this.mapDefinition.exec(ctx);
   }
 
-  onFieldFinish(req: Req, result: Result<Res>): void {
+  onFieldFinishNew(req: Req, result: Result<Res>): void {
     this.inv();
     this.resultsMap.set(req, result);
   }
@@ -713,154 +768,24 @@ class ComputationMap<Req, Res> extends ComputationWithChildren<
   // TODO map and filter operations
 }
 
-/*class ComputationMap<Req, Res> {
-  private readonly registry: ComputationRegistry;
-  private readonly definition: ComputationMapDefinition<Req, Res>;
-  private readonly entryDefinition: ComputationDefinition<
-    ComputationMapStartContext<Req>,
-    undefined,
-    undefined
-  >;
-  private readonly computationsDefinition: ComputationDefinition<
-    ComputationMapContext<Req>,
-    Req,
-    Res
-  >;
-  private readonly exitDefinition: ComputationDefinition<
-    ComputationExitMapContext,
-    undefined,
-    ReadonlyHandlerHashMap<Req, Result<Res>>
-  >;
-  private readonly resultsMap: HashMap<Req, Result<Res>>;
-  private readonly status: [number, number, number, number];
-  private readonly notifier: Notifier<null>;
-  private lastSeen: ReadonlyHandlerHashMap<Req, Result<Res>> | null;
-
-  constructor(
-    registry: ComputationRegistry,
-    definition: ComputationMapDefinition<Req, Res>
-  ) {
-    this.registry = registry;
-    this.definition = definition;
-    this.entryDefinition = {
-      exec: definition.entryExec,
-      requestDef: anyValue,
-      responseDef: anyValue,
-      makeContext: ctx => ({
-        get: ctx.get,
-        compute: req => ctx.compute(this.make(req)),
-      }),
-    };
-    this.computationsDefinition = {
-      exec: definition.exec,
-      requestDef: definition.requestDef,
-      responseDef: definition.responseDef,
-      makeContext: ctx => ({
-        get: ctx.get,
-        compute: req => ctx.compute(this.make(req)),
-        request: ctx.request,
-      }),
-      events: {
-        stateChange: (_, from, to) => {
-          if (from !== State.CREATING) {
-            this.status[from]--;
-          }
-          if (to !== State.DELETED) {
-            this.status[to]++;
-          }
-          this.propagateChanges();
-        },
-        finished: (req, result) => {
-          this.resultsMap.set(req, result);
-        },
-        deleted: req => {
-          this.resultsMap.delete(req);
-        },
-      },
-    };
-    this.resultsMap = new HashMap<Req, Result<Res>>(this.definition.requestDef);
-    this.status = [0, 0, 0, 0];
-    this.notifier = createNotifier();
-    this.lastSeen = null;
-    this.exitDefinition = {
-      exec: async ctx => {
-        // Wait for the entry computation to finish
-        await ctx.get(this.registry.make(this.entryDefinition, undefined));
-
-        // Wait for all children computations to finish
-        while (!this.isDone()) {
-          // Ensure this running version is active before doing side-effects
-          ctx.active();
-          await this.notifier.wait();
-          // In case invalidations occured between notifier.done()
-          // and this computation resuming, keep waiting if !isDone()
-        }
-
-        return ok(this.resultsMap.getSnapshot());
-      },
-      requestDef: anyValue,
-      responseDef: anyValue,
-      makeContext: ctx => ctx,
-      events: {
-        stateChange: (c, from, to) => {
-          // Upon invalidation, undo the effects
-          if (to === State.PENDING || to === State.DELETED) {
-            this.lastSeen = null;
-            this.notifier.cancel();
-          }
-        },
-        finished: (request, result) => {
-          if (result.ok) {
-            // Record the last seen version of the results map
-            this.lastSeen = result.value;
-          }
-        },
-        deleted(request) {},
-      },
-    };
-  }
-
-  private make(request: Req) {
-    return this.registry.make(this.computationsDefinition, request);
-  }
-
-  private isDone() {
-    return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
-  }
-
-  private propagateChanges() {
-    if (this.lastSeen?.didChange()) {
-      this.getExitComputation().invalidate();
-    }
-
-    if (this.isDone()) {
-      this.notifier.done(null);
-    }
-  }
-
-  getExitComputation() {
-    return this.registry.make(this.exitDefinition, undefined);
-  }
-}*/
-
 export class ComputationRegistry {
-  private map: IdentityMap<
-    ComputationDefinition<any, any, any>,
-    HashMap<any, AnyComputation>
-  >;
+  private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
   readonly computations: readonly [
-    SpecialQueue<AnyComputation>,
-    SpecialQueue<AnyComputation>,
-    SpecialQueue<AnyComputation>,
-    SpecialQueue<AnyComputation>
+    SpecialQueue<AnyRawComputation>,
+    SpecialQueue<AnyRawComputation>,
+    SpecialQueue<AnyRawComputation>,
+    SpecialQueue<AnyRawComputation>
   ];
-  private readonly pending: SpecialQueue<AnyComputation>;
-  private readonly running: SpecialQueue<AnyComputation>;
-  private readonly errored: SpecialQueue<AnyComputation>;
+  private readonly pending: SpecialQueue<AnyRawComputation>;
+  private readonly running: SpecialQueue<AnyRawComputation>;
+  private readonly errored: SpecialQueue<AnyRawComputation>;
   private interrupted: boolean;
 
   constructor() {
-    this.map = new IdentityMap();
+    this.map = new HashMap({
+      equal: (a, b) => a.equal(b),
+      hash: a => a.hash(),
+    });
     this.computations = [
       new SpecialQueue(),
       new SpecialQueue(),
@@ -873,19 +798,12 @@ export class ComputationRegistry {
     this.interrupted = false;
   }
 
-  make<Ctx, Req, Res>(
-    definition: ComputationDefinition<Ctx, Req, Res>,
-    request: Req
-  ): Computation<Ctx, Req, Res> {
-    return this.map
-      .computeIfAbsent(definition, d => new HashMap(d.requestDef))
-      .computeIfAbsent(request, request =>
-        definition.create(this, definition, request)
-      );
+  make<C extends AnyRawComputation>(description: ComputationDescription<C>): C {
+    return this.map.computeIfAbsent(description, d => d.create(this)) as C;
   }
 
-  delete(c: AnyComputation) {
-    this.map.get(c.definition)?.delete(c.request);
+  delete(c: AnyRawComputation) {
+    this.map.delete(c.description);
   }
 
   interrupt() {

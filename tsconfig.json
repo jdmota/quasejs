@@ -9,7 +9,9 @@
     "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true,
+    "noImplicitThis": true
   },
   "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts"]
 }

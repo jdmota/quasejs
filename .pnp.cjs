@@ -139,7 +139,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["fs-extra", "npm:9.0.1"],\
             ["ix", "npm:4.5.2"],\
             ["jest", "npm:26.6.3"],\
-            ["prettier", "npm:2.2.0"],\
+            ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
@@ -11037,10 +11037,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["prettier", [\
-        ["npm:2.2.0", {\
-          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/prettier-npm-2.2.0-9fa8f01d1a-8.zip/node_modules/prettier/",\
+        ["npm:2.7.1", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/prettier-npm-2.7.1-d1f40f5e1a-8.zip/node_modules/prettier/",\
           "packageDependencies": [\
-            ["prettier", "npm:2.2.0"]\
+            ["prettier", "npm:2.7.1"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -11247,7 +11247,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["fs-extra", "npm:9.0.1"],\
             ["ix", "npm:4.5.2"],\
             ["jest", "npm:26.6.3"],\
-            ["prettier", "npm:2.2.0"],\
+            ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
