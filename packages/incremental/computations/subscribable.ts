@@ -1,4 +1,4 @@
-import { Result } from "../utils/result";
+import { Result, resultEqual } from "../utils/result";
 import { DependentComputation } from "./dependent";
 import { RawComputation } from "./raw";
 
@@ -29,6 +29,8 @@ export class SubscribableComputationMixin<Res> {
   // See invalidate()
   private oldResult: Result<Res> | null;
   readonly oldSubscribers: Set<DependentComputation>;
+  // Compare ok result's values
+  private readonly equal: (a: Res, b: Res) => boolean;
 
   constructor(source: RawComputation<any, Res> & SubscribableComputation<Res>) {
     this.source = source;
@@ -36,16 +38,7 @@ export class SubscribableComputationMixin<Res> {
     this.subscribers = new Set();
     this.oldResult = null;
     this.oldSubscribers = new Set();
-  }
-
-  private equals(prev: Result<Res>, next: Result<Res>): boolean {
-    if (prev.ok) {
-      return next.ok && this.source.responseEqual(prev.value, next.value);
-    }
-    if (!prev.ok) {
-      return !next.ok && prev.error === next.error;
-    }
-    return false;
+    this.equal = (a, b) => this.source.responseEqual(a, b);
   }
 
   private invalidateSubs(subs: ReadonlySet<DependentComputation>) {
@@ -63,7 +56,7 @@ export class SubscribableComputationMixin<Res> {
     this.oldResult = null;
     this.result = result;
 
-    if (old != null && this.equals(old, result)) {
+    if (old != null && resultEqual(this.equal, old, result)) {
       transferSetItems(this.oldSubscribers, this.subscribers);
     } else {
       this.invalidateSubs(this.oldSubscribers);

@@ -8,7 +8,7 @@ import {
   ReadonlyHandlerHashMap,
   HashMap,
 } from "../utils/hash-map";
-import { ok, Result } from "../utils/result";
+import { ok, Result, resultEqual } from "../utils/result";
 import { ChildComputation, ChildComputationMixin } from "./child";
 import { DependentComputation, DependentComputationMixin } from "./dependent";
 import { ParentComputation, ParentComputationMixin } from "./parent";
@@ -164,6 +164,7 @@ export class ComputationMap<Req, Res>
   private readonly status: [number, number, number, number];
   private readonly notifier: Notifier<null>;
   private lastSeen: ReadonlyHandlerHashMap<Req, Result<Res>> | null;
+  private readonly equal: (a: Result<Res>, b: Result<Res>) => boolean;
 
   constructor(
     registry: ComputationRegistry,
@@ -179,6 +180,7 @@ export class ComputationMap<Req, Res>
     this.status = [0, 0, 0, 0];
     this.notifier = createNotifier();
     this.lastSeen = null;
+    this.equal = (a, b) => resultEqual(mapDefinition.responseDef.equal, a, b);
     this.mark(State.PENDING);
   }
 
@@ -282,8 +284,7 @@ export class ComputationMap<Req, Res>
 
   onFieldFinish(req: Req, result: Result<Res>): void {
     this.inv();
-    // TODO only set if different
-    this.resultsMap.set(req, result);
+    this.resultsMap.set(req, result, this.equal);
   }
 
   onFieldDeleted(req: Req): void {

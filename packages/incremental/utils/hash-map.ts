@@ -15,6 +15,8 @@ export interface ReadonlyHashMap<K, V> {
   [Symbol.iterator](): IterableIterator<readonly [K, V]>;
 }
 
+const falseFn = () => false;
+
 export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
   private readonly map: Map<number, LinkedList<HashMapEntry<K, V>>>;
   private readonly hash: (key: K) => number;
@@ -49,16 +51,23 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
   }
 
   delete(key: K): V | undefined {
-    this.changed();
+    const hash = this.hash(key);
 
-    return this.map
-      .get(this.hash(key))
-      ?.remove(entry => this.equal(entry.key, key))?.value;
+    const list = this.map.get(hash);
+    if (list === undefined) {
+      return;
+    }
+
+    const entry = list.remove(entry => this.equal(entry.key, key));
+    if (entry === undefined) {
+      return;
+    }
+
+    this.changed();
+    return entry.value;
   }
 
-  set(key: K, value: V) {
-    this.changed();
-
+  set(key: K, value: V, equal: (a: V, b: V) => boolean = falseFn) {
     const hash = this.hash(key);
 
     let list = this.map.get(hash);
@@ -74,14 +83,15 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value,
       };
       list.addLast(entry);
+      this.changed();
     } else {
+      const oldValue = entry.value;
       entry.value = value;
+      if (!equal(oldValue, value)) this.changed();
     }
   }
 
   computeIfAbsent(key: K, fn: (key: K) => V): V {
-    this.changed();
-
     const hash = this.hash(key);
 
     let list = this.map.get(hash);
@@ -97,6 +107,7 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value: fn(key),
       };
       list.addLast(entry);
+      this.changed();
     }
     return entry.value;
   }
