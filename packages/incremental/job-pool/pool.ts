@@ -1,6 +1,25 @@
 import {
-  ComputationRegistry,
+  DependentComputation,
+  DependentComputationMixin,
+} from "../computations/dependent";
+import {
+  ParentComputation,
+  ParentComputationMixin,
+} from "../computations/parent";
+import {
+  RawComputation,
+  State,
+  RunId,
+  StateNotDeleted,
+  StateNotCreating,
+} from "../computations/raw";
+import {
+  SubscribableComputation,
+  SubscribableComputationMixin,
+} from "../computations/subscribable";
+import {
   ComputationDescription,
+  ComputationRegistry,
 } from "../incremental-lib";
 import { Notifier, createNotifier } from "../utils/deferred";
 import {
@@ -8,32 +27,15 @@ import {
   ReadonlyHandlerHashMap,
   HashMap,
 } from "../utils/hash-map";
-import { ok, Result, resultEqual } from "../utils/result";
-import { ChildComputation, ChildComputationMixin } from "./child";
-import { DependentComputation, DependentComputationMixin } from "./dependent";
-import { ParentComputation, ParentComputationMixin } from "./parent";
+import { Result, resultEqual, ok } from "../utils/result";
 import {
-  SubscribableComputation,
-  SubscribableComputationMixin,
-} from "./subscribable";
-import {
-  State,
-  RunId,
-  StateNotDeleted,
-  StateNotCreating,
-  AnyRawComputation,
-  RawComputation,
-} from "./raw";
+  ComputationJobInPoolContext,
+  ComputationJobInPoolDescription,
+} from "./job";
 
 type ComputationMapStartContext<Req> = {
   readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
-};
-
-type ComputationMapFieldContext<Req> = {
-  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
-  readonly compute: (req: Req) => void;
-  readonly request: Req;
 };
 
 type ComputationMapContext<Req> = {
@@ -49,101 +51,12 @@ export type ComputationMapDefinition<Req, Res> = {
     ComputationMapStartContext<Req>,
     undefined
   >;
-  readonly exec: ComputationExec<ComputationMapFieldContext<Req>, Res>;
+  readonly exec: ComputationExec<ComputationJobInPoolContext<Req>, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
 };
 
-class ComputationMapField<Req, Res>
-  extends RawComputation<ComputationMapFieldContext<Req>, Res>
-  implements DependentComputation, ParentComputation, ChildComputation
-{
-  private readonly source: ComputationMap<Req, Res>;
-  public readonly request: Req;
-  public readonly dependentMixin: DependentComputationMixin;
-  public readonly parentMixin: ParentComputationMixin;
-  public readonly childrenMixin: ChildComputationMixin;
-
-  constructor(
-    registry: ComputationRegistry,
-    description: ComputationDescription<any>,
-    request: Req,
-    source: ComputationMap<Req, Res>
-  ) {
-    super(registry, description, false);
-    this.source = source;
-    this.request = request;
-    this.dependentMixin = new DependentComputationMixin(this);
-    this.parentMixin = new ParentComputationMixin(this);
-    this.childrenMixin = new ChildComputationMixin(this);
-    this.mark(State.PENDING);
-  }
-
-  protected exec(ctx: ComputationMapFieldContext<Req>): Promise<Result<Res>> {
-    return this.source.execField(ctx);
-  }
-
-  protected makeContext(runId: RunId): ComputationMapFieldContext<Req> {
-    return {
-      get: dep => this.dependentMixin.getDep(dep, runId),
-      compute: req => this.parentMixin.compute(this.source.make(req), runId),
-      request: this.request,
-    };
-  }
-
-  protected isOrphan(): boolean {
-    return this.childrenMixin.isOrphan();
-  }
-
-  protected finishRoutine(result: Result<Res>): void {
-    this.source.onFieldFinish(this.request, result);
-  }
-
-  protected invalidateRoutine(): void {
-    this.dependentMixin.invalidateRoutine();
-    this.parentMixin.invalidateRoutine();
-  }
-
-  protected deleteRoutine(): void {
-    this.dependentMixin.deleteRoutine();
-    this.parentMixin.deleteRoutine();
-    this.source.onFieldDeleted(this.request);
-  }
-
-  protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
-    this.source.onFieldStateChange(from, to);
-  }
-}
-
-class ComputationMapFieldDescription<Req, Res>
-  implements ComputationDescription<ComputationMapField<Req, Res>>
-{
-  private readonly request: Req;
-  private readonly source: ComputationMap<Req, Res>;
-
-  constructor(request: Req, source: ComputationMap<Req, Res>) {
-    this.request = request;
-    this.source = source;
-  }
-
-  create(registry: ComputationRegistry): ComputationMapField<Req, Res> {
-    return new ComputationMapField(registry, this, this.request, this.source);
-  }
-
-  equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
-    return (
-      other instanceof ComputationMapFieldDescription &&
-      this.source === other.source &&
-      this.source.mapDefinition.requestDef.equal(this.request, other.request)
-    );
-  }
-
-  hash() {
-    return this.source.mapDefinition.requestDef.hash(this.request);
-  }
-}
-
-export class ComputationMap<Req, Res>
+export class ComputationPool<Req, Res>
   extends RawComputation<
     ComputationMapContext<Req>,
     ReadonlyHandlerHashMap<Req, Result<Res>>
@@ -266,9 +179,22 @@ export class ComputationMap<Req, Res>
 
   make(request: Req) {
     return this.registry.make(
-      new ComputationMapFieldDescription(request, this)
+      new ComputationJobInPoolDescription(request, this)
     );
   }
+
+  // TODO when we remove an edge from A to B, we need to do a search backwards to find the root
+  // If we find the root, all fine
+  // If we do not find the root, all the nodes we saw backwards are also not reachable
+  // (if we start with a graph where all the nodes are reachable from a root/source,
+  // the nodes that we found by going backwards, which are no longer reachable,
+  // were reachable before only because of the edge that was just removed)
+  // In that case, we can remove all these nodes
+  // By removing all these nodes, other edges will be broken, so we need to repeat the steps
+
+  // TODO what if an edge is removed and then added again?
+
+  // TODO should this computation have mini-registry stored?
 
   private isDone() {
     // TODO FIXME cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
@@ -277,23 +203,19 @@ export class ComputationMap<Req, Res>
     return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
   }
 
-  async execField(ctx: ComputationMapFieldContext<Req>): Promise<Result<Res>> {
-    this.inv();
-    return this.mapDefinition.exec(ctx);
-  }
-
   onFieldFinish(req: Req, result: Result<Res>): void {
-    this.inv();
+    if (this.deleted()) return;
     this.resultsMap.set(req, result, this.equal);
   }
 
   onFieldDeleted(req: Req): void {
-    this.inv();
+    if (this.deleted()) return;
     this.resultsMap.delete(req);
   }
 
   onFieldStateChange(from: StateNotDeleted, to: StateNotCreating): void {
-    this.inv();
+    if (this.deleted()) return;
+
     if (from !== State.CREATING) {
       this.status[from]--;
     }

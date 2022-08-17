@@ -84,8 +84,12 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
 
+  protected deleted() {
+    return this.state === State.DELETED;
+  }
+
   inv() {
-    if (this.state === State.DELETED) {
+    if (this.deleted()) {
       throw new Error("Unexpected deleted computation");
     }
   }
