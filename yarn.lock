@@ -9109,6 +9109,7 @@ fsevents@^1.2.7:
     jest: ^26.6.3
     prettier: ^2.7.1
     rxjs: ^7.5.6
+    type-fest: ^2.18.0
     typescript: ^4.7.4
   languageName: unknown
   linkType: soft
@@ -10825,6 +10826,13 @@ fsevents@^1.2.7:
   version: 0.8.1
   resolution: "type-fest@npm:0.8.1"
   checksum: d61c4b2eba24009033ae4500d7d818a94fd6d1b481a8111612ee141400d5f1db46f199c014766b9fa9b31a6a7374d96fc748c6d688a78a3ce5a33123839becb7
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^2.18.0":
+  version: 2.18.0
+  resolution: "type-fest@npm:2.18.0"
+  checksum: 0737128d9d77b93793c6ee443e304462a792f5b723a6be035d6cb488c5610a8baa00522805421341c04324c80efba9849885bbfbc5a9623d0672fe8712969f62
   languageName: node
   linkType: hard
 

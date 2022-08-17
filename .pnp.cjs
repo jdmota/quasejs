@@ -141,6 +141,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
+            ["type-fest", "npm:2.18.0"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
           "linkType": "SOFT"\
@@ -11249,6 +11250,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
+            ["type-fest", "npm:2.18.0"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
           "linkType": "SOFT"\
@@ -13138,6 +13140,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/type-fest-npm-0.8.1-351ad028fe-8.zip/node_modules/type-fest/",\
           "packageDependencies": [\
             ["type-fest", "npm:0.8.1"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:2.18.0", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/type-fest-npm-2.18.0-cd9d170d6e-8.zip/node_modules/type-fest/",\
+          "packageDependencies": [\
+            ["type-fest", "npm:2.18.0"]\
           ],\
           "linkType": "HARD"\
         }]\

@@ -1,8 +1,7 @@
+import { Result, error } from "../utils/result";
 import {
   ComputationRegistry,
   ComputationDescription,
-  Result,
-  error,
 } from "../incremental-lib";
 
 export enum State {
@@ -77,32 +76,36 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
   protected abstract makeContext(runId: RunId): Ctx;
   protected abstract isOrphan(): boolean;
+  protected abstract onStateChange(
+    from: StateNotDeleted,
+    to: StateNotCreating
+  ): void;
+  protected abstract finishRoutine(result: Result<Res>): void;
+  protected abstract invalidateRoutine(): void;
+  protected abstract deleteRoutine(): void;
 
-  protected inv() {
+  inv() {
     if (this.state === State.DELETED) {
       throw new Error("Unexpected deleted computation");
     }
   }
 
-  protected active(runId: RunId) {
+  active(runId: RunId) {
     if (runId !== this.runId) {
       throw new Error("Computation was cancelled");
     }
   }
 
-  protected onFinish(result: Result<Res>) {
-    this.result = result;
-  }
-
   private after(result: Result<Res>, runId: RunId): Result<Res> {
     if (this.runId === runId) {
-      this.onFinish(result);
+      this.result = result;
+      this.finishRoutine(result);
       this.mark(result.ok ? State.DONE : State.ERRORED);
     }
     return result;
   }
 
-  protected async run(): Promise<Result<Res>> {
+  async run(): Promise<Result<Res>> {
     this.inv();
     if (!this.running) {
       const { exec } = this;
@@ -117,39 +120,24 @@ export abstract class RawComputation<Ctx, Res> {
     return this.running;
   }
 
-  wait() {
-    return this.running;
-  }
-
-  protected onInvalidate() {
-    this.runId = null;
-    this.running = null;
-    this.result = null;
-  }
-
   invalidate() {
     this.inv();
-    this.onInvalidate();
-    this.mark(State.PENDING);
-  }
-
-  protected onDeleted() {
     this.runId = null;
     this.running = null;
     this.result = null;
+    this.invalidateRoutine();
+    this.mark(State.PENDING);
   }
 
   // pre: this.isOrphan()
   destroy() {
     this.inv();
-    this.onDeleted();
+    this.runId = null;
+    this.running = null;
+    this.result = null;
+    this.deleteRoutine();
     this.mark(State.DELETED);
   }
-
-  protected abstract onStateChange(
-    from: StateNotDeleted,
-    to: StateNotCreating
-  ): void;
 
   protected mark(state: StateNotCreating) {
     const prevState = this.state;

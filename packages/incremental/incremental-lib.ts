@@ -24,26 +24,10 @@
 
 import { from } from "ix/asynciterable";
 import { filter, map } from "ix/asynciterable/operators";
-import { Defer, createDefer, Notifier, createNotifier } from "./utils/deferred";
-import {
-  ValueDefinition,
-  HashMap,
-  ReadonlyHandlerHashMap,
-} from "./utils/hash-map";
+import { Defer, createDefer } from "./utils/deferred";
+import { ValueDefinition, HashMap } from "./utils/hash-map";
 import { SpecialQueue } from "./utils/linked-list";
-import {
-  RawComputation,
-  AnyRawComputation,
-  State,
-  StateNotDeleted,
-  StateNotCreating,
-  RunId,
-} from "./computations/raw";
-import { AnyComputation, Computation } from "./computations/subscribable";
-import {
-  AnyComputationWithChildren,
-  ComputationWithChildren,
-} from "./computations/with-children";
+import { AnyRawComputation, State } from "./computations/raw";
 
 type JobPoolOptions<Req, Res> = {
   readonly exec: (req: Req) => Promise<Res>;
@@ -161,24 +145,6 @@ function deterministic<Arg, Ret>(
   };
 }
 
-export type Result<T, E = unknown> =
-  | {
-      ok: true;
-      value: T;
-    }
-  | {
-      ok: false;
-      error: E;
-    };
-
-export function ok<T, E = unknown>(value: T): Result<T, E> {
-  return { ok: true, value };
-}
-
-export function error<T, E>(error: E): Result<T, E> {
-  return { ok: false, error };
-}
-
 const anyValue: ValueDefinition<any> = {
   equal: (a, b) => a === b,
   hash: _ => 0,
@@ -261,7 +227,7 @@ export class ComputationRegistry {
         c.maybeRun();
       }
 
-      await this.running.peek()?.wait();
+      await this.running.peek()?.run();
     }
 
     for (const c of this.errored.iterateAll()) {

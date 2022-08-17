@@ -1,9 +1,15 @@
-import {
-  ComputationDescription,
-  ComputationRegistry,
-  Result,
-} from "../incremental-lib";
-import { RawComputation, RunId, State } from "./raw";
+import { Result } from "../utils/result";
+import { DependentComputation } from "./dependent";
+import { RawComputation } from "./raw";
+
+export interface SubscribableComputation<Res> {
+  readonly subscribableMixin: SubscribableComputationMixin<Res>;
+
+  inv(): void;
+  run(): Promise<Result<Res>>;
+  responseEqual(a: Res, b: Res): boolean;
+  onNewResult(result: Result<Res>): void;
+}
 
 function transferSetItems<T>(from: Set<T>, to: Set<T>) {
   for (const e of from) {
@@ -12,43 +18,29 @@ function transferSetItems<T>(from: Set<T>, to: Set<T>) {
   from.clear();
 }
 
-export type AnyComputation = Computation<any, any, any>;
-
-export abstract class Computation<Ctx, Req, Res> extends RawComputation<
-  Ctx,
-  Res
-> {
-  public readonly request: Req;
-  // Dependencies
-  private readonly dependencies: Set<AnyComputation>;
+export class SubscribableComputationMixin<Res> {
+  public readonly source: RawComputation<any, Res> &
+    SubscribableComputation<Res>;
   // Subscribers that saw the latest result
-  private readonly subscribers: Set<AnyComputation>;
+  private result: Result<Res> | null;
+  readonly subscribers: Set<DependentComputation>;
   // If not null, it means all oldSubscribers saw this value
   // It is important to keep oldResult separate from result
   // See invalidate()
   private oldResult: Result<Res> | null;
-  private readonly oldSubscribers: Set<AnyComputation>;
+  readonly oldSubscribers: Set<DependentComputation>;
 
-  constructor(
-    registry: ComputationRegistry,
-    description: ComputationDescription<any>,
-    request: Req,
-    mark: boolean = true
-  ) {
-    super(registry, description, false);
-    this.request = request;
-    this.dependencies = new Set();
+  constructor(source: RawComputation<any, Res> & SubscribableComputation<Res>) {
+    this.source = source;
+    this.result = null;
     this.subscribers = new Set();
     this.oldResult = null;
     this.oldSubscribers = new Set();
-    if (mark) this.mark(State.PENDING);
   }
-
-  protected abstract responseEqual(a: Res, b: Res): boolean;
 
   private equals(prev: Result<Res>, next: Result<Res>): boolean {
     if (prev.ok) {
-      return next.ok && this.responseEqual(prev.value, next.value);
+      return next.ok && this.source.responseEqual(prev.value, next.value);
     }
     if (!prev.ok) {
       return !next.ok && prev.error === next.error;
@@ -56,86 +48,46 @@ export abstract class Computation<Ctx, Req, Res> extends RawComputation<
     return false;
   }
 
-  subscribe(dep: AnyComputation) {
-    this.inv();
-    dep.inv();
-
-    this.dependencies.add(dep);
-    dep.subscribers.add(this);
-  }
-
-  unsubscribe(dep: AnyComputation) {
-    this.dependencies.delete(dep);
-    dep.subscribers.delete(this);
-    dep.oldSubscribers.delete(this);
-  }
-
-  protected onFinishNew(result: Result<Res>) {}
-
-  protected override onFinish(result: Result<Res>): void {
-    super.onFinish(result);
-
-    const old = this.oldResult;
-    this.oldResult = null;
-
-    if (old != null && this.equals(old, result)) {
-      transferSetItems(this.oldSubscribers, this.subscribers);
-    } else {
-      this.invalidateSubs(this.oldSubscribers);
-      this.onFinishNew(result);
-    }
-  }
-
-  protected getDep<T>(
-    dep: Computation<any, any, T>,
-    runId: RunId
-  ): Promise<Result<T>> {
-    this.active(runId);
-    this.subscribe(dep);
-    return dep.run();
-  }
-
-  private invalidateSubs(subs: ReadonlySet<AnyComputation>) {
+  private invalidateSubs(subs: ReadonlySet<DependentComputation>) {
     for (const sub of subs) {
       sub.invalidate();
     }
   }
 
-  protected disconnect() {
-    for (const dep of this.dependencies) {
-      this.unsubscribe(dep);
+  isOrphan(): boolean {
+    return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
+  }
+
+  finishRoutine(result: Result<Res>): void {
+    const old = this.oldResult;
+    this.oldResult = null;
+    this.result = result;
+
+    if (old != null && this.equals(old, result)) {
+      transferSetItems(this.oldSubscribers, this.subscribers);
+    } else {
+      this.invalidateSubs(this.oldSubscribers);
+      this.source.onNewResult(result);
     }
   }
 
-  protected override onInvalidate(): void {
-    const { result } = this;
-    // Invalidate run
-    super.onInvalidate();
+  invalidateRoutine(): void {
     // If a computation is invalidated, partially executed, and then invalidated again,
     // oldResult will be null.
     // This will cause computations that subcribed in between both invalidations
     // to be propertly invalidated, preserving the invariant
     // that all oldSubscribers should have seen the same oldResult, if not null.
-    this.oldResult = result;
+    this.oldResult = this.result;
+    this.result = null;
     // Delay invalidation of subscribers
     // by moving them to the list of oldSubscribers.
     transferSetItems(this.subscribers, this.oldSubscribers);
-    // Disconnect from dependencies and children computations.
-    // The connection might be restored after rerunning this computation.
-    // This is fine because our garbage collection of computations
-    // only occurs after everything is stable.
-    this.disconnect();
   }
 
-  protected override onDeleted(): void {
-    super.onDeleted();
+  deleteRoutine(): void {
     this.oldResult = null;
-    this.disconnect();
+    this.result = null;
     this.invalidateSubs(this.subscribers);
     this.invalidateSubs(this.oldSubscribers);
-  }
-
-  protected isOrphan(): boolean {
-    return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
   }
 }

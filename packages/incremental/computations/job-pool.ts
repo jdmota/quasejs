@@ -1,8 +1,6 @@
 import {
-  Result,
   ComputationRegistry,
   ComputationDescription,
-  ok,
 } from "../incremental-lib";
 import { Notifier, createNotifier } from "../utils/deferred";
 import {
@@ -10,33 +8,37 @@ import {
   ReadonlyHandlerHashMap,
   HashMap,
 } from "../utils/hash-map";
+import { ok, Result } from "../utils/result";
+import { ChildComputation, ChildComputationMixin } from "./child";
+import { DependentComputation, DependentComputationMixin } from "./dependent";
+import { ParentComputation, ParentComputationMixin } from "./parent";
+import {
+  SubscribableComputation,
+  SubscribableComputationMixin,
+} from "./subscribable";
 import {
   State,
   RunId,
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
+  RawComputation,
 } from "./raw";
-import { Computation, AnyComputation } from "./subscribable";
-import {
-  ComputationWithChildren,
-  AnyComputationWithChildren,
-} from "./with-children";
 
 type ComputationMapStartContext<Req> = {
-  readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
+  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
 };
 
 type ComputationMapFieldContext<Req> = {
-  readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
+  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
   readonly request: Req;
 };
 
 type ComputationMapContext<Req> = {
   readonly active: () => void;
-  readonly get: <T>(dep: Computation<any, any, T>) => Promise<Result<T>>;
+  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
   readonly compute: (dep: Req) => void;
 };
 
@@ -52,12 +54,15 @@ export type ComputationMapDefinition<Req, Res> = {
   readonly responseDef: ValueDefinition<Res>;
 };
 
-class ComputationMapField<Req, Res> extends ComputationWithChildren<
-  ComputationMapFieldContext<Req>,
-  Req,
-  Res
-> {
+class ComputationMapField<Req, Res>
+  extends RawComputation<ComputationMapFieldContext<Req>, Res>
+  implements DependentComputation, ParentComputation, ChildComputation
+{
   private readonly source: ComputationMap<Req, Res>;
+  public readonly request: Req;
+  public readonly dependentMixin: DependentComputationMixin;
+  public readonly parentMixin: ParentComputationMixin;
+  public readonly childrenMixin: ChildComputationMixin;
 
   constructor(
     registry: ComputationRegistry,
@@ -65,18 +70,13 @@ class ComputationMapField<Req, Res> extends ComputationWithChildren<
     request: Req,
     source: ComputationMap<Req, Res>
   ) {
-    super(registry, description, request, false);
+    super(registry, description, false);
     this.source = source;
+    this.request = request;
+    this.dependentMixin = new DependentComputationMixin(this);
+    this.parentMixin = new ParentComputationMixin(this);
+    this.childrenMixin = new ChildComputationMixin(this);
     this.mark(State.PENDING);
-  }
-
-  override subscribe(dep: AnyComputation): void {
-    // TODO split two kinds of computations
-    throw new Error("Cannot subscribe to this kind of computation");
-  }
-
-  protected override responseEqual(a: Res, b: Res): boolean {
-    return this.source.mapDefinition.responseDef.equal(a, b);
   }
 
   protected exec(ctx: ComputationMapFieldContext<Req>): Promise<Result<Res>> {
@@ -85,19 +85,28 @@ class ComputationMapField<Req, Res> extends ComputationWithChildren<
 
   protected makeContext(runId: RunId): ComputationMapFieldContext<Req> {
     return {
-      get: dep => this.getDep(dep, runId),
-      compute: req => this.compute(this.source.make(req), runId),
+      get: dep => this.dependentMixin.getDep(dep, runId),
+      compute: req => this.parentMixin.compute(this.source.make(req), runId),
       request: this.request,
     };
   }
 
-  protected override onFinishNew(result: Result<Res>): void {
-    super.onFinishNew(result);
-    this.source.onFieldFinishNew(this.request, result);
+  protected isOrphan(): boolean {
+    return this.childrenMixin.isOrphan();
   }
 
-  protected override onDeleted(): void {
-    super.onDeleted();
+  protected finishRoutine(result: Result<Res>): void {
+    this.source.onFieldFinish(this.request, result);
+  }
+
+  protected invalidateRoutine(): void {
+    this.dependentMixin.invalidateRoutine();
+    this.parentMixin.invalidateRoutine();
+  }
+
+  protected deleteRoutine(): void {
+    this.dependentMixin.deleteRoutine();
+    this.parentMixin.deleteRoutine();
     this.source.onFieldDeleted(this.request);
   }
 
@@ -134,11 +143,22 @@ class ComputationMapFieldDescription<Req, Res>
   }
 }
 
-export class ComputationMap<Req, Res> extends ComputationWithChildren<
-  ComputationMapContext<Req>,
-  undefined,
-  ReadonlyHandlerHashMap<Req, Result<Res>>
-> {
+export class ComputationMap<Req, Res>
+  extends RawComputation<
+    ComputationMapContext<Req>,
+    ReadonlyHandlerHashMap<Req, Result<Res>>
+  >
+  implements
+    DependentComputation,
+    SubscribableComputation<ReadonlyHandlerHashMap<Req, Result<Res>>>,
+    ParentComputation
+{
+  public readonly dependentMixin: DependentComputationMixin;
+  public readonly subscribableMixin: SubscribableComputationMixin<
+    ReadonlyHandlerHashMap<Req, Result<Res>>
+  >;
+  public readonly parentMixin: ParentComputationMixin;
+
   public readonly mapDefinition: ComputationMapDefinition<Req, Res>;
   private readonly resultsMap: HashMap<Req, Result<Res>>;
   private readonly status: [number, number, number, number];
@@ -150,33 +170,16 @@ export class ComputationMap<Req, Res> extends ComputationWithChildren<
     description: ComputationDescription<any>,
     mapDefinition: ComputationMapDefinition<Req, Res>
   ) {
-    super(registry, description, undefined, false);
+    super(registry, description, false);
+    this.dependentMixin = new DependentComputationMixin(this);
+    this.subscribableMixin = new SubscribableComputationMixin(this);
+    this.parentMixin = new ParentComputationMixin(this);
     this.mapDefinition = mapDefinition;
     this.resultsMap = new HashMap<Req, Result<Res>>(mapDefinition.requestDef);
     this.status = [0, 0, 0, 0];
     this.notifier = createNotifier();
     this.lastSeen = null;
     this.mark(State.PENDING);
-  }
-
-  protected override responseEqual(
-    a: ReadonlyHandlerHashMap<Req, Result<Res>>,
-    b: ReadonlyHandlerHashMap<Req, Result<Res>>
-  ): boolean {
-    return false;
-  }
-
-  make(request: Req): AnyComputationWithChildren {
-    return this.registry.make(
-      new ComputationMapFieldDescription(request, this)
-    );
-  }
-
-  private isDone() {
-    // TODO FIXME cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
-    // In fact, since this will produce a graph (maybe a cyclic one)
-    // How to know if some computation should still exist??
-    return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
   }
 
   protected async exec(
@@ -213,9 +216,33 @@ export class ComputationMap<Req, Res> extends ComputationWithChildren<
   protected makeContext(runId: RunId): ComputationMapContext<Req> {
     return {
       active: () => this.active(runId),
-      get: dep => this.getDep(dep, runId),
-      compute: req => this.compute(this.make(req), runId),
+      get: dep => this.dependentMixin.getDep(dep, runId),
+      compute: req => this.parentMixin.compute(this.make(req), runId),
     };
+  }
+
+  protected isOrphan(): boolean {
+    return this.subscribableMixin.isOrphan();
+  }
+
+  protected finishRoutine(
+    result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>
+  ): void {
+    // this.dependentMixin.finishRoutine(result);
+    this.subscribableMixin.finishRoutine(result);
+    // this.parentMixin.finishRoutine(result);
+  }
+
+  protected invalidateRoutine(): void {
+    this.dependentMixin.invalidateRoutine();
+    this.subscribableMixin.invalidateRoutine();
+    this.parentMixin.invalidateRoutine();
+  }
+
+  protected deleteRoutine(): void {
+    this.dependentMixin.deleteRoutine();
+    this.subscribableMixin.deleteRoutine();
+    this.parentMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
@@ -226,13 +253,36 @@ export class ComputationMap<Req, Res> extends ComputationWithChildren<
     }
   }
 
+  responseEqual(
+    a: ReadonlyHandlerHashMap<Req, Result<Res>>,
+    b: ReadonlyHandlerHashMap<Req, Result<Res>>
+  ): boolean {
+    return false;
+  }
+
+  onNewResult(result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>): void {}
+
+  make(request: Req) {
+    return this.registry.make(
+      new ComputationMapFieldDescription(request, this)
+    );
+  }
+
+  private isDone() {
+    // TODO FIXME cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
+    // In fact, since this will produce a graph (maybe a cyclic one)
+    // How to know if some computation should still exist??
+    return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
+  }
+
   async execField(ctx: ComputationMapFieldContext<Req>): Promise<Result<Res>> {
     this.inv();
     return this.mapDefinition.exec(ctx);
   }
 
-  onFieldFinishNew(req: Req, result: Result<Res>): void {
+  onFieldFinish(req: Req, result: Result<Res>): void {
     this.inv();
+    // TODO only set if different
     this.resultsMap.set(req, result);
   }
 
