@@ -1,12 +1,10 @@
+import { joinIterators } from "../utils/join-iterators";
 import { Result, resultEqual } from "../utils/result";
 import { DependentComputation } from "./dependent";
-import { RawComputation } from "./raw";
+import { AnyRawComputation, RawComputation } from "./raw";
 
 export interface SubscribableComputation<Res> {
   readonly subscribableMixin: SubscribableComputationMixin<Res>;
-
-  inv(): void;
-  run(): Promise<Result<Res>>;
   responseEqual(a: Res, b: Res): boolean;
   onNewResult(result: Result<Res>): void;
 }
@@ -23,12 +21,12 @@ export class SubscribableComputationMixin<Res> {
     SubscribableComputation<Res>;
   // Subscribers that saw the latest result
   private result: Result<Res> | null;
-  readonly subscribers: Set<DependentComputation>;
+  readonly subscribers: Set<AnyRawComputation & DependentComputation>;
   // If not null, it means all oldSubscribers saw this value
   // It is important to keep oldResult separate from result
   // See invalidate()
   private oldResult: Result<Res> | null;
-  readonly oldSubscribers: Set<DependentComputation>;
+  readonly oldSubscribers: Set<AnyRawComputation & DependentComputation>;
   // Compare ok result's values
   private readonly equal: (a: Res, b: Res) => boolean;
 
@@ -41,7 +39,9 @@ export class SubscribableComputationMixin<Res> {
     this.equal = (a, b) => this.source.responseEqual(a, b);
   }
 
-  private invalidateSubs(subs: ReadonlySet<DependentComputation>) {
+  private invalidateSubs(
+    subs: ReadonlySet<AnyRawComputation & DependentComputation>
+  ) {
     for (const sub of subs) {
       sub.invalidate();
     }
@@ -81,5 +81,12 @@ export class SubscribableComputationMixin<Res> {
   deleteRoutine(): void {
     this.oldResult = null;
     this.result = null;
+  }
+
+  inEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return joinIterators(
+      this.oldSubscribers.values(),
+      this.subscribers.values()
+    );
   }
 }

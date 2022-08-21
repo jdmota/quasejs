@@ -12,6 +12,7 @@ import {
   RunId,
   StateNotDeleted,
   StateNotCreating,
+  AnyRawComputation,
 } from "../computations/raw";
 import {
   SubscribableComputation,
@@ -27,6 +28,7 @@ import {
   ReadonlyHandlerHashMap,
   HashMap,
 } from "../utils/hash-map";
+import { joinIterators } from "../utils/join-iterators";
 import { Result, resultEqual, ok } from "../utils/result";
 import {
   ComputationJobInPoolContext,
@@ -34,13 +36,17 @@ import {
 } from "./job";
 
 type ComputationMapStartContext<Req> = {
-  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
+  readonly get: <T>(
+    dep: RawComputation<any, T> & SubscribableComputation<T>
+  ) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
 };
 
 type ComputationMapContext<Req> = {
   readonly active: () => void;
-  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
+  readonly get: <T>(
+    dep: RawComputation<any, T> & SubscribableComputation<T>
+  ) => Promise<Result<T>>;
   readonly compute: (dep: Req) => void;
 };
 
@@ -231,6 +237,17 @@ export class ComputationPool<Req, Res>
     if (this.isDone()) {
       this.notifier.done(null);
     }
+  }
+
+  protected inEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return this.subscribableMixin.inEdgesRoutine();
+  }
+
+  protected outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return joinIterators(
+      this.dependentMixin.outEdgesRoutine(),
+      this.parentMixin.outEdgesRoutine()
+    );
   }
 
   // TODO map and filter operations

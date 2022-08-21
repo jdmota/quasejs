@@ -35,6 +35,12 @@ function newRunId() {
   return {} as RunId;
 }
 
+enum Reachability {
+  UNCONNECTED = 0,
+  CONNECTED = 1,
+  UNKNOWN = 2,
+}
+
 export type AnyRawComputation = RawComputation<any, any>;
 
 export abstract class RawComputation<Ctx, Res> {
@@ -49,6 +55,8 @@ export abstract class RawComputation<Ctx, Res> {
   // Requirements of SpecialQueue
   public prev: AnyRawComputation | null;
   public next: AnyRawComputation | null;
+  // Reachability
+  private reachability: Reachability;
 
   constructor(
     registry: ComputationRegistry,
@@ -63,6 +71,9 @@ export abstract class RawComputation<Ctx, Res> {
     this.result = null;
     this.prev = null;
     this.next = null;
+    this.reachability = this.isRoot()
+      ? Reachability.CONNECTED
+      : Reachability.UNCONNECTED;
     if (mark) this.mark(State.PENDING);
   }
 
@@ -83,6 +94,41 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract finishRoutine(result: Result<Res>): void;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
+
+  isRoot() {
+    return false;
+  }
+
+  // TODO fixme, this is not enough info... we might think it is connected because of another node... but that node might become unreachable...
+
+  onInEdgeAddition(node: AnyRawComputation) {
+    // Maybe this new edge connected the computation to the root
+    if (this.reachability === Reachability.UNCONNECTED) {
+      this.reachability = Reachability.UNKNOWN;
+    }
+    // If it was connected, it remains connected
+    // If unknown, it remains unknown
+  }
+
+  onInEdgeRemoval(node: AnyRawComputation) {
+    // Maybe this removed edge unconnected the computation to the root
+    if (this.reachability === Reachability.CONNECTED) {
+      this.reachability = Reachability.UNKNOWN;
+    }
+    // If it was unconnected, it remains unconnected
+    // If unknown, it remains unknown
+  }
+
+  protected abstract inEdgesRoutine(): IterableIterator<AnyRawComputation>;
+  protected abstract outEdgesRoutine(): IterableIterator<AnyRawComputation>;
+
+  inEdges() {
+    return this.inEdgesRoutine();
+  }
+
+  outEdges() {
+    return this.outEdgesRoutine();
+  }
 
   protected deleted() {
     return this.state === State.DELETED;

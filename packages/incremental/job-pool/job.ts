@@ -22,6 +22,7 @@ import {
   AnyRawComputation,
 } from "../computations/raw";
 import { ComputationPool } from "./pool";
+import { joinIterators } from "../utils/join-iterators";
 
 export class ComputationJobInPoolDescription<Req, Res>
   implements ComputationDescription<ComputationJobInPool<Req, Res>>
@@ -52,7 +53,9 @@ export class ComputationJobInPoolDescription<Req, Res>
 }
 
 export type ComputationJobInPoolContext<Req> = {
-  readonly get: <T>(dep: SubscribableComputation<T>) => Promise<Result<T>>;
+  readonly get: <T>(
+    dep: RawComputation<any, T> & SubscribableComputation<T>
+  ) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
   readonly request: Req;
 };
@@ -115,5 +118,16 @@ class ComputationJobInPool<Req, Res>
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     this.source.onFieldStateChange(from, to);
+  }
+
+  protected inEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return this.childrenMixin.inEdgesRoutine();
+  }
+
+  protected outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return joinIterators(
+      this.dependentMixin.outEdgesRoutine(),
+      this.parentMixin.outEdgesRoutine()
+    );
   }
 }

@@ -1,30 +1,32 @@
 import { ChildComputation } from "./child";
-import { RawComputation, RunId } from "./raw";
+import { AnyRawComputation, RunId } from "./raw";
 
 export interface ParentComputation {
   readonly parentMixin: ParentComputationMixin;
 }
 
 export class ParentComputationMixin {
-  public readonly source: RawComputation<any, any> & ParentComputation;
-  private readonly children: Set<ChildComputation>;
+  public readonly source: AnyRawComputation & ParentComputation;
+  private readonly children: Set<AnyRawComputation & ChildComputation>;
 
-  constructor(source: RawComputation<any, any> & ParentComputation) {
+  constructor(source: AnyRawComputation & ParentComputation) {
     this.source = source;
     this.children = new Set();
   }
 
-  private own(child: ChildComputation) {
+  private own(child: AnyRawComputation & ChildComputation) {
     this.children.add(child);
     child.childrenMixin.parents.add(this.source);
+    child.onInEdgeAddition(this.source);
   }
 
-  private unown(child: ChildComputation) {
+  private unown(child: AnyRawComputation & ChildComputation) {
     this.children.delete(child);
     child.childrenMixin.parents.delete(this.source);
+    child.onInEdgeRemoval(this.source);
   }
 
-  compute(child: ChildComputation, runId: RunId) {
+  compute(child: AnyRawComputation & ChildComputation, runId: RunId) {
     child.inv();
     this.source.active(runId);
     this.own(child);
@@ -46,5 +48,9 @@ export class ParentComputationMixin {
 
   deleteRoutine(): void {
     this.disconnect();
+  }
+
+  outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+    return this.children.values();
   }
 }
