@@ -59,7 +59,7 @@ export class DependentComputationMixin {
     this.disconnect();
   }
 
-  outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  outNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.dependencies.values();
   }
 }

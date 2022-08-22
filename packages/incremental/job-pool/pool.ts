@@ -166,6 +166,8 @@ export class ComputationPool<Req, Res>
     this.parentMixin.deleteRoutine();
   }
 
+  protected onReachabilityChange(state: State, from: boolean, to: boolean) {}
+
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     // Upon invalidation, undo the effects
     if (to === State.PENDING || to === State.DELETED) {
@@ -219,6 +221,10 @@ export class ComputationPool<Req, Res>
     this.resultsMap.delete(req);
   }
 
+  onFieldReachabilityChange(state: State, from: boolean, to: boolean): void {
+    // TODO
+  }
+
   onFieldStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     if (this.deleted()) return;
 
@@ -239,14 +245,14 @@ export class ComputationPool<Req, Res>
     }
   }
 
-  protected inEdgesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.subscribableMixin.inEdgesRoutine();
+  protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
+    return this.subscribableMixin.inNodesRoutine();
   }
 
-  protected outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  protected outNodesRoutine(): IterableIterator<AnyRawComputation> {
     return joinIterators(
-      this.dependentMixin.outEdgesRoutine(),
-      this.parentMixin.outEdgesRoutine()
+      this.dependentMixin.outNodesRoutine(),
+      this.parentMixin.outNodesRoutine()
     );
   }
 

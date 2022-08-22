@@ -145,11 +145,6 @@ function deterministic<Arg, Ret>(
   };
 }
 
-const anyValue: ValueDefinition<any> = {
-  equal: (a, b) => a === b,
-  hash: _ => 0,
-};
-
 export type ComputationDescription<C extends AnyRawComputation> = {
   readonly create: (registry: ComputationRegistry) => C;
   readonly equal: <O extends AnyRawComputation>(

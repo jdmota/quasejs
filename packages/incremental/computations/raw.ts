@@ -3,6 +3,7 @@ import {
   ComputationRegistry,
   ComputationDescription,
 } from "../incremental-lib";
+import { joinIterators } from "../utils/join-iterators";
 
 export enum State {
   PENDING = 0,
@@ -35,10 +36,23 @@ function newRunId() {
   return {} as RunId;
 }
 
+type ReachabilityId = {
+  readonly __opaque__: unique symbol;
+};
+
+function newReachabilityId(): ReachabilityId {
+  return {} as ReachabilityId;
+}
+
+type ReachabilityStatus = {
+  pending: boolean;
+  id: ReachabilityId | null;
+};
+
 enum Reachability {
   UNCONNECTED = 0,
   CONNECTED = 1,
-  UNKNOWN = 2,
+  // UNKNOWN = 2,
 }
 
 export type AnyRawComputation = RawComputation<any, any>;
@@ -56,7 +70,8 @@ export abstract class RawComputation<Ctx, Res> {
   public prev: AnyRawComputation | null;
   public next: AnyRawComputation | null;
   // Reachability
-  private reachability: Reachability;
+  private reachable: boolean;
+  private readonly reachabilityStatus: ReachabilityStatus;
 
   constructor(
     registry: ComputationRegistry,
@@ -71,9 +86,11 @@ export abstract class RawComputation<Ctx, Res> {
     this.result = null;
     this.prev = null;
     this.next = null;
-    this.reachability = this.isRoot()
-      ? Reachability.CONNECTED
-      : Reachability.UNCONNECTED;
+    this.reachable = false;
+    this.reachabilityStatus = {
+      pending: false,
+      id: null,
+    };
     if (mark) this.mark(State.PENDING);
   }
 
@@ -87,6 +104,11 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
   protected abstract makeContext(runId: RunId): Ctx;
   protected abstract isOrphan(): boolean;
+  protected abstract onReachabilityChange(
+    state: State,
+    from: boolean,
+    to: boolean
+  ): void;
   protected abstract onStateChange(
     from: StateNotDeleted,
     to: StateNotCreating
@@ -95,39 +117,148 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
 
-  isRoot() {
+  isRoot(): boolean {
     return false;
   }
 
-  // TODO fixme, this is not enough info... we might think it is connected because of another node... but that node might become unreachable...
+  isReachable(): boolean {
+    return this.reachable || this.isRoot();
+  }
 
   onInEdgeAddition(node: AnyRawComputation) {
-    // Maybe this new edge connected the computation to the root
-    if (this.reachability === Reachability.UNCONNECTED) {
-      this.reachability = Reachability.UNKNOWN;
+    // Remove from delayed removal
+    this.delayedRemovedInNodes.delete(node);
+    node.delayedRemovedOutNodes.delete(this);
+    //
+    if (node.isReachable()) {
+      // Mark this and all reachable nodes as reachable
+      this.markReachable(null);
     }
-    // If it was connected, it remains connected
-    // If unknown, it remains unknown
   }
+
+  // When invalidations occur, some edges are removed.
+  // After the computation reruns,
+  // it is probable that the same edges are restored.
+  // So we delay edge removals until the computation settles.
+  // (See mark function)
+  private delayedRemovedInNodes = new Set<AnyRawComputation>();
+  private delayedRemovedOutNodes = new Set<AnyRawComputation>();
 
   onInEdgeRemoval(node: AnyRawComputation) {
-    // Maybe this removed edge unconnected the computation to the root
-    if (this.reachability === Reachability.CONNECTED) {
-      this.reachability = Reachability.UNKNOWN;
+    // Delay removal of edges
+    // (Note: only if this node is a child and a subscribable computation can there be repeated in-nodes. Even if that is the case, this is fine.)
+    this.delayedRemovedInNodes.add(node);
+    node.delayedRemovedOutNodes.add(this);
+  }
+
+  private removeScheduledEdges() {
+    const outNodes = Array.from(this.delayedRemovedOutNodes);
+    this.delayedRemovedOutNodes.clear();
+    for (const outNode of outNodes) {
+      outNode.delayedRemovedInNodes.delete(this);
     }
-    // If it was unconnected, it remains unconnected
-    // If unknown, it remains unknown
+    // While all these checkReachability calls are running,
+    // there are no reentrant calls that modify edges.
+    // Additionally, we cannot trust any this.reachable field
+    // unless it was updated in this session.
+    // When this function call (removeScheduledEdges) finishes,
+    // all reachable values are updated.
+    const id = newReachabilityId();
+    for (const outNode of outNodes) {
+      outNode.checkReachability(id);
+    }
   }
 
-  protected abstract inEdgesRoutine(): IterableIterator<AnyRawComputation>;
-  protected abstract outEdgesRoutine(): IterableIterator<AnyRawComputation>;
+  // TODO extract this to a mixin, since we do not need this to be that complicated for general computations where cycles are not even allowed
+  // TODO somehow, avoid too deep recursive calls
+  // TODO another issue is that we might go up, to find out that something is now reachable
+  // which then will walk down marking everything as reachable, this way
+  // we might traverse edges more than once...
+  // TODO another issue is that we should be able to batch edge removals...
+  // TODO use strong connected components?
+  // IF the removed edge was inside the component, see if we need to split the component.
+  // AND do nothing else?????
+  // IF the removed edge goes from one component to another, we just need to check the parent components to find one that is reachable, in other words, we ignore all the nodes in the same component (the ones that form a cycle)
 
-  inEdges() {
-    return this.inEdgesRoutine();
+  private checkReachability(id: ReachabilityId): boolean {
+    // Roots are trivially reachable
+    if (this.isRoot()) {
+      return true;
+    }
+    // If the id is the same, we already have seen this node in this session
+    if (this.reachabilityStatus.id === id) {
+      // If pending, it means we are still computing this node's
+      // reachability and we hit a cycle. Return false.
+      // Otherwise, we can trust that this.reachable is updated.
+      return this.reachabilityStatus.pending ? false : this.reachable;
+    }
+    this.reachabilityStatus.id = id;
+    this.reachabilityStatus.pending = true;
+    // Check if this node is still reachable (by finding a root)
+    for (const inNode of this.inNodes()) {
+      if (inNode.checkReachability(id)) {
+        this.markReachable(id);
+        return true;
+      }
+    }
+    // This node is not reachable
+    this.markUnreachable(id);
+    return false;
   }
 
-  outEdges() {
-    return this.outEdgesRoutine();
+  private markReachable(id: ReachabilityId | null) {
+    this.reachabilityStatus.pending = false;
+    this.reachabilityStatus.id = id;
+    if (this.isReachable()) {
+      // If it was already reachable that is fine.
+      // Even if this value was not set in this session,
+      // it means that it was reachable before,
+      // which means that all out-nodes were reachable before as well,
+      // implying that their this.reachable value does not need to be updated.
+      return;
+    }
+    this.reachable = true;
+    this.onReachabilityChange(this.state, false, true);
+    for (const child of this.outNodes()) {
+      child.markReachable(id);
+    }
+  }
+
+  private markUnreachable(id: ReachabilityId) {
+    this.reachabilityStatus.pending = false;
+    this.reachabilityStatus.id = id;
+    if (!this.isReachable()) {
+      // If it was already not-reachable that is fine.
+      // Even if this value was not set in this session,
+      // it means that it was not-reachable before.
+      // So, no out-node needs to be rechecked
+      // because of this node (but maybe because of other nodes).
+      return;
+    }
+    this.reachable = false;
+    this.onReachabilityChange(this.state, true, false);
+    // This node is no longer reachable,
+    // check all out-nodes to see if they are still reachable
+    for (const outNode of this.outNodes()) {
+      outNode.checkReachability(id);
+    }
+  }
+
+  protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
+  protected abstract outNodesRoutine(): IterableIterator<AnyRawComputation>;
+
+  inNodes() {
+    return joinIterators(
+      this.inNodesRoutine(),
+      this.delayedRemovedInNodes.values()
+    );
+  }
+
+  outNodes() {
+    return joinIterators(
+      this.outNodesRoutine(),
+      this.delayedRemovedOutNodes.values()
+    );
   }
 
   protected deleted() {
@@ -146,15 +277,6 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  private after(result: Result<Res>, runId: RunId): Result<Res> {
-    if (this.runId === runId) {
-      this.result = result;
-      this.finishRoutine(result);
-      this.mark(result.ok ? State.DONE : State.ERRORED);
-    }
-    return result;
-  }
-
   async run(): Promise<Result<Res>> {
     this.inv();
     if (!this.running) {
@@ -162,12 +284,22 @@ export abstract class RawComputation<Ctx, Res> {
       const runId = newRunId();
       this.runId = runId;
       this.running = exec(this.makeContext(runId)).then(
-        v => this.after(v, runId),
-        e => this.after(error(e), runId)
+        v => this.finish(v, runId),
+        e => this.finish(error(e), runId)
       );
       this.mark(State.RUNNING);
     }
     return this.running;
+  }
+
+  private finish(result: Result<Res>, runId: RunId): Result<Res> {
+    if (this.runId === runId) {
+      this.result = result;
+      this.finishRoutine(result);
+      this.removeScheduledEdges();
+      this.mark(result.ok ? State.DONE : State.ERRORED);
+    }
+    return result;
   }
 
   invalidate() {
@@ -179,13 +311,14 @@ export abstract class RawComputation<Ctx, Res> {
     this.mark(State.PENDING);
   }
 
-  // pre: this.isOrphan()
+  // pre: !this.isReachable()
   destroy() {
     this.inv();
     this.runId = null;
     this.running = null;
     this.result = null;
     this.deleteRoutine();
+    this.removeScheduledEdges();
     this.mark(State.DELETED);
   }
 
@@ -207,9 +340,7 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   maybeRun() {
-    if (this.isOrphan()) {
-      // this.destroy();
-    } else {
+    if (this.isReachable()) {
       this.run();
     }
   }

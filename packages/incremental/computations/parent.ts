@@ -50,7 +50,7 @@ export class ParentComputationMixin {
     this.disconnect();
   }
 
-  outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  outNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.children.values();
   }
 }

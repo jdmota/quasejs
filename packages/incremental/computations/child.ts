@@ -18,7 +18,7 @@ export class ChildComputationMixin {
     return this.parents.size === 0;
   }
 
-  inEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.parents.values();
   }
 }

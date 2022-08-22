@@ -77,13 +77,14 @@ export class SubscribableComputationMixin<Res> {
     transferSetItems(this.subscribers, this.oldSubscribers);
   }
 
-  // pre: this.subscribers.size === 0 && this.oldSubscribers.size === 0
   deleteRoutine(): void {
     this.oldResult = null;
     this.result = null;
+    this.invalidateSubs(this.subscribers);
+    this.invalidateSubs(this.oldSubscribers);
   }
 
-  inEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return joinIterators(
       this.oldSubscribers.values(),
       this.subscribers.values()

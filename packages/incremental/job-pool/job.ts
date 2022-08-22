@@ -120,14 +120,22 @@ class ComputationJobInPool<Req, Res>
     this.source.onFieldStateChange(from, to);
   }
 
-  protected inEdgesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.childrenMixin.inEdgesRoutine();
+  protected onReachabilityChange(
+    state: State,
+    from: boolean,
+    to: boolean
+  ): void {
+    this.source.onFieldReachabilityChange(state, from, to);
   }
 
-  protected outEdgesRoutine(): IterableIterator<AnyRawComputation> {
+  protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
+    return this.childrenMixin.inNodesRoutine();
+  }
+
+  protected outNodesRoutine(): IterableIterator<AnyRawComputation> {
     return joinIterators(
-      this.dependentMixin.outEdgesRoutine(),
-      this.parentMixin.outEdgesRoutine()
+      this.dependentMixin.outNodesRoutine(),
+      this.parentMixin.outNodesRoutine()
     );
   }
 }
