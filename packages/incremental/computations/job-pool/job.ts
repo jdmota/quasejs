@@ -1,18 +1,15 @@
 import {
   ComputationRegistry,
   ComputationDescription,
-} from "../incremental-lib";
-import { Result } from "../utils/result";
-import { ChildComputation, ChildComputationMixin } from "../computations/child";
+} from "../../incremental-lib";
+import { Result } from "../../utils/result";
+import { ChildComputation, ChildComputationMixin } from "../mixins/child";
 import {
   DependentComputation,
   DependentComputationMixin,
-} from "../computations/dependent";
-import {
-  ParentComputation,
-  ParentComputationMixin,
-} from "../computations/parent";
-import { SubscribableComputation } from "../computations/subscribable";
+} from "../mixins/dependent";
+import { ParentComputation, ParentComputationMixin } from "../mixins/parent";
+import { SubscribableComputation } from "../mixins/subscribable";
 import {
   State,
   RunId,
@@ -20,12 +17,12 @@ import {
   StateNotCreating,
   RawComputation,
   AnyRawComputation,
-} from "../computations/raw";
+} from "../raw";
 import { ComputationPool } from "./pool";
 import {
   ReachableComputation,
   ReachableComputationMixin,
-} from "../computations/reachable";
+} from "../mixins/reachable";
 
 export class ComputationJobInPoolDescription<Req, Res>
   implements ComputationDescription<ComputationJobInPool<Req, Res>>

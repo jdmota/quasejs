@@ -1,11 +1,8 @@
 import {
   DependentComputation,
   DependentComputationMixin,
-} from "../computations/dependent";
-import {
-  ParentComputation,
-  ParentComputationMixin,
-} from "../computations/parent";
+} from "../mixins/dependent";
+import { ParentComputation, ParentComputationMixin } from "../mixins/parent";
 import {
   RawComputation,
   State,
@@ -13,26 +10,26 @@ import {
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
-} from "../computations/raw";
+} from "../raw";
 import {
   ReachableComputation,
   ReachableComputationMixinRoot,
-} from "../computations/reachable";
+} from "../mixins/reachable";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
-} from "../computations/subscribable";
+} from "../mixins/subscribable";
 import {
   ComputationDescription,
   ComputationRegistry,
-} from "../incremental-lib";
-import { Notifier, createNotifier } from "../utils/deferred";
+} from "../../incremental-lib";
+import { Notifier, createNotifier } from "../../utils/deferred";
 import {
   ValueDefinition,
   ReadonlyHandlerHashMap,
   HashMap,
-} from "../utils/hash-map";
-import { Result, resultEqual, ok } from "../utils/result";
+} from "../../utils/hash-map";
+import { Result, resultEqual, ok } from "../../utils/result";
 import {
   ComputationJobInPoolContext,
   ComputationJobInPoolDescription,

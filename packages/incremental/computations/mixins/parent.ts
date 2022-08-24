@@ -1,6 +1,6 @@
-import { setAdd } from "../utils/set";
+import { setAdd } from "../../utils/set";
 import { ChildComputation } from "./child";
-import { AnyRawComputation, RunId } from "./raw";
+import { AnyRawComputation, RunId } from "../raw";
 
 export interface ParentComputation {
   readonly parentMixin: ParentComputationMixin;

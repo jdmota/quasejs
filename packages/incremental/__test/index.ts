@@ -1,6 +1,7 @@
 import { newComputationBuilder } from "../computations/basic";
+import { newSimpleComputation } from "../computations/simple";
 import { ComputationRegistry } from "../incremental-lib";
-import { newComputationPool } from "../job-pool/pool";
+import { newComputationPool } from "../computations/job-pool/pool";
 import { error, ok } from "../utils/result";
 
 const files = {
@@ -83,7 +84,8 @@ const pool = newComputationPool<string, FILE>({
   },
 });
 
-const mainComputation = newComputationBuilder({
+const mainComputation = newSimpleComputation({
+  root: true,
   async exec(ctx) {
     console.log("Running main computation...");
     const results = await ctx.get(pool);
@@ -98,24 +100,7 @@ const mainComputation = newComputationBuilder({
     }
     return ok(undefined);
   },
-  requestDef: {
-    hash(a) {
-      return 0;
-    },
-    equal(a, b) {
-      return a === b;
-    },
-  },
-  responseDef: {
-    hash(a) {
-      return 0;
-    },
-    equal(a, b) {
-      return a === b;
-    },
-  },
-  root: true,
-})(undefined);
+});
 
 export async function main() {
   console.log("Starting main...");
@@ -126,3 +111,5 @@ export async function main() {
 }
 
 main().catch(error => console.log(error));
+
+// yarn n packages\incremental\__test\index.ts

@@ -22,8 +22,8 @@
 
 // We have computations which store their last value, and computations that emit events but do not store them?
 
-import { from } from "ix/asynciterable";
-import { filter, map } from "ix/asynciterable/operators";
+// import { from } from "ix/asynciterable";
+// import { filter, map } from "ix/asynciterable/operators";
 import { Defer, createDefer } from "./utils/deferred";
 import { ValueDefinition, HashMap } from "./utils/hash-map";
 import { SpecialQueue } from "./utils/linked-list";
@@ -115,12 +115,12 @@ async function main() {
 
   const source = pool.start({ number: 0 });
 
-  const results = from(source).pipe(
+  /*const results = from(source).pipe(
     filter(x => x[0].number % 2 === 0),
     map(x => x)
-  );
+  );*/
 
-  for await (const item of results) {
+  for await (const item of source) {
     console.log(item);
   }
 

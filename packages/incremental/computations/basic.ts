@@ -1,7 +1,7 @@
 import {
   DependentComputation,
   DependentComputationMixin,
-} from "../computations/dependent";
+} from "./mixins/dependent";
 import {
   RawComputation,
   State,
@@ -13,7 +13,7 @@ import {
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
-} from "../computations/subscribable";
+} from "./mixins/subscribable";
 import {
   ComputationDescription,
   ComputationRegistry,
@@ -48,7 +48,7 @@ export function newComputationBuilder<Req, Res>(
   return (request: Req) => new BasicComputationDescription(config, request);
 }
 
-class BasicComputationDescription<Req, Res>
+export class BasicComputationDescription<Req, Res>
   implements ComputationDescription<BasicComputation<Req, Res>>
 {
   readonly config: BasicComputationConfig<Req, Res>;

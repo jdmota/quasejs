@@ -1,7 +1,7 @@
-import { joinIterators } from "../utils/join-iterators";
-import { Result, resultEqual } from "../utils/result";
+import { joinIterators } from "../../utils/join-iterators";
+import { Result, resultEqual } from "../../utils/result";
 import { DependentComputation } from "./dependent";
-import { AnyRawComputation, RawComputation } from "./raw";
+import { AnyRawComputation, RawComputation } from "../raw";
 
 export interface SubscribableComputation<Res> {
   readonly subscribableMixin: SubscribableComputationMixin<Res>;

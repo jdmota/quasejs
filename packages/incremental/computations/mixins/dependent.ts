@@ -1,7 +1,7 @@
-import { ComputationDescription } from "../incremental-lib";
-import { Result } from "../utils/result";
-import { setAdd } from "../utils/set";
-import { AnyRawComputation, RawComputation, RunId } from "./raw";
+import { ComputationDescription } from "../../incremental-lib";
+import { Result } from "../../utils/result";
+import { setAdd } from "../../utils/set";
+import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
 export interface DependentComputation {
