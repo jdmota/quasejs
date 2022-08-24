@@ -4,6 +4,7 @@ import {
   ComputationDescription,
 } from "../incremental-lib";
 import { joinIterators } from "../utils/join-iterators";
+import { LinkedList } from "../utils/linked-list";
 
 export enum State {
   PENDING = 0,
@@ -45,15 +46,9 @@ function newReachabilityId(): ReachabilityId {
 }
 
 type ReachabilityStatus = {
-  pending: boolean;
+  confirmed: boolean;
   id: ReachabilityId | null;
 };
-
-enum Reachability {
-  UNCONNECTED = 0,
-  CONNECTED = 1,
-  // UNKNOWN = 2,
-}
 
 export type AnyRawComputation = RawComputation<any, any>;
 
@@ -69,9 +64,6 @@ export abstract class RawComputation<Ctx, Res> {
   // Requirements of SpecialQueue
   public prev: AnyRawComputation | null;
   public next: AnyRawComputation | null;
-  // Reachability
-  private reachable: boolean;
-  private readonly reachabilityStatus: ReachabilityStatus;
 
   constructor(
     registry: ComputationRegistry,
@@ -86,9 +78,9 @@ export abstract class RawComputation<Ctx, Res> {
     this.result = null;
     this.prev = null;
     this.next = null;
-    this.reachable = false;
+    this.reachable = null;
     this.reachabilityStatus = {
-      pending: false,
+      confirmed: false,
       id: null,
     };
     if (mark) this.mark(State.PENDING);
@@ -122,7 +114,7 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   isReachable(): boolean {
-    return this.reachable || this.isRoot();
+    return this.reachable != null || this.isRoot();
   }
 
   onInEdgeAddition(node: AnyRawComputation) {
@@ -132,10 +124,30 @@ export abstract class RawComputation<Ctx, Res> {
     //
     if (node.isReachable()) {
       // Mark this and all reachable nodes as reachable
-      this.markReachable(null);
+      this.markReachable(node);
     }
   }
 
+  // TODO when marking as reachable, use breath first to only leave the edges that lead to shortest paths activated
+  private markReachable(from: AnyRawComputation) {
+    if (this.isReachable()) {
+      // If this node is already reachable,
+      // the children already are as well
+      return;
+    }
+    this.reachable = from;
+    this.onReachabilityChange(this.state, false, true);
+    for (const child of this.outNodes()) {
+      child.markReachable(this);
+    }
+  }
+
+  // Reachability
+  // By keeping track of one edge that leads to the root,
+  // we reduce the changes that we need to recheck each node,
+  // since most likely, the edge removed, is not this one.
+  private reachable: AnyRawComputation | null;
+  private readonly reachabilityStatus: ReachabilityStatus;
   // When invalidations occur, some edges are removed.
   // After the computation reruns,
   // it is probable that the same edges are restored.
@@ -152,96 +164,93 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   private removeScheduledEdges() {
-    const outNodes = Array.from(this.delayedRemovedOutNodes);
-    this.delayedRemovedOutNodes.clear();
-    for (const outNode of outNodes) {
+    const queue = new LinkedList<AnyRawComputation>();
+    // Perform the edge removals
+    for (const outNode of this.delayedRemovedOutNodes) {
       outNode.delayedRemovedInNodes.delete(this);
+      if (outNode.reachable === this) {
+        // If this outNode was reachable through this node
+        // We need to recheck its reachability
+        queue.addLast(outNode);
+      }
     }
+    this.delayedRemovedOutNodes.clear();
+
     // While all these checkReachability calls are running,
     // there are no reentrant calls that modify edges.
-    // Additionally, we cannot trust any this.reachable field
-    // unless it was updated in this session.
+    // But we cannot trust any this.reachable != null fields
+    // unless they were confirmed in this session.
     // When this function call (removeScheduledEdges) finishes,
     // all reachable values are updated.
+    // The queue will contain all the nodes for which
+    // this.reachable was the edge removed.
+    // If this.reachable was already null, no need to add the node to the queue.
     const id = newReachabilityId();
-    for (const outNode of outNodes) {
-      outNode.checkReachability(id);
+    for (const node of queue.iterateAndRemove()) {
+      node.checkReachability(queue, id);
     }
   }
 
   // TODO extract this to a mixin, since we do not need this to be that complicated for general computations where cycles are not even allowed
-  // TODO somehow, avoid too deep recursive calls
-  // TODO another issue is that we might go up, to find out that something is now reachable
-  // which then will walk down marking everything as reachable, this way
-  // we might traverse edges more than once...
   // TODO another issue is that we should be able to batch edge removals...
   // TODO use strong connected components?
   // IF the removed edge was inside the component, see if we need to split the component.
   // AND do nothing else?????
   // IF the removed edge goes from one component to another, we just need to check the parent components to find one that is reachable, in other words, we ignore all the nodes in the same component (the ones that form a cycle)
+  // TODO the idea is "simple": ignore the in edges that are also reached by the relevant node
 
-  private checkReachability(id: ReachabilityId): boolean {
+  private checkReachability(
+    queue: LinkedList<AnyRawComputation>,
+    id: ReachabilityId
+  ): boolean {
     // Roots are trivially reachable
     if (this.isRoot()) {
       return true;
     }
+    // Since this routine was started to react to edge removals:
+    // If this node was not reachable before, it remains unreachable
+    // If this node became unreachable now, the procedure to recheck out-nodes
+    // was already executed.
+    // In any case, we can return here.
+    if (this.reachable == null) {
+      return false;
+    }
     // If the id is the same, we already have seen this node in this session
     if (this.reachabilityStatus.id === id) {
-      // If pending, it means we are still computing this node's
+      // If confirmed is false, it means we are still computing this node's
       // reachability and we hit a cycle. Return false.
-      // Otherwise, we can trust that this.reachable is updated.
-      return this.reachabilityStatus.pending ? false : this.reachable;
+      // Otherwise, we can trust that this.reachable != null was confirmed.
+      return this.reachabilityStatus.confirmed;
     }
+    // First time seeing this node...
     this.reachabilityStatus.id = id;
-    this.reachabilityStatus.pending = true;
+    this.reachabilityStatus.confirmed = false;
     // Check if this node is still reachable (by finding a root)
     for (const inNode of this.inNodes()) {
-      if (inNode.checkReachability(id)) {
-        this.markReachable(id);
+      if (inNode.checkReachability(queue, id)) {
+        // Since this routine was started to react to edge removals
+        // If this node is reachable now, it was reachable before
+        // No need to check the children
+        // If their this.reachable was removed or is no longer reachable,
+        // they will be added to the queue anyway.
+        this.reachabilityStatus.confirmed = true;
+        // Set this.reachable to a node we are sure will lead to the root
+        this.reachable = inNode;
         return true;
       }
     }
-    // This node is not reachable
-    this.markUnreachable(id);
-    return false;
-  }
-
-  private markReachable(id: ReachabilityId | null) {
-    this.reachabilityStatus.pending = false;
-    this.reachabilityStatus.id = id;
-    if (this.isReachable()) {
-      // If it was already reachable that is fine.
-      // Even if this value was not set in this session,
-      // it means that it was reachable before,
-      // which means that all out-nodes were reachable before as well,
-      // implying that their this.reachable value does not need to be updated.
-      return;
-    }
-    this.reachable = true;
-    this.onReachabilityChange(this.state, false, true);
-    for (const child of this.outNodes()) {
-      child.markReachable(id);
-    }
-  }
-
-  private markUnreachable(id: ReachabilityId) {
-    this.reachabilityStatus.pending = false;
-    this.reachabilityStatus.id = id;
-    if (!this.isReachable()) {
-      // If it was already not-reachable that is fine.
-      // Even if this value was not set in this session,
-      // it means that it was not-reachable before.
-      // So, no out-node needs to be rechecked
-      // because of this node (but maybe because of other nodes).
-      return;
-    }
-    this.reachable = false;
+    // This node is no longer reachable
+    this.reachabilityStatus.id = null;
+    this.reachable = null;
     this.onReachabilityChange(this.state, true, false);
-    // This node is no longer reachable,
-    // check all out-nodes to see if they are still reachable
     for (const outNode of this.outNodes()) {
-      outNode.checkReachability(id);
+      if (outNode.reachable === this) {
+        // If this outNode was reachable through this node
+        // We need to recheck its reachability
+        queue.addLast(outNode);
+      }
     }
+    return false;
   }
 
   protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
