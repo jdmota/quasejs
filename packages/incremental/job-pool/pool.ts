@@ -15,6 +15,10 @@ import {
   AnyRawComputation,
 } from "../computations/raw";
 import {
+  ReachableComputation,
+  ReachableComputationMixinRoot,
+} from "../computations/reachable";
+import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "../computations/subscribable";
@@ -70,17 +74,27 @@ export class ComputationPool<Req, Res>
   implements
     DependentComputation,
     SubscribableComputation<ReadonlyHandlerHashMap<Req, Result<Res>>>,
-    ParentComputation
+    ParentComputation,
+    ReachableComputation
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<
     ReadonlyHandlerHashMap<Req, Result<Res>>
   >;
   public readonly parentMixin: ParentComputationMixin;
-
+  public readonly reachableMixin: ReachableComputationMixinRoot;
+  //
   public readonly mapDefinition: ComputationMapDefinition<Req, Res>;
-  private readonly resultsMap: HashMap<Req, Result<Res>>;
-  private readonly status: [number, number, number, number];
+  private readonly data: {
+    readonly reachable: {
+      results: HashMap<Req, Result<Res>>;
+      status: [number, number, number, number];
+    };
+    readonly unreachable: {
+      results: HashMap<Req, Result<Res>>;
+      status: [number, number, number, number];
+    };
+  };
   private readonly notifier: Notifier<null>;
   private lastSeen: ReadonlyHandlerHashMap<Req, Result<Res>> | null;
   private readonly equal: (a: Result<Res>, b: Result<Res>) => boolean;
@@ -94,9 +108,18 @@ export class ComputationPool<Req, Res>
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
+    this.reachableMixin = new ReachableComputationMixinRoot(this);
     this.mapDefinition = mapDefinition;
-    this.resultsMap = new HashMap<Req, Result<Res>>(mapDefinition.requestDef);
-    this.status = [0, 0, 0, 0];
+    this.data = {
+      reachable: {
+        results: new HashMap<Req, Result<Res>>(mapDefinition.requestDef),
+        status: [0, 0, 0, 0],
+      },
+      unreachable: {
+        results: new HashMap<Req, Result<Res>>(mapDefinition.requestDef),
+        status: [0, 0, 0, 0],
+      },
+    };
     this.notifier = createNotifier();
     this.lastSeen = null;
     this.equal = (a, b) => resultEqual(mapDefinition.responseDef.equal, a, b);
@@ -130,7 +153,7 @@ export class ComputationPool<Req, Res>
     ctx.active();
     // Record the last seen version of the results map
     // in the same tick when isDone()
-    this.lastSeen = this.resultsMap.getSnapshot();
+    this.lastSeen = this.data.reachable.results.getSnapshot();
     return ok(this.lastSeen);
   }
 
@@ -149,9 +172,8 @@ export class ComputationPool<Req, Res>
   protected finishRoutine(
     result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>
   ): void {
-    // this.dependentMixin.finishRoutine(result);
     this.subscribableMixin.finishRoutine(result);
-    // this.parentMixin.finishRoutine(result);
+    this.reachableMixin.finishOrDeleteRoutine();
   }
 
   protected invalidateRoutine(): void {
@@ -164,9 +186,10 @@ export class ComputationPool<Req, Res>
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
+    this.reachableMixin.finishOrDeleteRoutine();
   }
 
-  protected onReachabilityChange(state: State, from: boolean, to: boolean) {}
+  onReachabilityChange(from: boolean, to: boolean) {}
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     // Upon invalidation, undo the effects
@@ -191,51 +214,69 @@ export class ComputationPool<Req, Res>
     );
   }
 
-  // TODO when we remove an edge from A to B, we need to do a search backwards to find the root
-  // If we find the root, all fine
-  // If we do not find the root, all the nodes we saw backwards are also not reachable
-  // (if we start with a graph where all the nodes are reachable from a root/source,
-  // the nodes that we found by going backwards, which are no longer reachable,
-  // were reachable before only because of the edge that was just removed)
-  // In that case, we can remove all these nodes
-  // By removing all these nodes, other edges will be broken, so we need to repeat the steps
-
-  // TODO what if an edge is removed and then added again?
-
-  // TODO should this computation have mini-registry stored?
-
   private isDone() {
-    // TODO FIXME cannot rely on this! deletion happens later. how do we know the pending ones are not orphan?
-    // In fact, since this will produce a graph (maybe a cyclic one)
-    // How to know if some computation should still exist??
-    return this.status[State.PENDING] + this.status[State.RUNNING] === 0;
+    const status = this.data.reachable.status;
+    return status[State.PENDING] + status[State.RUNNING] === 0;
   }
 
-  onFieldFinish(req: Req, result: Result<Res>): void {
+  onFieldFinish(reachable: boolean, req: Req, result: Result<Res>): void {
     if (this.deleted()) return;
-    this.resultsMap.set(req, result, this.equal);
+    const map = reachable
+      ? this.data.reachable.results
+      : this.data.unreachable.results;
+    map.set(req, result, this.equal);
   }
 
-  onFieldDeleted(req: Req): void {
+  onFieldDeleted(reachable: boolean, req: Req): void {
     if (this.deleted()) return;
-    this.resultsMap.delete(req);
+    const map = reachable
+      ? this.data.reachable.results
+      : this.data.unreachable.results;
+    map.delete(req);
   }
 
-  onFieldReachabilityChange(state: State, from: boolean, to: boolean): void {
-    // TODO
+  onFieldReachabilityChange(
+    state: State,
+    req: Req,
+    from: boolean,
+    to: boolean
+  ): void {
+    const fromData = from ? this.data.reachable : this.data.unreachable;
+    const toData = to ? this.data.reachable : this.data.unreachable;
+
+    if (state !== State.CREATING && state !== State.DELETED) {
+      fromData.status[state]--;
+      toData.status[state]++;
+    }
+
+    const result = fromData.results.delete(req);
+    if (result) toData.results.set(req, result);
+
+    this.react();
   }
 
-  onFieldStateChange(from: StateNotDeleted, to: StateNotCreating): void {
+  onFieldStateChange(
+    reachable: boolean,
+    from: StateNotDeleted,
+    to: StateNotCreating
+  ): void {
     if (this.deleted()) return;
+    const status = reachable
+      ? this.data.reachable.status
+      : this.data.unreachable.status;
 
     if (from !== State.CREATING) {
-      this.status[from]--;
+      status[from]--;
     }
     if (to !== State.DELETED) {
-      this.status[to]++;
+      status[to]++;
     }
 
-    // React to changes
+    this.react();
+  }
+
+  // React to possible changes
+  private react() {
     if (this.lastSeen?.didChange()) {
       this.invalidate();
     }

@@ -23,6 +23,10 @@ import {
 } from "../computations/raw";
 import { ComputationPool } from "./pool";
 import { joinIterators } from "../utils/join-iterators";
+import {
+  ReachableComputation,
+  ReachableComputationMixin,
+} from "../computations/reachable";
 
 export class ComputationJobInPoolDescription<Req, Res>
   implements ComputationDescription<ComputationJobInPool<Req, Res>>
@@ -62,13 +66,18 @@ export type ComputationJobInPoolContext<Req> = {
 
 class ComputationJobInPool<Req, Res>
   extends RawComputation<ComputationJobInPoolContext<Req>, Res>
-  implements DependentComputation, ParentComputation, ChildComputation
+  implements
+    DependentComputation,
+    ParentComputation,
+    ChildComputation,
+    ReachableComputation
 {
   private readonly source: ComputationPool<Req, Res>;
   public readonly request: Req;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly parentMixin: ParentComputationMixin;
-  public readonly childrenMixin: ChildComputationMixin;
+  public readonly childMixin: ChildComputationMixin;
+  public readonly reachableMixin: ReachableComputationMixin;
 
   constructor(
     registry: ComputationRegistry,
@@ -81,7 +90,8 @@ class ComputationJobInPool<Req, Res>
     this.request = request;
     this.dependentMixin = new DependentComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
-    this.childrenMixin = new ChildComputationMixin(this);
+    this.childMixin = new ChildComputationMixin(this);
+    this.reachableMixin = new ReachableComputationMixin(this);
     this.mark(State.PENDING);
   }
 
@@ -98,11 +108,16 @@ class ComputationJobInPool<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return this.childrenMixin.isOrphan();
+    return /*this.childMixin.isOrphan() || */ !this.reachableMixin.isReachable();
   }
 
   protected finishRoutine(result: Result<Res>): void {
-    this.source.onFieldFinish(this.request, result);
+    this.reachableMixin.finishOrDeleteRoutine();
+    this.source.onFieldFinish(
+      this.reachableMixin.isReachable(),
+      this.request,
+      result
+    );
   }
 
   protected invalidateRoutine(): void {
@@ -113,23 +128,37 @@ class ComputationJobInPool<Req, Res>
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
-    this.source.onFieldDeleted(this.request);
+    this.reachableMixin.finishOrDeleteRoutine();
+    this.source.onFieldDeleted(this.reachableMixin.isReachable(), this.request);
+  }
+
+  override onInEdgeAddition(node: AnyRawComputation): void {
+    if (node instanceof ComputationJobInPool) {
+      this.reachableMixin.onInEdgeAdditionRoutine(node.reachableMixin);
+    }
+  }
+
+  override onInEdgeRemoval(node: AnyRawComputation): void {
+    if (node instanceof ComputationJobInPool) {
+      this.reachableMixin.onInEdgeRemovalRoutine(node.reachableMixin);
+    }
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
-    this.source.onFieldStateChange(from, to);
+    this.source.onFieldStateChange(this.reachableMixin.isReachable(), from, to);
   }
 
-  protected onReachabilityChange(
-    state: State,
-    from: boolean,
-    to: boolean
-  ): void {
-    this.source.onFieldReachabilityChange(state, from, to);
+  onReachabilityChange(from: boolean, to: boolean): void {
+    this.source.onFieldReachabilityChange(
+      this.getState(),
+      this.request,
+      from,
+      to
+    );
   }
 
   protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.childrenMixin.inNodesRoutine();
+    return this.childMixin.inNodesRoutine();
   }
 
   protected outNodesRoutine(): IterableIterator<AnyRawComputation> {

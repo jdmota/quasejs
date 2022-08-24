@@ -2,7 +2,7 @@ import { ParentComputation } from "./parent";
 import { AnyRawComputation } from "./raw";
 
 export interface ChildComputation {
-  readonly childrenMixin: ChildComputationMixin;
+  readonly childMixin: ChildComputationMixin;
 }
 
 export class ChildComputationMixin {

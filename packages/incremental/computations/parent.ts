@@ -16,13 +16,13 @@ export class ParentComputationMixin {
 
   private own(child: AnyRawComputation & ChildComputation) {
     this.children.add(child);
-    child.childrenMixin.parents.add(this.source);
+    child.childMixin.parents.add(this.source);
     child.onInEdgeAddition(this.source);
   }
 
   private unown(child: AnyRawComputation & ChildComputation) {
     this.children.delete(child);
-    child.childrenMixin.parents.delete(this.source);
+    child.childMixin.parents.delete(this.source);
     child.onInEdgeRemoval(this.source);
   }
 
