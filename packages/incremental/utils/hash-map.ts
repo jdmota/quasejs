@@ -11,6 +11,7 @@ type HashMapEntry<K, V> = {
 };
 
 export interface ReadonlyHashMap<K, V> {
+  size(): number;
   get(key: K): V | undefined;
   [Symbol.iterator](): IterableIterator<readonly [K, V]>;
 }
@@ -22,12 +23,14 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
   private readonly hash: (key: K) => number;
   private readonly equal: (a: K, b: K) => boolean;
   private snapshot: ReadonlySnapshotHashMap<K, V> | null;
+  private sizeCount: number;
 
   constructor(valueDef: ValueDefinition<K>) {
     this.map = new Map();
     this.hash = valueDef.hash;
     this.equal = valueDef.equal;
     this.snapshot = null;
+    this.sizeCount = 0;
   }
 
   getSnapshot(): ReadonlySnapshotHashMap<K, V> {
@@ -42,6 +45,10 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
       this.snapshot.map = null;
       this.snapshot = null;
     }
+  }
+
+  size() {
+    return this.sizeCount;
   }
 
   get(key: K): V | undefined {
@@ -64,6 +71,7 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
     }
 
     this.changed();
+    this.sizeCount--;
     return entry.value;
   }
 
@@ -84,6 +92,7 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
       };
       list.addLast(entry);
       this.changed();
+      this.sizeCount++;
     } else {
       const oldValue = entry.value;
       entry.value = value;
@@ -144,6 +153,10 @@ class ReadonlySnapshotHashMap<K, V> implements ReadonlyHashMap<K, V> {
 
   get(key: K): V | undefined {
     return this.getMap().get(key);
+  }
+
+  size() {
+    return this.getMap().size();
   }
 
   [Symbol.iterator](): IterableIterator<readonly [K, V]> {

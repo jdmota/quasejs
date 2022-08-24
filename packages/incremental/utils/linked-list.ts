@@ -111,7 +111,7 @@ export class SpecialQueue<N extends { prev: N | null; next: N | null }> {
   }
 
   private checkConnected(node: N) {
-    if (node.prev == null && node.next == null) {
+    if (node.prev == null && node.next == null && this.head !== node) {
       throw new Error("Node does not belong to any linked-list");
     }
   }

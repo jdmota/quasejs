@@ -1,3 +1,4 @@
+import { setAdd } from "../utils/set";
 import { ChildComputation } from "./child";
 import { AnyRawComputation, RunId } from "./raw";
 
@@ -15,15 +16,19 @@ export class ParentComputationMixin {
   }
 
   private own(child: AnyRawComputation & ChildComputation) {
-    this.children.add(child);
-    child.childMixin.parents.add(this.source);
-    child.onInEdgeAddition(this.source);
+    if (setAdd(this.children, child)) {
+      child.childMixin.parents.add(this.source);
+      child.onInEdgeAddition(this.source);
+      // Without this, there might be no progress
+      child.maybeRun();
+    }
   }
 
   private unown(child: AnyRawComputation & ChildComputation) {
-    this.children.delete(child);
-    child.childMixin.parents.delete(this.source);
-    child.onInEdgeRemoval(this.source);
+    if (this.children.delete(child)) {
+      child.childMixin.parents.delete(this.source);
+      child.onInEdgeRemoval(this.source);
+    }
   }
 
   compute(child: AnyRawComputation & ChildComputation, runId: RunId) {

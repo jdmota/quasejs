@@ -22,7 +22,6 @@ import {
   AnyRawComputation,
 } from "../computations/raw";
 import { ComputationPool } from "./pool";
-import { joinIterators } from "../utils/join-iterators";
 import {
   ReachableComputation,
   ReachableComputationMixin,
@@ -47,18 +46,20 @@ export class ComputationJobInPoolDescription<Req, Res>
     return (
       other instanceof ComputationJobInPoolDescription &&
       this.source === other.source &&
-      this.source.mapDefinition.requestDef.equal(this.request, other.request)
+      this.source.config.requestDef.equal(this.request, other.request)
     );
   }
 
   hash() {
-    return this.source.mapDefinition.requestDef.hash(this.request);
+    return this.source.config.requestDef.hash(this.request);
   }
 }
 
 export type ComputationJobInPoolContext<Req> = {
   readonly get: <T>(
-    dep: RawComputation<any, T> & SubscribableComputation<T>
+    dep: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
   ) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
   readonly request: Req;
@@ -96,7 +97,7 @@ class ComputationJobInPool<Req, Res>
   }
 
   protected exec(ctx: ComputationJobInPoolContext<Req>): Promise<Result<Res>> {
-    return this.source.mapDefinition.exec(ctx);
+    return this.source.config.exec(ctx);
   }
 
   protected makeContext(runId: RunId): ComputationJobInPoolContext<Req> {
@@ -133,13 +134,19 @@ class ComputationJobInPool<Req, Res>
   }
 
   override onInEdgeAddition(node: AnyRawComputation): void {
-    if (node instanceof ComputationJobInPool) {
+    if (
+      node instanceof ComputationJobInPool ||
+      node instanceof ComputationPool
+    ) {
       this.reachableMixin.onInEdgeAdditionRoutine(node.reachableMixin);
     }
   }
 
   override onInEdgeRemoval(node: AnyRawComputation): void {
-    if (node instanceof ComputationJobInPool) {
+    if (
+      node instanceof ComputationJobInPool ||
+      node instanceof ComputationPool
+    ) {
       this.reachableMixin.onInEdgeRemovalRoutine(node.reachableMixin);
     }
   }
@@ -157,7 +164,7 @@ class ComputationJobInPool<Req, Res>
     );
   }
 
-  protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
+  /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.childMixin.inNodesRoutine();
   }
 
@@ -166,5 +173,5 @@ class ComputationJobInPool<Req, Res>
       this.dependentMixin.outNodesRoutine(),
       this.parentMixin.outNodesRoutine()
     );
-  }
+  }*/
 }

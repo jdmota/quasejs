@@ -83,21 +83,20 @@ export abstract class RawComputation<Ctx, Res> {
   protected abstract finishRoutine(result: Result<Res>): void;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
+  //protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
+  //protected abstract outNodesRoutine(): IterableIterator<AnyRawComputation>;
 
-  protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
-  protected abstract outNodesRoutine(): IterableIterator<AnyRawComputation>;
-
-  onInEdgeAddition(node: AnyRawComputation) {}
-
-  onInEdgeRemoval(node: AnyRawComputation) {}
-
-  inNodes() {
+  /*inNodes() {
     return this.inNodesRoutine();
   }
 
   outNodes() {
     return this.outNodesRoutine();
-  }
+  }*/
+
+  onInEdgeAddition(node: AnyRawComputation) {}
+
+  onInEdgeRemoval(node: AnyRawComputation) {}
 
   protected deleted() {
     return this.state === State.DELETED;
@@ -119,16 +118,18 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  async run(): Promise<Result<Res>> {
+  run(): Promise<Result<Res>> {
     this.inv();
     if (!this.running) {
-      const { exec } = this;
       const runId = newRunId();
+      const ctx = this.makeContext(runId);
       this.runId = runId;
-      this.running = exec(this.makeContext(runId)).then(
-        v => this.finish(v, runId),
-        e => this.finish(error(e), runId)
-      );
+      this.running = Promise.resolve()
+        .then(() => this.exec(ctx))
+        .then(
+          v => this.finish(v, runId),
+          e => this.finish(error(e), runId)
+        );
       this.mark(State.RUNNING);
     }
     return this.running;
@@ -180,7 +181,7 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   maybeRun() {
-    if (this.isOrphan()) {
+    if (this.state === State.PENDING && !this.isOrphan()) {
       this.run();
     }
   }

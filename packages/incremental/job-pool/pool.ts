@@ -32,7 +32,6 @@ import {
   ReadonlyHandlerHashMap,
   HashMap,
 } from "../utils/hash-map";
-import { joinIterators } from "../utils/join-iterators";
 import { Result, resultEqual, ok } from "../utils/result";
 import {
   ComputationJobInPoolContext,
@@ -41,7 +40,9 @@ import {
 
 type ComputationMapStartContext<Req> = {
   readonly get: <T>(
-    dep: RawComputation<any, T> & SubscribableComputation<T>
+    dep: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
   ) => Promise<Result<T>>;
   readonly compute: (req: Req) => void;
 };
@@ -49,14 +50,16 @@ type ComputationMapStartContext<Req> = {
 type ComputationMapContext<Req> = {
   readonly active: () => void;
   readonly get: <T>(
-    dep: RawComputation<any, T> & SubscribableComputation<T>
+    dep: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
   ) => Promise<Result<T>>;
   readonly compute: (dep: Req) => void;
 };
 
 type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
 
-export type ComputationMapDefinition<Req, Res> = {
+export type ComputationPoolConfig<Req, Res> = {
   readonly startExec: ComputationExec<
     ComputationMapStartContext<Req>,
     undefined
@@ -65,6 +68,40 @@ export type ComputationMapDefinition<Req, Res> = {
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
 };
+
+export function newComputationPool<Req, Res>(
+  config: ComputationPoolConfig<Req, Res>
+) {
+  return new ComputationPoolDescription(config);
+}
+
+class ComputationPoolDescription<Req, Res>
+  implements ComputationDescription<ComputationPool<Req, Res>>
+{
+  readonly config: ComputationPoolConfig<Req, Res>;
+
+  constructor(config: ComputationPoolConfig<Req, Res>) {
+    this.config = config;
+  }
+
+  create(registry: ComputationRegistry): ComputationPool<Req, Res> {
+    return new ComputationPool(registry, this, this.config);
+  }
+
+  equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
+    return (
+      other instanceof ComputationPoolDescription &&
+      this.config.startExec === other.config.startExec &&
+      this.config.exec === other.config.exec &&
+      this.config.requestDef === other.config.requestDef &&
+      this.config.responseDef === other.config.responseDef
+    );
+  }
+
+  hash() {
+    return 0;
+  }
+}
 
 export class ComputationPool<Req, Res>
   extends RawComputation<
@@ -84,7 +121,7 @@ export class ComputationPool<Req, Res>
   public readonly parentMixin: ParentComputationMixin;
   public readonly reachableMixin: ReachableComputationMixinRoot;
   //
-  public readonly mapDefinition: ComputationMapDefinition<Req, Res>;
+  public readonly config: ComputationPoolConfig<Req, Res>;
   private readonly data: {
     readonly reachable: {
       results: HashMap<Req, Result<Res>>;
@@ -102,34 +139,34 @@ export class ComputationPool<Req, Res>
   constructor(
     registry: ComputationRegistry,
     description: ComputationDescription<any>,
-    mapDefinition: ComputationMapDefinition<Req, Res>
+    config: ComputationPoolConfig<Req, Res>
   ) {
     super(registry, description, false);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
     this.reachableMixin = new ReachableComputationMixinRoot(this);
-    this.mapDefinition = mapDefinition;
+    this.config = config;
     this.data = {
       reachable: {
-        results: new HashMap<Req, Result<Res>>(mapDefinition.requestDef),
+        results: new HashMap<Req, Result<Res>>(config.requestDef),
         status: [0, 0, 0, 0],
       },
       unreachable: {
-        results: new HashMap<Req, Result<Res>>(mapDefinition.requestDef),
+        results: new HashMap<Req, Result<Res>>(config.requestDef),
         status: [0, 0, 0, 0],
       },
     };
     this.notifier = createNotifier();
     this.lastSeen = null;
-    this.equal = (a, b) => resultEqual(mapDefinition.responseDef.equal, a, b);
+    this.equal = (a, b) => resultEqual(config.responseDef.equal, a, b);
     this.mark(State.PENDING);
   }
 
   protected async exec(
     ctx: ComputationMapContext<Req>
   ): Promise<Result<ReadonlyHandlerHashMap<Req, Result<Res>>>> {
-    const { startExec } = this.mapDefinition;
+    const { startExec } = this.config;
 
     // Wait for the start computation to finish
     const startResult = await startExec({
@@ -241,6 +278,7 @@ export class ComputationPool<Req, Res>
     from: boolean,
     to: boolean
   ): void {
+    if (this.deleted()) return;
     const fromData = from ? this.data.reachable : this.data.unreachable;
     const toData = to ? this.data.reachable : this.data.unreachable;
 
@@ -286,7 +324,7 @@ export class ComputationPool<Req, Res>
     }
   }
 
-  protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
+  /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.subscribableMixin.inNodesRoutine();
   }
 
@@ -295,7 +333,7 @@ export class ComputationPool<Req, Res>
       this.dependentMixin.outNodesRoutine(),
       this.parentMixin.outNodesRoutine()
     );
-  }
+  }*/
 
   // TODO map and filter operations
 }

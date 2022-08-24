@@ -1,4 +1,6 @@
+import { ComputationDescription } from "../incremental-lib";
 import { Result } from "../utils/result";
+import { setAdd } from "../utils/set";
 import { AnyRawComputation, RawComputation, RunId } from "./raw";
 import { SubscribableComputation } from "./subscribable";
 
@@ -19,22 +21,27 @@ export class DependentComputationMixin {
   }
 
   private subscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
-    this.dependencies.add(dep);
-    dep.subscribableMixin.subscribers.add(this.source);
-    dep.onInEdgeAddition(this.source);
+    if (setAdd(this.dependencies, dep)) {
+      dep.subscribableMixin.subscribers.add(this.source);
+      dep.onInEdgeAddition(this.source);
+    }
   }
 
   private unsubscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
-    this.dependencies.delete(dep);
-    dep.subscribableMixin.subscribers.delete(this.source);
-    dep.subscribableMixin.oldSubscribers.delete(this.source);
-    dep.onInEdgeRemoval(this.source);
+    if (this.dependencies.delete(dep)) {
+      dep.subscribableMixin.subscribers.delete(this.source);
+      dep.subscribableMixin.oldSubscribers.delete(this.source);
+      dep.onInEdgeRemoval(this.source);
+    }
   }
 
   getDep<T>(
-    dep: RawComputation<any, T> & SubscribableComputation<T>,
+    description: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >,
     runId: RunId
   ): Promise<Result<T>> {
+    const dep = this.source.registry.make(description);
     dep.inv();
     this.source.active(runId);
     this.subscribe(dep);

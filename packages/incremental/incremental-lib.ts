@@ -127,7 +127,7 @@ async function main() {
   console.log("Done!");
 }
 
-main();
+// main();
 
 // ########################
 
@@ -219,7 +219,8 @@ export class ComputationRegistry {
 
     while (this.hasPending()) {
       for (const c of this.pending.keepTaking()) {
-        c.maybeRun();
+        // TODO use maybeRun... but how?
+        c.run();
       }
 
       await this.running.peek()?.run();
