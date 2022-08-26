@@ -119,7 +119,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.15"],\
             ["@types/jest-diff", "npm:24.3.0"],\
             ["@types/minimatch", "npm:3.0.3"],\
-            ["@types/node", "npm:14.14.9"],\
+            ["@types/node", "npm:18.7.13"],\
             ["@types/normalize-package-data", "npm:2.4.0"],\
             ["@types/write-file-atomic", "npm:3.0.1"],\
             ["@typescript-eslint/eslint-plugin", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:4.8.2"],\
@@ -141,6 +141,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
+            ["slash", "npm:3.0.0"],\
             ["type-fest", "npm:2.18.0"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\
@@ -5365,6 +5366,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@types-node-npm-14.14.9-7ed4d3e449-8.zip/node_modules/@types/node/",\
           "packageDependencies": [\
             ["@types/node", "npm:14.14.9"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:18.7.13", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@types-node-npm-18.7.13-148c07645a-8.zip/node_modules/@types/node/",\
+          "packageDependencies": [\
+            ["@types/node", "npm:18.7.13"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -13595,7 +13603,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.15"],\
             ["@types/jest-diff", "npm:24.3.0"],\
             ["@types/minimatch", "npm:3.0.3"],\
-            ["@types/node", "npm:14.14.9"],\
+            ["@types/node", "npm:18.7.13"],\
             ["@types/normalize-package-data", "npm:2.4.0"],\
             ["@types/write-file-atomic", "npm:3.0.1"],\
             ["@typescript-eslint/eslint-plugin", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:4.8.2"],\
@@ -13617,6 +13625,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],\
             ["prettier", "npm:2.7.1"],\
             ["rxjs", "npm:7.5.6"],\
+            ["slash", "npm:3.0.0"],\
             ["type-fest", "npm:2.18.0"],\
             ["typescript", "patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=f456af"]\
           ],\

@@ -44,6 +44,7 @@ export abstract class RawComputation<Ctx, Res> {
   private state: State;
   private runId: RunId | null;
   private running: Promise<Result<Res>> | null;
+  private deleting: boolean;
   // Latest result
   protected result: Result<Res> | null;
   // Requirements of SpecialQueue
@@ -60,6 +61,7 @@ export abstract class RawComputation<Ctx, Res> {
     this.state = State.CREATING;
     this.runId = null;
     this.running = null;
+    this.deleting = false;
     this.result = null;
     this.prev = null;
     this.next = null;
@@ -98,8 +100,8 @@ export abstract class RawComputation<Ctx, Res> {
 
   onInEdgeRemoval(node: AnyRawComputation) {}
 
-  protected deleted() {
-    return this.state === State.DELETED;
+  protected isDeleting() {
+    return this.deleting;
   }
 
   protected getState() {
@@ -107,7 +109,7 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   inv() {
-    if (this.deleted()) {
+    if (this.isDeleting()) {
       throw new Error("Unexpected deleted computation");
     }
   }
@@ -146,16 +148,23 @@ export abstract class RawComputation<Ctx, Res> {
 
   invalidate() {
     this.inv();
+    if (!this.registry.allowInvalidations()) {
+      throw new Error("Invalidations are disabled in this registry");
+    }
     this.runId = null;
     this.running = null;
     this.result = null;
     this.invalidateRoutine();
     this.mark(State.PENDING);
+    this.registry.scheduleWake();
   }
 
-  // pre: this.isOrphan()
   destroy() {
     this.inv();
+    if (!this.isOrphan()) {
+      throw new Error("Some computation depends on this, cannot destroy");
+    }
+    this.deleting = true;
     this.runId = null;
     this.running = null;
     this.result = null;
@@ -183,6 +192,12 @@ export abstract class RawComputation<Ctx, Res> {
   maybeRun() {
     if (this.state === State.PENDING && !this.isOrphan()) {
       this.run();
+    }
+  }
+
+  maybeDestroy() {
+    if (this.isOrphan()) {
+      this.destroy();
     }
   }
 }

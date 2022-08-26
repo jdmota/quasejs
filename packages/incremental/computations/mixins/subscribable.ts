@@ -78,10 +78,11 @@ export class SubscribableComputationMixin<Res> {
   }
 
   deleteRoutine(): void {
+    if (!this.isOrphan()) {
+      throw new Error("Cannot delete computation with subscribers");
+    }
     this.oldResult = null;
     this.result = null;
-    this.invalidateSubs(this.subscribers);
-    this.invalidateSubs(this.oldSubscribers);
   }
 
   inNodesRoutine(): IterableIterator<AnyRawComputation> {

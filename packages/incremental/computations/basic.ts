@@ -81,7 +81,7 @@ export class BasicComputationDescription<Req, Res>
   }
 }
 
-class BasicComputation<Req, Res>
+export class BasicComputation<Req, Res>
   extends RawComputation<BasicComputationContext<Req>, Res>
   implements DependentComputation, SubscribableComputation<Res>
 {
@@ -89,6 +89,7 @@ class BasicComputation<Req, Res>
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
   private readonly config: BasicComputationConfig<Req, Res>;
   private readonly request: Req;
+  private rooted: boolean;
 
   constructor(
     registry: ComputationRegistry,
@@ -99,6 +100,7 @@ class BasicComputation<Req, Res>
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
+    this.rooted = !!description.config.root;
     this.mark(State.PENDING);
   }
 
@@ -115,7 +117,7 @@ class BasicComputation<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return this.config.root ? false : this.subscribableMixin.isOrphan();
+    return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
   protected finishRoutine(result: Result<Res>): void {
@@ -139,6 +141,10 @@ class BasicComputation<Req, Res>
   }
 
   onNewResult(result: Result<Res>): void {}
+
+  unroot() {
+    this.rooted = false;
+  }
 
   /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.subscribableMixin.inNodesRoutine();

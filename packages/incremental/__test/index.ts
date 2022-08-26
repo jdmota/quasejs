@@ -1,27 +1,10 @@
-import { newComputationBuilder } from "../computations/basic";
 import { newSimpleComputation } from "../computations/simple";
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
 import { error, ok } from "../utils/result";
-
-const files = {
-  "index.ts": {
-    content: "content of index.ts",
-    deps: ["a.ts", "b.ts"],
-  },
-  "a.ts": {
-    content: "content of a.ts",
-    deps: ["util.ts"],
-  },
-  "b.ts": {
-    content: "content of b.ts",
-    deps: ["util.ts"],
-  },
-  "util.ts": {
-    content: "content of util.ts",
-    deps: [],
-  },
-} as const;
+import { FileSystem } from "../computations/file-system/file-system";
+import path from "path";
+import { readJSON } from "fs-extra";
 
 function deepClone(value: any): any {
   if (Array.isArray(value)) {
@@ -40,11 +23,7 @@ type FILE = {
   deps: string[];
 };
 
-type FS = {
-  [key in string]: FILE | undefined;
-};
-
-const fs: FS = deepClone(files);
+const fs = new FileSystem();
 
 const pool = newComputationPool<string, FILE>({
   async startExec(ctx) {
@@ -57,12 +36,17 @@ const pool = newComputationPool<string, FILE>({
   async exec(ctx) {
     console.log("Running pool job...", ctx.request);
 
-    const file = fs[ctx.request];
-    if (file) {
-      for (const dep of file.deps) {
+    const json: FILE = await fs.depend(
+      ctx,
+      path.resolve(__dirname, "fs", ctx.request + ".json"),
+      p => readJSON(p)
+    );
+
+    if (json) {
+      for (const dep of json.deps) {
         ctx.compute(dep);
       }
-      return ok(file);
+      return ok(json);
     }
     return error(new Error(`${ctx.request} not found`));
   },
@@ -84,9 +68,8 @@ const pool = newComputationPool<string, FILE>({
   },
 });
 
-const mainComputation = newSimpleComputation({
-  root: true,
-  async exec(ctx) {
+export async function main() {
+  const result = await ComputationRegistry.run(async ctx => {
     console.log("Running main computation...");
     const results = await ctx.get(pool);
 
@@ -98,18 +81,12 @@ const mainComputation = newSimpleComputation({
     } else {
       console.log(results);
     }
-    return ok(undefined);
-  },
-});
-
-export async function main() {
-  console.log("Starting main...");
-  const registry = new ComputationRegistry();
-  registry.make(mainComputation);
-  const errors = await registry.run();
-  console.log("Errors", errors);
+    return results;
+  });
+  console.log(result);
 }
 
 main().catch(error => console.log(error));
 
 // yarn n packages\incremental\__test\index.ts
+// yarn i packages\incremental\__test\index.ts

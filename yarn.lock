@@ -3311,7 +3311,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^14.14.9":
+"@types/node@npm:*":
   version: 14.14.9
   resolution: "@types/node@npm:14.14.9"
   checksum: fbda42840aadc5b979f438a2e4c79c1d85d16222d758e58f7a2355a94b06be9da6b2b35603e0daeac115c69d3e3b334d03a5da40ab9c5ba48b75a3946a9854d8
@@ -3329,6 +3329,13 @@ __metadata:
   version: 13.13.52
   resolution: "@types/node@npm:13.13.52"
   checksum: 8f1afff497ebeba209e2dc340d823284e087a47632afe99a7daa30eaff80893e520f222ad400cd1f2d3b8288e93cf3eaded52a8e64eaefb8aacfe6c35de98f42
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^18.7.13":
+  version: 18.7.13
+  resolution: "@types/node@npm:18.7.13"
+  checksum: 45431e7e89ecaf85c7d2c180d801c132a7c59e2f8ad578726b6d71cc74e3267c18f9ccdcad738bc0479790c078f0c79efb0e58da2c6be535c15995dbb19050c9
   languageName: node
   linkType: hard
 
@@ -10458,7 +10465,7 @@ fsevents@^1.2.7:
     "@types/jest": ^26.0.15
     "@types/jest-diff": ^24.3.0
     "@types/minimatch": ^3.0.3
-    "@types/node": ^14.14.9
+    "@types/node": ^18.7.13
     "@types/normalize-package-data": ^2.4.0
     "@types/write-file-atomic": ^3.0.1
     "@typescript-eslint/eslint-plugin": ^4.8.2
@@ -10480,6 +10487,7 @@ fsevents@^1.2.7:
     jest: ^26.6.3
     prettier: ^2.7.1
     rxjs: ^7.5.6
+    slash: 3.0.0
     type-fest: ^2.18.0
     typescript: ^4.7.4
   languageName: unknown
@@ -11376,17 +11384,17 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"slash@npm:3.0.0, slash@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "slash@npm:3.0.0"
+  checksum: 94a93fff615f25a999ad4b83c9d5e257a7280c90a32a7cb8b4a87996e4babf322e469c42b7f649fd5796edd8687652f3fb452a86dc97a816f01113183393f11c
+  languageName: node
+  linkType: hard
+
 "slash@npm:^2.0.0":
   version: 2.0.0
   resolution: "slash@npm:2.0.0"
   checksum: 512d4350735375bd11647233cb0e2f93beca6f53441015eea241fe784d8068281c3987fbaa93e7ef1c38df68d9c60013045c92837423c69115297d6169aa85e6
-  languageName: node
-  linkType: hard
-
-"slash@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "slash@npm:3.0.0"
-  checksum: 94a93fff615f25a999ad4b83c9d5e257a7280c90a32a7cb8b4a87996e4babf322e469c42b7f649fd5796edd8687652f3fb452a86dc97a816f01113183393f11c
   languageName: node
   linkType: hard
 

@@ -40,7 +40,8 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
     return this.snapshot;
   }
 
-  private changed() {
+  private changed(diff: number) {
+    this.sizeCount += diff;
     if (this.snapshot) {
       this.snapshot.map = null;
       this.snapshot = null;
@@ -70,8 +71,7 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
       return;
     }
 
-    this.changed();
-    this.sizeCount--;
+    this.changed(-1);
     return entry.value;
   }
 
@@ -91,12 +91,11 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value,
       };
       list.addLast(entry);
-      this.changed();
-      this.sizeCount++;
+      this.changed(1);
     } else {
       const oldValue = entry.value;
       entry.value = value;
-      if (!equal(oldValue, value)) this.changed();
+      if (!equal(oldValue, value)) this.changed(0);
     }
   }
 
@@ -116,14 +115,22 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value: fn(key),
       };
       list.addLast(entry);
-      this.changed();
+      this.changed(1);
     }
     return entry.value;
   }
 
   clear() {
-    this.changed();
+    this.changed(-this.sizeCount);
     this.map.clear();
+  }
+
+  *values() {
+    for (const list of this.map.values()) {
+      for (const entry of list) {
+        yield entry.value;
+      }
+    }
   }
 
   *[Symbol.iterator]() {

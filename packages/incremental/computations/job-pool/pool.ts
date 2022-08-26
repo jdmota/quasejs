@@ -254,7 +254,7 @@ export class ComputationPool<Req, Res>
   }
 
   onFieldFinish(reachable: boolean, req: Req, result: Result<Res>): void {
-    if (this.deleted()) return;
+    if (this.isDeleting()) return;
     const map = reachable
       ? this.data.reachable.results
       : this.data.unreachable.results;
@@ -262,7 +262,7 @@ export class ComputationPool<Req, Res>
   }
 
   onFieldDeleted(reachable: boolean, req: Req): void {
-    if (this.deleted()) return;
+    if (this.isDeleting()) return;
     const map = reachable
       ? this.data.reachable.results
       : this.data.unreachable.results;
@@ -275,7 +275,7 @@ export class ComputationPool<Req, Res>
     from: boolean,
     to: boolean
   ): void {
-    if (this.deleted()) return;
+    if (this.isDeleting()) return;
     const fromData = from ? this.data.reachable : this.data.unreachable;
     const toData = to ? this.data.reachable : this.data.unreachable;
 
@@ -295,7 +295,7 @@ export class ComputationPool<Req, Res>
     from: StateNotDeleted,
     to: StateNotCreating
   ): void {
-    if (this.deleted()) return;
+    if (this.isDeleting()) return;
     const status = reachable
       ? this.data.reachable.status
       : this.data.unreachable.status;

@@ -28,6 +28,12 @@ import { Defer, createDefer } from "./utils/deferred";
 import { ValueDefinition, HashMap } from "./utils/hash-map";
 import { SpecialQueue } from "./utils/linked-list";
 import { AnyRawComputation, State } from "./computations/raw";
+import {
+  newSimpleComputation,
+  SimpleComputationExec,
+} from "./computations/simple";
+import { Result } from "./utils/result";
+import { BasicComputation } from "./computations/basic";
 
 type JobPoolOptions<Req, Res> = {
   readonly exec: (req: Req) => Promise<Res>;
@@ -153,7 +159,12 @@ export type ComputationDescription<C extends AnyRawComputation> = {
   readonly hash: () => number;
 };
 
+type ComputationRegistryOpts = {
+  readonly inSingleRun: boolean;
+};
+
 export class ComputationRegistry {
+  private readonly opts: ComputationRegistryOpts;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
   readonly computations: readonly [
     SpecialQueue<AnyRawComputation>,
@@ -166,7 +177,8 @@ export class ComputationRegistry {
   private readonly errored: SpecialQueue<AnyRawComputation>;
   private interrupted: boolean;
 
-  constructor() {
+  constructor(opts: ComputationRegistryOpts) {
+    this.opts = opts;
     this.map = new HashMap({
       equal: (a, b) => a.equal(b),
       hash: a => a.hash(),
@@ -181,6 +193,14 @@ export class ComputationRegistry {
     this.running = this.computations[State.RUNNING];
     this.errored = this.computations[State.ERRORED];
     this.interrupted = false;
+  }
+
+  computationsCount() {
+    return this.map.size();
+  }
+
+  allowInvalidations() {
+    return !this.opts.inSingleRun;
   }
 
   make<C extends AnyRawComputation>(description: ComputationDescription<C>): C {
@@ -205,6 +225,24 @@ export class ComputationRegistry {
     );
   }
 
+  private timeoutId: NodeJS.Timeout | null = null;
+
+  scheduleWake() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      this.timeoutId = null;
+      this.wake();
+    }, 1000);
+  }
+
+  wake() {
+    for (const c of this.pending.keepTaking()) {
+      c.maybeRun();
+    }
+  }
+
   // TODO topological order
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations
@@ -218,11 +256,7 @@ export class ComputationRegistry {
     }
 
     while (this.hasPending()) {
-      for (const c of this.pending.keepTaking()) {
-        // TODO use maybeRun... but how?
-        c.run();
-      }
-
+      this.wake();
       await this.running.peek()?.run();
     }
 
@@ -231,5 +265,51 @@ export class ComputationRegistry {
     }
 
     return errors;
+  }
+
+  private async firstRun<T>(exec: SimpleComputationExec<T>) {
+    const desc = newSimpleComputation({ exec, root: true });
+    const computation = this.make(desc);
+    const result = await computation.run();
+    return { computation, result };
+  }
+
+  private cleanupRun(computation: BasicComputation<undefined, any>) {
+    computation.unroot();
+    computation.destroy();
+    let count;
+    do {
+      count = this.computationsCount();
+      for (const c of Array.from(this.map.values())) {
+        c.maybeDestroy();
+      }
+    } while (this.computationsCount() < count);
+  }
+
+  static async singleRun<T>(
+    exec: SimpleComputationExec<T>
+  ): Promise<Result<T>> {
+    const registry = new ComputationRegistry({ inSingleRun: true });
+    const { computation, result } = await registry.firstRun(exec);
+    registry.cleanupRun(computation);
+    if (registry.computationsCount() > 0) {
+      throw new Error("Cleanup failed...");
+    }
+    return result;
+  }
+
+  static run<T>(exec: SimpleComputationExec<T>) {
+    const registry = new ComputationRegistry({ inSingleRun: false });
+    const desc = newSimpleComputation({ exec, root: true });
+    const computation = registry.make(desc);
+    registry.wake();
+
+    process.once("SIGINT", () => {
+      console.log("Clean up...");
+      registry.cleanupRun(computation);
+      if (registry.computationsCount() > 0) {
+        throw new Error("Cleanup failed...");
+      }
+    });
   }
 }

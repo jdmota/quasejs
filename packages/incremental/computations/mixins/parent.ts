@@ -20,7 +20,7 @@ export class ParentComputationMixin {
       child.childMixin.parents.add(this.source);
       child.onInEdgeAddition(this.source);
       // Without this, there might be no progress
-      child.maybeRun();
+      this.source.registry.wake();
     }
   }
 

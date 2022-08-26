@@ -5,12 +5,12 @@ import { BasicComputationDescription } from "./basic";
 import { RawComputation } from "./raw";
 import { SubscribableComputation } from "./mixins/subscribable";
 
-type SimpleComputationExec = (
+export type SimpleComputationExec<T> = (
   ctx: SimpleComputationContext
-) => Promise<Result<undefined>>;
+) => Promise<Result<T>>;
 
-type SimpleComputationConfig = {
-  readonly exec: SimpleComputationExec;
+type SimpleComputationConfig<T> = {
+  readonly exec: SimpleComputationExec<T>;
   readonly root?: boolean;
 };
 
@@ -23,7 +23,7 @@ type SimpleComputationContext = {
   ) => Promise<Result<T>>;
 };
 
-const undefinedValue: ValueDefinition<undefined> = {
+const anyValue: ValueDefinition<any> = {
   hash(a) {
     return 0;
   },
@@ -32,12 +32,12 @@ const undefinedValue: ValueDefinition<undefined> = {
   },
 };
 
-export function newSimpleComputation(config: SimpleComputationConfig) {
-  return new BasicComputationDescription(
+export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {
+  return new BasicComputationDescription<undefined, T>(
     {
       exec: config.exec,
-      requestDef: undefinedValue,
-      responseDef: undefinedValue,
+      requestDef: anyValue,
+      responseDef: anyValue,
       root: config.root,
     },
     undefined
