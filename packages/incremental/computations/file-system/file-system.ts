@@ -158,6 +158,8 @@ export class FileSystem {
     return info;
   }
 
+  // TODO use better watcher that does not fail on non-existance files
+
   _sub(desc: FileComputationDescription, listener: WatchListener<string>) {
     const info = this.getInfo(desc.path);
     if (!info.watcher) {

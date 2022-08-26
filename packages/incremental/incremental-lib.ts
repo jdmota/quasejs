@@ -34,6 +34,7 @@ import {
 } from "./computations/simple";
 import { Result } from "./utils/result";
 import { BasicComputation } from "./computations/basic";
+import { Scheduler } from "./utils/schedule";
 
 type JobPoolOptions<Req, Res> = {
   readonly exec: (req: Req) => Promise<Res>;
@@ -177,7 +178,7 @@ export class ComputationRegistry {
   private readonly errored: SpecialQueue<AnyRawComputation>;
   private interrupted: boolean;
 
-  constructor(opts: ComputationRegistryOpts) {
+  private constructor(opts: ComputationRegistryOpts) {
     this.opts = opts;
     this.map = new HashMap({
       equal: (a, b) => a.equal(b),
@@ -225,27 +226,28 @@ export class ComputationRegistry {
     );
   }
 
-  private timeoutId: NodeJS.Timeout | null = null;
+  private scheduler = new Scheduler(() => this.wake(), 500);
 
+  // TODO time better the wakes...
   scheduleWake() {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-    }
-    this.timeoutId = setTimeout(() => {
-      this.timeoutId = null;
-      this.wake();
-    }, 1000);
+    this.scheduler.schedule();
   }
 
+  // TODO what about computations that errored? when to time their invalidation?
   wake() {
-    for (const c of this.pending.keepTaking()) {
+    // Since invalidations of a computation:
+    // - do not immediately invalidate the subscribers and
+    // - disconnect it from dependencies
+    // and since there is memoing,
+    // we actually do not need to start these in topological order
+    for (const c of Array.from(this.pending.iterateAll())) {
       c.maybeRun();
     }
   }
 
-  // TODO topological order
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations
+  // TODO fix all of this...
   async run(): Promise<unknown[]> {
     const errors: unknown[] = [];
 

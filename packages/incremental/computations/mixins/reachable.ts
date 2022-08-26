@@ -77,7 +77,6 @@ export class ReachableComputationMixin {
     node.delayedRemovedOutNodes.inc(this);
   }
 
-  // TODO when marking as reachable, use breath first to only leave the edges that lead to shortest paths activated
   private markReachable(from: ReachableComputationMixin) {
     if (this.isReachable()) {
       // If this node is already reachable,
@@ -91,6 +90,7 @@ export class ReachableComputationMixin {
     }
   }
 
+  // TODO delay this? like, batch edge removals?
   finishOrDeleteRoutine() {
     const queue = new LinkedList<ReachableComputationMixin>();
     for (const [outNode, count] of this.delayedRemovedOutNodes.entries()) {
@@ -120,13 +120,6 @@ export class ReachableComputationMixin {
       node.checkReachability(queue, id);
     }
   }
-
-  // TODO another issue is that we should be able to batch edge removals...
-  // TODO use strong connected components?
-  // IF the removed edge was inside the component, see if we need to split the component.
-  // AND do nothing else?????
-  // IF the removed edge goes from one component to another, we just need to check the parent components to find one that is reachable, in other words, we ignore all the nodes in the same component (the ones that form a cycle)
-  // TODO the idea is "simple": ignore the in edges that are also reached by the relevant node
 
   private checkReachability(
     queue: LinkedList<ReachableComputationMixin>,
@@ -188,3 +181,13 @@ export class ReachableComputationMixinRoot extends ReachableComputationMixin {
     return true;
   }
 }
+
+// One alternative solution would be to use strong connected components.
+// If the removed edge were inside a component, split the component.
+// All nodes in the previous component should still be reachable from the root.
+// If the removed edge goes from one component to another,
+// we just need to check if we have a reachable parent component,
+// because the cycles only exist inside the components.
+// The summary is that we should ignore the edges that lead to itself (i.e. a cycle).
+// But keeping track of the strong components, or even just the cyles,
+// is probably more complicated than what we have here.
