@@ -2,7 +2,6 @@ import {
   DependentComputation,
   DependentComputationMixin,
 } from "../mixins/dependent";
-import { ParentComputation, ParentComputationMixin } from "../mixins/parent";
 import {
   RawComputation,
   State,
@@ -11,10 +10,6 @@ import {
   StateNotCreating,
   AnyRawComputation,
 } from "../raw";
-import {
-  ReachableComputation,
-  ReachableComputationMixinRoot,
-} from "../mixins/reachable";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
@@ -30,19 +25,11 @@ import {
   HashMap,
 } from "../../utils/hash-map";
 import { Result, resultEqual, ok } from "../../utils/result";
+import { ComputationJobContext, ComputationJobDescription } from "./job";
 import {
-  ComputationJobInPoolContext,
-  ComputationJobInPoolDescription,
-} from "./job";
-
-type ComputationMapStartContext<Req> = {
-  readonly get: <T>(
-    dep: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<Result<T>>;
-  readonly compute: (req: Req) => void;
-};
+  ComputationEntryJobContext,
+  ComputationEntryJobDescription,
+} from "./entry-job";
 
 type ComputationMapContext<Req> = {
   readonly active: () => void;
@@ -51,17 +38,16 @@ type ComputationMapContext<Req> = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<Result<T>>;
-  readonly compute: (dep: Req) => void;
 };
 
 type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
 
 export type ComputationPoolConfig<Req, Res> = {
   readonly startExec: ComputationExec<
-    ComputationMapStartContext<Req>,
+    ComputationEntryJobContext<Req>,
     undefined
   >;
-  readonly exec: ComputationExec<ComputationJobInPoolContext<Req>, Res>;
+  readonly exec: ComputationExec<ComputationJobContext<Req>, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
 };
@@ -107,18 +93,15 @@ export class ComputationPool<Req, Res>
   >
   implements
     DependentComputation,
-    SubscribableComputation<ReadonlyHandlerHashMap<Req, Result<Res>>>,
-    ParentComputation,
-    ReachableComputation
+    SubscribableComputation<ReadonlyHandlerHashMap<Req, Result<Res>>>
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<
     ReadonlyHandlerHashMap<Req, Result<Res>>
   >;
-  public readonly parentMixin: ParentComputationMixin;
-  public readonly reachableMixin: ReachableComputationMixinRoot;
   //
   public readonly config: ComputationPoolConfig<Req, Res>;
+  private readonly entryDescription: ComputationEntryJobDescription<Req, Res>;
   private readonly data: {
     readonly reachable: {
       results: HashMap<Req, Result<Res>>;
@@ -141,9 +124,8 @@ export class ComputationPool<Req, Res>
     super(registry, description, false);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
-    this.parentMixin = new ParentComputationMixin(this);
-    this.reachableMixin = new ReachableComputationMixinRoot(this);
     this.config = config;
+    this.entryDescription = new ComputationEntryJobDescription(this);
     this.data = {
       reachable: {
         results: new HashMap<Req, Result<Res>>(config.requestDef),
@@ -163,13 +145,8 @@ export class ComputationPool<Req, Res>
   protected async exec(
     ctx: ComputationMapContext<Req>
   ): Promise<Result<ReadonlyHandlerHashMap<Req, Result<Res>>>> {
-    const { startExec } = this.config;
-
     // Wait for the start computation to finish
-    const startResult = await startExec({
-      get: ctx.get,
-      compute: ctx.compute,
-    });
+    const startResult = await ctx.get(this.entryDescription);
 
     if (!startResult.ok) {
       return startResult;
@@ -195,7 +172,6 @@ export class ComputationPool<Req, Res>
     return {
       active: () => this.active(runId),
       get: dep => this.dependentMixin.getDep(dep, runId),
-      compute: req => this.parentMixin.compute(this.make(req), runId),
     };
   }
 
@@ -207,23 +183,17 @@ export class ComputationPool<Req, Res>
     result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>
   ): void {
     this.subscribableMixin.finishRoutine(result);
-    this.reachableMixin.finishOrDeleteRoutine();
   }
 
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
-    this.parentMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
-    this.parentMixin.deleteRoutine();
-    this.reachableMixin.finishOrDeleteRoutine();
   }
-
-  onReachabilityChange(from: boolean, to: boolean) {}
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
     // Upon invalidation, undo the effects
@@ -243,9 +213,7 @@ export class ComputationPool<Req, Res>
   onNewResult(result: Result<ReadonlyHandlerHashMap<Req, Result<Res>>>): void {}
 
   make(request: Req) {
-    return this.registry.make(
-      new ComputationJobInPoolDescription(request, this)
-    );
+    return this.registry.make(new ComputationJobDescription(request, this));
   }
 
   private isDone() {
@@ -320,17 +288,6 @@ export class ComputationPool<Req, Res>
       this.notifier.done(null);
     }
   }
-
-  /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.subscribableMixin.inNodesRoutine();
-  }
-
-  protected outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return joinIterators(
-      this.dependentMixin.outNodesRoutine(),
-      this.parentMixin.outNodesRoutine()
-    );
-  }*/
 
   // TODO map and filter operations
 }

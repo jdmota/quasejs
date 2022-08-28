@@ -23,9 +23,10 @@ import {
   ReachableComputation,
   ReachableComputationMixin,
 } from "../mixins/reachable";
+import { ComputationEntryJob } from "./entry-job";
 
-export class ComputationJobInPoolDescription<Req, Res>
-  implements ComputationDescription<ComputationJobInPool<Req, Res>>
+export class ComputationJobDescription<Req, Res>
+  implements ComputationDescription<ComputationJob<Req, Res>>
 {
   private readonly request: Req;
   private readonly source: ComputationPool<Req, Res>;
@@ -35,13 +36,13 @@ export class ComputationJobInPoolDescription<Req, Res>
     this.source = source;
   }
 
-  create(registry: ComputationRegistry): ComputationJobInPool<Req, Res> {
-    return new ComputationJobInPool(registry, this, this.request, this.source);
+  create(registry: ComputationRegistry): ComputationJob<Req, Res> {
+    return new ComputationJob(registry, this, this.request, this.source);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
-      other instanceof ComputationJobInPoolDescription &&
+      other instanceof ComputationJobDescription &&
       this.source === other.source &&
       this.source.config.requestDef.equal(this.request, other.request)
     );
@@ -52,7 +53,7 @@ export class ComputationJobInPoolDescription<Req, Res>
   }
 }
 
-export type ComputationJobInPoolContext<Req> = {
+export type ComputationJobContext<Req> = {
   readonly get: <T>(
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
@@ -62,8 +63,8 @@ export type ComputationJobInPoolContext<Req> = {
   readonly request: Req;
 };
 
-class ComputationJobInPool<Req, Res>
-  extends RawComputation<ComputationJobInPoolContext<Req>, Res>
+class ComputationJob<Req, Res>
+  extends RawComputation<ComputationJobContext<Req>, Res>
   implements
     DependentComputation,
     ParentComputation,
@@ -93,11 +94,11 @@ class ComputationJobInPool<Req, Res>
     this.mark(State.PENDING);
   }
 
-  protected exec(ctx: ComputationJobInPoolContext<Req>): Promise<Result<Res>> {
+  protected exec(ctx: ComputationJobContext<Req>): Promise<Result<Res>> {
     return this.source.config.exec(ctx);
   }
 
-  protected makeContext(runId: RunId): ComputationJobInPoolContext<Req> {
+  protected makeContext(runId: RunId): ComputationJobContext<Req> {
     return {
       get: dep => this.dependentMixin.getDep(dep, runId),
       compute: req => this.parentMixin.compute(this.source.make(req), runId),
@@ -106,7 +107,7 @@ class ComputationJobInPool<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return /*this.childMixin.isOrphan() || */ !this.reachableMixin.isReachable();
+    return !this.reachableMixin.isReachable();
   }
 
   protected finishRoutine(result: Result<Res>): void {
@@ -131,19 +132,13 @@ class ComputationJobInPool<Req, Res>
   }
 
   override onInEdgeAddition(node: AnyRawComputation): void {
-    if (
-      node instanceof ComputationJobInPool ||
-      node instanceof ComputationPool
-    ) {
+    if (node instanceof ComputationJob || node instanceof ComputationEntryJob) {
       this.reachableMixin.onInEdgeAdditionRoutine(node.reachableMixin);
     }
   }
 
   override onInEdgeRemoval(node: AnyRawComputation): void {
-    if (
-      node instanceof ComputationJobInPool ||
-      node instanceof ComputationPool
-    ) {
+    if (node instanceof ComputationJob || node instanceof ComputationEntryJob) {
       this.reachableMixin.onInEdgeRemovalRoutine(node.reachableMixin);
     }
   }
@@ -160,15 +155,4 @@ class ComputationJobInPool<Req, Res>
       to
     );
   }
-
-  /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.childMixin.inNodesRoutine();
-  }
-
-  protected outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return joinIterators(
-      this.dependentMixin.outNodesRoutine(),
-      this.parentMixin.outNodesRoutine()
-    );
-  }*/
 }
