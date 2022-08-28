@@ -21,10 +21,12 @@ export class DependentComputationMixin {
   }
 
   private subscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
+    dep.inv();
     if (setAdd(this.dependencies, dep)) {
       dep.subscribableMixin.subscribers.add(this.source);
       dep.onInEdgeAddition(this.source);
     }
+    return dep;
   }
 
   private unsubscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
@@ -41,11 +43,8 @@ export class DependentComputationMixin {
     >,
     runId: RunId
   ): Promise<Result<T>> {
-    const dep = this.source.registry.make(description);
-    dep.inv();
     this.source.active(runId);
-    this.subscribe(dep);
-    return dep.run();
+    return this.subscribe(this.source.registry.make(description)).run();
   }
 
   private disconnect() {

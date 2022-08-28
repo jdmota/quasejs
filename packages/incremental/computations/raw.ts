@@ -139,6 +139,7 @@ export abstract class RawComputation<Ctx, Res> {
 
   private finish(result: Result<Res>, runId: RunId): Result<Res> {
     if (this.runId === runId) {
+      this.runId = null;
       this.result = result;
       this.finishRoutine(result);
       this.mark(result.ok ? State.DONE : State.ERRORED);
