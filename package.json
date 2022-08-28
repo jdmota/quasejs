@@ -58,6 +58,7 @@
     "@babel/preset-env": "^7.18.10",
     "@babel/preset-typescript": "^7.18.6",
     "@babel/register": "^7.18.9",
+    "@parcel/watcher": "^2.0.5",
     "@types/babel__code-frame": "^7.0.2",
     "@types/babel__core": "^7.1.12",
     "@types/babel__generator": "^7.6.2",
@@ -79,6 +80,7 @@
     "babel-eslint": "^10.1.0",
     "babel-helper-evaluate-path": "^0.5.0",
     "babel-jest": "^26.6.3",
+    "chokidar": "3.5.3",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-import-resolver-node": "^0.3.4",
@@ -96,5 +98,8 @@
     "type-fest": "^2.18.0",
     "typescript": "^4.7.4"
   },
-  "packageManager": "yarn@3.2.2"
+  "packageManager": "yarn@3.2.2",
+  "resolutions": {
+    "chokidar@3.5.3": "patch:chokidar@npm:3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch"
+  }
 }

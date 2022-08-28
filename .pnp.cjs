@@ -107,6 +107,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@babel/preset-env", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.10"],\
             ["@babel/preset-typescript", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.6"],\
             ["@babel/register", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.9"],\
+            ["@parcel/watcher", "npm:2.0.5"],\
             ["@types/babel__code-frame", "npm:7.0.2"],\
             ["@types/babel__core", "npm:7.1.12"],\
             ["@types/babel__generator", "npm:7.6.2"],\
@@ -128,6 +129,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["babel-eslint", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:10.1.0"],\
             ["babel-helper-evaluate-path", "npm:0.5.0"],\
             ["babel-jest", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:26.6.3"],\
+            ["chokidar", "patch:chokidar@npm%3A3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch::version=3.5.3&hash=c98167&locator=quase%40workspace%3A."],\
             ["eslint", "npm:7.14.0"],\
             ["eslint-config-prettier", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:6.15.0"],\
             ["eslint-import-resolver-node", "npm:0.3.4"],\
@@ -4764,6 +4766,18 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["@parcel/watcher", [\
+        ["npm:2.0.5", {\
+          "packageLocation": "./.yarn/unplugged/@parcel-watcher-npm-2.0.5-bda35fb0f8/node_modules/@parcel/watcher/",\
+          "packageDependencies": [\
+            ["@parcel/watcher", "npm:2.0.5"],\
+            ["node-addon-api", "npm:3.2.1"],\
+            ["node-gyp", "npm:5.0.7"],\
+            ["node-gyp-build", "npm:4.5.0"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["@quase/builder", [\
         ["workspace:packages/builder", {\
           "packageLocation": "./packages/builder/",\
@@ -6052,6 +6066,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/anymatch-npm-3.1.1-7dcfa6178a-8.zip/node_modules/anymatch/",\
           "packageDependencies": [\
             ["anymatch", "npm:3.1.1"],\
+            ["normalize-path", "npm:3.0.0"],\
+            ["picomatch", "npm:2.2.2"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:3.1.2", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/anymatch-npm-3.1.2-1d5471acfa-8.zip/node_modules/anymatch/",\
+          "packageDependencies": [\
+            ["anymatch", "npm:3.1.2"],\
             ["normalize-path", "npm:3.0.0"],\
             ["picomatch", "npm:2.2.2"]\
           ],\
@@ -7355,6 +7378,21 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["is-glob", "npm:4.0.1"],\
             ["normalize-path", "npm:3.0.0"],\
             ["readdirp", "npm:3.5.0"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["patch:chokidar@npm%3A3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch::version=3.5.3&hash=c98167&locator=quase%40workspace%3A.", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/chokidar-patch-8e19442f06-8.zip/node_modules/chokidar/",\
+          "packageDependencies": [\
+            ["chokidar", "patch:chokidar@npm%3A3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch::version=3.5.3&hash=c98167&locator=quase%40workspace%3A."],\
+            ["anymatch", "npm:3.1.2"],\
+            ["braces", "npm:3.0.2"],\
+            ["fsevents", "patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"],\
+            ["glob-parent", "npm:5.1.2"],\
+            ["is-binary-path", "npm:2.1.0"],\
+            ["is-glob", "npm:4.0.1"],\
+            ["normalize-path", "npm:3.0.0"],\
+            ["readdirp", "npm:3.6.0"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -9380,6 +9418,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["node-gyp", "npm:5.0.7"]\
           ],\
           "linkType": "HARD"\
+        }],\
+        ["patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7", {\
+          "packageLocation": "./.yarn/unplugged/fsevents-patch-3340e2eb10/node_modules/fsevents/",\
+          "packageDependencies": [\
+            ["fsevents", "patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"],\
+            ["node-gyp", "npm:5.0.7"]\
+          ],\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["fswatcher-child", [\
@@ -9575,6 +9621,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/glob-parent-npm-5.1.0-8e781a1aff-8.zip/node_modules/glob-parent/",\
           "packageDependencies": [\
             ["glob-parent", "npm:5.1.0"],\
+            ["is-glob", "npm:4.0.1"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:5.1.2", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/glob-parent-npm-5.1.2-021ab32634-8.zip/node_modules/glob-parent/",\
+          "packageDependencies": [\
+            ["glob-parent", "npm:5.1.2"],\
             ["is-glob", "npm:4.0.1"]\
           ],\
           "linkType": "HARD"\
@@ -12424,6 +12478,16 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["node-addon-api", [\
+        ["npm:3.2.1", {\
+          "packageLocation": "./.yarn/unplugged/node-addon-api-npm-3.2.1-a29528f81d/node_modules/node-addon-api/",\
+          "packageDependencies": [\
+            ["node-addon-api", "npm:3.2.1"],\
+            ["node-gyp", "npm:5.0.7"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["node-environment-flags", [\
         ["npm:1.0.6", {\
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/node-environment-flags-npm-1.0.6-019b553a56-8.zip/node_modules/node-environment-flags/",\
@@ -12451,6 +12515,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["semver", "npm:5.7.1"],\
             ["tar", "npm:4.4.13"],\
             ["which", "npm:1.3.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["node-gyp-build", [\
+        ["npm:4.5.0", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/node-gyp-build-npm-4.5.0-2538da6152-8.zip/node_modules/node-gyp-build/",\
+          "packageDependencies": [\
+            ["node-gyp-build", "npm:4.5.0"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -13591,6 +13664,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@babel/preset-env", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.10"],\
             ["@babel/preset-typescript", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.6"],\
             ["@babel/register", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:7.18.9"],\
+            ["@parcel/watcher", "npm:2.0.5"],\
             ["@types/babel__code-frame", "npm:7.0.2"],\
             ["@types/babel__core", "npm:7.1.12"],\
             ["@types/babel__generator", "npm:7.6.2"],\
@@ -13612,6 +13686,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["babel-eslint", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:10.1.0"],\
             ["babel-helper-evaluate-path", "npm:0.5.0"],\
             ["babel-jest", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:26.6.3"],\
+            ["chokidar", "patch:chokidar@npm%3A3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch::version=3.5.3&hash=c98167&locator=quase%40workspace%3A."],\
             ["eslint", "npm:7.14.0"],\
             ["eslint-config-prettier", "virtual:4a9853669021a7b00189bc1580010b9fb0cf5886c8e8403656c29a32e0358b74f148a82f4163df3b8931b1c718ed8b4cf5e7dce7691183ad854d49d556b35f7b#npm:6.15.0"],\
             ["eslint-import-resolver-node", "npm:0.3.4"],\
@@ -13783,6 +13858,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/readdirp-npm-3.5.0-a1b1568d32-8.zip/node_modules/readdirp/",\
           "packageDependencies": [\
             ["readdirp", "npm:3.5.0"],\
+            ["picomatch", "npm:2.2.2"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:3.6.0", {\
+          "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/readdirp-npm-3.6.0-f950cc74ab-8.zip/node_modules/readdirp/",\
+          "packageDependencies": [\
+            ["readdirp", "npm:3.6.0"],\
             ["picomatch", "npm:2.2.2"]\
           ],\
           "linkType": "HARD"\

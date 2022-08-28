@@ -1,0 +1,70 @@
+diff --git a/index.js b/index.js
+index ed4b6d5b6cbabee76c879c6eedcc7bf6ba46d38d..a4073149eed244316f93d326849de9cfdf19e9fc 100644
+--- a/index.js
++++ b/index.js
+@@ -392,7 +392,7 @@ constructor(_opts) {
+     this._nodeFsHandler = new NodeFsHandler(this);
+   }
+ 
+-  // You’re frozen when your heart’s not open.
++  // You're frozen when your heart's not open.
+   Object.freeze(opts);
+ }
+ 
+@@ -406,6 +406,11 @@ constructor(_opts) {
+  * @returns {FSWatcher} for chaining
+  */
+ add(paths_, _origAdd, _internal) {
++  this.addPromise(paths_, _origAdd, _internal);
++  return this;
++}
++
++addPromise(paths_, _origAdd, _internal) {
+   const {cwd, disableGlobbing} = this.options;
+   this.closed = false;
+   let paths = unifyPaths(paths_);
+@@ -442,11 +447,13 @@ add(paths_, _origAdd, _internal) {
+   if (this.options.useFsEvents && this._fsEventsHandler) {
+     if (!this._readyCount) this._readyCount = paths.length;
+     if (this.options.persistent) this._readyCount *= 2;
+-    paths.forEach((path) => this._fsEventsHandler._addToFsEvents(path));
++    return Promise.all(
++      paths.map((path) => this._fsEventsHandler._addToFsEvents(path))
++    ).then(() => this);
+   } else {
+     if (!this._readyCount) this._readyCount = 0;
+     this._readyCount += paths.length;
+-    Promise.all(
++    return Promise.all(
+       paths.map(async path => {
+         const res = await this._nodeFsHandler._addToNodeFs(path, !_internal, 0, 0, _origAdd);
+         if (res) this._emitReady();
+@@ -457,10 +464,8 @@ add(paths_, _origAdd, _internal) {
+       results.filter(item => item).forEach(item => {
+         this.add(sysPath.dirname(item), sysPath.basename(_origAdd || item));
+       });
+-    });
++    }).then(() => this);
+   }
+-
+-  return this;
+ }
+ 
+ /**
+diff --git a/types/index.d.ts b/types/index.d.ts
+index aab8e337accaf54e81b171ca3b7674e337d4794b..3a3ee28d5d9cddc4cbbdb69bf4b528ffa57753a9 100644
+--- a/types/index.d.ts
++++ b/types/index.d.ts
+@@ -20,6 +20,12 @@ export class FSWatcher extends EventEmitter implements fs.FSWatcher {
+    */
+   add(paths: string | ReadonlyArray<string>): this;
+ 
++  /**
++   * Add files, directories, or glob patterns for tracking. Takes an array of strings or just one
++   * string.
++   */
++  addPromise(paths: string | ReadonlyArray<string>): Promise<this>;
++
+   /**
+    * Stop watching files, directories, or glob patterns. Takes an array of strings or just one
+    * string.

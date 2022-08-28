@@ -1,4 +1,6 @@
-import { FSWatcher, watch, WatchListener } from "fs";
+// import { default as parcelWatcher } from "@parcel/watcher";
+import chokidarWatcher from "chokidar";
+import { dirname } from "path";
 import {
   ComputationDescription,
   ComputationRegistry,
@@ -19,8 +21,8 @@ import {
 } from "../raw";
 
 export enum FileChange {
-  ADD_OR_REMOVE = 0,
-  CHANGE = 1,
+  ADD_OR_REMOVE = "ADD_OR_REMOVE",
+  CHANGE = "CHANGE",
 }
 
 export class FileComputationDescription
@@ -29,11 +31,13 @@ export class FileComputationDescription
   readonly fs: FileSystem;
   readonly path: string;
   readonly type: FileChange;
+  readonly eventName: string;
 
   constructor(fs: FileSystem, path: string, type: FileChange) {
     this.fs = fs;
     this.path = path;
     this.type = type;
+    this.eventName = `${type}@${path}`;
   }
 
   create(registry: ComputationRegistry): FileComputation {
@@ -52,7 +56,7 @@ export class FileComputationDescription
   }
 
   hash() {
-    return this.path.length + 31 * this.type;
+    return this.path.length + 31 * this.type.length;
   }
 }
 
@@ -76,6 +80,9 @@ class FileComputation
   protected async exec(
     ctx: FileComputationDescription
   ): Promise<Result<undefined>> {
+    if (this.registry.allowInvalidations()) {
+      await this.desc.fs._sub(this);
+    }
     return ok(undefined);
   }
 
@@ -96,6 +103,7 @@ class FileComputation
   }
 
   protected deleteRoutine(): void {
+    this.desc.fs._unsub(this);
     this.subscribableMixin.deleteRoutine();
   }
 
@@ -106,94 +114,149 @@ class FileComputation
   }
 
   onNewResult(result: Result<undefined>): void {}
+}
 
-  private subs: number = 0;
-  private readonly listener: WatchListener<string> = (event, filename) => {
-    this.invalidate();
+class FileInfo {
+  private ready: Promise<any> | null;
+  readonly path: string;
+  readonly parentPath: string;
+  readonly events: {
+    [FileChange.ADD_OR_REMOVE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
+    [FileChange.CHANGE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
   };
 
-  override onInEdgeAddition(node: AnyRawComputation): void {
-    this.subs++;
-    if (this.subs === 1 && this.registry.allowInvalidations()) {
-      this.desc.fs._sub(this.desc, this.listener);
+  constructor(fs: FileSystem, path: string) {
+    this.ready = null;
+    this.path = path;
+    this.parentPath = makeAbsolute(dirname(path));
+    this.events = {
+      ADD_OR_REMOVE: {
+        desc: new FileComputationDescription(
+          fs,
+          path,
+          FileChange.ADD_OR_REMOVE
+        ),
+        computations: new Set(),
+      },
+      CHANGE: {
+        desc: new FileComputationDescription(fs, path, FileChange.CHANGE),
+        computations: new Set(),
+      },
+    };
+  }
+
+  sub(
+    event: FileChange,
+    comp: FileComputation,
+    watcher: chokidarWatcher.FSWatcher
+  ) {
+    this.events[event].computations.add(comp);
+    if (!this.ready) {
+      this.ready = watcher.addPromise(this.path);
+    }
+    return this.ready;
+  }
+
+  unsub(
+    event: FileChange,
+    comp: FileComputation,
+    watcher: chokidarWatcher.FSWatcher | null
+  ) {
+    this.events[event].computations.delete(comp);
+    if (this.subsCount() === 0) {
+      this.ready = null;
+      if (watcher) {
+        watcher.unwatch(this.path);
+      }
     }
   }
 
-  override onInEdgeRemoval(node: AnyRawComputation): void {
-    this.subs--;
-    if (this.subs === 0 && this.registry.allowInvalidations()) {
-      this.desc.fs._unsub(this.desc, this.listener);
-    }
+  subsCount() {
+    return (
+      this.events.ADD_OR_REMOVE.computations.size +
+      this.events.CHANGE.computations.size
+    );
   }
 }
 
-type FileInfo = {
-  readonly path: string;
-  addOrRemove: FileComputationDescription | null;
-  change: FileComputationDescription | null;
-  time: number;
-  watcher: FSWatcher | null;
-};
+const PARCEL_EVENT_TO_FILE_CHANGE = {
+  create: FileChange.ADD_OR_REMOVE,
+  delete: FileChange.ADD_OR_REMOVE,
+  update: FileChange.CHANGE,
+} as const;
+
+const CHOKIDAR_EVENT_TO_FILE_CHANGE = {
+  add: FileChange.ADD_OR_REMOVE,
+  addDir: FileChange.ADD_OR_REMOVE,
+  change: FileChange.CHANGE,
+  unlink: FileChange.ADD_OR_REMOVE,
+  unlinkDir: FileChange.ADD_OR_REMOVE,
+} as const;
 
 export class FileSystem {
+  // File infos
   private readonly files: Map<string, FileInfo>;
+  // Watcher
+  private watcher: chokidarWatcher.FSWatcher | null;
 
   constructor() {
     this.files = new Map();
+    this.watcher = null;
   }
 
-  private getInfo(path: string) {
+  private react(event: FileChange, path: string) {
+    console.log(event, path);
+    const info = this.files.get(makeAbsolute(path));
+    if (info) {
+      for (const c of info.events[event].computations) {
+        c.invalidate();
+      }
+    }
+  }
+
+  private getInfo(path: string): FileInfo {
     let info = this.files.get(path);
     if (info == null) {
-      info = {
-        path,
-        addOrRemove: null,
-        change: null,
-        // TODO need the timestamp?
-        time: Date.now(),
-        watcher: null,
-      };
+      info = new FileInfo(this, path);
       this.files.set(path, info);
     }
     return info;
   }
 
-  // TODO use better watcher that does not fail on non-existance files
-
-  _sub(desc: FileComputationDescription, listener: WatchListener<string>) {
-    const info = this.getInfo(desc.path);
-    if (!info.watcher) {
-      info.watcher = watch(info.path);
-      info.watcher.addListener("error", () => {});
+  private getWatcher() {
+    if (!this.watcher) {
+      const watcher = chokidarWatcher.watch([], {
+        ignoreInitial: true,
+        ignorePermissionErrors: true,
+        ignored: /\.cache|\.git/,
+        disableGlobbing: true,
+      });
+      this.watcher = watcher;
+      watcher.on("all", (event, path) => {
+        this.react(CHOKIDAR_EVENT_TO_FILE_CHANGE[event], path);
+      });
     }
-    info.watcher.addListener("change", listener);
+    return this.watcher;
   }
 
-  _unsub(desc: FileComputationDescription, listener: WatchListener<string>) {
-    const info = this.getInfo(desc.path);
-    if (info.watcher) {
-      info.watcher.removeListener("change", listener);
-      if (info.watcher.listenerCount("change") === 0) {
-        info.watcher.close();
-        info.watcher = null;
-      }
-    }
+  async _sub(computation: FileComputation) {
+    const { path, type } = computation.desc;
+    await this.getInfo(path).sub(type, computation, this.getWatcher());
   }
 
-  get(originalPath: string, type: FileChange) {
-    const path = makeAbsolute(originalPath);
-    const info = this.getInfo(path);
-    if (type === FileChange.ADD_OR_REMOVE) {
-      if (!info.addOrRemove) {
-        info.addOrRemove = new FileComputationDescription(this, path, type);
-      }
-      return info.addOrRemove;
-    } else {
-      if (!info.change) {
-        info.change = new FileComputationDescription(this, path, type);
-      }
-      return info.change;
-    }
+  _unsub(computation: FileComputation) {
+    const { path, type } = computation.desc;
+    this.getInfo(path).unsub(type, computation, this.watcher);
+  }
+
+  get(originalPath: string, type: FileChange): FileComputationDescription {
+    return this.getInfo(makeAbsolute(originalPath)).events[type].desc;
   }
 
   async depend<T>(
