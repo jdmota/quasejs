@@ -1,34 +1,25 @@
 import { LinkedList } from "../../../utils/linked-list";
-import { AnyRawComputation, RawComputation } from "../../raw";
+import { AnyRawComputation, RawComputation, RunId } from "../../raw";
 import { AnyStatefulComputation } from "../../stateful";
 import { ObserverComputation } from "./observer";
 
-export type Events = {
-  readonly [key in string]: unknown;
+export type EventFn<E> = (data: E, initial: boolean) => void;
+
+export type EmitterContext<E> = {
+  readonly emit: (data: E) => void;
 };
 
-export type EventFn<E extends Events> = <K extends keyof E>(
-  event: K,
-  value: E[K],
-  initial: boolean
-) => void;
-
-export interface EmitterComputation<E extends Events> {
+export interface EmitterComputation<E> {
   readonly emitterMixin: EmitterComputationMixin<E>;
 }
 
-type PastEvent<E extends Events, K extends keyof E> = {
-  readonly event: K;
-  readonly value: E[K];
-};
-
-export class EmitterComputationMixin<E extends Events> {
+export class EmitterComputationMixin<E> {
   public readonly source: RawComputation<any, any> & EmitterComputation<E>;
   readonly observers: Map<
     AnyStatefulComputation & ObserverComputation,
     EventFn<E>
   >;
-  readonly history: LinkedList<PastEvent<E, keyof E>>;
+  readonly history: LinkedList<E>;
 
   constructor(source: RawComputation<any, any> & EmitterComputation<E>) {
     this.source = source;
@@ -36,15 +27,19 @@ export class EmitterComputationMixin<E extends Events> {
     this.history = new LinkedList();
   }
 
-  emitRoutine<K extends keyof E>(event: K, value: E[K]) {
-    this.history.addLast({
-      event,
-      value,
-    });
+  makeContextRoutine(runId: RunId): EmitterContext<E> {
+    return {
+      emit: data => this.emit(data, runId),
+    };
+  }
+
+  private emit(data: E, runId: RunId) {
+    this.source.checkActive(runId);
+    this.history.addLast(data);
     // Do not fire observers that were added during this routine
     const observers = Array.from(this.observers.values());
     for (const fn of observers) {
-      fn(event, value, false);
+      fn(data, false);
     }
   }
 
@@ -52,7 +47,7 @@ export class EmitterComputationMixin<E extends Events> {
     const fn = this.observers.get(observer);
     if (fn) {
       for (const item of this.history) {
-        fn(item.event, item.value, true);
+        fn(item, true);
       }
     }
   }

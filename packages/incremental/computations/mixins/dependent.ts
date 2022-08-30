@@ -4,6 +4,14 @@ import { setAdd } from "../../utils/set";
 import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
+export type DependentContext = {
+  readonly get: <T>(
+    description: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) => Promise<Result<T>>;
+};
+
 export interface DependentComputation {
   readonly dependentMixin: DependentComputationMixin;
 }
@@ -18,6 +26,12 @@ export class DependentComputationMixin {
   constructor(source: AnyRawComputation & DependentComputation) {
     this.source = source;
     this.dependencies = new Set();
+  }
+
+  makeContextRoutine(runId: RunId): DependentContext {
+    return {
+      get: dep => this.getDep(dep, runId),
+    };
   }
 
   private subscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
@@ -37,13 +51,13 @@ export class DependentComputationMixin {
     }
   }
 
-  getDep<T>(
+  private getDep<T>(
     description: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >,
     runId: RunId
   ): Promise<Result<T>> {
-    this.source.active(runId);
+    this.source.checkActive(runId);
     return this.subscribe(this.source.registry.make(description)).run();
   }
 

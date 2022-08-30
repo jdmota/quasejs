@@ -15,7 +15,6 @@ type SimpleComputationConfig<T> = {
 };
 
 type SimpleComputationContext = {
-  readonly active: () => void;
   readonly get: <T>(
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>

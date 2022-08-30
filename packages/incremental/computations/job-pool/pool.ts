@@ -32,7 +32,7 @@ import {
 } from "./entry-job";
 
 type ComputationMapContext<Req> = {
-  readonly active: () => void;
+  readonly checkActive: () => void;
   readonly get: <T>(
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
@@ -145,7 +145,7 @@ export class ComputationPool<Req, Res>
   protected async exec(
     ctx: ComputationMapContext<Req>
   ): Promise<Result<ReadonlyHandlerHashMap<Req, Result<Res>>>> {
-    // Wait for the start computation to finish
+    // Wait for the entry computation to finish
     const startResult = await ctx.get(this.entryDescription);
 
     if (!startResult.ok) {
@@ -155,13 +155,13 @@ export class ComputationPool<Req, Res>
     // Wait for all children computations to finish
     while (!this.isDone()) {
       // Ensure this running version is active before doing side-effects
-      ctx.active();
+      ctx.checkActive();
       await this.notifier.wait();
       // In case invalidations occured between notifier.done()
       // and this computation resuming, keep waiting if !isDone()
     }
 
-    ctx.active();
+    ctx.checkActive();
     // Record the last seen version of the results map
     // in the same tick when isDone()
     this.lastSeen = this.data.reachable.results.getSnapshot();
@@ -170,8 +170,8 @@ export class ComputationPool<Req, Res>
 
   protected makeContext(runId: RunId): ComputationMapContext<Req> {
     return {
-      active: () => this.active(runId),
-      get: dep => this.dependentMixin.getDep(dep, runId),
+      checkActive: () => this.checkActive(runId),
+      ...this.dependentMixin.makeContextRoutine(runId),
     };
   }
 

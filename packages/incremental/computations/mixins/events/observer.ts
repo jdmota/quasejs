@@ -2,7 +2,26 @@ import { ComputationDescription } from "../../../incremental-lib";
 import { setAdd } from "../../../utils/set";
 import { AnyRawComputation, RawComputation, RunId } from "../../raw";
 import { AnyStatefulComputation } from "../../stateful";
-import { EmitterComputation, EventFn, Events } from "./emitter";
+import { EmitterComputation, EventFn } from "./emitter";
+
+export type ObserverContext = {
+  readonly addListener: <E>(
+    description: ComputationDescription<
+      RawComputation<any, any> & EmitterComputation<E>
+    >,
+    fn: EventFn<E>
+  ) => void;
+  readonly removeListener: <E>(
+    description: ComputationDescription<
+      RawComputation<any, any> & EmitterComputation<E>
+    >
+  ) => void;
+  readonly askForInitial: <E>(
+    description: ComputationDescription<
+      RawComputation<any, any> & EmitterComputation<E>
+    >
+  ) => void;
+};
 
 export interface ObserverComputation {
   readonly observerMixin: ObserverComputationMixin;
@@ -17,7 +36,15 @@ export class ObserverComputationMixin {
     this.emitters = new Set();
   }
 
-  private subscribe<E extends Events>(
+  makeContextRoutine(runId: RunId): ObserverContext {
+    return {
+      addListener: (desc, fn) => this.addListener(desc, fn, runId),
+      removeListener: desc => this.removeListener(desc, runId),
+      askForInitial: desc => this.askForInitial(desc, runId),
+    };
+  }
+
+  private subscribe<E>(
     dep: AnyRawComputation & EmitterComputation<E>,
     fn: EventFn<E>
   ) {
@@ -36,36 +63,36 @@ export class ObserverComputationMixin {
     }
   }
 
-  addListener<E extends Events>(
+  private addListener<E>(
     description: ComputationDescription<
       RawComputation<any, any> & EmitterComputation<E>
     >,
     fn: EventFn<E>,
     runId: RunId
   ) {
-    this.source.active(runId);
+    this.source.checkActive(runId);
     this.subscribe(this.source.registry.make(description), fn);
     // Ensure progress
     this.source.registry.scheduleWake();
   }
 
-  removeListener<E extends Events>(
+  private removeListener<E>(
     description: ComputationDescription<
       RawComputation<any, any> & EmitterComputation<E>
     >,
     runId: RunId
   ) {
-    this.source.active(runId);
+    this.source.checkActive(runId);
     this.unsubscribe(this.source.registry.make(description));
   }
 
-  emitInitial<E extends Events>(
+  private askForInitial<E>(
     description: ComputationDescription<
       RawComputation<any, any> & EmitterComputation<E>
     >,
     runId: RunId
   ) {
-    this.source.active(runId);
+    this.source.checkActive(runId);
     this.source.registry
       .make(description)
       .emitterMixin.emitInitialFor(this.source);

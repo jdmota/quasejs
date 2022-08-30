@@ -97,8 +97,8 @@ export class ComputationEntryJob<Req, Res>
 
   protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
     return {
-      get: dep => this.dependentMixin.getDep(dep, runId),
       compute: req => this.parentMixin.compute(this.source.make(req), runId),
+      ...this.dependentMixin.makeContextRoutine(runId),
     };
   }
 

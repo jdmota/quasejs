@@ -114,8 +114,12 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  active(runId: RunId) {
-    if (runId !== this.runId) {
+  isActive(runId: RunId) {
+    return runId === this.runId;
+  }
+
+  checkActive(runId: RunId) {
+    if (!this.isActive(runId)) {
       throw new Error("Computation was cancelled");
     }
   }

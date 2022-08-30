@@ -34,7 +34,6 @@ type BasicComputationConfig<Req, Res> = {
 
 type BasicComputationContext<Req> = {
   readonly request: Req;
-  readonly active: () => void;
   readonly get: <T>(
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
@@ -111,8 +110,7 @@ export class BasicComputation<Req, Res>
   protected makeContext(runId: RunId): BasicComputationContext<Req> {
     return {
       request: this.request,
-      active: () => this.active(runId),
-      get: dep => this.dependentMixin.getDep(dep, runId),
+      ...this.dependentMixin.makeContextRoutine(runId),
     };
   }
 

@@ -33,7 +33,7 @@ export class ParentComputationMixin {
 
   compute(child: AnyRawComputation & ChildComputation, runId: RunId) {
     child.inv();
-    this.source.active(runId);
+    this.source.checkActive(runId);
     this.own(child);
   }
 
