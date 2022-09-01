@@ -1,4 +1,3 @@
-import { LinkedList } from "../../../utils/linked-list";
 import { AnyRawComputation, RawComputation, RunId } from "../../raw";
 import { AnyStatefulComputation } from "../../stateful";
 import { ObserverComputation } from "./observer";
@@ -11,6 +10,8 @@ export type EmitterContext<E> = {
 
 export interface EmitterComputation<E> {
   readonly emitterMixin: EmitterComputationMixin<E>;
+
+  getAllPastEvents(): IterableIterator<E>;
 }
 
 export class EmitterComputationMixin<E> {
@@ -19,23 +20,24 @@ export class EmitterComputationMixin<E> {
     AnyStatefulComputation & ObserverComputation,
     EventFn<E>
   >;
-  readonly history: LinkedList<E>;
 
   constructor(source: RawComputation<any, any> & EmitterComputation<E>) {
     this.source = source;
     this.observers = new Map();
-    this.history = new LinkedList();
   }
 
-  makeContextRoutine(runId: RunId): EmitterContext<E> {
+  makeContextRoutine(): EmitterContext<E> {
     return {
-      emit: data => this.emit(data, runId),
+      emit: data => this.emit(data),
     };
   }
 
-  private emit(data: E, runId: RunId) {
-    this.source.checkActive(runId);
-    this.history.addLast(data);
+  // It is not possible for observers to see emitted values from deleted computations
+  // Because we can only delete the computation if we have zero observers
+  // And we cannot add observers to a deleted computation
+  // So it is fine to allow one to emit events even if the computation is not running
+  emit(data: E) {
+    this.source.inv();
     // Do not fire observers that were added during this routine
     const observers = Array.from(this.observers.values());
     for (const fn of observers) {
@@ -46,7 +48,7 @@ export class EmitterComputationMixin<E> {
   emitInitialFor(observer: AnyStatefulComputation & ObserverComputation) {
     const fn = this.observers.get(observer);
     if (fn) {
-      for (const item of this.history) {
+      for (const item of this.source.getAllPastEvents()) {
         fn(item, true);
       }
     }
@@ -58,7 +60,9 @@ export class EmitterComputationMixin<E> {
 
   deleteRoutine(): void {
     if (!this.isOrphan()) {
-      throw new Error("Cannot delete computation with observers");
+      throw new Error(
+        "Invariant violation: Cannot delete computation with observers"
+      );
     }
   }
 

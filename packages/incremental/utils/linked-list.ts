@@ -80,6 +80,11 @@ export class LinkedList<V> {
     return undefined;
   }
 
+  clear() {
+    this.head = null;
+    this.tail = null;
+  }
+
   *[Symbol.iterator]() {
     let node = this.head;
     while (node) {
@@ -106,13 +111,15 @@ export class SpecialQueue<N extends { prev: N | null; next: N | null }> {
 
   private checkNew(node: N) {
     if (node.prev != null || node.next != null) {
-      throw new Error("Node belongs to some linked-list");
+      throw new Error("Invariant violation: Node belongs to some linked-list");
     }
   }
 
   private checkConnected(node: N) {
     if (node.prev == null && node.next == null && this.head !== node) {
-      throw new Error("Node does not belong to any linked-list");
+      throw new Error(
+        "Invariant violation: Node does not belong to any linked-list"
+      );
     }
   }
 

@@ -79,7 +79,9 @@ export class SubscribableComputationMixin<Res> {
 
   deleteRoutine(): void {
     if (!this.isOrphan()) {
-      throw new Error("Cannot delete computation with subscribers");
+      throw new Error(
+        "Invariant violation: Cannot delete computation with subscribers"
+      );
     }
     this.oldResult = null;
     this.result = null;

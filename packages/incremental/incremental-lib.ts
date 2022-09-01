@@ -295,7 +295,7 @@ export class ComputationRegistry {
     const { computation, result } = await registry.firstRun(exec);
     registry.cleanupRun(computation);
     if (registry.computationsCount() > 0) {
-      throw new Error("Cleanup failed...");
+      throw new Error("Invariant violation: Cleanup failed");
     }
     return result;
   }
@@ -310,7 +310,7 @@ export class ComputationRegistry {
       console.log("Clean up...");
       registry.cleanupRun(computation);
       if (registry.computationsCount() > 0) {
-        throw new Error("Cleanup failed...");
+        throw new Error("Invariant violation: Cleanup failed");
       }
     });
   }

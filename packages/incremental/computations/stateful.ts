@@ -23,23 +23,23 @@ import {
   StateNotDeleted,
 } from "./raw";
 
-type StatefulComputationCtx<S, E, R> = {
+type StatefulComputationCtx<S, E> = {
   readonly isActive: () => void;
   readonly checkActive: () => void;
   readonly state: S;
-  readonly deferred: Defer<Result<R>>;
 } & EmitterContext<E> &
   ObserverContext;
 
 export type AnyStatefulComputation = StatefulComputation<any, any, any>;
 
 type StatefulComputationExec<S, E, R> = (
-  ctx: StatefulComputationCtx<S, E, R>
-) => Promise<Result<() => void>>;
+  ctx: StatefulComputationCtx<S, E>
+) => Promise<Result<R>>;
 
 type StatefulComputationConfig<S, E, R> = {
   readonly initialState: () => S;
   readonly exec: StatefulComputationExec<S, E, R>;
+  readonly cleanup: (ctx: StatefulComputationCtx<S, E>) => Promise<void>;
 };
 
 export function newStatefulComputation<S, E, R>(
@@ -65,6 +65,7 @@ export class StatefulComputationDescription<S, E, R>
     return (
       other instanceof StatefulComputationDescription &&
       this.config.exec === other.config.exec &&
+      this.config.cleanup === other.config.cleanup &&
       this.config.initialState === other.config.initialState
     );
   }
@@ -75,14 +76,13 @@ export class StatefulComputationDescription<S, E, R>
 }
 
 export class StatefulComputation<S, E, R>
-  extends RawComputation<StatefulComputationCtx<S, E, R>, R>
+  extends RawComputation<StatefulComputationCtx<S, E>, R>
   implements EmitterComputation<E>, ObserverComputation
 {
   readonly emitterMixin: EmitterComputationMixin<E>;
   readonly observerMixin: ObserverComputationMixin;
 
   private readonly config: StatefulComputationConfig<S, E, R>;
-  private cleanupFn: (() => void) | null;
 
   constructor(
     registry: ComputationRegistry,
@@ -92,58 +92,45 @@ export class StatefulComputation<S, E, R>
     this.emitterMixin = new EmitterComputationMixin(this);
     this.observerMixin = new ObserverComputationMixin(this);
     this.config = description.config;
-    this.cleanupFn = null;
     this.mark(State.PENDING);
   }
 
-  protected async exec(
-    ctx: StatefulComputationCtx<S, E, R>
-  ): Promise<Result<R>> {
-    const result = await this.config.exec(ctx);
-    if (result.ok) {
-      // Store the returned cleanup function (if this computation is still active)
-      ctx.checkActive();
-      this.cleanupFn = result.value;
-      // Return a promise that either never finishes (keeping this runId active)
-      // Or resolves to the value given to ctx.deferred.resolve()
-      return ctx.deferred.promise;
+  protected async exec(ctx: StatefulComputationCtx<S, E>): Promise<Result<R>> {
+    try {
+      // Execute this computation
+      return await this.config.exec(ctx);
+    } finally {
+      // Clean up this run
+      // Even if this computation were to be invalidated in the middle of a run,
+      // this will execute eventually anyway
+      await this.config.cleanup(ctx);
     }
-    // In case of error in the setup, propagate the error immediately
-    return result;
   }
 
-  protected makeContext(runId: RunId): StatefulComputationCtx<S, E, R> {
+  protected makeContext(runId: RunId): StatefulComputationCtx<S, E> {
     const state = this.config.initialState();
-    const deferred = createDefer<Result<R>>();
     return {
       state,
-      deferred,
       isActive: () => this.isActive(runId),
       checkActive: () => this.checkActive(runId),
-      ...this.emitterMixin.makeContextRoutine(runId),
       ...this.observerMixin.makeContextRoutine(runId),
+      ...this.emitterMixin.makeContextRoutine(),
     };
   }
 
-  private cleanup() {
-    const { cleanupFn } = this;
-    if (cleanupFn) {
-      cleanupFn();
-      this.cleanupFn = null;
-    }
+  // TODO work more on the idea of events and stateful computations, and how to cancel stuff or interrupt in the middle
+  // TODO can we emit of observe/unobserve outside of the time frame of a run?
+  getAllPastEvents(): IterableIterator<E> {
+    throw new Error("Method not implemented.");
   }
 
-  protected finishRoutine(result: Result<R>): void {
-    this.cleanup();
-  }
+  protected finishRoutine(result: Result<R>): void {}
 
   protected invalidateRoutine(): void {
-    this.cleanup();
     this.observerMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
-    this.cleanup();
     this.emitterMixin.deleteRoutine();
     this.observerMixin.deleteRoutine();
   }

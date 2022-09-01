@@ -16,6 +16,32 @@ export interface ReadonlyHashMap<K, V> {
   [Symbol.iterator](): IterableIterator<readonly [K, V]>;
 }
 
+export type MapEvent<K, V> =
+  | {
+      readonly type: "added";
+      readonly key: K;
+      readonly value: V;
+      readonly oldValue: undefined;
+    }
+  | {
+      readonly type: "changed";
+      readonly key: K;
+      readonly value: V;
+      readonly oldValue: V;
+    }
+  | {
+      readonly type: "removed";
+      readonly key: K;
+      readonly value: undefined;
+      readonly oldValue: V;
+    };
+
+const DIFF = {
+  added: 1,
+  changed: 0,
+  removed: -1,
+} as const;
+
 const falseFn = () => false;
 
 export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
@@ -40,8 +66,8 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
     return this.snapshot;
   }
 
-  private changed(diff: number) {
-    this.sizeCount += diff;
+  protected changed(event: MapEvent<K, V>) {
+    this.sizeCount += DIFF[event.type];
     if (this.snapshot) {
       this.snapshot.map = null;
       this.snapshot = null;
@@ -71,7 +97,12 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
       return;
     }
 
-    this.changed(-1);
+    this.changed({
+      type: "removed",
+      key: entry.key,
+      value: undefined,
+      oldValue: entry.value,
+    });
     return entry.value;
   }
 
@@ -91,11 +122,24 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value,
       };
       list.addLast(entry);
-      this.changed(1);
+      this.changed({
+        type: "added",
+        key,
+        value,
+        oldValue: undefined,
+      });
     } else {
       const oldValue = entry.value;
+      if (equal(oldValue, value)) {
+        return;
+      }
       entry.value = value;
-      if (!equal(oldValue, value)) this.changed(0);
+      this.changed({
+        type: "changed",
+        key,
+        value,
+        oldValue,
+      });
     }
   }
 
@@ -115,14 +159,14 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
         value: fn(key),
       };
       list.addLast(entry);
-      this.changed(1);
+      this.changed({
+        type: "added",
+        key,
+        value: entry.value,
+        oldValue: undefined,
+      });
     }
     return entry.value;
-  }
-
-  clear() {
-    this.changed(-this.sizeCount);
-    this.map.clear();
   }
 
   *values() {
@@ -171,4 +215,4 @@ class ReadonlySnapshotHashMap<K, V> implements ReadonlyHashMap<K, V> {
   }
 }
 
-export type { ReadonlySnapshotHashMap as ReadonlyHandlerHashMap };
+export type { ReadonlySnapshotHashMap };

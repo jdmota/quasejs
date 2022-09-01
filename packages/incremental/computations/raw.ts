@@ -72,7 +72,7 @@ export abstract class RawComputation<Ctx, Res> {
     if (this.result?.ok === false) {
       return this.result.error;
     }
-    throw new Error("Assertion error: no error");
+    throw new Error("Invariant violation: no error");
   }
 
   protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
@@ -110,7 +110,7 @@ export abstract class RawComputation<Ctx, Res> {
 
   inv() {
     if (this.isDeleting()) {
-      throw new Error("Unexpected deleted computation");
+      throw new Error("Invariant violation: Unexpected deleted computation");
     }
   }
 
@@ -167,7 +167,9 @@ export abstract class RawComputation<Ctx, Res> {
   destroy() {
     this.inv();
     if (!this.isOrphan()) {
-      throw new Error("Some computation depends on this, cannot destroy");
+      throw new Error(
+        "Invariant violation: Some computation depends on this, cannot destroy"
+      );
     }
     this.deleting = true;
     this.runId = null;
@@ -180,7 +182,7 @@ export abstract class RawComputation<Ctx, Res> {
   protected mark(state: StateNotCreating) {
     const prevState = this.state;
     if (prevState === State.DELETED) {
-      throw new Error("Unexpected deleted computation");
+      throw new Error("Invariant violation: Unexpected deleted computation");
     }
     if (prevState !== State.CREATING) {
       this.registry.computations[prevState].delete(this);
