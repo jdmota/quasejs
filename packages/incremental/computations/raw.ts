@@ -147,8 +147,9 @@ export abstract class RawComputation<Ctx, Res> {
       this.result = result;
       this.finishRoutine(result);
       this.mark(result.ok ? State.DONE : State.ERRORED);
+      return result;
     }
-    return result;
+    return error(new Error("Computation was cancelled"));
   }
 
   invalidate() {
@@ -171,6 +172,7 @@ export abstract class RawComputation<Ctx, Res> {
         "Invariant violation: Some computation depends on this, cannot destroy"
       );
     }
+    this.registry.delete(this); // Remove immediately from registry to be safe
     this.deleting = true;
     this.runId = null;
     this.running = null;
@@ -187,9 +189,7 @@ export abstract class RawComputation<Ctx, Res> {
     if (prevState !== State.CREATING) {
       this.registry.computations[prevState].delete(this);
     }
-    if (state === State.DELETED) {
-      this.registry.delete(this);
-    } else {
+    if (state !== State.DELETED) {
       this.registry.computations[state].add(this);
     }
     this.state = state;
