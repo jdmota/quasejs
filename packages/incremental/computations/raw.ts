@@ -154,8 +154,8 @@ export abstract class RawComputation<Ctx, Res> {
 
   invalidate() {
     this.inv();
-    if (!this.registry.allowInvalidations()) {
-      throw new Error("Invalidations are disabled in this registry");
+    if (!this.registry.invalidationsAllowed()) {
+      throw new Error("Invariant violation: Invalidations are disabled");
     }
     this.runId = null;
     this.running = null;

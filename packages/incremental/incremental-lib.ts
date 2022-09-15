@@ -161,11 +161,12 @@ export type ComputationDescription<C extends AnyRawComputation> = {
 };
 
 type ComputationRegistryOpts = {
-  readonly inSingleRun: boolean;
+  readonly canInvalidate: boolean;
 };
 
 export class ComputationRegistry {
-  private readonly opts: ComputationRegistryOpts;
+  private readonly canInvalidate: boolean;
+  private canExternalInvalidate: boolean;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
   readonly computations: readonly [
     SpecialQueue<AnyRawComputation>,
@@ -176,10 +177,10 @@ export class ComputationRegistry {
   private readonly pending: SpecialQueue<AnyRawComputation>;
   private readonly running: SpecialQueue<AnyRawComputation>;
   private readonly errored: SpecialQueue<AnyRawComputation>;
-  private interrupted: boolean;
 
   private constructor(opts: ComputationRegistryOpts) {
-    this.opts = opts;
+    this.canInvalidate = opts.canInvalidate;
+    this.canExternalInvalidate = opts.canInvalidate;
     this.map = new HashMap({
       equal: (a, b) => a.equal(b),
       hash: a => a.hash(),
@@ -193,15 +194,22 @@ export class ComputationRegistry {
     this.pending = this.computations[State.PENDING];
     this.running = this.computations[State.RUNNING];
     this.errored = this.computations[State.ERRORED];
-    this.interrupted = false;
   }
 
-  computationsCount() {
+  private computationsCount() {
     return this.map.size();
   }
 
-  allowInvalidations() {
-    return !this.opts.inSingleRun;
+  invalidationsAllowed() {
+    return this.canInvalidate;
+  }
+
+  externalInvalidationsAllowed() {
+    return this.canExternalInvalidate;
+  }
+
+  private disableExternalInvalidations() {
+    this.canExternalInvalidate = false;
   }
 
   make<C extends AnyRawComputation>(description: ComputationDescription<C>): C {
@@ -212,69 +220,63 @@ export class ComputationRegistry {
     this.map.delete(c.description);
   }
 
-  interrupt() {
-    this.interrupted = true;
-  }
+  private scheduler1 = new Scheduler(() => this.wake(), 100);
+  private scheduler2 = new Scheduler(() => {
+    this.invalidateErrored();
+    this.wake();
+  }, 200);
 
-  wasInterrupted(): boolean {
-    return this.interrupted;
-  }
-
-  private hasPending(): boolean {
-    return (
-      !this.interrupted && !(this.pending.isEmpty() && this.running.isEmpty())
-    );
-  }
-
-  private scheduler = new Scheduler(() => this.wake(), 500);
-
-  // TODO time better the wakes...
   scheduleWake() {
-    this.scheduler.schedule();
+    this.scheduler1.schedule();
   }
 
-  // TODO what about computations that errored? when to time their invalidation?
   wake() {
+    this.scheduler1.cancel();
+
     // Since invalidations of a computation:
     // - do not immediately invalidate the subscribers and
     // - disconnect it from dependencies
     // and since there is memoing,
-    // we actually do not need to start these in topological order
+    // we actually do not need to start these in topological order.
+    // Since some computations might not be removed from the "pending" set,
+    // in case they have no dependents, we use Array.from first.
     for (const c of Array.from(this.pending.iterateAll())) {
       c.maybeRun();
     }
   }
 
-  // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
-  // TODO delete unneeed computations
-  // TODO fix all of this...
-  async run(): Promise<unknown[]> {
-    const errors: unknown[] = [];
+  // External invalidations, like those caused by file changes,
+  // invalidate errored computations (to overcome sporadic errors),
+  // and schedule a new execution
+  externalInvalidate(computation: AnyRawComputation) {
+    if (this.externalInvalidationsAllowed()) {
+      computation.invalidate();
+      this.scheduler2.schedule();
+    }
+  }
 
-    this.interrupted = false;
-
+  private invalidateErrored() {
     for (const c of this.errored.keepTaking()) {
       c.invalidate();
     }
+  }
 
-    while (this.hasPending()) {
+  private async wait() {
+    while (!this.pending.isEmpty() || !this.running.isEmpty()) {
       this.wake();
       await this.running.peek()?.run();
     }
+  }
 
+  // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
+  // TODO delete unneeed computations during execution?
+  // TODO peek errors and return a list of them? create a error pool and report only those?
+  // TODO maybe distinguish sporadic errors from non-sporadic ones?
+  /*
     for (const c of this.errored.iterateAll()) {
       errors.push(c.peekError());
     }
-
-    return errors;
-  }
-
-  private async firstRun<T>(exec: SimpleComputationExec<T>) {
-    const desc = newSimpleComputation({ exec, root: true });
-    const computation = this.make(desc);
-    const result = await computation.run();
-    return { computation, result };
-  }
+  */
 
   private cleanupRun(computation: BasicComputation<undefined, any>) {
     computation.unroot();
@@ -286,32 +288,56 @@ export class ComputationRegistry {
         c.maybeDestroy();
       }
     } while (this.computationsCount() < count);
+
+    if (this.computationsCount() > 0) {
+      throw new Error("Invariant violation: Cleanup failed");
+    }
   }
 
   static async singleRun<T>(
     exec: SimpleComputationExec<T>
   ): Promise<Result<T>> {
-    const registry = new ComputationRegistry({ inSingleRun: true });
-    const { computation, result } = await registry.firstRun(exec);
+    const registry = new ComputationRegistry({ canInvalidate: false });
+    const desc = newSimpleComputation({ exec, root: true });
+    const computation = registry.make(desc);
+    const result = await computation.run();
     registry.cleanupRun(computation);
-    if (registry.computationsCount() > 0) {
-      throw new Error("Invariant violation: Cleanup failed");
-    }
     return result;
   }
 
-  static run<T>(exec: SimpleComputationExec<T>) {
-    const registry = new ComputationRegistry({ inSingleRun: false });
+  static run<T>(exec: SimpleComputationExec<T>): ComputationController<T> {
+    const defer = createDefer<Result<T>>();
+    const registry = new ComputationRegistry({ canInvalidate: true });
     const desc = newSimpleComputation({ exec, root: true });
     const computation = registry.make(desc);
     registry.wake();
 
-    process.once("SIGINT", () => {
-      console.log("Clean up...");
-      registry.cleanupRun(computation);
-      if (registry.computationsCount() > 0) {
-        throw new Error("Invariant violation: Cleanup failed");
-      }
-    });
+    return {
+      promise: defer.promise,
+      interrupt() {
+        registry.cleanupRun(computation);
+        defer.reject(new Error("Interrupted"));
+      },
+      finish() {
+        if (registry.externalInvalidationsAllowed()) {
+          registry.disableExternalInvalidations();
+          registry.invalidateErrored();
+          registry
+            .wait()
+            .then(async () => {
+              const result = await computation.run();
+              registry.cleanupRun(computation);
+              return result;
+            })
+            .then(defer.resolve, defer.reject);
+        }
+      },
+    };
   }
 }
+
+type ComputationController<T> = {
+  readonly promise: Promise<Result<T>>;
+  readonly interrupt: () => void;
+  readonly finish: () => void;
+};

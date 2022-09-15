@@ -77,10 +77,14 @@ class FileComputation
     this.mark(State.PENDING);
   }
 
+  externalInvalidate() {
+    this.registry.externalInvalidate(this);
+  }
+
   protected async exec(
     ctx: FileComputationDescription
   ): Promise<Result<undefined>> {
-    if (this.registry.allowInvalidations()) {
+    if (this.registry.invalidationsAllowed()) {
       await this.desc.fs._sub(this);
     }
     return ok(undefined);
@@ -215,7 +219,7 @@ export class FileSystem {
     const info = this.files.get(makeAbsolute(path));
     if (info) {
       for (const c of info.events[event].computations) {
-        c.invalidate();
+        c.externalInvalidate();
       }
     }
   }

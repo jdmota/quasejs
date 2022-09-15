@@ -69,7 +69,7 @@ const pool = newComputationPool<string, FILE>({
 });
 
 export async function main() {
-  const result = await ComputationRegistry.run(async ctx => {
+  const controller = ComputationRegistry.run(async ctx => {
     console.log("Running main computation...");
     const results = await ctx.get(pool);
 
@@ -83,6 +83,13 @@ export async function main() {
     }
     return results;
   });
+
+  process.once("SIGINT", () => {
+    console.log("SIGINT...");
+    controller.finish();
+  });
+
+  const result = await controller.promise;
   console.log(result);
 }
 
