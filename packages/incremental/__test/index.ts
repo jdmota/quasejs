@@ -42,13 +42,10 @@ const pool = newComputationPool<string, FILE>({
       p => readJSON(p)
     );
 
-    if (json) {
-      for (const dep of json.deps) {
-        ctx.compute(dep);
-      }
-      return ok(json);
+    for (const dep of json.deps) {
+      ctx.compute(dep);
     }
-    return error(new Error(`${ctx.request} not found`));
+    return ok(json);
   },
   requestDef: {
     hash(a) {

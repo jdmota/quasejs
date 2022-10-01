@@ -2,7 +2,6 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../incremental-lib";
-import { createDefer, Defer } from "../utils/deferred";
 import { Result } from "../utils/result";
 import {
   EmitterComputation,
@@ -119,7 +118,8 @@ export class StatefulComputation<S, E, R>
   }
 
   // TODO work more on the idea of events and stateful computations, and how to cancel stuff or interrupt in the middle
-  // TODO can we emit of observe/unobserve outside of the time frame of a run?
+  // TODO can we emit or observe/unobserve outside of the time frame of a run?
+  // TODO allow to consume events with an async generator
   getAllPastEvents(): IterableIterator<E> {
     throw new Error("Method not implemented.");
   }

@@ -7,8 +7,8 @@ import {
 export enum State {
   PENDING = 0,
   RUNNING = 1,
-  ERRORED = 2,
-  DONE = 3,
+  SETTLED_UNSTABLE = 2,
+  SETTLED_STABLE = 3,
   DELETED = 4,
   CREATING = 5,
 }
@@ -16,15 +16,15 @@ export enum State {
 export type StateNotCreating =
   | State.PENDING
   | State.RUNNING
-  | State.ERRORED
-  | State.DONE
+  | State.SETTLED_UNSTABLE
+  | State.SETTLED_STABLE
   | State.DELETED;
 
 export type StateNotDeleted =
   | State.PENDING
   | State.RUNNING
-  | State.ERRORED
-  | State.DONE
+  | State.SETTLED_UNSTABLE
+  | State.SETTLED_STABLE
   | State.CREATING;
 
 export type RunId = {
@@ -134,7 +134,7 @@ export abstract class RawComputation<Ctx, Res> {
         .then(() => this.exec(ctx))
         .then(
           v => this.finish(v, runId),
-          e => this.finish(error(e), runId)
+          e => this.finish(error(e, false), runId)
         );
       this.mark(State.RUNNING);
     }
@@ -146,10 +146,14 @@ export abstract class RawComputation<Ctx, Res> {
       this.runId = null;
       this.result = result;
       this.finishRoutine(result);
-      this.mark(result.ok ? State.DONE : State.ERRORED);
+      this.mark(
+        result.ok || result.deterministic
+          ? State.SETTLED_STABLE
+          : State.SETTLED_UNSTABLE
+      );
       return result;
     }
-    return error(new Error("Computation was cancelled"));
+    return error(new Error("Computation was cancelled"), true);
   }
 
   invalidate() {
