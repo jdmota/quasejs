@@ -2972,9 +2972,11 @@ __metadata:
   dependencies:
     "@quase/parser": "workspace:*"
     "@sindresorhus/is": ^2.0.0
+    "@types/luxon": ^3
     colorette: ^1.1.0
     decamelize: ^4.0.0
     leven: ^3.1.0
+    luxon: ^3.0.4
     strip-ansi: ^6.0.0
   languageName: unknown
   linkType: soft
@@ -3312,6 +3314,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: ee0d098693bf4af44be756eed02daf95f5d0fd4b5b02da952a5952e08842baddf6a986a9ea5f9e460729782f1a0a47848c892ad96ea188b66a363feb49a1536f
+  languageName: node
+  linkType: hard
+
+"@types/luxon@npm:^3":
+  version: 3.0.2
+  resolution: "@types/luxon@npm:3.0.2"
+  checksum: e47e199c5d70ce16e4eff54b21fdf385065f1134774109b40c36dba8b5fd29a732b763125e93863d6070dd22ba6a3f18dbdd368cf3748aae9f24bb335c5c210d
   languageName: node
   linkType: hard
 
@@ -9122,6 +9131,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"luxon@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "luxon@npm:3.0.4"
+  checksum: d0908c3951da2a10ccf23040210ead23b0da5366a9d0954e7d5db3560189a7bd703d8af1e00084f197effc9cd7158d1bddf32886d98a70d59ce9bc3fe88bbce0
+  languageName: node
+  linkType: hard
+
 "make-dir@npm:^1.0.0":
   version: 1.3.0
   resolution: "make-dir@npm:1.3.0"
@@ -10572,6 +10588,7 @@ fsevents@^1.2.7:
     "@types/is-ci": ^2.0.0
     "@types/jest": ^26.0.15
     "@types/jest-diff": ^24.3.0
+    "@types/luxon": ^3
     "@types/minimatch": ^3.0.3
     "@types/node": ^18.7.13
     "@types/normalize-package-data": ^2.4.0
@@ -10594,6 +10611,7 @@ fsevents@^1.2.7:
     fs-extra: ^9.0.1
     ix: ^4.5.2
     jest: ^26.6.3
+    luxon: ^3.0.4
     prettier: ^2.7.1
     rxjs: ^7.5.6
     slash: 3.0.0
