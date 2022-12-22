@@ -1,6 +1,6 @@
 import { ComputationDescription } from "../../incremental-lib";
 import { Result } from "../../utils/result";
-import { setAdd } from "../../utils/set";
+import { setAdd } from "../../utils/maps-sets";
 import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 

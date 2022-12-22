@@ -1,5 +1,5 @@
 import { ComputationDescription } from "../../../incremental-lib";
-import { setAdd } from "../../../utils/set";
+import { setAdd } from "../../../utils/maps-sets";
 import { AnyRawComputation, RawComputation, RunId } from "../../raw";
 import { AnyStatefulComputation } from "../../stateful";
 import { EmitterComputation, EventFn } from "./emitter";
