@@ -17,6 +17,7 @@ export type RuntimeInfo = Readonly<{
   publicPath: string;
   minify: boolean;
   buildKey: string | null;
+  myId: string;
 }>;
 
 const DEFAULT_KEY = "__quase_builder__";
@@ -27,7 +28,7 @@ const cache: { [key: string]: Promise<string> } = {};
 
 export async function createRuntime(
   runtimeOpts: RuntimeOptions,
-  { context, fullPath, publicPath, minify, buildKey }: RuntimeInfo
+  { context, fullPath, publicPath, minify, buildKey, myId }: RuntimeInfo
 ) {
   const minified = minify === undefined ? !runtimeOpts.hmr : !!minify;
 
@@ -77,6 +78,7 @@ export async function createRuntime(
   const buildKeyString = JSON.stringify(buildKey || DEFAULT_KEY);
 
   runtime = runtime.replace("$_BUILD_KEY", buildKeyString);
+  runtime = runtime.replace("$_MY_ID", myId);
 
   return {
     runtime,

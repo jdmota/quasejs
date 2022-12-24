@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <script>
+      const state = {
+        updating: true,
+        success: true,
+        reload: true,
+      };
+
+      const UI_ID = "__quase_builder_ui__";
+      let ui = null;
+
+      const updateUI = () => {
+        if (!ui) {
+          ui = document.createElement("div");
+          ui.id = UI_ID;
+          document.body.appendChild(ui);
+        }
+
+        const { updating, success, reload } = state;
+
+        ui.innerHTML = `
+          <div style="
+            z-index:99999;color:white;position:fixed;top:0;
+            right:45px;line-height:30px;color:black;
+            font-size:18px;font-family:Menlo, Consolas, monospace;
+          ">
+            <div style="
+              ${reload ? "display:block;" : "display:none;"}
+              padding:10px;background:yellow;float:left;cursor:pointer;
+            ">🗘 Reload</div>
+            <div style="
+              ${updating ? "display:block;" : "display:none;"}
+              padding:10px;background:yellow;float:left;
+            ">Replacing modules...</div>
+            <div style="
+              float:left;
+              background:${success ? "green" : "red"};
+              padding:10px;
+            ">Build: ${success ? "Success" : "Error"}</div>
+          </div>`;
+      };
+
+      updateUI();
+
+      const OVERLAY_ID = "__quase_builder_error_overlay__";
+      let overlay = null;
+
+      const removeErrorOverlay = () => {
+        if (overlay) {
+          overlay.remove();
+          overlay = null;
+        }
+      };
+
+      const createErrorOverlay = (errors) => {
+        if (!overlay) {
+          overlay = document.createElement("div");
+          overlay.id = OVERLAY_ID;
+          document.body.appendChild(overlay);
+        }
+
+        // Html encode
+        const errorText = document.createElement("pre");
+        errorText.innerText = errors.join("\n");
+
+        overlay.innerHTML = `
+          <div style="
+            background:black;font-size:16px;color:white;
+            position:fixed;height:100%;width:100%;top:0px;left:0px;
+            padding:30px;opacity:0.85;font-family:Menlo,Consolas,monospace;z-index:9999;
+          ">
+            <span style="background:red;padding:2px 4px;border-radius:2px;">ERROR</span>
+            <span style="margin-left:10px;font-size:18px;position:relative;cursor:pointer;">🗙</span>
+            <pre style="margin-top:20px;">${errorText.innerHTML}</pre>
+          </div>
+        `;
+
+        overlay.getElementsByTagName("span")[1].onclick = removeErrorOverlay;
+      };
+
+      createErrorOverlay(["line 1", "line 2"]);
+    </script>
+  </body>
+</html>

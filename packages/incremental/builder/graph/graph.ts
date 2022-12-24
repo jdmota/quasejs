@@ -31,14 +31,44 @@ type Module = {
   readonly deps: Dep[];
 };
 
+enum AssetType {
+  JS = 0,
+  WASM = 1,
+  CSS = 2,
+  HTML = 3,
+}
+
+enum EnvType {
+  NODE = 0,
+  BROWSER = 1,
+  WORKER = 2,
+}
+
+export type { AssetType, EnvType, RuntimeManifest };
+
+// Note: if a JS module async imports a CSS module,
+// in practise, a JS file will be loaded which will dynamically load the CSS,
+// and also deal with HMR. This way we do not need such logic in the runtime.
+/*
+elem = document.createElement("link");
+elem.type = "text/css";
+elem.rel = "stylesheet";
+elem.href = href;
+*/
+
 type Asset = {
   id: AssetId;
+  type: AssetType;
   modules: Set<Module>;
   runtime: {
     code: string;
     manifest: RuntimeManifest;
   } | null;
 };
+
+type AssetsAndModules = OneToMany<string, Module>;
+
+type ModuleToNeededAssets = ReadonlyMap<Module, ReadonlySet<AssetId>>;
 
 function setToString(set: ReadonlySet<Module>) {
   return JSON.stringify([...set].sort(modulesSorter));
@@ -82,7 +112,7 @@ export class Graph {
     return reachableFrom;
   }
 
-  assetsAndModules(entries: readonly Module[]) {
+  assetsAndModules(entries: readonly Module[]): AssetsAndModules {
     const reachableFrom = this.reachableFrom(entries);
     const assetToModules = new OneToMany<AssetId, Module>();
     for (const [module, group] of reachableFrom) {
@@ -110,10 +140,9 @@ export class Graph {
     return neededAssets;
   }
 
-  // Extract the modules that are async dependencies of the modules in this asset
-  assetAsyncDeps(assetId: AssetId, assetToModules: OneToMany<AssetId, Module>) {
+  // Extract the modules that are async dependencies of the modules in this set
+  assetAsyncDeps(modules: ReadonlySet<Module>) {
     const set = new Set<Module>();
-    const modules = assetToModules.getMany(assetId);
     for (const module of modules) {
       for (const { importedId, async } of module.deps) {
         const required = get(this.modules, importedId);
@@ -129,42 +158,61 @@ export class Graph {
   // Manifest for an asset saying for each async import
   // which are the assets that need to be loaded
   // to ensure all the sync dependencies are available
-  manifest(assetId: AssetId, assetToModules: OneToMany<AssetId, Module>) {
+  // Note: this is optimized for production, not to be used for HMR
+  manifest(
+    assetId: AssetId,
+    assetToModules: OneToMany<AssetId, Module>,
+    globalModuleToNeededAssets: ModuleToNeededAssets
+  ) {
     const assets = new Set<AssetId>();
-    const moduleToAssets = new Map<Module, Set<AssetId>>();
+    const moduleToNeededAssets = new Map<Module, Set<AssetId>>();
 
-    for (const module of this.assetAsyncDeps(assetId, assetToModules)) {
-      const neededAssets = this.neededSyncAssets(module, assetToModules);
+    for (const module of this.assetAsyncDeps(assetToModules.getMany(assetId))) {
+      const neededAssets = new Set(get(globalModuleToNeededAssets, module));
       neededAssets.delete(assetId); // Exclude this asset itself
+      // TODO also exclude all the other assets that would have had to been loaded before
+      // (like assets needed for the evaluation of this asset at sync time)
 
       copy(neededAssets, assets);
-      moduleToAssets.set(module, neededAssets);
+      moduleToNeededAssets.set(module, neededAssets);
     }
 
     return {
       assets,
-      moduleToAssets,
+      moduleToNeededAssets,
     };
   }
 
-  manifestJson(assetId: AssetId, assetToModules: OneToMany<AssetId, Module>) {
+  manifestJson(
+    assetId: AssetId,
+    assetToModules: AssetsAndModules,
+    globalModuleToNeededAssets: ModuleToNeededAssets
+  ) {
     const json: RuntimeManifest = {
       f: [],
       m: {},
     };
-    const { assets, moduleToAssets } = this.manifest(assetId, assetToModules);
+    const { assets, moduleToNeededAssets } = this.manifest(
+      assetId,
+      assetToModules,
+      globalModuleToNeededAssets
+    );
 
     const sortedAssets = Array.from(assets).sort(stringSorter);
     const assetToIdx = new Map<AssetId, number>();
 
-    for (const asset of sortedAssets) {
-      assetToIdx.set(asset, json.f.push(asset) - 1);
+    for (let i = 0; i < sortedAssets.length; i++) {
+      const assetId = sortedAssets[i];
+      assetToIdx.set(assetId, i);
+      json.f.push(assetId);
     }
 
-    const sortedModules = Array.from(moduleToAssets.keys()).sort(modulesSorter);
+    const sortedModules = Array.from(moduleToNeededAssets.keys()).sort(
+      modulesSorter
+    );
 
     for (const module of sortedModules) {
-      json.m[module.id] = Array.from(get(moduleToAssets, module))
+      json.m[module.id] = Array.from(get(moduleToNeededAssets, module))
         .map(assetId => get(assetToIdx, assetId))
         .sort(numberSorter);
     }
@@ -195,7 +243,7 @@ export class Graph {
   }
 }
 
-// TODO hashIds
+// TODO hashIds and filenames for assets
 export function processGraph(
   modules: ReadonlyMap<string, Module>,
   entries: readonly Module[]
@@ -203,7 +251,19 @@ export function processGraph(
   const graph = new Graph(modules);
   const assetToModules = graph.assetsAndModules(entries);
 
+  // Avoid recomputing the needed assets for each module when creating the manifest
+  // And use this in HMR
+  const globalModuleToNeededAssets = new Map<Module, Set<AssetId>>();
+  for (const module of modules.values()) {
+    const neededAssets = graph.neededSyncAssets(module, assetToModules);
+    globalModuleToNeededAssets.set(module, neededAssets);
+  }
+
   for (const assetId of assetToModules.keys()) {
-    graph.manifestJson(assetId, assetToModules);
+    const runtimeManifest = graph.manifestJson(
+      assetId,
+      assetToModules,
+      globalModuleToNeededAssets
+    );
   }
 }
