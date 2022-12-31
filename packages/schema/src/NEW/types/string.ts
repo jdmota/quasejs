@@ -1,4 +1,4 @@
-import { SchemaType } from "../schema";
+import { PickSchemaType } from "../schema";
 import { SchemaOpCtx } from "../util/context";
 import { Result } from "../util/result";
 
@@ -8,11 +8,7 @@ type StringTypeOpts = Partial<{
 }>;
 
 export class StringType
-  implements
-    Pick<
-      SchemaType<string, unknown, unknown, unknown>,
-      "validate" | "decodeJS"
-    >
+  implements PickSchemaType<"validate" | "decodeJS", string>
 {
   readonly opts: StringTypeOpts;
   constructor(opts: StringTypeOpts) {

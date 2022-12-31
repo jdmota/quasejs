@@ -1,13 +1,10 @@
 import { formatKey } from "../util/format";
 import { SchemaOpCtx } from "../util/context";
 import { Result } from "../util/result";
-import { GetSchemaTS, SchemaType } from "../schema";
+import { GetSchemaTS, PickSchemaType } from "../schema";
 
 export type ObjectFields = {
-  readonly [field: string]: Pick<
-    SchemaType<unknown, unknown, unknown, unknown>,
-    "validate" | "decodeJS"
-  >;
+  readonly [field: string]: PickSchemaType<"validate" | "decodeJS", unknown>;
 };
 
 export type ObjectValue<F extends ObjectFields> = {
@@ -19,19 +16,12 @@ const hasProp = (o: any, k: string) => hasOwn.call(o, k);
 const getProp = (o: any, k: string) => (hasProp(o, k) ? o[k] : undefined);
 
 export class ObjectType<F extends ObjectFields>
-  implements
-    Pick<
-      SchemaType<ObjectValue<F>, unknown, unknown, unknown>,
-      "validate" | "decodeJS"
-    >
+  implements PickSchemaType<"validate" | "decodeJS", ObjectValue<F>>
 {
   private readonly fields: F;
   private readonly entries: readonly [
     string,
-    Pick<
-      SchemaType<unknown, unknown, unknown, unknown>,
-      "validate" | "decodeJS"
-    >
+    PickSchemaType<"validate" | "decodeJS", unknown>
   ][];
 
   constructor(fields: F) {

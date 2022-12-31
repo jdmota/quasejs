@@ -1,14 +1,10 @@
 import { DateTime } from "luxon";
 import { SchemaOpCtx } from "../util/context";
 import { Result } from "../util/result";
-import { SchemaType } from "../schema";
+import { PickSchemaType } from "../schema";
 
 export class DateTimeType
-  implements
-    Pick<
-      SchemaType<DateTime, unknown, unknown, unknown>,
-      "validate" | "decodeJS"
-    >
+  implements PickSchemaType<"validate" | "decodeJS", DateTime>
 {
   readonly format: string;
 

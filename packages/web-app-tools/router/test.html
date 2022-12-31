@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head></head>
+  <body>
+    <a href="#id1">JUMP TO #id1</a>
+    <a href="https://example.com">EXAMPLE.COM</a>
+    <div id="id1">JUMP TO HERE</div>
+    <script>
+      console.log("started");
+
+      window.addEventListener("hashchange", evt => {
+        console.log("hashchange", evt);
+      });
+
+      window.addEventListener("popstate", evt => {
+        console.log("popstate", evt);
+      });
+
+      window.addEventListener("beforeunload", evt => {
+        console.log("beforeunload", evt);
+        evt.preventDefault();
+        evt.returnValue = false;
+      });
+
+      window.addEventListener("pageshow", evt => {
+        console.log("pageshow", evt);
+      });
+    </script>
+  </body>
+</html>
