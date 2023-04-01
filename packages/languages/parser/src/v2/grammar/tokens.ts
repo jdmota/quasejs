@@ -1,5 +1,5 @@
 import { Location } from "../runtime/input";
-import { never } from "../utils";
+import { never, nonNull } from "../utils";
 import {
   AnyRule,
   builder,
@@ -135,7 +135,11 @@ function idToVar(id: number) {
 export class TokensStore {
   private readonly tokens = new Map<
     string,
-    { token: TokenDeclaration; id: number }
+    Readonly<{ decl: TokenDeclaration; id: number }>
+  >();
+  private readonly tokens2 = new Map<
+    number,
+    Readonly<{ decl: TokenDeclaration; name: string }>
   >();
   private uuid: number = -1;
 
@@ -148,10 +152,16 @@ export class TokensStore {
     const curr = this.tokens.get(name);
     if (curr == null) {
       const id = this.uuid++;
-      this.tokens.set(name, { id, token: this.ensureDeclaration(id, token) });
+      const decl = this.ensureDeclaration(id, token);
+      this.tokens.set(name, { decl, id });
+      this.tokens2.set(id, { decl, name });
       return id;
     }
     return curr.id;
+  }
+
+  getDecl(id: number) {
+    return nonNull(this.tokens2.get(id));
   }
 
   private uniqName(token: TokenRules | TokenDeclaration) {
@@ -170,8 +180,8 @@ export class TokensStore {
   }
 
   *[Symbol.iterator]() {
-    for (const { token } of this.tokens.values()) {
-      yield token;
+    for (const { decl } of this.tokens.values()) {
+      yield decl;
     }
   }
 
@@ -194,16 +204,16 @@ export class TokensStore {
   // TODO text extraction
   createLexer() {
     const tokens = [];
-    for (const [, { id, token }] of this.tokens) {
+    for (const [, { id, decl }] of this.tokens) {
       const idNode = builder.int(id);
       const fieldIdSet = builder.field("id", idNode);
-      if (token.modifiers.type === "normal") {
+      if (decl.modifiers.type === "normal") {
         const prefix = idToVar(id) + "_";
         tokens.push(
           builder.seq(
-            prefixLocals(prefix, token.rule),
+            prefixLocals(prefix, decl.rule),
             fieldIdSet,
-            builder.field("token", prefixLocals(prefix, token.return))
+            builder.field("token", prefixLocals(prefix, decl.return))
           )
         );
       }

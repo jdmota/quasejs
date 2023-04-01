@@ -1,8 +1,7 @@
 import { Location } from "../runtime/input";
-import { first, locSuffix, locSuffix2, never } from "../utils";
+import { never } from "../utils";
 import {
   Declaration,
-  FieldRule,
   RuleDeclaration,
   RuleDeclarationArg,
   TokenDeclaration,
@@ -14,13 +13,6 @@ import {
   TokensCollector,
 } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
-import {
-  RuleDeclInterface,
-  TokenDeclInterface,
-  ExternalCallInterface,
-  TypesInferrer,
-} from "./type-checker/inferrer";
-import { AnyType } from "./type-checker/types";
 
 export type GrammarError = Readonly<{
   message: string;
@@ -31,12 +23,10 @@ export type GrammarError = Readonly<{
 type GrammarOrErrors =
   | Readonly<{
       grammar: Grammar;
-      inferrer: TypesInferrer;
       errors: null;
     }>
   | Readonly<{
       grammar: null;
-      inferrer: null;
       errors: readonly GrammarError[];
     }>;
 
@@ -222,36 +212,24 @@ export function createGrammar(
 
   if (errors.length === 0) {
     const grammar = new Grammar(name, rules, tokens, startRules[0]);
-    const inferrer = new TypesInferrer(grammar);
-    for (const rule of rules.values()) {
-      if (rule.type === "rule") {
-        inferrer.run(rule);
-      }
-      // TODO for token rules
-    }
-    inferrer.check(errors);
 
-    if (errors.length === 0) {
-      return {
-        grammar,
-        inferrer,
-        errors: null,
-      };
-    }
+    return {
+      grammar,
+      errors: null,
+    };
   }
 
   return {
     grammar: null,
-    inferrer: null,
     errors,
   };
 }
 
 export class Grammar {
   public readonly name: string;
-  private readonly rules: ReadonlyMap<string, Declaration>;
-  private readonly tokens: TokensStore;
-  private readonly startRule: RuleDeclaration;
+  public readonly rules: ReadonlyMap<string, Declaration>;
+  public readonly tokens: TokensStore;
+  public readonly startRule: RuleDeclaration;
 
   constructor(
     name: string,
@@ -281,6 +259,10 @@ export class Grammar {
     return this.tokens.get(token);
   }
 
+  tokenIdToDecl(id: number) {
+    return this.tokens.getDecl(id);
+  }
+
   *getRules() {
     for (const decl of this.rules.values()) {
       if (decl.type === "rule") {
@@ -299,5 +281,13 @@ export class Grammar {
 
   getDecls() {
     return this.rules.values();
+  }
+
+  userFriendlyName(num: number, inLexer: boolean) {
+    if (inLexer) {
+      return num < 0 ? `${num}` : `'${String.fromCodePoint(num)}'`;
+    } else {
+      return this.tokenIdToDecl(num).name;
+    }
   }
 }

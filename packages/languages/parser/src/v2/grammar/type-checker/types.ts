@@ -60,7 +60,7 @@ class ReadonlyObjectType extends ConstructedType {
     super();
     this.fields = new Map(fields);
   }
-  formatMeta(seen: Set<Type>) {
+  override formatMeta(seen: Set<Type>) {
     return Array.from(this.fields)
       .map(([k, v]) => `${k}: ${v.format(seen)}`)
       .join(", ");
@@ -81,7 +81,7 @@ class ReadonlyArrayType extends ConstructedType {
     super();
     this.component = component;
   }
-  formatMeta(seen: Set<Type>) {
+  override formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
   positiveTypes(): readonly FreeType[] {
@@ -100,7 +100,7 @@ class ArrayType extends ConstructedType {
     super();
     this.component = component;
   }
-  formatMeta(seen: Set<Type>) {
+  override formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
   positiveTypes(): readonly FreeType[] {

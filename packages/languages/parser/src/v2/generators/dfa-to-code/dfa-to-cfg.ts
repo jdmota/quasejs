@@ -36,7 +36,7 @@ export class DispatchTransition extends EpsilonTransition {
   constructor() {
     super();
   }
-  toString() {
+  override toString() {
     return `[Dispatch]`;
   }
 }
@@ -163,11 +163,10 @@ export class CFGGroup {
 }
 
 export class DFAtoCFG {
-  convert({
-    start,
-    states,
-    acceptingSet,
-  }: DFA<DState>): { start: CFGNode; nodes: ReadonlySet<CFGNode> } {
+  convert({ start, states, acceptingSet }: DFA<DState>): {
+    start: CFGNode;
+    nodes: ReadonlySet<CFGNode>;
+  } {
     const nodes = new Map<DState, CFGNode>();
 
     // Associate each DState with a CFGState

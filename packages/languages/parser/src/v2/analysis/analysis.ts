@@ -7,107 +7,187 @@ import {
 } from "../automaton/transitions";
 import { MapKeyToValue } from "../utils/map-key-to-value";
 import { MapKeyToSet } from "../utils/map-key-to-set";
+import { assertion, equals, ObjectHashEquals } from "../utils";
+import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set";
+import { Range } from "../utils/range-utils";
+import { ParserGenerator } from "../generators/generate-parser";
+import { Grammar } from "../grammar/grammar";
+import { Declaration } from "../grammar/grammar-builder";
 
-type RuleName = string;
+type GotoDecision = Readonly<{
+  goto: AnyTransition;
+  stack: StackFrame;
+}>;
 
-class DecisionNode {
-  // Map the decision to make (i.e. the transition to perform)
-  // to points where the analysis stopped when computing the lookahead of this decision
-  readonly gotos: MapKeyToSet<AnyTransition, StackFrame>;
-  readonly children: DecisionsTree;
-  readonly ll: number;
+type DecisionNodeNoAdd = Omit<DecisionNode, "add">;
 
-  constructor(ll: number) {
-    this.ll = ll;
-    this.children = new DecisionsTree(ll + 1);
-    this.gotos = new MapKeyToSet<AnyTransition, StackFrame>();
+class DecisionNode implements SpecialSet<GotoDecision> {
+  private readonly gotos: MapKeyToSet<AnyTransition, StackFrame>;
+  private nextTree: DecisionTree | null;
+
+  constructor(
+    readonly parent: DecisionTree,
+    readonly follow: FollowStack | null,
+    readonly range: Range
+  ) {
+    this.gotos = new MapKeyToSet();
+    this.nextTree = null;
   }
 
-  addGoto(goto: AnyTransition, leftIn: StackFrame) {
-    this.gotos.addOne(goto, leftIn);
+  getGotos(): readonly AnyTransition[] {
+    return Array.from(this.gotos).map(e => e[0]);
+  }
+
+  add({ goto, stack }: GotoDecision) {
+    assertion(this.nextTree === null);
+    this.gotos.addOne(goto, stack);
+    return this;
   }
 
   isAmbiguous() {
     return this.gotos.size > 1;
   }
 
-  first() {
-    for (const [t] of this.gotos) {
-      return t;
-    }
-    throw new Error("0 gotos?");
+  iterate() {
+    return this.gotos[Symbol.iterator]();
   }
 
-  toString(indent = "") {
-    let str = `DecisionNode {\n`;
-    for (const [key, value] of this.gotos) {
-      str += `${indent}  (${key}, [${Array.from(value).map(s =>
-        s.follows?.toString()
-      )}])\n`;
+  *[Symbol.iterator]() {
+    for (const [goto, set] of this.gotos) {
+      for (const stack of set) {
+        yield { goto, stack };
+      }
     }
-    str += `${this.children.toString(`${indent}  `)}\n`;
-    return str + `${indent}}`;
+  }
+
+  getNextTree() {
+    return this.nextTree;
+  }
+
+  ensureNextTree() {
+    return this.nextTree ?? (this.nextTree = new DecisionTree(this));
+  }
+}
+
+export type DecisionTest = Readonly<{
+  follow: FollowStack | null;
+  range: Range;
+}>;
+
+class DecisionTree {
+  private readonly map: MapKeyToValue<
+    FollowStack | null,
+    MapRangeToSpecialSet<GotoDecision, DecisionNode>
+  >;
+  readonly ll: number;
+  private nonEmpty: boolean;
+
+  constructor(readonly owner: DecisionNode | null) {
+    this.map = new MapKeyToValue();
+    this.ll = owner ? owner.parent.ll + 1 : 1;
+    this.nonEmpty = false;
+  }
+
+  hasDecisions() {
+    return this.nonEmpty;
+  }
+
+  addDecision(
+    follow: FollowStack | null,
+    range: Range,
+    goto: AnyTransition,
+    stack: StackFrame
+  ) {
+    this.nonEmpty = true;
+    this.map
+      .computeIfAbsent(
+        follow,
+        () =>
+          new MapRangeToSpecialSet(
+            range => new DecisionNode(this, follow, range)
+          )
+      )
+      .addRange(
+        range.from,
+        range.to,
+        new DecisionNode(this, follow, range).add({ goto, stack })
+      );
+  }
+
+  *iterate(): Iterable<DecisionNodeNoAdd> {
+    for (const [follow, map] of this.map) {
+      for (const [range, decision] of map) {
+        yield decision;
+      }
+    }
   }
 
   [Symbol.iterator]() {
-    return this.gotos[Symbol.iterator]();
+    return this.map[Symbol.iterator]();
   }
 }
 
-class DecisionsTree {
-  readonly ll: number;
-  // TODO is it possible for conflicts to exists here?
-  private map = new MapKeyToValue<RangeTransition, DecisionNode>();
+export type DecisionAnd = readonly DecisionTest[];
+export type DecisionOr = readonly DecisionAnd[];
 
-  constructor(ll: number) {
-    this.ll = ll;
+class InvertedDecisionTree {
+  private readonly map: MapKeyToValue<AnyTransition, DecisionAnd[]>;
+  compatibleWithSwitch: boolean;
+  maxLL: number;
+  ambiguities: Readonly<{
+    decision: DecisionNodeNoAdd;
+    condition: DecisionAnd;
+  }>[];
+
+  constructor() {
+    this.map = new MapKeyToValue();
+    this.compatibleWithSwitch = true;
+    this.maxLL = 0;
+    this.ambiguities = [];
   }
 
-  addDecision(what: RangeTransition, goto: AnyTransition, leftIn: StackFrame) {
-    const node = this.map.computeIfAbsent(
-      what,
-      () => new DecisionNode(this.ll)
-    );
-    node.addGoto(goto, leftIn);
-    return node;
+  get(goto: AnyTransition): DecisionOr {
+    return this.map.get(goto) ?? [];
   }
 
-  toString(indent = "") {
-    let str = `${indent}DecisionTree (ll: ${this.ll}) {\n`;
-    for (const [key, value] of this.map) {
-      str += `${indent}  ${key}: ${value.toString(`${indent}  `)},\n`;
-    }
-    return str + `${indent}}`;
-  }
+  add(decision: DecisionNodeNoAdd) {
+    const condition = this.decisionToTest(decision);
+    assertion(decision.parent.ll === condition.length);
 
-  invert() {
-    const map = new MapKeyToSet<AnyTransition, RangeTransition>();
-    let compatibleWithSwitch = true;
-    for (const [range, node] of this.map) {
-      for (const [goto] of node) {
-        const ranges = map.addOne(goto, range);
-        if (ranges > 1 || range.from !== range.to) {
-          compatibleWithSwitch = false;
+    for (const { goto } of decision) {
+      this.map.computeIfAbsent(goto, () => []).push(condition);
+
+      if (this.compatibleWithSwitch) {
+        if (
+          condition.length > 1 ||
+          condition[0].follow ||
+          condition[0].range.from !== condition[0].range.to
+        ) {
+          this.compatibleWithSwitch = false;
         }
       }
     }
-    return {
-      map,
-      compatibleWithSwitch,
-    };
+    this.maxLL = Math.max(this.maxLL, condition.length);
+
+    if (decision.isAmbiguous()) {
+      this.ambiguities.push({ decision, condition });
+    }
   }
 
-  *nodes() {
-    for (const [_, node] of this.map) {
-      yield node;
-    }
+  private decisionToTest(decision: DecisionNodeNoAdd): DecisionTest[] {
+    const parent = decision.parent.owner;
+    const arr = parent ? this.decisionToTest(parent) : [];
+    arr.push({ follow: decision.follow, range: decision.range });
+    return arr;
   }
 }
 
-class FollowStack {
+type RuleName = string;
+
+class FollowStack implements ObjectHashEquals {
   readonly child: FollowStack | null;
   readonly thisRule: RuleName;
-  readonly enterState: DState;
+  readonly exitState: DState;
   private cachedHashCode: number;
 
   constructor(
@@ -117,14 +197,16 @@ class FollowStack {
   ) {
     this.child = child;
     this.thisRule = thisRule;
-    this.enterState = exitState;
+    this.exitState = exitState;
     this.cachedHashCode = 0;
   }
 
   hashCode(): number {
     if (this.cachedHashCode === 0) {
-      const child = this.child == null ? 1 : this.child.hashCode();
-      this.cachedHashCode = child * this.thisRule.length * this.enterState.id;
+      this.cachedHashCode =
+        this.thisRule.length *
+        this.exitState.id *
+        (this.child ? this.child.hashCode() : 1);
     }
     return this.cachedHashCode;
   }
@@ -134,16 +216,11 @@ class FollowStack {
       return true;
     }
     if (other instanceof FollowStack) {
-      if (
-        this.thisRule !== other.thisRule ||
-        this.enterState !== other.enterState
-      ) {
-        return false;
-      }
-      if (this.child === null) {
-        return other.child === null;
-      }
-      return this.child.equals(other.child);
+      return (
+        this.thisRule === other.thisRule &&
+        this.exitState === other.exitState &&
+        equals(this.child, other.child)
+      );
     }
     return false;
   }
@@ -154,26 +231,98 @@ class FollowStack {
   }
 }
 
-class StackFrame {
+class StackFrame implements ObjectHashEquals {
+  readonly analyzer: Analyzer;
   readonly parent: StackFrame | null;
   readonly thisRule: RuleName;
   readonly state: DState;
-  readonly follows: FollowStack | null;
+  readonly follow: FollowStack | null;
+  private cachedHashCode: number;
 
   constructor(
+    analyzer: Analyzer,
     parent: StackFrame | null,
     thisRule: RuleName,
     state: DState,
-    follows: FollowStack | null
+    follow: FollowStack | null
   ) {
+    this.analyzer = analyzer;
     this.parent = parent;
     this.thisRule = thisRule;
     this.state = state;
-    this.follows = follows;
+    this.follow = follow;
+    this.cachedHashCode = 0;
   }
 
-  move(state: DState) {
-    return new StackFrame(this.parent, this.thisRule, state, this.follows);
+  move(dest: DState) {
+    return new StackFrame(
+      this.analyzer,
+      this.parent,
+      this.thisRule,
+      dest,
+      this.follow
+    );
+  }
+
+  push(call: CallTransition) {
+    return new StackFrame(
+      this.analyzer,
+      this,
+      call.ruleName,
+      this.analyzer.initialStates.get(call.ruleName)!!,
+      this.follow
+    );
+  }
+
+  pop(ret: ReturnTransition): Readonly<StackFrame[]> {
+    if (this.parent) {
+      return [this.parent];
+    }
+    const f = this.analyzer.follows.get(this.thisRule);
+    // Rules with an empty follow set are the start rule or unused rules
+    // The start rule should terminate with the "end" token, so we never get here
+    // Unused rules are not reachable nor analyzed
+    // In summary, do not worry about empty follow sets
+    // TODO do not analyze unused rules assertion(!!f && f.length > 0);
+    return f
+      ? f.map(
+          info =>
+            new StackFrame(
+              this.analyzer,
+              null,
+              info.rule,
+              info.exitState,
+              new FollowStack(this.follow, info.rule, info.exitState)
+            )
+        )
+      : [];
+  }
+
+  hashCode(): number {
+    if (this.cachedHashCode === 0) {
+      this.cachedHashCode =
+        this.thisRule.length *
+        this.state.id *
+        (this.parent ? this.parent.hashCode() : 1) *
+        (this.follow ? this.follow.hashCode() : 1);
+    }
+    return this.cachedHashCode;
+  }
+
+  equals(other: unknown): boolean {
+    if (this === other) {
+      return true;
+    }
+    if (other instanceof StackFrame) {
+      return (
+        this.analyzer === other.analyzer &&
+        equals(this.parent, other.parent) &&
+        this.thisRule === other.thisRule &&
+        this.state === other.state &&
+        equals(this.follow, other.follow)
+      );
+    }
+    return false;
   }
 
   toString() {
@@ -187,66 +336,52 @@ export type AnalyzerFollow = {
   readonly exitState: DState;
 };
 
-// TODO cache stuff
+type Lookahead = readonly [RangeTransition, StackFrame];
 
 export class Analyzer {
+  readonly grammar: Grammar;
   readonly initialStates: Map<RuleName, DState>;
   readonly follows: Map<RuleName, AnalyzerFollow[]>;
+  private cache: MapKeyToValue<StackFrame, Lookahead[] | null>;
 
   constructor({
+    grammar,
     initialStates,
     follows,
   }: {
+    grammar: Grammar;
     initialStates: Map<RuleName, DState>;
     follows: Map<RuleName, AnalyzerFollow[]>;
   }) {
+    this.grammar = grammar;
     this.initialStates = initialStates;
     this.follows = follows;
+    this.cache = new MapKeyToValue();
   }
 
-  private analyzeHelper(
-    seen: Set<DState>,
-    stack: StackFrame,
-    lookahead: [RangeTransition, StackFrame][]
+  private ll1(
+    start: Iterable<StackFrame>,
+    goto: AnyTransition,
+    map: DecisionTree
   ) {
-    let prev: StackFrame[] = [stack];
+    const seen = new MapKeyToValue<StackFrame, boolean>();
+    let prev: readonly StackFrame[] = Array.from(start);
     let next: StackFrame[] = [];
+
+    // TODO this will fail if we have left-recursion
 
     while (prev.length) {
       for (const stack of prev) {
-        if (seen.has(stack.state)) continue;
-        seen.add(stack.state);
+        if (seen.set(stack, true) === true) continue;
+        // FIXME instead of this, what we need is a cache from StackFrame to ll1 set
 
         for (const [transition, dest] of stack.state) {
           if (transition instanceof CallTransition) {
-            next.push(
-              new StackFrame(
-                stack.move(dest),
-                transition.ruleName,
-                this.initialStates.get(transition.ruleName)!!,
-                stack.follows
-              )
-            );
+            next.push(stack.move(dest).push(transition));
           } else if (transition instanceof ReturnTransition) {
-            if (stack.parent) {
-              next.push(stack.parent);
-            } else {
-              const f = this.follows.get(stack.thisRule);
-              if (f && f.length > 0) {
-                for (const info of f) {
-                  next.push(
-                    new StackFrame(
-                      null,
-                      info.rule,
-                      info.enterState,
-                      new FollowStack(stack.follows, info.rule, info.enterState)
-                    )
-                  );
-                }
-              }
-            }
+            next.push(...stack.pop(transition));
           } else if (transition instanceof RangeTransition) {
-            lookahead.push([transition, stack.move(dest)]);
+            map.addDecision(stack.follow, transition, goto, stack.move(dest));
           } else {
             next.push(stack.move(dest));
           }
@@ -257,73 +392,89 @@ export class Analyzer {
     }
   }
 
-  analyze(ruleName: RuleName, state: DState, maxLL = 1) {
-    const seen = new Set<DState>();
-    const stack = new StackFrame(null, ruleName, state, null);
-    const decisions = new DecisionsTree(1);
+  analyze(rule: Declaration, state: DState, maxLL = 3) {
+    const stack = new StackFrame(this, null, rule.name, state, null);
+    const ll1 = new DecisionTree(null);
+    const inverted = new InvertedDecisionTree();
 
     for (const [goto, dest] of state) {
-      const lookahead: [RangeTransition, StackFrame][] = [];
-
       if (goto instanceof CallTransition) {
-        this.analyzeHelper(
-          seen,
-          new StackFrame(
-            stack.move(dest),
-            goto.ruleName,
-            this.initialStates.get(goto.ruleName)!!,
-            null
-          ),
-          lookahead
-        );
+        this.ll1([stack.move(dest).push(goto)], goto, ll1);
       } else if (goto instanceof ReturnTransition) {
-        const f = this.follows.get(stack.thisRule);
-        if (f && f.length > 0) {
-          for (const info of f) {
-            this.analyzeHelper(
-              seen,
-              new StackFrame(null, info.rule, info.enterState, null),
-              lookahead
-            );
-          }
-        }
+        this.ll1(stack.pop(goto), goto, ll1);
       } else if (goto instanceof RangeTransition) {
-        lookahead.push([goto, stack.move(dest)]);
+        ll1.addDecision(stack.follow, goto, goto, stack.move(dest));
       } else {
-        this.analyzeHelper(seen, stack.move(dest), lookahead);
-      }
-
-      for (const [what, stack] of lookahead) {
-        decisions.addDecision(what, goto, stack);
+        this.ll1([stack.move(dest)], goto, ll1);
       }
     }
 
-    let currentLL = 1;
-    let trees = [decisions];
+    let prev = [ll1];
+    let next = [];
+    let ll = 2;
 
-    while (trees.length > 0 && currentLL <= maxLL) {
-      const moreTrees = [];
-
-      for (const tree of trees) {
-        for (const node of tree.nodes()) {
-          if (!node.isAmbiguous()) continue;
-          for (const [goto, stacks] of node.gotos) {
-            const lookahead: [RangeTransition, StackFrame][] = [];
-            for (const stack of stacks) {
-              this.analyzeHelper(seen, stack, lookahead);
-            }
-            for (const [what, stack] of lookahead) {
-              node.children.addDecision(what, goto, stack);
+    while (prev.length) {
+      for (const tree of prev) {
+        if (tree.hasDecisions()) {
+          for (const decision of tree.iterate()) {
+            if (ll <= maxLL && decision.isAmbiguous()) {
+              const nextTree = decision.ensureNextTree();
+              for (const [goto, stack] of decision.iterate()) {
+                this.ll1(stack, goto, nextTree);
+              }
+              next.push(nextTree);
+            } else {
+              inverted.add(decision);
             }
           }
-          moreTrees.push(node.children);
+        } else {
+          // If we reached the "end" of the grammar, we do not want to lose the last decision tree
+          if (tree.owner) {
+            inverted.add(tree.owner);
+          }
         }
       }
-
-      trees = moreTrees;
-      currentLL++;
+      prev = next;
+      next = [];
+      ll++;
     }
 
-    return decisions;
+    // TODO stop on impossible to resolve ambiguities
+    // TODO what if I dont need the follow stack to desambiguate?
+
+    this.printAmbiguities(rule, state, maxLL, inverted);
+
+    return {
+      tree: ll1,
+      inverted,
+    };
+  }
+
+  printAmbiguities(
+    rule: Declaration,
+    state: DState,
+    maxLL: number,
+    inverted: InvertedDecisionTree
+  ) {
+    const { ambiguities } = inverted;
+    if (ambiguities.length === 0) {
+      return;
+    }
+    const gen = new ParserGenerator(this.grammar, this, rule);
+    console.log("-----------");
+    console.log(
+      `Ambiguities in rule ${rule.name}, state ${state.id}, ll = ${maxLL}`
+    );
+    for (const { decision, condition } of ambiguities) {
+      console.log(
+        `Condition ${gen.renderConditionAnd(
+          condition
+        )} is not enough to choose between:`
+      );
+      for (const goto of decision.getGotos()) {
+        console.log(` - ${gen.renderTransition(goto)}`);
+      }
+    }
+    console.log("-----------");
   }
 }

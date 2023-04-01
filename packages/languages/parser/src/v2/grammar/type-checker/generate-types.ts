@@ -1,7 +1,7 @@
-import { Grammar } from "../grammar/grammar";
-import { TypesInferrer } from "../grammar/type-checker/inferrer";
-import { AnyNormalizedType } from "../grammar/type-checker/normalizer";
-import { never, nonNull } from "../utils";
+import { Grammar } from "../grammar";
+import { TypesInferrer } from "./inferrer";
+import { AnyNormalizedType } from "./normalizer";
+import { never, nonNull } from "../../utils";
 
 function toTypescript(type: AnyNormalizedType, names: Names): string {
   switch (type.clazz) {

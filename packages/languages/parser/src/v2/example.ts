@@ -1,6 +1,5 @@
-import { inspect } from "util";
 import { builder } from "./grammar/grammar-builder";
-import { tool } from "./tool";
+import { inferAndCheckTypes, tool } from "./tool";
 
 const {
   seq,
@@ -17,11 +16,13 @@ const {
   select,
   int,
   call2,
+  call,
 } = builder;
 
 const ruleA = rule(
   "A",
   seq(
+    optional(call("B", [])),
     optional(string("O")),
     choice(string("A"), string("B")),
     string("C"),
@@ -30,7 +31,8 @@ const ruleA = rule(
     optional(string("O")),
     field("my_obj", object([["id", int(10)]])),
     select(id("my_obj"), "id"),
-    select(id("my_obj"), "id")
+    select(id("my_obj"), "id"),
+    call("C", [int(10), int(20)])
   ),
   [],
   { start: true },
@@ -226,6 +228,6 @@ if (result) {
     console.log(code);
     console.log();
   }
-  console.log(result.types);
+  console.log(inferAndCheckTypes(result.grammar));
   console.log();
 }

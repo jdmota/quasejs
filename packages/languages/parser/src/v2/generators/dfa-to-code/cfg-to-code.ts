@@ -120,7 +120,7 @@ function removeBreaksOf(
       const lastIdx = blocks.length - 1;
       const last = blocks[lastIdx];
       const optimizedLast = removeBreaksOf(last, label, removed);
-      if (optimizedLast === last) return block; // Short path
+      if (optimizedLast === last) return block; // Fast path
       return makeSeq([...blocks.slice(0, lastIdx), optimizedLast]);
     }
     case "decision_block":
@@ -136,8 +136,11 @@ function removeBreaksOf(
         node: block.node,
       };
     case "break_block":
-      removed.value++;
-      return block.label === label ? empty : block;
+      if (block.label === label) {
+        removed.value++;
+        return empty;
+      }
+      return block;
     case "continue_block":
     case "return_block":
     case "loop_block":

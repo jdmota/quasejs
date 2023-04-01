@@ -18,23 +18,17 @@ export class TypeChecker {
     this.formatter = formatter;
   }
 
-  private formatLower(type: AnyType) {
-    return this.normalizer.lower.normalize(type).format();
-  }
-
-  private formatUpper(type: AnyType) {
-    return this.normalizer.upper.normalize(type).format();
+  private format(type: AnyType) {
+    return this.normalizer.normalize(type).format();
   }
 
   check(errors: GrammarError[]) {
     for (const [a, b, nodeA, nodeB] of this.registry.getErrors()) {
       errors.push(
         err(
-          `${this.formatLower(a)} is not a subtype of ${this.formatUpper(
-            b
-          )} in ${nodeA ? this.formatter.visit(nodeA) : null} and ${
-            nodeB ? this.formatter.visit(nodeB) : null
-          }`,
+          `${this.format(a)} is not a subtype of ${this.format(b)} in ${
+            nodeA ? this.formatter.visit(nodeA) : null
+          } and ${nodeB ? this.formatter.visit(nodeB) : null}`,
           nodeB?.loc
         )
       );

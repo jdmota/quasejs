@@ -5,6 +5,7 @@ import {
   ExprRule,
   FieldRule,
 } from "../grammar/grammar-builder";
+import { intersect } from "../utils/range-utils";
 
 export type AnyTransition =
   | EpsilonTransition
@@ -161,6 +162,10 @@ export class RangeTransition extends AbstractNotEpsilonTransition {
     );
   }
 
+  intersects(other: RangeTransition) {
+    return intersect(this, other);
+  }
+
   toString() {
     return `[Range [${this.from},${this.to}]]`;
   }
@@ -220,6 +225,8 @@ export class FieldTransition extends AbstractEpsilonTransition {
   }
 
   toString() {
-    return `[${this.name}${this.multiple ? "+=" : ""}...]`;
+    return `[${this.name} ${
+      this.multiple ? "+=" : ""
+    } ${this.transition.toString()}]`;
   }
 }

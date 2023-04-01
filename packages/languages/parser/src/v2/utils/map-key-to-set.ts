@@ -1,7 +1,6 @@
-type MapKey = {
-  hashCode(): number;
-  equals(other: unknown): boolean;
-};
+import { equals, ObjectHashEquals } from ".";
+
+type MapKey = ObjectHashEquals | null;
 
 type MapEntry<K, V> = {
   key: K;
@@ -22,13 +21,13 @@ export class MapKeyToSet<K extends MapKey, V> {
   }
 
   private entry(key: K) {
-    const idx = Math.abs(key.hashCode() % TABLE_SIZE);
+    const idx = key === null ? 0 : Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
       list = this.table[idx] = [];
     }
     return {
-      entry: list.find(entry => entry.key.equals(key)),
+      entry: list.find(entry => equals(entry.key, key)),
       list,
     };
   }

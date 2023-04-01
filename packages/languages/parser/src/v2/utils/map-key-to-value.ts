@@ -1,7 +1,6 @@
-type MapKey = {
-  hashCode(): number;
-  equals(other: unknown): boolean;
-};
+import { equals, ObjectHashEquals } from ".";
+
+type MapKey = ObjectHashEquals | null;
 
 type MapEntry<K, V> = {
   key: K;
@@ -20,13 +19,13 @@ export class MapKeyToValue<K extends MapKey, V> {
   }
 
   private entry(key: K) {
-    const idx = Math.abs(key.hashCode() % TABLE_SIZE);
+    const idx = key === null ? 0 : Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
       list = this.table[idx] = [];
     }
     return {
-      entry: list.find(entry => entry.key.equals(key)),
+      entry: list.find(entry => equals(entry.key, key)),
       list,
     };
   }
@@ -53,6 +52,21 @@ export class MapKeyToValue<K extends MapKey, V> {
     });
     this.size++;
     return true;
+  }
+
+  set(key: K, value: V) {
+    const { entry, list } = this.entry(key);
+    if (entry) {
+      const oldValue = entry.value;
+      entry.value = value;
+      return oldValue;
+    }
+    list.push({
+      key,
+      value,
+    });
+    this.size++;
+    return null;
   }
 
   computeIfAbsent(key: K, fn: () => V): V {

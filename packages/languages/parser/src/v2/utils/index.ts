@@ -1,5 +1,15 @@
 import type { Location } from "../runtime/input";
 
+export interface ObjectHashEquals {
+  hashCode(): number;
+  equals(other: unknown): boolean;
+}
+
+export function equals(a: ObjectHashEquals | null, b: ObjectHashEquals | null) {
+  if (a === null || b === null) return a === b;
+  return a.equals(b);
+}
+
 export type Optional<T> = T | undefined | null;
 
 export function find<A, B>(

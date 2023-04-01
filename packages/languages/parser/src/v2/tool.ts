@@ -5,14 +5,15 @@ import { FactoryRule } from "./factories/factory-rule";
 import { FactoryToken } from "./factories/factory-token";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
 import { ParserGenerator } from "./generators/generate-parser";
-import { generateTypes } from "./generators/generate-types";
-import { createGrammar } from "./grammar/grammar";
+import { generateTypes } from "./grammar/type-checker/generate-types";
+import { createGrammar, Grammar, GrammarError } from "./grammar/grammar";
 import {
   Declaration,
   RuleDeclaration,
   TokenDeclaration,
   TokenRules,
 } from "./grammar/grammar-builder";
+import { TypesInferrer } from "./grammar/type-checker/inferrer";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 import { locSuffix } from "./utils";
@@ -75,6 +76,7 @@ export function tool(opts: ToolInput) {
 
   // Init analyzer
   const analyzer = new Analyzer({
+    grammar,
     initialStates,
     follows,
   });
@@ -109,7 +111,26 @@ export function tool(opts: ToolInput) {
     );
   }
 
-  const types = generateTypes(grammar, result.inferrer);
+  return { tokenCode, ruleCode, grammar };
+}
 
-  return { tokenCode, ruleCode, types };
+export function inferAndCheckTypes(grammar: Grammar) {
+  const errors: GrammarError[] = [];
+  const inferrer = new TypesInferrer(grammar);
+
+  for (const rule of grammar.rules.values()) {
+    if (rule.type === "rule") {
+      inferrer.run(rule);
+    }
+    // TODO for token rules
+  }
+
+  inferrer.check(errors);
+
+  const types = generateTypes(grammar, inferrer);
+
+  return {
+    types,
+    errors,
+  };
 }
