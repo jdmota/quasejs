@@ -57,7 +57,7 @@ export class ParserGenerator {
     return curr;
   }
 
-  private markLocal(localVar: string) {
+  private markVar(localVar: string) {
     this.internalVars.add(localVar);
     return localVar;
   }
@@ -89,7 +89,7 @@ export class ParserGenerator {
       range: { from, to },
     } = test;
     // TODO test follow
-    this.markLocal("$ll" + ll);
+    this.markVar("$ll" + ll);
     return from === to
       ? `$ll${ll} === ${this.renderNum(from)}`
       : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
@@ -142,7 +142,7 @@ export class ParserGenerator {
   }
 
   // This method detects if we need to save a value for later assignment
-  // And optimizes code such as "$val = 2; field = $val;" to "field = 2;"
+  // And writes "field = 2;" instead of "$val = 2; field = $val;" if possible
   private renderExpectBlock(indent: string, block: ExpectBlock): string {
     const t = block.edge.transition;
     if (t instanceof FieldTransition && block.edge.start.outEdges.size === 1) {
@@ -152,17 +152,15 @@ export class ParserGenerator {
     const followingField = find(block.edge.dest.outEdges, ({ transition: f }) =>
       f instanceof FieldTransition && f.transition === t ? f : null
     );
-    const hasOnlyOneTransitionNext = block.edge.dest.outEdges.size === 1;
     if (followingField) {
+      const hasOnlyOneTransitionNext = block.edge.dest.outEdges.size === 1;
       if (hasOnlyOneTransitionNext) {
         return `${indent}${this.renderField(
           followingField,
           this.renderTransition(t)
         )};`;
       }
-      return `${indent}${this.markLocal("$val")} = ${this.renderTransition(
-        t
-      )};`;
+      return `${indent}${this.markVar("$val")} = ${this.renderTransition(t)};`;
     }
     return `${indent}${this.renderTransition(t)};`;
   }
@@ -181,7 +179,7 @@ export class ParserGenerator {
         .join(", ")})`;
     }
     if (t instanceof FieldTransition) {
-      return this.renderField(t, this.markLocal("$val"));
+      return this.renderField(t, this.markVar("$val"));
     }
     if (t instanceof ActionTransition) {
       return this.renderCode(t.code);
@@ -202,7 +200,7 @@ export class ParserGenerator {
 
   private markTransitionAfterDispatch(indent: string, edge: CFGEdge) {
     return edge.originalDest
-      ? `${indent}  ${this.markLocal(
+      ? `${indent}  ${this.markVar(
           `$d${this.nodeId(edge.dest)}`
         )} = ${this.nodeId(edge.originalDest)};`
       : "";
@@ -218,15 +216,14 @@ export class ParserGenerator {
         // If this corresponds to a dispatch node
         if (block.node.state == null) {
           return lines([
-            `${indent}switch(${this.markLocal(
-              `$d${this.nodeId(block.node)}`
-            )}){`,
+            `${indent}switch(${this.markVar(`$d${this.nodeId(block.node)}`)}){`,
             ...block.choices.map(([t, d]) => {
               assertion(t.transition instanceof DispatchTransition);
-              return (
-                `${indent}  case ${this.nodeId(t.dest)}:\n` +
-                this.r(`${indent}    `, d)
-              );
+              return lines([
+                `${indent}  case ${this.nodeId(t.dest)}:`,
+                this.r(`${indent}    `, d),
+                endsWithFlowBreak(d) ? "" : `${indent}    break;`,
+              ]);
             }),
             `${indent}}`,
           ]);
@@ -261,7 +258,7 @@ export class ParserGenerator {
         return (
           lines(
             Array.from(range(1, choices.maxLL)).map(
-              n => `${indent}${this.markLocal("$ll" + n)} = this.ll(${n});`
+              n => `${indent}${this.markVar("$ll" + n)} = this.ll(${n});`
             )
           ) +
           `\n${indent}` +

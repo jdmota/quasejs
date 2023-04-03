@@ -264,26 +264,34 @@ class StackFrame implements ObjectHashEquals {
     );
   }
 
-  push(call: CallTransition) {
-    return new StackFrame(
-      this.analyzer,
-      this,
-      call.ruleName,
-      this.analyzer.initialStates.get(call.ruleName)!!,
-      this.follow
-    );
+  push(call: CallTransition): readonly StackFrame[] {
+    let s: StackFrame | null = this;
+    do {
+      if (s.thisRule === call.ruleName) {
+        // Avoid infinite loop due to left-recursive grammars.
+        // It is enough to check the name to find left-recursion,
+        // since if the recursion was guarded with a token, we would not get here.
+        return [];
+      }
+      s = s.parent;
+    } while (s);
+
+    return [
+      new StackFrame(
+        this.analyzer,
+        this,
+        call.ruleName,
+        this.analyzer.initialStates.get(call.ruleName)!!,
+        this.follow
+      ),
+    ];
   }
 
-  pop(ret: ReturnTransition): Readonly<StackFrame[]> {
+  pop(ret: ReturnTransition): readonly StackFrame[] {
     if (this.parent) {
       return [this.parent];
     }
     const f = this.analyzer.follows.get(this.thisRule);
-    // Rules with an empty follow set are the start rule or unused rules
-    // The start rule should terminate with the "end" token, so we never get here
-    // Unused rules are not reachable nor analyzed
-    // In summary, do not worry about empty follow sets
-    // TODO do not analyze unused rules assertion(!!f && f.length > 0);
     return f
       ? f.map(
           info =>
@@ -368,16 +376,14 @@ export class Analyzer {
     let prev: readonly StackFrame[] = Array.from(start);
     let next: StackFrame[] = [];
 
-    // TODO this will fail if we have left-recursion
-
     while (prev.length) {
       for (const stack of prev) {
         if (seen.set(stack, true) === true) continue;
-        // FIXME instead of this, what we need is a cache from StackFrame to ll1 set
+        // TODO cache from StackFrame to ll1 set?
 
         for (const [transition, dest] of stack.state) {
           if (transition instanceof CallTransition) {
-            next.push(stack.move(dest).push(transition));
+            next.push(...stack.move(dest).push(transition));
           } else if (transition instanceof ReturnTransition) {
             next.push(...stack.pop(transition));
           } else if (transition instanceof RangeTransition) {
@@ -399,7 +405,7 @@ export class Analyzer {
 
     for (const [goto, dest] of state) {
       if (goto instanceof CallTransition) {
-        this.ll1([stack.move(dest).push(goto)], goto, ll1);
+        this.ll1(stack.move(dest).push(goto), goto, ll1);
       } else if (goto instanceof ReturnTransition) {
         this.ll1(stack.pop(goto), goto, ll1);
       } else if (goto instanceof RangeTransition) {
