@@ -17,6 +17,7 @@ import { TypesInferrer } from "./grammar/type-checker/inferrer";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 import { locSuffix } from "./utils";
+import { generateAll } from "./generators/generate-all";
 
 type ToolInput = {
   readonly name: string;
@@ -92,7 +93,7 @@ export function tool(opts: ToolInput) {
   for (const [rule, block] of tokenCodeBlocks) {
     tokenCode.set(
       rule,
-      new ParserGenerator(grammar, analyzer, rule).process(block)
+      new ParserGenerator(grammar, analyzer, rule).process("  ", block)
     );
   }
 
@@ -107,11 +108,11 @@ export function tool(opts: ToolInput) {
   for (const [rule, block] of ruleCodeBlocks) {
     ruleCode.set(
       rule,
-      new ParserGenerator(grammar, analyzer, rule).process(block)
+      new ParserGenerator(grammar, analyzer, rule).process("  ", block)
     );
   }
 
-  return { tokenCode, ruleCode, grammar };
+  return { code: generateAll(grammar, tokenCode, ruleCode), grammar };
 }
 
 export function inferAndCheckTypes(grammar: Grammar) {

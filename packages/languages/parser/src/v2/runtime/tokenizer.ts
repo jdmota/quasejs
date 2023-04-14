@@ -1,11 +1,12 @@
 import { error } from "./error";
 import { Position, Location, Input } from "./input";
+import { Stream } from "./stream";
 
 export type Token = Readonly<{
   id: number;
   label: string;
-  image: string;
   loc: Location;
+  token: unknown;
 }>;
 
 export const FAKE_LOC: Location = {
@@ -21,59 +22,89 @@ export const FAKE_LOC: Location = {
   },
 };
 
-export class Tokenizer {
-  input: Input;
-  labels: { [key: number]: string | undefined };
-  idToChannels: { [key: number]: string | undefined };
-  channels: { [key: string]: Token[] | undefined };
-  start: Position;
+type IdToChannels = Readonly<{
+  [key: number]: readonly string[] | undefined;
+}>;
 
-  constructor(string: string) {
-    this.input = Input.new({ string });
-    this.labels = [];
-    this.idToChannels = {};
+export abstract class Tokenizer extends Stream<Token> {
+  private input: Input;
+  private idToChannels: IdToChannels;
+  private channels: { [key: string]: Token[] | undefined };
+
+  constructor(input: Input) {
+    super();
+    this.input = input;
+    this.idToChannels = this.getIdToChannels();
     this.channels = {};
-    this.start = this.input.position();
   }
 
-  unexpected() {
-    const { current } = this.input;
-    throw error(
-      `Unexpected character ${String.fromCodePoint(current)} ${current}`,
-      this.start
-    );
+  abstract token$lexer(): any;
+  abstract getIdToChannels(): IdToChannels;
+
+  protected override next(): Token {
+    while (true) {
+      //this.start = this.input.position();
+      const token: Token = this.token$lexer();
+      //this.end = this.input.position();
+
+      const channels = this.idToChannels[token.id];
+      if (channels) {
+        for (const chan of channels) {
+          const array = this.channels[chan] || (this.channels[chan] = []);
+          array.push(token);
+        }
+        continue;
+      }
+
+      return token;
+    }
   }
 
-  loc(): Location {
+  override ll1Loc() {
+    return this.llArray[0].loc;
+  }
+
+  override ll1Id() {
+    return this.llArray[0].id;
+  }
+
+  /*loc(): Location {
     return {
       start: this.start,
       end: this.input.position(),
     };
+  }*/
+
+  e(id: number) {
+    return this.input.expect(id);
   }
 
-  readToken(): number {
-    throw new Error("Abstract");
+  e2(a: number, b: number) {
+    return this.input.expect2(a, b);
   }
 
-  expect1(code: number) {
-    const { current } = this.input;
-    if (current === code) {
-      this.input.advance();
-      return current;
-    }
-    this.unexpected();
+  ll(n: number) {
+    return this.input.lookahead(n);
   }
 
-  expect2(a: number, b: number) {
-    const { current } = this.input;
-    if (a <= current && current <= b) {
-      this.input.advance();
-      return current;
-    }
-    this.unexpected();
+  err(): never {
+    this.input.unexpected(this.input.ll1Loc(), this.input.lookahead(1));
   }
 
-  makeToken(id: number, start: Position, end: Position): Token {
+  override unexpected(
+    loc: Location,
+    found: Token,
+    expected?: number | string
+  ): never {
+    throw error(
+      `Unexpected token ${found.label}${
+        expected == null ? "" : `, expected ${expected}`
+      }`,
+      loc.start
+    );
+  }
+
+  /*makeToken(id: number, start: Position, end: Position): Token {
     if (id === -2) {
       return {
         id,
@@ -105,34 +136,16 @@ export class Tokenizer {
         end,
       },
     };
+  }*/
+
+  private stack: string[] = [];
+
+  push(label: string) {
+    this.stack.push(label);
   }
 
-  nextTokenId(): number {
-    while (true) {
-      this.start = this.input.position();
-
-      if (this.input.eof()) {
-        return -1;
-      }
-
-      const tokenId = this.readToken();
-      const channels = this.idToChannels[tokenId];
-      if (channels) {
-        for (const chan of channels) {
-          const array = this.channels[chan] || (this.channels[chan] = []);
-          array.push(
-            this.makeToken(tokenId, this.start, this.input.position())
-          );
-        }
-        continue;
-      }
-
-      return tokenId;
-    }
-  }
-
-  nextToken(): Token {
-    const tokenId = this.nextTokenId();
-    return this.makeToken(tokenId, this.start, this.input.position());
+  pop<T>(value: T): T {
+    this.stack.pop();
+    return value;
   }
 }

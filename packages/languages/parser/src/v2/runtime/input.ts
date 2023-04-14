@@ -1,3 +1,7 @@
+import { nonNull } from "../utils";
+import { error } from "./error";
+import { Stream } from "./stream";
+
 export type Position = Readonly<{
   pos: number;
   line: number;
@@ -13,78 +17,67 @@ export type InputOpts = Readonly<{
   string: string;
 }>;
 
-export class Input {
-  pos: number;
-  current: number;
-  line: number;
-  column: number;
-  string: string;
-  size: number;
+export class Input extends Stream<number> {
+  private ll1: { pos: number; line: number; column: number };
+  private string: string;
+  private size: number;
+  private pos: number;
 
-  private constructor() {
+  constructor(opts: InputOpts) {
+    super();
+    this.ll1 = {
+      pos: 0,
+      line: 1,
+      column: 0,
+    };
+    this.string = opts.string;
+    this.size = opts.string.length;
     this.pos = 0;
-    this.line = 1;
-    this.column = 0;
-    this.current = -1;
-    this.string = "";
-    this.size = 0;
   }
 
-  static new(opts: InputOpts) {
-    const input = new Input();
-    input.string = opts.string;
-    input.size = opts.string.length;
-    input.current = input.codeAt(0);
-    return input;
+  protected override next() {
+    const code = this.codeAt(this.pos);
+    this.pos += code > 0xffff ? 2 : 1;
+    return code;
   }
 
-  clone() {
-    const input = new Input();
-    input.pos = this.pos;
-    input.line = this.line;
-    input.column = this.column;
-    input.current = this.current;
-    input.string = this.string;
-    input.size = this.size;
-    return input;
-  }
-
-  position(): Position {
+  override ll1Loc() {
     return {
-      pos: this.pos,
-      line: this.line,
-      column: this.column,
+      start: { ...this.ll1 },
+      end: { ...this.ll1 },
     };
   }
 
-  advance() {
-    const { current: prev } = this;
+  override ll1Id(): number {
+    return this.llArray[0];
+  }
+
+  override advance() {
+    const { ll1 } = this;
+    const prev = nonNull(this.llArray.shift());
     // "\r"
     if (prev === 13) {
-      this.pos++;
-      this.current = this.codeAt(this.pos);
+      ll1.pos++;
       // "\n"
-      if (this.current === 10) {
-        this.column++;
+      if (this.lookahead(1) === 10) {
+        ll1.column++;
       } else {
-        this.line++;
-        this.column = 0;
+        ll1.line++;
+        ll1.column = 0;
       }
       // "\n"
     } else if (prev === 10) {
-      this.pos++;
-      this.current = this.codeAt(this.pos);
-      this.line++;
-      this.column = 0;
+      ll1.pos++;
+      ll1.line++;
+      ll1.column = 0;
     } else {
       if (prev > 0xffff) {
-        this.pos += 2;
-        this.column += 2;
+        ll1.pos += 2;
+        ll1.column += 2;
       } else {
-        this.pos++;
-        this.column++;
+        ll1.pos++;
+        ll1.column++;
       }
-      this.current = this.codeAt(this.pos);
     }
   }
 
@@ -93,13 +86,9 @@ export class Input {
     return this.string.slice(start, end);
   }
 
-  eof() {
-    return this.pos >= this.size;
-  }
-
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt
   // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
-  codeAt(index: number) {
+  private codeAt(index: number) {
     const { string, size } = this;
     if (index < 0 || index >= this.size) {
       return -1;
@@ -113,5 +102,18 @@ export class Input {
       }
     }
     return first;
+  }
+
+  override unexpected(
+    loc: Location,
+    found: number,
+    expected?: string | number
+  ): never {
+    throw error(
+      `Unexpected character ${String.fromCodePoint(found)} (code: ${found})${
+        expected == null ? "" : `, expected ${expected}`
+      }`,
+      loc?.start
+    );
   }
 }

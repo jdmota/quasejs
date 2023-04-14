@@ -16,7 +16,7 @@ import {
 } from "../automaton/transitions";
 import { Grammar } from "../grammar/grammar";
 import { Declaration, ExprRule } from "../grammar/grammar-builder";
-import { any, assertion, find, never } from "../utils";
+import { any, assertion, find, lines, never } from "../utils";
 import { range } from "../utils/range-utils";
 import {
   CodeBlock,
@@ -24,10 +24,6 @@ import {
   ExpectBlock,
 } from "./dfa-to-code/cfg-to-code";
 import { CFGEdge, CFGNode, DispatchTransition } from "./dfa-to-code/dfa-to-cfg";
-
-function lines(arr: readonly (string | undefined)[], separator = "\n"): string {
-  return arr.filter(Boolean).join(separator);
-}
 
 export class ParserGenerator {
   private readonly grammar: Grammar;
@@ -57,9 +53,11 @@ export class ParserGenerator {
     return curr;
   }
 
-  private markVar(localVar: string) {
-    this.internalVars.add(localVar);
-    return localVar;
+  private markVar(name: string) {
+    if (!this.rule.fields.has(name)) {
+      this.internalVars.add(name);
+    }
+    return name;
   }
 
   private renderConditionOr(conditions: DecisionOr) {
@@ -136,6 +134,7 @@ export class ParserGenerator {
   }
 
   private renderField(t: FieldTransition, what: string) {
+    this.markVar(t.name);
     return t.multiple
       ? `(${t.name} = ${t.name} || []).push(${what})`
       : `${t.name} = ${what}`;
@@ -150,7 +149,7 @@ export class ParserGenerator {
       return "";
     }
     const followingField = find(block.edge.dest.outEdges, ({ transition: f }) =>
-      f instanceof FieldTransition && f.transition === t ? f : null
+      f instanceof FieldTransition && f.transition.equals(t) ? f : null
     );
     if (followingField) {
       const hasOnlyOneTransitionNext = block.edge.dest.outEdges.size === 1;
@@ -168,9 +167,9 @@ export class ParserGenerator {
   renderTransition(t: AnyTransition): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
-        return `this.expect(${this.renderNum(t.from)})`;
+        return `this.e(${this.renderNum(t.from)})`;
       }
-      return `this.expect2(${this.renderNum(t.from)}, ${this.renderNum(t.to)})`;
+      return `this.e2(${this.renderNum(t.from)}, ${this.renderNum(t.to)})`;
     }
     if (t instanceof CallTransition) {
       const type = this.grammar.getRule(t.ruleName).type;
@@ -251,7 +250,7 @@ export class ParserGenerator {
             `${indent}  default:\n` +
               (block.default
                 ? this.r(`${indent}    `, block.default)
-                : `${indent}    this.unexpected();`) +
+                : `${indent}    this.err();`) +
               `\n${indent}}`,
           ]);
         }
@@ -276,7 +275,7 @@ export class ParserGenerator {
               `{\n${
                 block.default
                   ? this.r(`${indent}  `, block.default)
-                  : `${indent}  this.unexpected();`
+                  : `${indent}  this.err();`
               }\n${indent}}`,
             ],
             " else "
@@ -309,20 +308,20 @@ export class ParserGenerator {
     }
   }
 
-  process(block: CodeBlock) {
-    const rendered = this.r("  ", block);
+  process(indent: string, block: CodeBlock) {
+    const rendered = this.r(`${indent}  `, block);
     const args =
       this.rule.type === "rule" ? this.rule.args.map(a => a.arg).join(",") : "";
     const vars = [
       ...Array.from(this.internalVars),
       ...Array.from(this.rule.fields).map(([name, [{ multiple }]]) =>
-        multiple ? `${name}=[]` : `${name}=null`
+        multiple ? `${name}=[]` : `${name}:any=null`
       ),
     ];
-    const decls = vars.length > 0 ? `\n  let ${vars.join(", ")};` : "";
-    return `${this.rule.type}${this.rule.name}(${args}) {${
-      this.useStackContext ? `\n  this.push("${this.rule.name}");` : ""
-    }${decls}\n${rendered}\n}`;
+    const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
+    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${
+      this.useStackContext ? `\n${indent}  this.push("${this.rule.name}");` : ""
+    }${decls}\n${rendered}\n${indent}}`;
   }
 
   private useStackContext = true;

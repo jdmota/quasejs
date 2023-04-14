@@ -89,7 +89,7 @@ export function endsWithFlowBreak(block: CodeBlock): boolean {
   if (block.type === "seq_block") {
     const { blocks } = block;
     const last = blocks[blocks.length - 1];
-    return isBreakFlow(last);
+    return endsWithFlowBreak(last);
   }
   if (block.type === "decision_block") {
     return (
@@ -101,78 +101,6 @@ export function endsWithFlowBreak(block: CodeBlock): boolean {
 }
 
 type IntRef = { value: number };
-
-// The optimization removes "breaks" with this label if they are the last statement
-function removeBreaksOf(
-  block: CodeBlock,
-  label: Label,
-  removed: IntRef
-): CodeBlock {
-  switch (block.type) {
-    case "scope_block":
-      return {
-        type: "scope_block",
-        label,
-        block: removeBreaksOf(block.block, label, removed),
-      };
-    case "seq_block": {
-      const { blocks } = block;
-      const lastIdx = blocks.length - 1;
-      const last = blocks[lastIdx];
-      const optimizedLast = removeBreaksOf(last, label, removed);
-      if (optimizedLast === last) return block; // Fast path
-      return makeSeq([...blocks.slice(0, lastIdx), optimizedLast]);
-    }
-    case "decision_block":
-      return {
-        type: "decision_block",
-        choices: block.choices.map(([edge, choice]) => [
-          edge,
-          removeBreaksOf(choice, label, removed),
-        ]),
-        default: block.default
-          ? removeBreaksOf(block.default, label, removed)
-          : null,
-        node: block.node,
-      };
-    case "break_block":
-      if (block.label === label) {
-        removed.value++;
-        return empty;
-      }
-      return block;
-    case "continue_block":
-    case "return_block":
-    case "loop_block":
-    case "expect_block":
-    case "empty_block":
-      return block;
-    default:
-      never(block);
-  }
-}
-
-function makeSeq(_blocks: CodeBlock[]): CodeBlock {
-  const blocks = _blocks
-    .flatMap(b => (b.type === "seq_block" ? b.blocks : b))
-    .filter(b => b.type !== "empty_block");
-  switch (blocks.length) {
-    case 0:
-      return empty;
-    case 1:
-      return blocks[0];
-    default: {
-      const firstBreakOrContinue = blocks.findIndex(isBreakFlow);
-      return {
-        type: "seq_block",
-        blocks:
-          firstBreakOrContinue === -1
-            ? blocks
-            : blocks.slice(0, firstBreakOrContinue + 1),
-      };
-    }
-  }
-}
 
 function makeLoop(label: Label, block: CodeBlock): CodeBlock {
   if (block.type === "empty_block") {
@@ -192,6 +120,83 @@ export class CfgToCode {
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
   private usedScopeLabels = new Map<string, number>();
+
+  private makeSeq(_blocks: CodeBlock[]): CodeBlock {
+    const blocks = _blocks
+      .flatMap(b => (b.type === "seq_block" ? b.blocks : b))
+      .filter(b => b.type !== "empty_block");
+    switch (blocks.length) {
+      case 0:
+        return empty;
+      case 1:
+        return blocks[0];
+      default: {
+        const firstBreakOrContinue = blocks.findIndex(endsWithFlowBreak);
+
+        blocks.slice(firstBreakOrContinue + 1).forEach(b => {
+          if (b.type === "break_block") this.unuseScopeBreaks(b.label, 1);
+        });
+
+        return {
+          type: "seq_block",
+          blocks:
+            firstBreakOrContinue === -1
+              ? blocks
+              : blocks.slice(0, firstBreakOrContinue + 1),
+        };
+      }
+    }
+  }
+
+  // The optimization removes "breaks" with this label if they are the last statement
+  private removeBreaksOf(
+    block: CodeBlock,
+    label: Label,
+    removed: IntRef
+  ): CodeBlock {
+    switch (block.type) {
+      case "scope_block":
+        return {
+          type: "scope_block",
+          label,
+          block: this.removeBreaksOf(block.block, label, removed),
+        };
+      case "seq_block": {
+        const { blocks } = block;
+        const lastIdx = blocks.length - 1;
+        const last = blocks[lastIdx];
+        const optimizedLast = this.removeBreaksOf(last, label, removed);
+        if (optimizedLast === last) return block; // Fast path
+        return this.makeSeq([...blocks.slice(0, lastIdx), optimizedLast]);
+      }
+      case "decision_block":
+        return {
+          type: "decision_block",
+          choices: block.choices.map(([edge, choice]) => [
+            edge,
+            this.removeBreaksOf(choice, label, removed),
+          ]),
+          default: block.default
+            ? this.removeBreaksOf(block.default, label, removed)
+            : null,
+          node: block.node,
+        };
+      case "break_block":
+        if (block.label === label) {
+          removed.value++;
+          return empty;
+        }
+        return block;
+      case "continue_block":
+      case "return_block":
+      case "loop_block":
+      case "expect_block":
+      case "empty_block":
+        return block;
+      default:
+        never(block);
+    }
+  }
 
   private createScopeBreak(label: string): BreakScopeBlock {
     const curr = this.usedScopeLabels.get(label) ?? 0;
@@ -234,7 +239,7 @@ export class CfgToCode {
 
   private surroundWithScope(label: Label, block: CodeBlock): CodeBlock {
     const removed = { value: 0 };
-    const optimized = removeBreaksOf(block, label, removed);
+    const optimized = this.removeBreaksOf(block, label, removed);
     const usedLabels = this.unuseScopeBreaks(label, removed.value);
     if (optimized.type === "empty_block") {
       return empty;
@@ -263,7 +268,7 @@ export class CfgToCode {
         }
         choices.push([
           outEdge,
-          makeSeq([
+          this.makeSeq([
             {
               type: "expect_block",
               edge: outEdge,
@@ -280,7 +285,7 @@ export class CfgToCode {
           // Nest the code
           choices.push([
             outEdge,
-            makeSeq([
+            this.makeSeq([
               {
                 type: "expect_block",
                 edge: outEdge,
@@ -291,7 +296,7 @@ export class CfgToCode {
         } else {
           choices.push([
             outEdge,
-            makeSeq([
+            this.makeSeq([
               {
                 type: "expect_block",
                 edge: outEdge,
@@ -332,7 +337,7 @@ export class CfgToCode {
       block = {
         type: "loop_block",
         label,
-        block: makeSeq([block, this.createScopeBreak(label)]),
+        block: this.makeSeq([block, this.createScopeBreak(label)]),
       };
     }
 
@@ -356,7 +361,7 @@ export class CfgToCode {
     let lastBlock: CodeBlock = empty;
     for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
-      lastBlock = makeSeq([
+      lastBlock = this.makeSeq([
         this.surroundWithScope(this.getScopeLabel(nodes), lastBlock),
         this.handleNodes(nodes, ordered),
       ]);

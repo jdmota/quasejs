@@ -1,7 +1,6 @@
 import {
   RuleMap,
   AnyRule,
-  TokenRules,
   RuleDeclaration,
   CallRule,
   ChoiceRule,
@@ -33,7 +32,8 @@ type IRuleVisitor = {
 export abstract class RuleVisitor<
   Data extends ReadonlyData,
   ReadonlyData = Data
-> implements IRuleVisitor {
+> implements IRuleVisitor
+{
   protected readonly data: Data;
 
   constructor(data: Data) {
@@ -161,7 +161,7 @@ export class FieldsCollector extends RuleVisitor<
     super(new Map());
   }
 
-  field(node: FieldRule) {
+  override field(node: FieldRule) {
     const array = this.data.get(node.name) ?? [];
     array.push(node);
     this.data.set(node.name, array);
@@ -179,22 +179,22 @@ export class TokensCollector extends RuleVisitor<TokensStore> {
     super(new TokensStore());
   }
 
-  string(node: StringRule) {
+  override string(node: StringRule) {
     this.data.get(node);
     super.string(node);
   }
 
-  regexp(node: RegExpRule) {
+  override regexp(node: RegExpRule) {
     this.data.get(node);
     super.regexp(node);
   }
 
-  eof(node: EofRule) {
+  override eof(node: EofRule) {
     this.data.get(node);
     super.eof(node);
   }
 
-  token(node: TokenDeclaration) {
+  override token(node: TokenDeclaration) {
     this.data.get(node);
     // No super call here
   }
@@ -208,12 +208,12 @@ export class ReferencesCollector extends RuleVisitor<
     super([]);
   }
 
-  call(node: CallRule) {
+  override call(node: CallRule) {
     this.data.push(node);
     super.call(node);
   }
 
-  id(node: IdRule) {
+  override id(node: IdRule) {
     this.data.push(node);
     super.id(node);
   }
@@ -227,7 +227,7 @@ export class ExternalCallsCollector extends RuleVisitor<
     super(new Map());
   }
 
-  call2(node: Call2Rule) {
+  override call2(node: Call2Rule) {
     const array = this.data.get(node.id) ?? [];
     array.push(node);
     this.data.set(node.id, array);

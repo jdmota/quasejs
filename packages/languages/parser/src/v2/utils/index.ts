@@ -80,3 +80,10 @@ export function nonNull<T>(val: T | undefined | null): T {
   }
   return val;
 }
+
+export function lines(
+  arr: readonly (string | undefined)[],
+  separator = "\n"
+): string {
+  return arr.filter(Boolean).join(separator);
+}

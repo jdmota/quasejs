@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { builder } from "./grammar/grammar-builder";
 import { inferAndCheckTypes, tool } from "./tool";
 
@@ -17,6 +19,7 @@ const {
   int,
   call2,
   call,
+  token,
 } = builder;
 
 const ruleA = rule(
@@ -108,13 +111,25 @@ const ruleE = rule(
 
 const ruleF = rule(
   "F",
-  choice(
-    field("ret", object([["x", select(id("arg"), "x")]])),
-    field("ret", object([["x", select(id("arg"), "x")]]))
+  seq(
+    choice(
+      field("ret", object([["x", select(id("arg"), "x")]])),
+      field("ret", object([["x", select(id("arg"), "x")]]))
+    ),
+    field("w", call("W", []))
   ),
   [rule.arg("arg")],
   {},
-  id("ret")
+  id("w")
+);
+
+const ruleG = rule("G", choice(string("<<<"), string("<<")), [], {}, null);
+
+const tokenW = token(
+  "W",
+  field("text", string("W")),
+  { type: "normal" },
+  id("text")
 );
 
 // const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
@@ -215,19 +230,12 @@ console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  ruleDecls: [ruleA, ruleB, ruleC, ruleD, ruleE, ruleF],
-  tokenDecls: [],
+  ruleDecls: [ruleA, ruleB, ruleC, ruleD, ruleE, ruleF, ruleG],
+  tokenDecls: [tokenW],
 });
 
 if (result) {
-  for (const [, code] of result.tokenCode) {
-    console.log(code);
-    console.log();
-  }
-  for (const [, code] of result.ruleCode) {
-    console.log(code);
-    console.log();
-  }
+  fs.writeFileSync(path.join(__dirname, "example.gen.ts"), result.code);
   console.log(inferAndCheckTypes(result.grammar));
   console.log();
 }

@@ -102,10 +102,6 @@ export class FactoryRule extends AbstractFactory {
   genRule(rule: RuleDeclaration): Frag {
     let { start, end } = this.gen(rule.rule);
 
-    if (rule.modifiers.inline) {
-      // TODO
-    }
-
     if (rule.modifiers.noSkips) {
       // TODO
     }

@@ -144,6 +144,7 @@ export class TokensStore {
   private uuid: number = -1;
 
   constructor() {
+    // Ensure the EOF token exists
     this.get(builder.eof());
   }
 
@@ -201,7 +202,6 @@ export class TokensStore {
     }
   }
 
-  // TODO text extraction
   createLexer() {
     const tokens = [];
     for (const [, { id, decl }] of this.tokens) {

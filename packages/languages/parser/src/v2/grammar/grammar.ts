@@ -57,13 +57,13 @@ export function createGrammar(
   const externalCalls = new ExternalCallsCollector();
 
   // Detect duplicate rules
-  const rules = new Map<string, Declaration>();
+  const declarations = new Map<string, Declaration>();
   for (const rule of decls) {
-    const curr = rules.get(rule.name);
+    const curr = declarations.get(rule.name);
     if (curr) {
       errors.push(err(`Duplicate rule ${rule.name}`, curr.loc, rule.loc));
     } else {
-      rules.set(rule.name, rule);
+      declarations.set(rule.name, rule);
     }
   }
 
@@ -76,7 +76,7 @@ export function createGrammar(
   }
 
   // For each declaration...
-  for (const decl of rules.values()) {
+  for (const decl of declarations.values()) {
     externalCalls.visitDecl(decl);
 
     if (decl.type === "rule") {
@@ -135,7 +135,7 @@ export function createGrammar(
       const id = ref.id;
       switch (ref.type) {
         case "call":
-          const referenced = rules.get(id);
+          const referenced = declarations.get(id);
           // Detect undefined references
           if (!referenced) {
             errors.push(err(`Cannot find rule ${id}`, ref.loc));
@@ -211,7 +211,7 @@ export function createGrammar(
   }
 
   if (errors.length === 0) {
-    const grammar = new Grammar(name, rules, tokens, startRules[0]);
+    const grammar = new Grammar(name, declarations, tokens, startRules[0]);
 
     return {
       grammar,
@@ -241,10 +241,6 @@ export class Grammar {
     this.rules = rules;
     this.tokens = tokens;
     this.startRule = startRule;
-  }
-
-  getStart() {
-    return this.startRule;
   }
 
   getRule(ruleName: string) {

@@ -38,7 +38,6 @@ export type Assignables = TokenRules | CallRule | ExprRule;
 export type RuleModifiers = {
   readonly start?: boolean;
   readonly noSkips?: boolean;
-  readonly inline?: boolean;
 };
 
 export type RuleDeclaration = {
