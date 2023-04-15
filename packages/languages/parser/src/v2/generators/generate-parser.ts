@@ -3,6 +3,7 @@ import {
   DecisionAnd,
   DecisionOr,
   DecisionTest,
+  FollowStack,
 } from "../analysis/analysis";
 import {
   ActionTransition,
@@ -14,6 +15,7 @@ import {
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions";
+import { FollowInfo } from "../grammar/follow-info";
 import { Grammar } from "../grammar/grammar";
 import { Declaration, ExprRule } from "../grammar/grammar-builder";
 import { any, assertion, find, lines, never } from "../utils";
@@ -81,18 +83,38 @@ export class ParserGenerator {
     );
   }
 
+  private renderFollowInfo(info: FollowInfo) {
+    return `${info.id}${
+      this.DEBUG ? `/* ${info.rule} ${info.enterState.id} */` : ""
+    }`;
+  }
+
+  private renderFollowCondition(follow: FollowStack | null) {
+    let f = follow;
+    const array = [];
+    while (f) {
+      array.push(this.renderFollowInfo(f.info));
+      f = f.child;
+    }
+    return array.length ? `this.ctx.f([${array.join(", ")}])` : null;
+  }
+
   private renderCondition(ll: number, test: DecisionTest) {
     const {
       follow,
       range: { from, to },
     } = test;
-    // TODO test follow
     this.markVar("$ll" + ll);
-    return from === to
-      ? `$ll${ll} === ${this.renderNum(from)}`
-      : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
-          to
-        )}`;
+    return [
+      from === to
+        ? `$ll${ll} === ${this.renderNum(from)}`
+        : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
+            to
+          )}`,
+      this.renderFollowCondition(follow),
+    ]
+      .filter(Boolean)
+      .join(" && ");
   }
 
   private renderNum(num: number) {
@@ -173,9 +195,14 @@ export class ParserGenerator {
     }
     if (t instanceof CallTransition) {
       const type = this.grammar.getRule(t.ruleName).type;
-      return `this.${type}${t.ruleName}(${t.args
+      const code = `this.${type}${t.ruleName}(${t.args
         .map(a => this.renderCode(a))
         .join(", ")})`;
+      return this.useStackContext
+        ? `this.ctx.u(${this.renderFollowInfo(
+            this.analyzer.follows.getByTransition(t)
+          )}, ${code})`
+        : code;
     }
     if (t instanceof FieldTransition) {
       return this.renderField(t, this.markVar("$val"));
@@ -188,7 +215,7 @@ export class ParserGenerator {
     }
     if (t instanceof ReturnTransition) {
       return this.useStackContext
-        ? `return this.pop(${this.renderCode(t.returnCode)})`
+        ? `return this.ctx.o(${this.renderCode(t.returnCode)})`
         : `return ${this.renderCode(t.returnCode)}`;
     }
     if (t instanceof EpsilonTransition) {
@@ -319,9 +346,7 @@ export class ParserGenerator {
       ),
     ];
     const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${
-      this.useStackContext ? `\n${indent}  this.push("${this.rule.name}");` : ""
-    }${decls}\n${rendered}\n${indent}}`;
+    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n${indent}}`;
   }
 
   private useStackContext = true;

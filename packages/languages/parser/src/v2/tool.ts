@@ -1,4 +1,4 @@
-import { Analyzer, AnalyzerFollow } from "./analysis/analysis";
+import { Analyzer } from "./analysis/analysis";
 import { Automaton, Frag } from "./automaton/automaton";
 import { DState } from "./automaton/state";
 import { FactoryRule } from "./factories/factory-rule";
@@ -18,6 +18,7 @@ import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 import { locSuffix } from "./utils";
 import { generateAll } from "./generators/generate-all";
+import { FollowInfoDB } from "./grammar/follow-info";
 
 type ToolInput = {
   readonly name: string;
@@ -41,7 +42,7 @@ export function tool(opts: ToolInput) {
 
   // Init information the analyzer will need
   const initialStates = new Map<string, DState>();
-  const follows = new Map<string, AnalyzerFollow[]>();
+  const follows = new FollowInfoDB();
 
   // Init minimizers
   const nfaToDfa = new NfaToDfa();

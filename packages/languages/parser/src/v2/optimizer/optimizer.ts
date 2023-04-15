@@ -1,4 +1,3 @@
-import { AnalyzerFollow } from "../analysis/analysis";
 import { State, DState } from "../automaton/state";
 import {
   AnyTransition,
@@ -6,6 +5,7 @@ import {
   CallTransition,
 } from "../automaton/transitions";
 import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
+import { FollowInfoDB } from "../grammar/follow-info";
 
 const EPSILON = new EpsilonTransition();
 
@@ -40,10 +40,10 @@ export class NfaToDfa extends AbstractNfaToDfa<State, DState, AnyTransition> {
 }
 
 export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
-  private readonly follows: Map<string, AnalyzerFollow[]>;
+  private readonly follows: FollowInfoDB;
   private currentProcessedRule: string;
 
-  constructor(follows: Map<string, AnalyzerFollow[]>) {
+  constructor(follows: FollowInfoDB) {
     super();
     this.follows = follows;
     this.currentProcessedRule = "";
@@ -61,18 +61,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
     state.addTransition(transition, dest);
 
     if (transition instanceof CallTransition) {
-      const rule = transition.ruleName;
-      const array = this.follows.get(rule);
-      const info = {
-        rule: this.currentProcessedRule,
-        enterState: state,
-        exitState: dest,
-      };
-      if (array) {
-        array.push(info);
-      } else {
-        this.follows.set(rule, [info]);
-      }
+      this.follows.add(this.currentProcessedRule, state, transition, dest);
     }
   }
 

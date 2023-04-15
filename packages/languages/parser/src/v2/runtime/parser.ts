@@ -1,11 +1,14 @@
 import { Position, Location } from "./input";
 import { Token, Tokenizer } from "./tokenizer";
 import { error } from "./error";
+import { RuntimeContext } from "./context";
 
 export abstract class Parser {
+  readonly ctx: RuntimeContext;
   private tokenizer: Tokenizer;
 
   constructor(tokenizer: Tokenizer) {
+    this.ctx = new RuntimeContext();
     this.tokenizer = tokenizer;
   }
 
@@ -41,16 +44,5 @@ export abstract class Parser {
       this.tokenizer.ll1Loc(),
       this.tokenizer.lookahead(1)
     );
-  }
-
-  private stack: string[] = [];
-
-  push(label: string) {
-    this.stack.push(label);
-  }
-
-  pop<T>(value: T): T {
-    this.stack.pop();
-    return value;
   }
 }

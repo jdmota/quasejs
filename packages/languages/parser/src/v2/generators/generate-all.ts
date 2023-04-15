@@ -33,9 +33,9 @@ export function generateAll(
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input);`,
     `  const parser = new GrammarParser(tokenizer);`,
-    `  return parser.rule${grammar.startRule.name}(${grammar.startRule.args
-      .map(a => `$${a.arg}`)
-      .join(", ")});`,
+    `  return parser.ctx.u(-1, ${`parser.rule${
+      grammar.startRule.name
+    }(${grammar.startRule.args.map(a => `$${a.arg}`).join(", ")})`});`,
     `}\n`,
   ]);
 }

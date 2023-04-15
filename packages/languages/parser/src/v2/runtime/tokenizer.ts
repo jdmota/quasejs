@@ -1,3 +1,4 @@
+import { RuntimeContext } from "./context";
 import { error } from "./error";
 import { Position, Location, Input } from "./input";
 import { Stream } from "./stream";
@@ -27,12 +28,14 @@ type IdToChannels = Readonly<{
 }>;
 
 export abstract class Tokenizer extends Stream<Token> {
+  readonly ctx: RuntimeContext;
   private input: Input;
   private idToChannels: IdToChannels;
   private channels: { [key: string]: Token[] | undefined };
 
   constructor(input: Input) {
     super();
+    this.ctx = new RuntimeContext();
     this.input = input;
     this.idToChannels = this.getIdToChannels();
     this.channels = {};
@@ -44,7 +47,7 @@ export abstract class Tokenizer extends Stream<Token> {
   protected override next(): Token {
     while (true) {
       //this.start = this.input.position();
-      const token: Token = this.token$lexer();
+      const token: Token = this.ctx.u(-1, this.token$lexer());
       //this.end = this.input.position();
 
       const channels = this.idToChannels[token.id];
@@ -137,15 +140,4 @@ export abstract class Tokenizer extends Stream<Token> {
       },
     };
   }*/
-
-  private stack: string[] = [];
-
-  push(label: string) {
-    this.stack.push(label);
-  }
-
-  pop<T>(value: T): T {
-    this.stack.pop();
-    return value;
-  }
 }

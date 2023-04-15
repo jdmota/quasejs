@@ -13,6 +13,7 @@ import { Range } from "../utils/range-utils";
 import { ParserGenerator } from "../generators/generate-parser";
 import { Grammar } from "../grammar/grammar";
 import { Declaration } from "../grammar/grammar-builder";
+import { FollowInfo, FollowInfoDB } from "../grammar/follow-info";
 
 type GotoDecision = Readonly<{
   goto: AnyTransition;
@@ -210,22 +211,15 @@ class InvertedDecisionTree {
 
 type RuleName = string;
 
-class FollowStack implements ObjectHashEquals {
+export class FollowStack implements ObjectHashEquals {
+  readonly info: FollowInfo;
   readonly child: FollowStack | null;
-  readonly thisRule: RuleName;
-  readonly exitState: DState;
   readonly llPhase: number;
   private cachedHashCode: number;
 
-  constructor(
-    analyzer: Analyzer,
-    child: FollowStack | null,
-    thisRule: RuleName,
-    exitState: DState
-  ) {
+  constructor(analyzer: Analyzer, child: FollowStack | null, info: FollowInfo) {
+    this.info = info;
     this.child = child;
-    this.thisRule = thisRule;
-    this.exitState = exitState;
     this.llPhase = analyzer.getLLState();
     this.cachedHashCode = 0;
   }
@@ -233,8 +227,7 @@ class FollowStack implements ObjectHashEquals {
   hashCode(): number {
     if (this.cachedHashCode === 0) {
       this.cachedHashCode =
-        this.thisRule.length *
-        this.exitState.id *
+        this.info.id *
         (this.child ? this.child.hashCode() : 1) *
         (this.llPhase + 1);
     }
@@ -247,8 +240,7 @@ class FollowStack implements ObjectHashEquals {
     }
     if (other instanceof FollowStack) {
       return (
-        this.thisRule === other.thisRule &&
-        this.exitState === other.exitState &&
+        this.info.id === other.info.id &&
         this.llPhase === other.llPhase &&
         equals(this.child, other.child)
       );
@@ -258,7 +250,7 @@ class FollowStack implements ObjectHashEquals {
 
   toString() {
     const { child } = this;
-    return `${this.thisRule}${child ? `,${child}` : ""}`;
+    return `${this.info.rule}${child ? `,${child}` : ""}`;
   }
 }
 
@@ -311,14 +303,10 @@ class StackFrame implements ObjectHashEquals {
     return false;
   }
 
-  private hasSameFollow(info: AnalyzerFollow) {
+  private hasSameFollow(info: FollowInfo) {
     let s: FollowStack | null = this.follow;
     while (s) {
-      if (
-        s.thisRule === info.rule &&
-        s.exitState === info.exitState &&
-        s.llPhase === this.llPhase
-      ) {
+      if (s.info.id === info.id && s.llPhase === this.llPhase) {
         return true;
       }
       s = s.child;
@@ -358,12 +346,7 @@ class StackFrame implements ObjectHashEquals {
                 null,
                 info.rule,
                 info.exitState,
-                new FollowStack(
-                  analyzer,
-                  this.follow,
-                  info.rule,
-                  info.exitState
-                )
+                new FollowStack(analyzer, this.follow, info)
               )
           )
       : [];
@@ -402,16 +385,10 @@ class StackFrame implements ObjectHashEquals {
   }
 }
 
-export type AnalyzerFollow = {
-  readonly rule: RuleName;
-  readonly enterState: DState;
-  readonly exitState: DState;
-};
-
 export class Analyzer {
   readonly grammar: Grammar;
   readonly initialStates: Map<RuleName, DState>;
-  readonly follows: Map<RuleName, AnalyzerFollow[]>;
+  readonly follows: FollowInfoDB;
   // This value is used to distinguish StackFrame's and FollowStack's
   // generated in different phases of the analysis process.
   // We use this because we do not want to avoid pushing/poping
@@ -425,7 +402,7 @@ export class Analyzer {
   }: {
     grammar: Grammar;
     initialStates: Map<RuleName, DState>;
-    follows: Map<RuleName, AnalyzerFollow[]>;
+    follows: FollowInfoDB;
   }) {
     this.grammar = grammar;
     this.initialStates = initialStates;
@@ -527,6 +504,7 @@ export class Analyzer {
 
     // TODO stop on impossible to resolve ambiguities
     // TODO what if I dont need the follow stack to disambiguate?
+    // TODO there is also ambiguity when the follow stacks are a subset of one another right?
 
     this.printAmbiguities(rule, state, maxLL, inverted);
 

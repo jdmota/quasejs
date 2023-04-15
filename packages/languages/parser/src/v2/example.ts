@@ -303,3 +303,5 @@ if (result) {
   console.log(inferAndCheckTypes(result.grammar));
   console.log();
 }
+
+// TODO right-optimize: the code should not be in the edges, it should be in the nodes?

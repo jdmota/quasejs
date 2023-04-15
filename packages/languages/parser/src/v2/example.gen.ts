@@ -6,7 +6,6 @@ const EMPTY_OBJ = {};
 
 class GrammarTokenizer extends Tokenizer {
   token$lexer() {
-    this.push("$lexer");
     let $startLoc, id:any=null, token:any=null, $9_text:any=null;
     s2:do{
       switch(this.ll(1)){
@@ -69,74 +68,62 @@ class GrammarTokenizer extends Tokenizer {
       }
       token = EMPTY_OBJ;
     }while(0);
-    return this.pop({id, token});
+    return this.ctx.o({id, token});
   }
   token$_1() {
-    this.push("$_1");
     this.e(-1 /*-1*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$0() {
-    this.push("$0");
     this.e(79 /*'O'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$1() {
-    this.push("$1");
     this.e(65 /*'A'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$2() {
-    this.push("$2");
     this.e(66 /*'B'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$3() {
-    this.push("$3");
     this.e(67 /*'C'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$4() {
-    this.push("$4");
     this.e(68 /*'D'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$5() {
-    this.push("$5");
     this.e(69 /*'E'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$6() {
-    this.push("$6");
     this.e(70 /*'F'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$7() {
-    this.push("$7");
     this.e(60 /*'<'*/);
     this.e(60 /*'<'*/);
     this.e(60 /*'<'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   token$8() {
-    this.push("$8");
     this.e(60 /*'<'*/);
     this.e(60 /*'<'*/);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   tokenW() {
-    this.push("W");
     let $startLoc, text:any=null;
     $startLoc = this.external.$getLoc();
     this.e(87 /*'W'*/);
     text = this.external.$getText($startLoc);
-    return this.pop(text);
+    return this.ctx.o(text);
   }
 }
 
 class GrammarParser extends Parser {
   ruleA() {
-    this.push("A");
     let $ll1, $ll2, $ll3, my_obj:any=null;
     s5:do{
       s6:do{
@@ -145,7 +132,7 @@ class GrammarParser extends Parser {
           $ll2 = this.ll(2);
           $ll3 = this.ll(3);
           if(($ll1 === 1 /*#string:A*/ && $ll2 === 0 /*#string:O*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 3 /*#string:C*/ && $ll3 === 4 /*#string:D*/)){
-            this.ruleB();
+            this.ctx.u(1/* A 1 */, this.ruleB());
             switch(this.ll(1)){
               case 0 /*#string:O*/:
                 this.e(0 /*#string:O*/);
@@ -221,24 +208,23 @@ class GrammarParser extends Parser {
     }while(0);
     my_obj.id;
     my_obj.id;
-    this.ruleC(10, 20);
+    this.ctx.u(2/* A 11 */, this.ruleC(10, 20));
     this.e(-1 /*#eof*/);
-    return this.pop(this.external.externalCall(my_obj));
+    return this.ctx.o(this.external.externalCall(my_obj));
   }
   ruleB() {
-    this.push("B");
     let $ll1;
     this.e(1 /*#string:A*/);
     $ll1 = this.ll(1);
-    if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
-      return this.pop(EMPTY_OBJ);
+    if($ll1 === 0 /*#string:O*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 1 /*#string:A*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([1/* A 1 */])){
+      return this.ctx.o(EMPTY_OBJ);
     } else if($ll1 === 2 /*#string:B*/){
       this.e(2 /*#string:B*/);
       l1:while(1){
         this.e(4 /*#string:D*/);
         $ll1 = this.ll(1);
-        if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
-          return this.pop(EMPTY_OBJ);
+        if($ll1 === 0 /*#string:O*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 1 /*#string:A*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([1/* A 1 */])){
+          return this.ctx.o(EMPTY_OBJ);
         } else if($ll1 === 2 /*#string:B*/){
           this.e(2 /*#string:B*/);
           continue l1;
@@ -251,8 +237,8 @@ class GrammarParser extends Parser {
       l2:while(1){
         this.e(4 /*#string:D*/);
         $ll1 = this.ll(1);
-        if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
-          return this.pop(EMPTY_OBJ);
+        if($ll1 === 0 /*#string:O*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 1 /*#string:A*/ && this.ctx.f([1/* A 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([1/* A 1 */])){
+          return this.ctx.o(EMPTY_OBJ);
         } else if($ll1 === 3 /*#string:C*/){
           this.e(3 /*#string:C*/);
           continue l2;
@@ -265,20 +251,18 @@ class GrammarParser extends Parser {
     }
   }
   ruleC(x,y) {
-    this.push("C");
     let $ll1, ret:any=null;
     $ll1 = this.ll(1);
-    if($ll1 === -1 /*#eof*/){
+    if($ll1 === -1 /*#eof*/ && this.ctx.f([2/* A 11 */])){
       ret = {x, y};
-    } else if($ll1 === -1 /*#eof*/){
+    } else if($ll1 === -1 /*#eof*/ && this.ctx.f([2/* A 11 */])){
       ret = {x: y, y: x};
     } else {
       this.err();
     }
-    return this.pop(ret);
+    return this.ctx.o(ret);
   }
   ruleD(arg) {
-    this.push("D");
     let ret:any=null;
     switch(this.ll(1)){
       case false:
@@ -290,23 +274,20 @@ class GrammarParser extends Parser {
       default:
         this.err();
     }
-    return this.pop(ret);
+    return this.ctx.o(ret);
   }
   ruleE() {
-    this.push("E");
     let obj:any=null;
     obj = {num: 10};
-    return this.pop(obj.num);
+    return this.ctx.o(obj.num);
   }
   ruleF(arg) {
-    this.push("F");
     let ret:any=null, w:any=null;
     ret = {x: arg.x};
     w = this.e(9 /*W*/);
-    return this.pop(w);
+    return this.ctx.o(w);
   }
   ruleG() {
-    this.push("G");
     switch(this.ll(1)){
       case 7 /*#string:<<<*/:
         this.e(7 /*#string:<<<*/);
@@ -317,44 +298,42 @@ class GrammarParser extends Parser {
       default:
         this.err();
     }
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   ruleTricky1() {
-    this.push("Tricky1");
     let $ll1, $ll2, $ll3;
     $ll1 = this.ll(1);
     $ll2 = this.ll(2);
     $ll3 = this.ll(3);
-    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      this.ruleTricky1();
+    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */]) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */, 3/* Tricky1 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */, 3/* Tricky1 1 */]))){
+      this.ctx.u(3/* Tricky1 1 */, this.ruleTricky1());
       $ll1 = this.ll(1);
-      if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/){
-        return this.pop(EMPTY_OBJ);
+      if($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])){
+        return this.ctx.o(EMPTY_OBJ);
       } else if($ll1 === 2 /*#string:B*/){
         this.e(2 /*#string:B*/);
       } else {
         this.err();
       }
-    } else if($ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      return this.pop(EMPTY_OBJ);
-    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/)){
+    } else if($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */]) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */, 3/* Tricky1 1 */]))){
+      return this.ctx.o(EMPTY_OBJ);
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */, 3/* Tricky1 1 */]))){
       this.e(1 /*#string:A*/);
-      this.ruleTricky1();
+      this.ctx.u(4/* Tricky1 4 */, this.ruleTricky1());
     } else {
       this.err();
     }
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
   ruleTricky2() {
-    this.push("Tricky2");
     let $ll1, $ll2, $ll3, $val, x:any=null, y:any=null, z:any=null;
     $ll1 = this.ll(1);
     $ll2 = this.ll(2);
     $ll3 = this.ll(3);
-    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      $val = this.ruleTricky2();
+    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */]) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */, 5/* Tricky2 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */, 5/* Tricky2 1 */]))){
+      $val = this.ctx.u(5/* Tricky2 1 */, this.ruleTricky2());
       $ll1 = this.ll(1);
-      if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/){
+      if($ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])){
         x = $val;
       } else if($ll1 === 2 /*#string:B*/){
         z = $val;
@@ -362,46 +341,44 @@ class GrammarParser extends Parser {
       } else {
         this.err();
       }
-    } else if($ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      return this.pop({x, y, z});
-    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/)){
+    } else if($ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */]) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */, 5/* Tricky2 1 */]))){
+      return this.ctx.o({x, y, z});
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([5/* Tricky2 1 */, 6/* Tricky2 5 */, 5/* Tricky2 1 */]))){
       this.e(1 /*#string:A*/);
-      y = this.ruleTricky2();
+      y = this.ctx.u(6/* Tricky2 5 */, this.ruleTricky2());
     } else {
       this.err();
     }
-    return this.pop({x, y, z});
+    return this.ctx.o({x, y, z});
   }
   ruleTricky3(arg) {
-    this.push("Tricky3");
     let $ll1, $ll2, $ll3, x:any=null, y:any=null, z:any=null;
     $ll1 = this.ll(1);
     $ll2 = this.ll(2);
     $ll3 = this.ll(3);
-    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      x = this.ruleTricky3(10);
-    } else if(($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/)){
-      z = this.ruleTricky3(30);
+    if($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */]) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]))){
+      x = this.ctx.u(7/* Tricky3 1 */, this.ruleTricky3(10));
+    } else if(($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */]))){
+      z = this.ctx.u(8/* Tricky3 1 */, this.ruleTricky3(30));
       this.e(2 /*#string:B*/);
-    } else if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
-      return this.pop({x, y, z});
-    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/)){
+    } else if($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */]) || $ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */]) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */]))){
+      return this.ctx.o({x, y, z});
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 8/* Tricky3 1 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */]) && $ll3 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */, 8/* Tricky3 1 */, 9/* Tricky3 6 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 9/* Tricky3 6 */, 7/* Tricky3 1 */])) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([8/* Tricky3 1 */, 7/* Tricky3 1 */, 9/* Tricky3 6 */]))){
       this.e(1 /*#string:A*/);
-      y = this.ruleTricky3(20);
+      y = this.ctx.u(9/* Tricky3 6 */, this.ruleTricky3(20));
     } else {
       this.err();
     }
-    return this.pop({x, y, z});
+    return this.ctx.o({x, y, z});
   }
   ruleTricky4() {
-    this.push("Tricky4");
     let $ll1, $ll2, $ll3;
     s2:do{
       $ll1 = this.ll(1);
       $ll2 = this.ll(2);
       $ll3 = this.ll(3);
       if($ll1 === 2 /*#string:B*/ || ($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/) || ($ll1 === -1 /*#eof*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === -1 /*#eof*/)){
-        this.ruleTricky4();
+        this.ctx.u(10/* Tricky4 1 */, this.ruleTricky4());
         switch(this.ll(1)){
           case -1 /*#eof*/:
             this.e(-1 /*#eof*/);
@@ -412,18 +389,18 @@ class GrammarParser extends Parser {
           default:
             this.err();
         }
-      } else if(($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/) || ($ll1 === -1 /*#eof*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/)){
+      } else if(($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/ && this.ctx.f([10/* Tricky4 1 */])) || ($ll1 === -1 /*#eof*/ && $ll2 === 2 /*#string:B*/ && this.ctx.f([10/* Tricky4 1 */])) || ($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/ && this.ctx.f([11/* Tricky4 5 */]))){
         this.e(-1 /*#eof*/);
         break s2;
       } else if(($ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === -1 /*#eof*/)){
         this.e(1 /*#string:A*/);
-        this.ruleTricky4();
+        this.ctx.u(11/* Tricky4 5 */, this.ruleTricky4());
       } else {
         this.err();
       }
       this.e(-1 /*#eof*/);
     }while(0);
-    return this.pop(EMPTY_OBJ);
+    return this.ctx.o(EMPTY_OBJ);
   }
 }
 
@@ -431,5 +408,5 @@ export function parse(string: string) {
   const input = new Input({ string });
   const tokenizer = new GrammarTokenizer(input);
   const parser = new GrammarParser(tokenizer);
-  return parser.ruleA();
+  return parser.ctx.u(-1, parser.ruleA());
 }
