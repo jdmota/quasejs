@@ -99,4 +99,20 @@ export class MapKeyToValue<K extends MapKey, V> {
       listIdx = 0;
     }
   }
+
+  *keys() {
+    let idx = 0;
+    let listIdx = 0;
+    while (idx < this.table.length) {
+      const list = this.table[idx];
+      if (list) {
+        while (listIdx < list.length) {
+          yield list[listIdx].key;
+          listIdx++;
+        }
+      }
+      idx++;
+      listIdx = 0;
+    }
+  }
 }

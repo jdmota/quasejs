@@ -69,10 +69,36 @@ class DecisionNode implements SpecialSet<GotoDecision> {
   }
 }
 
-export type DecisionTest = Readonly<{
-  follow: FollowStack | null;
-  range: Range;
-}>;
+export class DecisionTest implements ObjectHashEquals {
+  readonly follow: FollowStack | null;
+  readonly range: Range;
+
+  constructor(follow: FollowStack | null, range: Range) {
+    this.follow = follow;
+    this.range = range;
+  }
+
+  hashCode(): number {
+    return (
+      (this.range.from + this.range.to) *
+      (this.follow ? this.follow.hashCode() : 1)
+    );
+  }
+
+  equals(other: unknown): boolean {
+    if (this === other) {
+      return true;
+    }
+    if (other instanceof DecisionTest) {
+      return (
+        this.range.from === other.range.from &&
+        this.range.to === other.range.to &&
+        equals(this.follow, other.follow)
+      );
+    }
+    return false;
+  }
+}
 
 class DecisionTree {
   private readonly map: MapKeyToValue<
@@ -177,7 +203,7 @@ class InvertedDecisionTree {
   private decisionToTest(decision: DecisionNodeNoAdd): DecisionTest[] {
     const parent = decision.parent.owner;
     const arr = parent ? this.decisionToTest(parent) : [];
-    arr.push({ follow: decision.follow, range: decision.range });
+    arr.push(new DecisionTest(decision.follow, decision.range));
     return arr;
   }
 }
@@ -188,9 +214,11 @@ class FollowStack implements ObjectHashEquals {
   readonly child: FollowStack | null;
   readonly thisRule: RuleName;
   readonly exitState: DState;
+  readonly llPhase: number;
   private cachedHashCode: number;
 
   constructor(
+    analyzer: Analyzer,
     child: FollowStack | null,
     thisRule: RuleName,
     exitState: DState
@@ -198,6 +226,7 @@ class FollowStack implements ObjectHashEquals {
     this.child = child;
     this.thisRule = thisRule;
     this.exitState = exitState;
+    this.llPhase = analyzer.getLLState();
     this.cachedHashCode = 0;
   }
 
@@ -206,7 +235,8 @@ class FollowStack implements ObjectHashEquals {
       this.cachedHashCode =
         this.thisRule.length *
         this.exitState.id *
-        (this.child ? this.child.hashCode() : 1);
+        (this.child ? this.child.hashCode() : 1) *
+        (this.llPhase + 1);
     }
     return this.cachedHashCode;
   }
@@ -219,6 +249,7 @@ class FollowStack implements ObjectHashEquals {
       return (
         this.thisRule === other.thisRule &&
         this.exitState === other.exitState &&
+        this.llPhase === other.llPhase &&
         equals(this.child, other.child)
       );
     }
@@ -232,11 +263,11 @@ class FollowStack implements ObjectHashEquals {
 }
 
 class StackFrame implements ObjectHashEquals {
-  readonly analyzer: Analyzer;
   readonly parent: StackFrame | null;
   readonly thisRule: RuleName;
   readonly state: DState;
   readonly follow: FollowStack | null;
+  readonly llPhase: number;
   private cachedHashCode: number;
 
   constructor(
@@ -246,17 +277,17 @@ class StackFrame implements ObjectHashEquals {
     state: DState,
     follow: FollowStack | null
   ) {
-    this.analyzer = analyzer;
     this.parent = parent;
     this.thisRule = thisRule;
     this.state = state;
     this.follow = follow;
+    this.llPhase = analyzer.getLLState();
     this.cachedHashCode = 0;
   }
 
-  move(dest: DState) {
+  move(analyzer: Analyzer, dest: DState) {
     return new StackFrame(
-      this.analyzer,
+      analyzer,
       this.parent,
       this.thisRule,
       dest,
@@ -264,45 +295,77 @@ class StackFrame implements ObjectHashEquals {
     );
   }
 
-  push(call: CallTransition): readonly StackFrame[] {
-    let s: StackFrame | null = this;
-    do {
-      if (s.thisRule === call.ruleName) {
+  private hasLeftRecursion(call: string) {
+    let s: StackFrame | null = this.parent; // Start with parent!
+    while (s) {
+      if (s.thisRule === call && s.llPhase === this.llPhase) {
         // Avoid infinite loop due to left-recursive grammars.
-        // It is enough to check the name to find left-recursion,
+        // It is enough to check the name and the ll phase to find left-recursion,
         // since if the recursion was guarded with a token, we would not get here.
-        return [];
+        // By checking the phase and starting with the parent,
+        // we always allow at least one push when we start a new phase.
+        return true;
       }
       s = s.parent;
-    } while (s);
-
-    return [
-      new StackFrame(
-        this.analyzer,
-        this,
-        call.ruleName,
-        this.analyzer.initialStates.get(call.ruleName)!!,
-        this.follow
-      ),
-    ];
+    }
+    return false;
   }
 
-  pop(ret: ReturnTransition): readonly StackFrame[] {
+  private hasSameFollow(info: AnalyzerFollow) {
+    let s: FollowStack | null = this.follow;
+    while (s) {
+      if (
+        s.thisRule === info.rule &&
+        s.exitState === info.exitState &&
+        s.llPhase === this.llPhase
+      ) {
+        return true;
+      }
+      s = s.child;
+    }
+    return false;
+  }
+
+  push(analyzer: Analyzer, call: CallTransition): StackFrame {
+    if (this.hasLeftRecursion(call.ruleName)) {
+      // If we see left recursion in this ll phase,
+      // It means the rule is empty
+      // For soundness, we need to jump over it to gather lookahead information
+      // "this" is the stack we return to after the call
+      return this;
+    }
+    return new StackFrame(
+      analyzer,
+      this,
+      call.ruleName,
+      analyzer.initialStates.get(call.ruleName)!!,
+      this.follow
+    );
+  }
+
+  pop(analyzer: Analyzer, ret: ReturnTransition): readonly StackFrame[] {
     if (this.parent) {
       return [this.parent];
     }
-    const f = this.analyzer.follows.get(this.thisRule);
+    const f = analyzer.follows.get(this.thisRule);
     return f
-      ? f.map(
-          info =>
-            new StackFrame(
-              this.analyzer,
-              null,
-              info.rule,
-              info.exitState,
-              new FollowStack(this.follow, info.rule, info.exitState)
-            )
-        )
+      ? f
+          .filter(info => !this.hasSameFollow(info))
+          .map(
+            info =>
+              new StackFrame(
+                analyzer,
+                null,
+                info.rule,
+                info.exitState,
+                new FollowStack(
+                  analyzer,
+                  this.follow,
+                  info.rule,
+                  info.exitState
+                )
+              )
+          )
       : [];
   }
 
@@ -312,7 +375,8 @@ class StackFrame implements ObjectHashEquals {
         this.thisRule.length *
         this.state.id *
         (this.parent ? this.parent.hashCode() : 1) *
-        (this.follow ? this.follow.hashCode() : 1);
+        (this.follow ? this.follow.hashCode() : 1) *
+        (this.llPhase + 1);
     }
     return this.cachedHashCode;
   }
@@ -323,10 +387,10 @@ class StackFrame implements ObjectHashEquals {
     }
     if (other instanceof StackFrame) {
       return (
-        this.analyzer === other.analyzer &&
-        equals(this.parent, other.parent) &&
         this.thisRule === other.thisRule &&
         this.state === other.state &&
+        this.llPhase === other.llPhase &&
+        equals(this.parent, other.parent) &&
         equals(this.follow, other.follow)
       );
     }
@@ -344,13 +408,15 @@ export type AnalyzerFollow = {
   readonly exitState: DState;
 };
 
-type Lookahead = readonly [RangeTransition, StackFrame];
-
 export class Analyzer {
   readonly grammar: Grammar;
   readonly initialStates: Map<RuleName, DState>;
   readonly follows: Map<RuleName, AnalyzerFollow[]>;
-  private cache: MapKeyToValue<StackFrame, Lookahead[] | null>;
+  // This value is used to distinguish StackFrame's and FollowStack's
+  // generated in different phases of the analysis process.
+  // We use this because we do not want to avoid pushing/poping
+  // the stacks just because some rule was previously seen in a different phase.
+  private llState: number;
 
   constructor({
     grammar,
@@ -364,7 +430,11 @@ export class Analyzer {
     this.grammar = grammar;
     this.initialStates = initialStates;
     this.follows = follows;
-    this.cache = new MapKeyToValue();
+    this.llState = 0;
+  }
+
+  getLLState() {
+    return this.llState;
   }
 
   private ll1(
@@ -379,17 +449,21 @@ export class Analyzer {
     while (prev.length) {
       for (const stack of prev) {
         if (seen.set(stack, true) === true) continue;
-        // TODO cache from StackFrame to ll1 set?
 
         for (const [transition, dest] of stack.state) {
           if (transition instanceof CallTransition) {
-            next.push(...stack.move(dest).push(transition));
+            next.push(stack.move(this, dest).push(this, transition));
           } else if (transition instanceof ReturnTransition) {
-            next.push(...stack.pop(transition));
+            next.push(...stack.pop(this, transition));
           } else if (transition instanceof RangeTransition) {
-            map.addDecision(stack.follow, transition, goto, stack.move(dest));
+            map.addDecision(
+              stack.follow,
+              transition,
+              goto,
+              stack.move(this, dest)
+            );
           } else {
-            next.push(stack.move(dest));
+            next.push(stack.move(this, dest));
           }
         }
       }
@@ -399,31 +473,37 @@ export class Analyzer {
   }
 
   analyze(rule: Declaration, state: DState, maxLL = 3) {
+    // Reset phase
+    this.llState = 0;
+
     const stack = new StackFrame(this, null, rule.name, state, null);
     const ll1 = new DecisionTree(null);
     const inverted = new InvertedDecisionTree();
 
+    this.llState = 1;
+
     for (const [goto, dest] of state) {
       if (goto instanceof CallTransition) {
-        this.ll1(stack.move(dest).push(goto), goto, ll1);
+        this.ll1([stack.move(this, dest).push(this, goto)], goto, ll1);
       } else if (goto instanceof ReturnTransition) {
-        this.ll1(stack.pop(goto), goto, ll1);
+        this.ll1(stack.pop(this, goto), goto, ll1);
       } else if (goto instanceof RangeTransition) {
-        ll1.addDecision(stack.follow, goto, goto, stack.move(dest));
+        ll1.addDecision(stack.follow, goto, goto, stack.move(this, dest));
       } else {
-        this.ll1([stack.move(dest)], goto, ll1);
+        this.ll1([stack.move(this, dest)], goto, ll1);
       }
     }
 
     let prev = [ll1];
     let next = [];
-    let ll = 2;
+
+    this.llState = 2;
 
     while (prev.length) {
       for (const tree of prev) {
         if (tree.hasDecisions()) {
           for (const decision of tree.iterate()) {
-            if (ll <= maxLL && decision.isAmbiguous()) {
+            if (this.llState <= maxLL && decision.isAmbiguous()) {
               const nextTree = decision.ensureNextTree();
               for (const [goto, stack] of decision.iterate()) {
                 this.ll1(stack, goto, nextTree);
@@ -442,11 +522,11 @@ export class Analyzer {
       }
       prev = next;
       next = [];
-      ll++;
+      this.llState++;
     }
 
     // TODO stop on impossible to resolve ambiguities
-    // TODO what if I dont need the follow stack to desambiguate?
+    // TODO what if I dont need the follow stack to disambiguate?
 
     this.printAmbiguities(rule, state, maxLL, inverted);
 

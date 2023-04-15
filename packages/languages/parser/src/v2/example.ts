@@ -20,6 +20,7 @@ const {
   call2,
   call,
   token,
+  eof,
 } = builder;
 
 const ruleA = rule(
@@ -124,6 +125,57 @@ const ruleF = rule(
 );
 
 const ruleG = rule("G", choice(string("<<<"), string("<<")), [], {}, null);
+
+const ruleTricky1 = rule(
+  "Tricky1",
+  choice(
+    optional(call("Tricky1", [])),
+    seq(string("A"), call("Tricky1", [])),
+    seq(call("Tricky1", []), string("B"))
+  ),
+  [],
+  {},
+  null
+);
+
+const ruleTricky2 = rule(
+  "Tricky2",
+  choice(
+    optional(field("x", call("Tricky2", []))),
+    seq(string("A"), field("y", call("Tricky2", []))),
+    seq(field("z", call("Tricky2", [])), string("B"))
+  ),
+  [],
+  {},
+  null
+);
+
+const ruleTricky3 = rule(
+  "Tricky3",
+  choice(
+    optional(field("x", call("Tricky3", [int(10)]))),
+    seq(string("A"), field("y", call("Tricky3", [int(20)]))),
+    seq(field("z", call("Tricky3", [int(30)])), string("B"))
+  ),
+  [rule.arg("arg")],
+  {},
+  null
+);
+
+const ruleTricky4 = rule(
+  "Tricky4",
+  seq(
+    choice(
+      optional(call("Tricky4", [])),
+      seq(string("A"), call("Tricky4", [])),
+      seq(call("Tricky4", []), string("B"))
+    ),
+    eof()
+  ),
+  [],
+  {},
+  null
+);
 
 const tokenW = token(
   "W",
@@ -230,7 +282,19 @@ console.log("Starting...");
 
 const result = tool({
   name: "my_grammar",
-  ruleDecls: [ruleA, ruleB, ruleC, ruleD, ruleE, ruleF, ruleG],
+  ruleDecls: [
+    ruleA,
+    ruleB,
+    ruleC,
+    ruleD,
+    ruleE,
+    ruleF,
+    ruleG,
+    ruleTricky1,
+    ruleTricky2,
+    ruleTricky3,
+    ruleTricky4,
+  ],
   tokenDecls: [tokenW],
 });
 

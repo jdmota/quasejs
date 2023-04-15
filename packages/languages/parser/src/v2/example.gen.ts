@@ -319,6 +319,112 @@ class GrammarParser extends Parser {
     }
     return this.pop(EMPTY_OBJ);
   }
+  ruleTricky1() {
+    this.push("Tricky1");
+    let $ll1, $ll2, $ll3;
+    $ll1 = this.ll(1);
+    $ll2 = this.ll(2);
+    $ll3 = this.ll(3);
+    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      this.ruleTricky1();
+      $ll1 = this.ll(1);
+      if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/){
+        return this.pop(EMPTY_OBJ);
+      } else if($ll1 === 2 /*#string:B*/){
+        this.e(2 /*#string:B*/);
+      } else {
+        this.err();
+      }
+    } else if($ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      return this.pop(EMPTY_OBJ);
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/)){
+      this.e(1 /*#string:A*/);
+      this.ruleTricky1();
+    } else {
+      this.err();
+    }
+    return this.pop(EMPTY_OBJ);
+  }
+  ruleTricky2() {
+    this.push("Tricky2");
+    let $ll1, $ll2, $ll3, $val, x:any=null, y:any=null, z:any=null;
+    $ll1 = this.ll(1);
+    $ll2 = this.ll(2);
+    $ll3 = this.ll(3);
+    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      $val = this.ruleTricky2();
+      $ll1 = this.ll(1);
+      if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/){
+        x = $val;
+      } else if($ll1 === 2 /*#string:B*/){
+        z = $val;
+        this.e(2 /*#string:B*/);
+      } else {
+        this.err();
+      }
+    } else if($ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      return this.pop({x, y, z});
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/)){
+      this.e(1 /*#string:A*/);
+      y = this.ruleTricky2();
+    } else {
+      this.err();
+    }
+    return this.pop({x, y, z});
+  }
+  ruleTricky3(arg) {
+    this.push("Tricky3");
+    let $ll1, $ll2, $ll3, x:any=null, y:any=null, z:any=null;
+    $ll1 = this.ll(1);
+    $ll2 = this.ll(2);
+    $ll3 = this.ll(3);
+    if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      x = this.ruleTricky3(10);
+    } else if(($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/)){
+      z = this.ruleTricky3(30);
+      this.e(2 /*#string:B*/);
+    } else if($ll1 === 2 /*#string:B*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 2 /*#string:B*/ && $ll2 === 2 /*#string:B*/)){
+      return this.pop({x, y, z});
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 2 /*#string:B*/)){
+      this.e(1 /*#string:A*/);
+      y = this.ruleTricky3(20);
+    } else {
+      this.err();
+    }
+    return this.pop({x, y, z});
+  }
+  ruleTricky4() {
+    this.push("Tricky4");
+    let $ll1, $ll2, $ll3;
+    s2:do{
+      $ll1 = this.ll(1);
+      $ll2 = this.ll(2);
+      $ll3 = this.ll(3);
+      if($ll1 === 2 /*#string:B*/ || ($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/) || ($ll1 === -1 /*#eof*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === -1 /*#eof*/)){
+        this.ruleTricky4();
+        switch(this.ll(1)){
+          case -1 /*#eof*/:
+            this.e(-1 /*#eof*/);
+            break s2;
+          case 2 /*#string:B*/:
+            this.e(2 /*#string:B*/);
+            break;
+          default:
+            this.err();
+        }
+      } else if(($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/) || ($ll1 === -1 /*#eof*/ && $ll2 === 2 /*#string:B*/) || ($ll1 === -1 /*#eof*/ && $ll2 === -1 /*#eof*/)){
+        this.e(-1 /*#eof*/);
+        break s2;
+      } else if(($ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === -1 /*#eof*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 2 /*#string:B*/) || ($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === -1 /*#eof*/)){
+        this.e(1 /*#string:A*/);
+        this.ruleTricky4();
+      } else {
+        this.err();
+      }
+      this.e(-1 /*#eof*/);
+    }while(0);
+    return this.pop(EMPTY_OBJ);
+  }
 }
 
 export function parse(string: string) {
