@@ -5,10 +5,10 @@ export type NormalizedSearch = Opaque<string, "NormalizedSearch">;
 export type NormalizedHash = Opaque<string, "NormalizedHash">;
 
 const reSlashes = /(^\/+)|(\/+$)/g;
-const reQuestion = /^?/g;
-const reHash = /^#/g;
+const reQuestion = /^\?+/;
+const reHash = /^#+/;
 
-const normalizers = {
+export const normalizers = {
   // Should have one leading / but no trailing /
   pathname(str: string): NormalizedPathname {
     return `/${str.trim().replace(reSlashes, "")}` as NormalizedPathname;
@@ -34,8 +34,8 @@ export function startsWith(
 
 export type RawSimpleLocation = Readonly<{
   pathname: string;
-  search: string;
-  hash: string;
+  search?: string;
+  hash?: string;
 }>;
 
 export type SimpleLocation = Readonly<{
@@ -51,8 +51,8 @@ export function createSimpleLocation({
 }: RawSimpleLocation): SimpleLocation {
   return {
     pathname: normalizers.pathname(pathname),
-    search: normalizers.search(search),
-    hash: normalizers.hash(hash),
+    search: normalizers.search(search ?? ""),
+    hash: normalizers.hash(hash ?? ""),
   };
 }
 
@@ -71,11 +71,18 @@ export function sameSimpleLocation(
   return pathname === pathname2 && search === search2 && hash === hash2;
 }
 
+export function sameSimpleLocationExceptHash(
+  { pathname, search, hash }: SimpleLocation,
+  { pathname: pathname2, search: search2, hash: hash2 }: SimpleLocation
+) {
+  return pathname === pathname2 && search === search2 && hash !== hash2;
+}
+
 // Simple location without hash
 
 export type RawSimpleLocationNoHash = Readonly<{
   pathname: string;
-  search: string;
+  search?: string;
 }>;
 
 export type SimpleLocationNoHash = Readonly<{
@@ -89,7 +96,7 @@ export function createSimpleLocationNoHash({
 }: RawSimpleLocationNoHash): SimpleLocationNoHash {
   return {
     pathname: normalizers.pathname(pathname),
-    search: normalizers.search(search),
+    search: normalizers.search(search ?? ""),
   };
 }
 

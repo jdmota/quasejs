@@ -15,6 +15,11 @@ const SCROLL_KEY = "quase_router_scroll";
 
 export type ScrollPosition = Readonly<{ x: number; y: number }>;
 
+export type ScrollData = Readonly<{
+  pos: ScrollPosition | null;
+  hash: NormalizedHash | null;
+}>;
+
 export function getScrollState(): ScrollPosition {
   return {
     x: window.scrollX,
@@ -22,13 +27,17 @@ export function getScrollState(): ScrollPosition {
   };
 }
 
-export function scroll(position: ScrollPosition | null, hash: NormalizedHash) {
-  if (position) {
-    scrollTo(position.x, position.y);
+export function scroll({ pos, hash }: ScrollData) {
+  if (pos) {
+    scrollTo(pos.x, pos.y);
   } else {
-    const element = document.getElementById(hash);
-    if (element) {
-      element.scrollIntoView();
+    if (hash) {
+      const element = document.getElementById(hash);
+      if (element) {
+        element.scrollIntoView();
+      } else {
+        scrollTo(0, 0);
+      }
     } else {
       scrollTo(0, 0);
     }

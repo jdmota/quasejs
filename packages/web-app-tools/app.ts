@@ -16,10 +16,10 @@ function onLoad() {
   });
 }
 
-const SPLASH_ID = "quase_app_splash";
+const DEFAULT_SPLASH_ID = "quase_app_splash";
 
-function removeSplash() {
-  const splash = document.getElementById(SPLASH_ID);
+function removeSplash(id: string) {
+  const splash = document.getElementById(id);
   if (splash) {
     const callback = () => {
       splash.style.display = "none";
@@ -31,6 +31,7 @@ function removeSplash() {
 }
 
 export type CreateSplashOpts = Readonly<{
+  id?: string;
   title: string;
   backgroundColor?: string;
   fontFamily?: string;
@@ -38,23 +39,25 @@ export type CreateSplashOpts = Readonly<{
 }>;
 
 export function createSplash({
+  id: _id,
   title,
   backgroundColor,
   fontFamily,
   fontSize,
 }: CreateSplashOpts) {
+  const id = _id ?? DEFAULT_SPLASH_ID;
   return {
-    html: `<div id="${SPLASH_ID}">${title}</div>`,
+    html: `<div id="${id}">${title}</div>`,
     css: `body {
       margin: 0;
     }
     body.loading {
       overflow: hidden;
     }
-    body.loading #${SPLASH_ID} {
+    body.loading #${id} {
       opacity: 1;
     }
-    #${SPLASH_ID} {
+    #${id} {
       background-color: ${backgroundColor || "#336fb7"};
       font-family: ${fontFamily || "Roboto, Helvetica, Arial, sans-serif"};
       font-size: ${fontSize || "38px"};
@@ -80,11 +83,21 @@ export function createSplash({
   };
 }
 
+type AppOptions = Readonly<{
+  splashId?: string;
+}>;
+
 export class App {
+  readonly opts: AppOptions;
+
+  constructor(opts: AppOptions = {}) {
+    this.opts = opts;
+  }
+
   async init(jobs: Promise<unknown>[] = []) {
     await Promise.all(jobs);
     await onLoad();
-    removeSplash();
+    removeSplash(this.opts.splashId ?? DEFAULT_SPLASH_ID);
   }
 }
 

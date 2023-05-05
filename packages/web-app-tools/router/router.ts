@@ -6,18 +6,16 @@
 
 // TODO on ready/navigation, we have to scroll and deal with focus
 
-// TODO improve SSR (maybe make a separate class?)
-
 // TODO https://github.com/remix-run/react-router/blob/main/docs/components/scroll-restoration.md
 // TODO support state and key (based on index)
 // TODO https://codepen.io/morten-olsen/post/when-safari-broke-webapps
 
 import { TypedEvent, TypedEventTarget } from "../events";
 import { noop } from "../utils";
-import lifecycle from "./lifecycle/export";
 import { findAnchor } from "./anchors";
 import {
   createSimpleLocation,
+  sameSimpleLocation,
   simpleLocationToHref,
   type RawSimpleLocation,
   type SimpleLocation,
@@ -49,11 +47,6 @@ export type RouterEvents = {
   readonly ready: LocationAndIndex;
   readonly navigation: Transition;
 };
-
-// More info at https://developer.chrome.com/blog/page-lifecycle-api/
-// Image explaining lifecyle
-// https://wd.imgix.net/image/eqprBhZUGfb8WYnumQ9ljAxRrA72/KCIeOsJ0lCWMthBSSBrn.svg
-export { lifecycle };
 
 export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
   private readonly mixins: readonly RouterMixin<E>[];
@@ -180,6 +173,10 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
     const prev = this.current;
     const to = createSimpleLocation(rawTo);
 
+    if (sameSimpleLocation(prev, to)) {
+      return;
+    }
+
     make(to);
 
     this.setCurrent(to, index);
@@ -218,13 +215,3 @@ export class RouterMixin<E extends RouterEvents> {
   onFreshLoc(loc: LocationAndIndex): void {}
   onTransition(transition: Transition): void {}
 }
-
-import { ScrollEvents, ScrollMixin } from "./router.scroll";
-import { PreloadEvents, PreloadMixin } from "./router.preload";
-
-export const router = new Router<RouterEvents & ScrollEvents & PreloadEvents>(
-  router => [
-    new ScrollMixin(router, { getKey: loc => loc.index + "" }),
-    new PreloadMixin(router, { preload: false }),
-  ]
-);

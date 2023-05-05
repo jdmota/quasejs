@@ -8,6 +8,8 @@ const getGlobal = function () {
   return null;
 };
 
+export const SSR = typeof document === "undefined";
+
 export const globalThis = getGlobal();
 
 export const localStorage = globalThis?.localStorage;

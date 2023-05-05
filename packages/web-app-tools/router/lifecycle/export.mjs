@@ -16,3 +16,7 @@
 import Lifecycle from "./Lifecycle.mjs";
 
 export default new Lifecycle();
+
+// More info at https://developer.chrome.com/blog/page-lifecycle-api/
+// Image explaining lifecyle
+// https://wd.imgix.net/image/eqprBhZUGfb8WYnumQ9ljAxRrA72/KCIeOsJ0lCWMthBSSBrn.svg

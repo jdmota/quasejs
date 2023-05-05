@@ -45,4 +45,15 @@ export class TypedEventTarget<M extends StateEventMap> extends EventTarget {
   ): boolean {
     return super.dispatchEvent(event);
   }
+
+  subscribe<K extends keyof M & string>(
+    type: K,
+    callback: (ev: TypedEvent<K, M[K]>) => void,
+    options?: AddEventListenerOptions | boolean
+  ) {
+    this.addEventListener(type, callback, options);
+    return () => {
+      this.removeEventListener(type, callback, options);
+    };
+  }
 }
