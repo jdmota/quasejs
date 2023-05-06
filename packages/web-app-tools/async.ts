@@ -37,17 +37,20 @@ type AsyncOpts<P, R> = Readonly<{
   }> | null;
   fetch: FetchFn<P, R>;
   optimistic: OptimisticFn<P, R> | null;
+  equalProps: (a: P, b: P) => boolean;
 }>;
 
 export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
-  private fetch: FetchFn<P, R>;
-  private optimistic: OptimisticFn<P, R> | null;
+  private readonly fetch: FetchFn<P, R>;
+  private readonly optimistic: OptimisticFn<P, R> | null;
+  private readonly equalProps: (a: P, b: P) => boolean;
   private result: AsyncResult<P, R> | null;
 
-  constructor({ initial, fetch, optimistic }: AsyncOpts<P, R>) {
+  constructor({ initial, fetch, optimistic, equalProps }: AsyncOpts<P, R>) {
     super();
     this.fetch = fetch;
     this.optimistic = optimistic;
+    this.equalProps = equalProps;
     this.result = initial
       ? {
           props: initial.props,
@@ -139,7 +142,7 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
   }
 
   setProps(props: P) {
-    if (this.result == null || this.result.props !== props) {
+    if (this.result == null || !this.equalProps(this.result.props, props)) {
       this.reload(props);
     }
   }
