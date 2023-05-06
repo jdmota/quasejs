@@ -15,7 +15,11 @@
 
 import Lifecycle from "./Lifecycle.mjs";
 
-export default new Lifecycle();
+let cache;
+
+export default () => {
+  return cache ?? (cache = new Lifecycle());
+};
 
 // More info at https://developer.chrome.com/blog/page-lifecycle-api/
 // Image explaining lifecyle

@@ -103,9 +103,10 @@ export class ThemeSelector extends Subscribable<ThemeModeDetails> {
   }
 
   async init() {
-    const prefersDarkQuery = matchMedia
-      ? matchMedia("(prefers-color-scheme: dark)")
-      : null;
+    const prefersDarkQuery =
+      typeof matchMedia === "function"
+        ? matchMedia("(prefers-color-scheme: dark)")
+        : null;
 
     this.prefersDark = prefersDarkQuery?.matches ?? false;
 

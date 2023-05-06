@@ -10,6 +10,7 @@ import {
   Router,
 } from "./router";
 import { TypedEvent } from "../events";
+import { SSR } from "../support";
 
 const SCROLL_KEY = "quase_router_scroll";
 
@@ -21,6 +22,9 @@ export type ScrollData = Readonly<{
 }>;
 
 export function getScrollState(): ScrollPosition {
+  if (SSR) {
+    return { x: 0, y: 0 };
+  }
   return {
     x: window.scrollX,
     y: window.scrollY,
@@ -28,6 +32,9 @@ export function getScrollState(): ScrollPosition {
 }
 
 export function scroll({ pos, hash }: ScrollData) {
+  if (SSR) {
+    return;
+  }
   if (pos) {
     scrollTo(pos.x, pos.y);
   } else {
@@ -81,7 +88,7 @@ export class ScrollMixin<
 
     // Setup scrollRestoration to "manual" on load and "auto" on exit
     history.scrollRestoration = "manual";
-    lifecycle.addEventListener("statechange", event => {
+    lifecycle().addEventListener("statechange", event => {
       switch (event.newState) {
         case "hidden":
           this.saveScrollPos(this.router.getCurrent());
