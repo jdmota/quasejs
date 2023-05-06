@@ -1,3 +1,5 @@
+import { Subscribable } from "./subscribable";
+
 export type AsyncResult<P, R> =
   | {
       readonly props: P;
@@ -37,12 +39,13 @@ type AsyncOpts<P, R> = Readonly<{
   optimistic: OptimisticFn<P, R> | null;
 }>;
 
-export class Async<P, R> {
+export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
   private fetch: FetchFn<P, R>;
   private optimistic: OptimisticFn<P, R> | null;
   private result: AsyncResult<P, R> | null;
 
   constructor({ initial, fetch, optimistic }: AsyncOpts<P, R>) {
+    super();
     this.fetch = fetch;
     this.optimistic = optimistic;
     this.result = initial
@@ -57,9 +60,13 @@ export class Async<P, R> {
       : null;
   }
 
+  peek() {
+    return this.result;
+  }
+
   private setResult(result: AsyncResult<P, R>) {
     this.result = result;
-    // TODO notify
+    this.emit(result);
   }
 
   private startRequest(props: P) {
