@@ -46,6 +46,7 @@ export type Transition = {
 export type RouterEvents = {
   readonly ready: LocationAndIndex;
   readonly navigation: Transition;
+  readonly "self-navigation": LocationAndIndex;
 };
 
 export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
@@ -174,6 +175,12 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
     const to = createSimpleLocation(rawTo);
 
     if (sameSimpleLocation(prev, to)) {
+      this.dispatchEvent(
+        new TypedEvent("self-navigation", {
+          location: prev,
+          index: prevIndex,
+        })
+      );
       return;
     }
 
