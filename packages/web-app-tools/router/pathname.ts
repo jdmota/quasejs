@@ -4,14 +4,18 @@ export type NormalizedPathname = Opaque<string, "NormalizedPathname">;
 export type NormalizedSearch = Opaque<string, "NormalizedSearch">;
 export type NormalizedHash = Opaque<string, "NormalizedHash">;
 
-const reSlashes = /(^\/+)|(\/+$)/g;
+const reHeadingTrailingSlash = /(^\/+)|(\/+$)/g;
+const reRepeatedSlashes = /\/+/g;
 const reQuestion = /^\?+/;
 const reHash = /^#+/;
 
 export const normalizers = {
   // Should have one leading / but no trailing /
   pathname(str: string): NormalizedPathname {
-    return `/${str.trim().replace(reSlashes, "")}` as NormalizedPathname;
+    return `/${str
+      .trim()
+      .replace(reHeadingTrailingSlash, "")
+      .replace(reRepeatedSlashes, "/")}` as NormalizedPathname;
   },
   // No leading ?
   search(str: string): NormalizedSearch {
