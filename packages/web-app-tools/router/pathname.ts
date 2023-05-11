@@ -10,7 +10,7 @@ const reQuestion = /^\?+/;
 const reHash = /^#+/;
 
 export const normalizers = {
-  // Should have one leading / but no trailing /
+  // Should have one leading / but no trailing / nor repeated slashes ///
   pathname(str: string): NormalizedPathname {
     return `/${str
       .trim()
