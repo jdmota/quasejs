@@ -31,6 +31,8 @@ export const storageEstimate = globalThis?.navigator?.storage?.estimate
 export const indexedDB = globalThis?.indexedDB;
 
 type SimpleShareData = Readonly<{
+  title?: string;
+  text?: string;
   url: string;
 }>;
 
