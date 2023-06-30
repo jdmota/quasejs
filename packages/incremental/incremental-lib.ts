@@ -10,13 +10,13 @@ import { createDefer } from "./utils/deferred";
 import { HashMap } from "./utils/hash-map";
 import { SpecialQueue } from "./utils/linked-list";
 import { AnyRawComputation, State } from "./computations/raw";
-import {
-  newSimpleComputation,
-  SimpleComputationExec,
-} from "./computations/simple";
 import { Result } from "./utils/result";
-import { BasicComputation } from "./computations/basic";
 import { Scheduler } from "./utils/schedule";
+import {
+  SimpleEffectComputationExec,
+  newSimpleEffectComputation,
+} from "./computations/simple-effect";
+import { EffectComputation } from "./computations/effect";
 
 const determinismSym = Symbol("deterministic");
 
@@ -158,7 +158,7 @@ export class ComputationRegistry {
     }
   */
 
-  private cleanupRun(computation: BasicComputation<undefined, any>) {
+  private cleanupRun(computation: EffectComputation<undefined, any>) {
     computation.unroot();
     computation.destroy();
     let count;
@@ -175,20 +175,22 @@ export class ComputationRegistry {
   }
 
   static async singleRun<T>(
-    exec: SimpleComputationExec<T>
+    exec: SimpleEffectComputationExec<T>
   ): Promise<Result<T>> {
     const registry = new ComputationRegistry({ canInvalidate: false });
-    const desc = newSimpleComputation({ exec, root: true });
+    const desc = newSimpleEffectComputation({ exec });
     const computation = registry.make(desc);
     const result = await computation.run();
     registry.cleanupRun(computation);
     return result;
   }
 
-  static run<T>(exec: SimpleComputationExec<T>): ComputationController<T> {
+  static run<T>(
+    exec: SimpleEffectComputationExec<T>
+  ): ComputationController<T> {
     const defer = createDefer<Result<T>>();
     const registry = new ComputationRegistry({ canInvalidate: true });
-    const desc = newSimpleComputation({ exec, root: true });
+    const desc = newSimpleEffectComputation({ exec });
     const computation = registry.make(desc);
     registry.wake();
 

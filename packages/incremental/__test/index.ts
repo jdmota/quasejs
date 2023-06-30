@@ -1,7 +1,7 @@
 import { newSimpleComputation } from "../computations/simple";
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
-import { error, ok } from "../utils/result";
+import { Result, error, ok } from "../utils/result";
 import { FileSystem } from "../computations/file-system/file-system";
 import path from "path";
 import { readJSON } from "fs-extra";
@@ -67,10 +67,17 @@ const pool = newComputationPool<string, FILE>({
 
 export async function main() {
   const controller = ComputationRegistry.run(async ctx => {
+    let map: Map<string, Result<FILE>> | null = null;
+    ctx.cleanup(() => {
+      console.log("Cleanup. Previous results:", map);
+    });
+
     console.log("Running main computation...");
     const results = await ctx.get(pool);
 
     if (results.ok) {
+      map = new Map(results.value);
+
       console.log("Results", results.value.size());
       for (const [key, value] of results.value) {
         console.log(key, value.ok ? value.value : value.error);

@@ -1,26 +1,26 @@
 import { ComputationDescription } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { Result } from "../utils/result";
-import { BasicComputationDescription } from "./basic";
 import { RawComputation } from "./raw";
+import { CleanupFn, EffectComputationDescription } from "./effect";
 import type { SubscribableComputation } from "./mixins/subscribable";
 
-export type SimpleComputationExec<T> = (
-  ctx: SimpleComputationContext
+export type SimpleEffectComputationExec<T> = (
+  ctx: SimpleEffectComputationContext
 ) => Promise<Result<T>>;
 
-type SimpleComputationConfig<T> = {
-  readonly exec: SimpleComputationExec<T>;
-  readonly root?: boolean;
+type SimpleEffectComputationConfig<T> = {
+  readonly exec: SimpleEffectComputationExec<T>;
 };
 
-type SimpleComputationContext = {
+type SimpleEffectComputationContext = {
   readonly checkActive: () => void;
   readonly get: <T>(
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<Result<T>>;
+  readonly cleanup: (fn: CleanupFn) => void;
 };
 
 const anyValue: ValueDefinition<any> = {
@@ -32,13 +32,13 @@ const anyValue: ValueDefinition<any> = {
   },
 };
 
-export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {
-  return new BasicComputationDescription<undefined, T>(
+export function newSimpleEffectComputation<T>(
+  config: SimpleEffectComputationConfig<T>
+) {
+  return new EffectComputationDescription<undefined, T>(
     {
       exec: config.exec,
       requestDef: anyValue,
-      responseDef: anyValue,
-      root: config.root,
     },
     undefined
   );
