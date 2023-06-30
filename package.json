@@ -58,7 +58,7 @@
     "@babel/preset-env": "^7.18.10",
     "@babel/preset-typescript": "^7.18.6",
     "@babel/register": "^7.18.9",
-    "@parcel/watcher": "^2.0.5",
+    "@parcel/watcher": "^2.1.0",
     "@types/babel__code-frame": "^7.0.2",
     "@types/babel__core": "^7.1.12",
     "@types/babel__generator": "^7.6.2",
@@ -72,7 +72,7 @@
     "@types/jest-diff": "^24.3.0",
     "@types/luxon": "^3",
     "@types/minimatch": "^3.0.3",
-    "@types/node": "^18.13.0",
+    "@types/node": "^20.3.2",
     "@types/normalize-package-data": "^2.4.0",
     "@types/write-file-atomic": "^3.0.1",
     "@typescript-eslint/eslint-plugin": "^4.8.2",
@@ -98,9 +98,9 @@
     "rxjs": "^7.5.6",
     "slash": "3.0.0",
     "type-fest": "^2.18.0",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.4"
   },
-  "packageManager": "yarn@3.2.2",
+  "packageManager": "yarn@3.6.0",
   "resolutions": {
     "chokidar@3.5.3": "patch:chokidar@npm:3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch"
   }

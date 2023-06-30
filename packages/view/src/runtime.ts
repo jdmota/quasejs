@@ -45,8 +45,7 @@ type Win = Window & {
   const walker = doc.createTreeWalker(
     doc,
     128, // NodeFilter.SHOW_COMMENT
-    null,
-    false
+    null
   );
 
   const getWalker = (root: Node): TreeWalker => {
@@ -166,7 +165,7 @@ type Win = Window & {
 
   class AttributePart extends Part {
     protected name: string;
-    protected element: Element;
+    protected override element: Element;
 
     constructor(element: Element, name: string) {
       super(element);
@@ -188,7 +187,7 @@ type Win = Window & {
   }
 
   class PropertyPart extends AttributePart {
-    setValue(value: any) {
+    override setValue(value: any) {
       (this.element as any)[this.name] = value;
     }
   }

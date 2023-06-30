@@ -33,21 +33,25 @@ export default class Lifecycle extends EventTarget {
    */
   get pageWasDiscarded(): boolean;
 
+  //@ts-ignore
   addEventListener(
     type: "statechange",
     listener: (ev: StateChangeEvent) => void,
     options?: boolean | AddEventListenerOptions
   ): void;
+  //@ts-ignore
   addEventListener(
     type: "statechange",
     listener: StateChangeEventListenerOrStateChangeEventListenerObject,
     options?: boolean | AddEventListenerOptions
   ): void;
+  //@ts-ignore
   removeEventListener(
     type: "statechange",
     listener: (ev: StateChangeEvent) => void,
     options?: boolean | EventListenerOptions
   ): void;
+  //@ts-ignore
   removeEventListener(
     type: "statechange",
     listener: StateChangeEventListenerOrStateChangeEventListenerObject,

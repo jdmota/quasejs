@@ -18,7 +18,7 @@ function setupPreload<E extends RouterEvents>(
   notify: (anchor: HTMLAnchorElement) => void
 ) {
   const container = document.body;
-  let mousemoveTimeout: number = 0;
+  let mousemoveTimeout: number | NodeJS.Timeout = 0;
 
   function hover(event: Event) {
     clearTimeout(mousemoveTimeout);
