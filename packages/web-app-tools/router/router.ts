@@ -41,6 +41,7 @@ export type LocationAndIndex = {
 export type Transition = {
   readonly from: LocationAndIndex;
   readonly to: LocationAndIndex;
+  readonly fresh: boolean;
 };
 
 export type RouterEvents = {
@@ -197,6 +198,7 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
         location: this.current,
         index: this.index,
       },
+      fresh: index == null,
     });
   }
 
