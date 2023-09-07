@@ -61,7 +61,7 @@ const {
   givers,
   receivers,
   transactions,
-} = computeGraph(costs, "J");
+} = computeGraph(new Set(Object.keys(costs)), costs, "J");
 
 print(graph);
 console.log("Original Total Cost", originalCost.toString());

@@ -98,10 +98,11 @@ enum PennyLeftOversStrategy {
 }
 
 function computeGraph(
+  persons_: ReadonlySet<string>,
   registry: CostsRegistry,
   strat: PennyLeftOversStrategy | string
 ) {
-  const persons = Object.keys(registry);
+  const persons = [...persons_];
   // Compute diff (for display)
   const diff = createTable(persons);
   for (const [person, costs] of Object.entries(registry)) {
@@ -247,4 +248,4 @@ function computeGraph(
   };
 }
 
-export { everyone, computeGraph, CostsRegistry, cost, cover, print };
+export { everyone, computeGraph, type CostsRegistry, cost, cover, print };
