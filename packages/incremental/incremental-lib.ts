@@ -2,9 +2,7 @@
 // They accept (immutable) arguments and produce results
 // The arguments and results may be serialized and deserialized
 // They may also be associated with equality functions to avoid unnecessary recomputations
-// The computations also have an implementation version so that results cached in disk can be invalidated if the plugin gets a new version
 // Since computations may be asynchronous, to ensure determinism, they may only depend on other computations and on the (immutable) arguments
-// Circular dependencies are detected at runtime
 
 import { createDefer } from "./utils/deferred";
 import { HashMap } from "./utils/hash-map";
@@ -125,7 +123,7 @@ export class ComputationRegistry {
     }
   }
 
-  // External invalidations, like those caused by file changes,
+  // External invalidations (like those caused by file changes)
   // schedule invalidation of unstable computations
   // (those that errored with sporadic errors),
   // together with a new execution
@@ -149,6 +147,7 @@ export class ComputationRegistry {
     }
   }
 
+  // TODO The computations also have an implementation version so that results cached in disk can be invalidated if the plugin gets a new version?
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations during execution?
   // TODO peek errors and return a list of them? create a error pool and report only those?
