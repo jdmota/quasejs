@@ -147,9 +147,9 @@ export class ParserGenerator {
               )
               .join(", ")}}`;
       case "call2":
-        return `this.external.${code.id}(${code.args
-          .map(e => this.renderCode(e))
-          .join(", ")})`;
+        return `this.${code.id.startsWith("$") ? "" : "external."}${
+          code.id
+        }(${code.args.map(e => this.renderCode(e)).join(", ")})`;
       default:
         never(code);
     }
@@ -268,7 +268,7 @@ export class ParserGenerator {
                   c => `${indent}  case ${this.renderNum(c[0].range.from)}:`
                 );
               return lines([
-                ...(casesStr.length ? casesStr : [`${indent}  case false:`]),
+                ...(casesStr.length ? casesStr : [`${indent}  case NaN:`]),
                 this.r(`${indent}    `, d),
                 this.markTransitionAfterDispatch(indent, t),
                 endsWithFlowBreak(d) ? "" : `${indent}    break;`,

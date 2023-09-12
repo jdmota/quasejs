@@ -1,4 +1,4 @@
-import { expect, never } from "../../utils";
+import { expect } from "../../utils";
 import { AnyRule } from "../grammar-builder";
 import { AnyType, TypePolarity, polarity, FreeType } from "./types";
 
@@ -52,8 +52,6 @@ class Graph<N, E> {
   }
 }
 
-const EXPERIMENTAL = true;
-
 export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   private upperHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
     if (seen.has(type)) return;
@@ -66,12 +64,8 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
         }
         break;
       case TypePolarity.NEGATIVE:
-        if (EXPERIMENTAL) {
-          for (const dest of this.outDest(type)) {
-            this.upperHelper(dest, set, seen);
-          }
-        } else {
-          set.add(type);
+        for (const dest of this.outDest(type)) {
+          this.upperHelper(dest, set, seen);
         }
         break;
       case TypePolarity.POSITIVE:
@@ -95,12 +89,8 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
         }
         break;
       case TypePolarity.POSITIVE:
-        if (EXPERIMENTAL) {
-          for (const dest of this.inDest(type)) {
-            this.lowerHelper(dest, set, seen);
-          }
-        } else {
-          set.add(type);
+        for (const dest of this.inDest(type)) {
+          this.lowerHelper(dest, set, seen);
         }
         break;
       case TypePolarity.NEGATIVE:

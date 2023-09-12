@@ -27,16 +27,18 @@ type IdToChannels = Readonly<{
   [key: number]: readonly string[] | undefined;
 }>;
 
-export abstract class Tokenizer extends Stream<Token> {
+export abstract class Tokenizer<T> extends Stream<Token> {
   readonly ctx: RuntimeContext;
+  readonly external: T;
   private input: Input;
   private idToChannels: IdToChannels;
   private channels: { [key: string]: Token[] | undefined };
 
-  constructor(input: Input) {
+  constructor(input: Input, external: T) {
     super();
     this.ctx = new RuntimeContext();
     this.input = input;
+    this.external = external;
     this.idToChannels = this.getIdToChannels();
     this.channels = {};
   }

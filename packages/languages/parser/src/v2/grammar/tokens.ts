@@ -25,6 +25,8 @@ import {
   TokenRules,
 } from "./grammar-builder";
 
+export const LEXER_RULE_NAME = "$lexer";
+
 type ILocalPrefixer = {
   [key in keyof RuleMap]: (prefix: string, node: RuleMap[key]) => RuleMap[key];
 };
@@ -219,7 +221,7 @@ export class TokensStore {
       }
     }
     return builder.token(
-      "$lexer",
+      LEXER_RULE_NAME,
       builder.choice(...tokens),
       {
         type: "normal",

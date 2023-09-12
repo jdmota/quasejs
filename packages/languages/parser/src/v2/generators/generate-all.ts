@@ -6,6 +6,8 @@ import { lines } from "../utils";
 // TODO better types also on the results of this.e() calls
 // TODO getIdToChannels
 
+export const TYPES_MACRO = "// #### TYPES ####";
+
 export function generateAll(
   grammar: Grammar,
   tokensCode: ReadonlyMap<TokenDeclaration, string>,
@@ -16,23 +18,25 @@ export function generateAll(
     `import { Tokenizer } from "./runtime/tokenizer";`,
     `import { Parser } from "./runtime/parser";\n`,
     ``,
+    TYPES_MACRO,
+    ``,
     `const EMPTY_OBJ = {};\n`,
     ``,
-    `class GrammarTokenizer extends Tokenizer {`,
+    `class GrammarTokenizer extends Tokenizer<$ExternalCalls> {`,
     ...tokensCode.values(),
     `}\n`,
     ``,
-    `class GrammarParser extends Parser {`,
+    `class GrammarParser extends Parser<$ExternalCalls> {`,
     ...rulesCode.values(),
     `}\n`,
     ``,
-    `export function parse(${[
+    `export function parse(external: $ExternalCalls, ${[
       "string: string",
       ...grammar.startRule.args.map(a => `$${a.arg}: any`),
     ].join(", ")}) {`,
     `  const input = new Input({ string });`,
-    `  const tokenizer = new GrammarTokenizer(input);`,
-    `  const parser = new GrammarParser(tokenizer);`,
+    `  const tokenizer = new GrammarTokenizer(input, external);`,
+    `  const parser = new GrammarParser(tokenizer, external);`,
     `  return parser.ctx.u(-1, ${`parser.rule${
       grammar.startRule.name
     }(${grammar.startRule.args.map(a => `$${a.arg}`).join(", ")})`});`,

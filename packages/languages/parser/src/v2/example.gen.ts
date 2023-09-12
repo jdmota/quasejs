@@ -2,17 +2,45 @@ import { Input } from "./runtime/input";
 import { Tokenizer } from "./runtime/tokenizer";
 import { Parser } from "./runtime/parser";
 
+/* eslint-disable */
+export type $Position = {pos:number;line:number;column:number;};
+export type $Location = {start:$Position;end:$Position;};
+export type $Nodes = A|B|C|D|E|F|G|Tricky1|Tricky2|Tricky3|Tricky4;
+export type $ExternalCalls = {
+  externalCall: ((arg0: Readonly<{ id: number }>) => A);
+};
+export type A = A;
+export type B = Readonly<Record<string, never>>;
+export type C_x = C_x;
+export type C_y = C_y;
+export type C = (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>);
+export type D_arg = (Readonly<{ x: $rec1 }> & Readonly<{ y: $rec2 }> & Readonly<{ y: $rec3 }> & Readonly<{ x: $rec4 }>);
+export type D = (Readonly<{ x: $rec1, y: $rec2 }> | Readonly<{ x: $rec3, y: $rec4 }>);
+export type E = number;
+export type F_arg = (Readonly<{ x: unknown }> & Readonly<{ x: unknown }>);
+export type F = never;
+export type G = Readonly<Record<string, never>>;
+export type Tricky1 = Readonly<Record<string, never>>;
+export type Tricky2 = Readonly<{ x: (null | Tricky2), y: (null | Tricky2), z: (null | Tricky2) }>;
+export type Tricky3_arg = unknown;
+export type Tricky3 = Readonly<{ x: (null | Tricky3), y: (null | Tricky3), z: (null | Tricky3) }>;
+export type Tricky4 = Readonly<Record<string, never>>;
+export type $rec1 = $rec1;
+export type $rec2 = $rec2;
+export type $rec3 = $rec3;
+export type $rec4 = $rec4;
+
 const EMPTY_OBJ = {};
 
-class GrammarTokenizer extends Tokenizer {
+class GrammarTokenizer extends Tokenizer<$ExternalCalls> {
   token$lexer() {
     let $startLoc, id:any=null, token:any=null, $9_text:any=null;
     s2:do{
       switch(this.ll(1)){
         case 87 /*'W'*/:
-          $startLoc = this.external.$getLoc();
+          $startLoc = this.$getLoc();
           this.e(87 /*'W'*/);
-          $9_text = this.external.$getText($startLoc);
+          $9_text = this.$getText($startLoc);
           id = 9;
           token = $9_text;
           break s2;
@@ -24,7 +52,7 @@ class GrammarTokenizer extends Tokenizer {
           this.e(60 /*'<'*/);
           this.e(60 /*'<'*/);
           switch(this.ll(1)){
-            case false:
+            case NaN:
               id = 8;
               break;
             case 60 /*'<'*/:
@@ -115,14 +143,14 @@ class GrammarTokenizer extends Tokenizer {
   }
   tokenW() {
     let $startLoc, text:any=null;
-    $startLoc = this.external.$getLoc();
+    $startLoc = this.$getLoc();
     this.e(87 /*'W'*/);
-    text = this.external.$getText($startLoc);
+    text = this.$getText($startLoc);
     return this.ctx.o(text);
   }
 }
 
-class GrammarParser extends Parser {
+class GrammarParser extends Parser<$ExternalCalls> {
   ruleA() {
     let $ll1, $ll2, $ll3, my_obj:any=null;
     s5:do{
@@ -265,10 +293,10 @@ class GrammarParser extends Parser {
   ruleD(arg) {
     let ret:any=null;
     switch(this.ll(1)){
-      case false:
+      case NaN:
         ret = {x: arg.x, y: arg.y};
         break;
-      case false:
+      case NaN:
         ret = {x: arg.y, y: arg.x};
         break;
       default:
@@ -404,9 +432,9 @@ class GrammarParser extends Parser {
   }
 }
 
-export function parse(string: string) {
+export function parse(external: $ExternalCalls, string: string) {
   const input = new Input({ string });
-  const tokenizer = new GrammarTokenizer(input);
-  const parser = new GrammarParser(tokenizer);
+  const tokenizer = new GrammarTokenizer(input, external);
+  const parser = new GrammarParser(tokenizer, external);
   return parser.ctx.u(-1, parser.ruleA());
 }

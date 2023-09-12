@@ -1,10 +1,5 @@
 import { first, never, nonNull } from "../../utils";
-import {
-  AnyType,
-  TypePolarity,
-  isConstructedType,
-  TypesRegistry,
-} from "./types";
+import { AnyType, TypePolarity, TypesRegistry } from "./types";
 
 abstract class NormalizedType {
   abstract format(): string;
@@ -203,13 +198,6 @@ export type AnyNormalizedType =
   | UnionType
   | IntersectionType;
 
-// TODO i think the point here is that
-// we could choose the lower bound for every type
-// of course we dont want that because that is not useful
-// so we give polatiries to the types
-// now the issue is, if I decide to choose the lower bound of some type
-// I cannot cross a type that has choosen the upper bound
-
 export class Normalizer {
   constructor(private readonly registry: TypesRegistry) {}
 
@@ -268,6 +256,7 @@ export class Normalizer {
           case TypePolarity.NONE:
             throw new Error("Cannot normalize type with no polarity");
           case TypePolarity.POSITIVE: {
+            // Get the lower bound and do not "go beyond" types with negative polarity
             const set = new Set<AnyNormalizedType>();
             for (const sub of this.registry.graph.lower(type)) {
               set.add(this.normalize(sub));
@@ -275,6 +264,7 @@ export class Normalizer {
             return union(set);
           }
           case TypePolarity.NEGATIVE: {
+            // Get the upper bound and do not "go beyond" types with positive polarity
             const set = new Set<AnyNormalizedType>();
             for (const sub of this.registry.graph.upper(type)) {
               set.add(this.normalize(sub));
@@ -282,6 +272,7 @@ export class Normalizer {
             return intersection(set);
           }
           case TypePolarity.BIPOLAR: {
+            // Get both bounds
             const lowerSet = new Set<AnyNormalizedType>();
             for (const sub of this.registry.graph.lower(type)) {
               lowerSet.add(this.normalize(sub));

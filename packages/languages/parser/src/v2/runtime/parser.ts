@@ -3,13 +3,15 @@ import { Token, Tokenizer } from "./tokenizer";
 import { error } from "./error";
 import { RuntimeContext } from "./context";
 
-export abstract class Parser {
+export abstract class Parser<T> {
   readonly ctx: RuntimeContext;
-  private tokenizer: Tokenizer;
+  readonly external: T;
+  private tokenizer: Tokenizer<T>;
 
-  constructor(tokenizer: Tokenizer) {
+  constructor(tokenizer: Tokenizer<T>, external: T) {
     this.ctx = new RuntimeContext();
     this.tokenizer = tokenizer;
+    this.external = external;
   }
 
   /*startNode(): Position {
