@@ -76,9 +76,7 @@ export class FactoryRule extends AbstractFactory {
     const fragItem = this.automaton.single(transition);
     const end = this.automaton.newState();
     fragItem.end.addTransition(
-      new FieldTransition(node.name, node.multiple, transition).setLoc(
-        node.loc
-      ),
+      new FieldTransition(node.name, node.multiple).setLoc(node.loc),
       end
     );
     return {

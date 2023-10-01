@@ -210,7 +210,7 @@ console.log("Error", run(example, new InputState("ab", 0), Stack.new()).errors);
 console.log("Error", run(example, new InputState("ac", 0), Stack.new()).errors);
 
 export function parse(grammar: Grammar, input: string) {
-  const start = grammar.getRule(grammar.startRule);
+  const start = grammar.getRule(grammar.startRule.name);
   run({ transitions: [] }, new InputState(input, 0), Stack.new());
   // TODO expect eof
 }

@@ -8,7 +8,7 @@ import { MapRangeToSet } from "../utils/map-range-to-set";
 import { MapKeyToValue } from "../utils/map-key-to-value";
 import { MapRangeToValue } from "../utils/map-range-to-value";
 
-const EPSILON = new EpsilonTransition();
+export const EPSILON = new EpsilonTransition();
 
 export class State {
   readonly id: number;

@@ -198,17 +198,11 @@ export class ReturnTransition extends AbstractEpsilonTransition {
 export class FieldTransition extends AbstractEpsilonTransition {
   readonly name: string;
   readonly multiple: boolean;
-  readonly transition: AssignableTransition;
 
-  constructor(
-    name: string,
-    multiple: boolean,
-    transition: AssignableTransition
-  ) {
+  constructor(name: string, multiple: boolean) {
     super();
     this.name = name;
     this.multiple = multiple;
-    this.transition = transition;
   }
 
   hashCode() {
@@ -219,14 +213,11 @@ export class FieldTransition extends AbstractEpsilonTransition {
     return (
       other instanceof FieldTransition &&
       this.name === other.name &&
-      this.multiple === other.multiple &&
-      this.transition.equals(other.transition)
+      this.multiple === other.multiple
     );
   }
 
   toString() {
-    return `[${this.name} ${
-      this.multiple ? "+=" : ""
-    } ${this.transition.toString()}]`;
+    return `[${this.name} ${this.multiple ? "+=" : ""} $val]`;
   }
 }

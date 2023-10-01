@@ -29,10 +29,10 @@ export function formatRule(rule: AnyRule): string {
       return `${rule.name}${rule.multiple ? "+=" : "="}${formatRule(
         rule.rule
       )}`;
-    case "action":
-      return `{${rule.action}}`;
+    /*case "action":
+      return `{${rule.action}}`;*/
     case "predicate":
-      return `{${rule.predicate}}?`;
+      return `{${rule.code}}?`; // TODO
     default:
       never(rule);
   }

@@ -224,9 +224,3 @@ if (result) {
   console.log("Type errors", errors);
   console.log();
 }
-
-// TODO right-optimize: the code should not be in the edges, it should be in the nodes?
-// state1 ---x--> end
-// state2 ---x--> end
-// If x is epsilon code, we could optimize...
-// Example in ruleA

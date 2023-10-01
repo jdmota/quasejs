@@ -108,7 +108,7 @@ export class FactoryToken extends AbstractFactory {
       start
         .addTransition(getStartLoc, this.automaton.newState())
         .addTransition(
-          new FieldTransition("$startLoc", false, getStartLoc).setLoc(node.loc),
+          new FieldTransition("$startLoc", false).setLoc(node.loc),
           fragment.start
         );
       // ?? = $getText($startLoc);
@@ -118,9 +118,7 @@ export class FactoryToken extends AbstractFactory {
       const end = fragment.end
         .addTransition(getText, this.automaton.newState())
         .addTransition(
-          new FieldTransition(node.name, node.multiple, getText).setLoc(
-            node.loc
-          ),
+          new FieldTransition(node.name, node.multiple).setLoc(node.loc),
           this.automaton.newState()
         );
       return {
@@ -135,9 +133,7 @@ export class FactoryToken extends AbstractFactory {
       const fragItem = this.automaton.single(transition);
       const end = this.automaton.newState();
       fragItem.end.addTransition(
-        new FieldTransition(node.name, node.multiple, transition).setLoc(
-          node.loc
-        ),
+        new FieldTransition(node.name, node.multiple).setLoc(node.loc),
         end
       );
       return {

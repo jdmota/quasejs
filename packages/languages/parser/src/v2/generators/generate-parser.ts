@@ -25,13 +25,13 @@ import {
   endsWithFlowBreak,
   ExpectBlock,
 } from "./dfa-to-code/cfg-to-code";
-import { CFGEdge, CFGNode, DispatchTransition } from "./dfa-to-code/dfa-to-cfg";
+import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg";
 
 export class ParserGenerator {
   private readonly grammar: Grammar;
   private readonly analyzer: Analyzer;
   private readonly rule: Declaration;
-  private nodes: Map<CFGNode, number>;
+  private nodes: Map<ParserCFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
   private DEBUG = true;
@@ -45,7 +45,7 @@ export class ParserGenerator {
     this.internalVars = new Set();
   }
 
-  private nodeId(node: CFGNode) {
+  private nodeId(node: ParserCFGNode) {
     const curr = this.nodes.get(node);
     if (curr == null) {
       const id = this.nodeUuid++;
@@ -162,28 +162,19 @@ export class ParserGenerator {
       : `${t.name} = ${what}`;
   }
 
-  // This method detects if we need to save a value for later assignment
-  // And writes "field = 2;" instead of "$val = 2; field = $val;" if possible
   private renderExpectBlock(indent: string, block: ExpectBlock): string {
-    const t = block.edge.transition;
-    if (t instanceof FieldTransition && block.edge.start.outEdges.size === 1) {
-      // This field assignment was rendered before
-      return "";
+    if (block.result === false) {
+      return `${indent}${this.renderTransition(block.transition)};`;
     }
-    const followingField = find(block.edge.dest.outEdges, ({ transition: f }) =>
-      f instanceof FieldTransition && f.transition.equals(t) ? f : null
-    );
-    if (followingField) {
-      const hasOnlyOneTransitionNext = block.edge.dest.outEdges.size === 1;
-      if (hasOnlyOneTransitionNext) {
-        return `${indent}${this.renderField(
-          followingField,
-          this.renderTransition(t)
-        )};`;
-      }
-      return `${indent}${this.markVar("$val")} = ${this.renderTransition(t)};`;
+    if (block.result === true) {
+      return `${indent}${this.markVar("$val")} = ${this.renderTransition(
+        block.transition
+      )};`;
     }
-    return `${indent}${this.renderTransition(t)};`;
+    return `${indent}${this.renderField(
+      block.result,
+      this.renderTransition(block.transition)
+    )};`;
   }
 
   renderTransition(t: AnyTransition): string {
@@ -224,7 +215,7 @@ export class ParserGenerator {
     never(t);
   }
 
-  private markTransitionAfterDispatch(indent: string, edge: CFGEdge) {
+  private markTransitionAfterDispatch(indent: string, edge: ParserCFGEdge) {
     return edge.originalDest
       ? `${indent}  ${this.markVar(
           `$d${this.nodeId(edge.dest)}`
@@ -239,46 +230,24 @@ export class ParserGenerator {
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
-        // If this corresponds to a dispatch node
-        if (block.node.state == null) {
-          return lines([
-            `${indent}switch(${this.markVar(`$d${this.nodeId(block.node)}`)}){`,
-            ...block.choices.map(([t, d]) => {
-              assertion(t.transition instanceof DispatchTransition);
-              return lines([
-                `${indent}  case ${this.nodeId(t.dest)}:`,
-                this.r(`${indent}    `, d),
-                endsWithFlowBreak(d) ? "" : `${indent}    break;`,
-              ]);
-            }),
-            `${indent}}`,
-          ]);
-        }
-        const choices = this.analyzer.analyze(
-          this.rule,
-          block.node.state
-        ).inverted;
+        const choices = this.analyzer.analyze(this.rule, block.state).inverted;
         if (block.choices.length >= 2 && choices.compatibleWithSwitch) {
           return lines([
             `${indent}switch(this.ll(1)){`,
             ...block.choices.map(([t, d]) => {
               const casesStr = choices
-                .get(t.transition)
+                .get(t)
                 .map(
                   c => `${indent}  case ${this.renderNum(c[0].range.from)}:`
                 );
               return lines([
                 ...(casesStr.length ? casesStr : [`${indent}  case NaN:`]),
                 this.r(`${indent}    `, d),
-                this.markTransitionAfterDispatch(indent, t),
+                // TODO this.markTransitionAfterDispatch(indent, t),
                 endsWithFlowBreak(d) ? "" : `${indent}    break;`,
               ]);
             }),
-            `${indent}  default:\n` +
-              (block.default
-                ? this.r(`${indent}    `, block.default)
-                : `${indent}    this.err();`) +
-              `\n${indent}}`,
+            `${indent}  default:\n${indent}    this.err();\n${indent}}`,
           ]);
         }
         return (
@@ -291,19 +260,15 @@ export class ParserGenerator {
           lines(
             [
               ...block.choices.map(([t, d]) => {
-                const cases = choices.get(t.transition);
+                const cases = choices.get(t);
                 return lines([
                   `if(${this.renderConditionOr(cases)}){`,
                   this.r(`${indent}  `, d),
-                  this.markTransitionAfterDispatch(indent, t),
+                  // TODO this.markTransitionAfterDispatch(indent, t),
                   `${indent}}`,
                 ]);
               }),
-              `{\n${
-                block.default
-                  ? this.r(`${indent}  `, block.default)
-                  : `${indent}  this.err();`
-              }\n${indent}}`,
+              `{\n${indent}  this.err();\n${indent}}`,
             ],
             " else "
           )
@@ -325,11 +290,22 @@ export class ParserGenerator {
         return `${indent}break ${block.label};`;
       case "continue_block":
         return `${indent}continue ${block.label};`;
-      case "return_block":
-        // There is always a ReturnTransition before, no need to render the "return" block
-        return "";
       case "empty_block":
         return "";
+      case "dispatch_block":
+        throw new Error("TODO");
+      /*return lines([
+          `${indent}switch(${this.markVar(`$d${this.nodeId(block.node)}`)}){`,
+          ...block.choices.map(([t, d]) => {
+            assertion(t.transition instanceof DispatchTransition);
+            return lines([
+              `${indent}  case ${this.nodeId(t.dest)}:`,
+              this.r(`${indent}    `, d),
+              endsWithFlowBreak(d) ? "" : `${indent}    break;`,
+            ]);
+          }),
+          `${indent}}`,
+        ]);*/
       default:
         never(block);
     }
