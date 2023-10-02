@@ -449,6 +449,8 @@ export class Analyzer {
     }
   }
 
+  // TODO what about the follow of $lexer?
+
   analyze(rule: Declaration, state: DState, maxLL = 3) {
     // Reset phase
     this.llState = 0;

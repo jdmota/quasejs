@@ -1,10 +1,5 @@
 import type { Location } from "../runtime/input";
-import {
-  sameArgs,
-  sameAssignable,
-  ExprRule,
-  FieldRule,
-} from "../grammar/grammar-builder";
+import { sameArgs, sameAssignable, ExprRule } from "../grammar/grammar-builder";
 import { intersect } from "../utils/range-utils";
 
 export type AnyTransition =
@@ -13,13 +8,12 @@ export type AnyTransition =
   | ActionTransition
   | PredicateTransition
   | RangeTransition
-  | ReturnTransition
-  | FieldTransition;
+  | ReturnTransition;
 
-export type AssignableTransition =
-  | ActionTransition
-  | RangeTransition
-  | CallTransition;
+export type FieldInfo = Readonly<{
+  name: string;
+  multiple: boolean;
+}>;
 
 export abstract class Transition<E extends boolean> {
   readonly isEpsilon: E;
@@ -52,6 +46,23 @@ abstract class AbstractNotEpsilonTransition extends Transition<false> {
   }
 }
 
+export abstract class AssignableTransition extends AbstractNotEpsilonTransition {
+  readonly field: FieldInfo | null;
+
+  constructor(field: FieldInfo | null) {
+    super();
+    this.field = field;
+  }
+
+  equals(other: unknown): other is AssignableTransition {
+    return (
+      other instanceof AssignableTransition &&
+      other.field?.name === this.field?.name &&
+      other.field?.multiple === this.field?.multiple
+    );
+  }
+}
+
 export class EpsilonTransition extends AbstractEpsilonTransition {
   hashCode() {
     return 0;
@@ -66,12 +77,16 @@ export class EpsilonTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class CallTransition extends AbstractNotEpsilonTransition {
+export class CallTransition extends AssignableTransition {
   readonly ruleName: string;
   readonly args: readonly ExprRule[];
 
-  constructor(ruleName: string, args: readonly ExprRule[]) {
-    super();
+  constructor(
+    ruleName: string,
+    args: readonly ExprRule[],
+    field: FieldInfo | null
+  ) {
+    super(field);
     this.ruleName = ruleName;
     this.args = args;
   }
@@ -80,11 +95,12 @@ export class CallTransition extends AbstractNotEpsilonTransition {
     return 1;
   }
 
-  equals(other: unknown): other is CallTransition {
+  override equals(other: unknown): other is CallTransition {
     return (
       other instanceof CallTransition &&
       this.ruleName === other.ruleName &&
-      sameArgs(this.args, other.args)
+      sameArgs(this.args, other.args) &&
+      super.equals(other)
     );
   }
 
@@ -117,11 +133,11 @@ export class PredicateTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class ActionTransition extends AbstractEpsilonTransition {
+export class ActionTransition extends AssignableTransition {
   readonly code: ExprRule;
 
-  constructor(code: ExprRule) {
-    super();
+  constructor(code: ExprRule, field: FieldInfo | null) {
+    super(field);
     this.code = code;
   }
 
@@ -129,9 +145,11 @@ export class ActionTransition extends AbstractEpsilonTransition {
     return 4;
   }
 
-  equals(other: unknown): other is ActionTransition {
+  override equals(other: unknown): other is ActionTransition {
     return (
-      other instanceof ActionTransition && sameAssignable(this.code, other.code)
+      other instanceof ActionTransition &&
+      sameAssignable(this.code, other.code) &&
+      super.equals(other)
     );
   }
 
@@ -140,12 +158,12 @@ export class ActionTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class RangeTransition extends AbstractNotEpsilonTransition {
+export class RangeTransition extends AssignableTransition {
   readonly from: number;
   readonly to: number;
 
-  constructor(from: number, to: number) {
-    super();
+  constructor(from: number, to: number, field: FieldInfo | null) {
+    super(field);
     this.from = from;
     this.to = to;
   }
@@ -154,11 +172,12 @@ export class RangeTransition extends AbstractNotEpsilonTransition {
     return 5 * this.from * this.to;
   }
 
-  equals(other: unknown): other is RangeTransition {
+  override equals(other: unknown): other is RangeTransition {
     return (
       other instanceof RangeTransition &&
       other.from === this.from &&
-      other.to === this.to
+      other.to === this.to &&
+      super.equals(other)
     );
   }
 
@@ -195,7 +214,7 @@ export class ReturnTransition extends AbstractEpsilonTransition {
   }
 }
 
-export class FieldTransition extends AbstractEpsilonTransition {
+/*export class FieldTransition extends AbstractEpsilonTransition {
   readonly name: string;
   readonly multiple: boolean;
 
@@ -220,4 +239,4 @@ export class FieldTransition extends AbstractEpsilonTransition {
   toString() {
     return `[${this.name} ${this.multiple ? "+=" : ""} $val]`;
   }
-}
+}*/

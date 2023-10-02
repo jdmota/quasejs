@@ -13,9 +13,9 @@ import { Frag, Automaton } from "../automaton/automaton";
 import {
   CallTransition,
   ReturnTransition,
-  FieldTransition,
   RangeTransition,
   ActionTransition,
+  FieldInfo,
 } from "../automaton/transitions";
 import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 import { Location } from "../../runtime/tokenizer";
@@ -50,7 +50,7 @@ export class FactoryToken extends AbstractFactory {
   }
 
   static eof(automaton: Automaton, node: EofRule): Frag {
-    return automaton.single(new RangeTransition(-1, -1).setLoc(node.loc));
+    return automaton.single(new RangeTransition(-1, -1, null).setLoc(node.loc));
   }
 
   static string(automaton: Automaton, node: StringRule): Frag {
@@ -75,14 +75,17 @@ export class FactoryToken extends AbstractFactory {
     return regexpToAutomaton(factoryRegexp, node.regexp);
   }
 
-  protected callTransition(node: CallRule): CallTransition {
+  protected callTransition(
+    node: CallRule,
+    field: FieldInfo | null
+  ): CallTransition {
     const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(false);
       case "token":
         assertion(node.args.length === 0);
-        return new CallTransition(node.id, []).setLoc(node.loc);
+        return new CallTransition(node.id, [], field).setLoc(node.loc);
       default:
         never(decl);
     }
@@ -102,44 +105,30 @@ export class FactoryToken extends AbstractFactory {
       );
       const start = this.automaton.newState();
       // $startLoc = $getLoc();
-      const getStartLoc = new ActionTransition(
-        builder.call2("$getLoc", [])
-      ).setLoc(node.loc);
-      start
-        .addTransition(getStartLoc, this.automaton.newState())
-        .addTransition(
-          new FieldTransition("$startLoc", false).setLoc(node.loc),
-          fragment.start
-        );
+      const getStartLoc = new ActionTransition(builder.call2("$getLoc", []), {
+        name: "$startLoc",
+        multiple: false,
+      }).setLoc(node.loc);
+      start.addTransition(getStartLoc, fragment.start);
       // ?? = $getText($startLoc);
       const getText = new ActionTransition(
-        builder.call2("$getText", [builder.id("$startLoc")])
+        builder.call2("$getText", [builder.id("$startLoc")]),
+        node
       ).setLoc(node.loc);
-      const end = fragment.end
-        .addTransition(getText, this.automaton.newState())
-        .addTransition(
-          new FieldTransition(node.name, node.multiple).setLoc(node.loc),
-          this.automaton.newState()
-        );
+      const end = fragment.end.addTransition(
+        getText,
+        this.automaton.newState()
+      );
       return {
         start,
         end,
       };
     } else {
-      const transition =
+      return this.automaton.single(
         innerRule.type === "call"
-          ? this.callTransition(innerRule)
-          : this.actionTransition(innerRule);
-      const fragItem = this.automaton.single(transition);
-      const end = this.automaton.newState();
-      fragItem.end.addTransition(
-        new FieldTransition(node.name, node.multiple).setLoc(node.loc),
-        end
+          ? this.callTransition(innerRule, node)
+          : this.actionTransition(innerRule, node)
       );
-      return {
-        start: fragItem.start,
-        end,
-      };
     }
   }
 

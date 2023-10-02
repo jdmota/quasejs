@@ -1,9 +1,5 @@
 import { DState } from "../../automaton/state";
-import {
-  AnyTransition,
-  FieldTransition,
-  ReturnTransition,
-} from "../../automaton/transitions";
+import { AnyTransition, ReturnTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
 import { assertion, first, never } from "../../utils";
 import { cfgToGroups, CFGGroup } from "./cfg";
@@ -32,7 +28,6 @@ type Label = string;
 export type ExpectBlock = Readonly<{
   type: "expect_block";
   transition: AnyTransition;
-  result: FieldTransition | boolean;
 }>;
 
 export type SeqBlock = Readonly<{
@@ -313,8 +308,6 @@ export class CfgToCode {
     return ref.state;
   }
 
-  private toReplace = new Set<ParserCFGNode>();
-
   private handleNode(node: ParserCFGNode, parent: ParserCFGGroup): CodeBlock {
     const { code } = node;
     let block: CodeBlock;
@@ -323,72 +316,12 @@ export class CfgToCode {
     switch (code?.type) {
       case "regular_block": {
         const edge = first(node.outEdges);
-
-        const someField = this.following(
-          node,
-          {
-            stop: false,
-            state: false,
-          },
-          (node, block, ref) => {
-            if (block.expr instanceof FieldTransition) {
-              ref.state = true;
-              ref.stop = true;
-            }
-          }
-        );
-
-        // If the control flow leads always to the same field assignments,
-        // And such field assigments are preceded by nodes that meet the same criteria
-        // Then we can optimize...
-
-        // TODO check second criteria
-
-        const ref2: {
-          stop: boolean;
-          state: { field: FieldTransition | null; set: Set<ParserCFGNode> };
-        } = {
-          stop: false,
-          state: { field: null, set: new Set() },
-        };
-        const { field: nextField, set: nextFieldNodes } = this.following(
-          node,
-          ref2,
-          (node, block, ref) => {
-            if (block.expr instanceof FieldTransition) {
-              if (ref.state.field == null) {
-                ref.state.field = block.expr;
-                ref.state.set.add(node);
-              } else {
-                if (block.expr.equals(ref.state)) {
-                  ref.state.set.add(node);
-                } else {
-                  ref.state.field = null;
-                  ref.state.set.clear();
-                  ref.stop = true;
-                }
-              }
-            } else {
-              ref.state.field = null;
-              ref.state.set.clear();
-              ref.stop = true;
-            }
-          }
-        );
-
-        for (const n of nextFieldNodes) {
-          this.toReplace.add(n);
-        }
-
         const { loop, result } = this.handleEdge(parent, node, edge);
         block = this.makeSeq([
-          this.toReplace.has(node)
-            ? empty
-            : {
-                type: "expect_block",
-                transition: code.expr,
-                result: nextField ?? someField,
-              },
+          {
+            type: "expect_block",
+            transition: code.expr,
+          },
           result,
         ]);
         isLoop = loop;
@@ -421,11 +354,7 @@ export class CfgToCode {
 
     if (isLoop) {
       const label = this.getLoopLabel(node);
-      block = {
-        type: "loop_block",
-        label,
-        block: this.makeSeq([block, this.createBreak(label)]),
-      };
+      block = makeLoop(label, this.makeSeq([block, this.createBreak(label)]));
     }
 
     return block;

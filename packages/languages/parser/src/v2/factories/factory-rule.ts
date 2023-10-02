@@ -14,8 +14,8 @@ import {
   CallTransition,
   ReturnTransition,
   RangeTransition,
-  AssignableTransition,
-  FieldTransition,
+  ActionTransition,
+  FieldInfo,
 } from "../automaton/transitions";
 import { Location } from "../../runtime/tokenizer";
 import { assertion, never } from "../utils";
@@ -37,64 +37,60 @@ export class FactoryRule extends AbstractFactory {
     return new FactoryRule(grammar, rule, automaton).genRule(rule);
   }
 
-  protected callTransition(node: CallRule): CallTransition | RangeTransition {
+  protected callTransition(
+    node: CallRule,
+    field: FieldInfo | null
+  ): CallTransition | RangeTransition {
     const decl = this.grammar.getRule(node.id);
     switch (decl.type) {
       case "rule":
         assertion(node.args.length === decl.args.length);
-        return new CallTransition(node.id, node.args).setLoc(node.loc);
+        return new CallTransition(node.id, node.args, field).setLoc(node.loc);
       case "token":
         assertion(decl.modifiers.type === "normal");
         assertion(node.args.length === 0);
         const id = this.grammar.tokenId(decl);
-        return new RangeTransition(id, id);
+        return new RangeTransition(id, id, field);
       default:
         never(decl);
     }
   }
 
-  private token(node: TokenRules) {
+  private token(node: TokenRules, field: FieldInfo | null) {
     const id = this.grammar.tokenId(node);
-    return new RangeTransition(id, id);
+    return new RangeTransition(id, id, field);
   }
 
-  private assignablesToTransition(node: Assignables): AssignableTransition {
+  private assignablesToTransition(
+    node: Assignables,
+    field: FieldInfo | null
+  ): CallTransition | ActionTransition | RangeTransition {
     switch (node.type) {
       case "string":
       case "regexp":
       case "eof":
-        return this.token(node);
+        return this.token(node, field);
       case "call":
-        return this.callTransition(node);
+        return this.callTransition(node, field);
       default:
-        return this.actionTransition(node);
+        return this.actionTransition(node, field);
     }
   }
 
   field(node: FieldRule): Frag {
-    const transition = this.assignablesToTransition(node.rule);
-    const fragItem = this.automaton.single(transition);
-    const end = this.automaton.newState();
-    fragItem.end.addTransition(
-      new FieldTransition(node.name, node.multiple).setLoc(node.loc),
-      end
-    );
-    return {
-      start: fragItem.start,
-      end,
-    };
+    return this.automaton.single(this.assignablesToTransition(node.rule, node));
   }
 
   string(node: StringRule): Frag {
-    return this.automaton.single(this.token(node));
+    return this.automaton.single(this.token(node, null));
   }
 
   regexp(node: RegExpRule): Frag {
-    return this.automaton.single(this.token(node));
+    return this.automaton.single(this.token(node, null));
   }
 
   eof(node: EofRule): Frag {
-    return this.automaton.single(this.token(node));
+    return this.automaton.single(this.token(node, null));
   }
 
   genRule(rule: RuleDeclaration): Frag {
@@ -110,7 +106,7 @@ export class FactoryRule extends AbstractFactory {
 
     if (rule.modifiers.start) {
       const newEnd = this.automaton.newState();
-      end.addTransition(new RangeTransition(-1, -1).setLoc(loc), newEnd);
+      end.addTransition(new RangeTransition(-1, -1, null).setLoc(loc), newEnd);
       end = newEnd;
     }
 

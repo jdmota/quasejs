@@ -63,7 +63,7 @@ export class State {
       yield step;
     }
     for (const [range, set] of this.mapRangeToSet) {
-      yield [new RangeTransition(range.from, range.to), set] as const;
+      yield [new RangeTransition(range.from, range.to, null), set] as const;
     }
   }
 }
@@ -84,7 +84,7 @@ export class DState {
 
   addTransition(transition: AnyTransition, dest: DState) {
     let added = false;
-    if (transition instanceof RangeTransition) {
+    if (transition instanceof RangeTransition && transition.field === null) {
       added = this.rangeList.addRange(transition.from, transition.to, dest);
     } else {
       added = this.transitionsMap.add(transition, dest);
@@ -112,7 +112,7 @@ export class DState {
       yield pair;
     }
     for (const [range, dest] of this.rangeList) {
-      yield [new RangeTransition(range.from, range.to), dest] as const;
+      yield [new RangeTransition(range.from, range.to, null), dest] as const;
     }
   }
 }

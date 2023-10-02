@@ -8,9 +8,10 @@ import {
 import {
   ActionTransition,
   AnyTransition,
+  AssignableTransition,
   CallTransition,
   EpsilonTransition,
-  FieldTransition,
+  FieldInfo,
   PredicateTransition,
   RangeTransition,
   ReturnTransition,
@@ -34,6 +35,9 @@ export class ParserGenerator {
   private nodes: Map<ParserCFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
+  private breaksStack: string[];
+  private continuesStack: string[];
+  private neededLabels: Set<string>;
   private DEBUG = true;
 
   constructor(grammar: Grammar, analyzer: Analyzer, rule: Declaration) {
@@ -43,6 +47,17 @@ export class ParserGenerator {
     this.nodes = new Map();
     this.nodeUuid = 1;
     this.internalVars = new Set();
+    this.breaksStack = [];
+    this.continuesStack = [];
+    this.neededLabels = new Set();
+  }
+
+  private lastBreakScope() {
+    return this.breaksStack[this.breaksStack.length - 1];
+  }
+
+  private lastContinueScope() {
+    return this.continuesStack[this.continuesStack.length - 1];
   }
 
   private nodeId(node: ParserCFGNode) {
@@ -155,7 +170,7 @@ export class ParserGenerator {
     }
   }
 
-  private renderField(t: FieldTransition, what: string) {
+  private renderField(t: FieldInfo, what: string) {
     this.markVar(t.name);
     return t.multiple
       ? `(${t.name} = ${t.name} || []).push(${what})`
@@ -163,18 +178,16 @@ export class ParserGenerator {
   }
 
   private renderExpectBlock(indent: string, block: ExpectBlock): string {
-    if (block.result === false) {
-      return `${indent}${this.renderTransition(block.transition)};`;
+    const t = block.transition;
+    if (t instanceof AssignableTransition) {
+      if (t.field) {
+        return `${indent}${this.renderField(
+          t.field,
+          this.renderTransition(block.transition)
+        )};`;
+      }
     }
-    if (block.result === true) {
-      return `${indent}${this.markVar("$val")} = ${this.renderTransition(
-        block.transition
-      )};`;
-    }
-    return `${indent}${this.renderField(
-      block.result,
-      this.renderTransition(block.transition)
-    )};`;
+    return `${indent}${this.renderTransition(block.transition)};`;
   }
 
   renderTransition(t: AnyTransition): string {
@@ -194,9 +207,6 @@ export class ParserGenerator {
             this.analyzer.follows.getByTransition(t)
           )}, ${code})`
         : code;
-    }
-    if (t instanceof FieldTransition) {
-      return this.renderField(t, this.markVar("$val"));
     }
     if (t instanceof ActionTransition) {
       return this.renderCode(t.code);
@@ -230,9 +240,11 @@ export class ParserGenerator {
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
+        this.breaksStack.push("");
+        let code = "";
         const choices = this.analyzer.analyze(this.rule, block.state).inverted;
         if (block.choices.length >= 2 && choices.compatibleWithSwitch) {
-          return lines([
+          code = lines([
             `${indent}switch(this.ll(1)){`,
             ...block.choices.map(([t, d]) => {
               const casesStr = choices
@@ -249,47 +261,74 @@ export class ParserGenerator {
             }),
             `${indent}  default:\n${indent}    this.err();\n${indent}}`,
           ]);
+        } else {
+          code =
+            lines(
+              Array.from(range(1, choices.maxLL)).map(
+                n => `${indent}${this.markVar("$ll" + n)} = this.ll(${n});`
+              )
+            ) +
+            `\n${indent}` +
+            lines(
+              [
+                ...block.choices.map(([t, d]) => {
+                  const cases = choices.get(t);
+                  return lines([
+                    `if(${this.renderConditionOr(cases)}){`,
+                    this.r(`${indent}  `, d),
+                    // TODO this.markTransitionAfterDispatch(indent, t),
+                    `${indent}}`,
+                  ]);
+                }),
+                `{\n${indent}  this.err();\n${indent}}`,
+              ],
+              " else "
+            );
         }
-        return (
-          lines(
-            Array.from(range(1, choices.maxLL)).map(
-              n => `${indent}${this.markVar("$ll" + n)} = this.ll(${n});`
-            )
-          ) +
-          `\n${indent}` +
-          lines(
-            [
-              ...block.choices.map(([t, d]) => {
-                const cases = choices.get(t);
-                return lines([
-                  `if(${this.renderConditionOr(cases)}){`,
-                  this.r(`${indent}  `, d),
-                  // TODO this.markTransitionAfterDispatch(indent, t),
-                  `${indent}}`,
-                ]);
-              }),
-              `{\n${indent}  this.err();\n${indent}}`,
-            ],
-            " else "
-          )
-        );
+        this.breaksStack.pop();
+        return code;
       }
-      case "scope_block":
+      case "scope_block": {
+        this.breaksStack.push(block.label);
+        const code = this.r(indent + "  ", block.block);
+        this.breaksStack.pop();
         return lines([
-          `${indent}${block.label}:do{`,
-          this.r(indent + "  ", block.block),
+          `${indent}${
+            this.neededLabels.has(block.label) ? `${block.label}:` : ""
+          }do{`,
+          code,
           `${indent}}while(0);`,
         ]);
-      case "loop_block":
+      }
+      case "loop_block": {
+        this.breaksStack.push(block.label);
+        this.continuesStack.push(block.label);
+        const code = this.r(indent + "  ", block.block);
+        this.continuesStack.pop();
+        this.breaksStack.pop();
         return lines([
-          `${indent}${block.label}:while(1){`,
-          this.r(indent + "  ", block.block),
+          `${indent}${
+            this.neededLabels.has(block.label) ? `${block.label}:` : ""
+          }while(1){`,
+          code,
           `${indent}}`,
         ]);
-      case "break_block":
-        return `${indent}break ${block.label};`;
+      }
+      case "break_block": {
+        if (this.lastBreakScope() === block.label) {
+          return `${indent}break;`;
+        } else {
+          this.neededLabels.add(block.label);
+          return `${indent}break ${block.label};`;
+        }
+      }
       case "continue_block":
-        return `${indent}continue ${block.label};`;
+        if (this.lastContinueScope() === block.label) {
+          return `${indent}continue;`;
+        } else {
+          this.neededLabels.add(block.label);
+          return `${indent}continue ${block.label};`;
+        }
       case "empty_block":
         return "";
       case "dispatch_block":

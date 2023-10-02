@@ -27,6 +27,7 @@ import {
   ActionTransition,
   CallTransition,
   RangeTransition,
+  FieldInfo,
 } from "../automaton/transitions";
 
 type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
@@ -40,12 +41,16 @@ export abstract class AbstractFactory implements Gen {
     this.automaton = automaton;
   }
 
-  protected actionTransition(node: ExprRule): ActionTransition {
-    return new ActionTransition(node).setLoc(node.loc);
+  protected actionTransition(
+    node: ExprRule,
+    field: FieldInfo | null
+  ): ActionTransition {
+    return new ActionTransition(node, field).setLoc(node.loc);
   }
 
   protected abstract callTransition(
-    node: CallRule
+    node: CallRule,
+    field: FieldInfo | null
   ): CallTransition | RangeTransition;
 
   abstract field(node: FieldRule): Frag;
@@ -75,7 +80,7 @@ export abstract class AbstractFactory implements Gen {
   }
 
   call(node: CallRule): Frag {
-    return this.automaton.single(this.callTransition(node));
+    return this.automaton.single(this.callTransition(node, null));
   }
 
   abstract string(node: StringRule): Frag;
@@ -85,23 +90,23 @@ export abstract class AbstractFactory implements Gen {
   abstract eof(node: EofRule): Frag;
 
   id(node: IdRule): Frag {
-    return this.automaton.single(this.actionTransition(node));
+    return this.automaton.single(this.actionTransition(node, null));
   }
 
   select(node: SelectRule) {
-    return this.automaton.single(this.actionTransition(node));
+    return this.automaton.single(this.actionTransition(node, null));
   }
 
   int(node: IntRule) {
-    return this.automaton.single(this.actionTransition(node));
+    return this.automaton.single(this.actionTransition(node, null));
   }
 
   object(node: ObjectRule) {
-    return this.automaton.single(this.actionTransition(node));
+    return this.automaton.single(this.actionTransition(node, null));
   }
 
   call2(node: Call2Rule) {
-    return this.automaton.single(this.actionTransition(node));
+    return this.automaton.single(this.actionTransition(node, null));
   }
 
   predicate(node: PredicateRule): Frag {
