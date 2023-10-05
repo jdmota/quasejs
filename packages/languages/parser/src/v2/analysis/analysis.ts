@@ -39,6 +39,10 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return Array.from(this.gotos).map(e => e[0]);
   }
 
+  hasGoto(t: AnyTransition) {
+    return this.gotos.get(t).size > 0;
+  }
+
   add({ goto, stack }: GotoDecision) {
     assertion(this.nextTree === null);
     this.gotos.addOne(goto, stack);
@@ -153,6 +157,8 @@ class DecisionTree {
     return this.map[Symbol.iterator]();
   }
 }
+
+export type { DecisionTree, DecisionNodeNoAdd };
 
 export type DecisionAnd = readonly DecisionTest[];
 export type DecisionOr = readonly DecisionAnd[];
@@ -538,7 +544,12 @@ export class Analyzer {
         )} is not enough to choose between:`
       );
       for (const goto of decision.getGotos()) {
-        console.log(` - ${gen.renderTransition(goto)}`);
+        console.log(
+          ` - ${gen.renderExpectBlock("", {
+            type: "expect_block",
+            transition: goto,
+          })}`
+        );
       }
     }
     console.log("-----------");

@@ -3,6 +3,7 @@ import {
   DecisionAnd,
   DecisionOr,
   DecisionTest,
+  DecisionTree,
   FollowStack,
 } from "../analysis/analysis";
 import {
@@ -23,6 +24,7 @@ import { any, assertion, find, lines, never } from "../utils";
 import { range } from "../utils/range-utils";
 import {
   CodeBlock,
+  DecisionBlock,
   endsWithFlowBreak,
   ExpectBlock,
 } from "./dfa-to-code/cfg-to-code";
@@ -75,6 +77,16 @@ export class ParserGenerator {
       this.internalVars.add(name);
     }
     return name;
+  }
+
+  private renderConditionOrString(conditions: readonly string[]) {
+    if (conditions.length === 0) {
+      return "false";
+    }
+    if (conditions.length === 1) {
+      return conditions[0];
+    }
+    return conditions.map(r => (r.includes("&&") ? `(${r})` : r)).join(" || ");
   }
 
   private renderConditionOr(conditions: DecisionOr) {
@@ -177,7 +189,7 @@ export class ParserGenerator {
       : `${t.name} = ${what}`;
   }
 
-  private renderExpectBlock(indent: string, block: ExpectBlock): string {
+  renderExpectBlock(indent: string, block: ExpectBlock): string {
     const t = block.transition;
     if (t instanceof AssignableTransition) {
       if (t.field) {
@@ -190,7 +202,7 @@ export class ParserGenerator {
     return `${indent}${this.renderTransition(block.transition)};`;
   }
 
-  renderTransition(t: AnyTransition): string {
+  private renderTransition(t: AnyTransition): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
         return `this.e(${this.renderNum(t.from)})`;
@@ -233,6 +245,61 @@ export class ParserGenerator {
       : "";
   }
 
+  private renderDecisionTree(
+    block: DecisionBlock,
+    indent: string,
+    tree: DecisionTree
+  ) {
+    const ll = tree.ll;
+    let code = `${indent}${this.markVar(
+      "$ll" + ll
+    )} = this.ll(${ll});\n${indent}`;
+
+    const bodyToIf = new Map<string, string[]>();
+    for (const decision of tree.iterate()) {
+      const nextTree = decision.getNextTree();
+      let nestedCode;
+      if (nextTree?.hasDecisions()) {
+        nestedCode = this.renderDecisionTree(block, `${indent}  `, nextTree);
+      } else {
+        const nestedBlocksCode = block.choices
+          .filter(([transition, _]) => decision.hasGoto(transition))
+          .map(([_, block], idx) =>
+            idx === 0
+              ? this.r(`${indent}  `, block)
+              : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
+          );
+        nestedCode = lines(
+          nestedBlocksCode.length === 1
+            ? nestedBlocksCode
+            : [`${indent}  throw new Error("Ambiguity");`, ...nestedBlocksCode]
+        );
+      }
+
+      // TODO nestedCode += this.markTransitionAfterDispatch(indent, t);
+
+      const arr = bodyToIf.get(nestedCode) ?? [];
+      arr.push(
+        this.renderCondition(
+          ll,
+          new DecisionTest(decision.follow, decision.range)
+        )
+      );
+      bodyToIf.set(nestedCode, arr);
+    }
+
+    for (const [nestedCode, conditions] of bodyToIf) {
+      code += lines([
+        `if(${this.renderConditionOrString(conditions)}){`,
+        nestedCode,
+        `${indent}} else `,
+      ]);
+    }
+
+    code += `{\n${indent}  this.err();\n${indent}}`;
+    return code;
+  }
+
   private r(indent: string, block: CodeBlock): string {
     switch (block.type) {
       case "expect_block":
@@ -242,8 +309,11 @@ export class ParserGenerator {
       case "decision_block": {
         this.breaksStack.push("");
         let code = "";
-        const choices = this.analyzer.analyze(this.rule, block.state).inverted;
-        if (block.choices.length >= 2 && choices.compatibleWithSwitch) {
+        const { tree, inverted: choices } = this.analyzer.analyze(
+          this.rule,
+          block.state
+        );
+        if (choices.compatibleWithSwitch) {
           code = lines([
             `${indent}switch(this.ll(1)){`,
             ...block.choices.map(([t, d]) => {
@@ -262,7 +332,9 @@ export class ParserGenerator {
             `${indent}  default:\n${indent}    this.err();\n${indent}}`,
           ]);
         } else {
-          code =
+          // TODO optimize to refactor common decisions
+          code = this.renderDecisionTree(block, indent, tree);
+          /*code =
             lines(
               Array.from(range(1, choices.maxLL)).map(
                 n => `${indent}${this.markVar("$ll" + n)} = this.ll(${n});`
@@ -283,7 +355,7 @@ export class ParserGenerator {
                 `{\n${indent}  this.err();\n${indent}}`,
               ],
               " else "
-            );
+            );*/
         }
         this.breaksStack.pop();
         return code;
