@@ -72,34 +72,144 @@ class DecisionNode implements SpecialSet<GotoDecision> {
   ensureNextTree() {
     return this.nextTree ?? (this.nextTree = new DecisionTree(this));
   }
+
+  toExpr() {
+    return DecisionAnd.create([
+      new DecisionTestRange(this.parent.ll, this.range),
+      this.follow ? new DecisionTestFollow(this.follow) : TRUE,
+    ]);
+  }
 }
 
-export class DecisionTest implements ObjectHashEquals {
-  readonly follow: FollowStack | null;
-  readonly range: Range;
+export type DecisionExpr =
+  | DecisionTestRange
+  | DecisionTestFollow
+  | DecisionAnd
+  | DecisionOr;
 
-  constructor(follow: FollowStack | null, range: Range) {
-    this.follow = follow;
-    this.range = range;
+abstract class AbstractDecision {
+  or(this: DecisionExpr, expr: DecisionExpr): DecisionExpr {
+    return DecisionOr.create([this, expr]);
+  }
+
+  and(this: DecisionExpr, expr: DecisionExpr): DecisionExpr {
+    return DecisionAnd.create([this, expr]);
+  }
+}
+
+abstract class DecisionCompoundExpr
+  extends AbstractDecision
+  implements ObjectHashEquals
+{
+  readonly exprs: readonly DecisionExpr[];
+
+  constructor(exprs: DecisionExpr[]) {
+    super();
+    this.exprs = exprs;
   }
 
   hashCode(): number {
-    return (
-      (this.range.from + this.range.to) *
-      (this.follow ? this.follow.hashCode() : 1)
-    );
+    return this.exprs.length;
   }
 
   equals(other: unknown): boolean {
     if (this === other) {
       return true;
     }
-    if (other instanceof DecisionTest) {
+    if (other instanceof DecisionCompoundExpr) {
       return (
-        this.range.from === other.range.from &&
-        this.range.to === other.range.to &&
-        equals(this.follow, other.follow)
+        this.exprs.length === other.exprs.length &&
+        this.exprs.every((val, idx) => equals(val, other.exprs[idx]))
       );
+    }
+    return false;
+  }
+}
+
+export class DecisionAnd extends DecisionCompoundExpr {
+  static create(exprs: DecisionExpr[]) {
+    exprs = exprs.flatMap(e => (e instanceof DecisionAnd ? e.exprs : [e]));
+    if (exprs.length === 1) {
+      return exprs[0];
+    }
+    return new DecisionAnd(exprs);
+  }
+
+  override equals(other: unknown): boolean {
+    return other instanceof DecisionAnd && super.equals(other);
+  }
+}
+
+export class DecisionOr extends DecisionCompoundExpr {
+  static create(exprs: DecisionExpr[]) {
+    exprs = exprs.flatMap(e => (e instanceof DecisionOr ? e.exprs : [e]));
+    if (exprs.length === 1) {
+      return exprs[0];
+    }
+    return new DecisionOr(exprs);
+  }
+
+  override equals(other: unknown): boolean {
+    return other instanceof DecisionOr && super.equals(other);
+  }
+}
+
+export const FALSE = DecisionOr.create([]);
+export const TRUE = DecisionAnd.create([]);
+
+export class DecisionTestRange
+  extends AbstractDecision
+  implements ObjectHashEquals
+{
+  readonly ll: number;
+  readonly range: Range;
+
+  constructor(ll: number, range: Range) {
+    super();
+    this.ll = ll;
+    this.range = range;
+  }
+
+  hashCode(): number {
+    return this.ll * (this.range.from + this.range.to);
+  }
+
+  equals(other: unknown): boolean {
+    if (this === other) {
+      return true;
+    }
+    if (other instanceof DecisionTestRange) {
+      return (
+        this.ll === other.ll &&
+        this.range.from === other.range.from &&
+        this.range.to === other.range.to
+      );
+    }
+    return false;
+  }
+}
+
+export class DecisionTestFollow
+  extends AbstractDecision
+  implements ObjectHashEquals
+{
+  readonly follow: FollowStack;
+
+  constructor(follow: FollowStack) {
+    super();
+    this.follow = follow;
+  }
+
+  hashCode(): number {
+    return this.follow.hashCode();
+  }
+
+  equals(other: unknown): boolean {
+    if (this === other) {
+      return true;
+    }
+    if (other instanceof DecisionTestFollow) {
+      return equals(this.follow, other.follow);
     }
     return false;
   }
@@ -160,16 +270,13 @@ class DecisionTree {
 
 export type { DecisionTree, DecisionNodeNoAdd };
 
-export type DecisionAnd = readonly DecisionTest[];
-export type DecisionOr = readonly DecisionAnd[];
-
 class InvertedDecisionTree {
-  private readonly map: MapKeyToValue<AnyTransition, DecisionAnd[]>;
+  private readonly map: MapKeyToValue<AnyTransition, DecisionExpr>;
   compatibleWithSwitch: boolean;
   maxLL: number;
   ambiguities: Readonly<{
     decision: DecisionNodeNoAdd;
-    condition: DecisionAnd;
+    condition: DecisionExpr;
   }>[];
 
   constructor() {
@@ -179,39 +286,32 @@ class InvertedDecisionTree {
     this.ambiguities = [];
   }
 
-  get(goto: AnyTransition): DecisionOr {
-    return this.map.get(goto) ?? [];
+  get(goto: AnyTransition): DecisionExpr {
+    return this.map.get(goto) ?? FALSE;
   }
 
   add(decision: DecisionNodeNoAdd) {
     const condition = this.decisionToTest(decision);
-    assertion(decision.parent.ll === condition.length);
+    // assertion(decision.parent.ll === condition.length);
 
     for (const { goto } of decision) {
-      this.map.computeIfAbsent(goto, () => []).push(condition);
-
-      if (this.compatibleWithSwitch) {
-        if (
-          condition.length > 1 ||
-          condition[0].follow ||
-          condition[0].range.from !== condition[0].range.to
-        ) {
-          this.compatibleWithSwitch = false;
-        }
-      }
+      this.map.update(goto, old => (old ? old.or(condition) : condition));
     }
-    this.maxLL = Math.max(this.maxLL, condition.length);
+
+    this.compatibleWithSwitch &&=
+      condition instanceof DecisionTestRange &&
+      condition.range.from === condition.range.to;
+    this.maxLL = Math.max(this.maxLL, decision.parent.ll);
 
     if (decision.isAmbiguous()) {
       this.ambiguities.push({ decision, condition });
     }
   }
 
-  private decisionToTest(decision: DecisionNodeNoAdd): DecisionTest[] {
+  private decisionToTest(decision: DecisionNodeNoAdd): DecisionExpr {
     const parent = decision.parent.owner;
-    const arr = parent ? this.decisionToTest(parent) : [];
-    arr.push(new DecisionTest(decision.follow, decision.range));
-    return arr;
+    const parentCondition = parent ? this.decisionToTest(parent) : TRUE;
+    return parentCondition.and(decision.toExpr());
   }
 }
 
@@ -539,8 +639,9 @@ export class Analyzer {
     );
     for (const { decision, condition } of ambiguities) {
       console.log(
-        `Condition ${gen.renderConditionAnd(
-          condition
+        `Condition ${gen.renderDecision(
+          condition,
+          true
         )} is not enough to choose between:`
       );
       for (const goto of decision.getGotos()) {

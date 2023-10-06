@@ -69,6 +69,21 @@ export class MapKeyToValue<K extends MapKey, V> {
     return null;
   }
 
+  update(key: K, fn: (old: V | null) => V): V {
+    const { entry, list } = this.entry(key);
+    if (entry) {
+      entry.value = fn(entry.value);
+      return entry.value;
+    }
+    const value = fn(null);
+    list.push({
+      key,
+      value,
+    });
+    this.size++;
+    return value;
+  }
+
   computeIfAbsent(key: K, fn: () => V): V {
     const { entry, list } = this.entry(key);
     if (entry) {

@@ -1,9 +1,12 @@
 import {
   Analyzer,
   DecisionAnd,
+  DecisionExpr,
   DecisionOr,
-  DecisionTest,
+  DecisionTestFollow,
+  DecisionTestRange,
   DecisionTree,
+  FALSE,
   FollowStack,
 } from "../analysis/analysis";
 import {
@@ -79,17 +82,43 @@ export class ParserGenerator {
     return name;
   }
 
-  private renderConditionOrString(conditions: readonly string[]) {
-    if (conditions.length === 0) {
-      return "false";
-    }
-    if (conditions.length === 1) {
-      return conditions[0];
-    }
-    return conditions.map(r => (r.includes("&&") ? `(${r})` : r)).join(" || ");
+  private renderParentheses(yes: boolean, what: string) {
+    return yes ? `(${what})` : what;
   }
 
-  private renderConditionOr(conditions: DecisionOr) {
+  private optimizeDecision(expr: DecisionExpr) {
+    return expr; // TODO refactor expressions
+
+    // ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */]))){
+    // turn into $ctx1 == 1 && $ctx2 == 2
+  }
+
+  renderDecision(expr: DecisionExpr, first = false): string {
+    if (expr instanceof DecisionOr) {
+      if (expr.exprs.length === 0) {
+        return "false";
+      }
+      return this.renderParentheses(
+        !first,
+        expr.exprs.map(r => this.renderDecision(r)).join(" || ")
+      );
+    }
+    if (expr instanceof DecisionAnd) {
+      if (expr.exprs.length === 0) {
+        return "true";
+      }
+      return this.renderParentheses(
+        !first,
+        expr.exprs.map(r => this.renderDecision(r)).join(" && ")
+      );
+    }
+    if (expr instanceof DecisionTestFollow) {
+      return this.renderFollowCondition(expr);
+    }
+    return this.renderRangeCondition(expr);
+  }
+
+  /*private renderConditionOr(conditions: DecisionOr) {
     if (conditions.length === 0) {
       return "false";
     }
@@ -101,14 +130,10 @@ export class ParserGenerator {
       return "true";
     }
     if (condition.length === 1) {
-      return this.renderCondition(1, condition[0]);
+      return this.renderCondition(condition[0]);
     }
-    return (
-      "(" +
-      condition.map((r, i) => this.renderCondition(i + 1, r)).join(" && ") +
-      ")"
-    );
-  }
+    return "(" + condition.map(r => this.renderCondition(r)).join(" && ") + ")";
+  }*/
 
   private renderFollowInfo(info: FollowInfo) {
     return `${info.id}${
@@ -116,32 +141,27 @@ export class ParserGenerator {
     }`;
   }
 
-  private renderFollowCondition(follow: FollowStack | null) {
-    let f = follow;
+  private renderFollowCondition(test: DecisionTestFollow) {
+    let f: FollowStack | null = test.follow;
     const array = [];
-    while (f) {
+    do {
       array.push(this.renderFollowInfo(f.info));
       f = f.child;
-    }
-    return array.length ? `this.ctx.f([${array.join(", ")}])` : null;
+    } while (f);
+    return `this.ctx.f([${array.join(", ")}])`;
   }
 
-  private renderCondition(ll: number, test: DecisionTest) {
+  private renderRangeCondition(test: DecisionTestRange) {
     const {
-      follow,
       range: { from, to },
+      ll,
     } = test;
     this.markVar("$ll" + ll);
-    return [
-      from === to
-        ? `$ll${ll} === ${this.renderNum(from)}`
-        : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
-            to
-          )}`,
-      this.renderFollowCondition(follow),
-    ]
-      .filter(Boolean)
-      .join(" && ");
+    return from === to
+      ? `$ll${ll} === ${this.renderNum(from)}`
+      : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
+          to
+        )}`;
   }
 
   private renderNum(num: number) {
@@ -255,20 +275,21 @@ export class ParserGenerator {
       "$ll" + ll
     )} = this.ll(${ll});\n${indent}`;
 
-    const bodyToIf = new Map<string, string[]>();
+    const bodyToIf = new Map<string, DecisionExpr>();
     for (const decision of tree.iterate()) {
       const nextTree = decision.getNextTree();
       let nestedCode;
       if (nextTree?.hasDecisions()) {
         nestedCode = this.renderDecisionTree(block, `${indent}  `, nextTree);
       } else {
-        const nestedBlocksCode = block.choices
-          .filter(([transition, _]) => decision.hasGoto(transition))
-          .map(([_, block], idx) =>
-            idx === 0
-              ? this.r(`${indent}  `, block)
-              : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
-          );
+        const nestedBlocks = block.choices.filter(([transition, _]) =>
+          decision.hasGoto(transition)
+        );
+        const nestedBlocksCode = nestedBlocks.map(([_, block], idx) =>
+          idx === 0
+            ? this.r(`${indent}  `, block)
+            : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
+        );
         nestedCode = lines(
           nestedBlocksCode.length === 1
             ? nestedBlocksCode
@@ -278,25 +299,27 @@ export class ParserGenerator {
 
       // TODO nestedCode += this.markTransitionAfterDispatch(indent, t);
 
-      const arr = bodyToIf.get(nestedCode) ?? [];
-      arr.push(
-        this.renderCondition(
-          ll,
-          new DecisionTest(decision.follow, decision.range)
-        )
-      );
-      bodyToIf.set(nestedCode, arr);
+      const currExpr = bodyToIf.get(nestedCode) ?? FALSE;
+      bodyToIf.set(nestedCode, currExpr.or(decision.toExpr()));
     }
 
-    for (const [nestedCode, conditions] of bodyToIf) {
+    const bodyToIfArr = Array.from(bodyToIf);
+    for (const [nestedCode, condition] of bodyToIfArr.slice(0, -1)) {
       code += lines([
-        `if(${this.renderConditionOrString(conditions)}){`,
+        `if(${this.renderDecision(this.optimizeDecision(condition), true)}){`,
         nestedCode,
         `${indent}} else `,
       ]);
     }
 
-    code += `{\n${indent}  this.err();\n${indent}}`;
+    // Optimize: no need for the last "if", just use "else"
+    const [nestedCode, condition] = bodyToIfArr[bodyToIfArr.length - 1];
+    code += lines([
+      `{ //${this.renderDecision(this.optimizeDecision(condition), true)}`,
+      nestedCode,
+      `${indent}}`,
+    ]);
+    // code += `{\n${indent}  this.err();\n${indent}}`;
     return code;
   }
 
@@ -317,11 +340,17 @@ export class ParserGenerator {
           code = lines([
             `${indent}switch(this.ll(1)){`,
             ...block.choices.map(([t, d]) => {
-              const casesStr = choices
-                .get(t)
-                .map(
-                  c => `${indent}  case ${this.renderNum(c[0].range.from)}:`
-                );
+              const caseConditions = choices.get(t);
+              const cases =
+                caseConditions instanceof DecisionOr
+                  ? caseConditions.exprs
+                  : [caseConditions];
+              const casesStr = cases.map(
+                c =>
+                  `${indent}  case ${this.renderNum(
+                    (c as DecisionTestRange).range.from
+                  )}:`
+              );
               return lines([
                 ...(casesStr.length ? casesStr : [`${indent}  case NaN:`]),
                 this.r(`${indent}    `, d),

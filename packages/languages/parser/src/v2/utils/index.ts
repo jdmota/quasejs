@@ -87,3 +87,12 @@ export function lines(
 ): string {
   return arr.filter(Boolean).join(separator);
 }
+
+export function computeIfAbsent<K, V>(map: Map<K, V>, key: K, fn: () => V): V {
+  let value = map.get(key);
+  if (value === undefined) {
+    value = fn();
+    map.set(key, value);
+  }
+  return value;
+}
