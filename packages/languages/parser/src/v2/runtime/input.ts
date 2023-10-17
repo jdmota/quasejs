@@ -35,16 +35,25 @@ export class Input extends Stream<number> {
     this.pos = 0;
   }
 
+  position() {
+    return this.pos;
+  }
+
   protected override next() {
     const code = this.codeAt(this.pos);
     this.pos += code > 0xffff ? 2 : 1;
     return code;
   }
 
+  override getPos() {
+    return { ...this.ll1 };
+  }
+
   override ll1Loc() {
+    const { pos, line, column } = this.ll1;
     return {
-      start: { ...this.ll1 },
-      end: { ...this.ll1 },
+      start: { pos, line, column },
+      end: { pos: pos + 1, line, column: column + 1 }, // TODO imprecise
     };
   }
 

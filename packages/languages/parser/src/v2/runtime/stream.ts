@@ -1,4 +1,4 @@
-import { Location } from "./input";
+import { Location, Position } from "./input";
 
 export abstract class Stream<T> {
   protected llArray: T[];
@@ -8,6 +8,8 @@ export abstract class Stream<T> {
   }
 
   protected abstract next(): T;
+
+  abstract getPos(): Position;
 
   // pre: this.lookahead.length > 0
   abstract ll1Loc(): Location;

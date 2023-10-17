@@ -91,6 +91,7 @@ rule.arg = ruleArg;
 
 export type TokenModifiers = {
   readonly type: "normal" | "skip" | "fragment";
+  readonly channels?: readonly string[];
 };
 
 export type TokenDeclaration = {

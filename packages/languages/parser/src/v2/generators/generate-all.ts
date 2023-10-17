@@ -23,6 +23,16 @@ export function generateAll(
     `const EMPTY_OBJ = {};\n`,
     ``,
     `class GrammarTokenizer extends Tokenizer<$ExternalCalls> {`,
+    `  getIdToLabel() {`,
+    `    return ${JSON.stringify(grammar.tokens.makeIdToLabels(), null, 2)
+      .split("\n")
+      .join("\n    ")};`,
+    `  }`,
+    `  getIdToChannels() {`,
+    `    return ${JSON.stringify(grammar.tokens.makeIdToChannels(), null, 2)
+      .split("\n")
+      .join("\n    ")};`,
+    `  }`,
     ...tokensCode.values(),
     `}\n`,
     ``,

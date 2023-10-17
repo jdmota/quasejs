@@ -5,32 +5,23 @@ import { Stream } from "./stream";
 
 export type Token = Readonly<{
   id: number;
-  label: string;
   loc: Location;
   token: unknown;
 }>;
 
-export const FAKE_LOC: Location = {
-  start: {
-    pos: 0,
-    line: 0,
-    column: 0,
-  },
-  end: {
-    pos: 0,
-    line: 0,
-    column: 0,
-  },
-};
-
 type IdToChannels = Readonly<{
-  [key: number]: readonly string[] | undefined;
+  [key: number]: Readonly<{ s: boolean; c: readonly string[] }>;
+}>;
+
+type IdToLabel = Readonly<{
+  [key: number]: string;
 }>;
 
 export abstract class Tokenizer<T> extends Stream<Token> {
   readonly ctx: RuntimeContext;
   readonly external: T;
   private input: Input;
+  private idToLabels: IdToLabel;
   private idToChannels: IdToChannels;
   private channels: { [key: string]: Token[] | undefined };
 
@@ -39,28 +30,43 @@ export abstract class Tokenizer<T> extends Stream<Token> {
     this.ctx = new RuntimeContext();
     this.input = input;
     this.external = external;
+    this.idToLabels = this.getIdToLabel();
     this.idToChannels = this.getIdToChannels();
     this.channels = {};
   }
 
-  abstract token$lexer(): any;
+  abstract token$lexer(): Token;
   abstract getIdToChannels(): IdToChannels;
+  abstract getIdToLabel(): IdToLabel;
+
+  getIndex() {
+    return this.input.position();
+  }
+
+  getText(start: number) {
+    const end = this.input.position();
+    return this.input.text(start, end);
+  }
+
+  getPos() {
+    return this.input.getPos();
+  }
+
+  getLoc(start: Position): Location {
+    return { start, end: this.getPos() };
+  }
 
   protected override next(): Token {
     while (true) {
-      //this.start = this.input.position();
-      const token: Token = this.ctx.u(-1, this.token$lexer());
-      //this.end = this.input.position();
-
+      const token = this.ctx.u(-1, this.token$lexer());
       const channels = this.idToChannels[token.id];
-      if (channels) {
-        for (const chan of channels) {
-          const array = this.channels[chan] || (this.channels[chan] = []);
-          array.push(token);
-        }
-        continue;
+      for (const chan of channels.c) {
+        const array = this.channels[chan] || (this.channels[chan] = []);
+        array.push(token);
       }
-
+      if (channels.s) {
+        continue; // Skip
+      }
       return token;
     }
   }
@@ -72,13 +78,6 @@ export abstract class Tokenizer<T> extends Stream<Token> {
   override ll1Id() {
     return this.llArray[0].id;
   }
-
-  /*loc(): Location {
-    return {
-      start: this.start,
-      end: this.input.position(),
-    };
-  }*/
 
   e(id: number) {
     return this.input.expect(id);
@@ -102,44 +101,16 @@ export abstract class Tokenizer<T> extends Stream<Token> {
     expected?: number | string
   ): never {
     throw error(
-      `Unexpected token ${found.label}${
-        expected == null ? "" : `, expected ${expected}`
+      `Unexpected token ${this.idToLabels[found.id]}${
+        expected == null
+          ? ""
+          : `, expected ${
+              typeof expected === "number"
+                ? this.idToLabels[expected]
+                : expected
+            }`
       }`,
       loc.start
     );
   }
-
-  /*makeToken(id: number, start: Position, end: Position): Token {
-    if (id === -2) {
-      return {
-        id,
-        label: "ERROR",
-        image: this.input.text(start.pos, end.pos),
-        loc: {
-          start,
-          end,
-        },
-      };
-    }
-    if (id === -1) {
-      return {
-        id,
-        label: "EOF",
-        image: "",
-        loc: {
-          start,
-          end,
-        },
-      };
-    }
-    return {
-      id,
-      label: this.labels[id] || "UNKNOWN",
-      image: this.input.text(start.pos, end.pos),
-      loc: {
-        start,
-        end,
-      },
-    };
-  }*/
 }

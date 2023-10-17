@@ -37,11 +37,11 @@ const ruleA = rule(
     field("my_obj", object([["id", int(10)]])),
     select(id("my_obj"), "id"),
     select(id("my_obj"), "id"),
-    call("C", [int(10), int(20)])
+    field("C", call("C", [int(10), int(20)]))
   ),
   [],
   { start: true },
-  call2("externalCall", [id("my_obj")])
+  call2("externalCall", [id("my_obj"), id("C")])
 );
 
 const ruleB = rule(
@@ -60,12 +60,15 @@ const ruleB = rule(
 const ruleC = rule(
   "C",
   choice(
-    field(
-      "ret",
-      object([
-        ["x", id("x")],
-        ["y", id("y")],
-      ])
+    seq(
+      field("text", string("STRING")),
+      field(
+        "ret",
+        object([
+          ["x", id("x")],
+          ["y", id("y")],
+        ])
+      )
     ),
     field(
       "ret",
@@ -77,7 +80,10 @@ const ruleC = rule(
   ),
   [rule.arg("x"), rule.arg("y")],
   {},
-  id("ret")
+  object([
+    ["ret", id("ret")],
+    ["text", id("text")],
+  ])
 );
 
 const ruleD = rule(
@@ -181,7 +187,7 @@ const ruleTricky4 = rule(
 const tokenW = token(
   "W",
   field("text", string("W")),
-  { type: "normal" },
+  { type: "normal", channels: ["channel1"] },
   id("text")
 );
 

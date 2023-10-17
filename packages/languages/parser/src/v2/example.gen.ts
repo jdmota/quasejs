@@ -7,13 +7,13 @@ export type $Position = {pos:number;line:number;column:number;};
 export type $Location = {start:$Position;end:$Position;};
 export type $Nodes = A|B|C|D|E|F|G|Tricky1|Tricky2|Tricky3|Tricky4;
 export type $ExternalCalls = {
-  externalCall: ((arg0: Readonly<{ id: number }>) => A);
+  externalCall: ((arg0: Readonly<{ id: number }>, arg1: Readonly<{ ret: (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>), text: null }>) => A);
 };
 export type A = A;
 export type B = Readonly<Record<string, never>>;
 export type C_x = C_x;
 export type C_y = C_y;
-export type C = (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>);
+export type C = Readonly<{ ret: (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>), text: null }>;
 export type D_arg = (Readonly<{ x: $rec1 }> & Readonly<{ y: $rec2 }> & Readonly<{ y: $rec3 }> & Readonly<{ x: $rec4 }>);
 export type D = (Readonly<{ x: $rec1, y: $rec2 }> | Readonly<{ x: $rec3, y: $rec4 }>);
 export type E = number;
@@ -33,16 +33,87 @@ export type $rec4 = $rec4;
 const EMPTY_OBJ = {};
 
 class GrammarTokenizer extends Tokenizer<$ExternalCalls> {
+  getIdToLabel() {
+    return {
+      "0": "#string:O",
+      "1": "#string:A",
+      "2": "#string:B",
+      "3": "#string:C",
+      "4": "#string:D",
+      "5": "#string:E",
+      "6": "#string:F",
+      "7": "#string:STRING",
+      "8": "#string:<<<",
+      "9": "#string:<<",
+      "10": "W",
+      "-1": "#eof"
+    };
+  }
+  getIdToChannels() {
+    return {
+      "0": {
+        "s": false,
+        "c": []
+      },
+      "1": {
+        "s": false,
+        "c": []
+      },
+      "2": {
+        "s": false,
+        "c": []
+      },
+      "3": {
+        "s": false,
+        "c": []
+      },
+      "4": {
+        "s": false,
+        "c": []
+      },
+      "5": {
+        "s": false,
+        "c": []
+      },
+      "6": {
+        "s": false,
+        "c": []
+      },
+      "7": {
+        "s": false,
+        "c": []
+      },
+      "8": {
+        "s": false,
+        "c": []
+      },
+      "9": {
+        "s": false,
+        "c": []
+      },
+      "10": {
+        "s": false,
+        "c": [
+          "channel1"
+        ]
+      },
+      "-1": {
+        "s": false,
+        "c": []
+      }
+    };
+  }
   token$lexer() {
-    let $startLoc, id:any=null, token:any=null, $9_text:any=null;
+    let $startIndex, $startPos:any=null, id:any=null, token:any=null, $10_text:any=null, loc:any=null;
     s2:do{
+      $startPos = this.getPos();
       switch(this.ll(1)){
         case 87 /*'W'*/:
-          $startLoc = this.$getLoc();
+          $startIndex = this.getIndex();
           this.e(87 /*'W'*/);
-          $9_text = this.$getText($startLoc);
-          id = 9;
-          token = $9_text;
+          $10_text = this.getText($startIndex);
+          id = 10;
+          token = $10_text;
           break s2;
         case -1 /*-1*/:
           this.e(-1 /*-1*/);
@@ -53,11 +124,11 @@ class GrammarTokenizer extends Tokenizer<$ExternalCalls> {
           this.e(60 /*'<'*/);
           switch(this.ll(1)){
             case NaN:
-              id = 8;
+              id = 9;
               break;
             case 60 /*'<'*/:
               this.e(60 /*'<'*/);
-              id = 7;
+              id = 8;
               break;
             default:
               this.err();
@@ -91,12 +162,22 @@ class GrammarTokenizer extends Tokenizer<$ExternalCalls> {
           this.e(79 /*'O'*/);
           id = 0;
           break;
+        case 83 /*'S'*/:
+          this.e(83 /*'S'*/);
+          this.e(84 /*'T'*/);
+          this.e(82 /*'R'*/);
+          this.e(73 /*'I'*/);
+          this.e(78 /*'N'*/);
+          this.e(71 /*'G'*/);
+          id = 7;
+          break;
         default:
           this.err();
       }
       token = EMPTY_OBJ;
     }while(0);
-    return this.ctx.o({id, token});
+    loc = this.getLoc($startPos);
+    return this.ctx.o({id, loc, token});
   }
   token$_1() {
     this.e(-1 /*-1*/);
@@ -131,28 +212,37 @@ class GrammarTokenizer extends Tokenizer<$ExternalCalls> {
     return this.ctx.o(EMPTY_OBJ);
   }
   token$7() {
-    this.e(60 /*'<'*/);
-    this.e(60 /*'<'*/);
-    this.e(60 /*'<'*/);
+    this.e(83 /*'S'*/);
+    this.e(84 /*'T'*/);
+    this.e(82 /*'R'*/);
+    this.e(73 /*'I'*/);
+    this.e(78 /*'N'*/);
+    this.e(71 /*'G'*/);
     return this.ctx.o(EMPTY_OBJ);
   }
   token$8() {
     this.e(60 /*'<'*/);
     this.e(60 /*'<'*/);
+    this.e(60 /*'<'*/);
+    return this.ctx.o(EMPTY_OBJ);
+  }
+  token$9() {
+    this.e(60 /*'<'*/);
+    this.e(60 /*'<'*/);
     return this.ctx.o(EMPTY_OBJ);
   }
   tokenW() {
-    let $startLoc, text:any=null;
-    $startLoc = this.$getLoc();
+    let $startIndex, text:any=null;
+    $startIndex = this.getIndex();
     this.e(87 /*'W'*/);
-    text = this.$getText($startLoc);
+    text = this.getText($startIndex);
     return this.ctx.o(text);
   }
 }
 
 class GrammarParser extends Parser<$ExternalCalls> {
   ruleA() {
-    let $ll1, $ll2, $ll3, my_obj:any=null;
+    let $ll1, $ll2, $ll3, my_obj:any=null, C:any=null;
     s7:do{
       s8:do{
         s5:do{
@@ -176,7 +266,7 @@ class GrammarParser extends Parser<$ExternalCalls> {
                   }
                 } else { //$ll2 === 3 /*#string:C*/
                   $ll3 = this.ll(3);
-                  if($ll3 === -1 /*#eof*/ || $ll3 === 0 /*#string:O*/ || $ll3 === 6 /*#string:F*/){
+                  if($ll3 === -1 /*#eof*/ || $ll3 === 0 /*#string:O*/ || $ll3 === 6 /*#string:F*/ || $ll3 === 7 /*#string:STRING*/){
                     break s3;
                   } else { //$ll3 === 4 /*#string:D*/
                     throw new Error("Ambiguity");
@@ -217,6 +307,7 @@ class GrammarParser extends Parser<$ExternalCalls> {
         while(1){
           switch(this.ll(1)){
             case -1 /*#eof*/:
+            case 7 /*#string:STRING*/:
               break s7;
             case 0 /*#string:O*/:
               break s8;
@@ -229,6 +320,7 @@ class GrammarParser extends Parser<$ExternalCalls> {
                 this.e(6 /*#string:F*/);
                 switch(this.ll(1)){
                   case -1 /*#eof*/:
+                  case 7 /*#string:STRING*/:
                     break s7;
                   case 0 /*#string:O*/:
                     break s8;
@@ -249,9 +341,9 @@ class GrammarParser extends Parser<$ExternalCalls> {
     my_obj = {id: 10};
     my_obj.id;
     my_obj.id;
-    this.ctx.u(2/* A 10 */, this.ruleC(10, 20));
+    C = this.ctx.u(2/* A 10 */, this.ruleC(10, 20));
     this.e(-1 /*#eof*/);
-    return this.ctx.o(this.external.externalCall(my_obj));
+    return this.ctx.o(this.external.externalCall(my_obj, C));
   }
   ruleB() {
     let $ll1;
@@ -286,15 +378,15 @@ class GrammarParser extends Parser<$ExternalCalls> {
     return this.ctx.o(EMPTY_OBJ);
   }
   ruleC(x,y) {
-    let $ll1, ret:any=null;
+    let $ll1, text:any=null, ret:any=null;
     $ll1 = this.ll(1);
-    { //$ll1 === -1 /*#eof*/ && this.ctx.f([2/* A 10 */])
-      throw new Error("Ambiguity");
+    if($ll1 === 7 /*#string:STRING*/){
+      text = this.e(7 /*#string:STRING*/);
       ret = {x, y};
-      //Ambiguity
+    } else { //$ll1 === -1 /*#eof*/ && this.ctx.f([2/* A 10 */])
       ret = {x: y, y: x};
     }
-    return this.ctx.o(ret);
+    return this.ctx.o({ret, text});
   }
   ruleD(arg) {
     let ret:any=null;
@@ -318,16 +410,16 @@ class GrammarParser extends Parser<$ExternalCalls> {
   ruleF(arg) {
     let ret:any=null, w:any=null;
     ret = {x: arg.x};
-    w = this.e(9 /*W*/);
+    w = this.e(10 /*W*/);
     return this.ctx.o(w);
   }
   ruleG() {
     switch(this.ll(1)){
-      case 7 /*#string:<<<*/:
-        this.e(7 /*#string:<<<*/);
+      case 8 /*#string:<<<*/:
+        this.e(8 /*#string:<<<*/);
         break;
-      case 8 /*#string:<<*/:
-        this.e(8 /*#string:<<*/);
+      case 9 /*#string:<<*/:
+        this.e(9 /*#string:<<*/);
         break;
       default:
         this.err();

@@ -194,8 +194,8 @@ export class ParserGenerator {
               )
               .join(", ")}}`;
       case "call2":
-        return `this.${code.id.startsWith("$") ? "" : "external."}${
-          code.id
+        return `this.${
+          code.id.startsWith("$") ? code.id.slice(1) : `external.${code.id}`
         }(${code.args.map(e => this.renderCode(e)).join(", ")})`;
       default:
         never(code);

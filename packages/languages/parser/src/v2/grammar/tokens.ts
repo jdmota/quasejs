@@ -222,13 +222,36 @@ export class TokensStore {
     }
     return builder.token(
       LEXER_RULE_NAME,
-      builder.choice(...tokens),
+      builder.seq(
+        builder.field("$startPos", builder.call2("$getPos", [])),
+        builder.choice(...tokens),
+        builder.field(
+          "loc",
+          builder.call2("$getLoc", [builder.id("$startPos")])
+        )
+      ),
       {
         type: "normal",
       },
       builder.object([
         ["id", builder.id("id")],
+        ["loc", builder.id("loc")],
         ["token", builder.id("token")],
+      ])
+    );
+  }
+
+  makeIdToLabels() {
+    return Object.fromEntries(
+      Array.from(this.tokens2).map(([id, { name }]) => [id, name])
+    );
+  }
+
+  makeIdToChannels() {
+    return Object.fromEntries(
+      Array.from(this.tokens2).map(([id, { decl }]) => [
+        id,
+        { s: decl.modifiers.type === "skip", c: decl.modifiers.channels ?? [] },
       ])
     );
   }

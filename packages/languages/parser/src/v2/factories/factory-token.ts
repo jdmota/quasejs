@@ -104,15 +104,15 @@ export class FactoryToken extends AbstractFactory {
         this.automaton
       );
       const start = this.automaton.newState();
-      // $startLoc = $getLoc();
-      const getStartLoc = new ActionTransition(builder.call2("$getLoc", []), {
-        name: "$startLoc",
+      // $startIndex = $getIndex();
+      const getIndex = new ActionTransition(builder.call2("$getIndex", []), {
+        name: "$startIndex",
         multiple: false,
       }).setLoc(node.loc);
-      start.addTransition(getStartLoc, fragment.start);
-      // ?? = $getText($startLoc);
+      start.addTransition(getIndex, fragment.start);
+      // ?? = $getText($startIndex);
       const getText = new ActionTransition(
-        builder.call2("$getText", [builder.id("$startLoc")]),
+        builder.call2("$getText", [builder.id("$startIndex")]),
         node
       ).setLoc(node.loc);
       const end = fragment.end.addTransition(
