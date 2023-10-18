@@ -279,7 +279,7 @@ export class ParserGenerator {
     for (const decision of tree.iterate()) {
       const nextTree = decision.getNextTree();
       let nestedCode;
-      if (nextTree?.hasDecisions()) {
+      if (nextTree?.worthIt()) {
         nestedCode = this.renderDecisionTree(block, `${indent}  `, nextTree);
       } else {
         const nestedBlocks = block.choices.filter(([transition, _]) =>
@@ -288,6 +288,8 @@ export class ParserGenerator {
         const nestedBlocksCode = nestedBlocks.map(([_, block], idx) =>
           idx === 0
             ? this.r(`${indent}  `, block)
+            : block.type === "empty_block"
+            ? `${indent}  //Ambiguity\n${indent}  // epsilon`
             : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
         );
         nestedCode = lines(
@@ -454,7 +456,11 @@ export class ParserGenerator {
   process(indent: string, block: CodeBlock) {
     const rendered = this.r(`${indent}  `, block);
     const args =
-      this.rule.type === "rule" ? this.rule.args.map(a => a.arg).join(",") : "";
+      this.rule.type === "rule"
+        ? this.rule.args
+            .map(a => `${a.arg}: ${this.rule.name}_${a.arg}`)
+            .join(",")
+        : "";
     const vars = [
       ...Array.from(this.internalVars),
       ...Array.from(this.rule.fields).map(([name, [{ multiple }]]) =>
@@ -462,7 +468,7 @@ export class ParserGenerator {
       ),
     ];
     const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n${indent}}`;
+    return `${indent}${this.rule.type}${this.rule.name}(${args}): ${this.rule.name} {${decls}\n${rendered}\n${indent}}`;
   }
 
   private useStackContext = true;

@@ -4,7 +4,6 @@ import { lines } from "../utils";
 
 // TODO better types (not only on method signatures but also on local vars)
 // TODO better types also on the results of this.e() calls
-// TODO getIdToChannels
 
 export const TYPES_MACRO = "// #### TYPES ####";
 

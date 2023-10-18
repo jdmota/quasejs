@@ -49,6 +49,10 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return this;
   }
 
+  gotosNumber() {
+    return this.gotos.size;
+  }
+
   isAmbiguous() {
     return this.gotos.size > 1;
   }
@@ -215,6 +219,8 @@ export class DecisionTestFollow
   }
 }
 
+type DecisionTreeNoAdd = Omit<DecisionTree, "addDecision">;
+
 class DecisionTree {
   private readonly map: MapKeyToValue<
     FollowStack | null,
@@ -265,6 +271,27 @@ class DecisionTree {
 
   [Symbol.iterator]() {
     return this.map[Symbol.iterator]();
+  }
+
+  private worthItCache: boolean | null = null;
+
+  private _worthIt() {
+    let gotos = -1;
+    for (const decision of this.iterate()) {
+      if (gotos === -1) {
+        gotos = decision.gotosNumber();
+      } else if (gotos !== decision.gotosNumber()) {
+        return true;
+      }
+      if (decision.getNextTree()?.worthIt()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  worthIt() {
+    return this.worthItCache ?? (this.worthItCache = this._worthIt());
   }
 }
 
@@ -579,8 +606,8 @@ export class Analyzer {
       }
     }
 
-    let prev = [ll1];
-    let next = [];
+    let prev: DecisionTreeNoAdd[] = [ll1];
+    let next: DecisionTreeNoAdd[] = [];
 
     this.llState = 2;
 

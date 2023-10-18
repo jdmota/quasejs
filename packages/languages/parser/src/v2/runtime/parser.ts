@@ -30,11 +30,11 @@ export abstract class Parser<T> {
   }*/
 
   e(id: number) {
-    return this.tokenizer.expect(id);
+    return this.tokenizer.expect(id).token;
   }
 
   e2(a: number, b: number) {
-    return this.tokenizer.expect2(a, b);
+    return this.tokenizer.expect2(a, b).token;
   }
 
   ll(n: number) {
