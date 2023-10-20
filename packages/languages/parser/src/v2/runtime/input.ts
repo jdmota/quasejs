@@ -41,7 +41,7 @@ export class Input extends Stream<number> {
 
   protected override next() {
     const code = this.codeAt(this.pos);
-    this.pos += code > 0xffff ? 2 : 1;
+    this.pos += code <= 0xffff ? (code < 0 ? 0 : 1) : 2;
     return code;
   }
 
@@ -99,7 +99,7 @@ export class Input extends Stream<number> {
   // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
   private codeAt(index: number) {
     const { string, size } = this;
-    if (index < 0 || index >= this.size) {
+    if (index < 0 || index >= size) {
       return -1;
     }
 

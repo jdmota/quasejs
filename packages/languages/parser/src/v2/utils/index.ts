@@ -76,7 +76,7 @@ export function assertion(bool: boolean) {
 
 export function nonNull<T>(val: T | undefined | null): T {
   if (val == null) {
-    throw new Error("Value is null");
+    throw new Error("Value is " + val);
   }
   return val;
 }

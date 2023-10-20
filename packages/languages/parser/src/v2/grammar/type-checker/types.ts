@@ -30,24 +30,27 @@ abstract class Type {
   toString() {
     return this.format(new Set());
   }
+  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+    // Do nothing here
+  }
 }
 
 abstract class ConstructedType extends Type {
-  abstract positiveTypes(): readonly FreeType[];
-  abstract negativeTypes(): readonly FreeType[];
+  abstract positiveTypes(): readonly AnyType[];
+  abstract negativeTypes(): readonly AnyType[];
 }
 
 class FunctionType extends ConstructedType {
   readonly clazz = "FunctionType";
 
-  constructor(readonly args: readonly FreeType[], readonly ret: FreeType) {
+  constructor(readonly args: readonly AnyType[], readonly ret: AnyType) {
     super();
   }
 
-  positiveTypes(): readonly FreeType[] {
+  positiveTypes(): readonly AnyType[] {
     return [this.ret];
   }
-  negativeTypes(): readonly FreeType[] {
+  negativeTypes(): readonly AnyType[] {
     return this.args;
   }
 }
@@ -55,8 +58,8 @@ class FunctionType extends ConstructedType {
 class ReadonlyObjectType extends ConstructedType {
   readonly clazz = "ReadonlyObjectType";
 
-  readonly fields: ReadonlyMap<string, FreeType>;
-  constructor(fields: readonly (readonly [string, FreeType])[]) {
+  readonly fields: ReadonlyMap<string, AnyType>;
+  constructor(fields: readonly (readonly [string, AnyType])[]) {
     super();
     this.fields = new Map(fields);
   }
@@ -65,10 +68,10 @@ class ReadonlyObjectType extends ConstructedType {
       .map(([k, v]) => `${k}: ${v.format(seen)}`)
       .join(", ");
   }
-  positiveTypes(): readonly FreeType[] {
+  positiveTypes(): readonly AnyType[] {
     return Array.from(this.fields.values());
   }
-  negativeTypes(): readonly FreeType[] {
+  negativeTypes(): readonly AnyType[] {
     return EMPTY_FREE_TYPE_ARRAY;
   }
 }
@@ -76,18 +79,18 @@ class ReadonlyObjectType extends ConstructedType {
 class ReadonlyArrayType extends ConstructedType {
   readonly clazz = "ReadonlyArrayType";
 
-  readonly component: FreeType;
-  constructor(component: FreeType) {
+  readonly component: AnyType;
+  constructor(component: AnyType) {
     super();
     this.component = component;
   }
   override formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  positiveTypes(): readonly FreeType[] {
+  positiveTypes(): readonly AnyType[] {
     return [this.component];
   }
-  negativeTypes(): readonly FreeType[] {
+  negativeTypes(): readonly AnyType[] {
     return EMPTY_FREE_TYPE_ARRAY;
   }
 }
@@ -95,18 +98,18 @@ class ReadonlyArrayType extends ConstructedType {
 class ArrayType extends ConstructedType {
   readonly clazz = "ArrayType";
 
-  readonly component: FreeType;
-  constructor(component: FreeType) {
+  readonly component: AnyType;
+  constructor(component: AnyType) {
     super();
     this.component = component;
   }
   override formatMeta(seen: Set<Type>) {
     return `component: ${this.component.format(seen)}`;
   }
-  positiveTypes(): readonly FreeType[] {
+  positiveTypes(): readonly AnyType[] {
     return [this.component];
   }
-  negativeTypes(): readonly FreeType[] {
+  negativeTypes(): readonly AnyType[] {
     return [this.component];
   }
 }
@@ -135,6 +138,25 @@ class IntType extends AtomType {
 
 class BottomType extends AtomType {
   readonly clazz = "BottomType";
+}
+
+export type TSType =
+  | TopType
+  | NullType
+  | StringType
+  | BooleanType
+  | IntType
+  | BottomType;
+
+export function isTSType(type: AnyType): type is TSType {
+  return (
+    type.clazz === "TopType" ||
+    type.clazz === "NullType" ||
+    type.clazz === "StringType" ||
+    type.clazz === "BooleanType" ||
+    type.clazz === "IntType" ||
+    type.clazz === "BottomType"
+  );
 }
 
 export type AnyConstructedType =
@@ -178,7 +200,7 @@ class FreeType extends Type {
     super();
   }
 
-  setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
+  override setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
     const curr = this.polarity;
     // Even though TS does not check this, we know this is safe
     this.polarity |= polarity;
@@ -272,7 +294,41 @@ export type AnyType =
 
 type AnyTypeExceptFree = Exclude<AnyType, FreeType>;
 
-export type { FreeType };
+export type { FreeType, FunctionType };
+
+const NULL_TYPE = new NullType();
+const BOOL_TYPE = new BooleanType();
+const INT_TYPE = new IntType();
+const STRING_TYPE = new StringType();
+
+const EMPTY_OBJ_TYPE = new ReadonlyObjectType([]);
+
+const POSITION_TYPE = new ReadonlyObjectType([
+  ["pos", INT_TYPE],
+  ["line", INT_TYPE],
+  ["column", INT_TYPE],
+]);
+
+const LOCATION_TYPE = new ReadonlyObjectType([
+  ["start", POSITION_TYPE],
+  ["end", POSITION_TYPE],
+]);
+
+export const runtimeTypes = {
+  null: NULL_TYPE,
+  number: INT_TYPE,
+  string: STRING_TYPE,
+  $Empty: EMPTY_OBJ_TYPE,
+  $Position: POSITION_TYPE,
+  $Location: LOCATION_TYPE,
+};
+
+export const runtimeFuncs = {
+  getIndex: new FunctionType([], INT_TYPE),
+  getText: new FunctionType([INT_TYPE], STRING_TYPE),
+  getPos: new FunctionType([], POSITION_TYPE),
+  getLoc: new FunctionType([POSITION_TYPE], LOCATION_TYPE),
+};
 
 export class TypesRegistry {
   readonly graph = new ConstraintsGraph();
@@ -282,8 +338,19 @@ export class TypesRegistry {
   private readonly supers = new MapSet<AnyType, AnyType>();
   private readonly subs = new MapSet<AnyType, AnyType>();
 
+  constructor() {
+    this.saveRuntimeType(INT_TYPE);
+    this.saveRuntimeType(STRING_TYPE);
+    this.saveRuntimeType(POSITION_TYPE);
+    this.saveRuntimeType(LOCATION_TYPE);
+    this.saveRuntimeType(runtimeFuncs.getIndex);
+    this.saveRuntimeType(runtimeFuncs.getText);
+    this.saveRuntimeType(runtimeFuncs.getPos);
+    this.saveRuntimeType(runtimeFuncs.getLoc);
+  }
+
   private save<T extends AnyTypeExceptFree>(t: T, node: AnyRule): T {
-    this.locations.set(t, node);
+    this.locations.set(t, node); // TODO for error messages, this will not work because we are reusing types...
     //
     this.allTypes.add(t);
     this.supers.add(t, t);
@@ -292,6 +359,13 @@ export class TypesRegistry {
   }
 
   private saveFree<T extends FreeType>(t: T): T {
+    this.allTypes.add(t);
+    this.supers.add(t, t);
+    this.subs.add(t, t);
+    return t;
+  }
+
+  private saveRuntimeType<T extends AnyType>(t: T): T {
     this.allTypes.add(t);
     this.supers.add(t, t);
     this.subs.add(t, t);
@@ -331,6 +405,8 @@ export class TypesRegistry {
       }
     }
 
+    // TODO C_x (and C_y) should be at least "int"...
+
     while (changedPositive.size > 0 || changedNegative.size > 0) {
       const prevPositive = changedPositive;
       changedPositive = new Set();
@@ -347,6 +423,7 @@ export class TypesRegistry {
               t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
             }
           }
+          // TODO??? b.setPolarity(TypePolarity.POSITIVE, changedPositive);
         }
       }
 
@@ -360,27 +437,26 @@ export class TypesRegistry {
               t.setPolarity(TypePolarity.POSITIVE, changedPositive);
             }
           }
+          // TODO??? b.setPolarity(TypePolarity.NEGATIVE, changedNegative);
         }
       }
     }
   }
 
-  // TODO maybe we should use singletons
-
   null(node: AnyRule) {
-    return this.save(new NullType(), node);
+    return this.save(NULL_TYPE, node);
   }
 
   string(node: AnyRule) {
-    return this.save(new StringType(), node);
+    return this.save(STRING_TYPE, node);
   }
 
   int(node: AnyRule) {
-    return this.save(new IntType(), node);
+    return this.save(INT_TYPE, node);
   }
 
   boolean(node: AnyRule) {
-    return this.save(new BooleanType(), node);
+    return this.save(BOOL_TYPE, node);
   }
 
   free(preference: TypePolarity = TypePolarity.NONE) {
@@ -397,7 +473,9 @@ export class TypesRegistry {
 
   readonlyObject(fields: readonly string[], node: AnyRule) {
     return this.save(
-      new ReadonlyObjectType(fields.map(f => [f, this.free()])),
+      fields.length === 0
+        ? runtimeTypes.$Empty
+        : new ReadonlyObjectType(fields.map(f => [f, this.free()])),
       node
     );
   }

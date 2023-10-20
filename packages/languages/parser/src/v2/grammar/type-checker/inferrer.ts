@@ -26,7 +26,14 @@ import {
   ExprRule,
 } from "../grammar-builder";
 import { GrammarFormatter } from "../grammar-formatter";
-import { TypesRegistry, AnyType, TypePolarity, FreeType } from "./types";
+import {
+  TypesRegistry,
+  AnyType,
+  TypePolarity,
+  FreeType,
+  runtimeFuncs,
+  FunctionType,
+} from "./types";
 import { Normalizer } from "./normalizer";
 import { TypeChecker } from "./checker";
 import { Store } from "./store";
@@ -78,6 +85,7 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     TokenDeclInterface
   >();
   private readonly externalCallTypes = new Map<string, FreeType>();
+  private currentRule: Declaration | null = null;
 
   constructor(private readonly grammar: Grammar) {}
 
@@ -239,6 +247,14 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   string(pre: Store, node: StringRule, post: Store) {
     pre.propagateTo(post);
     // TODO
+    if (this.currentRule!.type === "token") {
+      // TODO how is this propagating to rule C???
+      this.registry.subtype(
+        this.registry.string(node),
+        this.exprType(node),
+        node
+      );
+    }
   }
 
   regexp(pre: Store, node: RegExpRule, post: Store) {
@@ -298,8 +314,15 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   call2(pre: Store, node: Call2Rule, post: Store) {
     this.visitSeq(pre, node.args, post);
     //
-    const funcType = this.registry.function(node.args.length, node);
-    this.registry.subtype(this.externalCallInterface(node), funcType, node);
+    let funcType: FunctionType;
+    if (node.id.startsWith("$")) {
+      funcType = nonNull(
+        runtimeFuncs[node.id.slice(1) as keyof typeof runtimeFuncs]
+      );
+    } else {
+      funcType = this.registry.function(node.args.length, node);
+      this.registry.subtype(this.externalCallInterface(node), funcType, node);
+    }
     node.args.forEach((a, i) => {
       this.registry.subtype(this.exprType(a), funcType.args[i], a);
     });
@@ -307,9 +330,8 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
   }
 
   call(pre: Store, node: CallRule, post: Store) {
-    const { argTypes, returnType } = this.declInterface(
-      this.grammar.getRule(node.id)
-    );
+    const calledRule = this.grammar.getRule(node.id);
+    const { argTypes, returnType } = this.declInterface(calledRule);
     this.visitSeq(pre, node.args, post);
     //
     const argTypesIt = argTypes.values();
@@ -360,8 +382,13 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
     );
   }
 
-  run(rule: RuleDeclaration) {
-    const { argTypes, returnType } = this.ruleDeclInterface(rule);
+  run(rule: Declaration) {
+    this.currentRule = rule;
+
+    const { argTypes, returnType } =
+      rule.type === "rule"
+        ? this.ruleDeclInterface(rule)
+        : this.tokenDeclInterface(rule);
     const [preRule, postRule] = this.store(rule.rule);
 
     for (const [name, type] of argTypes) {

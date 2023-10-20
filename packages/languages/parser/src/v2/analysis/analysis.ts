@@ -16,14 +16,15 @@ import { Declaration } from "../grammar/grammar-builder";
 import { FollowInfo, FollowInfoDB } from "../grammar/follow-info";
 
 type GotoDecision = Readonly<{
-  goto: AnyTransition;
   stack: StackFrame;
+  gotos: Iterable<AnyTransition>;
 }>;
 
 type DecisionNodeNoAdd = Omit<DecisionNode, "add">;
 
 class DecisionNode implements SpecialSet<GotoDecision> {
   private readonly gotos: MapKeyToSet<AnyTransition, StackFrame>;
+  private readonly gotos2: MapKeyToSet<StackFrame, AnyTransition>;
   private nextTree: DecisionTree | null;
 
   constructor(
@@ -32,6 +33,7 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     readonly range: Range
   ) {
     this.gotos = new MapKeyToSet();
+    this.gotos2 = new MapKeyToSet();
     this.nextTree = null;
   }
 
@@ -43,9 +45,12 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return this.gotos.get(t).size > 0;
   }
 
-  add({ goto, stack }: GotoDecision) {
+  add({ stack, gotos }: GotoDecision) {
     assertion(this.nextTree === null);
-    this.gotos.addOne(goto, stack);
+    for (const goto of gotos) {
+      this.gotos.addOne(goto, stack);
+    }
+    this.gotos2.add(stack, gotos);
     return this;
   }
 
@@ -57,15 +62,9 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return this.gotos.size > 1;
   }
 
-  iterate() {
-    return this.gotos[Symbol.iterator]();
-  }
-
   *[Symbol.iterator]() {
-    for (const [goto, set] of this.gotos) {
-      for (const stack of set) {
-        yield { goto, stack };
-      }
+    for (const [stack, gotos] of this.gotos2) {
+      yield { stack, gotos };
     }
   }
 
@@ -242,7 +241,7 @@ class DecisionTree {
   addDecision(
     follow: FollowStack | null,
     range: Range,
-    goto: AnyTransition,
+    gotos: Iterable<AnyTransition>,
     stack: StackFrame
   ) {
     this.nonEmpty = true;
@@ -257,7 +256,10 @@ class DecisionTree {
       .addRange(
         range.from,
         range.to,
-        new DecisionNode(this, follow, range).add({ goto, stack })
+        new DecisionNode(this, follow, range).add({
+          gotos,
+          stack,
+        })
       );
   }
 
@@ -276,11 +278,12 @@ class DecisionTree {
   private worthItCache: boolean | null = null;
 
   private _worthIt() {
-    let gotos = -1;
+    if (!this.owner) {
+      return true;
+    }
+    const gotos = this.owner.gotosNumber();
     for (const decision of this.iterate()) {
-      if (gotos === -1) {
-        gotos = decision.gotosNumber();
-      } else if (gotos !== decision.gotosNumber()) {
+      if (gotos > decision.gotosNumber()) {
         return true;
       }
       if (decision.getNextTree()?.worthIt()) {
@@ -321,8 +324,10 @@ class InvertedDecisionTree {
     const condition = this.decisionToTest(decision);
     // assertion(decision.parent.ll === condition.length);
 
-    for (const { goto } of decision) {
-      this.map.update(goto, old => (old ? old.or(condition) : condition));
+    for (const { gotos } of decision) {
+      for (const goto of gotos) {
+        this.map.update(goto, old => (old ? old.or(condition) : condition));
+      }
     }
 
     this.compatibleWithSwitch &&=
@@ -549,7 +554,7 @@ export class Analyzer {
 
   private ll1(
     start: Iterable<StackFrame>,
-    goto: AnyTransition,
+    gotos: Iterable<AnyTransition>,
     map: DecisionTree
   ) {
     const seen = new MapKeyToValue<StackFrame, boolean>();
@@ -569,7 +574,7 @@ export class Analyzer {
             map.addDecision(
               stack.follow,
               transition,
-              goto,
+              gotos,
               stack.move(this, dest)
             );
           } else {
@@ -596,13 +601,13 @@ export class Analyzer {
 
     for (const [goto, dest] of state) {
       if (goto instanceof CallTransition) {
-        this.ll1([stack.move(this, dest).push(this, goto)], goto, ll1);
+        this.ll1([stack.move(this, dest).push(this, goto)], [goto], ll1);
       } else if (goto instanceof ReturnTransition) {
-        this.ll1(stack.pop(this, goto), goto, ll1);
+        this.ll1(stack.pop(this, goto), [goto], ll1);
       } else if (goto instanceof RangeTransition) {
-        ll1.addDecision(stack.follow, goto, goto, stack.move(this, dest));
+        ll1.addDecision(stack.follow, goto, [goto], stack.move(this, dest));
       } else {
-        this.ll1([stack.move(this, dest)], goto, ll1);
+        this.ll1([stack.move(this, dest)], [goto], ll1);
       }
     }
 
@@ -617,8 +622,8 @@ export class Analyzer {
           for (const decision of tree.iterate()) {
             if (this.llState <= maxLL && decision.isAmbiguous()) {
               const nextTree = decision.ensureNextTree();
-              for (const [goto, stack] of decision.iterate()) {
-                this.ll1(stack, goto, nextTree);
+              for (const { stack, gotos } of decision) {
+                this.ll1([stack], gotos, nextTree);
               }
               next.push(nextTree);
             } else {
@@ -637,7 +642,6 @@ export class Analyzer {
       this.llState++;
     }
 
-    // TODO stop on impossible to resolve ambiguities
     // TODO what if I dont need the follow stack to disambiguate?
     // TODO there is also ambiguity when the follow stacks are a subset of one another right?
 

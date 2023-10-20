@@ -40,7 +40,7 @@ export class MapKeyToSet<K extends MapKey, V> {
     return this.EMPTY_SET;
   }
 
-  add(key: K, value: ReadonlySet<V>) {
+  add(key: K, value: Iterable<V>) {
     const { entry, list } = this.entry(key);
     if (entry) {
       for (const v of value) {

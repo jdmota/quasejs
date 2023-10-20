@@ -3,28 +3,43 @@ import { Tokenizer } from "./runtime/tokenizer";
 import { Parser } from "./runtime/parser";
 
 /* eslint-disable */
-export type $Position = {pos:number;line:number;column:number;};
-export type $Location = {start:$Position;end:$Position;};
 export type $Nodes = A|B|C|D|E|F|G|Tricky1|Tricky2|Tricky3|Tricky4;
+export type $Tokens = W|$_1|$0|$1|$2|$3|$4|$5|$6|$7|$8|$9;
 export type $ExternalCalls = {
-  externalCall: ((arg0: Readonly<{ id: number }>, arg1: Readonly<{ ret: (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>), text: null }>) => A);
+  externalCall: ((arg0: Readonly<{ id: number }>, arg1: C) => A);
 };
+export type $Empty = Readonly<Record<string, never>>;
+export type $Position = Readonly<{ pos: number, line: number, column: number }>;
+export type $Location = Readonly<{ start: $Position, end: $Position }>;
 export type A = A;
-export type B = Readonly<Record<string, never>>;
+export type B = $Empty;
 export type C_x = C_x;
 export type C_y = C_y;
-export type C = Readonly<{ ret: (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>), text: null }>;
+export type C = Readonly<{ ret: (Readonly<{ x: C_x, y: C_y }> | Readonly<{ x: C_y, y: C_x }>), text: (string | null) }>;
 export type D_arg = (Readonly<{ x: $rec1 }> & Readonly<{ y: $rec2 }> & Readonly<{ y: $rec3 }> & Readonly<{ x: $rec4 }>);
 export type D = (Readonly<{ x: $rec1, y: $rec2 }> | Readonly<{ x: $rec3, y: $rec4 }>);
 export type E = number;
 export type F_arg = (Readonly<{ x: unknown }> & Readonly<{ x: unknown }>);
-export type F = never;
-export type G = Readonly<Record<string, never>>;
-export type Tricky1 = Readonly<Record<string, never>>;
+export type F = string;
+export type G = $Empty;
+export type Tricky1 = $Empty;
 export type Tricky2 = Readonly<{ x: (null | Tricky2), y: (null | Tricky2), z: (null | Tricky2) }>;
 export type Tricky3_arg = unknown;
 export type Tricky3 = Readonly<{ x: (null | Tricky3), y: (null | Tricky3), z: (null | Tricky3) }>;
-export type Tricky4 = Readonly<Record<string, never>>;
+export type Tricky4 = $Empty;
+export type W = string;
+export type $lexer = Readonly<{ id: number, loc: $Location, token: ($Empty | string) }>;
+export type $_1 = $Empty;
+export type $0 = $Empty;
+export type $1 = $Empty;
+export type $2 = $Empty;
+export type $3 = $Empty;
+export type $4 = $Empty;
+export type $5 = $Empty;
+export type $6 = $Empty;
+export type $7 = $Empty;
+export type $8 = $Empty;
+export type $9 = $Empty;
 export type $rec1 = $rec1;
 export type $rec2 = $rec2;
 export type $rec3 = $rec3;
@@ -631,22 +646,23 @@ class GrammarParser extends Parser<$ExternalCalls> {
     return this.ctx.o({x, y, z});
   }
   ruleTricky4(): Tricky4 {
-    let $ll1;
+    let $ll1, $ll2;
     $ll1 = this.ll(1);
     if($ll1 === -1 /*#eof*/){
-      throw new Error("Ambiguity");
-      this.ctx.u(11/* Tricky4 1 */, this.ruleTricky4());
-      switch(this.ll(1)){
-        case -1 /*#eof*/:
-          break;
-        case 2 /*#string:B*/:
-          this.e(2 /*#string:B*/);
-          break;
-        default:
-          this.err();
+      $ll2 = this.ll(2);
+      if($ll2 === -1 /*#eof*/ || $ll2 === 2 /*#string:B*/){
+        this.ctx.u(11/* Tricky4 1 */, this.ruleTricky4());
+        switch(this.ll(1)){
+          case -1 /*#eof*/:
+            break;
+          case 2 /*#string:B*/:
+            this.e(2 /*#string:B*/);
+            break;
+          default:
+            this.err();
+        }
+      } else { //($ll2 === -1 /*#eof*/ && this.ctx.f([11/* Tricky4 1 */])) || ($ll2 === 2 /*#string:B*/ && this.ctx.f([11/* Tricky4 1 */])) || ($ll2 === -1 /*#eof*/ && this.ctx.f([12/* Tricky4 5 */]))
       }
-      //Ambiguity
-      // epsilon
     } else if($ll1 === 1 /*#string:A*/){
       throw new Error("Ambiguity");
       this.ctx.u(11/* Tricky4 1 */, this.ruleTricky4());

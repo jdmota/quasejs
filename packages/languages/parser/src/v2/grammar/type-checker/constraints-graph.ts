@@ -59,10 +59,6 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
-        for (const dest of this.outDest(type)) {
-          this.upperHelper(dest, set, seen);
-        }
-        break;
       case TypePolarity.NEGATIVE:
         for (const dest of this.outDest(type)) {
           this.upperHelper(dest, set, seen);
@@ -84,10 +80,6 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
-        for (const dest of this.inDest(type)) {
-          this.lowerHelper(dest, set, seen);
-        }
-        break;
       case TypePolarity.POSITIVE:
         for (const dest of this.inDest(type)) {
           this.lowerHelper(dest, set, seen);

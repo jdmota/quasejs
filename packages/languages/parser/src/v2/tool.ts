@@ -121,10 +121,7 @@ export function inferAndCheckTypes(grammar: Grammar) {
   const inferrer = new TypesInferrer(grammar);
 
   for (const rule of grammar.rules.values()) {
-    if (rule.type === "rule") {
-      inferrer.run(rule);
-    }
-    // TODO for token rules
+    inferrer.run(rule);
   }
 
   inferrer.check(errors);
