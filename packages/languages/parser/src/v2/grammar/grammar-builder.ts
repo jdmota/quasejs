@@ -482,3 +482,123 @@ export function sameArgs(
   }
   return true;
 }
+
+type ICloner = {
+  [key in keyof RuleMap]: (node: RuleMap[key]) => RuleMap[key];
+};
+
+const cloneRulesVisitor: ICloner = {
+  seq(node: SeqRule) {
+    return builder.seq(...node.rules.map(r => cloneRules(r)));
+  },
+
+  choice(node: ChoiceRule) {
+    return builder.choice(...node.rules.map(r => cloneRules(r)));
+  },
+
+  repeat(node: RepeatRule) {
+    return builder.repeat(cloneRules(node.rule));
+  },
+
+  repeat1(node: Repeat1Rule) {
+    return builder.repeat1(cloneRules(node.rule));
+  },
+
+  optional(node: OptionalRule) {
+    return builder.optional(cloneRules(node.rule));
+  },
+
+  empty(node: EmptyRule) {
+    return builder.empty();
+  },
+
+  eof(node: EofRule) {
+    return builder.eof();
+  },
+
+  string(node: StringRule) {
+    return builder.string(node.string);
+  },
+
+  regexp(node: RegExpRule) {
+    return builder.regexp(node.regexp);
+  },
+
+  int(node: IntRule) {
+    return builder.int(node.value);
+  },
+
+  object(node: ObjectRule) {
+    return builder.object(
+      node.fields.map(([key, value]) => [key, cloneRules(value)] as const)
+    );
+  },
+
+  id(node: IdRule) {
+    return builder.id(node.id);
+  },
+
+  select(node: SelectRule) {
+    return builder.select(cloneRules(node.parent), node.field);
+  },
+
+  call(node: CallRule) {
+    return builder.call(
+      node.id,
+      node.args.map(a => cloneRules(a))
+    );
+  },
+
+  call2(node: Call2Rule) {
+    return builder.call2(
+      node.id,
+      node.args.map(a => cloneRules(a))
+    );
+  },
+
+  field(node: FieldRule) {
+    return node.multiple
+      ? builder.fieldMultiple(node.name, cloneRules(node.rule))
+      : builder.field(node.name, cloneRules(node.rule));
+  },
+
+  predicate(node: PredicateRule) {
+    return builder.predicate(cloneRules(node.code));
+  },
+};
+
+function setLoc<T extends { loc: Location | null }>(
+  rule: T,
+  loc: Location | null
+) {
+  rule.loc = loc;
+  return rule;
+}
+
+function cloneRules<T extends AnyRule>(rule: T): T {
+  return setLoc(cloneRulesVisitor[rule.type](rule as any) as T, rule.loc);
+}
+
+export function cloneDeclaration(decl: Declaration): Declaration {
+  if (decl.type === "rule") {
+    return setLoc(
+      builder.rule(
+        decl.name,
+        cloneRules(decl.rule),
+        decl.args.map(a => setLoc(builder.rule.arg(a.arg), a.loc)),
+        decl.modifiers,
+        cloneRules(decl.return)
+      ),
+      decl.loc
+    );
+  }
+  return setLoc(
+    builder.token(
+      decl.name,
+      cloneRules(decl.rule),
+      decl.modifiers,
+      cloneRules(decl.return)
+    ),
+    decl.loc
+  );
+}

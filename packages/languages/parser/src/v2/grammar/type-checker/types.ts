@@ -1,4 +1,5 @@
 import { never } from "../../utils";
+import { MapSet } from "../../utils/map-set";
 import { AnyRule } from "../grammar-builder";
 import { ConstraintsGraph } from "./constraints-graph";
 
@@ -210,71 +211,6 @@ class FreeType extends Type {
   }
 }
 
-class MapSet<K, V> {
-  private readonly map = new Map<K, Set<V>>();
-
-  get(key: K): Set<V> {
-    let val = this.map.get(key);
-    if (val == null) {
-      val = new Set();
-      this.map.set(key, val);
-    }
-    return val;
-  }
-
-  test(key: K, val: V) {
-    return this.get(key).has(val);
-  }
-
-  add(key: K, val: V) {
-    this.get(key).add(val);
-  }
-
-  addManyToOne(keys: Iterable<K>, value: V) {
-    for (const key of keys) {
-      const set = this.get(key);
-      set.add(value);
-    }
-  }
-
-  addOneToMany(key: K, values: Iterable<V>) {
-    const set = this.get(key);
-    for (const val of values) {
-      set.add(val);
-    }
-  }
-
-  addManyToMany(keys: Iterable<K>, values: Iterable<V>) {
-    for (const key of keys) {
-      const set = this.get(key);
-      for (const val of values) {
-        set.add(val);
-      }
-    }
-  }
-
-  addManyToMany2(keys: Iterable<K>, values: Iterable<V>, newPairs: [K, V][]) {
-    for (const key of keys) {
-      const set = this.get(key);
-      for (const val of values) {
-        const oldSize = set.size;
-        set.add(val);
-        if (set.size > oldSize) {
-          newPairs.push([key, val]);
-        }
-      }
-    }
-  }
-
-  *[Symbol.iterator]() {
-    for (const [key, set] of this.map) {
-      for (const value of set) {
-        yield [key, value] as const;
-      }
-    }
-  }
-}
-
 export function isFreeType(t: AnyType): t is FreeType {
   return t instanceof FreeType;
 }
@@ -423,7 +359,6 @@ export class TypesRegistry {
               t.setPolarity(TypePolarity.NEGATIVE, changedNegative);
             }
           }
-          // TODO??? b.setPolarity(TypePolarity.POSITIVE, changedPositive);
         }
       }
 
@@ -437,7 +372,6 @@ export class TypesRegistry {
               t.setPolarity(TypePolarity.POSITIVE, changedPositive);
             }
           }
-          // TODO??? b.setPolarity(TypePolarity.NEGATIVE, changedNegative);
         }
       }
     }
@@ -549,7 +483,7 @@ function handleSubtypingImplications(
   }
 }
 
-function isSubtype2(
+function isSubtypeHelper(
   registry: TypesRegistry,
   set: MapSet<AnyType, AnyType>,
   a: AnyType,
@@ -591,7 +525,7 @@ function isSubtype2(
     if (b instanceof ReadonlyObjectType) {
       for (const [key, typeB] of b.fields) {
         const typeA = a.fields.get(key);
-        if (typeA == null || !isSubtype2(registry, set, typeA, typeB)) {
+        if (typeA == null || !isSubtypeHelper(registry, set, typeA, typeB)) {
           return false;
         }
       }
@@ -604,7 +538,7 @@ function isSubtype2(
   if (a instanceof ReadonlyArrayType) {
     return (
       b instanceof ReadonlyArrayType &&
-      isSubtype2(registry, set, a.component, b.component)
+      isSubtypeHelper(registry, set, a.component, b.component)
     );
   }
 
@@ -612,10 +546,10 @@ function isSubtype2(
   if (a instanceof ArrayType) {
     return (
       (b instanceof ArrayType &&
-        isSubtype2(registry, set, a.component, b.component) &&
-        isSubtype2(registry, set, b.component, a.component)) ||
+        isSubtypeHelper(registry, set, a.component, b.component) &&
+        isSubtypeHelper(registry, set, b.component, a.component)) ||
       (b instanceof ReadonlyArrayType &&
-        isSubtype2(registry, set, a.component, b.component))
+        isSubtypeHelper(registry, set, a.component, b.component))
     );
   }
 
@@ -624,14 +558,20 @@ function isSubtype2(
     return (
       b instanceof FunctionType &&
       a.args.length === b.args.length &&
-      a.args.every((argA, i) => isSubtype2(registry, set, b.args[i], argA)) &&
-      isSubtype2(registry, set, a.ret, b.ret)
+      a.args.every((argA, i) =>
+        isSubtypeHelper(registry, set, b.args[i], argA)
+      ) &&
+      isSubtypeHelper(registry, set, a.ret, b.ret)
     );
   }
 
   never(a);
 }
 
-function isSubtype(a: AnyType, b: AnyType, registry: TypesRegistry): boolean {
-  return isSubtype2(registry, new MapSet(), a, b);
+function isSubtype(
+  a: AnyTypeExceptFree,
+  b: AnyTypeExceptFree,
+  registry: TypesRegistry
+): boolean {
+  return isSubtypeHelper(registry, new MapSet(), a, b);
 }

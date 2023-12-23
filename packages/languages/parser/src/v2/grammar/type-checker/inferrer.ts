@@ -246,20 +246,20 @@ export class TypesInferrer implements RuleAnalyzer<Store> {
 
   string(pre: Store, node: StringRule, post: Store) {
     pre.propagateTo(post);
-    // TODO
-    if (this.currentRule!.type === "token") {
-      // TODO how is this propagating to rule C???
-      this.registry.subtype(
-        this.registry.string(node),
-        this.exprType(node),
-        node
-      );
-    }
+    this.registry.subtype(
+      this.registry.string(node),
+      this.exprType(node),
+      node
+    );
   }
 
   regexp(pre: Store, node: RegExpRule, post: Store) {
     pre.propagateTo(post);
-    // TODO
+    this.registry.subtype(
+      this.registry.string(node),
+      this.exprType(node),
+      node
+    );
   }
 
   object(pre: Store, node: ObjectRule, post: Store) {

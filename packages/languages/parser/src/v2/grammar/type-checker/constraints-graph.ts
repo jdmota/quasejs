@@ -1,4 +1,4 @@
-import { expect } from "../../utils";
+import { expect, setAdd } from "../../utils";
 import { AnyRule } from "../grammar-builder";
 import { AnyType, TypePolarity, polarity, FreeType } from "./types";
 
@@ -54,8 +54,7 @@ class Graph<N, E> {
 
 export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   private upperHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
-    if (seen.has(type)) return;
-    seen.add(type);
+    if (!setAdd(seen, type)) return;
     const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
@@ -75,8 +74,7 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
   }
 
   private lowerHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
-    if (seen.has(type)) return;
-    seen.add(type);
+    if (!setAdd(seen, type)) return;
     const p = polarity(type);
     switch (p) {
       case TypePolarity.NONE:
@@ -109,6 +107,48 @@ export class ConstraintsGraph extends Graph<AnyType, AnyRule | null> {
     const seen = new Set<AnyType>([type]);
     for (const dest of this.inDest(type)) {
       this.lowerHelper(dest, set, seen);
+    }
+    return set;
+  }
+
+  private upperAnyHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
+    if (!setAdd(seen, type)) return;
+    const p = polarity(type);
+    if (p == null) {
+      set.add(type);
+    } else {
+      for (const dest of this.outDest(type)) {
+        this.upperAnyHelper(dest, set, seen);
+      }
+    }
+  }
+
+  private lowerAnyHelper(type: AnyType, set: Set<AnyType>, seen: Set<AnyType>) {
+    if (!setAdd(seen, type)) return;
+    const p = polarity(type);
+    if (p == null) {
+      set.add(type);
+    } else {
+      for (const dest of this.inDest(type)) {
+        this.lowerAnyHelper(dest, set, seen);
+      }
+    }
+  }
+
+  upperAny(type: FreeType) {
+    const set = new Set<AnyType>();
+    const seen = new Set<AnyType>([type]);
+    for (const dest of this.outDest(type)) {
+      this.upperAnyHelper(dest, set, seen);
+    }
+    return set;
+  }
+
+  lowerAny(type: FreeType) {
+    const set = new Set<AnyType>();
+    const seen = new Set<AnyType>([type]);
+    for (const dest of this.inDest(type)) {
+      this.lowerAnyHelper(dest, set, seen);
     }
     return set;
   }

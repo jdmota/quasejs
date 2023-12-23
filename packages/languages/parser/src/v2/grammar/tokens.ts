@@ -31,7 +31,7 @@ type ILocalPrefixer = {
   [key in keyof RuleMap]: (prefix: string, node: RuleMap[key]) => RuleMap[key];
 };
 
-const prefixLocalsObj: ILocalPrefixer = {
+const prefixLocalsVisitor: ILocalPrefixer = {
   seq(prefix: string, node: SeqRule) {
     return builder.seq(...node.rules.map(r => prefixLocals(prefix, r)));
   },
@@ -68,16 +68,16 @@ const prefixLocalsObj: ILocalPrefixer = {
     return node;
   },
 
+  int(prefix: string, node: IntRule) {
+    return node;
+  },
+
   object(prefix: string, node: ObjectRule) {
     return builder.object(
       node.fields.map(
         ([key, value]) => [key, prefixLocals(prefix, value)] as const
       )
     );
-  },
-
-  int(prefix: string, node: IntRule) {
-    return node;
   },
 
   id(prefix: string, node: IdRule) {
@@ -112,7 +112,7 @@ const prefixLocalsObj: ILocalPrefixer = {
   },
 
   predicate(prefix: string, node: PredicateRule) {
-    return setLoc(builder.predicate(prefixLocals(prefix, node.code)), node.loc);
+    return builder.predicate(prefixLocals(prefix, node.code));
   },
 };
 
@@ -127,7 +127,10 @@ function setLoc<T extends { loc: Location | null }>(
 }
 
 function prefixLocals<T extends AnyRule>(prefix: string, rule: T): T {
-  return setLoc(prefixLocalsObj[rule.type](prefix, rule as any) as T, rule.loc);
+  return setLoc(
+    prefixLocalsVisitor[rule.type](prefix, rule as any) as T,
+    rule.loc
+  );
 }
 
 function idToVar(id: number) {
@@ -207,9 +210,9 @@ export class TokensStore {
   createLexer() {
     const tokens = [];
     for (const [, { id, decl }] of this.tokens) {
-      const idNode = builder.int(id);
-      const fieldIdSet = builder.field("id", idNode);
       if (decl.modifiers.type === "normal") {
+        const idNode = builder.int(id);
+        const fieldIdSet = builder.field("id", idNode);
         const prefix = idToVar(id) + "_";
         tokens.push(
           builder.seq(

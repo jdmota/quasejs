@@ -6,6 +6,7 @@ import {
   RuleDeclarationArg,
   TokenDeclaration,
   TokenRules,
+  cloneDeclaration,
 } from "./grammar-builder";
 import {
   ExternalCallsCollector,
@@ -53,7 +54,9 @@ export function createGrammar(
     .visitTokenDecls(tokenDecls)
     .get();
   const lexer = tokens.createLexer();
-  const decls = [...ruleDecls, lexer, ...Array.from(tokens)];
+  const decls = [...ruleDecls, lexer, ...Array.from(tokens)].map(r =>
+    cloneDeclaration(r)
+  );
   const externalCalls = new ExternalCallsCollector();
 
   // Detect duplicate rules

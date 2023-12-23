@@ -88,6 +88,12 @@ export function lines(
   return arr.filter(Boolean).join(separator);
 }
 
+export function setAdd<V>(set: Set<V>, value: V) {
+  const initialSize = set.size;
+  set.add(value);
+  return set.size > initialSize;
+}
+
 export function computeIfAbsent<K, V>(map: Map<K, V>, key: K, fn: () => V): V {
   let value = map.get(key);
   if (value === undefined) {
