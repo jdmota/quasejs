@@ -2,9 +2,6 @@
   "files.eol": "\n",
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
   "eslint.enable": false,
   "eslint.nodePath": ".yarn/sdks",
   "eslint.validate": [
