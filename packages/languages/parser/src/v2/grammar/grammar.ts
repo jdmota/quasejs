@@ -1,4 +1,5 @@
 import { Location } from "../runtime/input";
+import { ToolInput } from "../tool";
 import { never } from "../utils";
 import {
   Declaration,
@@ -14,6 +15,7 @@ import {
   TokensCollector,
 } from "./grammar-visitors";
 import { TokensStore } from "./tokens";
+import { GFuncType, GType } from "./type-checker/types-builder";
 
 export type GrammarError = Readonly<{
   message: string;
@@ -43,11 +45,13 @@ export function err(
   };
 }
 
-export function createGrammar(
-  name: string,
-  ruleDecls: readonly RuleDeclaration[],
-  tokenDecls: readonly TokenDeclaration[]
-): GrammarOrErrors {
+export function createGrammar({
+  name,
+  ruleDecls,
+  tokenDecls,
+  startArguments,
+  externalFunctions,
+}: ToolInput): GrammarOrErrors {
   const errors: GrammarError[] = [];
   const tokens = new TokensCollector()
     .visitRuleDecls(ruleDecls)
@@ -78,40 +82,59 @@ export function createGrammar(
     errors.push(err(`Expected 1 start rule, found ${startRules.length}`, null));
   }
 
+  const start = startRules[0];
+  if (start.args.length !== startArguments.length) {
+    errors.push(
+      err(
+        `Missing types for start rule arguments. Expected ${start.args.length}, found ${startArguments.length}.`,
+        start.loc
+      )
+    );
+  }
+
+  // Check that normal tokens do not have arguments
+  for (const decl of declarations.values()) {
+    if (
+      decl.args.length > 0 &&
+      decl.type === "token" &&
+      decl.modifiers.type === "normal"
+    ) {
+      errors.push(err(`Normal tokens should not have arguments`, decl.loc));
+    }
+  }
+
   // For each declaration...
   for (const decl of declarations.values()) {
     externalCalls.visitDecl(decl);
 
-    if (decl.type === "rule") {
-      // Detect duplicate arguments in rules
-      const seenArgs = new Map<string, RuleDeclarationArg>();
-      for (const arg of decl.args) {
-        const seenArg = seenArgs.get(arg.arg);
-        if (seenArg) {
-          errors.push(
-            err(
-              `Duplicate argument ${arg.arg} in declaration ${decl.name}`,
-              seenArg.loc,
-              arg.loc
-            )
-          );
-        } else {
-          seenArgs.set(arg.arg, arg);
-        }
+    // Detect duplicate arguments in rules
+    const seenArgs = new Map<string, RuleDeclarationArg>();
+    for (const arg of decl.args) {
+      const seenArg = seenArgs.get(arg.arg);
+      if (seenArg) {
+        errors.push(
+          err(
+            `Duplicate argument ${arg.arg} in declaration ${decl.name}`,
+            seenArg.loc,
+            arg.loc
+          )
+        );
+      } else {
+        seenArgs.set(arg.arg, arg);
       }
+    }
 
-      // Detect conflicts between arguments and fields
-      for (const [name, fields] of decl.fields) {
-        const seenArg = seenArgs.get(name);
-        if (seenArg) {
-          errors.push(
-            err(
-              `Field cannot have the same name as argument`,
-              seenArg.loc,
-              fields[0].loc
-            )
-          );
-        }
+    // Detect conflicts between arguments and fields
+    for (const [name, fields] of decl.fields) {
+      const seenArg = seenArgs.get(name);
+      if (seenArg) {
+        errors.push(
+          err(
+            `Field cannot have the same name as argument`,
+            seenArg.loc,
+            fields[0].loc
+          )
+        );
       }
     }
 
@@ -144,8 +167,7 @@ export function createGrammar(
             errors.push(err(`Cannot find rule ${id}`, ref.loc));
           } else {
             // Detect wrong number of arguments
-            const expected =
-              referenced.type === "rule" ? referenced.args.length : 0;
+            const expected = referenced.args.length;
             if (expected !== ref.args.length) {
               errors.push(
                 err(
@@ -179,10 +201,7 @@ export function createGrammar(
           }
           break;
         case "id":
-          if (
-            !decl.fields.has(id) &&
-            (decl.type === "token" || !decl.args.find(a => a.arg === id))
-          ) {
+          if (!decl.fields.has(id) && !decl.args.find(a => a.arg === id)) {
             errors.push(err(`Cannot find variable ${id}`, ref.loc));
           }
           break;
@@ -192,9 +211,46 @@ export function createGrammar(
     }
   }
 
+  for (const [name, funcType] of Object.entries(externalFunctions)) {
+    if (name.startsWith("$")) {
+      errors.push(err(`External functions cannot start with $`, funcType.loc));
+    } else if (funcType.type !== "func") {
+      errors.push(
+        err(
+          `Type for external function ${name} should be a function type`,
+          funcType.loc
+        )
+      );
+    }
+  }
+
   // Check that the number of arguments for external calls is consistent
   for (const [name, calls] of externalCalls.get()) {
-    let firstCall = null;
+    if (name.startsWith("$")) continue;
+
+    const funcType = externalFunctions[name];
+    if (funcType) {
+      for (const call of calls) {
+        if (funcType.args.length !== call.args.length) {
+          errors.push(
+            err(
+              `Expected ${funcType.args.length} arguments but got ${call.args.length}`,
+              call.loc,
+              funcType.loc
+            )
+          );
+          break;
+        }
+      }
+    } else {
+      errors.push(
+        err(
+          `No function type for external function ${name} was found`,
+          calls[0].loc
+        )
+      );
+    }
+    /*let firstCall = null;
     for (const call of calls) {
       if (firstCall) {
         if (firstCall.args.length !== call.args.length) {
@@ -210,11 +266,18 @@ export function createGrammar(
       } else {
         firstCall = call;
       }
-    }
+    }*/
   }
 
   if (errors.length === 0) {
-    const grammar = new Grammar(name, declarations, tokens, startRules[0]);
+    const grammar = new Grammar(
+      name,
+      declarations,
+      tokens,
+      start,
+      startArguments,
+      externalFunctions
+    );
 
     return {
       grammar,
@@ -233,17 +296,23 @@ export class Grammar {
   public readonly rules: ReadonlyMap<string, Declaration>;
   public readonly tokens: TokensStore;
   public readonly startRule: RuleDeclaration;
+  public readonly startArguments: readonly GType[];
+  public readonly externalFunctions: Readonly<Record<string, GFuncType>>;
 
   constructor(
     name: string,
     rules: ReadonlyMap<string, Declaration>,
     tokens: TokensStore,
-    startRule: RuleDeclaration
+    startRule: RuleDeclaration,
+    startArguments: readonly GType[],
+    externalFunctions: Readonly<Record<string, GFuncType>>
   ) {
     this.name = name;
     this.rules = rules;
     this.tokens = tokens;
     this.startRule = startRule;
+    this.startArguments = startArguments;
+    this.externalFunctions = externalFunctions;
   }
 
   getRule(ruleName: string) {

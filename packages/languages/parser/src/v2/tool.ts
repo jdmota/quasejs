@@ -5,29 +5,32 @@ import { FactoryRule } from "./factories/factory-rule";
 import { FactoryToken } from "./factories/factory-token";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
 import { ParserGenerator } from "./generators/generate-parser";
-import { generateTypes } from "./grammar/type-checker/generate-types";
 import { createGrammar, Grammar, GrammarError } from "./grammar/grammar";
-import {
-  Declaration,
-  RuleDeclaration,
-  TokenDeclaration,
-  TokenRules,
-} from "./grammar/grammar-builder";
-import { TypesInferrer } from "./grammar/type-checker/inferrer";
+import { RuleDeclaration, TokenDeclaration } from "./grammar/grammar-builder";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 import { locSuffix } from "./utils";
 import { generateAll } from "./generators/generate-all";
 import { FollowInfoDB } from "./grammar/follow-info";
+import {
+  GFuncType,
+  GType,
+  typeBuilder,
+} from "./grammar/type-checker/types-builder";
+import { TypesInferrer } from "./grammar/type-checker/inferrer";
+import { runtimeTypes } from "./grammar/type-checker/default-types";
+import { typeFormatter } from "./grammar/type-checker/types-formatter";
 
-type ToolInput = {
+export type ToolInput = {
   readonly name: string;
   readonly ruleDecls: readonly RuleDeclaration[];
   readonly tokenDecls: readonly TokenDeclaration[];
+  readonly startArguments: readonly GType[];
+  readonly externalFunctions: Readonly<Record<string, GFuncType>>;
 };
 
 export function tool(opts: ToolInput) {
-  const result = createGrammar(opts.name, opts.ruleDecls, opts.tokenDecls);
+  const result = createGrammar(opts);
 
   if (result.errors) {
     for (const { message, loc } of result.errors) {
@@ -117,19 +120,57 @@ export function tool(opts: ToolInput) {
 }
 
 export function inferAndCheckTypes(grammar: Grammar) {
-  const errors: GrammarError[] = [];
   const inferrer = new TypesInferrer(grammar);
 
-  for (const rule of grammar.rules.values()) {
-    inferrer.run(rule);
+  const knownNames = new Map();
+  const typeDeclarations: [string, string][] = [];
+
+  for (const [name, type] of Object.entries(runtimeTypes)) {
+    const { typescript, eq } = typeFormatter(type, knownNames);
+    typeDeclarations.push(...eq);
+    typeDeclarations.push([name, typescript]);
+    knownNames.set(type, name);
   }
 
-  inferrer.check(errors);
+  {
+    const astType = inferrer.declaration(grammar.startRule, []);
+    const { typescript, eq } = typeFormatter(astType, knownNames);
+    typeDeclarations.push(...eq);
+    typeDeclarations.push(["$AST", typescript]);
+  }
 
-  const types = generateTypes(grammar, inferrer);
+  {
+    const externalsType = typeBuilder.readObject(
+      Object.fromEntries(
+        Object.keys(grammar.externalFunctions).map(name => [
+          name,
+          inferrer.getExternalCallType(name),
+        ])
+      )
+    );
+    const { typescript, eq } = typeFormatter(externalsType, knownNames);
+    typeDeclarations.push(...eq);
+    typeDeclarations.push(["$Externals", typescript]);
+  }
+
+  const argTypes = grammar.startArguments.map(t => {
+    const { typescript, eq } = typeFormatter(t, knownNames);
+    typeDeclarations.push(...eq);
+    return typescript;
+  });
+
+  if (inferrer.errors.length) {
+    for (const { message, loc } of inferrer.errors) {
+      console.error(message, locSuffix(loc));
+    }
+  }
 
   return {
-    types,
-    errors,
+    types: `${typeDeclarations
+      .map(([name, type]) => `type ${name} = ${type};`)
+      .join("\n")}\nexport function parse(external: $Externals, ${[
+      "string: string",
+      ...grammar.startRule.args.map((a, i) => `$${a.arg}: ${argTypes[i]}`),
+    ].join(", ")}): $AST;\n`,
   };
 }

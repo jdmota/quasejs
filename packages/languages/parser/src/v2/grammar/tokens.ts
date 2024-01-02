@@ -199,7 +199,7 @@ export class TokensStore {
       case "string":
       case "regexp":
       case "eof":
-        return builder.token(idToVar(id), token, { type: "normal" }, null);
+        return builder.token(idToVar(id), token, [], { type: "normal" }, null);
       case "token":
         return token;
       default:
@@ -233,6 +233,7 @@ export class TokensStore {
           builder.call2("$getLoc", [builder.id("$startPos")])
         )
       ),
+      [],
       {
         type: "normal",
       },

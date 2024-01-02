@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { builder } from "./grammar/grammar-builder";
+import { typeBuilder } from "./grammar/type-checker/types-builder";
 import { inferAndCheckTypes, tool } from "./tool";
-import { TYPES_MACRO } from "./generators/generate-all";
 
 const {
   seq,
@@ -22,26 +22,36 @@ const {
   call,
   token,
   eof,
+  empty,
 } = builder;
 
 const ruleA = rule(
   "A",
   seq(
-    optional(call("B", [])),
+    optional(field("B", call("B", []))),
     optional(string("O")),
     choice(string("A"), string("B")),
     string("C"),
-    repeat(seq(string("D"), string("E"))),
+    repeat(seq(fieldMultiple("D", string("D")), string("E"))),
     repeat(string("F")),
     optional(string("O")),
     field("my_obj", object([["id", int(10)]])),
     select(id("my_obj"), "id"),
     select(id("my_obj"), "id"),
-    field("C", call("C", [int(10), int(20)]))
+    select(id("my_obj"), "unknown_field"),
+    field("C", call("C", [int(10), int(20)])),
+    field("T", call("Tricky2", []))
   ),
   [],
   { start: true },
-  call2("externalCall", [id("my_obj"), id("C")])
+  object([
+    ["o", id("my_obj")],
+    ["b", id("B")],
+    ["c", id("C")],
+    ["d", id("D")],
+    ["t", id("T")],
+    ["external", call2("externalCall", [id("my_obj"), id("C")])],
+  ])
 );
 
 const ruleB = rule(
@@ -124,7 +134,8 @@ const ruleF = rule(
       field("ret", object([["x", select(id("arg"), "x")]])),
       field("ret", object([["x", select(id("arg"), "x")]]))
     ),
-    field("w", call("W", []))
+    field("w", call("W", [])),
+    call("H", [int(10)])
   ),
   [rule.arg("arg")],
   {},
@@ -132,6 +143,14 @@ const ruleF = rule(
 );
 
 const ruleG = rule("G", choice(string("<<<"), string("<<")), [], {}, null);
+
+const ruleH = rule(
+  "H",
+  choice(field("y", id("x")), field("y", string("a"))),
+  [rule.arg("x")],
+  {},
+  id("y")
+);
 
 const ruleTricky1 = rule(
   "Tricky1",
@@ -184,22 +203,23 @@ const ruleTricky4 = rule(
   null
 );
 
+const ruleY = rule("Y", field("y", call("TY", [])), [], {}, id("y"));
+
 const tokenW = token(
   "W",
   field("text", string("W")),
+  [],
   { type: "normal", channels: ["channel1"] },
   id("text")
 );
 
-// const ruleB = seq(repeat(fieldMultiple("c", string("C"))), string("D"));
-
-// export type D_arg = Readonly<{ y: $rec1 }> & Readonly<{ x: $rec2 }> & Readonly<{ x: $rec3 }> & Readonly<{ y: $rec4 }>;
-// export type D = Readonly<{ x: $rec2, y: $rec1 }> | Readonly<{ x: $rec4, y: $rec3 }>;
-
-// export type D_arg = Readonly<{ x: $rec2 & $rec3, y: $rec1 & $rec4 }>;
-// export type D = Readonly<{ x: $rec2, y: $rec1 }> | Readonly<{ x: $rec4, y: $rec3 }>;
-
-// TODO: maybe the problem is that when making the type info "flow" from one store to another, we do not make the contents of objects flow as well...
+const tokenY = token(
+  "TY",
+  field("num", int(10)),
+  [],
+  { type: "normal", channels: ["channel1"] },
+  id("num")
+);
 
 console.log("Starting...");
 
@@ -213,20 +233,26 @@ const result = tool({
     ruleE,
     ruleF,
     ruleG,
+    ruleH,
     ruleTricky1,
     ruleTricky2,
     ruleTricky3,
     ruleTricky4,
+    ruleY,
   ],
-  tokenDecls: [tokenW],
+  tokenDecls: [tokenW, tokenY],
+  startArguments: [],
+  externalFunctions: {
+    externalCall: typeBuilder.func(
+      [typeBuilder.readObject({}), typeBuilder.unknown()],
+      typeBuilder.bool()
+    ),
+  },
 });
 
 if (result) {
-  const { types, errors } = inferAndCheckTypes(result.grammar);
-  fs.writeFileSync(
-    path.join(__dirname, "example.gen.ts"),
-    result.code.replace(TYPES_MACRO, types)
-  );
-  console.log("Type errors", errors);
+  const { types } = inferAndCheckTypes(result.grammar);
+  fs.writeFileSync(path.join(__dirname, "example.gen.js"), result.code);
+  fs.writeFileSync(path.join(__dirname, "example.gen.d.ts"), types);
   console.log();
 }

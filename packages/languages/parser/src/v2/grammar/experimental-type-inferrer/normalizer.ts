@@ -1,5 +1,13 @@
 import { first, never, nonNull } from "../../utils";
-import { AnyType, TypePolarity, TypesRegistry } from "./types";
+import {
+  AnyType,
+  FreeType,
+  TypePolarity,
+  TypesRegistry,
+  formatPolarity,
+  isAtomType,
+  isFreeType,
+} from "./types";
 
 abstract class NormalizedType {
   abstract format(): string;
@@ -132,21 +140,38 @@ class BottomType extends NormalizedType {
   }
 }
 
-let genericUuid = 1;
-
 class GenericType extends NormalizedType {
   readonly clazz = "GenericType";
-  readonly id = genericUuid++;
 
   constructor(
-    readonly lower: AnyNormalizedType,
-    readonly upper: AnyNormalizedType
+    public readonly lower: AnyNormalizedType,
+    public readonly upper: AnyNormalizedType,
+    public readonly polarity: TypePolarity,
+    public readonly name: string
   ) {
     super();
   }
 
   format(): string {
-    return `T${this.id}`;
+    return `${this.name}(${formatPolarity(
+      this.polarity
+    )})[${this.lower.format()},${this.upper.format()}]`;
+  }
+}
+
+class AliasType extends NormalizedType {
+  readonly clazz = "AliasType";
+
+  constructor(public readonly name: string) {
+    super();
+  }
+
+  isAux() {
+    return this.name.startsWith("$_T");
+  }
+
+  format(): string {
+    return `${this.name}`;
   }
 }
 
@@ -184,6 +209,7 @@ class IntersectionType extends NormalizedType {
 
 export type AnyNormalizedType =
   | RecursiveRef
+  | AliasType
   | FunctionType
   | ReadonlyObjectType
   | ReadonlyArrayType
@@ -197,6 +223,8 @@ export type AnyNormalizedType =
   | GenericType
   | UnionType
   | IntersectionType;
+
+const EXPERIMENTAL = false;
 
 export class Normalizer {
   constructor(private readonly registry: TypesRegistry) {}
@@ -281,11 +309,132 @@ export class Normalizer {
             for (const sub of this.registry.graph.upper(type)) {
               upperSet.add(this.normalize(sub));
             }
-            return new GenericType(union(lowerSet), intersection(upperSet));
+            return new GenericType(
+              union(lowerSet),
+              intersection(upperSet),
+              type.polarity,
+              type.ensureName()
+            );
           }
           default:
             never(type.polarity);
         }
+      default:
+        never(type);
+    }
+  }
+
+  private cache2 = new Map<AnyType, AnyNormalizedType>();
+  private cache3 = new Map<string, AnyNormalizedType>();
+
+  getFromCache(name: string) {
+    return nonNull(this.cache3.get(name));
+  }
+
+  normalize2(type: AnyType): AnyNormalizedType {
+    if (isAtomType(type)) {
+      return this._normalize2(type);
+    }
+    const name = type.ensureName();
+    const alias = new AliasType(name);
+    const inCache = this.cache2.get(type);
+    if (inCache) {
+      return alias.isAux() ? inCache : alias;
+    }
+    this.cache2.set(type, alias);
+    const normalized = this._normalize2(type);
+    this.cache2.set(type, normalized);
+    this.cache3.set(name, normalized);
+    return normalized;
+  }
+
+  private _normalize2(type: AnyType): AnyNormalizedType {
+    switch (type.clazz) {
+      case "TopType":
+        return new TopType();
+      case "StringType":
+        return new StringType();
+      case "IntType":
+        return new IntType();
+      case "NullType":
+        return new NullType();
+      case "BooleanType":
+        return new BooleanType();
+      case "BottomType":
+        return new BottomType();
+      case "FunctionType":
+        return new FunctionType(
+          type.args.map(a => this.normalize2(a)),
+          this.normalize2(type.ret)
+        );
+      case "ReadonlyObjectType":
+        return new ReadonlyObjectType(
+          Array.from(type.fields).map(([k, v]) => [k, this.normalize2(v)])
+        );
+      case "ReadonlyArrayType":
+        return new ReadonlyArrayType(this.normalize2(type.component));
+      case "ArrayType":
+        return new ArrayType(this.normalize2(type.component));
+      case "FreeType":
+        if (!EXPERIMENTAL) {
+          // Get the lower bound
+          const set = new Set<AnyNormalizedType>();
+          for (const sub of this.registry.graph.lowerAny(type)) {
+            set.add(this.normalize2(sub));
+          }
+          return union(set);
+        }
+
+        let negativeToPositive = false;
+
+        const lowerSet = new Set<AnyNormalizedType>();
+        for (const sub of this.registry.graph.lower(type)) {
+          negativeToPositive ||=
+            type.polarity === TypePolarity.POSITIVE &&
+            isFreeType(sub) &&
+            sub.polarity === TypePolarity.NEGATIVE;
+
+          lowerSet.add(this.normalize2(sub));
+        }
+
+        const upperSet = new Set<AnyNormalizedType>();
+        for (const sup of this.registry.graph.upper(type)) {
+          negativeToPositive ||=
+            type.polarity === TypePolarity.NEGATIVE &&
+            isFreeType(sup) &&
+            sup.polarity === TypePolarity.POSITIVE;
+
+          upperSet.add(this.normalize2(sup));
+        }
+
+        const lowerBound = union(lowerSet);
+        const upperBound = intersection(upperSet);
+
+        switch (type.polarity) {
+          case TypePolarity.NONE:
+            throw new Error("Cannot normalize type with no polarity");
+          case TypePolarity.POSITIVE:
+            if (!negativeToPositive) {
+              return lowerBound;
+            }
+            break;
+          case TypePolarity.NEGATIVE: {
+            if (!negativeToPositive) {
+              return upperBound;
+            }
+            break;
+          }
+          case TypePolarity.BIPOLAR:
+            break;
+          default:
+            never(type.polarity);
+        }
+        return new GenericType(
+          lowerBound,
+          upperBound,
+          type.polarity,
+          type.ensureName()
+        );
       default:
         never(type);
     }

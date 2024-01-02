@@ -204,9 +204,7 @@ export class ParserGenerator {
 
   private renderField(t: FieldInfo, what: string) {
     this.markVar(t.name);
-    return t.multiple
-      ? `(${t.name} = ${t.name} || []).push(${what})`
-      : `${t.name} = ${what}`;
+    return t.multiple ? `${t.name}.push(${what})` : `${t.name} = ${what}`;
   }
 
   renderExpectBlock(indent: string, block: ExpectBlock): string {
@@ -455,20 +453,15 @@ export class ParserGenerator {
 
   process(indent: string, block: CodeBlock) {
     const rendered = this.r(`${indent}  `, block);
-    const args =
-      this.rule.type === "rule"
-        ? this.rule.args
-            .map(a => `${a.arg}: ${this.rule.name}_${a.arg}`)
-            .join(",")
-        : "";
+    const args = this.rule.args.map(a => `${a.arg}`).join(",");
     const vars = [
       ...Array.from(this.internalVars),
       ...Array.from(this.rule.fields).map(([name, [{ multiple }]]) =>
-        multiple ? `${name}=[]` : `${name}:any=null`
+        multiple ? `${name}=[]` : `${name}=null`
       ),
     ];
     const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    return `${indent}${this.rule.type}${this.rule.name}(${args}): ${this.rule.name} {${decls}\n${rendered}\n${indent}}`;
+    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n${indent}}`;
   }
 
   private useStackContext = true;

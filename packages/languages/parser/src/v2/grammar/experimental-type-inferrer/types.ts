@@ -1,13 +1,17 @@
 import { never } from "../../utils";
 import { MapSet } from "../../utils/map-set";
-import { AnyRule } from "../grammar-builder";
+import { AnyRule, GFuncType, GType } from "../grammar-builder";
 import { ConstraintsGraph } from "./constraints-graph";
 
 // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-do-these-empty-classes-behave-strangely
 
 const EMPTY_FREE_TYPE_ARRAY: readonly FreeType[] = [];
 
+let typeUUID = 1;
+
 abstract class Type {
+  private name: string | null = null;
+
   formatMeta(seen: Set<Type>): string {
     return "";
   }
@@ -33,6 +37,21 @@ abstract class Type {
   }
   setPolarity(polarity: TypePolarity, changed: Set<FreeType>) {
     // Do nothing here
+  }
+  setName(name: string) {
+    if (this.name) {
+      throw new Error(
+        `Already set the name ${this.name}. Trying to set ${name}`
+      );
+    }
+    this.name = name;
+    return this;
+  }
+  ensureName() {
+    if (!this.name) {
+      this.name = `$_T${typeUUID++}`;
+    }
+    return this.name;
   }
 }
 
@@ -141,7 +160,7 @@ class BottomType extends AtomType {
   readonly clazz = "BottomType";
 }
 
-export type TSType =
+export type AnyAtomType =
   | TopType
   | NullType
   | StringType
@@ -149,7 +168,7 @@ export type TSType =
   | IntType
   | BottomType;
 
-export function isTSType(type: AnyType): type is TSType {
+export function isAtomType(type: AnyType): type is AnyAtomType {
   return (
     type.clazz === "TopType" ||
     type.clazz === "NullType" ||
@@ -192,6 +211,21 @@ function isNegative(type: FreeType) {
 
 function isPositive(type: FreeType) {
   return (type.polarity & TypePolarity.POSITIVE) !== 0;
+}
+
+export function formatPolarity(p: TypePolarity) {
+  switch (p) {
+    case TypePolarity.NONE:
+      return "0";
+    case TypePolarity.NEGATIVE:
+      return "-";
+    case TypePolarity.POSITIVE:
+      return "+";
+    case TypePolarity.BIPOLAR:
+      return "+-";
+    default:
+      never(p);
+  }
 }
 
 class FreeType extends Type {
@@ -237,18 +271,18 @@ const BOOL_TYPE = new BooleanType();
 const INT_TYPE = new IntType();
 const STRING_TYPE = new StringType();
 
-const EMPTY_OBJ_TYPE = new ReadonlyObjectType([]);
+const EMPTY_OBJ_TYPE = new ReadonlyObjectType([]).setName("$Empty");
 
 const POSITION_TYPE = new ReadonlyObjectType([
   ["pos", INT_TYPE],
   ["line", INT_TYPE],
   ["column", INT_TYPE],
-]);
+]).setName("$Position");
 
 const LOCATION_TYPE = new ReadonlyObjectType([
   ["start", POSITION_TYPE],
   ["end", POSITION_TYPE],
-]);
+]).setName("$Location");
 
 export const runtimeTypes = {
   null: NULL_TYPE,
@@ -341,8 +375,6 @@ export class TypesRegistry {
       }
     }
 
-    // TODO C_x (and C_y) should be at least "int"...
-
     while (changedPositive.size > 0 || changedNegative.size > 0) {
       const prevPositive = changedPositive;
       changedPositive = new Set();
@@ -393,8 +425,12 @@ export class TypesRegistry {
     return this.save(BOOL_TYPE, node);
   }
 
-  free(preference: TypePolarity = TypePolarity.NONE) {
-    return this.saveFree(new FreeType(preference));
+  freeNamed(preference: TypePolarity, name: string) {
+    return this.saveFree(new FreeType(preference).setName(name));
+  }
+
+  free() {
+    return this.saveFree(new FreeType(TypePolarity.NONE));
   }
 
   function(argNum: number, node: AnyRule) {
@@ -420,6 +456,36 @@ export class TypesRegistry {
 
   array(node: AnyRule) {
     return this.save(new ArrayType(this.free()), node);
+  }
+
+  fromSyntax(type: GType): AnyType {
+    switch (type.type) {
+      case "top":
+        return new TopType();
+      case "int":
+        return new IntType();
+      case "bool":
+        return new BooleanType();
+      case "string":
+        return new StringType();
+      case "null":
+        return new NullType();
+      case "array":
+        return new ArrayType(this.fromSyntax(type.component));
+      case "readArray":
+        return new ReadonlyArrayType(this.fromSyntax(type.component));
+      case "readObject":
+        return new ReadonlyObjectType(
+          type.fields.map(([name, type]) => [name, this.fromSyntax(type)])
+        );
+      case "func":
+        return new FunctionType(
+          type.args.map(a => this.fromSyntax(a)),
+          this.fromSyntax(type.ret)
+        );
+      default:
+        never(type);
+    }
   }
 
   [Symbol.iterator]() {

@@ -1,6 +1,8 @@
 import type { Location } from "../runtime/input";
-import { never } from "../utils";
+import { assertion, never } from "../utils";
 import { FieldsCollector } from "./grammar-visitors";
+
+// Build rules and expressions
 
 export interface RuleMap {
   seq: SeqRule;
@@ -98,6 +100,7 @@ export type TokenDeclaration = {
   readonly type: "token";
   readonly name: string;
   readonly rule: AnyRule;
+  readonly args: readonly RuleDeclarationArg[];
   readonly return: ExprRule;
   readonly modifiers: TokenModifiers;
   readonly fields: ReadonlyMap<string, FieldRule[]>;
@@ -107,6 +110,7 @@ export type TokenDeclaration = {
 function token(
   name: string,
   rule: AnyRule,
+  args: readonly RuleDeclarationArg[],
   modifiers: TokenModifiers,
   returnCode: ExprRule | null
 ): TokenDeclaration {
@@ -115,6 +119,7 @@ function token(
     type: "token",
     name,
     rule,
+    args,
     modifiers,
     return:
       returnCode ??
@@ -596,6 +601,7 @@ export function cloneDeclaration(decl: Declaration): Declaration {
     builder.token(
       decl.name,
       cloneRules(decl.rule),
+      decl.args.map(a => setLoc(builder.rule.arg(a.arg), a.loc)),
       decl.modifiers,
       cloneRules(decl.return)
     ),

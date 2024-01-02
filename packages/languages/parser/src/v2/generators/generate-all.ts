@@ -2,11 +2,6 @@ import { Grammar } from "../grammar/grammar";
 import { TokenDeclaration, RuleDeclaration } from "../grammar/grammar-builder";
 import { lines } from "../utils";
 
-// TODO better types (not only on method signatures but also on local vars)
-// TODO better types also on the results of this.e() calls
-
-export const TYPES_MACRO = "// #### TYPES ####";
-
 export function generateAll(
   grammar: Grammar,
   tokensCode: ReadonlyMap<TokenDeclaration, string>,
@@ -17,11 +12,9 @@ export function generateAll(
     `import { Tokenizer } from "./runtime/tokenizer";`,
     `import { Parser } from "./runtime/parser";\n`,
     ``,
-    TYPES_MACRO,
-    ``,
     `const EMPTY_OBJ = {};\n`,
     ``,
-    `class GrammarTokenizer extends Tokenizer<$ExternalCalls> {`,
+    `class GrammarTokenizer extends Tokenizer {`,
     `  getIdToLabel() {`,
     `    return ${JSON.stringify(grammar.tokens.makeIdToLabels(), null, 2)
       .split("\n")
@@ -35,13 +28,13 @@ export function generateAll(
     ...tokensCode.values(),
     `}\n`,
     ``,
-    `class GrammarParser extends Parser<$ExternalCalls> {`,
+    `class GrammarParser extends Parser {`,
     ...rulesCode.values(),
     `}\n`,
     ``,
-    `export function parse(external: $ExternalCalls, ${[
-      "string: string",
-      ...grammar.startRule.args.map(a => `$${a.arg}: any`),
+    `export function parse(external, ${[
+      "string",
+      ...grammar.startRule.args.map(a => `$${a.arg}`),
     ].join(", ")}) {`,
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input, external);`,
