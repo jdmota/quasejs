@@ -10,8 +10,12 @@ export function isSubtype(
   _a: GType,
   _b: GType
 ): boolean {
-  const a = _a.type === "recursive-var" ? _a.definition() : _a;
-  const b = _b.type === "recursive-var" ? _b.definition() : _b;
+  const a =
+    _a.type === "recursive-var" ? (_a.defined() ? _a.definition() : null) : _a;
+  const b =
+    _b.type === "recursive-var" ? (_b.defined() ? _b.definition() : null) : _b;
+
+  if (!a || !b) return false;
 
   // Short-path: Every type is a subtype of itself
   if (a === b) return true;

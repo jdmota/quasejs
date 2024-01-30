@@ -12,6 +12,8 @@ export function typeFormatter(
   };
 }
 
+const VALID_ID = /^[$_a-z][$_a-z0-9]*$/i;
+
 function typeFormatterAux(
   t: GType,
   eq: [string, string][],
@@ -32,7 +34,7 @@ function typeFormatterAux(
         return "Readonly<Record<string, never>>";
       }
       return `Readonly<{ ${Array.from(t.fields)
-        .map(([k, v]) => `${JSON.stringify(k)}: ${f(v)}`)
+        .map(([k, v]) => `${VALID_ID.test(k) ? k : JSON.stringify(k)}: ${f(v)}`)
         .join(", ")} }>`;
     case "readArray":
       return `readonly ${f(t.component)}[]`;

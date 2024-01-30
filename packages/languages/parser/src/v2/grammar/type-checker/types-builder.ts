@@ -153,7 +153,10 @@ export type GUnionType = {
   loc: Location | null;
 };
 
-function unionType(types: readonly GType[]): GUnionType {
+function unionType(types: readonly GType[]): GType {
+  types = types.filter(t => t.type !== "bot");
+  if (types.length === 0) return typeBuilder.never();
+  if (types.length === 1) return types[0];
   return { type: "union", types, loc: null };
 }
 
@@ -163,7 +166,10 @@ export type GInterType = {
   loc: Location | null;
 };
 
-function interType(types: readonly GType[]): GInterType {
+function interType(types: readonly GType[]): GType {
+  types = types.filter(t => t.type !== "top");
+  if (types.length === 0) return typeBuilder.unknown();
+  if (types.length === 1) return types[0];
   return { type: "inter", types, loc: null };
 }
 
@@ -175,6 +181,7 @@ export type GRecursiveType = {
 
 export type GRecursiveVarType = {
   readonly type: "recursive-var";
+  readonly defined: () => boolean;
   readonly definition: () => GRecursiveType; // The identity of this function is what distinguishes different variables
   loc: Location | null;
 };
@@ -191,6 +198,7 @@ function recursiveType(fn: (v: GRecursiveVarType) => GType): GRecursiveType {
   };
   const variable: GRecursiveVarType = {
     type: "recursive-var",
+    defined: () => rec.content != null,
     definition: () => {
       assertion(rec.content != null);
       return rec as GRecursiveType;
@@ -217,6 +225,7 @@ export class RecursiveTypeCreator {
 
   private readonly variable: GRecursiveVarType = {
     type: "recursive-var",
+    defined: () => this.rec.content != null,
     definition: () => {
       assertion(this.rec.content != null);
       return this.rec as GRecursiveType;

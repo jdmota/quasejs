@@ -13,5 +13,5 @@
     "noImplicitOverride": true,
     "noImplicitThis": true
   },
-  "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts"]
+  "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts", "**/_legacy/**"]
 }

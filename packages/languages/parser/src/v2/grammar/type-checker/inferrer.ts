@@ -1,4 +1,4 @@
-import { Grammar, GrammarError, err } from "../grammar";
+import { AugmentedDeclaration, Grammar, GrammarError, err } from "../grammar";
 import {
   RuleMap,
   CallRule,
@@ -12,22 +12,16 @@ import {
   RegExpRule,
   Repeat1Rule,
   RepeatRule,
-  SelectRule,
   SeqRule,
   StringRule,
   AnyRule,
   Call2Rule,
   ObjectRule,
   IntRule,
-  Declaration,
+  BoolRule,
 } from "../grammar-builder";
-import { never, nonNull } from "../../utils";
-import {
-  GFuncType,
-  GType,
-  RecursiveTypeCreator,
-  typeBuilder,
-} from "./types-builder";
+import { assertion, nonNull } from "../../utils";
+import { GType, RecursiveTypeCreator, typeBuilder } from "./types-builder";
 import { runtimeFuncs, runtimeTypes } from "./default-types";
 import { isSub } from "./subtyping";
 import { typeFormatter } from "./types-formatter";
@@ -37,18 +31,16 @@ type RuleAnalyzer<T> = {
 };
 
 function merge(current: GType | undefined, type: GType) {
-  try {
-    // TODO
-    if (current && isSub(type, current)) {
-      return current;
-    }
-  } catch (err) {}
+  if (current && isSub(type, current)) {
+    return current;
+  }
   return current ? typeBuilder.union([current, type]) : type;
 }
 
 class Store {
   private readonly t: TypesInferrer;
-  private readonly map: Map<string, GType> = new Map();
+  private readonly map: Map<string, { readonly array: boolean; type: GType }> =
+    new Map();
   private changed = true; // Because it was just initialized
 
   constructor(t: TypesInferrer) {
@@ -63,24 +55,30 @@ class Store {
       : this.t.genId(name);
   }
 
-  get(name: AnyRule | string) {
-    return this.map.get(this.strName(name));
+  read(name: AnyRule | string) {
+    const { type, array } = nonNull(this.map.get(this.strName(name)));
+    return array ? typeBuilder.readArray(type) : type;
   }
 
-  merge(name: AnyRule | string, type: GType) {
-    name = this.strName(name);
-    const current = this.map.get(name);
-    const next = merge(current, type);
-    if (current === next) {
-      return false;
-    }
-    this.map.set(name, next);
+  set(name: AnyRule | string, type: GType, array: boolean) {
+    this.map.set(this.strName(name), { array, type });
     this.changed = true;
     return true; // It changed
   }
 
-  set(name: AnyRule | string, type: GType) {
-    this.map.set(this.strName(name), type);
+  merge(name: AnyRule | string, type: GType, array: boolean = false) {
+    name = this.strName(name);
+    const current = this.map.get(name);
+    if (current) {
+      assertion(current.array === array);
+      const next = merge(current?.type, type);
+      if (current.type === next) {
+        return false;
+      }
+      this.map.set(name, { array, type: next });
+    } else {
+      this.map.set(name, { array, type });
+    }
     this.changed = true;
     return true; // It changed
   }
@@ -95,8 +93,8 @@ class Store {
 
   propagateTo(other: Store) {
     let changed = false;
-    for (const [name, type] of this.map) {
-      changed = other.merge(name, type) || changed;
+    for (const [name, { array, type }] of this.map) {
+      changed = other.merge(name, type, array) || changed;
     }
     return changed;
   }
@@ -226,6 +224,11 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     post.merge(node, typeBuilder.int());
   }
 
+  bool({ pre, post }: StorePair, node: BoolRule) {
+    pre.propagateTo(post);
+    post.merge(node, typeBuilder.bool());
+  }
+
   string({ pre, post }: StorePair, node: StringRule) {
     pre.propagateTo(post);
     post.merge(node, typeBuilder.string());
@@ -248,7 +251,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
         ? runtimeTypes.$Empty
         : typeBuilder.readObject(
             Object.fromEntries(
-              node.fields.map(([k, v]) => [k, nonNull(pair.post.get(v))])
+              node.fields.map(([k, v]) => [k, pair.post.read(v)])
             )
           )
     );
@@ -258,173 +261,28 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     pre.propagateTo(post);
   }
 
-  private getField(t: GType, field: string): { type: GType; errors: string[] } {
-    switch (t.type) {
-      case "readObject":
-        const v = t.fields.get(field);
-        return v
-          ? { type: v, errors: [] }
-          : {
-              type: typeBuilder.never(),
-              errors: [
-                `Field ${field} does not exist in ${
-                  typeFormatter(t).typescript
-                }`,
-              ],
-            };
-      case "func":
-      case "readArray":
-      case "array":
-      case "null":
-      case "string":
-      case "int":
-      case "bool":
-      case "top":
-        return {
-          type: typeBuilder.never(),
-          errors: [`${typeFormatter(t).typescript} is not an object type`],
-        };
-      case "bot":
-        return { type: t, errors: [] };
-      case "recursive":
-        return this.getField(t.content, field);
-      case "recursive-var":
-        return this.getField(t.definition().content, field);
-      case "union": {
-        const results = t.types.map(t => this.getField(t, field));
-        return {
-          type: typeBuilder.union(results.map(r => r.type)),
-          errors: results.reduce<string[]>(
-            (acc, { errors }) => acc.concat(errors),
-            []
-          ),
-        };
-      }
-      case "inter": {
-        const results = t.types
-          .map(t => this.getField(t, field))
-          .filter(r => r.errors.length === 0);
-        if (results.length === 0) {
-          return {
-            type: typeBuilder.never(),
-            errors: [
-              `Field ${field} does not exist in ${typeFormatter(t).typescript}`,
-            ],
-          };
-        }
-        return {
-          type: typeBuilder.inter(results.map(r => r.type)),
-          errors: [],
-        };
-      }
-      default:
-        never(t);
-    }
-  }
-
-  private getArrayComponent(t: GType): { type: GType; errors: string[] } {
-    switch (t.type) {
-      case "readArray":
-      case "array":
-        return {
-          type: t.component,
-          errors: t.type === "readArray" ? ["Not write in readonly array"] : [],
-        };
-      case "readObject":
-      case "func":
-      case "null":
-      case "string":
-      case "int":
-      case "bool":
-      case "top":
-        return {
-          type: typeBuilder.never(),
-          errors: [`${typeFormatter(t).typescript} is not an array type`],
-        };
-      case "bot":
-        return { type: t, errors: [] };
-      case "recursive":
-        return this.getArrayComponent(t.content);
-      case "recursive-var":
-        return this.getArrayComponent(t.definition().content);
-      case "union": {
-        const results = t.types.map(t => this.getArrayComponent(t));
-        return {
-          type: typeBuilder.union(results.map(r => r.type)),
-          errors: results.reduce<string[]>(
-            (acc, { errors }) => acc.concat(errors),
-            []
-          ),
-        };
-      }
-      case "inter": {
-        const results = t.types
-          .map(t => this.getArrayComponent(t))
-          .filter(r => r.errors.length === 0);
-        if (results.length === 0) {
-          return {
-            type: typeBuilder.never(),
-            errors: [`${typeFormatter(t).typescript} is not an array type`],
-          };
-        }
-        return {
-          type: typeBuilder.inter(results.map(r => r.type)),
-          errors: [],
-        };
-      }
-      default:
-        never(t);
-    }
-  }
-
-  select({ pre, post }: StorePair, node: SelectRule) {
-    const { pre: preExpr, post: postExpr } = this.store(node.parent);
-    pre.propagateTo(preExpr);
-    this.visit(node.parent);
-    postExpr.propagateTo(post);
-    //
-    const objType = nonNull(postExpr.get(node.parent));
-    const { type: fieldType, errors } = this.getField(objType, node.field);
-    for (const error of errors) this.errors.push(err(error, node.loc));
-    post.merge(node, fieldType);
-  }
-
   call2(pair: StorePair, node: Call2Rule) {
     this.visitSeq(pair, node.args);
     //
-    let funcType: GFuncType;
+    let retType: GType;
     if (node.id.startsWith("$")) {
-      funcType = nonNull(
-        runtimeFuncs[node.id.slice(1) as keyof typeof runtimeFuncs]
-      );
+      retType = nonNull(runtimeFuncs[node.id as keyof typeof runtimeFuncs]).ret;
     } else {
-      funcType = this.grammar.externalFunctions[node.id];
+      retType = this.grammar.externalFuncReturns[node.id];
 
       const funcArgs = this.externalArgs(node.id);
       node.args.forEach((a, i) => {
-        funcArgs[i] = merge(funcArgs[i], nonNull(pair.post.get(a)));
-
-        /*const expected = funcType.args[i];
-        if (!isSub(actual, expected)) {
-          this.errors.push(
-            err(
-              `${typeFormatter(actual).typescript} is not a subtype of ${
-                typeFormatter(expected).typescript
-              }`,
-              node.loc
-            )
-          );
-        }*/
+        funcArgs[i] = merge(funcArgs[i], pair.post.read(a));
       });
     }
-    pair.post.merge(node, funcType.ret);
+    pair.post.merge(node, retType);
   }
 
   call(pair: StorePair, node: CallRule) {
     const calledRule = this.grammar.getRule(node.id);
     this.visitSeq(pair, node.args);
     //
-    const argTypes = node.args.map(a => nonNull(pair.post.get(a)));
+    const argTypes = node.args.map(a => pair.post.read(a));
     const resultType = this.declaration(calledRule, argTypes);
     pair.post.merge(node, resultType);
   }
@@ -436,18 +294,10 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     //
     if (node.multiple) {
       postExpr.propagateTo(post);
-
-      const { type: component, errors } = this.getArrayComponent(
-        nonNull(post.get(node.name))
-      );
-      for (const error of errors) this.errors.push(err(error, node.loc));
-      const newComponent = merge(component, nonNull(postExpr.get(node.rule)));
-      if (component !== newComponent) {
-        post.set(node.name, typeBuilder.array(newComponent));
-      }
+      post.merge(node.name, postExpr.read(node.rule), true);
     } else {
       postExpr.propagateTo(post);
-      post.set(node.name, nonNull(postExpr.get(node.rule)));
+      post.set(node.name, postExpr.read(node.rule), false);
     }
   }
 
@@ -462,7 +312,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
   private ruleStack = new Map<string, RecursiveTypeCreator>();
 
-  declaration(rule: Declaration, argTypes: GType[]) {
+  declaration(rule: AugmentedDeclaration, argTypes: GType[]) {
     let recCreator = this.ruleStack.get(rule.name);
     if (recCreator) {
       return recCreator.getVar();
@@ -483,9 +333,9 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
       for (const [name, [{ multiple }]] of rule.fields) {
         if (multiple) {
-          preRule.merge(name, typeBuilder.array(typeBuilder.never()));
+          preRule.set(name, typeBuilder.never(), true);
         } else {
-          preRule.merge(name, typeBuilder.null());
+          preRule.set(name, typeBuilder.null(), false);
         }
       }
 
@@ -494,7 +344,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
       this.visit(rule.return);
     }
 
-    const resultType = recCreator.create(nonNull(postReturn.get(rule.return)));
+    const resultType = recCreator.create(postReturn.read(rule.return));
     this.ruleStack.delete(rule.name);
     return resultType;
   }
@@ -510,8 +360,8 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
   getExternalCallType(call: string) {
     const funcArgs = this.externalArgs(call);
-    const given = this.grammar.externalFunctions[call];
-    return typeBuilder.func(funcArgs, given.ret);
+    const ret = this.grammar.externalFuncReturns[call];
+    return typeBuilder.func(funcArgs, ret);
   }
 
   print() {
@@ -521,12 +371,8 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
     for (const rule of this.grammar.rules.values()) {
       const { pre: preReturn, post: postReturn } = this.store(rule.return);
-      const t = postReturn.get(rule.return);
-      console.log(
-        "rule",
-        rule.name,
-        t ? typeFormatter(t, knownNames) : undefined
-      );
+      const t = postReturn.read(rule.return);
+      console.log("rule", rule.name, typeFormatter(t, knownNames));
     }
   }
 }

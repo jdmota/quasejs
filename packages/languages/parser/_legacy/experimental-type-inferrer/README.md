@@ -4,11 +4,33 @@ TODO
 
 - Simplify unions and intersection types (use DNF)
 - Better error locations
-- Support ValueOf ?
+- Support ValueOf ? (Or any sort of computation over types?)
 
-- Need to deal with the scenario where we have `T1- ----> T2+`
+Random insight: maybe computations over types are like lazy computations, only executed when actually needed, like monads in Haskell??
 
-// See sketch.png
+```
+// How to deal with these cases in terms of the constraints graph? (See sketch2.png)
+
+obj() = {
+  y: obj()["x"],
+  x: obj()["i"],
+  i: 10,
+};
+
+while (true) {
+  b = b.z;
+}
+```
+
+TypeScript rejects these because of circularity:
+
+```
+A = A.x | A.y | { x : int, y : bool }
+
+A = A | int
+```
+
+- Need to deal with the scenario where we have `T1- ----> T2+` (See sketch.png)
 
 - The store should also reason on paths like `x.field` for better inference
 

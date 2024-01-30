@@ -13,11 +13,11 @@ import {
   RepeatRule,
   SeqRule,
   StringRule,
-  SelectRule,
   CallRule,
   ObjectRule,
   Call2Rule,
   IntRule,
+  BoolRule,
   ExprRule,
 } from "../grammar/grammar-builder";
 import { Grammar } from "../grammar/grammar";
@@ -93,7 +93,7 @@ export abstract class AbstractFactory implements Gen {
     return this.automaton.single(this.actionTransition(node, null));
   }
 
-  select(node: SelectRule) {
+  bool(node: BoolRule) {
     return this.automaton.single(this.actionTransition(node, null));
   }
 

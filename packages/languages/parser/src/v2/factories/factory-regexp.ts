@@ -26,9 +26,6 @@ declare module "regexp-tree/ast" {
     left: Expression | null;
     right: Expression | null;
   }
-  interface NoncapturingGroup extends Base<"Group"> {
-    name?: string;
-  }
 }
 
 interface AstClassMap {
@@ -119,11 +116,11 @@ export class FactoryRegexp implements Gen {
     return this.automaton.choice(fragments);
   }
 
-  Group({ expression, capturing, name }: Group) {
-    if (capturing && name) {
+  Group(group: Group) {
+    if (group.capturing && group.name) {
       throw new Error(`Named group capturing is not supported`);
     }
-    return this.gen(expression);
+    return this.gen(group.expression);
   }
 
   Backreference(_: Backreference): Frag {

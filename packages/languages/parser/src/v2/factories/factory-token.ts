@@ -8,7 +8,7 @@ import {
   CallRule,
   builder,
 } from "../grammar/grammar-builder";
-import { Grammar } from "../grammar/grammar";
+import { AugmentedTokenDeclaration, Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
   CallTransition,
@@ -32,7 +32,7 @@ export class FactoryToken extends AbstractFactory {
 
   static process(
     grammar: Grammar,
-    token: TokenRules | TokenDeclaration,
+    token: TokenRules | AugmentedTokenDeclaration,
     automaton: Automaton
   ) {
     switch (token.type) {
@@ -144,7 +144,7 @@ export class FactoryToken extends AbstractFactory {
     return FactoryToken.eof(this.automaton, node);
   }
 
-  genToken(rule: TokenDeclaration): Frag {
+  genToken(rule: AugmentedTokenDeclaration): Frag {
     let { start, end } = this.gen(rule.rule);
 
     const loc: Location | null = rule.loc

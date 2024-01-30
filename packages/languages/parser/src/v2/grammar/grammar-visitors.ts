@@ -1,7 +1,11 @@
 import {
+  AugmentedDeclaration,
+  AugmentedRuleDeclaration,
+  AugmentedTokenDeclaration,
+} from "./grammar";
+import {
   RuleMap,
   AnyRule,
-  RuleDeclaration,
   CallRule,
   ChoiceRule,
   EmptyRule,
@@ -13,15 +17,13 @@ import {
   RegExpRule,
   Repeat1Rule,
   RepeatRule,
-  SelectRule,
   SeqRule,
   StringRule,
   Call2Rule,
   ObjectRule,
-  TokenDeclaration,
-  Declaration,
   References,
   IntRule,
+  BoolRule,
 } from "./grammar-builder";
 import { TokensStore } from "./tokens";
 
@@ -80,11 +82,9 @@ export abstract class RuleVisitor<
 
   int(node: IntRule) {}
 
-  id(node: IdRule) {}
+  bool(node: BoolRule) {}
 
-  select(node: SelectRule) {
-    this.visit(node.parent);
-  }
+  id(node: IdRule) {}
 
   call(node: CallRule) {
     for (const arg of node.args) {
@@ -104,35 +104,35 @@ export abstract class RuleVisitor<
 
   predicate(node: PredicateRule) {}
 
-  rule(node: RuleDeclaration) {
+  rule(node: AugmentedRuleDeclaration) {
     this.visit(node.rule);
-    this.visit(node.return);
+    if (node.return) this.visit(node.return);
   }
 
-  token(node: TokenDeclaration) {
+  token(node: AugmentedTokenDeclaration) {
     this.visit(node.rule);
-    this.visit(node.return);
+    if (node.return) this.visit(node.return);
   }
 
   visit(node: AnyRule) {
     this[node.type](node as any);
   }
 
-  visitRuleDecls(decls: readonly RuleDeclaration[]) {
+  visitRuleDecls(decls: readonly AugmentedRuleDeclaration[]) {
     for (const decl of decls) {
       this.rule(decl);
     }
     return this;
   }
 
-  visitTokenDecls(decls: readonly TokenDeclaration[]) {
+  visitTokenDecls(decls: readonly AugmentedTokenDeclaration[]) {
     for (const decl of decls) {
       this.token(decl);
     }
     return this;
   }
 
-  visitDecl(decl: Declaration) {
+  visitDecl(decl: AugmentedDeclaration) {
     if (decl.type === "rule") {
       this.rule(decl);
     } else {
@@ -141,7 +141,7 @@ export abstract class RuleVisitor<
     return this;
   }
 
-  visitAllDecls(decls: readonly Declaration[]) {
+  visitAllDecls(decls: readonly AugmentedDeclaration[]) {
     for (const decl of decls) {
       this.visitDecl(decl);
     }
@@ -181,22 +181,18 @@ export class TokensCollector extends RuleVisitor<TokensStore> {
 
   override string(node: StringRule) {
     this.data.get(node);
-    super.string(node);
   }
 
   override regexp(node: RegExpRule) {
     this.data.get(node);
-    super.regexp(node);
   }
 
   override eof(node: EofRule) {
     this.data.get(node);
-    super.eof(node);
   }
 
-  override token(node: TokenDeclaration) {
+  override token(node: AugmentedTokenDeclaration) {
     this.data.get(node);
-    // No super call here
   }
 }
 

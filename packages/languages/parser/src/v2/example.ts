@@ -16,7 +16,7 @@ const {
   rule,
   id,
   object,
-  select,
+  bool,
   int,
   call2,
   call,
@@ -36,9 +36,6 @@ const ruleA = rule(
     repeat(string("F")),
     optional(string("O")),
     field("my_obj", object([["id", int(10)]])),
-    select(id("my_obj"), "id"),
-    select(id("my_obj"), "id"),
-    select(id("my_obj"), "unknown_field"),
     field("C", call("C", [int(10), int(20)])),
     field("T", call("Tricky2", []))
   ),
@@ -96,7 +93,7 @@ const ruleC = rule(
   ])
 );
 
-const ruleD = rule(
+/*const ruleD = rule(
   "D",
   choice(
     field(
@@ -117,22 +114,22 @@ const ruleD = rule(
   [rule.arg("arg")],
   {},
   id("ret")
-);
+);*/
 
-const ruleE = rule(
+/*const ruleE = rule(
   "E",
   field("obj", object([["num", int(10)]])),
   [],
   {},
   select(id("obj"), "num")
-);
+);*/
 
 const ruleF = rule(
   "F",
   seq(
     choice(
-      field("ret", object([["x", select(id("arg"), "x")]])),
-      field("ret", object([["x", select(id("arg"), "x")]]))
+      field("ret", object([["x", id("arg")]])),
+      field("ret", object([["x", id("arg")]]))
     ),
     field("w", call("W", [])),
     call("H", [int(10)])
@@ -229,8 +226,8 @@ const result = tool({
     ruleA,
     ruleB,
     ruleC,
-    ruleD,
-    ruleE,
+    //ruleD,
+    //ruleE,
     ruleF,
     ruleG,
     ruleH,
@@ -242,11 +239,8 @@ const result = tool({
   ],
   tokenDecls: [tokenW, tokenY],
   startArguments: [],
-  externalFunctions: {
-    externalCall: typeBuilder.func(
-      [typeBuilder.readObject({}), typeBuilder.unknown()],
-      typeBuilder.bool()
-    ),
+  externalFuncReturns: {
+    externalCall: typeBuilder.bool(),
   },
 });
 

@@ -1,6 +1,5 @@
 import type { Location } from "../runtime/input";
-import { assertion, never } from "../utils";
-import { FieldsCollector } from "./grammar-visitors";
+import { never } from "../utils";
 
 // Build rules and expressions
 
@@ -16,8 +15,8 @@ export interface RuleMap {
   regexp: RegExpRule;
   object: ObjectRule;
   int: IntRule;
+  bool: BoolRule;
   id: IdRule;
-  select: SelectRule;
   call: CallRule;
   call2: Call2Rule;
   predicate: PredicateRule;
@@ -33,13 +32,12 @@ export type AnyRule = RuleMap[RuleNames];
 
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type ExprRule = IdRule | SelectRule | ObjectRule | IntRule | Call2Rule;
+export type ExprRule = IdRule | ObjectRule | IntRule | BoolRule | Call2Rule;
 
 export type Assignables = TokenRules | CallRule | ExprRule;
 
 export type RuleModifiers = {
   readonly start?: boolean;
-  readonly noSkips?: boolean;
 };
 
 export type RuleDeclaration = {
@@ -47,9 +45,8 @@ export type RuleDeclaration = {
   readonly name: string;
   readonly rule: AnyRule;
   readonly args: readonly RuleDeclarationArg[];
-  readonly return: ExprRule;
+  readonly return: ExprRule | null;
   readonly modifiers: RuleModifiers;
-  readonly fields: ReadonlyMap<string, FieldRule[]>;
   loc: Location | null;
 };
 
@@ -72,19 +69,15 @@ function rule(
   rule: AnyRule,
   args: readonly RuleDeclarationArg[],
   modifiers: RuleModifiers,
-  returnCode: ExprRule | null
+  returnCode: ExprRule | null = null
 ): RuleDeclaration {
-  const fields = new FieldsCollector().run(rule);
   return {
     type: "rule",
     name,
     rule,
     args,
     modifiers,
-    return:
-      returnCode ??
-      builder.object(Array.from(fields.keys()).map(f => [f, builder.id(f)])),
-    fields,
+    return: returnCode,
     loc: null,
   };
 }
@@ -101,9 +94,8 @@ export type TokenDeclaration = {
   readonly name: string;
   readonly rule: AnyRule;
   readonly args: readonly RuleDeclarationArg[];
-  readonly return: ExprRule;
+  readonly return: ExprRule | null;
   readonly modifiers: TokenModifiers;
-  readonly fields: ReadonlyMap<string, FieldRule[]>;
   loc: Location | null;
 };
 
@@ -112,19 +104,15 @@ function token(
   rule: AnyRule,
   args: readonly RuleDeclarationArg[],
   modifiers: TokenModifiers,
-  returnCode: ExprRule | null
+  returnCode: ExprRule | null = null
 ): TokenDeclaration {
-  const fields = new FieldsCollector().run(rule);
   return {
     type: "token",
     name,
     rule,
     args,
     modifiers,
-    return:
-      returnCode ??
-      builder.object(Array.from(fields.keys()).map(f => [f, builder.id(f)])),
-    fields,
+    return: returnCode,
     loc: null,
   };
 }
@@ -245,22 +233,6 @@ function id(id: string): IdRule {
   };
 }
 
-export type SelectRule = {
-  readonly type: "select";
-  readonly parent: ExprRule;
-  readonly field: string;
-  loc: Location | null;
-};
-
-function select(parent: ExprRule, field: string): SelectRule {
-  return {
-    type: "select",
-    parent,
-    field,
-    loc: null,
-  };
-}
-
 export type EmptyRule = {
   readonly type: "empty";
   loc: Location | null;
@@ -377,6 +349,20 @@ function int(value: number): IntRule {
   };
 }
 
+export type BoolRule = {
+  readonly type: "bool";
+  readonly value: boolean;
+  loc: Location | null;
+};
+
+function bool(value: boolean): BoolRule {
+  return {
+    type: "bool",
+    value,
+    loc: null,
+  };
+}
+
 export type ObjectRule = {
   readonly type: "object";
   readonly fields: readonly (readonly [string, ExprRule])[];
@@ -402,11 +388,11 @@ export const builder = {
   call,
   call2,
   id,
-  select,
   empty,
   eof,
   string,
   regexp,
+  bool,
   int,
   object,
   field,
@@ -431,6 +417,7 @@ export function sameAssignable(
     case "id":
       return value1.type === value2.type && value1.id === value2.id;
     case "int":
+    case "bool":
       return value1.type === value2.type && value1.value === value2.value;
     case "call":
     case "call2":
@@ -438,12 +425,6 @@ export function sameAssignable(
         value1.type === value2.type &&
         value1.id === value2.id &&
         sameArgs(value1.args, value2.args)
-      );
-    case "select":
-      return (
-        value1.type === value2.type &&
-        value1.field === value2.field &&
-        sameAssignable(value1.parent, value2.parent)
       );
     case "eof":
       return value1.type === value2.type;
@@ -533,6 +514,10 @@ const cloneRulesVisitor: ICloner = {
     return builder.int(node.value);
   },
 
+  bool(node: BoolRule) {
+    return builder.bool(node.value);
+  },
+
   object(node: ObjectRule) {
     return builder.object(
       node.fields.map(([key, value]) => [key, cloneRules(value)] as const)
@@ -541,10 +526,6 @@ const cloneRulesVisitor: ICloner = {
 
   id(node: IdRule) {
     return builder.id(node.id);
-  },
-
-  select(node: SelectRule) {
-    return builder.select(cloneRules(node.parent), node.field);
   },
 
   call(node: CallRule) {
@@ -584,26 +565,29 @@ function cloneRules<T extends AnyRule>(rule: T): T {
   return setLoc(cloneRulesVisitor[rule.type](rule as any) as T, rule.loc);
 }
 
-export function cloneDeclaration(decl: Declaration): Declaration {
-  if (decl.type === "rule") {
-    return setLoc(
-      builder.rule(
-        decl.name,
-        cloneRules(decl.rule),
-        decl.args.map(a => setLoc(builder.rule.arg(a.arg), a.loc)),
-        decl.modifiers,
-        cloneRules(decl.return)
-      ),
-      decl.loc
-    );
-  }
+export function cloneRuleDeclaration(decl: RuleDeclaration): RuleDeclaration {
+  return setLoc(
+    builder.rule(
+      decl.name,
+      cloneRules(decl.rule),
+      decl.args.map(a => setLoc(builder.rule.arg(a.arg), a.loc)),
+      decl.modifiers,
+      decl.return ? cloneRules(decl.return) : null
+    ),
+    decl.loc
+  );
+}
+
+export function cloneTokenDeclaration(
+  decl: TokenDeclaration
+): TokenDeclaration {
   return setLoc(
     builder.token(
       decl.name,
       cloneRules(decl.rule),
       decl.args.map(a => setLoc(builder.rule.arg(a.arg), a.loc)),
       decl.modifiers,
-      cloneRules(decl.return)
+      decl.return ? cloneRules(decl.return) : null
     ),
     decl.loc
   );

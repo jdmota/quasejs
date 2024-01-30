@@ -2,20 +2,28 @@ import { Location } from "../runtime/input";
 import { ToolInput } from "../tool";
 import { never } from "../utils";
 import {
+  AnyRule,
   Declaration,
+  ExprRule,
+  FieldRule,
   RuleDeclaration,
   RuleDeclarationArg,
+  RuleModifiers,
   TokenDeclaration,
+  TokenModifiers,
   TokenRules,
-  cloneDeclaration,
+  builder,
+  cloneRuleDeclaration,
+  cloneTokenDeclaration,
 } from "./grammar-builder";
 import {
   ExternalCallsCollector,
+  FieldsCollector,
   ReferencesCollector,
   TokensCollector,
 } from "./grammar-visitors";
-import { TokensStore } from "./tokens";
-import { GFuncType, GType } from "./type-checker/types-builder";
+import { LEXER_RULE_NAME, TokensStore } from "./tokens";
+import { GType } from "./type-checker/types-builder";
 
 export type GrammarError = Readonly<{
   message: string;
@@ -45,26 +53,49 @@ export function err(
   };
 }
 
-export function createGrammar({
+function augmentToolInput({
   name,
-  ruleDecls,
-  tokenDecls,
-  startArguments,
-  externalFunctions,
-}: ToolInput): GrammarOrErrors {
-  const errors: GrammarError[] = [];
-  const tokens = new TokensCollector()
-    .visitRuleDecls(ruleDecls)
-    .visitTokenDecls(tokenDecls)
-    .get();
-  const lexer = tokens.createLexer();
-  const decls = [...ruleDecls, lexer, ...Array.from(tokens)].map(r =>
-    cloneDeclaration(r)
+  ruleDecls = [],
+  tokenDecls = [],
+  startArguments = [],
+  externalFuncReturns = {},
+}: ToolInput) {
+  const augmentedRules = ruleDecls.map(r =>
+    augmentRule(cloneRuleDeclaration(r))
   );
+  const augmentedTokens = tokenDecls.map(r =>
+    augmentToken(cloneTokenDeclaration(r))
+  );
+
+  const tokens = new TokensCollector()
+    .visitRuleDecls(augmentedRules)
+    .visitTokenDecls(augmentedTokens)
+    .get();
+
+  const decls = [
+    ...augmentedRules,
+    tokens.createLexer(),
+    ...Array.from(tokens),
+  ];
+
+  return {
+    name,
+    startArguments,
+    externalFuncReturns,
+    tokens,
+    decls,
+  };
+}
+
+export function createGrammar(options: ToolInput): GrammarOrErrors {
+  const errors: GrammarError[] = [];
   const externalCalls = new ExternalCallsCollector();
 
+  const { name, startArguments, externalFuncReturns, decls, tokens } =
+    augmentToolInput(options);
+
   // Detect duplicate rules
-  const declarations = new Map<string, Declaration>();
+  const declarations = new Map<string, AugmentedDeclaration>();
   for (const rule of decls) {
     const curr = declarations.get(rule.name);
     if (curr) {
@@ -76,7 +107,8 @@ export function createGrammar({
 
   // Find start rule
   const startRules = decls.filter(
-    (r): r is RuleDeclaration => r.type === "rule" && !!r.modifiers.start
+    (r): r is AugmentedRuleDeclaration =>
+      r.type === "rule" && !!r.modifiers.start
   );
   if (startRules.length !== 1) {
     errors.push(err(`Expected 1 start rule, found ${startRules.length}`, null));
@@ -211,16 +243,9 @@ export function createGrammar({
     }
   }
 
-  for (const [name, funcType] of Object.entries(externalFunctions)) {
+  for (const [name, retType] of Object.entries(externalFuncReturns)) {
     if (name.startsWith("$")) {
-      errors.push(err(`External functions cannot start with $`, funcType.loc));
-    } else if (funcType.type !== "func") {
-      errors.push(
-        err(
-          `Type for external function ${name} should be a function type`,
-          funcType.loc
-        )
-      );
+      errors.push(err(`External functions cannot start with $`, retType.loc));
     }
   }
 
@@ -228,29 +253,17 @@ export function createGrammar({
   for (const [name, calls] of externalCalls.get()) {
     if (name.startsWith("$")) continue;
 
-    const funcType = externalFunctions[name];
-    if (funcType) {
-      for (const call of calls) {
-        if (funcType.args.length !== call.args.length) {
-          errors.push(
-            err(
-              `Expected ${funcType.args.length} arguments but got ${call.args.length}`,
-              call.loc,
-              funcType.loc
-            )
-          );
-          break;
-        }
-      }
-    } else {
+    const funcType = externalFuncReturns[name];
+    if (!funcType) {
       errors.push(
         err(
-          `No function type for external function ${name} was found`,
+          `No function return type for external function ${name} was found`,
           calls[0].loc
         )
       );
     }
-    /*let firstCall = null;
+
+    let firstCall = null;
     for (const call of calls) {
       if (firstCall) {
         if (firstCall.args.length !== call.args.length) {
@@ -266,7 +279,7 @@ export function createGrammar({
       } else {
         firstCall = call;
       }
-    }*/
+    }
   }
 
   if (errors.length === 0) {
@@ -276,7 +289,7 @@ export function createGrammar({
       tokens,
       start,
       startArguments,
-      externalFunctions
+      externalFuncReturns
     );
 
     return {
@@ -293,26 +306,26 @@ export function createGrammar({
 
 export class Grammar {
   public readonly name: string;
-  public readonly rules: ReadonlyMap<string, Declaration>;
+  public readonly rules: ReadonlyMap<string, AugmentedDeclaration>;
   public readonly tokens: TokensStore;
-  public readonly startRule: RuleDeclaration;
+  public readonly startRule: AugmentedRuleDeclaration;
   public readonly startArguments: readonly GType[];
-  public readonly externalFunctions: Readonly<Record<string, GFuncType>>;
+  public readonly externalFuncReturns: Readonly<Record<string, GType>>;
 
   constructor(
     name: string,
-    rules: ReadonlyMap<string, Declaration>,
+    rules: ReadonlyMap<string, AugmentedDeclaration>,
     tokens: TokensStore,
-    startRule: RuleDeclaration,
+    startRule: AugmentedRuleDeclaration,
     startArguments: readonly GType[],
-    externalFunctions: Readonly<Record<string, GFuncType>>
+    externalFuncReturns: Readonly<Record<string, GType>>
   ) {
     this.name = name;
     this.rules = rules;
     this.tokens = tokens;
     this.startRule = startRule;
     this.startArguments = startArguments;
-    this.externalFunctions = externalFunctions;
+    this.externalFuncReturns = externalFuncReturns;
   }
 
   getRule(ruleName: string) {
@@ -323,7 +336,7 @@ export class Grammar {
     return rule;
   }
 
-  tokenId(token: TokenRules | TokenDeclaration) {
+  tokenId(token: TokenRules | AugmentedTokenDeclaration) {
     return this.tokens.get(token);
   }
 
@@ -358,4 +371,121 @@ export class Grammar {
       return this.tokenIdToDecl(num).name;
     }
   }
+}
+
+export type AugmentedDeclaration =
+  | AugmentedRuleDeclaration
+  | AugmentedTokenDeclaration;
+
+export type AugmentedRuleDeclaration = {
+  readonly type: "rule";
+  readonly name: string;
+  readonly rule: AnyRule;
+  readonly args: readonly RuleDeclarationArg[];
+  readonly return: ExprRule;
+  readonly modifiers: RuleModifiers;
+  readonly fields: ReadonlyMap<string, FieldRule[]>;
+  loc: Location | null;
+};
+
+function augmentRule(rule: RuleDeclaration): AugmentedRuleDeclaration {
+  const loc = needsLoc(rule);
+  const body = augmentRuleBody(rule.rule, loc);
+  const fields = new FieldsCollector().run(body);
+  const ret = augmentReturn(rule.return, loc, fields);
+  return {
+    type: "rule",
+    name: rule.name,
+    rule: body,
+    args: rule.args,
+    modifiers: rule.modifiers,
+    return: ret,
+    fields,
+    loc: rule.loc,
+  };
+}
+
+export type AugmentedTokenDeclaration = {
+  readonly type: "token";
+  readonly name: string;
+  readonly rule: AnyRule;
+  readonly args: readonly RuleDeclarationArg[];
+  readonly return: ExprRule;
+  readonly modifiers: TokenModifiers;
+  readonly fields: ReadonlyMap<string, FieldRule[]>;
+  loc: Location | null;
+};
+
+export function augmentToken(
+  rule: TokenDeclaration
+): AugmentedTokenDeclaration {
+  const loc = needsLoc(rule);
+  const body = augmentRuleBody(rule.rule, loc);
+  const fields = new FieldsCollector().run(body);
+  const ret = augmentReturn(rule.return, loc, fields);
+  return {
+    type: "token",
+    name: rule.name,
+    rule: body,
+    args: rule.args,
+    modifiers: rule.modifiers,
+    return: ret,
+    fields,
+    loc: rule.loc,
+  };
+}
+
+function needsLoc(rule: Declaration) {
+  return (
+    rule.type === "rule" ||
+    (rule.type === "token" && rule.name === LEXER_RULE_NAME)
+  );
+}
+
+function augmentRuleBody(rule: AnyRule, withLoc: boolean) {
+  return withLoc
+    ? builder.seq(
+        builder.field("$startPos", builder.call2("$getPos", [])),
+        rule,
+        builder.field(
+          "$loc",
+          builder.call2("$getLoc", [builder.id("$startPos")])
+        )
+      )
+    : rule;
+}
+
+function augmentReturn(
+  ret: ExprRule | null,
+  withLoc: boolean,
+  fields: ReadonlyMap<string, FieldRule[]>
+) {
+  if (withLoc) {
+    if (ret) {
+      if (ret.type === "object") {
+        return builder.object([...ret.fields, ["$loc", builder.id("$loc")]]);
+      }
+      return ret;
+    }
+    return builder.object(
+      Array.from(fields.keys())
+        .filter(f => !f.startsWith("$") || f === "$loc")
+        .map(f => [f, builder.id(f)])
+    );
+  }
+  return (
+    ret ??
+    builder.object(
+      Array.from(fields.keys())
+        .filter(f => !f.startsWith("$"))
+        .map(f => [f, builder.id(f)])
+    )
+  );
+}
+
+function augmentDecl(rule: Declaration) {
+  if (rule.type === "rule") {
+    return augmentRule(rule);
+  }
+  return augmentToken(rule);
 }

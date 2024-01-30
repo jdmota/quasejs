@@ -39,36 +39,28 @@ export class Input extends Stream<number> {
     return this.pos;
   }
 
-  protected override next() {
+  protected override $next() {
     const code = this.codeAt(this.pos);
-    this.pos += code <= 0xffff ? (code < 0 ? 0 : 1) : 2;
+    this.pos += code < 0 ? 0 : code <= 0xffff ? 1 : 2;
     return code;
   }
 
-  override getPos() {
+  override $getPos() {
     return { ...this.ll1 };
   }
 
-  override ll1Loc() {
-    const { pos, line, column } = this.ll1;
-    return {
-      start: { pos, line, column },
-      end: { pos: pos + 1, line, column: column + 1 }, // TODO imprecise
-    };
+  override $ll1Id(): number {
+    return this.$llArray[0];
   }
 
-  override ll1Id(): number {
-    return this.llArray[0];
-  }
-
-  override advance() {
+  override $advance() {
     const { ll1 } = this;
-    const prev = nonNull(this.llArray.shift());
+    const prev = nonNull(this.$llArray.shift());
     // "\r"
     if (prev === 13) {
       ll1.pos++;
       // "\n"
-      if (this.lookahead(1) === 10) {
+      if (this.$lookahead(1) === 10) {
         ll1.column++;
       } else {
         ll1.line++;
@@ -83,7 +75,7 @@ export class Input extends Stream<number> {
       if (prev > 0xffff) {
         ll1.pos += 2;
         ll1.column += 2;
-      } else {
+      } else if (prev >= 0) {
         ll1.pos++;
         ll1.column++;
       }
@@ -113,8 +105,8 @@ export class Input extends Stream<number> {
     return first;
   }
 
-  override unexpected(
-    loc: Location,
+  override $unexpected(
+    pos: Position,
     found: number,
     expected?: string | number
   ): never {
@@ -122,7 +114,7 @@ export class Input extends Stream<number> {
       `Unexpected character ${String.fromCodePoint(found)} (code: ${found})${
         expected == null ? "" : `, expected ${expected}`
       }`,
-      loc?.start
+      pos
     );
   }
 }

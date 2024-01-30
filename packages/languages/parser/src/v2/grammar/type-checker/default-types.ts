@@ -22,8 +22,8 @@ export const runtimeTypes = {
 };
 
 export const runtimeFuncs = {
-  getIndex: func([], int()),
-  getText: func([int()], string()),
-  getPos: func([], POSITION_TYPE),
-  getLoc: func([POSITION_TYPE], LOCATION_TYPE),
+  $getIndex: func([], int()),
+  $getText: func([int()], string()),
+  $getPos: func([], POSITION_TYPE),
+  $getLoc: func([POSITION_TYPE], LOCATION_TYPE),
 };

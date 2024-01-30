@@ -1,57 +1,59 @@
-import { Location, Position } from "./input";
+import { Position } from "./input";
 
 export abstract class Stream<T> {
-  protected llArray: T[];
+  protected $llArray: T[];
+  private $lastToken: T | undefined;
 
   constructor() {
-    this.llArray = [];
+    this.$llArray = [];
   }
 
-  protected abstract next(): T;
+  protected abstract $next(): T;
 
-  abstract getPos(): Position;
-
-  // pre: this.lookahead.length > 0
-  abstract ll1Loc(): Location;
+  abstract $getPos(): Position;
 
   // pre: this.lookahead.length > 0
-  abstract ll1Id(): number;
+  abstract $ll1Id(): number;
 
   // pre: this.lookahead.length > 0
-  advance() {
-    this.llArray.shift();
+  $advance() {
+    this.$lastToken = this.$llArray.shift();
   }
 
-  lookahead(n: number) {
-    const { llArray: lookahead } = this;
+  $getLast() {
+    return this.$lastToken;
+  }
+
+  $lookahead(n: number) {
+    const { $llArray: lookahead } = this;
     while (lookahead.length < n) {
-      lookahead.push(this.next());
+      lookahead.push(this.$next());
     }
     return lookahead[n - 1];
   }
 
-  expect(id: number) {
-    const token = this.lookahead(1);
-    const foundId = this.ll1Id();
+  $expect(id: number) {
+    const token = this.$lookahead(1);
+    const foundId = this.$ll1Id();
     if (foundId === id) {
-      this.advance();
+      this.$advance();
       return token;
     }
-    this.unexpected(this.ll1Loc(), token, id);
+    this.$unexpected(this.$getPos(), token, id);
   }
 
-  expect2(a: number, b: number) {
-    const token = this.lookahead(1);
-    const foundId = this.ll1Id();
+  $expect2(a: number, b: number) {
+    const token = this.$lookahead(1);
+    const foundId = this.$ll1Id();
     if (a <= foundId && foundId <= b) {
-      this.advance();
+      this.$advance();
       return token;
     }
-    this.unexpected(this.ll1Loc(), token, a);
+    this.$unexpected(this.$getPos(), token, a);
   }
 
-  abstract unexpected(
-    loc: Location,
+  abstract $unexpected(
+    pos: Position,
     found: T,
     expected?: number | string
   ): never;

@@ -11,8 +11,7 @@ import { assertion, equals, ObjectHashEquals } from "../utils";
 import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set";
 import { Range } from "../utils/range-utils";
 import { ParserGenerator } from "../generators/generate-parser";
-import { Grammar } from "../grammar/grammar";
-import { Declaration } from "../grammar/grammar-builder";
+import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
 import { FollowInfo, FollowInfoDB } from "../grammar/follow-info";
 
 type GotoDecision = Readonly<{
@@ -588,8 +587,41 @@ export class Analyzer {
   }
 
   // TODO what about the follow of $lexer?
+  // TODO what about left recursive rules?
 
-  analyze(rule: Declaration, state: DState, maxLL = 3) {
+  /*
+  E[1] -> E[2] ( + E[2] | - E[2] )* // left assoc
+  E[2] -> E[3] ( ** E[2] )? // right assoc
+  E[3] -> - E[3] | E[4]
+  E[4] -> num | ( E[1] )
+
+  E -> E + E
+       E - E
+       E ** E
+       - E
+       ( E )
+       num
+
+  E -> E prec(+,1) E
+       E prec(-,1) E
+       E prec(**,2,right) E
+       prec(-,3) E
+       ( E )
+       num
+
+  // https://tree-sitter.github.io/tree-sitter/creating-parsers#using-precedence
+
+  E -> prec.left(1, E + E)
+       prec.left(1, E - E)
+       prec.right(2, E ** E)
+       prec(3, - E)
+       ( E )
+       num
+
+  // If precedences are equal, then associativity is used
+  */
+
+  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3) {
     // Reset phase
     this.llState = 0;
 
@@ -654,7 +686,7 @@ export class Analyzer {
   }
 
   printAmbiguities(
-    rule: Declaration,
+    rule: AugmentedDeclaration,
     state: DState,
     maxLL: number,
     inverted: InvertedDecisionTree

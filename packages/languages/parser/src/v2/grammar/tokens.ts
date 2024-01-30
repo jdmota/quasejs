@@ -1,5 +1,6 @@
 import { Location } from "../runtime/input";
 import { never, nonNull } from "../utils";
+import { AugmentedTokenDeclaration, augmentToken } from "./grammar";
 import {
   AnyRule,
   builder,
@@ -11,6 +12,7 @@ import {
   FieldRule,
   IdRule,
   IntRule,
+  BoolRule,
   ObjectRule,
   OptionalRule,
   PredicateRule,
@@ -18,10 +20,8 @@ import {
   Repeat1Rule,
   RepeatRule,
   RuleMap,
-  SelectRule,
   SeqRule,
   StringRule,
-  TokenDeclaration,
   TokenRules,
 } from "./grammar-builder";
 
@@ -72,6 +72,10 @@ const prefixLocalsVisitor: ILocalPrefixer = {
     return node;
   },
 
+  bool(prefix: string, node: BoolRule) {
+    return node;
+  },
+
   object(prefix: string, node: ObjectRule) {
     return builder.object(
       node.fields.map(
@@ -82,10 +86,6 @@ const prefixLocalsVisitor: ILocalPrefixer = {
 
   id(prefix: string, node: IdRule) {
     return builder.id(`${prefix}${node.id}`);
-  },
-
-  select(prefix: string, node: SelectRule) {
-    return builder.select(prefixLocals(prefix, node.parent), node.field);
   },
 
   call(prefix: string, node: CallRule) {
@@ -140,11 +140,11 @@ function idToVar(id: number) {
 export class TokensStore {
   private readonly tokens = new Map<
     string,
-    Readonly<{ decl: TokenDeclaration; id: number }>
+    Readonly<{ decl: AugmentedTokenDeclaration; id: number }>
   >();
   private readonly tokens2 = new Map<
     number,
-    Readonly<{ decl: TokenDeclaration; name: string }>
+    Readonly<{ decl: AugmentedTokenDeclaration; name: string }>
   >();
   private uuid: number = -1;
 
@@ -153,7 +153,7 @@ export class TokensStore {
     this.get(builder.eof());
   }
 
-  get(token: TokenRules | TokenDeclaration): number {
+  get(token: TokenRules | AugmentedTokenDeclaration): number {
     const name = this.uniqName(token);
     const curr = this.tokens.get(name);
     if (curr == null) {
@@ -170,7 +170,7 @@ export class TokensStore {
     return nonNull(this.tokens2.get(id));
   }
 
-  private uniqName(token: TokenRules | TokenDeclaration) {
+  private uniqName(token: TokenRules | AugmentedTokenDeclaration) {
     switch (token.type) {
       case "string":
         return `#string:${token.string}`;
@@ -193,13 +193,15 @@ export class TokensStore {
 
   private ensureDeclaration(
     id: number,
-    token: TokenRules | TokenDeclaration
-  ): TokenDeclaration {
+    token: TokenRules | AugmentedTokenDeclaration
+  ): AugmentedTokenDeclaration {
     switch (token.type) {
       case "string":
       case "regexp":
       case "eof":
-        return builder.token(idToVar(id), token, [], { type: "normal" }, null);
+        return augmentToken(
+          builder.token(idToVar(id), token, [], { type: "normal" })
+        );
       case "token":
         return token;
       default:
@@ -223,25 +225,19 @@ export class TokensStore {
         );
       }
     }
-    return builder.token(
-      LEXER_RULE_NAME,
-      builder.seq(
-        builder.field("$startPos", builder.call2("$getPos", [])),
+    return augmentToken(
+      builder.token(
+        LEXER_RULE_NAME,
         builder.choice(...tokens),
-        builder.field(
-          "loc",
-          builder.call2("$getLoc", [builder.id("$startPos")])
-        )
-      ),
-      [],
-      {
-        type: "normal",
-      },
-      builder.object([
-        ["id", builder.id("id")],
-        ["loc", builder.id("loc")],
-        ["token", builder.id("token")],
-      ])
+        [],
+        {
+          type: "normal",
+        },
+        builder.object([
+          ["id", builder.id("id")],
+          ["token", builder.id("token")],
+        ])
+      )
     );
   }
 

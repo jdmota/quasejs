@@ -1,7 +1,6 @@
-import { Position, Location } from "./input";
-import { Token, Tokenizer } from "./tokenizer";
-import { error } from "./error";
+import { Tokenizer } from "./tokenizer";
 import { RuntimeContext } from "./context";
+import { Location, Position } from "./input";
 
 export abstract class Parser<T> {
   readonly ctx: RuntimeContext;
@@ -14,37 +13,34 @@ export abstract class Parser<T> {
     this.external = external;
   }
 
-  /*startNode(): Position {
-    return this.token.loc.start;
+  $getPos() {
+    return this.tokenizer.$lookahead(1).$loc.start;
   }
 
-  endNode(): Position {
-    return this.lastTokenEnd;
-  }*/
-
-  /*locNode(start: Position): Location {
+  $getLoc(start: Position): Location {
+    const possibleEnd = this.tokenizer.$getLast()?.$loc.end ?? start;
     return {
       start,
-      end: this.endNode(),
+      end: possibleEnd.pos < start.pos ? start : possibleEnd,
     };
-  }*/
-
-  e(id: number) {
-    return this.tokenizer.expect(id).token;
   }
 
-  e2(a: number, b: number) {
-    return this.tokenizer.expect2(a, b).token;
+  $e(id: number) {
+    return this.tokenizer.$expect(id).token;
   }
 
-  ll(n: number) {
-    return this.tokenizer.lookahead(n).id;
+  $e2(a: number, b: number) {
+    return this.tokenizer.$expect2(a, b).token;
   }
 
-  err(): never {
-    this.tokenizer.unexpected(
-      this.tokenizer.ll1Loc(),
-      this.tokenizer.lookahead(1)
+  $ll(n: number) {
+    return this.tokenizer.$lookahead(n).id;
+  }
+
+  $err(): never {
+    this.tokenizer.$unexpected(
+      this.tokenizer.$getPos(),
+      this.tokenizer.$lookahead(1)
     );
   }
 }

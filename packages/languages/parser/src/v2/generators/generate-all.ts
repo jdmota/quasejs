@@ -15,12 +15,12 @@ export function generateAll(
     `const EMPTY_OBJ = {};\n`,
     ``,
     `class GrammarTokenizer extends Tokenizer {`,
-    `  getIdToLabel() {`,
+    `  $getIdToLabel() {`,
     `    return ${JSON.stringify(grammar.tokens.makeIdToLabels(), null, 2)
       .split("\n")
       .join("\n    ")};`,
     `  }`,
-    `  getIdToChannels() {`,
+    `  $getIdToChannels() {`,
     `    return ${JSON.stringify(grammar.tokens.makeIdToChannels(), null, 2)
       .split("\n")
       .join("\n    ")};`,

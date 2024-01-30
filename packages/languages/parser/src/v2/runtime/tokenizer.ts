@@ -5,8 +5,8 @@ import { Stream } from "./stream";
 
 export type Token = Readonly<{
   id: number;
-  loc: Location;
   token: unknown;
+  $loc: Location;
 }>;
 
 type IdToChannels = Readonly<{
@@ -30,33 +30,33 @@ export abstract class Tokenizer<T> extends Stream<Token> {
     this.ctx = new RuntimeContext();
     this.input = input;
     this.external = external;
-    this.idToLabels = this.getIdToLabel();
-    this.idToChannels = this.getIdToChannels();
+    this.idToLabels = this.$getIdToLabel();
+    this.idToChannels = this.$getIdToChannels();
     this.channels = {};
   }
 
   abstract token$lexer(): Token;
-  abstract getIdToChannels(): IdToChannels;
-  abstract getIdToLabel(): IdToLabel;
+  abstract $getIdToChannels(): IdToChannels;
+  abstract $getIdToLabel(): IdToLabel;
 
-  getIndex() {
+  $getIndex() {
     return this.input.position();
   }
 
-  getText(start: number) {
+  $getText(start: number) {
     const end = this.input.position();
     return this.input.text(start, end);
   }
 
-  getPos() {
-    return this.input.getPos();
+  $getPos(): Position {
+    return this.input.$getPos();
   }
 
-  getLoc(start: Position): Location {
-    return { start, end: this.getPos() };
+  $getLoc(start: Position): Location {
+    return { start, end: this.$getPos() };
   }
 
-  protected override next(): Token {
+  protected override $next(): Token {
     while (true) {
       const token = this.ctx.u(-1, this.token$lexer());
       const channels = this.idToChannels[token.id];
@@ -71,32 +71,28 @@ export abstract class Tokenizer<T> extends Stream<Token> {
     }
   }
 
-  override ll1Loc() {
-    return this.llArray[0].loc;
+  override $ll1Id() {
+    return this.$llArray[0].id;
   }
 
-  override ll1Id() {
-    return this.llArray[0].id;
+  $e(id: number) {
+    return this.input.$expect(id);
   }
 
-  e(id: number) {
-    return this.input.expect(id);
+  $e2(a: number, b: number) {
+    return this.input.$expect2(a, b);
   }
 
-  e2(a: number, b: number) {
-    return this.input.expect2(a, b);
+  $ll(n: number) {
+    return this.input.$lookahead(n);
   }
 
-  ll(n: number) {
-    return this.input.lookahead(n);
+  $err(): never {
+    this.input.$unexpected(this.input.$getPos(), this.input.$lookahead(1));
   }
 
-  err(): never {
-    this.input.unexpected(this.input.ll1Loc(), this.input.lookahead(1));
-  }
-
-  override unexpected(
-    loc: Location,
+  override $unexpected(
+    pos: Position,
     found: Token,
     expected?: number | string
   ): never {
@@ -110,7 +106,7 @@ export abstract class Tokenizer<T> extends Stream<Token> {
                 : expected
             }`
       }`,
-      loc.start
+      pos
     );
   }
 }

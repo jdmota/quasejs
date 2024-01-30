@@ -21,10 +21,9 @@ import {
   ReturnTransition,
 } from "../automaton/transitions";
 import { FollowInfo } from "../grammar/follow-info";
-import { Grammar } from "../grammar/grammar";
-import { Declaration, ExprRule } from "../grammar/grammar-builder";
-import { any, assertion, find, lines, never } from "../utils";
-import { range } from "../utils/range-utils";
+import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
+import { ExprRule } from "../grammar/grammar-builder";
+import { lines, never } from "../utils";
 import {
   CodeBlock,
   DecisionBlock,
@@ -36,7 +35,7 @@ import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg";
 export class ParserGenerator {
   private readonly grammar: Grammar;
   private readonly analyzer: Analyzer;
-  private readonly rule: Declaration;
+  private readonly rule: AugmentedDeclaration;
   private nodes: Map<ParserCFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
@@ -45,7 +44,11 @@ export class ParserGenerator {
   private neededLabels: Set<string>;
   private DEBUG = true;
 
-  constructor(grammar: Grammar, analyzer: Analyzer, rule: Declaration) {
+  constructor(
+    grammar: Grammar,
+    analyzer: Analyzer,
+    rule: AugmentedDeclaration
+  ) {
     this.grammar = grammar;
     this.analyzer = analyzer;
     this.rule = rule;
@@ -179,8 +182,7 @@ export class ParserGenerator {
     switch (code.type) {
       case "id":
         return code.id;
-      case "select":
-        return `${this.renderCode(code.parent)}.${code.field}`;
+      case "bool":
       case "int":
         return `${code.value}`;
       case "object":
@@ -195,7 +197,7 @@ export class ParserGenerator {
               .join(", ")}}`;
       case "call2":
         return `this.${
-          code.id.startsWith("$") ? code.id.slice(1) : `external.${code.id}`
+          code.id.startsWith("$") ? code.id : `external.${code.id}`
         }(${code.args.map(e => this.renderCode(e)).join(", ")})`;
       default:
         never(code);
@@ -223,9 +225,9 @@ export class ParserGenerator {
   private renderTransition(t: AnyTransition): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
-        return `this.e(${this.renderNum(t.from)})`;
+        return `this.$e(${this.renderNum(t.from)})`;
       }
-      return `this.e2(${this.renderNum(t.from)}, ${this.renderNum(t.to)})`;
+      return `this.$e2(${this.renderNum(t.from)}, ${this.renderNum(t.to)})`;
     }
     if (t instanceof CallTransition) {
       const type = this.grammar.getRule(t.ruleName).type;
@@ -271,7 +273,7 @@ export class ParserGenerator {
     const ll = tree.ll;
     let code = `${indent}${this.markVar(
       "$ll" + ll
-    )} = this.ll(${ll});\n${indent}`;
+    )} = this.$ll(${ll});\n${indent}`;
 
     const bodyToIf = new Map<string, DecisionExpr>();
     for (const decision of tree.iterate()) {
@@ -319,7 +321,7 @@ export class ParserGenerator {
       nestedCode,
       `${indent}}`,
     ]);
-    // code += `{\n${indent}  this.err();\n${indent}}`;
+    // code += `{\n${indent}  this.$err();\n${indent}}`;
     return code;
   }
 
@@ -330,15 +332,15 @@ export class ParserGenerator {
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
-        this.breaksStack.push("");
         let code = "";
         const { tree, inverted: choices } = this.analyzer.analyze(
           this.rule,
           block.state
         );
         if (choices.compatibleWithSwitch) {
+          this.breaksStack.push("");
           code = lines([
-            `${indent}switch(this.ll(1)){`,
+            `${indent}switch(this.$ll(1)){`,
             ...block.choices.map(([t, d]) => {
               const caseConditions = choices.get(t);
               const cases =
@@ -358,15 +360,16 @@ export class ParserGenerator {
                 endsWithFlowBreak(d) ? "" : `${indent}    break;`,
               ]);
             }),
-            `${indent}  default:\n${indent}    this.err();\n${indent}}`,
+            `${indent}  default:\n${indent}    this.$err();\n${indent}}`,
           ]);
+          this.breaksStack.pop();
         } else {
           // TODO optimize to refactor common decisions
           code = this.renderDecisionTree(block, indent, tree);
           /*code =
             lines(
               Array.from(range(1, choices.maxLL)).map(
-                n => `${indent}${this.markVar("$ll" + n)} = this.ll(${n});`
+                n => `${indent}${this.markVar("$ll" + n)} = this.$ll(${n});`
               )
             ) +
             `\n${indent}` +
@@ -381,12 +384,11 @@ export class ParserGenerator {
                     `${indent}}`,
                   ]);
                 }),
-                `{\n${indent}  this.err();\n${indent}}`,
+                `{\n${indent}  this.$err();\n${indent}}`,
               ],
               " else "
             );*/
         }
-        this.breaksStack.pop();
         return code;
       }
       case "scope_block": {
@@ -452,16 +454,20 @@ export class ParserGenerator {
   }
 
   process(indent: string, block: CodeBlock) {
+    const { type, name, args, fields } = this.rule;
+
     const rendered = this.r(`${indent}  `, block);
-    const args = this.rule.args.map(a => `${a.arg}`).join(",");
     const vars = [
       ...Array.from(this.internalVars),
-      ...Array.from(this.rule.fields).map(([name, [{ multiple }]]) =>
+      ...Array.from(fields).map(([name, [{ multiple }]]) =>
         multiple ? `${name}=[]` : `${name}=null`
       ),
-    ];
+    ].filter(Boolean);
+
     const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    return `${indent}${this.rule.type}${this.rule.name}(${args}) {${decls}\n${rendered}\n${indent}}`;
+    return `${indent}${type}${name}(${args
+      .map(a => `${a.arg}`)
+      .join(",")}) {${decls}\n${rendered}\n${indent}}`;
   }
 
   private useStackContext = true;

@@ -5,28 +5,29 @@ import { FactoryRule } from "./factories/factory-rule";
 import { FactoryToken } from "./factories/factory-token";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
 import { ParserGenerator } from "./generators/generate-parser";
-import { createGrammar, Grammar, GrammarError } from "./grammar/grammar";
+import {
+  AugmentedRuleDeclaration,
+  AugmentedTokenDeclaration,
+  createGrammar,
+  Grammar,
+} from "./grammar/grammar";
 import { RuleDeclaration, TokenDeclaration } from "./grammar/grammar-builder";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
 import { locSuffix } from "./utils";
 import { generateAll } from "./generators/generate-all";
 import { FollowInfoDB } from "./grammar/follow-info";
-import {
-  GFuncType,
-  GType,
-  typeBuilder,
-} from "./grammar/type-checker/types-builder";
+import { GType, typeBuilder } from "./grammar/type-checker/types-builder";
 import { TypesInferrer } from "./grammar/type-checker/inferrer";
 import { runtimeTypes } from "./grammar/type-checker/default-types";
 import { typeFormatter } from "./grammar/type-checker/types-formatter";
 
 export type ToolInput = {
   readonly name: string;
-  readonly ruleDecls: readonly RuleDeclaration[];
-  readonly tokenDecls: readonly TokenDeclaration[];
-  readonly startArguments: readonly GType[];
-  readonly externalFunctions: Readonly<Record<string, GFuncType>>;
+  readonly ruleDecls?: readonly RuleDeclaration[];
+  readonly tokenDecls?: readonly TokenDeclaration[];
+  readonly startArguments?: readonly GType[];
+  readonly externalFuncReturns?: Readonly<Record<string, GType>>;
 };
 
 export function tool(opts: ToolInput) {
@@ -62,7 +63,7 @@ export function tool(opts: ToolInput) {
   }
 
   // Process rule declarations
-  const ruleAutomatons = new Map<RuleDeclaration, DFA<DState>>();
+  const ruleAutomatons = new Map<AugmentedRuleDeclaration, DFA<DState>>();
   for (const rule of grammar.getRules()) {
     const frag = FactoryRule.process(grammar, rule, rulesAutomaton);
     const automaton = minimize(rule.name, frag);
@@ -71,7 +72,7 @@ export function tool(opts: ToolInput) {
   }
 
   // Process tokens
-  const tokenAutomatons = new Map<TokenDeclaration, DFA<DState>>();
+  const tokenAutomatons = new Map<AugmentedTokenDeclaration, DFA<DState>>();
   for (const token of grammar.getTokens()) {
     const frag = FactoryToken.process(grammar, token, tokensAutomaton);
     const automaton = minimize(token.name, frag);
@@ -87,13 +88,13 @@ export function tool(opts: ToolInput) {
   });
 
   // Create code blocks for tokens
-  const tokenCodeBlocks = new Map<TokenDeclaration, CodeBlock>();
+  const tokenCodeBlocks = new Map<AugmentedTokenDeclaration, CodeBlock>();
   for (const [token, automaton] of tokenAutomatons) {
     tokenCodeBlocks.set(token, new CfgToCode().process(automaton));
   }
 
   // Produce code for tokens
-  const tokenCode = new Map<TokenDeclaration, string>();
+  const tokenCode = new Map<AugmentedTokenDeclaration, string>();
   for (const [rule, block] of tokenCodeBlocks) {
     tokenCode.set(
       rule,
@@ -102,13 +103,13 @@ export function tool(opts: ToolInput) {
   }
 
   // Create code blocks for rules
-  const ruleCodeBlocks = new Map<RuleDeclaration, CodeBlock>();
+  const ruleCodeBlocks = new Map<AugmentedRuleDeclaration, CodeBlock>();
   for (const [rule, automaton] of ruleAutomatons) {
     ruleCodeBlocks.set(rule, new CfgToCode().process(automaton));
   }
 
   // Produce code for rules
-  const ruleCode = new Map<RuleDeclaration, string>();
+  const ruleCode = new Map<AugmentedRuleDeclaration, string>();
   for (const [rule, block] of ruleCodeBlocks) {
     ruleCode.set(
       rule,
@@ -142,7 +143,7 @@ export function inferAndCheckTypes(grammar: Grammar) {
   {
     const externalsType = typeBuilder.readObject(
       Object.fromEntries(
-        Object.keys(grammar.externalFunctions).map(name => [
+        Object.keys(grammar.externalFuncReturns).map(name => [
           name,
           inferrer.getExternalCallType(name),
         ])

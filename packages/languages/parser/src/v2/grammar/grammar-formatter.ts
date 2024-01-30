@@ -11,13 +11,13 @@ import {
   RegExpRule,
   Repeat1Rule,
   RepeatRule,
-  SelectRule,
   SeqRule,
   StringRule,
   AnyRule,
   Call2Rule,
   ObjectRule,
   IntRule,
+  BoolRule,
 } from "./grammar-builder";
 
 type IGrammarFormatter = {
@@ -75,8 +75,8 @@ export class GrammarFormatter implements IGrammarFormatter {
     return node.value + "";
   }
 
-  select(node: SelectRule) {
-    return `${this.visit(node.parent)}.${node.field}`;
+  bool(node: BoolRule) {
+    return node.value + "";
   }
 
   call2(node: Call2Rule) {

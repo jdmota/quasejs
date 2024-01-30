@@ -1,7 +1,7 @@
 import { DState } from "../../automaton/state";
 import { AnyTransition, ReturnTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
-import { assertion, first, never } from "../../utils";
+import { first, never } from "../../utils";
 import { cfgToGroups, CFGGroup } from "./cfg";
 import {
   ParserCFGEdge,
@@ -97,17 +97,26 @@ export function endsWithFlowBreak(block: CodeBlock): boolean {
   );
 }
 
-type IntRef = { value: number };
-
-function makeLoop(label: Label, block: CodeBlock): CodeBlock {
-  if (block.type === "empty_block") {
-    throw new Error(`Empty infinite loop?`);
+function usesLabel(block: CodeBlock, label: string): boolean {
+  switch (block.type) {
+    case "scope_block":
+    case "loop_block":
+      return usesLabel(block.block, label);
+    case "seq_block":
+      return block.blocks.some(b => usesLabel(b, label));
+    case "decision_block":
+      return block.choices.some(([_, b]) => usesLabel(b, label));
+    case "break_block":
+    case "continue_block":
+      return block.label === label;
+    case "expect_block":
+    case "empty_block":
+      return false;
+    case "dispatch_block":
+      throw new Error("TODO");
+    default:
+      never(block);
   }
-  return {
-    type: "loop_block",
-    label,
-    block,
-  };
 }
 
 export class CfgToCode {
@@ -116,7 +125,6 @@ export class CfgToCode {
   private readonly loopLabels = new Map<ParserCFGNode, number>();
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
-  private usedLabels = new Map<string, number>();
 
   private makeSeq(_blocks: CodeBlock[]): CodeBlock {
     const blocks = _blocks
@@ -129,11 +137,6 @@ export class CfgToCode {
         return blocks[0];
       default: {
         const firstBreakOrContinue = blocks.findIndex(endsWithFlowBreak);
-
-        blocks.slice(firstBreakOrContinue + 1).forEach(b => {
-          if (b.type === "break_block") this.unuseBreaks(b.label, 1);
-        });
-
         return {
           type: "seq_block",
           blocks:
@@ -146,23 +149,19 @@ export class CfgToCode {
   }
 
   // The optimization removes "breaks" with this label if they are the last statement
-  private removeBreaksOf(
-    block: CodeBlock,
-    label: Label,
-    removed: IntRef
-  ): CodeBlock {
+  private removeBreaksOf(block: CodeBlock, label: Label): CodeBlock {
     switch (block.type) {
       case "scope_block":
         return {
           type: "scope_block",
           label,
-          block: this.removeBreaksOf(block.block, label, removed),
+          block: this.removeBreaksOf(block.block, label),
         };
       case "seq_block": {
         const { blocks } = block;
         const lastIdx = blocks.length - 1;
         const last = blocks[lastIdx];
-        const optimizedLast = this.removeBreaksOf(last, label, removed);
+        const optimizedLast = this.removeBreaksOf(last, label);
         if (optimizedLast === last) return block; // Fast path
         return this.makeSeq([...blocks.slice(0, lastIdx), optimizedLast]);
       }
@@ -171,18 +170,19 @@ export class CfgToCode {
           type: "decision_block",
           choices: block.choices.map(([edge, choice]) => [
             edge,
-            this.removeBreaksOf(choice, label, removed),
+            this.removeBreaksOf(choice, label),
           ]),
           state: block.state,
         };
-      case "break_block":
-        if (block.label === label) {
-          removed.value++;
-          return empty;
-        }
-        return block;
-      case "continue_block":
       case "loop_block":
+        return {
+          type: "loop_block",
+          label: block.label,
+          block: this.replaceBreaksInLoop(block.label, block.block, label),
+        };
+      case "break_block":
+        return block.label === label ? empty : block;
+      case "continue_block":
       case "expect_block":
       case "empty_block":
         return block;
@@ -193,21 +193,94 @@ export class CfgToCode {
     }
   }
 
+  // The optimization turns "breaks" of a scope to "breaks" of a loop
+  private replaceBreaksInLoop(
+    loopLabel: Label,
+    block: CodeBlock,
+    label: Label
+  ): CodeBlock {
+    switch (block.type) {
+      case "scope_block":
+        return {
+          type: "scope_block",
+          label,
+          block: this.replaceBreaksInLoop(loopLabel, block.block, label),
+        };
+      case "seq_block":
+        return this.makeSeq(
+          block.blocks.map(b => this.replaceBreaksInLoop(loopLabel, b, label))
+        );
+      case "decision_block":
+        return {
+          type: "decision_block",
+          choices: block.choices.map(([edge, choice]) => [
+            edge,
+            this.replaceBreaksInLoop(loopLabel, choice, label),
+          ]),
+          state: block.state,
+        };
+      case "loop_block":
+        return {
+          type: "loop_block",
+          label: block.label,
+          block: this.replaceBreaksInLoop(loopLabel, block.block, label),
+        };
+      case "break_block":
+        return block.label === label ? this.createBreak(loopLabel) : block;
+      case "continue_block":
+      case "expect_block":
+      case "empty_block":
+        return block;
+      case "dispatch_block":
+        throw new Error("TODO");
+      default:
+        never(block);
+    }
+  }
+
+  private surroundWithScope(label: Label, block: CodeBlock): CodeBlock {
+    const optimized = this.removeBreaksOf(block, label);
+    if (optimized.type === "seq_block") {
+      const { blocks } = optimized;
+      const idx = blocks.findIndex(b => usesLabel(b, label));
+      if (idx === -1) {
+        return optimized;
+      }
+      return this.makeSeq([
+        ...blocks.slice(0, idx),
+        {
+          type: "scope_block",
+          label,
+          block: this.makeSeq(blocks.slice(idx)),
+        },
+      ]);
+    }
+    if (usesLabel(optimized, label)) {
+      return {
+        type: "scope_block",
+        label,
+        block: optimized,
+      };
+    }
+    return optimized;
+  }
+
+  private makeLoop(label: Label, block: CodeBlock): CodeBlock {
+    if (block.type === "empty_block") {
+      throw new Error(`Empty infinite loop?`);
+    }
+    return {
+      type: "loop_block",
+      label,
+      block,
+    };
+  }
+
   private createBreak(label: string): BreakScopeBlock {
-    const curr = this.usedLabels.get(label) ?? 0;
-    this.usedLabels.set(label, curr + 1);
     return {
       type: "break_block",
       label,
     };
-  }
-
-  private unuseBreaks(label: string, amount: number): number {
-    const currAmount = this.usedLabels.get(label) ?? 0;
-    const newAmount = currAmount - amount;
-    assertion(newAmount >= 0);
-    this.usedLabels.set(label, newAmount);
-    return newAmount;
   }
 
   private getScopeLabel(nodes: ParserCFGNodeOrGroup): string {
@@ -230,23 +303,6 @@ export class CfgToCode {
     const label = this.loopLabelUuid++;
     this.loopLabels.set(n, label);
     return `l${label}`;
-  }
-
-  private surroundWithScope(label: Label, block: CodeBlock): CodeBlock {
-    const removed = { value: 0 };
-    const optimized = this.removeBreaksOf(block, label, removed);
-    const usedLabels = this.unuseBreaks(label, removed.value);
-    if (optimized.type === "empty_block") {
-      return empty;
-    }
-    if (usedLabels === 0) {
-      return optimized;
-    }
-    return {
-      type: "scope_block",
-      label,
-      block: optimized,
-    };
   }
 
   private handleEdge(
@@ -354,14 +410,17 @@ export class CfgToCode {
 
     if (isLoop) {
       const label = this.getLoopLabel(node);
-      block = makeLoop(label, this.makeSeq([block, this.createBreak(label)]));
+      block = this.makeLoop(
+        label,
+        this.makeSeq([block, this.createBreak(label)])
+      );
     }
 
     return block;
   }
 
   private handleLoop(group: ParserCFGGroup): CodeBlock {
-    return makeLoop(this.getLoopLabel(group), this.processGroup(group));
+    return this.makeLoop(this.getLoopLabel(group), this.processGroup(group));
   }
 
   private handleNodes(nodes: ParserCFGNodeOrGroup, parent: ParserCFGGroup) {

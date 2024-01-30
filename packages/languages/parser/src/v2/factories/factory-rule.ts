@@ -1,5 +1,4 @@
 import {
-  RuleDeclaration,
   Assignables,
   FieldRule,
   CallRule,
@@ -8,7 +7,7 @@ import {
   EofRule,
   TokenRules,
 } from "../grammar/grammar-builder";
-import { Grammar } from "../grammar/grammar";
+import { AugmentedRuleDeclaration, Grammar } from "../grammar/grammar";
 import { Frag, Automaton } from "../automaton/automaton";
 import {
   CallTransition,
@@ -22,16 +21,20 @@ import { assertion, never } from "../utils";
 import { AbstractFactory } from "./abstract-factory";
 
 export class FactoryRule extends AbstractFactory {
-  readonly rule: RuleDeclaration;
+  readonly rule: AugmentedRuleDeclaration;
 
-  constructor(grammar: Grammar, rule: RuleDeclaration, automaton: Automaton) {
+  constructor(
+    grammar: Grammar,
+    rule: AugmentedRuleDeclaration,
+    automaton: Automaton
+  ) {
     super(grammar, automaton);
     this.rule = rule;
   }
 
   static process(
     grammar: Grammar,
-    rule: RuleDeclaration,
+    rule: AugmentedRuleDeclaration,
     automaton: Automaton
   ) {
     return new FactoryRule(grammar, rule, automaton).genRule(rule);
@@ -93,12 +96,8 @@ export class FactoryRule extends AbstractFactory {
     return this.automaton.single(this.token(node, null));
   }
 
-  genRule(rule: RuleDeclaration): Frag {
+  genRule(rule: AugmentedRuleDeclaration): Frag {
     let { start, end } = this.gen(rule.rule);
-
-    if (rule.modifiers.noSkips) {
-      // TODO
-    }
 
     const loc: Location | null = rule.loc
       ? { start: rule.loc.end, end: rule.loc.end }
