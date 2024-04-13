@@ -1,4 +1,4 @@
-import { never } from "../../utils";
+import { never } from "../../utils/index";
 import { GRecursiveType, GType } from "./types-builder";
 
 export function typeFormatter(

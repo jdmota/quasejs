@@ -1,5 +1,5 @@
 import type { Location } from "../runtime/input";
-import { never } from "../utils";
+import { never } from "../utils/index";
 
 // Build rules and expressions
 

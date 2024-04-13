@@ -10,6 +10,9 @@ export function isSubtype(
   _a: GType,
   _b: GType
 ): boolean {
+  // Short-path: Even undefined variables can be considered equal if they are exactly the same
+  if (_a === _b) return true;
+
   const a =
     _a.type === "recursive-var" ? (_a.defined() ? _a.definition() : null) : _a;
   const b =

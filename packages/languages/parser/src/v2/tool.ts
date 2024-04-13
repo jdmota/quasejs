@@ -14,7 +14,7 @@ import {
 import { RuleDeclaration, TokenDeclaration } from "./grammar/grammar-builder";
 import { DFA } from "./optimizer/abstract-optimizer";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
-import { locSuffix } from "./utils";
+import { locSuffix } from "./utils/index";
 import { generateAll } from "./generators/generate-all";
 import { FollowInfoDB } from "./grammar/follow-info";
 import { GType, typeBuilder } from "./grammar/type-checker/types-builder";

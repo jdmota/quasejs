@@ -1,4 +1,4 @@
-import { first } from "../../utils";
+import { first } from "../../utils/index";
 import { BaseComponent, BaseSCC } from "./strongly-connected-components";
 import { BaseTopologicalOrder } from "./topological-order";
 

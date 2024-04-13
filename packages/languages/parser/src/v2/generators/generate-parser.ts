@@ -23,7 +23,7 @@ import {
 import { FollowInfo } from "../grammar/follow-info";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
 import { ExprRule } from "../grammar/grammar-builder";
-import { lines, never } from "../utils";
+import { lines, never } from "../utils/index";
 import {
   CodeBlock,
   DecisionBlock,

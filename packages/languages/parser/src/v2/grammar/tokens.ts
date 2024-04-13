@@ -1,5 +1,5 @@
 import { Location } from "../runtime/input";
-import { never, nonNull } from "../utils";
+import { never, nonNull } from "../utils/index";
 import { AugmentedTokenDeclaration, augmentToken } from "./grammar";
 import {
   AnyRule,

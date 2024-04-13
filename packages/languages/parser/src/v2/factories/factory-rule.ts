@@ -17,7 +17,7 @@ import {
   FieldInfo,
 } from "../automaton/transitions";
 import { Location } from "../../runtime/tokenizer";
-import { assertion, never } from "../utils";
+import { assertion, never } from "../utils/index";
 import { AbstractFactory } from "./abstract-factory";
 
 export class FactoryRule extends AbstractFactory {
@@ -110,7 +110,10 @@ export class FactoryRule extends AbstractFactory {
     }
 
     const newEnd = this.automaton.newState();
-    end.addTransition(new ReturnTransition(rule.return).setLoc(loc), newEnd);
+    end.addTransition(
+      new ReturnTransition(rule.name, rule.return).setLoc(loc),
+      newEnd
+    );
     end = newEnd;
 
     return {

@@ -20,7 +20,7 @@ import {
   IntRule,
   BoolRule,
 } from "../grammar-builder";
-import { assertion, nonNull } from "../../utils";
+import { assertion, nonNull } from "../../utils/index";
 import { GType, RecursiveTypeCreator, typeBuilder } from "./types-builder";
 import { runtimeFuncs, runtimeTypes } from "./default-types";
 import { isSub } from "./subtyping";

@@ -1,4 +1,4 @@
-import { nonNull } from "../utils";
+import { nonNull } from "../utils/index";
 import { error } from "./error";
 import { Stream } from "./stream";
 

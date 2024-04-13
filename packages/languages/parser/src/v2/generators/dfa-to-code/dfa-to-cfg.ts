@@ -1,7 +1,7 @@
 import { DState, EPSILON } from "../../automaton/state";
 import { AnyTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
-import { ObjectHashEquals, first, nonNull } from "../../utils";
+import { ObjectHashEquals, first, nonNull } from "../../utils/index";
 import { MapKeyToValue } from "../../utils/map-key-to-value";
 import { CFGNode, CFGEdge, CFGGroup, CFGNodeOrGroup } from "./cfg";
 

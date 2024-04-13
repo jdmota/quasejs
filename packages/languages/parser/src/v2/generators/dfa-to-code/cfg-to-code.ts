@@ -1,7 +1,7 @@
 import { DState } from "../../automaton/state";
 import { AnyTransition, ReturnTransition } from "../../automaton/transitions";
 import { DFA } from "../../optimizer/abstract-optimizer";
-import { first, never } from "../../utils";
+import { first, never } from "../../utils/index";
 import { cfgToGroups, CFGGroup } from "./cfg";
 import {
   ParserCFGEdge,

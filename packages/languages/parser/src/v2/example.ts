@@ -152,10 +152,50 @@ const ruleH = rule(
 const ruleTricky1 = rule(
   "Tricky1",
   choice(
-    optional(call("Tricky1", [])),
-    seq(string("A"), call("Tricky1", [])),
-    seq(call("Tricky1", []), string("B"))
+    seq(int(1), optional(call("Tricky1", [])), int(10)),
+    seq(int(2), string("A"), call("Tricky1", []), int(20)),
+    seq(int(3), call("Tricky1", []), string("B"), int(30))
   ),
+  [],
+  {},
+  null
+);
+
+const ruleRecTricky1 = rule(
+  "RecTricky1",
+  choice(
+    seq(int(1), optional(call("RecTricky2", [])), int(10)),
+    seq(int(2), string("A"), call("RecTricky2", []), int(20)),
+    seq(int(3), call("RecTricky2", []), string("B"), int(30))
+  ),
+  [],
+  {},
+  null
+);
+
+const ruleRecTricky2 = rule("RecTricky2", call("RecTricky1", []), [], {}, null);
+
+const ruleRecTricky3 = rule(
+  "RecTricky3",
+  choice(call("RecTricky2", []), string("C")),
+  [],
+  {},
+  null
+);
+
+const ruleRecMutual1 = rule(
+  "RecMutual1",
+  // Lookahead of this call should be {B, C}
+  choice(call("RecMutual2", []), string("B")),
+  [],
+  {},
+  null
+);
+
+const ruleRecMutual2 = rule(
+  "RecMutual2",
+  // Lookahead of this call should be {B, C}
+  choice(call("RecMutual1", []), string("C")),
   [],
   {},
   null
@@ -200,7 +240,57 @@ const ruleTricky4 = rule(
   null
 );
 
+const ruleUsesEmpty = rule(
+  "UsesEmpty",
+  choice(
+    seq(call("Empty", []), string("A"), call("Empty", []), string("B")),
+    seq(string("A"), string("C"))
+  ),
+  [],
+  {},
+  null
+);
+
+const ruleEmpty = rule("Empty", empty(), [], {}, null);
+
+const ruleEmptyOrNot = rule(
+  "EmptyOrNot",
+  choice(empty(), string("O")),
+  [],
+  {},
+  null
+);
+
+const ruleTrickyAfterEmpty = rule(
+  "TrickyAfterEmpty",
+  choice(
+    seq(call("EmptyOrNot", []), call("Tricky1", [])),
+    seq(string("O"), string("P"))
+  ),
+  [],
+  {},
+  null
+);
+
 const ruleY = rule("Y", field("y", call("TY", [])), [], {}, id("y"));
+
+const ruleRecursive1 = rule("Rec1", call("Rec1", []), [], {}, int(10));
+
+const ruleRecursive2 = rule(
+  "Rec2",
+  optional(call("Rec2", [])),
+  [],
+  {},
+  int(10)
+);
+
+const ruleRecursive3 = rule(
+  "Rec3",
+  choice(call("Rec3", []), string("A")),
+  [],
+  {},
+  int(10)
+);
 
 const tokenW = token(
   "W",
@@ -236,6 +326,18 @@ const result = tool({
     ruleTricky3,
     ruleTricky4,
     ruleY,
+    ruleRecursive1,
+    ruleRecursive2,
+    ruleRecursive3,
+    ruleRecTricky1,
+    ruleRecTricky2,
+    ruleRecTricky3,
+    ruleRecMutual1,
+    ruleRecMutual2,
+    ruleUsesEmpty,
+    ruleEmpty,
+    ruleEmptyOrNot,
+    ruleTrickyAfterEmpty,
   ],
   tokenDecls: [tokenW, tokenY],
   startArguments: [],
@@ -246,7 +348,10 @@ const result = tool({
 
 if (result) {
   const { types } = inferAndCheckTypes(result.grammar);
-  fs.writeFileSync(path.join(__dirname, "example.gen.js"), result.code);
-  fs.writeFileSync(path.join(__dirname, "example.gen.d.ts"), types);
+  fs.writeFileSync(
+    path.join(import.meta.dirname, "example.gen.js"),
+    result.code
+  );
+  fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.ts"), types);
   console.log();
 }

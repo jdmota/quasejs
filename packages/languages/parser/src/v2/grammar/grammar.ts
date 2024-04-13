@@ -1,6 +1,6 @@
 import { Location } from "../runtime/input";
 import { ToolInput } from "../tool";
-import { never } from "../utils";
+import { never } from "../utils/index";
 import {
   AnyRule,
   Declaration,

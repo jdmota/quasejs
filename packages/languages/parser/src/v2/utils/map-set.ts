@@ -10,6 +10,10 @@ export class MapSet<K, V> {
     return val;
   }
 
+  clearMany(key: K) {
+    this.map.delete(key);
+  }
+
   test(key: K, val: V) {
     return this.get(key).has(val);
   }

@@ -19,7 +19,7 @@ import {
 } from "../automaton/transitions";
 import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
 import { Location } from "../../runtime/tokenizer";
-import { never, assertion } from "../utils";
+import { never, assertion } from "../utils/index";
 import { AbstractFactory } from "./abstract-factory";
 
 export class FactoryToken extends AbstractFactory {
@@ -152,7 +152,10 @@ export class FactoryToken extends AbstractFactory {
       : null;
 
     const newEnd = this.automaton.newState();
-    end.addTransition(new ReturnTransition(rule.return).setLoc(loc), newEnd);
+    end.addTransition(
+      new ReturnTransition(rule.name, rule.return).setLoc(loc),
+      newEnd
+    );
     end = newEnd;
 
     return {

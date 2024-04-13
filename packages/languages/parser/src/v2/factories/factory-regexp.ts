@@ -1,4 +1,4 @@
-import { parse as parseRegexp } from "regexp-tree";
+import regexpTree from "regexp-tree";
 import type {
   AstRegExp,
   Char,
@@ -14,6 +14,8 @@ import type {
 } from "regexp-tree/ast";
 import { Frag, Automaton } from "../automaton/automaton";
 import { MIN_CHAR, MAX_CHAR } from "../constants";
+
+const { parse: parseRegexp } = regexpTree;
 
 declare module "regexp-tree/ast" {
   interface SimpleChar extends Base<"Char"> {

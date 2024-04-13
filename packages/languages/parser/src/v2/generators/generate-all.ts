@@ -1,6 +1,6 @@
 import { Grammar } from "../grammar/grammar";
 import { TokenDeclaration, RuleDeclaration } from "../grammar/grammar-builder";
-import { lines } from "../utils";
+import { lines } from "../utils/index";
 
 export function generateAll(
   grammar: Grammar,

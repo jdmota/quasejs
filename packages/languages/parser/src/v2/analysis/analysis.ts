@@ -7,12 +7,13 @@ import {
 } from "../automaton/transitions";
 import { MapKeyToValue } from "../utils/map-key-to-value";
 import { MapKeyToSet } from "../utils/map-key-to-set";
-import { assertion, equals, ObjectHashEquals } from "../utils";
+import { assertion, equals, nonNull, ObjectHashEquals } from "../utils/index";
 import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set";
 import { Range } from "../utils/range-utils";
 import { ParserGenerator } from "../generators/generate-parser";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
 import { FollowInfo, FollowInfoDB } from "../grammar/follow-info";
+import { MapSet } from "../utils/map-set";
 
 type GotoDecision = Readonly<{
   stack: StackFrame;
@@ -414,25 +415,18 @@ class StackFrame implements ObjectHashEquals {
     this.cachedHashCode = 0;
   }
 
-  move(analyzer: Analyzer, dest: DState) {
-    return new StackFrame(
-      analyzer,
-      this.parent,
-      this.thisRule,
-      dest,
-      this.follow
-    );
+  private isRootOfPhase() {
+    if (this.parent) {
+      return this.parent.llPhase !== this.llPhase;
+    }
+    return true;
   }
 
-  private hasLeftRecursion(call: string) {
-    let s: StackFrame | null = this.parent; // Start with parent!
-    while (s) {
+  // Was this rule entered at least once in this phase?
+  wasPushed(call: string) {
+    let s: StackFrame | null = this;
+    while (s && !s.isRootOfPhase()) {
       if (s.thisRule === call && s.llPhase === this.llPhase) {
-        // Avoid infinite loop due to left-recursive grammars.
-        // It is enough to check the name and the ll phase to find left-recursion,
-        // since if the recursion was guarded with a token, we would not get here.
-        // By checking the phase and starting with the parent,
-        // we always allow at least one push when we start a new phase.
         return true;
       }
       s = s.parent;
@@ -451,13 +445,33 @@ class StackFrame implements ObjectHashEquals {
     return false;
   }
 
-  push(analyzer: Analyzer, call: CallTransition): StackFrame {
-    if (this.hasLeftRecursion(call.ruleName)) {
+  move(analyzer: Analyzer, dest: DState) {
+    return new StackFrame(
+      analyzer,
+      this.parent,
+      this.thisRule,
+      dest,
+      this.follow
+    );
+  }
+
+  // Since we move() before push(),
+  // there is always a parent frame in the current phase
+  // which serves as the root of the phase
+
+  push(analyzer: Analyzer, call: CallTransition) {
+    // To interrupt recursion, we need to guarantee that
+    // other branches being explored will gather the lookahead that
+    // would be obtained by entering this rule again.
+    // If we see this rule in the stack (except if it is the root of a new phase or a frame from different phase),
+    // we can be sure that we do not need to enter this rule again (because it was entered before in this same phase).
+    if (this.wasPushed(call.ruleName)) {
       // If we see left recursion in this ll phase,
-      // It means the rule is empty
-      // For soundness, we need to jump over it to gather lookahead information
-      // "this" is the stack we return to after the call
-      return this;
+      // and if the rule may be empty,
+      // we need to jump over it to gather lookahead information.
+      // The other branches in this phase are responsible
+      // for gathering the rest of the lookahead information.
+      return null;
     }
     return new StackFrame(
       analyzer,
@@ -551,31 +565,45 @@ export class Analyzer {
     return this.llState;
   }
 
+  private readonly emptyRules = new Set<RuleName>();
+
   private ll1(
-    start: Iterable<StackFrame>,
+    start: readonly StackFrame[],
     gotos: Iterable<AnyTransition>,
     map: DecisionTree
   ) {
+    const empty = this.emptyRules;
+    const delayedReturns = new MapSet<RuleName, StackFrame>();
+    //
     const seen = new MapKeyToValue<StackFrame, boolean>();
-    let prev: readonly StackFrame[] = Array.from(start);
+    let prev: readonly StackFrame[] = start;
     let next: StackFrame[] = [];
 
     while (prev.length) {
       for (const stack of prev) {
         if (seen.set(stack, true) === true) continue;
 
-        for (const [transition, dest] of stack.state) {
-          if (transition instanceof CallTransition) {
-            next.push(stack.move(this, dest).push(this, transition));
-          } else if (transition instanceof ReturnTransition) {
-            next.push(...stack.pop(this, transition));
-          } else if (transition instanceof RangeTransition) {
-            map.addDecision(
-              stack.follow,
-              transition,
-              gotos,
-              stack.move(this, dest)
-            );
+        for (const [edge, dest] of stack.state) {
+          if (edge instanceof CallTransition) {
+            const ret = stack.move(this, dest);
+            const pushed = ret.push(this, edge);
+            if (pushed) {
+              next.push(pushed);
+            } else if (empty.has(edge.ruleName)) {
+              next.push(ret);
+            } else {
+              delayedReturns.add(edge.ruleName, ret);
+            }
+          } else if (edge instanceof ReturnTransition) {
+            next.push(...stack.pop(this, edge));
+            // Deal with possibly empty rules
+            if (!empty.has(edge.ruleName) && stack.wasPushed(edge.ruleName)) {
+              empty.add(edge.ruleName);
+              next.push(...delayedReturns.get(edge.ruleName));
+              delayedReturns.clearMany(edge.ruleName);
+            }
+          } else if (edge instanceof RangeTransition) {
+            map.addDecision(stack.follow, edge, gotos, stack.move(this, dest));
           } else {
             next.push(stack.move(this, dest));
           }
@@ -633,7 +661,24 @@ export class Analyzer {
 
     for (const [goto, dest] of state) {
       if (goto instanceof CallTransition) {
-        this.ll1([stack.move(this, dest).push(this, goto)], [goto], ll1);
+        // The stack will be turned from
+        // | rule.name , state, ll=0 |
+        // |           null          |
+        // to
+        // | calledRule, ...  , ll=1 |
+        // | rule.name , dest , ll=1 | (root of the new phase resulting from move)
+        // |           null          |
+        //
+        // If rule.name == calledRule, the push is allowed because we need to enter the rule at least once
+        // (to this end we ignore the root).
+        // If inside calledRule, we push calledRule again, we interrupt
+        // (because we already crossed the rule's entry once for sure).
+        // See StackFrame#wasPushed() and StackFrame#push().
+        this.ll1(
+          [nonNull(stack.move(this, dest).push(this, goto))],
+          [goto],
+          ll1
+        );
       } else if (goto instanceof ReturnTransition) {
         this.ll1(stack.pop(this, goto), [goto], ll1);
       } else if (goto instanceof RangeTransition) {
@@ -643,7 +688,7 @@ export class Analyzer {
       }
     }
 
-    let prev: DecisionTreeNoAdd[] = [ll1];
+    let prev: readonly DecisionTreeNoAdd[] = [ll1];
     let next: DecisionTreeNoAdd[] = [];
 
     this.llState = 2;

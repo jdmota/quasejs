@@ -1,6 +1,6 @@
 import { DState } from "../automaton/state";
 import { CallTransition } from "../automaton/transitions";
-import { assertion, nonNull } from "../utils";
+import { assertion, nonNull } from "../utils/index";
 
 export type FollowInfo = {
   readonly rule: string;

@@ -1,5 +1,5 @@
 import type { Grammar } from "../grammar/grammar";
-import { never } from "../utils";
+import { never } from "../utils/index";
 
 type SomeTransition =
   | {
