@@ -3,7 +3,8 @@ __dev__
 .yarn
 dist
 node_modules
-.pnp.js
+.pnp.cjs
+.pnp.loader.mjs
 packages/_legacy/**
 packages/builder/src/plugins/transformers/babel-helpers.js
 packages/builder/src/runtime/builds/**

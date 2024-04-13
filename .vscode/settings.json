@@ -2,16 +2,10 @@
   "files.eol": "\n",
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
-  "eslint.enable": false,
-  "eslint.nodePath": ".yarn/sdks",
-  "eslint.validate": [
-    "javascript",
-    "typescript"
-  ],
   "typescript.validate.enable": true,
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "prettier.prettierPath": ".yarn/sdks/prettier/index.js",
+  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs",
   "[javascript]": {
     "editor.formatOnSave": true
   },
