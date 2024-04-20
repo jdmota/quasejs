@@ -19,6 +19,7 @@ import {
   IntRule,
   BoolRule,
   ExprRule,
+  NullRule,
 } from "../grammar/grammar-builder.ts";
 import { Grammar } from "../grammar/grammar.ts";
 import { Frag, Automaton } from "../automaton/automaton.ts";
@@ -98,6 +99,10 @@ export abstract class AbstractFactory implements Gen {
   }
 
   int(node: IntRule) {
+    return this.automaton.single(this.actionTransition(node, null));
+  }
+
+  null(node: NullRule) {
     return this.automaton.single(this.actionTransition(node, null));
   }
 

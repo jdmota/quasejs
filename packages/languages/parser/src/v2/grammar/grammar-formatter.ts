@@ -18,6 +18,7 @@ import {
   ObjectRule,
   IntRule,
   BoolRule,
+  NullRule,
 } from "./grammar-builder.ts";
 
 type IGrammarFormatter = {
@@ -51,6 +52,10 @@ export class GrammarFormatter implements IGrammarFormatter {
 
   eof(node: EofRule) {
     return "eof";
+  }
+
+  null(node: NullRule) {
+    return "null";
   }
 
   string(node: StringRule) {

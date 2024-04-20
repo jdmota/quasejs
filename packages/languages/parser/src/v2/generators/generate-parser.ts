@@ -7,7 +7,6 @@ import {
   DecisionTestRange,
   DecisionTree,
   FALSE,
-  FollowStack,
 } from "../analysis/analysis.ts";
 import {
   ActionTransition,
@@ -177,6 +176,10 @@ export class ParserGenerator {
       case "bool":
       case "int":
         return `${code.value}`;
+      case "null":
+        return "null";
+      case "string":
+        return JSON.stringify(code.string);
       case "object":
         return code.fields.length === 0
           ? "EMPTY_OBJ"

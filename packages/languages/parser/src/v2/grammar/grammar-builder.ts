@@ -16,6 +16,7 @@ export interface RuleMap {
   object: ObjectRule;
   int: IntRule;
   bool: BoolRule;
+  null: NullRule;
   id: IdRule;
   call: CallRule;
   call2: Call2Rule;
@@ -32,7 +33,14 @@ export type AnyRule = RuleMap[RuleNames];
 
 export type TokenRules = EofRule | StringRule | RegExpRule;
 
-export type ExprRule = IdRule | ObjectRule | IntRule | BoolRule | Call2Rule;
+export type ExprRule =
+  | StringRule
+  | IdRule
+  | ObjectRule
+  | IntRule
+  | BoolRule
+  | NullRule
+  | Call2Rule;
 
 export type Assignables = TokenRules | CallRule | ExprRule;
 
@@ -363,6 +371,18 @@ function bool(value: boolean): BoolRule {
   };
 }
 
+export type NullRule = {
+  readonly type: "null";
+  loc: Location | null;
+};
+
+function nil(): NullRule {
+  return {
+    type: "null",
+    loc: null,
+  };
+}
+
 export type ObjectRule = {
   readonly type: "object";
   readonly fields: readonly (readonly [string, ExprRule])[];
@@ -393,6 +413,7 @@ export const builder = {
   string,
   regexp,
   bool,
+  null: nil,
   int,
   object,
   field,
@@ -427,6 +448,7 @@ export function sameAssignable(
         sameArgs(value1.args, value2.args)
       );
     case "eof":
+    case "null":
       return value1.type === value2.type;
     case "object":
       if (
@@ -516,6 +538,10 @@ const cloneRulesVisitor: ICloner = {
 
   bool(node: BoolRule) {
     return builder.bool(node.value);
+  },
+
+  null(node: NullRule) {
+    return builder.null();
   },
 
   object(node: ObjectRule) {

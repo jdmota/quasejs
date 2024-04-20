@@ -15,6 +15,10 @@ const LOCATION_TYPE = readObject({
   end: POSITION_TYPE,
 });
 
+const MARKER_TYPE = readObject({
+  pos: int(),
+});
+
 export const runtimeTypes = {
   $Empty: EMPTY_OBJ_TYPE,
   $Position: POSITION_TYPE,
@@ -22,8 +26,8 @@ export const runtimeTypes = {
 };
 
 export const runtimeFuncs = {
-  $getIndex: func([], int()),
-  $getText: func([int()], string()),
+  $startText: func([], MARKER_TYPE),
+  $endText: func([MARKER_TYPE], string()),
   $getPos: func([], POSITION_TYPE),
   $getLoc: func([POSITION_TYPE], LOCATION_TYPE),
 };

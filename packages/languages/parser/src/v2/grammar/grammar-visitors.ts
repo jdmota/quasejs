@@ -24,6 +24,7 @@ import {
   References,
   IntRule,
   BoolRule,
+  NullRule,
 } from "./grammar-builder.ts";
 import { TokensStore } from "./tokens.ts";
 
@@ -83,6 +84,8 @@ export abstract class RuleVisitor<
   int(node: IntRule) {}
 
   bool(node: BoolRule) {}
+
+  null(node: NullRule) {}
 
   id(node: IdRule) {}
 

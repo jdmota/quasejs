@@ -1,7 +1,7 @@
 import { RuntimeContext } from "./context.ts";
 import { error } from "./error.ts";
 import { Position, Location, Input } from "./input.ts";
-import { Stream } from "./stream.ts";
+import { BufferedStream, Marker } from "./stream.ts";
 
 export type Token = Readonly<{
   id: number;
@@ -17,7 +17,7 @@ type IdToLabel = Readonly<{
   [key: number]: string;
 }>;
 
-export abstract class Tokenizer<T> extends Stream<Token> {
+export abstract class Tokenizer<T> extends BufferedStream<Token> {
   readonly ctx: RuntimeContext;
   readonly external: T;
   private input: Input;
@@ -35,17 +35,42 @@ export abstract class Tokenizer<T> extends Stream<Token> {
     this.channels = {};
   }
 
+  protected override fetchMore(amountFetched: number, amountToFetch: number) {
+    while (amountToFetch--) {
+      while (true) {
+        const token = this.token$lexer();
+        const channels = this.idToChannels[token.id];
+        for (const chan of channels.c) {
+          const array = this.channels[chan] || (this.channels[chan] = []);
+          array.push(token);
+        }
+        if (channels.s) {
+          continue; // Skip
+        }
+        this.buffer.push(token);
+        break;
+      }
+    }
+  }
+
+  protected override eof(): Token {
+    throw new Error("Unreachable");
+  }
+
+  protected override ofb(): Token {
+    throw new Error("Out of bounds");
+  }
+
   abstract token$lexer(): Token;
   abstract $getIdToChannels(): IdToChannels;
   abstract $getIdToLabel(): IdToLabel;
 
-  $getIndex() {
-    return this.input.position();
+  $startText() {
+    return this.input.mark();
   }
 
-  $getText(start: number) {
-    const end = this.input.position();
-    return this.input.text(start, end);
+  $endText(marker: Marker) {
+    return this.input.$endText(marker);
   }
 
   $getPos(): Position {
@@ -54,25 +79,6 @@ export abstract class Tokenizer<T> extends Stream<Token> {
 
   $getLoc(start: Position): Location {
     return { start, end: this.$getPos() };
-  }
-
-  protected override $next(): Token {
-    while (true) {
-      const token = this.token$lexer();
-      const channels = this.idToChannels[token.id];
-      for (const chan of channels.c) {
-        const array = this.channels[chan] || (this.channels[chan] = []);
-        array.push(token);
-      }
-      if (channels.s) {
-        continue; // Skip
-      }
-      return token;
-    }
-  }
-
-  override $ll1Id() {
-    return this.$llArray[0].id;
   }
 
   $e(id: number) {
@@ -84,18 +90,34 @@ export abstract class Tokenizer<T> extends Stream<Token> {
   }
 
   $ll(n: number) {
-    return this.input.$lookahead(n);
+    return this.input.lookahead(n);
   }
 
   $err(): never {
-    this.input.$unexpected(this.input.$getPos(), this.input.$lookahead(1));
+    this.input.$unexpected(this.input.$getPos(), this.input.lookahead(1));
   }
 
-  override $unexpected(
-    pos: Position,
-    found: Token,
-    expected?: number | string
-  ): never {
+  $expect(id: number) {
+    const token = this.lookahead(1);
+    const foundId = token.id;
+    if (foundId === id) {
+      this.advance();
+      return token;
+    }
+    this.$unexpected(this.$getPos(), token, id);
+  }
+
+  $expect2(a: number, b: number) {
+    const token = this.lookahead(1);
+    const foundId = token.id;
+    if (a <= foundId && foundId <= b) {
+      this.advance();
+      return token;
+    }
+    this.$unexpected(this.$getPos(), token, a);
+  }
+
+  $unexpected(pos: Position, found: Token, expected?: number | string): never {
     throw error(
       `Unexpected token ${this.idToLabels[found.id]}${
         expected == null

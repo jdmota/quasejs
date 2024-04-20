@@ -137,7 +137,10 @@ export function inferAndCheckTypes(grammar: Grammar) {
   }
 
   {
-    const astType = inferrer.declaration(grammar.startRule, []);
+    const astType = inferrer.declaration(
+      grammar.startRule,
+      grammar.startArguments
+    );
     const { typescript, eq } = typeFormatter(astType, knownNames);
     typeDeclarations.push(...eq);
     typeDeclarations.push(["$AST", typescript]);

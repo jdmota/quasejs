@@ -53,7 +53,7 @@ export class MapRangeToValue<T> {
       }
 
       throw new Error(
-        `Already exists (curr:${curr.range.from},${curr.range.to}; node:${node.range.from},${node.range.to})`
+        `Already exists (curr:${curr.range.from},${curr.range.to},${curr.value}; node:${node.range.from},${node.range.to},${node.value})`
       );
     }
   }

@@ -82,6 +82,10 @@ export class DState {
     this.inTransitions = 0;
   }
 
+  toString() {
+    return `DState{${this.id}}`;
+  }
+
   addTransition(transition: AnyTransition, dest: DState) {
     let added = false;
     if (transition instanceof RangeTransition && transition.field === null) {

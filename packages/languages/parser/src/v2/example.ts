@@ -39,7 +39,7 @@ const ruleA = rule(
     field("C", call("C", [int(10), int(20)])),
     field("T", call("Tricky2", []))
   ),
-  [],
+  [rule.arg("arg")],
   { start: true },
   object([
     ["o", id("my_obj")],
@@ -204,7 +204,7 @@ const ruleRecMutual2 = rule(
 const ruleTricky2 = rule(
   "Tricky2",
   choice(
-    optional(field("x", call("Tricky2", []))),
+    empty(),
     seq(string("A"), field("y", call("Tricky2", []))),
     seq(field("z", call("Tricky2", [])), string("B"))
   ),
@@ -342,7 +342,7 @@ const result = tool({
     ruleTrickyAfterEmpty,
   ],
   tokenDecls: [tokenW, tokenY],
-  startArguments: [],
+  startArguments: [typeBuilder.string()],
   externalFuncReturns: {
     externalCall: typeBuilder.bool(),
   },
@@ -351,11 +351,11 @@ const result = tool({
 console.timeEnd("BENCHMARK");
 
 if (result) {
-  const { types } = inferAndCheckTypes(result.grammar);
   fs.writeFileSync(
     path.join(import.meta.dirname, "example.gen.mjs"),
     result.code
   );
+  const { types } = inferAndCheckTypes(result.grammar);
   fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
   console.log();
 }

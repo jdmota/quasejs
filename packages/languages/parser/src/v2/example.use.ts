@@ -7,7 +7,8 @@ const ast = parse(
       return true;
     },
   },
-  "AACSTRING"
+  "AACSTRING",
+  "$arg"
 );
 
 const d = ast.d;

@@ -1,6 +1,5 @@
-import { nonNull } from "../utils/index.ts";
 import { error } from "./error.ts";
-import { Stream } from "./stream.ts";
+import { BufferedStream, Marker } from "./stream.ts";
 
 export type Position = Readonly<{
   pos: number;
@@ -17,11 +16,11 @@ export type InputOpts = Readonly<{
   string: string;
 }>;
 
-export class Input extends Stream<number> {
+export class Input extends BufferedStream<number> {
   private ll1: { pos: number; line: number; column: number };
   private string: string;
-  private size: number;
-  private pos: number;
+  private stringSize: number;
+  private stringIdx: number;
 
   constructor(opts: InputOpts) {
     super();
@@ -31,36 +30,29 @@ export class Input extends Stream<number> {
       column: 0,
     };
     this.string = opts.string;
-    this.size = opts.string.length;
-    this.pos = 0;
+    this.stringSize = opts.string.length;
+    this.stringIdx = 0;
   }
 
-  position() {
-    return this.pos;
+  protected override fetchMore(amountFetched: number, amountToFetch: number) {
+    while (amountToFetch--) {
+      if (this.stringIdx < this.stringSize) {
+        const code = this.string.codePointAt(this.stringIdx) as number;
+        this.stringIdx += code <= 0xffff ? 1 : 2;
+        this.buffer.push(code);
+      }
+    }
   }
 
-  protected override $next() {
-    const code = this.codeAt(this.pos);
-    this.pos += code < 0 ? 0 : code <= 0xffff ? 1 : 2;
-    return code;
-  }
-
-  override $getPos() {
-    return { ...this.ll1 };
-  }
-
-  override $ll1Id(): number {
-    return this.$llArray[0];
-  }
-
-  override $advance() {
+  override advance(): void {
+    super.advance();
     const { ll1 } = this;
-    const prev = nonNull(this.$llArray.shift());
+    const prev = this.lookahead(0);
     // "\r"
     if (prev === 13) {
       ll1.pos++;
       // "\n"
-      if (this.$lookahead(1) === 10) {
+      if (this.lookahead(1) === 10) {
         ll1.column++;
       } else {
         ll1.line++;
@@ -82,36 +74,59 @@ export class Input extends Stream<number> {
     }
   }
 
-  // [start, end[
-  text(start: number, end: number) {
-    return this.string.slice(start, end);
+  protected override eof(): number {
+    return -1;
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt
-  // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
-  private codeAt(index: number) {
-    const { string, size } = this;
-    if (index < 0 || index >= size) {
-      return -1;
-    }
-
-    const first = string.charCodeAt(index);
-    if (first >= 0xd800 && first <= 0xdbff && size > index + 1) {
-      const second = string.charCodeAt(index + 1);
-      if (second >= 0xdc00 && second <= 0xdfff) {
-        return (first - 0xd800) * 0x400 + second - 0xdc00 + 0x10000;
-      }
-    }
-    return first;
+  protected override ofb(): number {
+    throw new Error("Out of bounds");
   }
 
-  override $unexpected(
-    pos: Position,
-    found: number,
-    expected?: string | number
-  ): never {
+  $getPos(): Position {
+    return { ...this.ll1 };
+  }
+
+  $getLoc(start: Position): Location {
+    return { start, end: this.$getPos() };
+  }
+
+  $startText() {
+    return this.mark();
+  }
+
+  $endText(marker: Marker) {
+    return this.slice(marker, this.pos)
+      .map(n => String.fromCodePoint(n))
+      .join("");
+  }
+
+  $expect(id: number) {
+    const found = this.lookahead(1);
+    if (found === id) {
+      this.advance();
+      return found;
+    }
+    this.$unexpected(this.$getPos(), found, id);
+  }
+
+  $expect2(a: number, b: number) {
+    const found = this.lookahead(1);
+    if (a <= found && found <= b) {
+      this.advance();
+      return found;
+    }
+    this.$unexpected(this.$getPos(), found, a);
+  }
+
+  $unexpected(pos: Position, found: number, expected?: string | number): never {
+    const char =
+      found === -2
+        ? "<OUT OF BOUNDS>"
+        : found === -1
+          ? "<EOF>"
+          : String.fromCodePoint(found);
     throw error(
-      `Unexpected character ${String.fromCodePoint(found)} (code: ${found})${
+      `Unexpected character ${char} (code: ${found})${
         expected == null ? "" : `, expected ${expected}`
       }`,
       pos

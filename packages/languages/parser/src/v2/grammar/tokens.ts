@@ -23,6 +23,7 @@ import {
   SeqRule,
   StringRule,
   TokenRules,
+  NullRule,
 } from "./grammar-builder.ts";
 
 export const LEXER_RULE_NAME = "$lexer";
@@ -73,6 +74,10 @@ const prefixLocalsVisitor: ILocalPrefixer = {
   },
 
   bool(prefix: string, node: BoolRule) {
+    return node;
+  },
+
+  null(prefix: string, node: NullRule) {
     return node;
   },
 
@@ -198,9 +203,24 @@ export class TokensStore {
     switch (token.type) {
       case "string":
       case "regexp":
+        return augmentToken(
+          builder.token(
+            idToVar(id),
+            builder.field("t", token),
+            [],
+            { type: "normal" },
+            builder.id("t")
+          )
+        );
       case "eof":
         return augmentToken(
-          builder.token(idToVar(id), token, [], { type: "normal" })
+          builder.token(
+            idToVar(id),
+            token,
+            [],
+            { type: "normal" },
+            builder.null()
+          )
         );
       case "token":
         return token;

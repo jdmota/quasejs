@@ -14,14 +14,14 @@ export abstract class Parser<T> {
   }
 
   $getPos() {
-    return this.tokenizer.$lookahead(1).$loc.start;
+    return this.tokenizer.lookahead(1).$loc.start;
   }
 
   $getLoc(start: Position): Location {
-    const possibleEnd = this.tokenizer.$getLast()?.$loc.end ?? start;
+    const possibleEnd = this.tokenizer.lookahead(0).$loc.end;
     return {
       start,
-      end: possibleEnd.pos < start.pos ? start : possibleEnd,
+      end: possibleEnd.pos < start.pos ? start : possibleEnd, // Deal with empty rules
     };
   }
 
@@ -34,13 +34,13 @@ export abstract class Parser<T> {
   }
 
   $ll(n: number) {
-    return this.tokenizer.$lookahead(n).id;
+    return this.tokenizer.lookahead(n).id;
   }
 
   $err(): never {
     this.tokenizer.$unexpected(
       this.tokenizer.$getPos(),
-      this.tokenizer.$lookahead(1)
+      this.tokenizer.lookahead(1)
     );
   }
 }

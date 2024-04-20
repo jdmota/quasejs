@@ -18,7 +18,7 @@ const compareState = (a: BaseState, b: BaseState) => a.id - b.id;
 export abstract class AbstractNfaToDfa<
   NFAState extends BaseState,
   DFAState extends BaseState,
-  Transition
+  Transition,
 > {
   private closures: Map<NFAState, ReadonlySet<NFAState>>;
   private oldAcceptingSet: ReadonlySet<NFAState>;
@@ -48,7 +48,7 @@ export abstract class AbstractNfaToDfa<
 
   abstract combinations(
     closure: NFAState[]
-  ): IterableIterator<readonly [Transition, ReadonlySet<NFAState>]>;
+  ): Iterable<readonly [Transition, ReadonlySet<NFAState>]>;
 
   getEpsilonClosure(state: NFAState): ReadonlySet<NFAState> {
     const cache = this.closures.get(state);
@@ -69,8 +69,9 @@ export abstract class AbstractNfaToDfa<
     return closure;
   }
 
-  createState(closure: NFAState[]): DFAState {
-    const closureStr = closure.map(({ id }) => id).join(",");
+  createState(closure: Iterable<NFAState>): DFAState {
+    const closureArr = Array.from(closure).sort(compareState);
+    const closureStr = closureArr.map(({ id }) => id).join(",");
     let newState = this.closuseStrToState.get(closureStr);
     if (newState == null) {
       newState = this.newDFAState(this.states.length);
@@ -84,14 +85,14 @@ export abstract class AbstractNfaToDfa<
         }
       }
 
-      for (const [transition, set] of this.combinations(closure)) {
+      for (const [transition, set] of this.combinations(closureArr)) {
         const closure = new Set<NFAState>();
         for (const s of set) {
           for (const s2 of this.getEpsilonClosure(s)) {
             closure.add(s2);
           }
         }
-        const dest = this.createState(Array.from(closure).sort(compareState));
+        const dest = this.createState(closure);
         this.addTransition(newState, transition, dest);
       }
     }
@@ -108,9 +109,7 @@ export abstract class AbstractNfaToDfa<
     this.closuseStrToState = new Map();
     this.acceptingSet = new Set();
 
-    const start = this.createState(
-      Array.from(this.getEpsilonClosure(oldStart)).sort(compareState)
-    );
+    const start = this.createState(this.getEpsilonClosure(oldStart));
 
     return {
       states: this.states,
@@ -124,7 +123,7 @@ type StatePair<S> = readonly [S, S];
 
 export abstract class AbstractDfaMinimizer<
   DFAState extends BaseState,
-  Transition
+  Transition,
 > {
   abstract newDFAState(id: number): DFAState;
 

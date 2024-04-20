@@ -1,9 +1,4 @@
-import {
-  AugmentedDeclaration,
-  Grammar,
-  GrammarError,
-  err,
-} from "../grammar.ts";
+import { AugmentedDeclaration, Grammar, GrammarError } from "../grammar.ts";
 import {
   RuleMap,
   CallRule,
@@ -24,6 +19,7 @@ import {
   ObjectRule,
   IntRule,
   BoolRule,
+  NullRule,
 } from "../grammar-builder.ts";
 import { assertion, nonNull } from "../../utils/index.ts";
 import { GType, RecursiveTypeCreator, typeBuilder } from "./types-builder.ts";
@@ -234,6 +230,11 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     post.merge(node, typeBuilder.bool());
   }
 
+  null({ pre, post }: StorePair, node: NullRule) {
+    pre.propagateTo(post);
+    post.merge(node, typeBuilder.null());
+  }
+
   string({ pre, post }: StorePair, node: StringRule) {
     pre.propagateTo(post);
     post.merge(node, typeBuilder.string());
@@ -317,7 +318,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
   private ruleStack = new Map<string, RecursiveTypeCreator>();
 
-  declaration(rule: AugmentedDeclaration, argTypes: GType[]) {
+  declaration(rule: AugmentedDeclaration, argTypes: readonly GType[]) {
     let recCreator = this.ruleStack.get(rule.name);
     if (recCreator) {
       return recCreator.getVar();
