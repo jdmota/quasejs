@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true,
     "lib": ["esnext", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "noEmit": true,
@@ -11,7 +12,6 @@
     "esModuleInterop": true,
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
-    "allowJs": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },

@@ -2,8 +2,8 @@
   "name": "quase",
   "private": true,
   "scripts": {
-    "n": "node --import ./scripts/register-hooks.mjs",
-    "i": "node --inspect-brk --import ./scripts/register-hooks.mjs",
+    "n": "node --enable-source-maps --import ./scripts/register-hooks.mjs",
+    "i": "node --inspect-brk --enable-source-maps --import ./scripts/register-hooks.mjs",
     "test": "jest",
     "build": "node scripts/build",
     "prettier-check": "prettier --check \"**/*.{js,ts,json}\"",

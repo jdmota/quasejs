@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as pnpResolve, load as pnpLoad } from "../.pnp.loader.mjs";
 
 const babelOptions = {
+  sourceMaps: "inline",
   presets: ["@babel/preset-typescript"],
   // Don't look for configs
   configFile: false,
