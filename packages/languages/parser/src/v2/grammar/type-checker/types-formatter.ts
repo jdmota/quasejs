@@ -1,5 +1,5 @@
-import { never } from "../../utils/index";
-import { GRecursiveType, GType } from "./types-builder";
+import { never } from "../../utils/index.ts";
+import { GRecursiveType, GType } from "./types-builder.ts";
 
 export function typeFormatter(
   t: GType,

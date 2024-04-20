@@ -2,7 +2,7 @@ import {
   AugmentedDeclaration,
   AugmentedRuleDeclaration,
   AugmentedTokenDeclaration,
-} from "./grammar";
+} from "./grammar.ts";
 import {
   RuleMap,
   AnyRule,
@@ -24,8 +24,8 @@ import {
   References,
   IntRule,
   BoolRule,
-} from "./grammar-builder";
-import { TokensStore } from "./tokens";
+} from "./grammar-builder.ts";
+import { TokensStore } from "./tokens.ts";
 
 type IRuleVisitor = {
   [key in keyof RuleMap]: (node: RuleMap[key]) => void;
@@ -33,7 +33,7 @@ type IRuleVisitor = {
 
 export abstract class RuleVisitor<
   Data extends ReadonlyData,
-  ReadonlyData = Data
+  ReadonlyData = Data,
 > implements IRuleVisitor
 {
   protected readonly data: Data;

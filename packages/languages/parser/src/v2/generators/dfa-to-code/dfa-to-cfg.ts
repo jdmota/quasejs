@@ -1,9 +1,9 @@
-import { DState, EPSILON } from "../../automaton/state";
-import { AnyTransition } from "../../automaton/transitions";
-import { DFA } from "../../optimizer/abstract-optimizer";
-import { ObjectHashEquals, first, nonNull } from "../../utils/index";
-import { MapKeyToValue } from "../../utils/map-key-to-value";
-import { CFGNode, CFGEdge, CFGGroup, CFGNodeOrGroup } from "./cfg";
+import { DState, EPSILON } from "../../automaton/state.ts";
+import { AnyTransition } from "../../automaton/transitions.ts";
+import { DFA } from "../../optimizer/abstract-optimizer.ts";
+import { ObjectHashEquals, first, nonNull } from "../../utils/index.ts";
+import { MapKeyToValue } from "../../utils/map-key-to-value.ts";
+import { CFGNode, CFGEdge, CFGGroup, CFGNodeOrGroup } from "./cfg.ts";
 
 export type ConditionalBlock = Readonly<{
   type: "conditional_block";

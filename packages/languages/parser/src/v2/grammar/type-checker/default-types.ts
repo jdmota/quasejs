@@ -1,4 +1,4 @@
-import { typeBuilder } from "./types-builder";
+import { typeBuilder } from "./types-builder.ts";
 
 const { int, string, readObject, func } = typeBuilder;
 

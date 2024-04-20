@@ -1,4 +1,4 @@
-import type { Location } from "../runtime/input";
+import type { Location } from "../runtime/input.ts";
 
 export interface ObjectHashEquals {
   hashCode(): number;

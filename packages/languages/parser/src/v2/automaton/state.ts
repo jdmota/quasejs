@@ -2,11 +2,11 @@ import {
   AnyTransition,
   EpsilonTransition,
   RangeTransition,
-} from "./transitions";
-import { MapKeyToSet } from "../utils/map-key-to-set";
-import { MapRangeToSet } from "../utils/map-range-to-set";
-import { MapKeyToValue } from "../utils/map-key-to-value";
-import { MapRangeToValue } from "../utils/map-range-to-value";
+} from "./transitions.ts";
+import { MapKeyToSet } from "../utils/map-key-to-set.ts";
+import { MapRangeToSet } from "../utils/map-range-to-set.ts";
+import { MapKeyToValue } from "../utils/map-key-to-value.ts";
+import { MapRangeToValue } from "../utils/map-range-to-value.ts";
 
 export const EPSILON = new EpsilonTransition();
 

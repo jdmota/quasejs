@@ -1,11 +1,14 @@
-import { State, DState } from "../automaton/state";
+import { State, DState } from "../automaton/state.ts";
 import {
   AnyTransition,
   EpsilonTransition,
   CallTransition,
-} from "../automaton/transitions";
-import { AbstractNfaToDfa, AbstractDfaMinimizer } from "./abstract-optimizer";
-import { FollowInfoDB } from "../grammar/follow-info";
+} from "../automaton/transitions.ts";
+import {
+  AbstractNfaToDfa,
+  AbstractDfaMinimizer,
+} from "./abstract-optimizer.ts";
+import { FollowInfoDB } from "../grammar/follow-info.ts";
 
 const EPSILON = new EpsilonTransition();
 

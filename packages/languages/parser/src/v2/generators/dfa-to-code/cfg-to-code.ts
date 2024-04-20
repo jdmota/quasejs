@@ -1,8 +1,11 @@
-import { DState } from "../../automaton/state";
-import { AnyTransition, ReturnTransition } from "../../automaton/transitions";
-import { DFA } from "../../optimizer/abstract-optimizer";
-import { first, never } from "../../utils/index";
-import { cfgToGroups, CFGGroup } from "./cfg";
+import { DState } from "../../automaton/state.ts";
+import {
+  AnyTransition,
+  ReturnTransition,
+} from "../../automaton/transitions.ts";
+import { DFA } from "../../optimizer/abstract-optimizer.ts";
+import { first, never } from "../../utils/index.ts";
+import { cfgToGroups, CFGGroup } from "./cfg.ts";
 import {
   ParserCFGEdge,
   ParserCFGGroup,
@@ -10,7 +13,7 @@ import {
   ParserCFGNodeOrGroup,
   RegularBlock,
   convertDFAtoCFG,
-} from "./dfa-to-cfg";
+} from "./dfa-to-cfg.ts";
 
 export type CodeBlock =
   | ExpectBlock

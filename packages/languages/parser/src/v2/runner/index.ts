@@ -1,5 +1,5 @@
-import type { Grammar } from "../grammar/grammar";
-import { never } from "../utils/index";
+import type { Grammar } from "../grammar/grammar.ts";
+import { never } from "../utils/index.ts";
 
 type SomeTransition =
   | {

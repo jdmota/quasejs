@@ -1,12 +1,9 @@
 export class RuntimeContext {
   private stack: number[] = [];
 
-  u<T>(id: number, value: T): T {
+  p<T>(id: number, fn: () => T): T {
     this.stack.push(id);
-    return value;
-  }
-
-  o<T>(value: T): T {
+    const value = fn();
     this.stack.pop();
     return value;
   }
@@ -18,7 +15,7 @@ export class RuntimeContext {
       return false;
     }
     while (j >= 0) {
-      if (this.stack[i] != array[j]) {
+      if (this.stack[i] !== array[j]) {
         return false;
       }
       i--;

@@ -12,8 +12,8 @@ import type {
   Assertion,
   Expression,
 } from "regexp-tree/ast";
-import { Frag, Automaton } from "../automaton/automaton";
-import { MIN_CHAR, MAX_CHAR } from "../constants";
+import { Frag, Automaton } from "../automaton/automaton.ts";
+import { MIN_CHAR, MAX_CHAR } from "../constants.ts";
 
 const { parse: parseRegexp } = regexpTree;
 

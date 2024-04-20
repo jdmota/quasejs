@@ -1,6 +1,6 @@
-import { Location } from "../runtime/input";
-import { never, nonNull } from "../utils/index";
-import { AugmentedTokenDeclaration, augmentToken } from "./grammar";
+import { Location } from "../runtime/input.ts";
+import { never, nonNull } from "../utils/index.ts";
+import { AugmentedTokenDeclaration, augmentToken } from "./grammar.ts";
 import {
   AnyRule,
   builder,
@@ -23,7 +23,7 @@ import {
   SeqRule,
   StringRule,
   TokenRules,
-} from "./grammar-builder";
+} from "./grammar-builder.ts";
 
 export const LEXER_RULE_NAME = "$lexer";
 

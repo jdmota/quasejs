@@ -1,6 +1,6 @@
-import { DState } from "../automaton/state";
-import { CallTransition } from "../automaton/transitions";
-import { assertion, nonNull } from "../utils/index";
+import { DState } from "../automaton/state.ts";
+import { CallTransition } from "../automaton/transitions.ts";
+import { assertion, nonNull } from "../utils/index.ts";
 
 export type FollowInfo = {
   readonly rule: string;
@@ -13,7 +13,7 @@ export class FollowInfoDB {
   private follows = new Map<string, FollowInfo[]>();
   private followsById = new Map<number, FollowInfo>();
   private followsByTransition = new Map<CallTransition, FollowInfo>();
-  private uuid = 1;
+  private uuid = 0;
 
   add(
     contextRule: string,

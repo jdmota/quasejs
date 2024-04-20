@@ -1,5 +1,5 @@
-import type { Location } from "../runtime/input";
-import { never } from "../utils/index";
+import type { Location } from "../runtime/input.ts";
+import { never } from "../utils/index.ts";
 
 // Build rules and expressions
 

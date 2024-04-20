@@ -19,16 +19,16 @@ import {
   IntRule,
   BoolRule,
   ExprRule,
-} from "../grammar/grammar-builder";
-import { Grammar } from "../grammar/grammar";
-import { Frag, Automaton } from "../automaton/automaton";
+} from "../grammar/grammar-builder.ts";
+import { Grammar } from "../grammar/grammar.ts";
+import { Frag, Automaton } from "../automaton/automaton.ts";
 import {
   PredicateTransition,
   ActionTransition,
   CallTransition,
   RangeTransition,
   FieldInfo,
-} from "../automaton/transitions";
+} from "../automaton/transitions.ts";
 
 type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
 

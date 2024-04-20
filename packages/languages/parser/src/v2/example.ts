@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { builder } from "./grammar/grammar-builder";
-import { typeBuilder } from "./grammar/type-checker/types-builder";
-import { inferAndCheckTypes, tool } from "./tool";
+import { builder } from "./grammar/grammar-builder.ts";
+import { typeBuilder } from "./grammar/type-checker/types-builder.ts";
+import { inferAndCheckTypes, tool } from "./tool.ts";
 
 const {
   seq,
@@ -310,6 +310,8 @@ const tokenY = token(
 
 console.log("Starting...");
 
+console.time("BENCHMARK");
+
 const result = tool({
   name: "my_grammar",
   ruleDecls: [
@@ -346,12 +348,14 @@ const result = tool({
   },
 });
 
+console.timeEnd("BENCHMARK");
+
 if (result) {
   const { types } = inferAndCheckTypes(result.grammar);
   fs.writeFileSync(
-    path.join(import.meta.dirname, "example.gen.js"),
+    path.join(import.meta.dirname, "example.gen.mjs"),
     result.code
   );
-  fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.ts"), types);
+  fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
   console.log();
 }

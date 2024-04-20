@@ -1,4 +1,4 @@
-import { equals, ObjectHashEquals } from "./index";
+import { equals, ObjectHashEquals } from "./index.ts";
 
 type MapKey = ObjectHashEquals | null;
 

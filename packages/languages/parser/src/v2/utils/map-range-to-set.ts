@@ -1,4 +1,4 @@
-import { allAfter, allBefore, Range } from "./range-utils";
+import { allAfter, allBefore, Range } from "./range-utils.ts";
 
 export interface ReadonlySpecialSet<T> {
   [Symbol.iterator](): Iterator<T>;
@@ -9,7 +9,8 @@ export interface SpecialSet<T> extends ReadonlySpecialSet<T> {
 }
 
 type Node<T, S extends SpecialSet<T>> = {
-  range: Range;
+  from: number;
+  to: number;
   value: Omit<S, "add">;
   prev: Node<T, S> | null;
   next: Node<T, S> | null;
@@ -24,7 +25,7 @@ function rangeComparator(
   return a[0] - b[0];
 }
 
-type NewSetFn<T, S extends SpecialSet<T>> = (range: Range) => S;
+type NewSetFn<T, S extends SpecialSet<T>> = (from: number, to: number) => S;
 
 export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
   private head: Node<T, S> | null;
@@ -37,7 +38,7 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
 
   addNotRangeSet(
     set: NotRangeSet,
-    value: Omit<S, "add">,
+    value: ReadonlySpecialSet<T>,
     MIN: number,
     MAX: number
   ) {
@@ -58,9 +59,9 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
     }
   }
 
-  addRange(from: number, to: number, value: Omit<S, "add">) {
+  addRange(from: number, to: number, value: ReadonlySpecialSet<T>) {
     let curr = this.head;
-    let node = this.node({ from, to }, value);
+    let node = this.node(from, to, value);
 
     if (curr == null) {
       this.head = node;
@@ -69,13 +70,13 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
     }
 
     while (true) {
-      if (allBefore(node.range, curr.range)) {
+      if (allBefore(node, curr)) {
         this.insertBefore(node, curr);
         this.size++;
         return;
       }
 
-      if (allAfter(node.range, curr.range)) {
+      if (allAfter(node, curr)) {
         if (curr.next) {
           curr = curr.next;
           continue;
@@ -98,7 +99,7 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
 
       if (right) {
         if (curr.next) {
-          if (allBefore(right.range, curr.next.range)) {
+          if (allBefore(right, curr.next)) {
             this.connect(middle, right);
             this.connect(right, curr.next);
           } else {
@@ -152,46 +153,34 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
     }
   }
 
-  private node(range: Range, value: Omit<S, "add">): Node<T, S> {
-    return {
-      range,
-      value,
-      prev: null,
-      next: null,
-    };
-  }
-
   private intersection(current: Node<T, S>, newNode: Node<T, S>) {
-    const a = current.range;
-    const b = newNode.range;
-
     let left = null;
     let right = null;
 
     // Left
-    if (a.from !== b.from) {
-      left = this.nodeWithClone(
-        Math.min(a.from, b.from),
-        Math.max(a.from, b.from) - 1,
-        a.from < b.from ? current.value : newNode.value
+    if (current.from !== newNode.from) {
+      left = this.node(
+        Math.min(current.from, newNode.from),
+        Math.max(current.from, newNode.from) - 1,
+        current.from < newNode.from ? current.value : newNode.value
       );
     }
 
     // Middle (intersection)
 
-    const middle = this.nodeWithClone(
-      Math.max(a.from, b.from),
-      Math.min(a.to, b.to),
+    const middle = this.node(
+      Math.max(current.from, newNode.from),
+      Math.min(current.to, newNode.to),
       current.value,
       newNode.value
     );
 
     // Right
-    if (a.to !== b.to) {
-      right = this.nodeWithClone(
-        Math.min(a.to, b.to) + 1,
-        Math.max(a.to, b.to),
-        a.to < b.to ? newNode.value : current.value
+    if (current.to !== newNode.to) {
+      right = this.node(
+        Math.min(current.to, newNode.to) + 1,
+        Math.max(current.to, newNode.to),
+        current.to < newNode.to ? newNode.value : current.value
       );
     }
 
@@ -202,22 +191,28 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
     };
   }
 
-  private nodeWithClone(
+  private node(
     from: number,
     to: number,
-    value: Omit<S, "add">,
-    newValue?: Omit<S, "add">
-  ) {
-    const range: Range = { from, to };
-    return this.node(range, this.clone(range, value, newValue));
+    value: ReadonlySpecialSet<T>,
+    newValue?: ReadonlySpecialSet<T>
+  ): Node<T, S> {
+    return {
+      from,
+      to,
+      value: this.clone(from, to, value, newValue),
+      prev: null,
+      next: null,
+    };
   }
 
   private clone(
-    range: Range,
-    value: Omit<S, "add">,
-    newValue?: Omit<S, "add">
+    from: number,
+    to: number,
+    value: ReadonlySpecialSet<T>,
+    newValue?: ReadonlySpecialSet<T>
   ): Omit<S, "add"> {
-    const clone = this.newSet(range);
+    const clone = this.newSet(from, to);
     for (const v of value) {
       clone.add(v);
     }
@@ -232,7 +227,7 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
   importFrom(data: MapRangeToSpecialSet<T, S>) {
     let current = data.head;
     while (current) {
-      this.addRange(current.range.from, current.range.to, current.value);
+      this.addRange(current.from, current.to, current.value);
       current = current.next;
     }
   }
@@ -240,7 +235,7 @@ export class MapRangeToSpecialSet<T, S extends SpecialSet<T>> {
   *[Symbol.iterator]() {
     let current = this.head;
     while (current) {
-      yield [current.range, current.value] as const;
+      yield [{ from: current.from, to: current.to }, current.value] as const;
       current = current.next;
     }
   }

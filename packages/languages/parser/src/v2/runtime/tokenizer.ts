@@ -1,7 +1,7 @@
-import { RuntimeContext } from "./context";
-import { error } from "./error";
-import { Position, Location, Input } from "./input";
-import { Stream } from "./stream";
+import { RuntimeContext } from "./context.ts";
+import { error } from "./error.ts";
+import { Position, Location, Input } from "./input.ts";
+import { Stream } from "./stream.ts";
 
 export type Token = Readonly<{
   id: number;
@@ -58,7 +58,7 @@ export abstract class Tokenizer<T> extends Stream<Token> {
 
   protected override $next(): Token {
     while (true) {
-      const token = this.ctx.u(-1, this.token$lexer());
+      const token = this.token$lexer();
       const channels = this.idToChannels[token.id];
       for (const chan of channels.c) {
         const array = this.channels[chan] || (this.channels[chan] = []);

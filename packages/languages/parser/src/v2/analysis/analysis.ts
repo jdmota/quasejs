@@ -1,19 +1,24 @@
-import { DState } from "../automaton/state";
+import { DState } from "../automaton/state.ts";
 import {
   AnyTransition,
   CallTransition,
   RangeTransition,
   ReturnTransition,
-} from "../automaton/transitions";
-import { MapKeyToValue } from "../utils/map-key-to-value";
-import { MapKeyToSet } from "../utils/map-key-to-set";
-import { assertion, equals, nonNull, ObjectHashEquals } from "../utils/index";
-import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set";
-import { Range } from "../utils/range-utils";
-import { ParserGenerator } from "../generators/generate-parser";
-import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
-import { FollowInfo, FollowInfoDB } from "../grammar/follow-info";
-import { MapSet } from "../utils/map-set";
+} from "../automaton/transitions.ts";
+import { MapKeyToValue } from "../utils/map-key-to-value.ts";
+import { MapKeyToSet } from "../utils/map-key-to-set.ts";
+import {
+  assertion,
+  equals,
+  nonNull,
+  ObjectHashEquals,
+} from "../utils/index.ts";
+import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set.ts";
+import { Range } from "../utils/range-utils.ts";
+import { ParserGenerator } from "../generators/generate-parser.ts";
+import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
+import { FollowInfo, FollowInfoDB } from "../grammar/follow-info.ts";
+import { MapSet } from "../utils/map-set.ts";
 
 type GotoDecision = Readonly<{
   stack: StackFrame;
@@ -23,18 +28,26 @@ type GotoDecision = Readonly<{
 type DecisionNodeNoAdd = Omit<DecisionNode, "add">;
 
 class DecisionNode implements SpecialSet<GotoDecision> {
+  readonly parent: DecisionTree;
   private readonly gotos: MapKeyToSet<AnyTransition, StackFrame>;
   private readonly gotos2: MapKeyToSet<StackFrame, AnyTransition>;
   private nextTree: DecisionTree | null;
+  //
+  readonly range: DecisionTestRange;
+  readonly follow: DecisionTestFollow | null;
 
   constructor(
-    readonly parent: DecisionTree,
-    readonly follow: FollowStack | null,
-    readonly range: Range
+    parent: DecisionTree,
+    follow: DecisionTestFollow | null,
+    range: DecisionTestRange
   ) {
+    this.parent = parent;
     this.gotos = new MapKeyToSet();
     this.gotos2 = new MapKeyToSet();
     this.nextTree = null;
+    this.range = range;
+    assertion(range.ll === parent.ll);
+    this.follow = follow;
   }
 
   getGotos(): readonly AnyTransition[] {
@@ -77,10 +90,7 @@ class DecisionNode implements SpecialSet<GotoDecision> {
   }
 
   toExpr() {
-    return DecisionAnd.create([
-      new DecisionTestRange(this.parent.ll, this.range),
-      this.follow ? new DecisionTestFollow(this.follow) : TRUE,
-    ]);
+    return DecisionAnd.create([this.range, this.follow ?? TRUE]);
   }
 }
 
@@ -165,16 +175,18 @@ export class DecisionTestRange
   implements ObjectHashEquals
 {
   readonly ll: number;
-  readonly range: Range;
+  readonly from: number;
+  readonly to: number;
 
-  constructor(ll: number, range: Range) {
+  constructor(ll: number, from: number, to: number) {
     super();
     this.ll = ll;
-    this.range = range;
+    this.from = from;
+    this.to = to;
   }
 
   hashCode(): number {
-    return this.ll * (this.range.from + this.range.to);
+    return this.ll * (this.from + this.to);
   }
 
   equals(other: unknown): boolean {
@@ -183,28 +195,38 @@ export class DecisionTestRange
     }
     if (other instanceof DecisionTestRange) {
       return (
-        this.ll === other.ll &&
-        this.range.from === other.range.from &&
-        this.range.to === other.range.to
+        this.ll === other.ll && this.from === other.from && this.to === other.to
       );
     }
     return false;
   }
 }
 
+type FlatFollowStack = readonly FollowInfo[];
+
+function flatFollowStack(follow: FollowStack): FlatFollowStack {
+  let f: FollowStack | null = follow;
+  const array = [];
+  do {
+    array.push(f.info);
+    f = f.child;
+  } while (f);
+  return array;
+}
+
 export class DecisionTestFollow
   extends AbstractDecision
   implements ObjectHashEquals
 {
-  readonly follow: FollowStack;
+  readonly follow: readonly FollowInfo[];
 
   constructor(follow: FollowStack) {
     super();
-    this.follow = follow;
+    this.follow = flatFollowStack(follow);
   }
 
   hashCode(): number {
-    return this.follow.hashCode();
+    return this.follow.length;
   }
 
   equals(other: unknown): boolean {
@@ -212,7 +234,10 @@ export class DecisionTestFollow
       return true;
     }
     if (other instanceof DecisionTestFollow) {
-      return equals(this.follow, other.follow);
+      return (
+        this.follow.length === other.follow.length &&
+        this.follow.every((val, idx) => val.id === other.follow[idx].id)
+      );
     }
     return false;
   }
@@ -222,7 +247,7 @@ type DecisionTreeNoAdd = Omit<DecisionTree, "addDecision">;
 
 class DecisionTree {
   private readonly map: MapKeyToValue<
-    FollowStack | null,
+    DecisionTestFollow | null,
     MapRangeToSpecialSet<GotoDecision, DecisionNode>
   >;
   readonly ll: number;
@@ -244,23 +269,28 @@ class DecisionTree {
     gotos: Iterable<AnyTransition>,
     stack: StackFrame
   ) {
+    const dFollow = follow ? new DecisionTestFollow(follow) : null;
+
     this.nonEmpty = true;
     this.map
       .computeIfAbsent(
-        follow,
+        dFollow,
         () =>
           new MapRangeToSpecialSet(
-            range => new DecisionNode(this, follow, range)
+            (from, to) =>
+              new DecisionNode(
+                this,
+                dFollow,
+                new DecisionTestRange(this.ll, from, to)
+              )
           )
       )
-      .addRange(
-        range.from,
-        range.to,
-        new DecisionNode(this, follow, range).add({
+      .addRange(range.from, range.to, [
+        {
           gotos,
           stack,
-        })
-      );
+        },
+      ]);
   }
 
   *iterate(): Iterable<DecisionNodeNoAdd> {
@@ -322,7 +352,6 @@ class InvertedDecisionTree {
 
   add(decision: DecisionNodeNoAdd) {
     const condition = this.decisionToTest(decision);
-    // assertion(decision.parent.ll === condition.length);
 
     for (const { gotos } of decision) {
       for (const goto of gotos) {
@@ -331,8 +360,7 @@ class InvertedDecisionTree {
     }
 
     this.compatibleWithSwitch &&=
-      condition instanceof DecisionTestRange &&
-      condition.range.from === condition.range.to;
+      condition instanceof DecisionTestRange && condition.from === condition.to;
     this.maxLL = Math.max(this.maxLL, decision.parent.ll);
 
     if (decision.isAmbiguous()) {
@@ -365,7 +393,7 @@ export class FollowStack implements ObjectHashEquals {
   hashCode(): number {
     if (this.cachedHashCode === 0) {
       this.cachedHashCode =
-        this.info.id *
+        (this.info.id + 1) *
         (this.child ? this.child.hashCode() : 1) *
         (this.llPhase + 1);
     }
@@ -415,19 +443,17 @@ class StackFrame implements ObjectHashEquals {
     this.cachedHashCode = 0;
   }
 
-  private isRootOfPhase() {
-    if (this.parent) {
-      return this.parent.llPhase !== this.llPhase;
-    }
-    return true;
-  }
-
   // Was this rule entered at least once in this phase?
   wasPushed(call: string) {
     let s: StackFrame | null = this;
-    while (s && !s.isRootOfPhase()) {
-      if (s.thisRule === call && s.llPhase === this.llPhase) {
-        return true;
+    while (s && s.llPhase === this.llPhase) {
+      // If 's' is in a different phase, all parents are also in different phases
+      if (s.thisRule === call) {
+        // If the parent is in the same phase,
+        // it means this stack is not the root and we can return true
+        // Otherwise, this is the root and we should return false
+        // to allow for the actual first push of this rule in this phase
+        return s.parent ? s.parent.llPhase === s.llPhase : false;
       }
       s = s.parent;
     }
@@ -436,8 +462,9 @@ class StackFrame implements ObjectHashEquals {
 
   private hasSameFollow(info: FollowInfo) {
     let s: FollowStack | null = this.follow;
-    while (s) {
-      if (s.info.id === info.id && s.llPhase === this.llPhase) {
+    while (s && s.llPhase === this.llPhase) {
+      // If 's' is in a different phase, all childs are also in different phases
+      if (s.info.id === info.id) {
         return true;
       }
       s = s.child;

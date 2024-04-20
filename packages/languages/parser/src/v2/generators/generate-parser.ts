@@ -8,7 +8,7 @@ import {
   DecisionTree,
   FALSE,
   FollowStack,
-} from "../analysis/analysis";
+} from "../analysis/analysis.ts";
 import {
   ActionTransition,
   AnyTransition,
@@ -19,18 +19,18 @@ import {
   PredicateTransition,
   RangeTransition,
   ReturnTransition,
-} from "../automaton/transitions";
-import { FollowInfo } from "../grammar/follow-info";
-import { AugmentedDeclaration, Grammar } from "../grammar/grammar";
-import { ExprRule } from "../grammar/grammar-builder";
-import { lines, never } from "../utils/index";
+} from "../automaton/transitions.ts";
+import { FollowInfo } from "../grammar/follow-info.ts";
+import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
+import { ExprRule } from "../grammar/grammar-builder.ts";
+import { lines, never } from "../utils/index.ts";
 import {
   CodeBlock,
   DecisionBlock,
   endsWithFlowBreak,
   ExpectBlock,
-} from "./dfa-to-code/cfg-to-code";
-import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg";
+} from "./dfa-to-code/cfg-to-code.ts";
+import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg.ts";
 
 export class ParserGenerator {
   private readonly grammar: Grammar;
@@ -145,20 +145,12 @@ export class ParserGenerator {
   }
 
   private renderFollowCondition(test: DecisionTestFollow) {
-    let f: FollowStack | null = test.follow;
-    const array = [];
-    do {
-      array.push(this.renderFollowInfo(f.info));
-      f = f.child;
-    } while (f);
+    const array = test.follow.map(info => this.renderFollowInfo(info));
     return `this.ctx.f([${array.join(", ")}])`;
   }
 
   private renderRangeCondition(test: DecisionTestRange) {
-    const {
-      range: { from, to },
-      ll,
-    } = test;
+    const { from, to, ll } = test;
     this.markVar("$ll" + ll);
     return from === to
       ? `$ll${ll} === ${this.renderNum(from)}`
@@ -235,9 +227,9 @@ export class ParserGenerator {
         .map(a => this.renderCode(a))
         .join(", ")})`;
       return this.useStackContext
-        ? `this.ctx.u(${this.renderFollowInfo(
+        ? `this.ctx.p(${this.renderFollowInfo(
             this.analyzer.follows.getByTransition(t)
-          )}, ${code})`
+          )}, () => ${code})`
         : code;
     }
     if (t instanceof ActionTransition) {
@@ -247,9 +239,7 @@ export class ParserGenerator {
       return "/* TODO predicate */";
     }
     if (t instanceof ReturnTransition) {
-      return this.useStackContext
-        ? `return this.ctx.o(${this.renderCode(t.returnCode)})`
-        : `return ${this.renderCode(t.returnCode)}`;
+      return `return ${this.renderCode(t.returnCode)}`;
     }
     if (t instanceof EpsilonTransition) {
       return "/* EPSILON */";
@@ -289,8 +279,8 @@ export class ParserGenerator {
           idx === 0
             ? this.r(`${indent}  `, block)
             : block.type === "empty_block"
-            ? `${indent}  //Ambiguity\n${indent}  // epsilon`
-            : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
+              ? `${indent}  //Ambiguity\n${indent}  // epsilon`
+              : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
         );
         nestedCode = lines(
           nestedBlocksCode.length === 1
@@ -350,7 +340,7 @@ export class ParserGenerator {
               const casesStr = cases.map(
                 c =>
                   `${indent}  case ${this.renderNum(
-                    (c as DecisionTestRange).range.from
+                    (c as DecisionTestRange).from
                   )}:`
               );
               return lines([

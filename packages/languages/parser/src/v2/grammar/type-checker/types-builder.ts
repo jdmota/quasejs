@@ -1,7 +1,7 @@
 // Build grammar types
 
-import { Location } from "../../runtime/input";
-import { assertion, never } from "../../utils/index";
+import { Location } from "../../runtime/input.ts";
+import { assertion, never } from "../../utils/index.ts";
 
 export interface GTypeMap {
   func: GFuncType;

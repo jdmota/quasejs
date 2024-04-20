@@ -1,6 +1,6 @@
-import { Location } from "../runtime/input";
-import { ToolInput } from "../tool";
-import { never } from "../utils/index";
+import { Location } from "../runtime/input.ts";
+import { ToolInput } from "../tool.ts";
+import { never } from "../utils/index.ts";
 import {
   AnyRule,
   Declaration,
@@ -15,15 +15,15 @@ import {
   builder,
   cloneRuleDeclaration,
   cloneTokenDeclaration,
-} from "./grammar-builder";
+} from "./grammar-builder.ts";
 import {
   ExternalCallsCollector,
   FieldsCollector,
   ReferencesCollector,
   TokensCollector,
-} from "./grammar-visitors";
-import { LEXER_RULE_NAME, TokensStore } from "./tokens";
-import { GType } from "./type-checker/types-builder";
+} from "./grammar-visitors.ts";
+import { LEXER_RULE_NAME, TokensStore } from "./tokens.ts";
+import { GType } from "./type-checker/types-builder.ts";
 
 export type GrammarError = Readonly<{
   message: string;
@@ -87,23 +87,14 @@ function augmentToolInput({
   };
 }
 
+const INTERNAL_START_RULE = "$$START$$";
+
 export function createGrammar(options: ToolInput): GrammarOrErrors {
   const errors: GrammarError[] = [];
   const externalCalls = new ExternalCallsCollector();
 
   const { name, startArguments, externalFuncReturns, decls, tokens } =
     augmentToolInput(options);
-
-  // Detect duplicate rules
-  const declarations = new Map<string, AugmentedDeclaration>();
-  for (const rule of decls) {
-    const curr = declarations.get(rule.name);
-    if (curr) {
-      errors.push(err(`Duplicate rule ${rule.name}`, curr.loc, rule.loc));
-    } else {
-      declarations.set(rule.name, rule);
-    }
-  }
 
   // Find start rule
   const startRules = decls.filter(
@@ -122,6 +113,37 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
         start.loc
       )
     );
+  }
+
+  const declarations = new Map<string, AugmentedDeclaration>();
+  const internalStartRule = augmentRule(
+    builder.rule(
+      INTERNAL_START_RULE,
+      builder.seq(
+        builder.field(
+          "$$ret",
+          builder.call(
+            start.name,
+            start.args.map(a => builder.id(a.arg))
+          )
+        ),
+        builder.eof()
+      ),
+      start.args,
+      {},
+      builder.id("$$ret")
+    )
+  );
+  declarations.set(INTERNAL_START_RULE, internalStartRule);
+
+  // Detect duplicate rules
+  for (const rule of decls) {
+    const curr = declarations.get(rule.name);
+    if (curr) {
+      errors.push(err(`Duplicate rule ${rule.name}`, curr.loc, rule.loc));
+    } else {
+      declarations.set(rule.name, rule);
+    }
   }
 
   // Check that normal tokens do not have arguments
@@ -287,7 +309,7 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
       name,
       declarations,
       tokens,
-      start,
+      internalStartRule,
       startArguments,
       externalFuncReturns
     );

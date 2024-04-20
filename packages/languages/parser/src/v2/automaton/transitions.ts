@@ -1,6 +1,10 @@
-import type { Location } from "../runtime/input";
-import { sameArgs, sameAssignable, ExprRule } from "../grammar/grammar-builder";
-import { intersect } from "../utils/range-utils";
+import type { Location } from "../runtime/input.ts";
+import {
+  sameArgs,
+  sameAssignable,
+  ExprRule,
+} from "../grammar/grammar-builder.ts";
+import { intersect } from "../utils/range-utils.ts";
 
 export type AnyTransition =
   | EpsilonTransition

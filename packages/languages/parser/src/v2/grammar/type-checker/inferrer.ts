@@ -1,4 +1,9 @@
-import { AugmentedDeclaration, Grammar, GrammarError, err } from "../grammar";
+import {
+  AugmentedDeclaration,
+  Grammar,
+  GrammarError,
+  err,
+} from "../grammar.ts";
 import {
   RuleMap,
   CallRule,
@@ -19,12 +24,12 @@ import {
   ObjectRule,
   IntRule,
   BoolRule,
-} from "../grammar-builder";
-import { assertion, nonNull } from "../../utils/index";
-import { GType, RecursiveTypeCreator, typeBuilder } from "./types-builder";
-import { runtimeFuncs, runtimeTypes } from "./default-types";
-import { isSub } from "./subtyping";
-import { typeFormatter } from "./types-formatter";
+} from "../grammar-builder.ts";
+import { assertion, nonNull } from "../../utils/index.ts";
+import { GType, RecursiveTypeCreator, typeBuilder } from "./types-builder.ts";
+import { runtimeFuncs, runtimeTypes } from "./default-types.ts";
+import { isSub } from "./subtyping.ts";
+import { typeFormatter } from "./types-formatter.ts";
 
 type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pair: T, node: RuleMap[key]) => void;
@@ -51,8 +56,8 @@ class Store {
     return typeof name === "string"
       ? name
       : name.type === "id"
-      ? name.id
-      : this.t.genId(name);
+        ? name.id
+        : this.t.genId(name);
   }
 
   read(name: AnyRule | string) {

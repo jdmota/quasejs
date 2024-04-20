@@ -1,5 +1,5 @@
-import { MapSet } from "../../utils/map-set";
-import { GType } from "./types-builder";
+import { MapSet } from "../../utils/map-set.ts";
+import { GType } from "./types-builder.ts";
 
 export function isSub(a: GType, b: GType) {
   return isSubtype(new MapSet(), a, b);

@@ -1,6 +1,9 @@
-import { Grammar } from "../grammar/grammar";
-import { TokenDeclaration, RuleDeclaration } from "../grammar/grammar-builder";
-import { lines } from "../utils/index";
+import { Grammar } from "../grammar/grammar.ts";
+import {
+  TokenDeclaration,
+  RuleDeclaration,
+} from "../grammar/grammar-builder.ts";
+import { lines } from "../utils/index.ts";
 
 export function generateAll(
   grammar: Grammar,
@@ -39,9 +42,7 @@ export function generateAll(
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input, external);`,
     `  const parser = new GrammarParser(tokenizer, external);`,
-    `  return parser.ctx.u(-1, ${`parser.rule${
-      grammar.startRule.name
-    }(${grammar.startRule.args.map(a => `$${a.arg}`).join(", ")})`});`,
+    `  return ${`parser.rule${grammar.startRule.name}(${grammar.startRule.args.map(a => `$${a.arg}`).join(", ")})`};`,
     `}\n`,
   ]);
 }

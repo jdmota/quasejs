@@ -1,6 +1,6 @@
-import { nonNull } from "../utils/index";
-import { error } from "./error";
-import { Stream } from "./stream";
+import { nonNull } from "../utils/index.ts";
+import { error } from "./error.ts";
+import { Stream } from "./stream.ts";
 
 export type Position = Readonly<{
   pos: number;

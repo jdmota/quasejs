@@ -1,4 +1,4 @@
-import { Position } from "./input";
+import { Position } from "./input.ts";
 
 export function positionToString(pos: Position) {
   return `${pos.line}:${pos.column}`;

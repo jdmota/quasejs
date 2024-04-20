@@ -7,20 +7,20 @@ import {
   TokenRules,
   CallRule,
   builder,
-} from "../grammar/grammar-builder";
-import { AugmentedTokenDeclaration, Grammar } from "../grammar/grammar";
-import { Frag, Automaton } from "../automaton/automaton";
+} from "../grammar/grammar-builder.ts";
+import { AugmentedTokenDeclaration, Grammar } from "../grammar/grammar.ts";
+import { Frag, Automaton } from "../automaton/automaton.ts";
 import {
   CallTransition,
   ReturnTransition,
   RangeTransition,
   ActionTransition,
   FieldInfo,
-} from "../automaton/transitions";
-import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp";
-import { Location } from "../../runtime/tokenizer";
-import { never, assertion } from "../utils/index";
-import { AbstractFactory } from "./abstract-factory";
+} from "../automaton/transitions.ts";
+import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp.ts";
+import { Location } from "../../runtime/tokenizer.ts";
+import { never, assertion } from "../utils/index.ts";
+import { AbstractFactory } from "./abstract-factory.ts";
 
 export class FactoryToken extends AbstractFactory {
   readonly rule: TokenDeclaration;

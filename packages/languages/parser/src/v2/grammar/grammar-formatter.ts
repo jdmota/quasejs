@@ -18,7 +18,7 @@ import {
   ObjectRule,
   IntRule,
   BoolRule,
-} from "./grammar-builder";
+} from "./grammar-builder.ts";
 
 type IGrammarFormatter = {
   [key in keyof RuleMap]: (node: RuleMap[key]) => string;

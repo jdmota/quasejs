@@ -1,4 +1,4 @@
-import { parse } from "./example.gen";
+import { parse } from "./example.gen.mjs";
 
 const ast = parse(
   {

@@ -1,26 +1,29 @@
-import { Analyzer } from "./analysis/analysis";
-import { Automaton, Frag } from "./automaton/automaton";
-import { DState } from "./automaton/state";
-import { FactoryRule } from "./factories/factory-rule";
-import { FactoryToken } from "./factories/factory-token";
-import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code";
-import { ParserGenerator } from "./generators/generate-parser";
+import { Analyzer } from "./analysis/analysis.ts";
+import { Automaton, Frag } from "./automaton/automaton.ts";
+import { DState } from "./automaton/state.ts";
+import { FactoryRule } from "./factories/factory-rule.ts";
+import { FactoryToken } from "./factories/factory-token.ts";
+import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code.ts";
+import { ParserGenerator } from "./generators/generate-parser.ts";
 import {
   AugmentedRuleDeclaration,
   AugmentedTokenDeclaration,
   createGrammar,
   Grammar,
-} from "./grammar/grammar";
-import { RuleDeclaration, TokenDeclaration } from "./grammar/grammar-builder";
-import { DFA } from "./optimizer/abstract-optimizer";
-import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer";
-import { locSuffix } from "./utils/index";
-import { generateAll } from "./generators/generate-all";
-import { FollowInfoDB } from "./grammar/follow-info";
-import { GType, typeBuilder } from "./grammar/type-checker/types-builder";
-import { TypesInferrer } from "./grammar/type-checker/inferrer";
-import { runtimeTypes } from "./grammar/type-checker/default-types";
-import { typeFormatter } from "./grammar/type-checker/types-formatter";
+} from "./grammar/grammar.ts";
+import {
+  RuleDeclaration,
+  TokenDeclaration,
+} from "./grammar/grammar-builder.ts";
+import { DFA } from "./optimizer/abstract-optimizer.ts";
+import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer.ts";
+import { locSuffix } from "./utils/index.ts";
+import { generateAll } from "./generators/generate-all.ts";
+import { FollowInfoDB } from "./grammar/follow-info.ts";
+import { GType, typeBuilder } from "./grammar/type-checker/types-builder.ts";
+import { TypesInferrer } from "./grammar/type-checker/inferrer.ts";
+import { runtimeTypes } from "./grammar/type-checker/default-types.ts";
+import { typeFormatter } from "./grammar/type-checker/types-formatter.ts";
 
 export type ToolInput = {
   readonly name: string;

@@ -1,6 +1,6 @@
-import { first } from "../../utils/index";
-import { BaseComponent, BaseSCC } from "./strongly-connected-components";
-import { BaseTopologicalOrder } from "./topological-order";
+import { first } from "../../utils/index.ts";
+import { BaseComponent, BaseSCC } from "./strongly-connected-components.ts";
+import { BaseTopologicalOrder } from "./topological-order.ts";
 
 export class CFGNode<Code, Decision> {
   readonly code: Code | null; // null is for a dispatch node

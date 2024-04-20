@@ -6,19 +6,19 @@ import {
   RegExpRule,
   EofRule,
   TokenRules,
-} from "../grammar/grammar-builder";
-import { AugmentedRuleDeclaration, Grammar } from "../grammar/grammar";
-import { Frag, Automaton } from "../automaton/automaton";
+} from "../grammar/grammar-builder.ts";
+import { AugmentedRuleDeclaration, Grammar } from "../grammar/grammar.ts";
+import { Frag, Automaton } from "../automaton/automaton.ts";
 import {
   CallTransition,
   ReturnTransition,
   RangeTransition,
   ActionTransition,
   FieldInfo,
-} from "../automaton/transitions";
-import { Location } from "../../runtime/tokenizer";
-import { assertion, never } from "../utils/index";
-import { AbstractFactory } from "./abstract-factory";
+} from "../automaton/transitions.ts";
+import { Location } from "../../runtime/tokenizer.ts";
+import { assertion, never } from "../utils/index.ts";
+import { AbstractFactory } from "./abstract-factory.ts";
 
 export class FactoryRule extends AbstractFactory {
   readonly rule: AugmentedRuleDeclaration;
@@ -102,12 +102,6 @@ export class FactoryRule extends AbstractFactory {
     const loc: Location | null = rule.loc
       ? { start: rule.loc.end, end: rule.loc.end }
       : null;
-
-    if (rule.modifiers.start) {
-      const newEnd = this.automaton.newState();
-      end.addTransition(new RangeTransition(-1, -1, null).setLoc(loc), newEnd);
-      end = newEnd;
-    }
 
     const newEnd = this.automaton.newState();
     end.addTransition(

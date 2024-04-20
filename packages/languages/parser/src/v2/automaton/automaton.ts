@@ -1,5 +1,5 @@
-import { State } from "./state";
-import { AnyTransition } from "./transitions";
+import { State } from "./state.ts";
+import { AnyTransition } from "./transitions.ts";
 
 export type Frag = {
   readonly start: State;

@@ -1,6 +1,6 @@
-import { Tokenizer } from "./tokenizer";
-import { RuntimeContext } from "./context";
-import { Location, Position } from "./input";
+import { Tokenizer } from "./tokenizer.ts";
+import { RuntimeContext } from "./context.ts";
+import { Location, Position } from "./input.ts";
 
 export abstract class Parser<T> {
   readonly ctx: RuntimeContext;
