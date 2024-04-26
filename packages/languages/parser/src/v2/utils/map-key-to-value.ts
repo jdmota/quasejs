@@ -7,7 +7,7 @@ type MapEntry<K, V> = {
   value: V;
 };
 
-const TABLE_SIZE = 10;
+const TABLE_SIZE = 1000;
 
 export class MapKeyToValue<K extends MapKey, V> {
   private table: (MapEntry<K, V>[] | undefined)[];

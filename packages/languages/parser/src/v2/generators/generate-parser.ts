@@ -1,13 +1,18 @@
 import {
   Analyzer,
+  DEBUG_apply,
+  DEBUG_unapply,
+  DecisionTokenTree,
+  DecisionTree,
+} from "../analysis/analysis.ts";
+import {
   DecisionAnd,
   DecisionExpr,
   DecisionOr,
   DecisionTestFollow,
-  DecisionTestRange,
-  DecisionTree,
+  DecisionTestToken,
   FALSE,
-} from "../analysis/analysis.ts";
+} from "../analysis/decision-expr.ts";
 import {
   ActionTransition,
   AnyTransition,
@@ -19,7 +24,6 @@ import {
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions.ts";
-import { FollowInfo } from "../grammar/follow-info.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { ExprRule } from "../grammar/grammar-builder.ts";
 import { lines, never } from "../utils/index.ts";
@@ -120,44 +124,6 @@ export class ParserGenerator {
     return this.renderRangeCondition(expr);
   }
 
-  /*private renderConditionOr(conditions: DecisionOr) {
-    if (conditions.length === 0) {
-      return "false";
-    }
-    return conditions.map(r => this.renderConditionAnd(r)).join(" || ");
-  }
-
-  renderConditionAnd(condition: DecisionAnd) {
-    if (condition.length === 0) {
-      return "true";
-    }
-    if (condition.length === 1) {
-      return this.renderCondition(condition[0]);
-    }
-    return "(" + condition.map(r => this.renderCondition(r)).join(" && ") + ")";
-  }*/
-
-  private renderFollowInfo(info: FollowInfo) {
-    return `${info.id}${
-      this.DEBUG ? `/* ${info.rule} ${info.enterState.id} */` : ""
-    }`;
-  }
-
-  private renderFollowCondition(test: DecisionTestFollow) {
-    const array = test.follow.map(info => this.renderFollowInfo(info));
-    return `this.ctx.f([${array.join(", ")}])`;
-  }
-
-  private renderRangeCondition(test: DecisionTestRange) {
-    const { from, to, ll } = test;
-    this.markVar("$ll" + ll);
-    return from === to
-      ? `$ll${ll} === ${this.renderNum(from)}`
-      : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
-          to
-        )}`;
-  }
-
   private renderNum(num: number) {
     return `${num}${
       this.DEBUG
@@ -167,6 +133,31 @@ export class ParserGenerator {
           )}*/`
         : ""
     }`;
+  }
+
+  private renderFollowInfo(id: number) {
+    const info = this.grammar.follows.getById(id);
+    return `${id}${
+      this.DEBUG ? ` /* ${info.rule} ${info.enterState.id} */` : ""
+    }`;
+  }
+
+  private renderFollowCondition(test: DecisionTestFollow) {
+    const { ff, from, to } = test;
+    this.markVar("$ff" + ff);
+    return from === to
+      ? `$ff${ff} === ${this.renderFollowInfo(from)}`
+      : `${from} <= $ff${ff} && $ff${ff} <= ${to}`;
+  }
+
+  private renderRangeCondition(test: DecisionTestToken) {
+    const { ll, from, to } = test;
+    this.markVar("$ll" + ll);
+    return from === to
+      ? `$ll${ll} === ${this.renderNum(from)}`
+      : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
+          to
+        )}`;
   }
 
   private renderCode(code: ExprRule): string {
@@ -182,7 +173,7 @@ export class ParserGenerator {
         return JSON.stringify(code.string);
       case "object":
         return code.fields.length === 0
-          ? "EMPTY_OBJ"
+          ? "$$EMPTY_OBJ"
           : `{${code.fields
               .map(([k, v]) =>
                 v.type === "id" && v.id === k
@@ -231,7 +222,7 @@ export class ParserGenerator {
         .join(", ")})`;
       return this.useStackContext
         ? `this.ctx.p(${this.renderFollowInfo(
-            this.analyzer.follows.getByTransition(t)
+            this.analyzer.follows.getByTransition(t).id
           )}, () => ${code})`
         : code;
     }
@@ -263,10 +254,20 @@ export class ParserGenerator {
     indent: string,
     tree: DecisionTree
   ) {
-    const ll = tree.ll;
-    let code = `${indent}${this.markVar(
-      "$ll" + ll
-    )} = this.$ll(${ll});\n${indent}`;
+    let code;
+    if (tree instanceof DecisionTokenTree) {
+      const ll = tree.ll;
+      code = `${indent}${this.markVar(
+        "$ll" + ll
+      )} = this.$ll(${ll});\n${indent}`;
+    } else {
+      const ff = tree.ff;
+      code = `${indent}${this.markVar(
+        "$ff" + ff
+      )} = this.ctx.ff(${ff});\n${indent}`;
+    }
+
+    DEBUG_apply(this.rule);
 
     const bodyToIf = new Map<string, DecisionExpr>();
     for (const decision of tree.iterate()) {
@@ -283,7 +284,7 @@ export class ParserGenerator {
             ? this.r(`${indent}  `, block)
             : block.type === "empty_block"
               ? `${indent}  //Ambiguity\n${indent}  // epsilon`
-              : this.r(`${indent}  //Ambiguity\n${indent}  `, block)
+              : `${indent}  //Ambiguity\n` + this.r(`${indent}  `, block)
         );
         nestedCode = lines(
           nestedBlocksCode.length === 1
@@ -297,6 +298,8 @@ export class ParserGenerator {
       const currExpr = bodyToIf.get(nestedCode) ?? FALSE;
       bodyToIf.set(nestedCode, currExpr.or(decision.toExpr()));
     }
+
+    DEBUG_unapply();
 
     const bodyToIfArr = Array.from(bodyToIf);
     for (const [nestedCode, condition] of bodyToIfArr.slice(0, -1)) {
@@ -343,7 +346,7 @@ export class ParserGenerator {
               const casesStr = cases.map(
                 c =>
                   `${indent}  case ${this.renderNum(
-                    (c as DecisionTestRange).from
+                    (c as DecisionTestToken).from
                   )}:`
               );
               return lines([

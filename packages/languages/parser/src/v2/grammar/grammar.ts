@@ -1,6 +1,7 @@
 import { Location } from "../runtime/input.ts";
 import { ToolInput } from "../tool.ts";
 import { never } from "../utils/index.ts";
+import { FollowInfoDB } from "./follow-info.ts";
 import {
   AnyRule,
   Declaration,
@@ -333,6 +334,7 @@ export class Grammar {
   public readonly startRule: AugmentedRuleDeclaration;
   public readonly startArguments: readonly GType[];
   public readonly externalFuncReturns: Readonly<Record<string, GType>>;
+  public readonly follows: FollowInfoDB;
 
   constructor(
     name: string,
@@ -348,6 +350,7 @@ export class Grammar {
     this.startRule = startRule;
     this.startArguments = startArguments;
     this.externalFuncReturns = externalFuncReturns;
+    this.follows = new FollowInfoDB();
   }
 
   getRule(ruleName: string) {

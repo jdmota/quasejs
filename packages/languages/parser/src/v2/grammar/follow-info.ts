@@ -1,6 +1,7 @@
 import { DState } from "../automaton/state.ts";
 import { CallTransition } from "../automaton/transitions.ts";
 import { assertion, nonNull } from "../utils/index.ts";
+import { Range } from "../utils/range-utils.ts";
 
 export type FollowInfo = {
   readonly rule: string;
@@ -14,6 +15,14 @@ export class FollowInfoDB {
   private followsById = new Map<number, FollowInfo>();
   private followsByTransition = new Map<CallTransition, FollowInfo>();
   private uuid = 0;
+
+  getIdRangeByIndex(rule: string, index: number) {
+    let arr = this.get(rule) || [];
+    for (let i = 2; i <= index; i++) {
+      arr = arr.map(info => this.get(info.rule) || []).flat();
+    }
+    return arr.map(info => info.id);
+  }
 
   add(
     contextRule: string,

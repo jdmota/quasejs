@@ -56,11 +56,28 @@ const ruleB = rule(
   seq(
     choice(
       seq(string("A"), repeat(seq(string("B"), string("D")))),
-      seq(string("A"), repeat(seq(string("C"), string("D"))))
+      seq(string("A"), repeat(seq(string("C"), string("D")))),
+      seq(string("A"), repeat(seq(string("O"))))
     )
   ),
   [],
   {},
+  null
+);
+
+const ruleParent = rule(
+  "parent",
+  seq(call("child", []), repeat(string("A"))),
+  [],
+  { _debug: { worthIt: true } },
+  null
+);
+
+const ruleChild = rule(
+  "child",
+  repeat(string("A")),
+  [],
+  { _debug: { worthIt: true } },
   null
 );
 
@@ -318,6 +335,8 @@ const result = tool({
     ruleA,
     ruleB,
     ruleC,
+    ruleParent,
+    ruleChild,
     //ruleD,
     //ruleE,
     ruleF,
@@ -359,3 +378,5 @@ if (result) {
   fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
   console.log();
 }
+
+// yarn n packages/languages/parser/src/v2/example.ts > packages/languages/parser/src/v2/example.txt

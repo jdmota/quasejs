@@ -6,19 +6,42 @@ import {
   ReturnTransition,
 } from "../automaton/transitions.ts";
 import { MapKeyToValue } from "../utils/map-key-to-value.ts";
-import { MapKeyToSet } from "../utils/map-key-to-set.ts";
+import { SpecialSet, MapKeyToSet } from "../utils/map-key-to-set.ts";
 import {
   assertion,
   equals,
   nonNull,
   ObjectHashEquals,
+  unreachable,
 } from "../utils/index.ts";
-import { MapRangeToSpecialSet, SpecialSet } from "../utils/map-range-to-set.ts";
+import { MapRangeToSpecialSet } from "../utils/map-range-to-set.ts";
 import { Range } from "../utils/range-utils.ts";
 import { ParserGenerator } from "../generators/generate-parser.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { FollowInfo, FollowInfoDB } from "../grammar/follow-info.ts";
 import { MapSet } from "../utils/map-set.ts";
+import {
+  DecisionExpr,
+  DecisionTestFollow,
+  DecisionTestToken,
+  FALSE,
+  TRUE,
+  getInFollowStack,
+} from "./decision-expr.ts";
+
+const DEBUG = {
+  worthIt: false,
+};
+
+export function DEBUG_apply(rule: AugmentedDeclaration) {
+  if (rule.modifiers._debug?.worthIt) {
+    DEBUG.worthIt = true;
+  }
+}
+
+export function DEBUG_unapply() {
+  DEBUG.worthIt = false;
+}
 
 type GotoDecision = Readonly<{
   stack: StackFrame;
@@ -33,21 +56,14 @@ class DecisionNode implements SpecialSet<GotoDecision> {
   private readonly gotos2: MapKeyToSet<StackFrame, AnyTransition>;
   private nextTree: DecisionTree | null;
   //
-  readonly range: DecisionTestRange;
-  readonly follow: DecisionTestFollow | null;
+  readonly decision: DecisionExpr;
 
-  constructor(
-    parent: DecisionTree,
-    follow: DecisionTestFollow | null,
-    range: DecisionTestRange
-  ) {
+  constructor(parent: DecisionTree, decision: DecisionExpr) {
     this.parent = parent;
     this.gotos = new MapKeyToSet();
     this.gotos2 = new MapKeyToSet();
     this.nextTree = null;
-    this.range = range;
-    assertion(range.ll === parent.ll);
-    this.follow = follow;
+    this.decision = decision;
   }
 
   getGotos(): readonly AnyTransition[] {
@@ -85,224 +101,64 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return this.nextTree;
   }
 
-  ensureNextTree() {
-    return this.nextTree ?? (this.nextTree = new DecisionTree(this));
+  ensureNextTokenTree() {
+    assertion(!this.nextTree);
+    return (this.nextTree = new DecisionTokenTree(this));
+  }
+
+  ensureNextFollowTree() {
+    assertion(!this.nextTree);
+    return (this.nextTree = new DecisionFollowTree(this));
   }
 
   toExpr() {
-    return DecisionAnd.create([this.range, this.follow ?? TRUE]);
+    return this.decision;
+  }
+
+  toString() {
+    return `(decision ${this.toExpr().toString()} (${this.getGotos()
+      .map(t => t.toString())
+      .join(" ")}))`;
   }
 }
 
-export type DecisionExpr =
-  | DecisionTestRange
-  | DecisionTestFollow
-  | DecisionAnd
-  | DecisionOr;
-
-abstract class AbstractDecision {
-  or(this: DecisionExpr, expr: DecisionExpr): DecisionExpr {
-    return DecisionOr.create([this, expr]);
-  }
-
-  and(this: DecisionExpr, expr: DecisionExpr): DecisionExpr {
-    return DecisionAnd.create([this, expr]);
-  }
-}
-
-abstract class DecisionCompoundExpr
-  extends AbstractDecision
-  implements ObjectHashEquals
-{
-  readonly exprs: readonly DecisionExpr[];
-
-  constructor(exprs: DecisionExpr[]) {
-    super();
-    this.exprs = exprs;
-  }
-
-  hashCode(): number {
-    return this.exprs.length;
-  }
-
-  equals(other: unknown): boolean {
-    if (this === other) {
-      return true;
-    }
-    if (other instanceof DecisionCompoundExpr) {
-      return (
-        this.exprs.length === other.exprs.length &&
-        this.exprs.every((val, idx) => equals(val, other.exprs[idx]))
-      );
-    }
-    return false;
-  }
-}
-
-export class DecisionAnd extends DecisionCompoundExpr {
-  static create(exprs: DecisionExpr[]) {
-    exprs = exprs.flatMap(e => (e instanceof DecisionAnd ? e.exprs : [e]));
-    if (exprs.length === 1) {
-      return exprs[0];
-    }
-    return new DecisionAnd(exprs);
-  }
-
-  override equals(other: unknown): boolean {
-    return other instanceof DecisionAnd && super.equals(other);
-  }
-}
-
-export class DecisionOr extends DecisionCompoundExpr {
-  static create(exprs: DecisionExpr[]) {
-    exprs = exprs.flatMap(e => (e instanceof DecisionOr ? e.exprs : [e]));
-    if (exprs.length === 1) {
-      return exprs[0];
-    }
-    return new DecisionOr(exprs);
-  }
-
-  override equals(other: unknown): boolean {
-    return other instanceof DecisionOr && super.equals(other);
-  }
-}
-
-export const FALSE = DecisionOr.create([]);
-export const TRUE = DecisionAnd.create([]);
-
-export class DecisionTestRange
-  extends AbstractDecision
-  implements ObjectHashEquals
-{
-  readonly ll: number;
-  readonly from: number;
-  readonly to: number;
-
-  constructor(ll: number, from: number, to: number) {
-    super();
-    this.ll = ll;
-    this.from = from;
-    this.to = to;
-  }
-
-  hashCode(): number {
-    return this.ll * (this.from + this.to);
-  }
-
-  equals(other: unknown): boolean {
-    if (this === other) {
-      return true;
-    }
-    if (other instanceof DecisionTestRange) {
-      return (
-        this.ll === other.ll && this.from === other.from && this.to === other.to
-      );
-    }
-    return false;
-  }
-}
-
-type FlatFollowStack = readonly FollowInfo[];
-
-function flatFollowStack(follow: FollowStack): FlatFollowStack {
-  let f: FollowStack | null = follow;
-  const array = [];
-  do {
-    array.push(f.info);
-    f = f.child;
-  } while (f);
-  return array;
-}
-
-export class DecisionTestFollow
-  extends AbstractDecision
-  implements ObjectHashEquals
-{
-  readonly follow: readonly FollowInfo[];
-
-  constructor(follow: FollowStack) {
-    super();
-    this.follow = flatFollowStack(follow);
-  }
-
-  hashCode(): number {
-    return this.follow.length;
-  }
-
-  equals(other: unknown): boolean {
-    if (this === other) {
-      return true;
-    }
-    if (other instanceof DecisionTestFollow) {
-      return (
-        this.follow.length === other.follow.length &&
-        this.follow.every((val, idx) => val.id === other.follow[idx].id)
-      );
-    }
-    return false;
-  }
-}
-
-type DecisionTreeNoAdd = Omit<DecisionTree, "addDecision">;
-
-class DecisionTree {
-  private readonly map: MapKeyToValue<
-    DecisionTestFollow | null,
-    MapRangeToSpecialSet<GotoDecision, DecisionNode>
-  >;
-  readonly ll: number;
+abstract class AbstractDecisionTree {
+  private readonly map: MapRangeToSpecialSet<GotoDecision, DecisionNode>;
   private nonEmpty: boolean;
+  readonly owner: DecisionNode | null;
 
-  constructor(readonly owner: DecisionNode | null) {
-    this.map = new MapKeyToValue();
-    this.ll = owner ? owner.parent.ll + 1 : 1;
+  constructor(
+    owner: DecisionNode | null,
+    fn: (from: number, to: number) => DecisionNode
+  ) {
+    this.owner = owner;
     this.nonEmpty = false;
+    this.map = new MapRangeToSpecialSet(fn);
   }
 
   hasDecisions() {
     return this.nonEmpty;
   }
 
-  addDecision(
-    follow: FollowStack | null,
-    range: Range,
+  protected addRange(
+    from: number,
+    to: number,
     gotos: Iterable<AnyTransition>,
     stack: StackFrame
   ) {
-    const dFollow = follow ? new DecisionTestFollow(follow) : null;
-
     this.nonEmpty = true;
-    this.map
-      .computeIfAbsent(
-        dFollow,
-        () =>
-          new MapRangeToSpecialSet(
-            (from, to) =>
-              new DecisionNode(
-                this,
-                dFollow,
-                new DecisionTestRange(this.ll, from, to)
-              )
-          )
-      )
-      .addRange(range.from, range.to, [
-        {
-          gotos,
-          stack,
-        },
-      ]);
+    this.map.addRange(from, to, [
+      {
+        gotos,
+        stack,
+      },
+    ]);
   }
 
   *iterate(): Iterable<DecisionNodeNoAdd> {
-    for (const [follow, map] of this.map) {
-      for (const [range, decision] of map) {
-        yield decision;
-      }
+    for (const [_, decision] of this.map) {
+      yield decision;
     }
-  }
-
-  [Symbol.iterator]() {
-    return this.map[Symbol.iterator]();
   }
 
   private worthItCache: boolean | null = null;
@@ -319,6 +175,9 @@ class DecisionTree {
       if (decision.getNextTree()?.worthIt()) {
         return true;
       }
+      if (DEBUG.worthIt) {
+        return true;
+      }
     }
     return false;
   }
@@ -328,12 +187,67 @@ class DecisionTree {
   }
 }
 
-export type { DecisionTree, DecisionNodeNoAdd };
+export class DecisionTokenTree extends AbstractDecisionTree {
+  readonly ll: number;
+
+  constructor(owner: DecisionNode | null) {
+    super(
+      owner,
+      (from, to) =>
+        new DecisionNode(this, new DecisionTestToken(this.ll, from, to))
+    );
+    this.ll = owner
+      ? owner.parent instanceof DecisionTokenTree
+        ? owner.parent.ll + 1
+        : unreachable()
+      : 1;
+  }
+
+  addDecision(range: Range, gotos: Iterable<AnyTransition>, stack: StackFrame) {
+    this.addRange(range.from, range.to, gotos, stack);
+  }
+}
+
+export class DecisionFollowTree extends AbstractDecisionTree {
+  readonly ff: number;
+
+  constructor(owner: DecisionNode) {
+    super(
+      owner,
+      (from, to) =>
+        new DecisionNode(this, new DecisionTestFollow(this.ff, from, to))
+    );
+    this.ff =
+      owner?.parent instanceof DecisionFollowTree ? owner.parent.ff + 1 : 1;
+  }
+
+  addDecision(
+    rule: RuleName,
+    followDB: FollowInfoDB,
+    follow: FollowInfo | null,
+    gotos: Iterable<AnyTransition>,
+    stack: StackFrame
+  ) {
+    if (follow) {
+      this.addRange(follow.id, follow.id, gotos, stack);
+    } else {
+      const ids = followDB.getIdRangeByIndex(rule, this.ff);
+      for (const id of ids) {
+        this.addRange(id, id, gotos, stack);
+      }
+    }
+  }
+}
+
+export type DecisionTree = DecisionTokenTree | DecisionFollowTree;
+
+export type DecisionTreeNoAdd = Omit<DecisionTree, "addDecision">;
+
+export type { DecisionNodeNoAdd, FollowStack };
 
 class InvertedDecisionTree {
   private readonly map: MapKeyToValue<AnyTransition, DecisionExpr>;
   compatibleWithSwitch: boolean;
-  maxLL: number;
   ambiguities: Readonly<{
     decision: DecisionNodeNoAdd;
     condition: DecisionExpr;
@@ -342,7 +256,6 @@ class InvertedDecisionTree {
   constructor() {
     this.map = new MapKeyToValue();
     this.compatibleWithSwitch = true;
-    this.maxLL = 0;
     this.ambiguities = [];
   }
 
@@ -360,8 +273,8 @@ class InvertedDecisionTree {
     }
 
     this.compatibleWithSwitch &&=
-      condition instanceof DecisionTestRange && condition.from === condition.to;
-    this.maxLL = Math.max(this.maxLL, decision.parent.ll);
+      condition instanceof DecisionTestToken && condition.from === condition.to;
+    // this.maxLL = Math.max(this.maxLL, decision.parent.ll);
 
     if (decision.isAmbiguous()) {
       this.ambiguities.push({ decision, condition });
@@ -381,12 +294,14 @@ class FollowStack implements ObjectHashEquals {
   readonly info: FollowInfo;
   readonly child: FollowStack | null;
   readonly llPhase: number;
+  readonly size: number;
   private cachedHashCode: number;
 
   constructor(analyzer: Analyzer, child: FollowStack | null, info: FollowInfo) {
     this.info = info;
     this.child = child;
     this.llPhase = analyzer.getLLState();
+    this.size = child ? child.size + 1 : 1;
     this.cachedHashCode = 0;
   }
 
@@ -394,6 +309,7 @@ class FollowStack implements ObjectHashEquals {
     if (this.cachedHashCode === 0) {
       this.cachedHashCode =
         (this.info.id + 1) *
+        this.size *
         (this.child ? this.child.hashCode() : 1) *
         (this.llPhase + 1);
     }
@@ -408,6 +324,7 @@ class FollowStack implements ObjectHashEquals {
       return (
         this.info.id === other.info.id &&
         this.llPhase === other.llPhase &&
+        this.size === other.size &&
         equals(this.child, other.child)
       );
     }
@@ -426,6 +343,7 @@ class StackFrame implements ObjectHashEquals {
   readonly state: DState;
   readonly follow: FollowStack | null;
   readonly llPhase: number;
+  private readonly size: number;
   private cachedHashCode: number;
 
   constructor(
@@ -440,6 +358,7 @@ class StackFrame implements ObjectHashEquals {
     this.state = state;
     this.follow = follow;
     this.llPhase = analyzer.getLLState();
+    this.size = parent ? parent.size + 1 : 1;
     this.cachedHashCode = 0;
   }
 
@@ -535,6 +454,7 @@ class StackFrame implements ObjectHashEquals {
       this.cachedHashCode =
         this.thisRule.length *
         this.state.id *
+        this.size *
         (this.parent ? this.parent.hashCode() : 1) *
         (this.follow ? this.follow.hashCode() : 1) *
         (this.llPhase + 1);
@@ -551,6 +471,7 @@ class StackFrame implements ObjectHashEquals {
         this.thisRule === other.thisRule &&
         this.state === other.state &&
         this.llPhase === other.llPhase &&
+        this.size === other.size &&
         equals(this.parent, other.parent) &&
         equals(this.follow, other.follow)
       );
@@ -565,8 +486,8 @@ class StackFrame implements ObjectHashEquals {
 
 export class Analyzer {
   readonly grammar: Grammar;
-  readonly initialStates: Map<RuleName, DState>;
   readonly follows: FollowInfoDB;
+  readonly initialStates: Map<RuleName, DState>;
   // This value is used to distinguish StackFrame's and FollowStack's
   // generated in different phases of the analysis process.
   // We use this because we do not want to avoid pushing/poping
@@ -576,15 +497,13 @@ export class Analyzer {
   constructor({
     grammar,
     initialStates,
-    follows,
   }: {
     grammar: Grammar;
     initialStates: Map<RuleName, DState>;
-    follows: FollowInfoDB;
   }) {
     this.grammar = grammar;
+    this.follows = grammar.follows;
     this.initialStates = initialStates;
-    this.follows = follows;
     this.llState = 0;
   }
 
@@ -597,7 +516,7 @@ export class Analyzer {
   private ll1(
     start: readonly StackFrame[],
     gotos: Iterable<AnyTransition>,
-    map: DecisionTree
+    map: DecisionTokenTree
   ) {
     const empty = this.emptyRules;
     const delayedReturns = new MapSet<RuleName, StackFrame>();
@@ -630,7 +549,7 @@ export class Analyzer {
               delayedReturns.clearMany(edge.ruleName);
             }
           } else if (edge instanceof RangeTransition) {
-            map.addDecision(stack.follow, edge, gotos, stack.move(this, dest));
+            map.addDecision(edge, gotos, stack.move(this, dest));
           } else {
             next.push(stack.move(this, dest));
           }
@@ -676,12 +595,23 @@ export class Analyzer {
   // If precedences are equal, then associativity is used
   */
 
-  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3) {
+  private readonly cache = new WeakMap<
+    DState,
+    {
+      tree: DecisionTokenTree;
+      inverted: InvertedDecisionTree;
+    }
+  >();
+
+  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 3) {
+    const inCache = this.cache.get(state);
+    if (inCache) return inCache;
+
     // Reset phase
     this.llState = 0;
 
     const stack = new StackFrame(this, null, rule.name, state, null);
-    const ll1 = new DecisionTree(null);
+    const ll1 = new DecisionTokenTree(null);
     const inverted = new InvertedDecisionTree();
 
     this.llState = 1;
@@ -699,7 +629,7 @@ export class Analyzer {
         // If rule.name == calledRule, the push is allowed because we need to enter the rule at least once
         // (to this end we ignore the root).
         // If inside calledRule, we push calledRule again, we interrupt
-        // (because we already crossed the rule's entry once for sure).
+        // (because we already crossed the rule's entry once in this phase for sure).
         // See StackFrame#wasPushed() and StackFrame#push().
         this.ll1(
           [nonNull(stack.move(this, dest).push(this, goto))],
@@ -709,7 +639,7 @@ export class Analyzer {
       } else if (goto instanceof ReturnTransition) {
         this.ll1(stack.pop(this, goto), [goto], ll1);
       } else if (goto instanceof RangeTransition) {
-        ll1.addDecision(stack.follow, goto, [goto], stack.move(this, dest));
+        ll1.addDecision(goto, [goto], stack.move(this, dest));
       } else {
         this.ll1([stack.move(this, dest)], [goto], ll1);
       }
@@ -720,16 +650,58 @@ export class Analyzer {
 
     this.llState = 2;
 
+    let followIndex = 1;
+
     while (prev.length) {
+      const inLLAnalysis = this.llState <= maxLL;
+      const inFFAnalysis = followIndex <= maxFF;
+
       for (const tree of prev) {
         if (tree.hasDecisions()) {
           for (const decision of tree.iterate()) {
-            if (this.llState <= maxLL && decision.isAmbiguous()) {
-              const nextTree = decision.ensureNextTree();
-              for (const { stack, gotos } of decision) {
-                this.ll1([stack], gotos, nextTree);
+            if (decision.isAmbiguous()) {
+              if (inLLAnalysis) {
+                const nextTree = decision.ensureNextTokenTree();
+                assertion(nextTree.ll === this.llState);
+                for (const { stack, gotos } of decision) {
+                  this.ll1([stack], gotos, nextTree);
+                }
+                next.push(nextTree);
+              } else if (inFFAnalysis) {
+                let hasUsefulFollows = false;
+                const nextTree = decision.ensureNextFollowTree();
+                assertion(nextTree.ff === followIndex);
+                for (const { stack, gotos } of decision) {
+                  if (stack.follow && followIndex <= stack.follow.size) {
+                    nextTree.addDecision(
+                      rule.name,
+                      this.follows,
+                      getInFollowStack(stack.follow, followIndex),
+                      gotos,
+                      stack
+                    );
+                    hasUsefulFollows = true;
+                  } else {
+                    nextTree.addDecision(
+                      rule.name,
+                      this.follows,
+                      null,
+                      gotos,
+                      stack
+                    );
+                  }
+                }
+                if (hasUsefulFollows) {
+                  next.push(nextTree);
+                } else {
+                  inverted.add(decision);
+                }
+                // TODO (1) then optimize: what is the minimum things we need to check to make a decision? shortest-path algorithm?
+                // TODO (addressed by 1) there is also ambiguity when the follow stacks are a subset of one another right?
+                // TODO (addressed by 1) what if I dont need the follow stack to disambiguate?
+              } else {
+                inverted.add(decision);
               }
-              next.push(nextTree);
             } else {
               inverted.add(decision);
             }
@@ -743,18 +715,21 @@ export class Analyzer {
       }
       prev = next;
       next = [];
-      this.llState++;
+      if (inLLAnalysis) {
+        this.llState++;
+      } else if (inFFAnalysis) {
+        followIndex++;
+      }
     }
-
-    // TODO what if I dont need the follow stack to disambiguate?
-    // TODO there is also ambiguity when the follow stacks are a subset of one another right?
 
     this.printAmbiguities(rule, state, maxLL, inverted);
 
-    return {
+    const result = {
       tree: ll1,
       inverted,
     };
+    this.cache.set(state, result);
+    return result;
   }
 
   printAmbiguities(

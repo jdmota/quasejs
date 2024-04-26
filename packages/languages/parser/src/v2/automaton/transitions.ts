@@ -5,6 +5,7 @@ import {
   ExprRule,
 } from "../grammar/grammar-builder.ts";
 import { intersect } from "../utils/range-utils.ts";
+import { GrammarFormatter } from "../grammar/grammar-formatter.ts";
 
 export type AnyTransition =
   | EpsilonTransition
@@ -158,7 +159,7 @@ export class ActionTransition extends AssignableTransition {
   }
 
   toString() {
-    return `[Action]`;
+    return `[Action ${new GrammarFormatter().visit(this.code)}]`;
   }
 }
 

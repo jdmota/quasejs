@@ -1,5 +1,13 @@
 import { equals, ObjectHashEquals } from "./index.ts";
 
+export interface ReadonlySpecialSet<T> {
+  [Symbol.iterator](): Iterator<T>;
+}
+
+export interface SpecialSet<T> extends ReadonlySpecialSet<T> {
+  add(value: T): void;
+}
+
 type MapKey = ObjectHashEquals | null;
 
 type MapEntry<K, V> = {
@@ -7,17 +15,17 @@ type MapEntry<K, V> = {
   value: V;
 };
 
-const TABLE_SIZE = 10;
+const TABLE_SIZE = 1000;
 
-export class MapKeyToSet<K extends MapKey, V> {
-  private table: (MapEntry<K, Set<V>>[] | undefined)[];
-  private EMPTY_SET: ReadonlySet<V>;
+type NewSetFn<K, V, S extends SpecialSet<V>> = (key: K) => S;
+
+export class MapKeyToSpecialSet<K extends MapKey, V, S extends SpecialSet<V>> {
+  private table: (MapEntry<K, S>[] | undefined)[];
   size: number;
 
-  constructor() {
+  constructor(readonly newSet: NewSetFn<K, V, S>) {
     this.table = [];
     this.size = 0;
-    this.EMPTY_SET = new Set();
   }
 
   private entry(key: K) {
@@ -32,12 +40,12 @@ export class MapKeyToSet<K extends MapKey, V> {
     };
   }
 
-  get(key: K): ReadonlySet<V> {
+  get(key: K) {
     const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
     }
-    return this.EMPTY_SET;
+    return this.newSet(key);
   }
 
   add(key: K, value: Iterable<V>) {
@@ -47,9 +55,13 @@ export class MapKeyToSet<K extends MapKey, V> {
         entry.value.add(v);
       }
     } else {
+      const set = this.newSet(key);
+      for (const v of value) {
+        set.add(v);
+      }
       list.push({
         key,
-        value: new Set(value),
+        value: set,
       });
       this.size++;
     }
@@ -59,18 +71,18 @@ export class MapKeyToSet<K extends MapKey, V> {
     const { entry, list } = this.entry(key);
     if (entry) {
       entry.value.add(value);
-      return entry.value.size;
     } else {
+      const set = this.newSet(key);
+      set.add(value);
       list.push({
         key,
-        value: new Set([value]),
+        value: set,
       });
       this.size++;
-      return 1;
     }
   }
 
-  *[Symbol.iterator](): IterableIterator<readonly [K, ReadonlySet<V>]> {
+  *[Symbol.iterator](): IterableIterator<readonly [K, Omit<S, "add">]> {
     let idx = 0;
     let listIdx = 0;
     while (idx < this.table.length) {
@@ -85,5 +97,15 @@ export class MapKeyToSet<K extends MapKey, V> {
       idx++;
       listIdx = 0;
     }
+  }
+}
+
+export class MapKeyToSet<K extends MapKey, V> extends MapKeyToSpecialSet<
+  K,
+  V,
+  Set<V>
+> {
+  constructor() {
+    super(() => new Set());
   }
 }

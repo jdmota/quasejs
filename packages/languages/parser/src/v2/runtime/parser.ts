@@ -37,6 +37,10 @@ export abstract class Parser<T> {
     return this.tokenizer.lookahead(n).id;
   }
 
+  $ff(n: number) {
+    return this.ctx.ff(n);
+  }
+
   $err(): never {
     this.tokenizer.$unexpected(
       this.tokenizer.$getPos(),

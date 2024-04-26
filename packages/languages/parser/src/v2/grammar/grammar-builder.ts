@@ -46,6 +46,9 @@ export type Assignables = TokenRules | CallRule | ExprRule;
 
 export type RuleModifiers = {
   readonly start?: boolean;
+  readonly _debug?: {
+    worthIt?: boolean;
+  };
 };
 
 export type RuleDeclaration = {
@@ -95,6 +98,9 @@ rule.arg = ruleArg;
 export type TokenModifiers = {
   readonly type: "normal" | "skip" | "fragment";
   readonly channels?: readonly string[];
+  readonly _debug?: {
+    worthIt?: boolean;
+  };
 };
 
 export type TokenDeclaration = {

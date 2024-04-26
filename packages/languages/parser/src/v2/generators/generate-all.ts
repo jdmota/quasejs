@@ -15,7 +15,7 @@ export function generateAll(
     `import { Tokenizer } from "./runtime/tokenizer";`,
     `import { Parser } from "./runtime/parser";\n`,
     ``,
-    `const EMPTY_OBJ = {};\n`,
+    `const $$EMPTY_OBJ = {};\n`,
     ``,
     `class GrammarTokenizer extends Tokenizer {`,
     `  $getIdToLabel() {`,

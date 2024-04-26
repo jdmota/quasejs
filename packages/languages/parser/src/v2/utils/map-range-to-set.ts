@@ -1,12 +1,5 @@
-import { allAfter, allBefore, Range } from "./range-utils.ts";
-
-export interface ReadonlySpecialSet<T> {
-  [Symbol.iterator](): Iterator<T>;
-}
-
-export interface SpecialSet<T> extends ReadonlySpecialSet<T> {
-  add(value: T): void;
-}
+import { ReadonlySpecialSet, SpecialSet } from "./map-key-to-set.ts";
+import { allAfter, allBefore } from "./range-utils.ts";
 
 type Node<T, S extends SpecialSet<T>> = {
   from: number;

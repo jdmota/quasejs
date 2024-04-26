@@ -19,7 +19,6 @@ import { DFA } from "./optimizer/abstract-optimizer.ts";
 import { DfaMinimizer, NfaToDfa } from "./optimizer/optimizer.ts";
 import { locSuffix } from "./utils/index.ts";
 import { generateAll } from "./generators/generate-all.ts";
-import { FollowInfoDB } from "./grammar/follow-info.ts";
 import { GType, typeBuilder } from "./grammar/type-checker/types-builder.ts";
 import { TypesInferrer } from "./grammar/type-checker/inferrer.ts";
 import { runtimeTypes } from "./grammar/type-checker/default-types.ts";
@@ -49,7 +48,7 @@ export function tool(opts: ToolInput) {
 
   // Init information the analyzer will need
   const initialStates = new Map<string, DState>();
-  const follows = new FollowInfoDB();
+  const follows = grammar.follows;
 
   // Init minimizers
   const nfaToDfa = new NfaToDfa();
@@ -87,7 +86,6 @@ export function tool(opts: ToolInput) {
   const analyzer = new Analyzer({
     grammar,
     initialStates,
-    follows,
   });
 
   // Create code blocks for tokens

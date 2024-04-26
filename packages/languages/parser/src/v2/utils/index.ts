@@ -74,6 +74,10 @@ export function assertion(bool: boolean) {
   }
 }
 
+export function unreachable(): never {
+  throw new Error("Assertion error");
+}
+
 export function nonNull<T>(val: T | undefined | null): T {
   if (val == null) {
     throw new Error("Value is " + val);
