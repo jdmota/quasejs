@@ -1,40 +1,36 @@
-import { State } from "./state.ts";
+import { AbstractNFAState, State } from "./state.ts";
 import { AnyTransition } from "./transitions.ts";
 
-export type Frag = {
-  readonly start: State;
-  readonly end: State;
+export type Frag<S extends AbstractNFAState<S, T>, T> = {
+  readonly start: S;
+  readonly end: S;
 };
 
-export class Automaton {
-  private uuid = 1;
-
-  newFrag(): Frag {
+export abstract class AbstractAutomaton<S extends AbstractNFAState<S, T>, T> {
+  newFrag(): Frag<S, T> {
     return {
       start: this.newState(),
       end: this.newState(),
     };
   }
 
-  newState(): State {
-    return new State(this.uuid++);
-  }
+  abstract newState(): S;
 
-  single(transition: AnyTransition): Frag {
+  single(transition: T): Frag<S, T> {
     const frag = this.newFrag();
     frag.start.addTransition(transition, frag.end);
     return frag;
   }
 
-  empty(): Frag {
+  empty(): Frag<S, T> {
     const frag = this.newFrag();
     frag.start.addEpsilon(frag.end);
     return frag;
   }
 
-  seq(fragments: readonly Frag[]): Frag {
-    let first: State | null = null;
-    let last: State | null = first;
+  seq(fragments: readonly Frag<S, T>[]): Frag<S, T> {
+    let first: S | null = null;
+    let last: S | null = first;
     for (const fragment of fragments) {
       if (last) {
         last.addEpsilon(fragment.start);
@@ -50,7 +46,7 @@ export class Automaton {
     };
   }
 
-  choice(fragments: readonly Frag[]): Frag {
+  choice(fragments: readonly Frag<S, T>[]): Frag<S, T> {
     const frag = this.newFrag();
     for (const fragment of fragments) {
       frag.start.addEpsilon(fragment.start);
@@ -59,7 +55,7 @@ export class Automaton {
     return frag;
   }
 
-  repeat(item: Frag): Frag {
+  repeat(item: Frag<S, T>): Frag<S, T> {
     const frag = this.newFrag();
     frag.start.addEpsilon(item.start);
     item.end.addEpsilon(frag.end);
@@ -70,7 +66,7 @@ export class Automaton {
     return frag;
   }
 
-  repeat1(item: Frag): Frag {
+  repeat1(item: Frag<S, T>): Frag<S, T> {
     const frag = this.newFrag();
     frag.start.addEpsilon(item.start);
     item.end.addEpsilon(frag.end);
@@ -80,7 +76,7 @@ export class Automaton {
     return frag;
   }
 
-  optional(item: Frag): Frag {
+  optional(item: Frag<S, T>): Frag<S, T> {
     const frag = this.newFrag();
     frag.start.addEpsilon(item.start);
     item.end.addEpsilon(frag.end);
@@ -88,5 +84,13 @@ export class Automaton {
     // Optimized ?: just add epsilon-transition from the input to the output
     frag.start.addEpsilon(frag.end);
     return frag;
+  }
+}
+
+export class Automaton extends AbstractAutomaton<State, AnyTransition> {
+  private uuid = 1;
+
+  newState(): State {
+    return new State(this.uuid++);
   }
 }

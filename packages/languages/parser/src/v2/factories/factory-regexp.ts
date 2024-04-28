@@ -14,6 +14,8 @@ import type {
 } from "regexp-tree/ast";
 import { Frag, Automaton } from "../automaton/automaton.ts";
 import { MIN_CHAR, MAX_CHAR } from "../constants.ts";
+import { State } from "../automaton/state.ts";
+import { AnyTransition } from "../automaton/transitions.ts";
 
 const { parse: parseRegexp } = regexpTree;
 
@@ -46,7 +48,11 @@ interface AstClassMap {
 
 type AstClass = keyof AstClassMap;
 type AstNode = AstClassMap[AstClass];
-type Gen = { [key in keyof AstClassMap]: (node: AstClassMap[key]) => Frag };
+type Gen = {
+  [key in keyof AstClassMap]: (
+    node: AstClassMap[key]
+  ) => Frag<State, AnyTransition>;
+};
 
 const WS = [" ", "\t", "\r", "\n", "\v", "\f"].map(c => c.charCodeAt(0));
 
@@ -63,7 +69,7 @@ export class FactoryRegexp implements Gen {
     this.automaton = automaton;
   }
 
-  c(code: number): Frag {
+  c(code: number): Frag<State, AnyTransition> {
     const start = this.automaton.newState();
     const end = this.automaton.newState();
     start.addNumber(code, end);
@@ -125,7 +131,7 @@ export class FactoryRegexp implements Gen {
     return this.gen(group.expression);
   }
 
-  Backreference(_: Backreference): Frag {
+  Backreference(_: Backreference): Frag<State, AnyTransition> {
     throw new Error(`Backreferences are not supported`);
   }
 
@@ -162,7 +168,7 @@ export class FactoryRegexp implements Gen {
     }
   }
 
-  Assertion(_: Assertion): Frag {
+  Assertion(_: Assertion): Frag<State, AnyTransition> {
     throw new Error(`Assertions are not supported`);
   }
 
@@ -173,7 +179,7 @@ export class FactoryRegexp implements Gen {
     return this.gen(node.body);
   }
 
-  gen(node: AstNode | null): Frag {
+  gen(node: AstNode | null): Frag<State, AnyTransition> {
     if (node) {
       return this[node.type](node as any);
     }

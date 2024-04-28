@@ -10,12 +10,26 @@ import { MapRangeToValue } from "../utils/map-range-to-value.ts";
 
 export const EPSILON = new EpsilonTransition();
 
-export class State {
+export abstract class AbstractNFAState<S extends AbstractNFAState<S, T>, T> {
+  abstract readonly id: number;
+  abstract addTransition(transition: T, dest: S): void;
+  abstract addEpsilon(dest: S): void;
+}
+
+export abstract class AbstractDFAState<S extends AbstractDFAState<S, T>, T> {
+  abstract readonly id: number;
+  abstract addTransition(transition: T, dest: S): void;
+  abstract transitionAmount(): number;
+  abstract [Symbol.iterator](): IterableIterator<readonly [T, S]>;
+}
+
+export class State extends AbstractNFAState<State, AnyTransition> {
   readonly id: number;
   readonly mapKeyToSet: MapKeyToSet<AnyTransition, State>;
   readonly mapRangeToSet: MapRangeToSet<State>;
 
   constructor(id: number) {
+    super();
     this.id = id;
     this.mapKeyToSet = new MapKeyToSet();
     this.mapRangeToSet = new MapRangeToSet();
@@ -69,20 +83,21 @@ export class State {
 }
 
 // Deterministic state
-export class DState {
+export class DState extends AbstractDFAState<DState, AnyTransition> {
   readonly id: number;
   readonly transitionsMap: MapKeyToValue<AnyTransition, DState>;
   readonly rangeList: MapRangeToValue<DState>;
   inTransitions: number;
 
   constructor(id: number) {
+    super();
     this.id = id;
     this.transitionsMap = new MapKeyToValue();
     this.rangeList = new MapRangeToValue();
     this.inTransitions = 0;
   }
 
-  toString() {
+  override toString() {
     return `DState{${this.id}}`;
   }
 

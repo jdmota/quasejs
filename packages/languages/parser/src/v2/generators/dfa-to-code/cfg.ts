@@ -27,7 +27,7 @@ export class CFGNode<Code, Decision> {
 
 export class CFGEdge<Code, Decision> {
   start: CFGNode<Code, Decision>;
-  decision: Decision | null; // null is for a dispatch decision
+  decision: Decision | null; // null is for a dispatch decision or empty decision
   dest: CFGNode<Code, Decision>;
   type: "forward" | "back";
   originalDest: CFGNode<Code, Decision> | null;

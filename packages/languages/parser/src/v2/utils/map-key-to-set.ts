@@ -8,9 +8,9 @@ export interface SpecialSet<T> extends ReadonlySpecialSet<T> {
   add(value: T): void;
 }
 
-type MapKey = ObjectHashEquals | null;
+export type MapKey = ObjectHashEquals | null;
 
-type MapEntry<K, V> = {
+export type MapEntry<K, V> = {
   key: K;
   value: V;
 };

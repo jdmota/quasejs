@@ -1,11 +1,5 @@
-import { equals, ObjectHashEquals } from "./index.ts";
-
-type MapKey = ObjectHashEquals | null;
-
-type MapEntry<K, V> = {
-  key: K;
-  value: V;
-};
+import { equals } from "./index.ts";
+import { MapEntry, MapKey } from "./map-key-to-set.ts";
 
 const TABLE_SIZE = 1000;
 

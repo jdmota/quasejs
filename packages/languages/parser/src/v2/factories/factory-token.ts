@@ -16,11 +16,13 @@ import {
   RangeTransition,
   ActionTransition,
   FieldInfo,
+  AnyTransition,
 } from "../automaton/transitions.ts";
 import { FactoryRegexp, regexpToAutomaton } from "./factory-regexp.ts";
 import { Location } from "../../runtime/tokenizer.ts";
 import { never, assertion } from "../utils/index.ts";
 import { AbstractFactory } from "./abstract-factory.ts";
+import { State } from "../automaton/state.ts";
 
 export class FactoryToken extends AbstractFactory {
   readonly rule: TokenDeclaration;
@@ -49,11 +51,14 @@ export class FactoryToken extends AbstractFactory {
     }
   }
 
-  static eof(automaton: Automaton, node: EofRule): Frag {
+  static eof(automaton: Automaton, node: EofRule): Frag<State, AnyTransition> {
     return automaton.single(new RangeTransition(-1, -1, null).setLoc(node.loc));
   }
 
-  static string(automaton: Automaton, node: StringRule): Frag {
+  static string(
+    automaton: Automaton,
+    node: StringRule
+  ): Frag<State, AnyTransition> {
     const start = automaton.newState();
     let end = start;
 
@@ -70,7 +75,10 @@ export class FactoryToken extends AbstractFactory {
     };
   }
 
-  static regexp(automaton: Automaton, node: RegExpRule): Frag {
+  static regexp(
+    automaton: Automaton,
+    node: RegExpRule
+  ): Frag<State, AnyTransition> {
     const factoryRegexp = new FactoryRegexp(automaton);
     return regexpToAutomaton(factoryRegexp, node.regexp);
   }
@@ -91,7 +99,7 @@ export class FactoryToken extends AbstractFactory {
     }
   }
 
-  field(node: FieldRule): Frag {
+  field(node: FieldRule): Frag<State, AnyTransition> {
     const innerRule = node.rule;
     if (
       innerRule.type === "string" ||
@@ -132,19 +140,19 @@ export class FactoryToken extends AbstractFactory {
     }
   }
 
-  string(node: StringRule): Frag {
+  string(node: StringRule): Frag<State, AnyTransition> {
     return FactoryToken.string(this.automaton, node);
   }
 
-  regexp(node: RegExpRule): Frag {
+  regexp(node: RegExpRule): Frag<State, AnyTransition> {
     return FactoryToken.regexp(this.automaton, node);
   }
 
-  eof(node: EofRule): Frag {
+  eof(node: EofRule): Frag<State, AnyTransition> {
     return FactoryToken.eof(this.automaton, node);
   }
 
-  genToken(rule: AugmentedTokenDeclaration): Frag {
+  genToken(rule: AugmentedTokenDeclaration): Frag<State, AnyTransition> {
     let { start, end } = this.gen(rule.rule);
 
     const loc: Location | null = rule.loc

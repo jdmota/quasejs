@@ -111,12 +111,8 @@ class DecisionNode implements SpecialSet<GotoDecision> {
     return (this.nextTree = new DecisionFollowTree(this));
   }
 
-  toExpr() {
-    return this.decision;
-  }
-
   toString() {
-    return `(decision ${this.toExpr().toString()} (${this.getGotos()
+    return `(decision ${this.decision.toString()} (${this.getGotos()
       .map(t => t.toString())
       .join(" ")}))`;
   }
@@ -252,11 +248,15 @@ class InvertedDecisionTree {
     decision: DecisionNodeNoAdd;
     condition: DecisionExpr;
   }>[];
+  maxLL: number;
+  maxFF: number;
 
   constructor() {
     this.map = new MapKeyToValue();
     this.compatibleWithSwitch = true;
     this.ambiguities = [];
+    this.maxLL = 0;
+    this.maxFF = 0;
   }
 
   get(goto: AnyTransition): DecisionExpr {
@@ -274,7 +274,12 @@ class InvertedDecisionTree {
 
     this.compatibleWithSwitch &&=
       condition instanceof DecisionTestToken && condition.from === condition.to;
-    // this.maxLL = Math.max(this.maxLL, decision.parent.ll);
+
+    if (decision.parent instanceof DecisionTokenTree) {
+      this.maxLL = Math.max(this.maxLL, decision.parent.ll);
+    } else {
+      this.maxFF = Math.max(this.maxFF, decision.parent.ff);
+    }
 
     if (decision.isAmbiguous()) {
       this.ambiguities.push({ decision, condition });
@@ -284,7 +289,7 @@ class InvertedDecisionTree {
   private decisionToTest(decision: DecisionNodeNoAdd): DecisionExpr {
     const parent = decision.parent.owner;
     const parentCondition = parent ? this.decisionToTest(parent) : TRUE;
-    return parentCondition.and(decision.toExpr());
+    return parentCondition.and(decision.decision);
   }
 }
 
@@ -696,9 +701,6 @@ export class Analyzer {
                 } else {
                   inverted.add(decision);
                 }
-                // TODO (1) then optimize: what is the minimum things we need to check to make a decision? shortest-path algorithm?
-                // TODO (addressed by 1) there is also ambiguity when the follow stacks are a subset of one another right?
-                // TODO (addressed by 1) what if I dont need the follow stack to disambiguate?
               } else {
                 inverted.add(decision);
               }

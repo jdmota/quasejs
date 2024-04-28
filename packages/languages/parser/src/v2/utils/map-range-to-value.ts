@@ -1,4 +1,4 @@
-type Range = { from: number; to: number };
+import { Range } from "./range-utils.ts";
 
 type Node<T> = {
   range: Range;

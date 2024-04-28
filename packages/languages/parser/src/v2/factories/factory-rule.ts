@@ -15,10 +15,12 @@ import {
   RangeTransition,
   ActionTransition,
   FieldInfo,
+  AnyTransition,
 } from "../automaton/transitions.ts";
 import { Location } from "../../runtime/tokenizer.ts";
 import { assertion, never } from "../utils/index.ts";
 import { AbstractFactory } from "./abstract-factory.ts";
+import { State } from "../automaton/state.ts";
 
 export class FactoryRule extends AbstractFactory {
   readonly rule: AugmentedRuleDeclaration;
@@ -80,23 +82,23 @@ export class FactoryRule extends AbstractFactory {
     }
   }
 
-  field(node: FieldRule): Frag {
+  field(node: FieldRule): Frag<State, AnyTransition> {
     return this.automaton.single(this.assignablesToTransition(node.rule, node));
   }
 
-  string(node: StringRule): Frag {
+  string(node: StringRule): Frag<State, AnyTransition> {
     return this.automaton.single(this.token(node, null));
   }
 
-  regexp(node: RegExpRule): Frag {
+  regexp(node: RegExpRule): Frag<State, AnyTransition> {
     return this.automaton.single(this.token(node, null));
   }
 
-  eof(node: EofRule): Frag {
+  eof(node: EofRule): Frag<State, AnyTransition> {
     return this.automaton.single(this.token(node, null));
   }
 
-  genRule(rule: AugmentedRuleDeclaration): Frag {
+  genRule(rule: AugmentedRuleDeclaration): Frag<State, AnyTransition> {
     let { start, end } = this.gen(rule.rule);
 
     const loc: Location | null = rule.loc

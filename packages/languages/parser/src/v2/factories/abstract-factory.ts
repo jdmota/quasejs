@@ -29,9 +29,13 @@ import {
   CallTransition,
   RangeTransition,
   FieldInfo,
+  AnyTransition,
 } from "../automaton/transitions.ts";
+import { State } from "../automaton/state.ts";
 
-type Gen = { [key in keyof RuleMap]: (node: RuleMap[key]) => Frag };
+type Gen = {
+  [key in keyof RuleMap]: (node: RuleMap[key]) => Frag<State, AnyTransition>;
+};
 
 export abstract class AbstractFactory implements Gen {
   readonly grammar: Grammar;
@@ -54,43 +58,43 @@ export abstract class AbstractFactory implements Gen {
     field: FieldInfo | null
   ): CallTransition | RangeTransition;
 
-  abstract field(node: FieldRule): Frag;
+  abstract field(node: FieldRule): Frag<State, AnyTransition>;
 
-  seq(node: SeqRule): Frag {
+  seq(node: SeqRule): Frag<State, AnyTransition> {
     return this.automaton.seq(node.rules.map(r => this.gen(r)));
   }
 
-  choice(node: ChoiceRule): Frag {
+  choice(node: ChoiceRule): Frag<State, AnyTransition> {
     return this.automaton.choice(node.rules.map(r => this.gen(r)));
   }
 
-  repeat(node: RepeatRule): Frag {
+  repeat(node: RepeatRule): Frag<State, AnyTransition> {
     return this.automaton.repeat(this.gen(node.rule));
   }
 
-  repeat1(node: Repeat1Rule): Frag {
+  repeat1(node: Repeat1Rule): Frag<State, AnyTransition> {
     return this.automaton.repeat1(this.gen(node.rule));
   }
 
-  optional(node: OptionalRule): Frag {
+  optional(node: OptionalRule): Frag<State, AnyTransition> {
     return this.automaton.optional(this.gen(node.rule));
   }
 
-  empty(_: EmptyRule): Frag {
+  empty(_: EmptyRule): Frag<State, AnyTransition> {
     return this.automaton.empty();
   }
 
-  call(node: CallRule): Frag {
+  call(node: CallRule): Frag<State, AnyTransition> {
     return this.automaton.single(this.callTransition(node, null));
   }
 
-  abstract string(node: StringRule): Frag;
+  abstract string(node: StringRule): Frag<State, AnyTransition>;
 
-  abstract regexp(node: RegExpRule): Frag;
+  abstract regexp(node: RegExpRule): Frag<State, AnyTransition>;
 
-  abstract eof(node: EofRule): Frag;
+  abstract eof(node: EofRule): Frag<State, AnyTransition>;
 
-  id(node: IdRule): Frag {
+  id(node: IdRule) {
     return this.automaton.single(this.actionTransition(node, null));
   }
 
@@ -114,13 +118,13 @@ export abstract class AbstractFactory implements Gen {
     return this.automaton.single(this.actionTransition(node, null));
   }
 
-  predicate(node: PredicateRule): Frag {
+  predicate(node: PredicateRule) {
     return this.automaton.single(
       new PredicateTransition(node.code).setLoc(node.loc)
     );
   }
 
-  gen(node: AnyRule): Frag {
+  gen(node: AnyRule): Frag<State, AnyTransition> {
     return this[node.type](node as any);
   }
 }

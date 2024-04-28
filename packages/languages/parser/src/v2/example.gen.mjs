@@ -340,54 +340,58 @@ class GrammarParser extends Parser {
     return $$ret;
   }
   ruleA(arg) {
-    let $ll1, $ll2, $ll3, $startPos=null, B=null, D=[], my_obj=null, C=null, T=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $startPos=null, B=null, D=[], my_obj=null, C=null, T=null, $loc=null;
     $startPos = this.$getPos();
     s5:do{
       s4:do{
         s3:do{
           $ll1 = this.$ll(1);
           if($ll1 === 0 /*#string:O*/){
+            $dd = 1;
           } else if($ll1 === 1 /*#string:A*/){
             $ll2 = this.$ll(2);
             if($ll2 === 0 /*#string:O*/ || $ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
-              B = this.ctx.p(1 /* A 2 */, () => this.ruleB());
-              switch(this.$ll(1)){
-                case 0 /*#string:O*/:
-                  break;
-                case 1 /*#string:A*/:
-                  break s3;
-                case 2 /*#string:B*/:
-                  break s4;
-                default:
-                  this.$err();
-              }
+              $dd = 0;
             } else { //$ll2 === 3 /*#string:C*/
               $ll3 = this.$ll(3);
               if($ll3 === -1 /*#eof*/ || $ll3 === 0 /*#string:O*/ || $ll3 === 1 /*#string:A*/ || $ll3 === 2 /*#string:B*/ || $ll3 === 6 /*#string:F*/ || $ll3 === 7 /*#string:STRING*/){
-                break;
+                $dd = 2;
               } else { //$ll3 === 4 /*#string:D*/
                 throw new Error("Ambiguity");
-                B = this.ctx.p(1 /* A 2 */, () => this.ruleB());
-                switch(this.$ll(1)){
-                  case 0 /*#string:O*/:
-                    break;
-                  case 1 /*#string:A*/:
-                    break s3;
-                  case 2 /*#string:B*/:
-                    break s4;
-                  default:
-                    this.$err();
-                }
+                $dd = 0;
                 //Ambiguity
-                break;
+                $dd = 2;
               }
             }
           } else { //$ll1 === 2 /*#string:B*/
+            $dd = 3;
+          }
+          if($dd === 0){
+            B = this.ctx.p(1 /* A 2 */, () => this.ruleB());
+            switch(this.$ll(1)){
+              case 0 /*#string:O*/:
+                // epsilon
+                break;
+              case 1 /*#string:A*/:
+                break s3;
+              case 2 /*#string:B*/:
+                break s4;
+              default:
+                this.$err();
+            }
+          } else if($dd === 1){
+            // epsilon
+          } else if($dd === 2){
+            break;
+          } else if($dd === 3){
             break s4;
+          } else {
+            this.$err();
           }
           this.$e(0 /*#string:O*/);
           switch(this.$ll(1)){
             case 1 /*#string:A*/:
+              // epsilon
               break;
             case 2 /*#string:B*/:
               break s4;
@@ -446,73 +450,73 @@ class GrammarParser extends Parser {
     return {o: my_obj, b: B, c: C, d: D, t: T, external: this.external.externalCall(my_obj, C), $loc};
   }
   ruleB() {
-    let $ll1, $ll2, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     this.$e(1 /*#string:A*/);
     $ll1 = this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
       $ll2 = this.$ll(2);
       if($ll2 === 0 /*#string:O*/){
-        while(1){
-          this.$e(0 /*#string:O*/);
-          $ll1 = this.$ll(1);
-          if($ll1 === 0 /*#string:O*/){
-            $ll2 = this.$ll(2);
-            if($ll2 === 0 /*#string:O*/){
-              continue;
-            } else { //$ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/
-              throw new Error("Ambiguity");
-              break;
-              //Ambiguity
-              continue;
-            }
-          } else { //$ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/
-            break;
-          }
-        }
+        $dd = 1;
       } else { //$ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/
         throw new Error("Ambiguity");
+        $dd = 0;
         //Ambiguity
-        while(1){
-          this.$e(0 /*#string:O*/);
-          $ll1 = this.$ll(1);
-          if($ll1 === 0 /*#string:O*/){
-            $ll2 = this.$ll(2);
-            if($ll2 === 0 /*#string:O*/){
-              continue;
-            } else { //$ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/
-              throw new Error("Ambiguity");
-              break;
-              //Ambiguity
-              continue;
-            }
-          } else { //$ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/
-            break;
-          }
-        }
+        $dd = 1;
       }
     } else if($ll1 === 1 /*#string:A*/){
+      $dd = 0;
     } else if($ll1 === 2 /*#string:B*/){
       $ll2 = this.$ll(2);
       if($ll2 === 3 /*#string:C*/){
+        $dd = 0;
       } else { //$ll2 === 4 /*#string:D*/
-        while(1){
-          this.$e(2 /*#string:B*/);
-          this.$e(4 /*#string:D*/);
-          $ll1 = this.$ll(1);
-          if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/){
-            break;
-          } else { //$ll1 === 2 /*#string:B*/
-            $ll2 = this.$ll(2);
-            if($ll2 === 3 /*#string:C*/){
-              break;
-            } else { //$ll2 === 4 /*#string:D*/
-              continue;
-            }
-          }
-        }
+        $dd = 2;
       }
     } else { //$ll1 === 3 /*#string:C*/
+      $dd = 3;
+    }
+    if($dd === 0){
+      // epsilon
+    } else if($dd === 1){
+      while(1){
+        this.$e(0 /*#string:O*/);
+        $ll1 = this.$ll(1);
+        if($ll1 === 0 /*#string:O*/){
+          $ll2 = this.$ll(2);
+          if($ll2 === 0 /*#string:O*/){
+            $dd = 1;
+          } else { //$ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/
+            throw new Error("Ambiguity");
+            $dd = 0;
+            //Ambiguity
+            $dd = 1;
+          }
+        } else { //$ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/
+          $dd = 0;
+        }
+        if($dd === 0){
+          break;
+        } else if($dd === 1){
+          continue;
+        } else {
+          this.$err();
+        }
+      }
+    } else if($dd === 2){
+      while(1){
+        this.$e(2 /*#string:B*/);
+        this.$e(4 /*#string:D*/);
+        $ll1 = this.$ll(1); $ll2 = this.$ll(2); 
+        if(($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/ || ($ll1 === 2 /*#string:B*/ && $ll2 === 3 /*#string:C*/))){
+          break;
+        } else if(($ll1 === 2 /*#string:B*/ && $ll2 === 4 /*#string:D*/)){
+          continue;
+        } else {
+          this.$err();
+        }
+      }
+    } else if($dd === 3){
       l3:while(1){
         this.$e(3 /*#string:C*/);
         this.$e(4 /*#string:D*/);
@@ -527,6 +531,8 @@ class GrammarParser extends Parser {
             this.$err();
         }
       }
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
@@ -568,7 +574,7 @@ class GrammarParser extends Parser {
     }
   }
   rulechild() {
-    let $ll1, $ll2, $ll3, $ff1, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     while(1){
       $ll1 = this.$ll(1);
@@ -580,14 +586,21 @@ class GrammarParser extends Parser {
             $ff1 = this.ctx.ff(1);
             { //$ff1 === 4 /* parent 2 */
               throw new Error("Ambiguity");
-              $loc = this.$getLoc($startPos);
-              return {$loc};
+              $dd = 0;
               //Ambiguity
-              this.$e(1 /*#string:A*/);
-              continue;
+              $dd = 1;
             }
           }
         }
+      }
+      if($dd === 0){
+        $loc = this.$getLoc($startPos);
+        return {$loc};
+      } else if($dd === 1){
+        this.$e(1 /*#string:A*/);
+        continue;
+      } else {
+        this.$err();
       }
     }
   }
@@ -633,7 +646,7 @@ class GrammarParser extends Parser {
     return y;
   }
   ruleTricky1() {
-    let $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     do{
       $ll1 = this.$ll(1);
@@ -641,55 +654,11 @@ class GrammarParser extends Parser {
         $ll2 = this.$ll(2);
         if($ll2 === 1 /*#string:A*/){
           throw new Error("Ambiguity");
-          1;
-          $ll1 = this.$ll(1);
-          if($ll1 === 1 /*#string:A*/){
-            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-          } else { //$ll1 === 2 /*#string:B*/
-            $ll2 = this.$ll(2);
-            { //$ll2 === 2 /*#string:B*/
-              $ll3 = this.$ll(3);
-              { //$ll3 === 2 /*#string:B*/
-                $ff1 = this.ctx.ff(1);
-                if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                  throw new Error("Ambiguity");
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  //Ambiguity
-                  // epsilon
-                } else { //$ff1 === 8 /* Tricky1 10 */
-                  $ff2 = this.ctx.ff(2);
-                  if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                    throw new Error("Ambiguity");
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                    //Ambiguity
-                    // epsilon
-                  } else { //$ff2 === 8 /* Tricky1 10 */
-                    $ff3 = this.ctx.ff(3);
-                    if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                      throw new Error("Ambiguity");
-                      this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                      //Ambiguity
-                      // epsilon
-                    } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                      this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                    }
-                  }
-                }
-              }
-            }
-          }
+          $dd = 0;
           //Ambiguity
-          2;
-          this.$e(1 /*#string:A*/);
-          this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-          20;
-          break;
+          $dd = 1;
           //Ambiguity
-          3;
-          this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-          this.$e(2 /*#string:B*/);
-          30;
-          break;
+          $dd = 2;
         } else { //$ll2 === 2 /*#string:B*/
           $ll3 = this.$ll(3);
           { //$ll3 === 2 /*#string:B*/
@@ -697,300 +666,60 @@ class GrammarParser extends Parser {
             if($ff1 === 6 /* Tricky1 3 */){
               $ff2 = this.ctx.ff(2);
               if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 29 /* TrickyAfterEmpty 6 */){
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else if($ff2 === 7 /* Tricky1 8 */){
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 29 /* TrickyAfterEmpty 6 */){
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 8 /* Tricky1 10 */
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  2;
-                  this.$e(1 /*#string:A*/);
-                  this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-                  20;
-                  break;
+                  $dd = 1;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               } else { //$ff2 === 8 /* Tricky1 10 */
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                } else { //$ll1 === 2 /*#string:B*/
-                  $ll2 = this.$ll(2);
-                  { //$ll2 === 2 /*#string:B*/
-                    $ll3 = this.$ll(3);
-                    { //$ll3 === 2 /*#string:B*/
-                      $ff1 = this.ctx.ff(1);
-                      if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff1 === 8 /* Tricky1 10 */
-                        $ff2 = this.ctx.ff(2);
-                        if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff2 === 8 /* Tricky1 10 */
-                          $ff3 = this.ctx.ff(3);
-                          if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                $dd = 0;
                 //Ambiguity
-                2;
-                this.$e(1 /*#string:A*/);
-                this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-                20;
-                break;
+                $dd = 1;
                 //Ambiguity
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               }
             } else if($ff1 === 7 /* Tricky1 8 */){
               $ff2 = this.ctx.ff(2);
               if($ff2 === 6 /* Tricky1 3 */){
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 29 /* TrickyAfterEmpty 6 */){
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 8 /* Tricky1 10 */
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  2;
-                  this.$e(1 /*#string:A*/);
-                  this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-                  20;
-                  break;
+                  $dd = 1;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               } else if($ff2 === 7 /* Tricky1 8 */ || $ff2 === 29 /* TrickyAfterEmpty 6 */){
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else { //$ff2 === 8 /* Tricky1 10 */
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                } else { //$ll1 === 2 /*#string:B*/
-                  $ll2 = this.$ll(2);
-                  { //$ll2 === 2 /*#string:B*/
-                    $ll3 = this.$ll(3);
-                    { //$ll3 === 2 /*#string:B*/
-                      $ff1 = this.ctx.ff(1);
-                      if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff1 === 8 /* Tricky1 10 */
-                        $ff2 = this.ctx.ff(2);
-                        if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff2 === 8 /* Tricky1 10 */
-                          $ff3 = this.ctx.ff(3);
-                          if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                $dd = 0;
                 //Ambiguity
-                2;
-                this.$e(1 /*#string:A*/);
-                this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-                20;
-                break;
+                $dd = 1;
                 //Ambiguity
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               }
             } else if($ff1 === 8 /* Tricky1 10 */){
               throw new Error("Ambiguity");
-              1;
-              $ll1 = this.$ll(1);
-              if($ll1 === 1 /*#string:A*/){
-                this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-              } else { //$ll1 === 2 /*#string:B*/
-                $ll2 = this.$ll(2);
-                { //$ll2 === 2 /*#string:B*/
-                  $ll3 = this.$ll(3);
-                  { //$ll3 === 2 /*#string:B*/
-                    $ff1 = this.ctx.ff(1);
-                    if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                      throw new Error("Ambiguity");
-                      this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                      //Ambiguity
-                      // epsilon
-                    } else { //$ff1 === 8 /* Tricky1 10 */
-                      $ff2 = this.ctx.ff(2);
-                      if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff2 === 8 /* Tricky1 10 */
-                        $ff3 = this.ctx.ff(3);
-                        if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              $dd = 0;
               //Ambiguity
-              2;
-              this.$e(1 /*#string:A*/);
-              this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
-              20;
-              break;
+              $dd = 1;
               //Ambiguity
-              3;
-              this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-              this.$e(2 /*#string:B*/);
-              30;
-              break;
+              $dd = 2;
             } else { //$ff1 === 29 /* TrickyAfterEmpty 6 */
-              3;
-              this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-              this.$e(2 /*#string:B*/);
-              30;
-              break;
+              $dd = 2;
             }
           }
         }
@@ -1004,204 +733,36 @@ class GrammarParser extends Parser {
               $ff2 = this.ctx.ff(2);
               if($ff2 === 7 /* Tricky1 8 */){
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                } else { //$ll1 === 2 /*#string:B*/
-                  $ll2 = this.$ll(2);
-                  { //$ll2 === 2 /*#string:B*/
-                    $ll3 = this.$ll(3);
-                    { //$ll3 === 2 /*#string:B*/
-                      $ff1 = this.ctx.ff(1);
-                      if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff1 === 8 /* Tricky1 10 */
-                        $ff2 = this.ctx.ff(2);
-                        if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff2 === 8 /* Tricky1 10 */
-                          $ff3 = this.ctx.ff(3);
-                          if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                $dd = 0;
                 //Ambiguity
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else { //$ff2 === 8 /* Tricky1 10 */
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               }
             } else if($ff1 === 7 /* Tricky1 8 */){
               $ff2 = this.ctx.ff(2);
               if($ff2 === 6 /* Tricky1 3 */){
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                } else { //$ll1 === 2 /*#string:B*/
-                  $ll2 = this.$ll(2);
-                  { //$ll2 === 2 /*#string:B*/
-                    $ll3 = this.$ll(3);
-                    { //$ll3 === 2 /*#string:B*/
-                      $ff1 = this.ctx.ff(1);
-                      if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff1 === 8 /* Tricky1 10 */
-                        $ff2 = this.ctx.ff(2);
-                        if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff2 === 8 /* Tricky1 10 */
-                          $ff3 = this.ctx.ff(3);
-                          if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                $dd = 0;
                 //Ambiguity
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else { //$ff2 === 8 /* Tricky1 10 */
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               }
             } else { //$ff1 === 8 /* Tricky1 10 */
@@ -1209,166 +770,94 @@ class GrammarParser extends Parser {
               if($ff2 === 6 /* Tricky1 3 */){
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 29 /* TrickyAfterEmpty 6 */){
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               } else if($ff2 === 7 /* Tricky1 8 */){
                 $ff3 = this.ctx.ff(3);
                 if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 8 /* Tricky1 10 */){
                   throw new Error("Ambiguity");
-                  1;
-                  $ll1 = this.$ll(1);
-                  if($ll1 === 1 /*#string:A*/){
-                    this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                  } else { //$ll1 === 2 /*#string:B*/
-                    $ll2 = this.$ll(2);
-                    { //$ll2 === 2 /*#string:B*/
-                      $ll3 = this.$ll(3);
-                      { //$ll3 === 2 /*#string:B*/
-                        $ff1 = this.ctx.ff(1);
-                        if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff1 === 8 /* Tricky1 10 */
-                          $ff2 = this.ctx.ff(2);
-                          if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff2 === 8 /* Tricky1 10 */
-                            $ff3 = this.ctx.ff(3);
-                            if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                              throw new Error("Ambiguity");
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                              //Ambiguity
-                              // epsilon
-                            } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                              this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $dd = 0;
                   //Ambiguity
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 } else { //$ff3 === 7 /* Tricky1 8 */ || $ff3 === 29 /* TrickyAfterEmpty 6 */
-                  3;
-                  this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                  this.$e(2 /*#string:B*/);
-                  30;
-                  break;
+                  $dd = 2;
                 }
               } else if($ff2 === 8 /* Tricky1 10 */){
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                } else { //$ll1 === 2 /*#string:B*/
-                  $ll2 = this.$ll(2);
-                  { //$ll2 === 2 /*#string:B*/
-                    $ll3 = this.$ll(3);
-                    { //$ll3 === 2 /*#string:B*/
-                      $ff1 = this.ctx.ff(1);
-                      if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
-                        throw new Error("Ambiguity");
-                        this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                        //Ambiguity
-                        // epsilon
-                      } else { //$ff1 === 8 /* Tricky1 10 */
-                        $ff2 = this.ctx.ff(2);
-                        if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
-                          throw new Error("Ambiguity");
-                          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          //Ambiguity
-                          // epsilon
-                        } else { //$ff2 === 8 /* Tricky1 10 */
-                          $ff3 = this.ctx.ff(3);
-                          if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
-                            throw new Error("Ambiguity");
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                            //Ambiguity
-                            // epsilon
-                          } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
-                            this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                $dd = 0;
                 //Ambiguity
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else { //$ff2 === 29 /* TrickyAfterEmpty 6 */
-                3;
-                this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               }
             }
           }
         }
+      }
+      if($dd === 0){
+        1;
+        $ll1 = this.$ll(1);
+        if($ll1 === 1 /*#string:A*/){
+          $dd = 0;
+        } else { //$ll1 === 2 /*#string:B*/
+          $ll2 = this.$ll(2);
+          { //$ll2 === 2 /*#string:B*/
+            $ll3 = this.$ll(3);
+            { //$ll3 === 2 /*#string:B*/
+              $ff1 = this.ctx.ff(1);
+              if($ff1 === 6 /* Tricky1 3 */ || $ff1 === 7 /* Tricky1 8 */){
+                throw new Error("Ambiguity");
+                $dd = 0;
+                //Ambiguity
+                $dd = 1;
+              } else { //$ff1 === 8 /* Tricky1 10 */
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 3 */ || $ff2 === 7 /* Tricky1 8 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                } else { //$ff2 === 8 /* Tricky1 10 */
+                  $ff3 = this.ctx.ff(3);
+                  if($ff3 === 6 /* Tricky1 3 */ || $ff3 === 7 /* Tricky1 8 */ || $ff3 === 8 /* Tricky1 10 */){
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  } else { //$ff3 === 29 /* TrickyAfterEmpty 6 */
+                    $dd = 0;
+                  }
+                }
+              }
+            }
+          }
+        }
+        if($dd === 0){
+          this.ctx.p(6 /* Tricky1 3 */, () => this.ruleTricky1());
+        } else if($dd === 1){
+          // epsilon
+        } else {
+          this.$err();
+        }
+      } else if($dd === 1){
+        2;
+        this.$e(1 /*#string:A*/);
+        this.ctx.p(7 /* Tricky1 8 */, () => this.ruleTricky1());
+        20;
+        break;
+      } else if($dd === 2){
+        3;
+        this.ctx.p(8 /* Tricky1 10 */, () => this.ruleTricky1());
+        this.$e(2 /*#string:B*/);
+        30;
+        break;
+      } else {
+        this.$err();
       }
       10;
     }while(0);
@@ -1376,27 +865,24 @@ class GrammarParser extends Parser {
     return {$loc};
   }
   ruleTricky2() {
-    let $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, y=null, z=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, y=null, z=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
     if($ll1 === -1 /*#eof*/){
+      $dd = 1;
     } else if($ll1 === 1 /*#string:A*/){
       $ll2 = this.$ll(2);
       if($ll2 === -1 /*#eof*/){
-        this.$e(1 /*#string:A*/);
-        y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+        $dd = 2;
       } else if($ll2 === 1 /*#string:A*/){
         $ll3 = this.$ll(3);
         if($ll3 === -1 /*#eof*/){
-          this.$e(1 /*#string:A*/);
-          y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+          $dd = 2;
         } else { //$ll3 === 1 /*#string:A*/ || $ll3 === 2 /*#string:B*/
           throw new Error("Ambiguity");
-          z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-          this.$e(2 /*#string:B*/);
+          $dd = 0;
           //Ambiguity
-          this.$e(1 /*#string:A*/);
-          y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+          $dd = 2;
         }
       } else { //$ll2 === 2 /*#string:B*/
         $ll3 = this.$ll(3);
@@ -1404,52 +890,40 @@ class GrammarParser extends Parser {
           $ff1 = this.ctx.ff(1);
           if($ff1 === 3 /* A 8 */){
             throw new Error("Ambiguity");
-            z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-            this.$e(2 /*#string:B*/);
+            $dd = 0;
             //Ambiguity
-            this.$e(1 /*#string:A*/);
-            y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+            $dd = 2;
           } else if($ff1 === 9 /* Tricky2 2 */){
-            this.$e(1 /*#string:A*/);
-            y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+            $dd = 2;
           } else { //$ff1 === 10 /* Tricky2 6 */
             $ff2 = this.ctx.ff(2);
             if($ff2 === 3 /* A 8 */){
               throw new Error("Ambiguity");
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
               //Ambiguity
-              this.$e(1 /*#string:A*/);
-              y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+              $dd = 2;
             } else { //$ff2 === 9 /* Tricky2 2 */
-              this.$e(1 /*#string:A*/);
-              y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+              $dd = 2;
             }
           }
         } else { //$ll3 === 2 /*#string:B*/
           $ff1 = this.ctx.ff(1);
           if($ff1 === 3 /* A 8 */){
-            z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-            this.$e(2 /*#string:B*/);
+            $dd = 0;
           } else if($ff1 === 9 /* Tricky2 2 */){
             throw new Error("Ambiguity");
-            z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-            this.$e(2 /*#string:B*/);
+            $dd = 0;
             //Ambiguity
-            this.$e(1 /*#string:A*/);
-            y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+            $dd = 2;
           } else { //$ff1 === 10 /* Tricky2 6 */
             $ff2 = this.ctx.ff(2);
             if($ff2 === 0 /* $$START$$ 2 */ || $ff2 === 3 /* A 8 */ || $ff2 === 10 /* Tricky2 6 */){
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
             } else { //$ff2 === 9 /* Tricky2 2 */
               throw new Error("Ambiguity");
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
               //Ambiguity
-              this.$e(1 /*#string:A*/);
-              y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+              $dd = 2;
             }
           }
         }
@@ -1458,48 +932,44 @@ class GrammarParser extends Parser {
       $ll2 = this.$ll(2);
       if($ll2 === -1 /*#eof*/){
         throw new Error("Ambiguity");
-        z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-        this.$e(2 /*#string:B*/);
+        $dd = 0;
         //Ambiguity
-        // epsilon
+        $dd = 1;
       } else { //$ll2 === 2 /*#string:B*/
         $ll3 = this.$ll(3);
         if($ll3 === -1 /*#eof*/){
           $ff1 = this.ctx.ff(1);
           if($ff1 === 3 /* A 8 */){
-            z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-            this.$e(2 /*#string:B*/);
+            $dd = 0;
           } else if($ff1 === 9 /* Tricky2 2 */){
             $ff2 = this.ctx.ff(2);
             if($ff2 === 3 /* A 8 */){
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
             } else if($ff2 === 9 /* Tricky2 2 */){
+              $dd = 1;
             } else { //$ff2 === 10 /* Tricky2 6 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 3 /* A 8 */){
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
               } else { //$ff3 === 9 /* Tricky2 2 */
+                $dd = 1;
               }
             }
           } else { //$ff1 === 10 /* Tricky2 6 */
             $ff2 = this.ctx.ff(2);
             if($ff2 === 3 /* A 8 */){
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
             } else { //$ff2 === 9 /* Tricky2 2 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 3 /* A 8 */){
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
               } else if($ff3 === 9 /* Tricky2 2 */){
+                $dd = 1;
               } else { //$ff3 === 10 /* Tricky2 6 */
                 throw new Error("Ambiguity");
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
                 //Ambiguity
-                // epsilon
+                $dd = 1;
               }
             }
           }
@@ -1508,31 +978,26 @@ class GrammarParser extends Parser {
           if($ff1 === 9 /* Tricky2 2 */){
             $ff2 = this.ctx.ff(2);
             if($ff2 === 0 /* $$START$$ 2 */ || $ff2 === 3 /* A 8 */){
-              z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-              this.$e(2 /*#string:B*/);
+              $dd = 0;
             } else if($ff2 === 9 /* Tricky2 2 */){
               $ff3 = this.ctx.ff(3);
               if($ff3 === 0 /* $$START$$ 2 */ || $ff3 === 3 /* A 8 */){
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
               } else { //$ff3 === 9 /* Tricky2 2 */ || $ff3 === 10 /* Tricky2 6 */
                 throw new Error("Ambiguity");
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
                 //Ambiguity
-                // epsilon
+                $dd = 1;
               }
             } else { //$ff2 === 10 /* Tricky2 6 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 0 /* $$START$$ 2 */ || $ff3 === 3 /* A 8 */ || $ff3 === 10 /* Tricky2 6 */){
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
               } else { //$ff3 === 9 /* Tricky2 2 */
                 throw new Error("Ambiguity");
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
                 //Ambiguity
-                // epsilon
+                $dd = 1;
               }
             }
           } else { //$ff1 === 10 /* Tricky2 6 */
@@ -1540,38 +1005,45 @@ class GrammarParser extends Parser {
             { //$ff2 === 9 /* Tricky2 2 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 0 /* $$START$$ 2 */ || $ff3 === 3 /* A 8 */){
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
               } else { //$ff3 === 9 /* Tricky2 2 */ || $ff3 === 10 /* Tricky2 6 */
                 throw new Error("Ambiguity");
-                z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
-                this.$e(2 /*#string:B*/);
+                $dd = 0;
                 //Ambiguity
-                // epsilon
+                $dd = 1;
               }
             }
           }
         }
       }
     }
+    if($dd === 0){
+      z = this.ctx.p(9 /* Tricky2 2 */, () => this.ruleTricky2());
+      this.$e(2 /*#string:B*/);
+    } else if($dd === 1){
+      // epsilon
+    } else if($dd === 2){
+      this.$e(1 /*#string:A*/);
+      y = this.ctx.p(10 /* Tricky2 6 */, () => this.ruleTricky2());
+    } else {
+      this.$err();
+    }
     $loc = this.$getLoc($startPos);
     return {y, z, $loc};
   }
   ruleTricky3(arg) {
-    let $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, x=null, y=null, z=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, x=null, y=null, z=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       $ll2 = this.$ll(2);
       if($ll2 === 1 /*#string:A*/){
         throw new Error("Ambiguity");
-        x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+        $dd = 0;
         //Ambiguity
-        z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-        this.$e(2 /*#string:B*/);
+        $dd = 1;
         //Ambiguity
-        this.$e(1 /*#string:A*/);
-        y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+        $dd = 3;
       } else { //$ll2 === 2 /*#string:B*/
         $ll3 = this.$ll(3);
         { //$ll3 === 2 /*#string:B*/
@@ -1579,71 +1051,57 @@ class GrammarParser extends Parser {
           if($ff1 === 11 /* Tricky3 2 */){
             $ff2 = this.ctx.ff(2);
             if($ff2 === 11 /* Tricky3 2 */){
-              z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-              this.$e(2 /*#string:B*/);
+              $dd = 1;
             } else if($ff2 === 12 /* Tricky3 2 */){
               throw new Error("Ambiguity");
-              x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+              $dd = 0;
               //Ambiguity
-              z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-              this.$e(2 /*#string:B*/);
+              $dd = 1;
               //Ambiguity
-              this.$e(1 /*#string:A*/);
-              y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+              $dd = 3;
             } else { //$ff2 === 13 /* Tricky3 6 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 11 /* Tricky3 2 */ || $ff3 === 13 /* Tricky3 6 */){
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
               } else { //$ff3 === 12 /* Tricky3 2 */
                 throw new Error("Ambiguity");
-                x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+                $dd = 0;
                 //Ambiguity
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
                 //Ambiguity
-                this.$e(1 /*#string:A*/);
-                y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+                $dd = 3;
               }
             }
           } else if($ff1 === 12 /* Tricky3 2 */){
             throw new Error("Ambiguity");
-            x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+            $dd = 0;
             //Ambiguity
-            z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-            this.$e(2 /*#string:B*/);
+            $dd = 1;
             //Ambiguity
-            this.$e(1 /*#string:A*/);
-            y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+            $dd = 3;
           } else { //$ff1 === 13 /* Tricky3 6 */
             $ff2 = this.ctx.ff(2);
             if($ff2 === 11 /* Tricky3 2 */){
               $ff3 = this.ctx.ff(3);
               if($ff3 === 11 /* Tricky3 2 */ || $ff3 === 13 /* Tricky3 6 */){
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
               } else { //$ff3 === 12 /* Tricky3 2 */
                 throw new Error("Ambiguity");
-                x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+                $dd = 0;
                 //Ambiguity
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
                 //Ambiguity
-                this.$e(1 /*#string:A*/);
-                y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+                $dd = 3;
               }
             } else if($ff2 === 12 /* Tricky3 2 */){
               throw new Error("Ambiguity");
-              x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+              $dd = 0;
               //Ambiguity
-              z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-              this.$e(2 /*#string:B*/);
+              $dd = 1;
               //Ambiguity
-              this.$e(1 /*#string:A*/);
-              y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+              $dd = 3;
             } else { //$ff2 === 13 /* Tricky3 6 */
-              z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-              this.$e(2 /*#string:B*/);
+              $dd = 1;
             }
           }
         }
@@ -1656,60 +1114,67 @@ class GrammarParser extends Parser {
           $ff1 = this.ctx.ff(1);
           if($ff1 === 11 /* Tricky3 2 */ || $ff1 === 13 /* Tricky3 6 */){
             throw new Error("Ambiguity");
-            x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+            $dd = 0;
             //Ambiguity
-            z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-            this.$e(2 /*#string:B*/);
+            $dd = 1;
             //Ambiguity
-            // epsilon
+            $dd = 2;
           } else { //$ff1 === 12 /* Tricky3 2 */
             $ff2 = this.ctx.ff(2);
             if($ff2 === 11 /* Tricky3 2 */){
               $ff3 = this.ctx.ff(3);
               if($ff3 === 11 /* Tricky3 2 */){
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
               } else { //$ff3 === 12 /* Tricky3 2 */ || $ff3 === 13 /* Tricky3 6 */
                 throw new Error("Ambiguity");
-                x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+                $dd = 0;
                 //Ambiguity
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
                 //Ambiguity
-                // epsilon
+                $dd = 2;
               }
             } else if($ff2 === 12 /* Tricky3 2 */){
               throw new Error("Ambiguity");
-              x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+              $dd = 0;
               //Ambiguity
-              z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-              this.$e(2 /*#string:B*/);
+              $dd = 1;
               //Ambiguity
-              // epsilon
+              $dd = 2;
             } else { //$ff2 === 13 /* Tricky3 6 */
               $ff3 = this.ctx.ff(3);
               if($ff3 === 11 /* Tricky3 2 */ || $ff3 === 12 /* Tricky3 2 */){
                 throw new Error("Ambiguity");
-                x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+                $dd = 0;
                 //Ambiguity
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
                 //Ambiguity
-                // epsilon
+                $dd = 2;
               } else { //$ff3 === 13 /* Tricky3 6 */
-                z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
-                this.$e(2 /*#string:B*/);
+                $dd = 1;
               }
             }
           }
         }
       }
     }
+    if($dd === 0){
+      x = this.ctx.p(11 /* Tricky3 2 */, () => this.ruleTricky3(10));
+    } else if($dd === 1){
+      z = this.ctx.p(12 /* Tricky3 2 */, () => this.ruleTricky3(30));
+      this.$e(2 /*#string:B*/);
+    } else if($dd === 2){
+      // epsilon
+    } else if($dd === 3){
+      this.$e(1 /*#string:A*/);
+      y = this.ctx.p(13 /* Tricky3 6 */, () => this.ruleTricky3(20));
+    } else {
+      this.$err();
+    }
     $loc = this.$getLoc($startPos);
     return {x, y, z, $loc};
   }
   ruleTricky4() {
-    let $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
     if($ll1 === -1 /*#eof*/){
@@ -1718,49 +1183,23 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         if($ll3 === -1 /*#eof*/){
           throw new Error("Ambiguity");
-          this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
-          switch(this.$ll(1)){
-            case -1 /*#eof*/:
-              break;
-            case 2 /*#string:B*/:
-              this.$e(2 /*#string:B*/);
-              break;
-            default:
-              this.$err();
-          }
+          $dd = 0;
           //Ambiguity
-          // epsilon
+          $dd = 1;
         } else { //$ll3 === 2 /*#string:B*/
           $ff1 = this.ctx.ff(1);
           if($ff1 === 14 /* Tricky4 2 */){
             $ff2 = this.ctx.ff(2);
             if($ff2 === 14 /* Tricky4 2 */){
               throw new Error("Ambiguity");
-              this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
-              switch(this.$ll(1)){
-                case -1 /*#eof*/:
-                  break;
-                case 2 /*#string:B*/:
-                  this.$e(2 /*#string:B*/);
-                  break;
-                default:
-                  this.$err();
-              }
+              $dd = 0;
               //Ambiguity
-              // epsilon
+              $dd = 1;
             } else { //$ff2 === 15 /* Tricky4 7 */
-              this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
-              switch(this.$ll(1)){
-                case -1 /*#eof*/:
-                  break;
-                case 2 /*#string:B*/:
-                  this.$e(2 /*#string:B*/);
-                  break;
-                default:
-                  this.$err();
-              }
+              $dd = 0;
             }
           } else { //$ff1 === 15 /* Tricky4 7 */
+            $dd = 1;
           }
         }
       } else { //$ll2 === 2 /*#string:B*/
@@ -1769,37 +1208,25 @@ class GrammarParser extends Parser {
           $ff1 = this.ctx.ff(1);
           if($ff1 === 14 /* Tricky4 2 */){
             throw new Error("Ambiguity");
-            this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
-            switch(this.$ll(1)){
-              case -1 /*#eof*/:
-                break;
-              case 2 /*#string:B*/:
-                this.$e(2 /*#string:B*/);
-                break;
-              default:
-                this.$err();
-            }
+            $dd = 0;
             //Ambiguity
-            // epsilon
+            $dd = 1;
           } else { //$ff1 === 15 /* Tricky4 7 */
-            this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
-            switch(this.$ll(1)){
-              case -1 /*#eof*/:
-                break;
-              case 2 /*#string:B*/:
-                this.$e(2 /*#string:B*/);
-                break;
-              default:
-                this.$err();
-            }
+            $dd = 0;
           }
         }
       }
     } else { //$ll1 === 1 /*#string:A*/
       throw new Error("Ambiguity");
+      $dd = 0;
+      //Ambiguity
+      $dd = 2;
+    }
+    if($dd === 0){
       this.ctx.p(14 /* Tricky4 2 */, () => this.ruleTricky4());
       switch(this.$ll(1)){
         case -1 /*#eof*/:
+          // epsilon
           break;
         case 2 /*#string:B*/:
           this.$e(2 /*#string:B*/);
@@ -1807,9 +1234,13 @@ class GrammarParser extends Parser {
         default:
           this.$err();
       }
-      //Ambiguity
+    } else if($dd === 1){
+      // epsilon
+    } else if($dd === 2){
       this.$e(1 /*#string:A*/);
       this.ctx.p(15 /* Tricky4 7 */, () => this.ruleTricky4());
+    } else {
+      this.$err();
     }
     this.$e(-1 /*#eof*/);
     $loc = this.$getLoc($startPos);
@@ -1837,6 +1268,7 @@ class GrammarParser extends Parser {
         this.ctx.p(17 /* Rec2 2 */, () => this.ruleRec2());
         break;
       case NaN:
+        // epsilon
         break;
       default:
         this.$err();
@@ -1845,23 +1277,27 @@ class GrammarParser extends Parser {
     return 10;
   }
   ruleRec3() {
-    let $startPos=null, $loc=null;
+    let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case 1 /*#string:A*/:
-        this.ctx.p(18 /* Rec3 2 */, () => this.ruleRec3());
-        break;
-      case 1 /*#string:A*/:
-        this.$e(1 /*#string:A*/);
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    { //$ll1 === 1 /*#string:A*/
+      throw new Error("Ambiguity");
+      $dd = 0;
+      //Ambiguity
+      $dd = 1;
+    }
+    if($dd === 0){
+      this.ctx.p(18 /* Rec3 2 */, () => this.ruleRec3());
+    } else if($dd === 1){
+      this.$e(1 /*#string:A*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return 10;
   }
   ruleRecTricky1() {
-    let $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     do{
       $ll1 = this.$ll(1);
@@ -1869,28 +1305,11 @@ class GrammarParser extends Parser {
         $ll2 = this.$ll(2);
         if($ll2 === 1 /*#string:A*/){
           throw new Error("Ambiguity");
-          1;
-          $ll1 = this.$ll(1);
-          if($ll1 === 1 /*#string:A*/){
-            this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
-          } else { //$ll1 === 2 /*#string:B*/
-            throw new Error("Ambiguity");
-            this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
-            //Ambiguity
-            // epsilon
-          }
+          $dd = 0;
           //Ambiguity
-          2;
-          this.$e(1 /*#string:A*/);
-          this.ctx.p(20 /* RecTricky1 8 */, () => this.ruleRecTricky2());
-          20;
-          break;
+          $dd = 1;
           //Ambiguity
-          3;
-          this.ctx.p(21 /* RecTricky1 10 */, () => this.ruleRecTricky2());
-          this.$e(2 /*#string:B*/);
-          30;
-          break;
+          $dd = 2;
         } else { //$ll2 === 2 /*#string:B*/
           $ll3 = this.$ll(3);
           { //$ll3 === 2 /*#string:B*/
@@ -1898,57 +1317,56 @@ class GrammarParser extends Parser {
             { //$ff1 === 22 /* RecTricky2 2 */
               $ff2 = this.ctx.ff(2);
               if($ff2 === 19 /* RecTricky1 3 */ || $ff2 === 20 /* RecTricky1 8 */ || $ff2 === 23 /* RecTricky3 2 */){
-                3;
-                this.ctx.p(21 /* RecTricky1 10 */, () => this.ruleRecTricky2());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               } else { //$ff2 === 21 /* RecTricky1 10 */
                 throw new Error("Ambiguity");
-                1;
-                $ll1 = this.$ll(1);
-                if($ll1 === 1 /*#string:A*/){
-                  this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
-                } else { //$ll1 === 2 /*#string:B*/
-                  throw new Error("Ambiguity");
-                  this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
-                  //Ambiguity
-                  // epsilon
-                }
+                $dd = 0;
                 //Ambiguity
-                2;
-                this.$e(1 /*#string:A*/);
-                this.ctx.p(20 /* RecTricky1 8 */, () => this.ruleRecTricky2());
-                20;
-                break;
+                $dd = 1;
                 //Ambiguity
-                3;
-                this.ctx.p(21 /* RecTricky1 10 */, () => this.ruleRecTricky2());
-                this.$e(2 /*#string:B*/);
-                30;
-                break;
+                $dd = 2;
               }
             }
           }
         }
       } else { //$ll1 === 2 /*#string:B*/
         throw new Error("Ambiguity");
+        $dd = 0;
+        //Ambiguity
+        $dd = 2;
+      }
+      if($dd === 0){
         1;
         $ll1 = this.$ll(1);
         if($ll1 === 1 /*#string:A*/){
-          this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
+          $dd = 0;
         } else { //$ll1 === 2 /*#string:B*/
           throw new Error("Ambiguity");
-          this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
+          $dd = 0;
           //Ambiguity
-          // epsilon
+          $dd = 1;
         }
-        //Ambiguity
+        if($dd === 0){
+          this.ctx.p(19 /* RecTricky1 3 */, () => this.ruleRecTricky2());
+        } else if($dd === 1){
+          // epsilon
+        } else {
+          this.$err();
+        }
+      } else if($dd === 1){
+        2;
+        this.$e(1 /*#string:A*/);
+        this.ctx.p(20 /* RecTricky1 8 */, () => this.ruleRecTricky2());
+        20;
+        break;
+      } else if($dd === 2){
         3;
         this.ctx.p(21 /* RecTricky1 10 */, () => this.ruleRecTricky2());
         this.$e(2 /*#string:B*/);
         30;
         break;
+      } else {
+        this.$err();
       }
       10;
     }while(0);
@@ -1980,35 +1398,45 @@ class GrammarParser extends Parser {
     return {$loc};
   }
   ruleRecMutual1() {
-    let $startPos=null, $loc=null;
+    let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case 3 /*#string:C*/:
-      case 2 /*#string:B*/:
-        this.ctx.p(24 /* RecMutual1 2 */, () => this.ruleRecMutual2());
-        break;
-      case 2 /*#string:B*/:
-        this.$e(2 /*#string:B*/);
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    if($ll1 === 2 /*#string:B*/){
+      throw new Error("Ambiguity");
+      $dd = 0;
+      //Ambiguity
+      $dd = 1;
+    } else { //$ll1 === 3 /*#string:C*/
+      $dd = 0;
+    }
+    if($dd === 0){
+      this.ctx.p(24 /* RecMutual1 2 */, () => this.ruleRecMutual2());
+    } else if($dd === 1){
+      this.$e(2 /*#string:B*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
   }
   ruleRecMutual2() {
-    let $startPos=null, $loc=null;
+    let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case 2 /*#string:B*/:
-      case 3 /*#string:C*/:
-        this.ctx.p(25 /* RecMutual2 2 */, () => this.ruleRecMutual1());
-        break;
-      case 3 /*#string:C*/:
-        this.$e(3 /*#string:C*/);
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    if($ll1 === 2 /*#string:B*/){
+      $dd = 0;
+    } else { //$ll1 === 3 /*#string:C*/
+      throw new Error("Ambiguity");
+      $dd = 0;
+      //Ambiguity
+      $dd = 1;
+    }
+    if($dd === 0){
+      this.ctx.p(25 /* RecMutual2 2 */, () => this.ruleRecMutual1());
+    } else if($dd === 1){
+      this.$e(3 /*#string:C*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
@@ -2016,18 +1444,17 @@ class GrammarParser extends Parser {
   ruleUsesEmpty() {
     let $ll1, $ll2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    $ll1 = this.$ll(1);
-    { //$ll1 === 1 /*#string:A*/
-      $ll2 = this.$ll(2);
-      if($ll2 === 2 /*#string:B*/){
-        this.ctx.p(26 /* UsesEmpty 2 */, () => this.ruleEmpty());
-        this.$e(1 /*#string:A*/);
-        this.ctx.p(27 /* UsesEmpty 4 */, () => this.ruleEmpty());
-        this.$e(2 /*#string:B*/);
-      } else { //$ll2 === 3 /*#string:C*/
-        this.$e(1 /*#string:A*/);
-        this.$e(3 /*#string:C*/);
-      }
+    $ll1 = this.$ll(1); $ll2 = this.$ll(2); 
+    if(($ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/)){
+      this.ctx.p(26 /* UsesEmpty 2 */, () => this.ruleEmpty());
+      this.$e(1 /*#string:A*/);
+      this.ctx.p(27 /* UsesEmpty 4 */, () => this.ruleEmpty());
+      this.$e(2 /*#string:B*/);
+    } else if(($ll1 === 1 /*#string:A*/ && $ll2 === 3 /*#string:C*/)){
+      this.$e(1 /*#string:A*/);
+      this.$e(3 /*#string:C*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
@@ -2044,6 +1471,7 @@ class GrammarParser extends Parser {
     switch(this.$ll(1)){
       case 1 /*#string:A*/:
       case 2 /*#string:B*/:
+        // epsilon
         break;
       case 0 /*#string:O*/:
         this.$e(0 /*#string:O*/);
@@ -2057,19 +1485,15 @@ class GrammarParser extends Parser {
   ruleTrickyAfterEmpty() {
     let $ll1, $ll2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    $ll1 = this.$ll(1);
-    if($ll1 === 0 /*#string:O*/){
-      $ll2 = this.$ll(2);
-      if($ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
-        this.ctx.p(28 /* TrickyAfterEmpty 2 */, () => this.ruleEmptyOrNot());
-        this.ctx.p(29 /* TrickyAfterEmpty 6 */, () => this.ruleTricky1());
-      } else { //$ll2 === 11 /*#string:P*/
-        this.$e(0 /*#string:O*/);
-        this.$e(11 /*#string:P*/);
-      }
-    } else { //$ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/
+    $ll1 = this.$ll(1); $ll2 = this.$ll(2); 
+    if(($ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 0 /*#string:O*/ && $ll2 === 1 /*#string:A*/) || ($ll1 === 0 /*#string:O*/ && $ll2 === 2 /*#string:B*/))){
       this.ctx.p(28 /* TrickyAfterEmpty 2 */, () => this.ruleEmptyOrNot());
       this.ctx.p(29 /* TrickyAfterEmpty 6 */, () => this.ruleTricky1());
+    } else if(($ll1 === 0 /*#string:O*/ && $ll2 === 11 /*#string:P*/)){
+      this.$e(0 /*#string:O*/);
+      this.$e(11 /*#string:P*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};

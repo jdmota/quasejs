@@ -615,5 +615,5 @@ Condition $ll1 === 3 /*#string:C*/ is not enough to choose between:
  - this.ctx.p(25 /* RecMutual2 2 */, () => this.ruleRecMutual1());
  - this.$e(3 /*#string:C*/);
 -----------
-BENCHMARK: 158.607ms
+BENCHMARK: 154.597ms
 

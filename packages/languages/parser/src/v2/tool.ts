@@ -1,6 +1,6 @@
 import { Analyzer } from "./analysis/analysis.ts";
 import { Automaton, Frag } from "./automaton/automaton.ts";
-import { DState } from "./automaton/state.ts";
+import { DState, State } from "./automaton/state.ts";
 import { FactoryRule } from "./factories/factory-rule.ts";
 import { FactoryToken } from "./factories/factory-token.ts";
 import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code.ts";
@@ -23,6 +23,7 @@ import { GType, typeBuilder } from "./grammar/type-checker/types-builder.ts";
 import { TypesInferrer } from "./grammar/type-checker/inferrer.ts";
 import { runtimeTypes } from "./grammar/type-checker/default-types.ts";
 import { typeFormatter } from "./grammar/type-checker/types-formatter.ts";
+import { AnyTransition } from "./automaton/transitions.ts";
 
 export type ToolInput = {
   readonly name: string;
@@ -54,7 +55,7 @@ export function tool(opts: ToolInput) {
   const nfaToDfa = new NfaToDfa();
   const dfaMinimizer = new DfaMinimizer(follows);
 
-  function minimize(ruleName: string, frag: Frag) {
+  function minimize(ruleName: string, frag: Frag<State, AnyTransition>) {
     dfaMinimizer.setCurrentRule(ruleName);
     return dfaMinimizer.minimize(
       nfaToDfa.do({
@@ -89,9 +90,15 @@ export function tool(opts: ToolInput) {
   });
 
   // Create code blocks for tokens
-  const tokenCodeBlocks = new Map<AugmentedTokenDeclaration, CodeBlock>();
+  const tokenCodeBlocks = new Map<
+    AugmentedTokenDeclaration,
+    CodeBlock<DState, AnyTransition>
+  >();
   for (const [token, automaton] of tokenAutomatons) {
-    tokenCodeBlocks.set(token, new CfgToCode().process(automaton));
+    tokenCodeBlocks.set(
+      token,
+      new CfgToCode<DState, AnyTransition>().process(automaton)
+    );
   }
 
   // Produce code for tokens
@@ -104,9 +111,15 @@ export function tool(opts: ToolInput) {
   }
 
   // Create code blocks for rules
-  const ruleCodeBlocks = new Map<AugmentedRuleDeclaration, CodeBlock>();
+  const ruleCodeBlocks = new Map<
+    AugmentedRuleDeclaration,
+    CodeBlock<DState, AnyTransition>
+  >();
   for (const [rule, automaton] of ruleAutomatons) {
-    ruleCodeBlocks.set(rule, new CfgToCode().process(automaton));
+    ruleCodeBlocks.set(
+      rule,
+      new CfgToCode<DState, AnyTransition>().process(automaton)
+    );
   }
 
   // Produce code for rules

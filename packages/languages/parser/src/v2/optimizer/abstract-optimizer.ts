@@ -10,7 +10,7 @@ export type DFA<DFAState> = Readonly<{
 }>;
 
 type BaseState = {
-  id: number;
+  readonly id: number;
 };
 
 const compareState = (a: BaseState, b: BaseState) => a.id - b.id;
