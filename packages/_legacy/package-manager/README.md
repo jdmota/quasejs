@@ -6,6 +6,8 @@ The key difference is that the tree is not built inside `node_modules`. It is cr
 
 Each different tree is actually only built once. Thanks to the way we store them, it is fast to distinguish between each different one.
 
+Essentially, it seems to implement this idea: [https://github.com/pnpm/pnpm/issues/1001](https://github.com/pnpm/pnpm/issues/1001).
+
 ## Features
 
 - Fast
@@ -13,3 +15,9 @@ Each different tree is actually only built once. Thanks to the way we store them
 - Deterministic. Has a lockfile called `qpm-lockfile.json`.
 - Strict. A package can access only dependencies that are specified in its `package.json`.
 - Aliases. Install different versions of the same package or import it using a different name.
+
+## UPDATE
+
+This was a very cool experiment. But I now think Yarn PnP has a better solution, which avoids the need to create all these different trees.
+
+There is also probably a problem with the current implementation because concurrent calls of the package manager might observe folders half-complete in the global store with installations on going. There are also other limitations (e.g. not checking engines, not dealing with peerDependencies, no ability to delete packages from the store, lacks checking integrity of the store with https://github.com/zkat/cadr).

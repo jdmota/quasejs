@@ -464,6 +464,7 @@ export class CfgToCode<
     return lastBlock;
   }
 
+  // Based on https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
   process(dfa: DFA<S>) {
     const { start, nodes } = convertDFAtoCFG<S, T>(dfa);
     const ordered = cfgToGroups(start, nodes);

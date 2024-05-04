@@ -333,10 +333,7 @@ class DecisionGenerator {
   }
 
   private optimizeDecision(expr: DecisionExpr) {
-    return expr; // TODO refactor expressions
-
-    // ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */])) || ($ll1 === 2 /*#string:B*/ && this.ctx.f([3/* Tricky1 1 */, 4/* Tricky1 4 */]))){
-    // turn into $ctx1 == 1 && $ctx2 == 2
+    return expr;
   }
 
   renderDecision(expr: DecisionTransition, first = false): string {

@@ -440,7 +440,7 @@ class StackFrame implements ObjectHashEquals {
     const f = analyzer.follows.get(this.thisRule);
     return f
       ? f
-          .filter(info => !this.hasSameFollow(info)) // TODO it seems if we ignore the phase and just try to find the same follow info, we finish faster...
+          .filter(info => !this.hasSameFollow(info))
           .map(
             info =>
               new StackFrame(
