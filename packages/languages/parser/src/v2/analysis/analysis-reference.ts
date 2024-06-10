@@ -285,7 +285,7 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
 
   public currentRule: AugmentedDeclaration = null as any;
 
-  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 0) {
+  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 3) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
 

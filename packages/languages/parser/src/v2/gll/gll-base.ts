@@ -107,7 +107,7 @@ export class GLLDescriptor<GLLLabel extends IGLLLabel>
     return (
       other instanceof GLLDescriptor &&
       this.label.equals(other.label) &&
-      this.node.equals(other.node) &&
+      this.node === other.node && // Use === instead of equals() so that descriptors from different analyzers are not considered equal
       this.pos === other.pos
     );
   }

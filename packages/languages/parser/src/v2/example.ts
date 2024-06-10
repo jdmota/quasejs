@@ -285,6 +285,51 @@ const ruleGLLAux2 = rule(
   null
 );
 
+const ruleGLLFollowTest1 = rule(
+  "GLL1Follow",
+  choice(seq(int(1), call("GLLAux1", [])), seq(int(2), call("GLLAux1", []))),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLFollowContextTest1 = rule(
+  "GLL1FollowContext",
+  seq(
+    call("GLL1Follow", []),
+    call("GLLAux1", []),
+    optional(call("GLLAux1", [])),
+    string("O")
+  ),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLAuxOptional1 = rule(
+  "GLLAuxOptional1",
+  optional(string("A")),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLFollowTest2 = rule(
+  "GLL1Follow2",
+  seq(choice(seq(int(1), call("GLLAuxOptional1", [])), int(2))),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLFollowContextTest2 = rule(
+  "GLL1FollowContext2",
+  seq(call("GLL1Follow2", []), call("GLLAuxOptional1", []), string("O")),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
 const ruleUsesEmpty = rule(
   "UsesEmpty",
   choice(
@@ -402,6 +447,11 @@ const result = tool({
     ruleGLLTest1,
     ruleGLLAux1,
     ruleGLLAux2,
+    ruleGLLFollowTest1,
+    ruleGLLFollowContextTest1,
+    ruleGLLFollowTest2,
+    ruleGLLFollowContextTest2,
+    ruleGLLAuxOptional1,
   ],
   tokenDecls: [tokenW, tokenY],
   startArguments: [typeBuilder.string()],

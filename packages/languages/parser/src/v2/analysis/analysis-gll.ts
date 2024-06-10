@@ -109,7 +109,7 @@ export class AnalysisGLL extends GLLBase<StateInRule> {
             info.rule,
             info.exitState,
             false,
-            null, // new FollowStack(this.analyzer, this.currL.follow, info),
+            new FollowStack(this.analyzer, this.currL.follow, info),
             this.currL.goto
           );
           assertion(v.level === 0);
@@ -143,7 +143,7 @@ export class AnalysisGLL extends GLLBase<StateInRule> {
       } else if (edge instanceof RangeTransition) {
         this.map.addDecision(
           edge,
-          [l.goto],
+          [l.goto], // == this.gotos
           new GLLDescriptor(dest, desc.node, desc.pos + 1)
         );
       } else {

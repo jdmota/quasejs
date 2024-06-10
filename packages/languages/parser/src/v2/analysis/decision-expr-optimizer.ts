@@ -102,8 +102,7 @@ class DecisionDFAState extends AbstractDFAState<
   }
 
   addTransition(transition: DecisionTransition, dest: DecisionDFAState) {
-    this.mapKeyToSet.add(transition, dest);
-    return dest;
+    return this.mapKeyToSet.add(transition, dest);
   }
 
   addEpsilon(dest: DecisionDFAState) {

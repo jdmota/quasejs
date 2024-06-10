@@ -284,8 +284,6 @@ export class ParserGenerator {
       )} = this.ctx.ff(${ff});\n${indent}`;
     }
 
-    DEBUG_apply(this.rule);
-
     const bodyToIf = new Map<string, DecisionExpr>();
     for (const decision of tree.iterate()) {
       const nextTree = decision.getNextTree();
@@ -321,8 +319,6 @@ export class ParserGenerator {
       const currExpr = bodyToIf.get(nestedCode) ?? FALSE;
       bodyToIf.set(nestedCode, currExpr.or(decision.decision));
     }
-
-    DEBUG_unapply();
 
     const bodyToIfArr = Array.from(bodyToIf);
     for (const [nestedCode, condition] of bodyToIfArr.slice(0, -1)) {
@@ -508,6 +504,7 @@ export class ParserGenerator {
   }
 
   process(indent: string, block: CodeBlock<DState, AnyTransition>) {
+    DEBUG_apply(this.rule);
     const { type, name, args, fields } = this.rule;
 
     const rendered = this.r(`${indent}  `, block);
@@ -519,9 +516,11 @@ export class ParserGenerator {
     ].filter(Boolean);
 
     const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    return `${indent}${type}${name}(${args
+    const result = `${indent}${type}${name}(${args
       .map(a => `${a.arg}`)
       .join(",")}) {${decls}\n${rendered}\n${indent}}`;
+    DEBUG_unapply();
+    return result;
   }
 
   private useStackContext = true;

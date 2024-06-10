@@ -5,16 +5,19 @@ export const DEBUG = {
   keepGoing: false,
 };
 
+const previousDebugs: (typeof DEBUG)[] = [];
+
 export function DEBUG_apply(rule: AugmentedDeclaration) {
-  if (rule.modifiers._debug?.worthIt) {
-    DEBUG.worthIt = true;
-  }
-  if (rule.modifiers._debug?.keepGoing) {
-    DEBUG.keepGoing = true;
-  }
+  previousDebugs.push({ ...DEBUG });
+  DEBUG.worthIt = !!rule.modifiers._debug?.worthIt;
+  DEBUG.keepGoing = !!rule.modifiers._debug?.keepGoing;
 }
 
 export function DEBUG_unapply() {
-  DEBUG.worthIt = false;
-  DEBUG.keepGoing = false;
+  const previous = previousDebugs.pop() ?? {
+    worthIt: false,
+    keepGoing: false,
+  };
+  DEBUG.worthIt = previous.worthIt;
+  DEBUG.keepGoing = previous.keepGoing;
 }

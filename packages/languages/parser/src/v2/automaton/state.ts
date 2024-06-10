@@ -18,7 +18,7 @@ export abstract class AbstractNFAState<S extends AbstractNFAState<S, T>, T> {
 
 export abstract class AbstractDFAState<S extends AbstractDFAState<S, T>, T> {
   abstract readonly id: number;
-  abstract addTransition(transition: T, dest: S): void;
+  abstract addTransition(transition: T, dest: S): boolean;
   abstract transitionAmount(): number;
   abstract [Symbol.iterator](): IterableIterator<readonly [T, S]>;
 }
@@ -111,6 +111,7 @@ export class DState extends AbstractDFAState<DState, AnyTransition> {
     if (added) {
       dest.inTransitions++;
     }
+    return added;
   }
 
   transitionAmount() {

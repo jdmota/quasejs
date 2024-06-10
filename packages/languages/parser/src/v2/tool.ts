@@ -1,5 +1,5 @@
 import { Analyzer } from "./analysis/analysis.ts";
-// import { AnalyzerReference } from "./analysis/analysis-reference.ts";
+import { AnalyzerReference } from "./analysis/analysis-reference.ts";
 import { Automaton, Frag } from "./automaton/automaton.ts";
 import { DState, State } from "./automaton/state.ts";
 import { FactoryRule } from "./factories/factory-rule.ts";
