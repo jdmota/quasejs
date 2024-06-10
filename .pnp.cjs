@@ -1085,6 +1085,13 @@ const RAW_RUNTIME_STATE =
           ["@babel/helper-validator-identifier", "npm:7.22.20"]\
         ],\
         "linkType": "HARD"\
+      }],\
+      ["npm:7.24.5", {\
+        "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@babel-helper-validator-identifier-npm-7.24.5-d1938535fe-10.zip/node_modules/@babel/helper-validator-identifier/",\
+        "packageDependencies": [\
+          ["@babel/helper-validator-identifier", "npm:7.24.5"]\
+        ],\
+        "linkType": "HARD"\
       }]\
     ]],\
     ["@babel/helper-validator-option", [\
@@ -1238,6 +1245,14 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@babel-parser-npm-7.24.4-f329cbb36f-10.zip/node_modules/@babel/parser/",\
         "packageDependencies": [\
           ["@babel/parser", "npm:7.24.4"],\
+          ["@babel/types", "npm:7.12.7"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:7.24.5", {\
+        "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@babel-parser-npm-7.24.5-a19c3b8c3b-10.zip/node_modules/@babel/parser/",\
+        "packageDependencies": [\
+          ["@babel/parser", "npm:7.24.5"],\
           ["@babel/types", "npm:7.12.7"]\
         ],\
         "linkType": "HARD"\
@@ -4714,6 +4729,16 @@ const RAW_RUNTIME_STATE =
           ["to-fast-properties", "npm:2.0.0"]\
         ],\
         "linkType": "HARD"\
+      }],\
+      ["npm:7.24.5", {\
+        "packageLocation": "../../../AppData/Local/Yarn/Berry/cache/@babel-types-npm-7.24.5-2710b35119-10.zip/node_modules/@babel/types/",\
+        "packageDependencies": [\
+          ["@babel/types", "npm:7.24.5"],\
+          ["@babel/helper-string-parser", "npm:7.24.1"],\
+          ["@babel/helper-validator-identifier", "npm:7.24.5"],\
+          ["to-fast-properties", "npm:2.0.0"]\
+        ],\
+        "linkType": "HARD"\
       }]\
     ]],\
     ["@bcoe/v8-coverage", [\
@@ -5222,6 +5247,8 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/languages/parser/",\
         "packageDependencies": [\
           ["@quase/parser", "workspace:packages/languages/parser"],\
+          ["@babel/parser", "npm:7.24.5"],\
+          ["@babel/types", "npm:7.24.5"],\
           ["make-dir", "npm:3.0.0"],\
           ["regexp-tree", "npm:0.1.21"]\
         ],\

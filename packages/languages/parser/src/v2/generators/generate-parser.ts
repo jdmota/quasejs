@@ -1,10 +1,5 @@
-import {
-  Analyzer,
-  DEBUG_apply,
-  DEBUG_unapply,
-  DecisionTokenTree,
-  DecisionTree,
-} from "../analysis/analysis.ts";
+import { DEBUG_apply, DEBUG_unapply } from "../analysis/analysis-debug.ts";
+import { DecisionTree } from "../analysis/decision-trees.ts";
 import {
   DecisionAnd,
   DecisionExpr,
@@ -38,10 +33,11 @@ import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg.ts";
 import { range } from "../utils/range-utils.ts";
 import { DState } from "../automaton/state.ts";
 import { minimizeDecision } from "../analysis/decision-expr-optimizer.ts";
+import { IAnalyzer } from "../analysis/analysis-reference.ts";
 
 export class ParserGenerator {
   private readonly grammar: Grammar;
-  private readonly analyzer: Analyzer;
+  private readonly analyzer: IAnalyzer<any>;
   private readonly rule: AugmentedDeclaration;
   private nodes: Map<ParserCFGNode<DState, AnyTransition>, number>;
   private nodeUuid: number;
@@ -53,7 +49,7 @@ export class ParserGenerator {
 
   constructor(
     grammar: Grammar,
-    analyzer: Analyzer,
+    analyzer: IAnalyzer<any>,
     rule: AugmentedDeclaration
   ) {
     this.grammar = grammar;
@@ -271,12 +267,12 @@ export class ParserGenerator {
   private renderDecisionTree(
     block: DecisionBlock<DState, AnyTransition>,
     indent: string,
-    tree: DecisionTree
+    tree: DecisionTree<any>
   ) {
     this.markVar("$dd");
 
     let code;
-    if (tree instanceof DecisionTokenTree) {
+    if ("ll" in tree) {
       const ll = tree.ll;
       code = `${indent}${this.markVar(
         "$ll" + ll

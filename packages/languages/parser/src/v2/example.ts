@@ -226,7 +226,7 @@ const ruleTricky2 = rule(
     seq(field("z", call("Tricky2", [])), string("B"))
   ),
   [],
-  {},
+  { _debug: { worthIt: true } },
   null
 );
 
@@ -254,6 +254,34 @@ const ruleTricky4 = rule(
   ),
   [],
   {},
+  null
+);
+
+const ruleGLLTest1 = rule(
+  "GLL1",
+  seq(
+    choice(call("GLLAux1", []), call("GLLAux2", [])),
+    string("O"),
+    string("W")
+  ),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLAux1 = rule(
+  "GLLAux1",
+  seq(string("A")),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleGLLAux2 = rule(
+  "GLLAux2",
+  seq(string("B"), string("C")),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } },
   null
 );
 
@@ -325,6 +353,18 @@ const tokenY = token(
   id("num")
 );
 
+const emptyRules = new Set([
+  "C",
+  "Tricky2",
+  "Tricky1",
+  "Tricky3",
+  "Rec2",
+  "RecTricky1",
+  "RecTricky2",
+  "Empty",
+  "EmptyOrNot",
+]);
+
 console.log("Starting...");
 
 console.time("BENCHMARK");
@@ -359,6 +399,9 @@ const result = tool({
     ruleEmpty,
     ruleEmptyOrNot,
     ruleTrickyAfterEmpty,
+    ruleGLLTest1,
+    ruleGLLAux1,
+    ruleGLLAux2,
   ],
   tokenDecls: [tokenW, tokenY],
   startArguments: [typeBuilder.string()],

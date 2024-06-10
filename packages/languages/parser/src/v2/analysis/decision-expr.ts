@@ -1,5 +1,5 @@
 import { ObjectHashEquals, equals, nonNull } from "../utils/index.ts";
-import { FollowStack } from "./analysis.ts";
+import { FollowStack } from "./follow-stack.ts";
 
 // 1-based index to be used in this.$ff(index)
 export function getInFollowStack(follow: FollowStack, index: number) {

@@ -48,6 +48,7 @@ export type RuleModifiers = {
   readonly start?: boolean;
   readonly _debug?: {
     worthIt?: boolean;
+    keepGoing?: boolean;
   };
 };
 
@@ -100,6 +101,7 @@ export type TokenModifiers = {
   readonly channels?: readonly string[];
   readonly _debug?: {
     worthIt?: boolean;
+    keepGoing?: boolean;
   };
 };
 

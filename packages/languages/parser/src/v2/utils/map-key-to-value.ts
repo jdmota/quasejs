@@ -12,15 +12,22 @@ export class MapKeyToValue<K extends MapKey, V> {
     this.size = 0;
   }
 
+  clear() {
+    this.table.length = 0;
+    this.size = 0;
+  }
+
   private entry(key: K) {
     const idx = key === null ? 0 : Math.abs(key.hashCode() % TABLE_SIZE);
     let list = this.table[idx];
     if (!list) {
       list = this.table[idx] = [];
     }
+    const idxInList = list.findIndex(entry => equals(entry.key, key));
     return {
-      entry: list.find(entry => equals(entry.key, key)),
+      entry: idxInList === -1 ? undefined : list[idxInList],
       list,
+      idxInList,
     };
   }
 
@@ -92,36 +99,39 @@ export class MapKeyToValue<K extends MapKey, V> {
     return value;
   }
 
+  delete(key: K) {
+    const { entry, list, idxInList } = this.entry(key);
+    if (entry) {
+      list.splice(idxInList, 1);
+      return true;
+    }
+    return false;
+  }
+
   *[Symbol.iterator]() {
-    let idx = 0;
-    let listIdx = 0;
-    while (idx < this.table.length) {
+    for (let idx = 0; idx < this.table.length; idx++) {
       const list = this.table[idx];
       if (list) {
+        let listIdx = 0;
         while (listIdx < list.length) {
           const { key, value } = list[listIdx];
           yield [key, value] as const;
           listIdx++;
         }
       }
-      idx++;
-      listIdx = 0;
     }
   }
 
   *keys() {
-    let idx = 0;
-    let listIdx = 0;
-    while (idx < this.table.length) {
+    for (let idx = 0; idx < this.table.length; idx++) {
       const list = this.table[idx];
       if (list) {
+        let listIdx = 0;
         while (listIdx < list.length) {
           yield list[listIdx].key;
           listIdx++;
         }
       }
-      idx++;
-      listIdx = 0;
     }
   }
 }
