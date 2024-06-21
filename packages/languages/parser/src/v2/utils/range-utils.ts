@@ -17,3 +17,9 @@ export function* range(from: number, to: number) {
     yield i;
   }
 }
+
+export const EOF_RANGE: Range = { from: -1, to: -1 };
+
+export const IMPOSSIBLE_RANGE: Range = { from: -9, to: -9 };
+
+// export const OOB_RANGE: Range = { from: -2, to: -2 };

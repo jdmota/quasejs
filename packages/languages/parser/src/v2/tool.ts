@@ -25,14 +25,16 @@ import { TypesInferrer } from "./grammar/type-checker/inferrer.ts";
 import { runtimeTypes } from "./grammar/type-checker/default-types.ts";
 import { typeFormatter } from "./grammar/type-checker/types-formatter.ts";
 import { AnyTransition } from "./automaton/transitions.ts";
+import { LEXER_RULE_NAME } from "./grammar/tokens.ts";
 
-export type ToolInput = {
-  readonly name: string;
-  readonly ruleDecls?: readonly RuleDeclaration[];
-  readonly tokenDecls?: readonly TokenDeclaration[];
-  readonly startArguments?: readonly GType[];
-  readonly externalFuncReturns?: Readonly<Record<string, GType>>;
-};
+export type ToolInput = Readonly<{
+  name: string;
+  ruleDecls?: readonly RuleDeclaration[];
+  tokenDecls?: readonly TokenDeclaration[];
+  startArguments?: readonly GType[];
+  externalFuncReturns?: Readonly<Record<string, GType>>;
+  _useReferenceAnalysis?: boolean;
+}>;
 
 export function tool(opts: ToolInput) {
   const result = createGrammar(opts);
@@ -82,13 +84,21 @@ export function tool(opts: ToolInput) {
     const automaton = minimize(token.name, frag);
     tokenAutomatons.set(token, automaton);
     initialStates.set(token.name, automaton.start);
+    if (token.name === LEXER_RULE_NAME) {
+      grammar.follows.addLexerFollow(automaton.start);
+    }
   }
 
   // Init analyzer
-  const analyzer = new Analyzer({
-    grammar,
-    initialStates,
-  });
+  const analyzer = opts._useReferenceAnalysis
+    ? new AnalyzerReference({
+        grammar,
+        initialStates,
+      })
+    : new Analyzer({
+        grammar,
+        initialStates,
+      });
 
   // Create code blocks for tokens
   const tokenCodeBlocks = new Map<

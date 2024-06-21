@@ -30,7 +30,7 @@ export abstract class AbstractAutomaton<S extends AbstractNFAState<S, T>, T> {
 
   seq(fragments: readonly Frag<S, T>[]): Frag<S, T> {
     let first: S | null = null;
-    let last: S | null = first;
+    let last: S | null = null;
     for (const fragment of fragments) {
       if (last) {
         last.addEpsilon(fragment.start);

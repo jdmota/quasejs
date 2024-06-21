@@ -1,9 +1,8 @@
-import { FollowInfo } from "../grammar/follow-info.ts";
 import { ObjectHashEquals, equals } from "../utils/index.ts";
 import { IAnalyzer } from "./analysis-reference.ts";
 
 export class FollowStack implements ObjectHashEquals {
-  readonly info: FollowInfo;
+  readonly followID: number;
   readonly child: FollowStack | null;
   readonly llPhase: number;
   readonly size: number;
@@ -12,9 +11,9 @@ export class FollowStack implements ObjectHashEquals {
   constructor(
     analyzer: IAnalyzer<any>,
     child: FollowStack | null,
-    info: FollowInfo
+    followID: number
   ) {
-    this.info = info;
+    this.followID = followID;
     this.child = child;
     this.llPhase = analyzer.getLLState();
     this.size = child ? child.size + 1 : 1;
@@ -24,7 +23,7 @@ export class FollowStack implements ObjectHashEquals {
   hashCode(): number {
     if (this.cachedHashCode === 0) {
       this.cachedHashCode =
-        (this.info.id + 1) *
+        (this.followID + 1) *
         this.size *
         (this.child ? this.child.hashCode() : 1) *
         (this.llPhase + 1);
@@ -38,7 +37,7 @@ export class FollowStack implements ObjectHashEquals {
     }
     if (other instanceof FollowStack) {
       return (
-        this.info.id === other.info.id &&
+        this.followID === other.followID &&
         this.llPhase === other.llPhase &&
         this.size === other.size &&
         equals(this.child, other.child)
@@ -49,6 +48,16 @@ export class FollowStack implements ObjectHashEquals {
 
   toString() {
     const { child } = this;
-    return `${this.info.rule}${child ? `,${child}` : ""}`;
+    return `${this.followID}${child ? `,${child}` : ""}`;
   }
+}
+
+export function followToArray(follow: FollowStack | null) {
+  let f: FollowStack | null = follow;
+  let array = [];
+  while (f) {
+    array.push(f.followID);
+    f = f.child;
+  }
+  return array;
 }

@@ -58,19 +58,30 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
   readonly rule: string;
   readonly level: InputPosition;
   private readonly childNodes: MapKeyToValue<GLLLabel, Set<GSSNode<GLLLabel>>>;
+  // private readonly parentNodes: MapKeyToValue<GLLLabel, Set<GSSNode<GLLLabel>>>;
 
   constructor(rule: string, pos: InputPosition) {
     this.rule = rule;
     this.level = pos;
     this.childNodes = new MapKeyToValue();
+    // this.parentNodes = new MapKeyToValue();
   }
+
+  /*parents() {
+    return this.parentNodes[Symbol.iterator]();
+  }*/
 
   children() {
     return this.childNodes[Symbol.iterator]();
   }
 
+  hasChildren() {
+    return this.childNodes.size > 0;
+  }
+
   addEdgeTo(edge: GLLLabel, u: GSSNode<GLLLabel>) {
     const set = this.childNodes.computeIfAbsent(edge, () => new Set());
+    // u.parentNodes.computeIfAbsent(edge, () => new Set()).add(this);
     return setAdd(set, u);
   }
 
@@ -215,7 +226,7 @@ export abstract class GLLBase<L extends IGLLLabel> {
     return true;
   }
 
-  protected ensureGLLNode(rule: string, pos: InputPosition): GSSNode<L> {
+  ensureGLLNode(rule: string, pos: InputPosition): GSSNode<L> {
     const newNode = new GSSNode<L>(rule, pos);
     return this.nodes.computeIfAbsent(newNode, () => newNode);
   }

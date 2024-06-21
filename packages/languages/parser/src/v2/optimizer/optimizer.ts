@@ -62,7 +62,7 @@ export class DfaMinimizer extends AbstractDfaMinimizer<DState, AnyTransition> {
     const added = state.addTransition(transition, dest);
 
     if (added && transition instanceof CallTransition) {
-      this.follows.add(this.currentProcessedRule, state, transition, dest);
+      this.follows.add(this.currentProcessedRule, transition, dest);
     }
   }
 

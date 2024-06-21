@@ -30,7 +30,7 @@ import {
   ReturnBlock,
 } from "./dfa-to-code/cfg-to-code.ts";
 import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg.ts";
-import { range } from "../utils/range-utils.ts";
+import { IMPOSSIBLE_RANGE, range } from "../utils/range-utils.ts";
 import { DState } from "../automaton/state.ts";
 import { minimizeDecision } from "../analysis/decision-expr-optimizer.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
@@ -133,14 +133,18 @@ export class ParserGenerator {
   }
 
   private renderFollowInfo(id: number) {
+    if (id < 0) {
+      return `${id}`;
+    }
     const info = this.grammar.follows.getById(id);
-    return `${id}${
-      this.DEBUG ? ` /* ${info.rule} ${info.enterState.id} */` : ""
-    }`;
+    return `${id}${this.DEBUG ? ` /* ${info.rule} ${info.exitState.id} */` : ""}`;
   }
 
   private renderFollowCondition(test: DecisionTestFollow) {
     const { ff, from, to } = test;
+    if (from === IMPOSSIBLE_RANGE.from) {
+      return "false";
+    }
     this.markVar("$ff" + ff);
     return from === to
       ? `$ff${ff} === ${this.renderFollowInfo(from)}`
@@ -149,6 +153,9 @@ export class ParserGenerator {
 
   private renderRangeCondition(test: DecisionTestToken) {
     const { ll, from, to } = test;
+    if (from === IMPOSSIBLE_RANGE.from) {
+      return "false";
+    }
     this.markVar("$ll" + ll);
     return from === to
       ? `$ll${ll} === ${this.renderNum(from)}`

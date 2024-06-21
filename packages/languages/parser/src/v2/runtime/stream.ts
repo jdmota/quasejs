@@ -78,7 +78,7 @@ export abstract class BufferedStream<T> extends IStream<T> {
   protected abstract eof(): T;
 
   // Out-of-bounds
-  protected abstract ofb(): T;
+  protected abstract oob(): T;
 
   protected abstract fetchMore(
     amountFetched: number,
@@ -141,7 +141,7 @@ export abstract class BufferedStream<T> extends IStream<T> {
     this.ensureFetched(pos + 1);
     const i = pos - this.released;
     if (i >= this.buffer.length) return this.eof();
-    if (i < 0) return this.ofb();
+    if (i < 0) return this.oob();
     return this.buffer[i];
   }
 

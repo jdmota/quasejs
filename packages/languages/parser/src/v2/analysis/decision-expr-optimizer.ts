@@ -376,9 +376,7 @@ class DecisionGenerator {
 
   private renderFollowInfo(id: number) {
     const info = this.grammar.follows.getById(id);
-    return `${id}${
-      this.DEBUG ? ` /* ${info.rule} ${info.enterState.id} */` : ""
-    }`;
+    return `${id}${this.DEBUG ? ` /* ${info.rule} ${info.exitState.id} */` : ""}`;
   }
 
   private renderFollowCondition(test: DecisionTestFollow) {

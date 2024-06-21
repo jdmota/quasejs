@@ -9,13 +9,14 @@ import {
   FALSE,
   TRUE,
 } from "./decision-expr.ts";
-import { Range } from "../utils/range-utils.ts";
-import { FollowInfo, FollowInfoDB } from "../grammar/follow-info.ts";
+import { EOF_RANGE, IMPOSSIBLE_RANGE, Range } from "../utils/range-utils.ts";
+import { FollowInfoDB } from "../grammar/follow-info.ts";
 import { MapKeyToValue } from "../utils/map-key-to-value.ts";
 import { DEBUG } from "./analysis-debug.ts";
+import { IAnalyzer } from "./analysis-reference.ts";
 
 type GotoDecision<P> = Readonly<{
-  desc: P;
+  desc: P | null;
   gotos: Iterable<AnyTransition>;
 }>;
 
@@ -28,8 +29,8 @@ class DecisionNode<P extends ObjectHashEquals>
   implements SpecialSet<GotoDecision<P>>
 {
   readonly parent: DecisionTree<P>;
-  private readonly gotos: MapKeyToSet<AnyTransition, P>;
-  private readonly gotos2: MapKeyToSet<P, AnyTransition>;
+  private readonly gotos: MapKeyToSet<AnyTransition, P | null>;
+  private readonly gotos2: MapKeyToSet<P | null, AnyTransition>;
   private nextTree: DecisionTree<P> | null;
   //
   readonly decision: DecisionExpr;
@@ -96,7 +97,7 @@ class DecisionNode<P extends ObjectHashEquals>
 
 abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
   private readonly map: MapRangeToSpecialSet<GotoDecision<P>, DecisionNode<P>>;
-  private nonEmpty: boolean;
+  private readonly gotos: MapKeyToValue<AnyTransition, boolean>;
   readonly owner: DecisionNode<P> | null;
 
   constructor(
@@ -104,27 +105,61 @@ abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
     fn: (from: number, to: number) => DecisionNode<P>
   ) {
     this.owner = owner;
-    this.nonEmpty = false;
+    this.gotos = new MapKeyToValue();
     this.map = new MapRangeToSpecialSet(fn);
   }
 
+  hasDecision(t: AnyTransition) {
+    return this.gotos.get(t) === true;
+  }
+
   hasDecisions() {
-    return this.nonEmpty;
+    return this.gotos.size > 0;
+  }
+
+  decisions() {
+    return this.gotos.size;
   }
 
   protected addRange(
     from: number,
     to: number,
-    gotos: Iterable<AnyTransition>,
-    desc: P
+    gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
+    desc: P | null
   ) {
-    this.nonEmpty = true;
-    this.map.addRange(from, to, [
-      {
-        gotos,
-        desc,
-      },
-    ]);
+    let hasGotos = false;
+    for (const goto of gotos) {
+      this.gotos.set(goto, true);
+      hasGotos = true;
+    }
+    if (hasGotos) {
+      this.map.addRange(from, to, [
+        {
+          gotos,
+          desc,
+        },
+      ]);
+    }
+  }
+
+  /*addAny(analyzer: IAnalyzer<P>, gotos: readonly AnyTransition[]) {
+    const range = analyzer.getAnyRange();
+    this.addRange(range.from, range.to, gotos, null);
+  }*/
+
+  addEof(gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>) {
+    this.addRange(EOF_RANGE.from, EOF_RANGE.to, gotos, null);
+  }
+
+  ensureDecisions(gotos: readonly AnyTransition[]) {
+    this.addRange(
+      IMPOSSIBLE_RANGE.from,
+      IMPOSSIBLE_RANGE.to,
+      gotos.filter(g => !this.hasDecision(g)),
+      null
+    );
+    assertion(gotos.length === this.decisions());
+    return this;
   }
 
   *iterate(): Iterable<DecisionNodeNoAdd<P>> {
@@ -177,7 +212,11 @@ export class DecisionTokenTree<
       : 1;
   }
 
-  addDecision(range: Range, gotos: Iterable<AnyTransition>, desc: P) {
+  addDecision(
+    range: Range,
+    gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
+    desc: P
+  ) {
     this.addRange(range.from, range.to, gotos, desc);
   }
 }
@@ -200,12 +239,12 @@ export class DecisionFollowTree<
   addDecision(
     rule: string,
     followDB: FollowInfoDB,
-    follow: FollowInfo | null,
-    gotos: Iterable<AnyTransition>,
+    followID: number | null,
+    gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
     desc: P
   ) {
-    if (follow) {
-      this.addRange(follow.id, follow.id, gotos, desc);
+    if (followID != null) {
+      this.addRange(followID, followID, gotos, desc);
     } else {
       const ids = followDB.getIdRangeByIndex(rule, this.ff);
       for (const id of ids) {

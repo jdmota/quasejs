@@ -24,6 +24,17 @@ import {
   DecisionTreeNoAdd,
   InvertedDecisionTree,
 } from "./decision-trees.ts";
+import { ANY_CHAR_RANGE } from "../constants.ts";
+import { Range } from "../utils/range-utils.ts";
+import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
+
+// IMPORTANT!
+// This reference implementation does not find all the possible "follow" sequences
+// when dealing with left recursive rules
+// The GLL version however, with it's GSS stack structure, can encode all possible pushes and pops
+// which then allows us to reconstruct the "follow" sequences
+// So, for left recursive rules, the "follows" produced herein are not trustworthy
+// Nonetheless, we can use this reference implementation to double-check non-left recursive rules
 
 type RuleName = string;
 
@@ -73,7 +84,7 @@ class StackFrame implements ObjectHashEquals {
     let s: FollowStack | null = this.follow;
     while (s && s.llPhase === this.llPhase) {
       // If 's' is in a different phase, all childs are also in different phases
-      if (s.info.id === info.id) {
+      if (s.followID === info.id) {
         return true;
       }
       s = s.child;
@@ -120,26 +131,29 @@ class StackFrame implements ObjectHashEquals {
 
   pop(
     analyzer: IAnalyzer<StackFrame>,
-    ret: ReturnTransition
-  ): readonly StackFrame[] {
+    ret: ReturnTransition,
+    maxFF: number
+  ): null | readonly StackFrame[] {
     if (this.parent) {
       return [this.parent];
     }
+    const maxed = (this.follow?.size ?? 0) >= maxFF;
     const f = analyzer.follows.get(this.thisRule);
+    if (f.length === 0) {
+      return null;
+    }
     return f
-      ? f
-          .filter(info => !this.hasSameFollow(info))
-          .map(
-            info =>
-              new StackFrame(
-                analyzer,
-                null,
-                info.rule,
-                info.exitState,
-                new FollowStack(analyzer, this.follow, info)
-              )
+      .filter(info => !(maxed && this.hasSameFollow(info)))
+      .map(
+        info =>
+          new StackFrame(
+            analyzer,
+            null,
+            info.rule,
+            info.exitState,
+            new FollowStack(analyzer, this.follow, info.id)
           )
-      : [];
+      );
   }
 
   hashCode(): number {
@@ -182,6 +196,7 @@ export interface IAnalyzer<P extends ObjectHashEquals> {
   readonly follows: FollowInfoDB;
   readonly initialStates: ReadonlyMap<RuleName, DState>;
   getLLState(): number;
+  getAnyRange(): Range;
   analyze(
     rule: AugmentedDeclaration,
     state: DState,
@@ -230,8 +245,9 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
 
   private ll1(
     start: readonly StackFrame[],
-    gotos: Iterable<AnyTransition>,
-    map: DecisionTokenTree<StackFrame>
+    gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
+    map: DecisionTokenTree<StackFrame>,
+    maxFF: number
   ) {
     const empty = this.emptyRules;
     const delayedReturns = new MapSet<RuleName, StackFrame>();
@@ -250,14 +266,21 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
             const pushed = ret.push(this, edge);
             if (pushed) {
               next.push(pushed);
-            } else if (empty.has(edge.ruleName)) {
-              next.push(ret);
             } else {
-              delayedReturns.add(edge.ruleName, ret);
+              if (empty.has(edge.ruleName)) {
+                next.push(ret);
+              } else {
+                delayedReturns.add(edge.ruleName, ret);
+              }
             }
           } else if (edge instanceof ReturnTransition) {
-            next.push(...stack.pop(this, edge));
-            // Deal with possibly empty rules
+            const popped = stack.pop(this, edge, maxFF);
+            if (popped) {
+              next.push(...popped);
+            } else {
+              map.addEof(gotos);
+            }
+            // Deal with empty rules
             if (!empty.has(edge.ruleName) && stack.wasPushed(edge.ruleName)) {
               empty.add(edge.ruleName);
               next.push(...delayedReturns.get(edge.ruleName));
@@ -285,9 +308,20 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
 
   public currentRule: AugmentedDeclaration = null as any;
 
+  getAnyRange() {
+    return this.currentRule.type === "rule"
+      ? this.grammar.tokens.anyRange()
+      : ANY_CHAR_RANGE;
+  }
+
   analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 3) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
+
+    if (rule.name === LEXER_RULE_NAME) {
+      maxLL = 1;
+      maxFF = 0;
+    }
 
     DEBUG_apply(rule);
     this.currentRule = rule;
@@ -319,18 +353,26 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
         this.ll1(
           [nonNull(stack.move(this, dest).push(this, goto))],
           [goto],
-          ll1
+          ll1,
+          maxFF
         );
       } else if (goto instanceof ReturnTransition) {
-        this.ll1(stack.pop(this, goto), [goto], ll1);
+        const popped = stack.pop(this, goto, maxFF);
+        if (popped) {
+          this.ll1(popped, [goto], ll1, maxFF);
+        } else {
+          ll1.addEof([goto]);
+        }
       } else if (goto instanceof RangeTransition) {
         ll1.addDecision(goto, [goto], stack.move(this, dest));
       } else {
-        this.ll1([stack.move(this, dest)], [goto], ll1);
+        this.ll1([stack.move(this, dest)], [goto], ll1, maxFF);
       }
     }
 
-    let prev: readonly DecisionTreeNoAdd<StackFrame>[] = [ll1];
+    let prev: readonly DecisionTreeNoAdd<StackFrame>[] = [
+      ll1.ensureDecisions(Array.from(state.transitions())),
+    ];
     let next: DecisionTreeNoAdd<StackFrame>[] = [];
 
     this.llState = 2;
@@ -342,22 +384,26 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
       const inFFAnalysis = followIndex <= maxFF;
 
       for (const tree of prev) {
-        if (tree.hasDecisions()) {
-          for (const decision of tree.iterate()) {
-            if (DEBUG.keepGoing || decision.isAmbiguous()) {
-              if (inLLAnalysis) {
-                const nextTree = decision.ensureNextTokenTree();
-                assertion(nextTree.ll === this.llState);
-                for (const { desc: stack, gotos } of decision) {
-                  this.ll1([stack], gotos, nextTree);
+        assertion(tree.hasDecisions());
+        for (const decision of tree.iterate()) {
+          if (DEBUG.keepGoing || decision.isAmbiguous()) {
+            if (inLLAnalysis) {
+              const nextTree = decision.ensureNextTokenTree();
+              assertion(nextTree.ll === this.llState);
+              for (const { desc: stack, gotos } of decision) {
+                if (stack) {
+                  this.ll1([stack], gotos, nextTree, maxFF);
+                } else {
+                  nextTree.addEof(gotos);
                 }
-                next.push(nextTree);
-              } else if (inFFAnalysis) {
-                let hasUsefulFollows = false;
-                const nextTree = decision.ensureNextFollowTree();
-                assertion(nextTree.ff === followIndex);
-                for (const { desc: stack, gotos } of decision) {
-                  if (stack.follow && followIndex <= stack.follow.size) {
+              }
+              next.push(nextTree.ensureDecisions(decision.getGotos()));
+            } else if (inFFAnalysis) {
+              const nextTree = decision.ensureNextFollowTree();
+              assertion(nextTree.ff === followIndex);
+              for (const { desc: stack, gotos } of decision) {
+                if (stack) {
+                  if (stack.follow) {
                     nextTree.addDecision(
                       rule.name,
                       this.follows,
@@ -365,7 +411,6 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
                       gotos,
                       stack
                     );
-                    hasUsefulFollows = true;
                   } else {
                     nextTree.addDecision(
                       rule.name,
@@ -375,23 +420,16 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
                       stack
                     );
                   }
-                }
-                if (hasUsefulFollows) {
-                  next.push(nextTree);
                 } else {
-                  inverted.add(decision);
+                  nextTree.addEof(gotos);
                 }
-              } else {
-                inverted.add(decision);
               }
+              next.push(nextTree.ensureDecisions(decision.getGotos()));
             } else {
               inverted.add(decision);
             }
-          }
-        } else {
-          // If we reached the "end" of the grammar, we do not want to lose the last decision tree
-          if (tree.owner) {
-            inverted.add(tree.owner);
+          } else {
+            inverted.add(decision);
           }
         }
       }

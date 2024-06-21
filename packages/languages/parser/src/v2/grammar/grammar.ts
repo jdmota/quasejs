@@ -393,7 +393,8 @@ export class Grammar {
     if (inLexer) {
       return num < 0 ? `${num}` : `'${String.fromCodePoint(num)}'`;
     } else {
-      return this.tokenIdToDecl(num).name;
+      const token = this.tokenIdToDecl(num);
+      return token ? token.name : `${num}`;
     }
   }
 }

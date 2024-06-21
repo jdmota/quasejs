@@ -1,11 +1,11 @@
 import { DState } from "../automaton/state.ts";
 import { CallTransition } from "../automaton/transitions.ts";
 import { assertion, nonNull } from "../utils/index.ts";
-import { Range } from "../utils/range-utils.ts";
+import { EOF_RANGE } from "../utils/range-utils.ts";
+import { LEXER_RULE_NAME } from "./tokens.ts";
 
 export type FollowInfo = {
   readonly rule: string;
-  readonly enterState: DState;
   readonly exitState: DState;
   readonly id: number;
 };
@@ -14,42 +14,60 @@ export class FollowInfoDB {
   private follows = new Map<string, FollowInfo[]>();
   private followsById = new Map<number, FollowInfo>();
   private followsByTransition = new Map<CallTransition, FollowInfo>();
+  private followsByRuleExit = new Map<string, FollowInfo>();
   private uuid = 0;
 
   getIdRangeByIndex(rule: string, index: number) {
-    let arr = this.get(rule) || [];
+    let arr = this.get(rule);
+    let minus1 = arr.length === 0;
     for (let i = 2; i <= index; i++) {
-      arr = arr.map(info => this.get(info.rule) || []).flat();
+      arr = arr
+        .map(info => {
+          const a = this.get(info.rule);
+          minus1 ||= a.length === 0;
+          return a;
+        })
+        .flat();
     }
-    return arr.map(info => info.id);
+    const result = arr.map(info => info.id);
+    if (minus1) result.push(EOF_RANGE.from);
+    return result;
   }
 
-  add(
-    contextRule: string,
-    state: DState,
-    transition: CallTransition,
-    dest: DState
-  ) {
+  add(contextRule: string, transition: CallTransition, dest: DState) {
     assertion(!this.followsByTransition.has(transition));
-
+    //
+    const key = `${contextRule}\0${dest.id}`;
+    let info = this.followsByRuleExit.get(key);
+    if (!info) {
+      info = {
+        rule: contextRule,
+        exitState: dest,
+        id: this.uuid++,
+      };
+      this.followsByRuleExit.set(key, info);
+      this.followsById.set(info.id, info);
+    }
+    //
     const array = this.follows.get(transition.ruleName);
-    const info: FollowInfo = {
-      rule: contextRule,
-      enterState: state,
-      exitState: dest,
-      id: this.uuid++,
-    };
     if (array) {
       array.push(info);
     } else {
       this.follows.set(transition.ruleName, [info]);
     }
-    this.followsById.set(info.id, info);
     this.followsByTransition.set(transition, info);
   }
 
+  addLexerFollow(startState: DState) {
+    return this.add(
+      LEXER_RULE_NAME,
+      new CallTransition(LEXER_RULE_NAME, [], null),
+      startState
+    );
+  }
+
   get(rule: string) {
-    return this.follows.get(rule);
+    return this.follows.get(rule) ?? [];
   }
 
   getById(id: number) {
@@ -58,5 +76,10 @@ export class FollowInfoDB {
 
   getByTransition(transition: CallTransition) {
     return nonNull(this.followsByTransition.get(transition));
+  }
+
+  getByRuleExitState(rule: string, exitState: DState) {
+    const key = `${rule}\0${exitState.id}`;
+    return nonNull(this.followsByRuleExit.get(key));
   }
 }

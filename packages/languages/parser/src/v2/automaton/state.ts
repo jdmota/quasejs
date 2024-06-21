@@ -127,6 +127,15 @@ export class DState extends AbstractDFAState<DState, AnyTransition> {
     }
   }
 
+  *transitions(): IterableIterator<AnyTransition> {
+    for (const [t] of this.transitionsMap) {
+      yield t;
+    }
+    for (const [range, dest] of this.rangeList) {
+      yield new RangeTransition(range.from, range.to, null);
+    }
+  }
+
   *[Symbol.iterator](): IterableIterator<readonly [AnyTransition, DState]> {
     for (const pair of this.transitionsMap) {
       yield pair;

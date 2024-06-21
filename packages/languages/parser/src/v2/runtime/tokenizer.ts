@@ -57,7 +57,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     throw new Error("Unreachable");
   }
 
-  protected override ofb(): Token {
+  protected override oob(): Token {
     throw new Error("Out of bounds");
   }
 

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { builder } from "./grammar/grammar-builder.ts";
 import { typeBuilder } from "./grammar/type-checker/types-builder.ts";
-import { inferAndCheckTypes, tool } from "./tool.ts";
+import { ToolInput, inferAndCheckTypes, tool } from "./tool.ts";
 
 const {
   seq,
@@ -174,6 +174,45 @@ const ruleTricky1 = rule(
     seq(int(3), call("Tricky1", []), string("B"), int(30))
   ),
   [],
+  { _debug: { worthIt: true, keepGoing: true } },
+  null
+);
+
+const ruleTricky2 = rule(
+  "Tricky2",
+  choice(
+    empty(),
+    seq(string("A"), field("y", call("Tricky2", []))),
+    seq(field("z", call("Tricky2", [])), string("B"))
+  ),
+  [],
+  { _debug: { worthIt: true } },
+  null
+);
+
+const ruleTricky3 = rule(
+  "Tricky3",
+  choice(
+    optional(field("x", call("Tricky3", [int(10)]))),
+    seq(string("A"), field("y", call("Tricky3", [int(20)]))),
+    seq(field("z", call("Tricky3", [int(30)])), string("B"))
+  ),
+  [rule.arg("arg")],
+  {},
+  null
+);
+
+const ruleTricky4 = rule(
+  "Tricky4",
+  seq(
+    choice(
+      optional(call("Tricky4", [])),
+      seq(string("A"), call("Tricky4", [])),
+      seq(call("Tricky4", []), string("B"))
+    ),
+    eof()
+  ),
+  [],
   {},
   null
 );
@@ -213,45 +252,6 @@ const ruleRecMutual2 = rule(
   "RecMutual2",
   // Lookahead of this call should be {B, C}
   choice(call("RecMutual1", []), string("C")),
-  [],
-  {},
-  null
-);
-
-const ruleTricky2 = rule(
-  "Tricky2",
-  choice(
-    empty(),
-    seq(string("A"), field("y", call("Tricky2", []))),
-    seq(field("z", call("Tricky2", [])), string("B"))
-  ),
-  [],
-  { _debug: { worthIt: true } },
-  null
-);
-
-const ruleTricky3 = rule(
-  "Tricky3",
-  choice(
-    optional(field("x", call("Tricky3", [int(10)]))),
-    seq(string("A"), field("y", call("Tricky3", [int(20)]))),
-    seq(field("z", call("Tricky3", [int(30)])), string("B"))
-  ),
-  [rule.arg("arg")],
-  {},
-  null
-);
-
-const ruleTricky4 = rule(
-  "Tricky4",
-  seq(
-    choice(
-      optional(call("Tricky4", [])),
-      seq(string("A"), call("Tricky4", [])),
-      seq(call("Tricky4", []), string("B"))
-    ),
-    eof()
-  ),
   [],
   {},
   null
@@ -382,6 +382,46 @@ const ruleRecursive3 = rule(
   int(10)
 );
 
+const ruleRecursive4 = rule(
+  "Rec4",
+  choice(seq(call("Rec4", []), string("A")), string("B")),
+  [],
+  {},
+  int(10)
+);
+
+const follow3 = rule(
+  "follow3",
+  seq(call("follow2", []), string("A"), string("A"), string("A")),
+  [],
+  {}
+);
+const follow2 = rule("follow2", call("follow1", []), [], {});
+const follow1 = rule("follow1", call("follow0", []), [], {});
+const follow0 = rule(
+  "follow0",
+  choice(field("a", int(0)), field("a", int(1))),
+  [],
+  { _debug: { worthIt: true, keepGoing: true } }
+);
+
+const grammarEnd = rule("end", seq(call("endAux", []), string("A")), [], {
+  _debug: { worthIt: true, keepGoing: true },
+});
+
+const grammarNotEnd = rule(
+  "notEnd",
+  seq(call("endAux", []), string("A"), string("B"), string("C")),
+  [],
+  {
+    _debug: { worthIt: true, keepGoing: true },
+  }
+);
+
+const endAux = rule("endAux", choice(int(1), int(2)), [], {
+  _debug: { worthIt: true, keepGoing: true },
+});
+
 const tokenW = token(
   "W",
   field("text", string("W")),
@@ -412,9 +452,7 @@ const emptyRules = new Set([
 
 console.log("Starting...");
 
-console.time("BENCHMARK");
-
-const result = tool({
+const opts: ToolInput = {
   name: "my_grammar",
   ruleDecls: [
     ruleA,
@@ -435,6 +473,7 @@ const result = tool({
     ruleRecursive1,
     ruleRecursive2,
     ruleRecursive3,
+    ruleRecursive4,
     ruleRecTricky1,
     ruleRecTricky2,
     ruleRecTricky3,
@@ -452,14 +491,28 @@ const result = tool({
     ruleGLLFollowTest2,
     ruleGLLFollowContextTest2,
     ruleGLLAuxOptional1,
+    follow3,
+    follow2,
+    follow1,
+    follow0,
+    grammarEnd,
+    grammarNotEnd,
+    endAux,
   ],
   tokenDecls: [tokenW, tokenY],
   startArguments: [typeBuilder.string()],
   externalFuncReturns: {
     externalCall: typeBuilder.bool(),
   },
+};
+
+const resultReference = tool({
+  ...opts,
+  _useReferenceAnalysis: true,
 });
 
+console.time("BENCHMARK");
+const result = tool(opts);
 console.timeEnd("BENCHMARK");
 
 if (result) {
@@ -469,7 +522,13 @@ if (result) {
   );
   const { types } = inferAndCheckTypes(result.grammar);
   fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
-  console.log();
+}
+
+if (resultReference) {
+  fs.writeFileSync(
+    path.join(import.meta.dirname, "example.reference.gen.mjs"),
+    resultReference.code
+  );
 }
 
 // yarn n packages/languages/parser/src/v2/example.ts > packages/languages/parser/src/v2/example.txt

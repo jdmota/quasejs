@@ -1,5 +1,5 @@
 import { Location } from "../runtime/input.ts";
-import { never, nonNull } from "../utils/index.ts";
+import { assertion, never } from "../utils/index.ts";
 import { AugmentedTokenDeclaration, augmentToken } from "./grammar.ts";
 import {
   AnyRule,
@@ -25,6 +25,7 @@ import {
   TokenRules,
   NullRule,
 } from "./grammar-builder.ts";
+import { Range } from "../utils/range-utils.ts";
 
 export const LEXER_RULE_NAME = "$lexer";
 
@@ -152,10 +153,19 @@ export class TokensStore {
     Readonly<{ decl: AugmentedTokenDeclaration; name: string }>
   >();
   private uuid: number = -1;
+  private MIN: number;
+  private MAX: number;
 
   constructor() {
     // Ensure the EOF token exists
-    this.get(builder.eof());
+    const eof = this.get(builder.eof());
+    assertion(eof === -1);
+    this.MIN = eof;
+    this.MAX = eof;
+  }
+
+  anyRange(): Range {
+    return { from: this.MIN, to: this.MAX };
   }
 
   get(token: TokenRules | AugmentedTokenDeclaration): number {
@@ -166,13 +176,14 @@ export class TokensStore {
       const decl = this.ensureDeclaration(id, token);
       this.tokens.set(name, { decl, id });
       this.tokens2.set(id, { decl, name });
+      this.MAX = id;
       return id;
     }
     return curr.id;
   }
 
   getDecl(id: number) {
-    return nonNull(this.tokens2.get(id));
+    return this.tokens2.get(id);
   }
 
   private uniqName(token: TokenRules | AugmentedTokenDeclaration) {

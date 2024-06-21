@@ -1,14 +1,18 @@
 import { ObjectHashEquals, equals, nonNull } from "../utils/index.ts";
+import { EOF_RANGE } from "../utils/range-utils.ts";
 import { FollowStack } from "./follow-stack.ts";
 
 // 1-based index to be used in this.$ff(index)
 export function getInFollowStack(follow: FollowStack, index: number) {
+  if (index > follow.size) {
+    return EOF_RANGE.from;
+  }
   let i = follow.size - index;
   let f: FollowStack = follow;
   while (i--) {
     f = nonNull(f.child);
   }
-  return f.info;
+  return f.followID;
 }
 
 export type DecisionSingleton = DecisionTestToken | DecisionTestFollow;

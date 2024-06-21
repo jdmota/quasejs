@@ -9,6 +9,6 @@ export class RuntimeContext {
   }
 
   ff(index: number) {
-    return this.stack[this.stack.length - index];
+    return this.stack[this.stack.length - index] ?? -1;
   }
 }

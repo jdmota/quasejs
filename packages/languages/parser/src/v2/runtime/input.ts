@@ -78,7 +78,7 @@ export class Input extends BufferedStream<number> {
     return -1;
   }
 
-  protected override ofb(): number {
+  protected override oob(): number {
     throw new Error("Out of bounds");
   }
 
