@@ -1,8 +1,6 @@
 import { DState } from "../automaton/state.ts";
-import { assertion, nonNull, setAdd } from "../utils/index.ts";
-import { ParserGenerator } from "../generators/generate-parser.ts";
+import { assertion, nonNull } from "../utils/index.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
-import { FollowInfoDB } from "../grammar/follow-info.ts";
 import {
   DecisionTokenTree,
   DecisionTreeNoAdd,
@@ -20,10 +18,7 @@ import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 
 type RuleName = string;
 
-export class Analyzer implements IAnalyzer<AnalysisPoint> {
-  readonly grammar: Grammar;
-  readonly follows: FollowInfoDB;
-  readonly initialStates: Map<RuleName, DState>;
+export class Analyzer extends IAnalyzer<AnalysisPoint> {
   private llState: number;
 
   constructor({
@@ -31,11 +26,12 @@ export class Analyzer implements IAnalyzer<AnalysisPoint> {
     initialStates,
   }: {
     grammar: Grammar;
-    initialStates: Map<RuleName, DState>;
+    initialStates: ReadonlyMap<RuleName, DState>;
   }) {
-    this.grammar = grammar;
-    this.follows = grammar.follows;
-    this.initialStates = initialStates;
+    super({
+      grammar,
+      initialStates,
+    });
     this.llState = 0;
   }
 
@@ -43,8 +39,7 @@ export class Analyzer implements IAnalyzer<AnalysisPoint> {
     return this.llState;
   }
 
-  // TODO what about the follow of $lexer?
-  // TODO what about left recursive rules?
+  // TODO deal with left recursive rules transformation!
 
   /*
   E[1] -> E[2] ( + E[2] | - E[2] )* // left assoc
@@ -114,92 +109,76 @@ export class Analyzer implements IAnalyzer<AnalysisPoint> {
 
     this.llState = 1;
 
-    const gllAnalyzers = new Map<AnyTransition, AnalysisGLL>();
+    // const gllAnalyzers = new Map<AnyTransition, AnalysisGLL>();
     const initialGSSs = new Map<AnyTransition, GSSNode<StateInRule>>();
-    const allFollows = new Map<AnyTransition, FollowStack[]>();
 
     for (const [goto, dest] of state) {
       const a = new AnalysisGLL(this, ll1, rule.name, state, goto);
-      gllAnalyzers.set(goto, a);
+      // gllAnalyzers.set(goto, a);
       initialGSSs.set(goto, a.getInitialGSS());
       a.addInitial(1);
       a.run();
     }
 
-    let prev: readonly DecisionTreeNoAdd<AnalysisPoint>[] = [
-      ll1.ensureDecisions(Array.from(state.transitions())),
-    ];
+    let prev: readonly DecisionTreeNoAdd<AnalysisPoint>[] = [ll1];
     let next: DecisionTreeNoAdd<AnalysisPoint>[] = [];
 
     this.llState = 2;
 
     let followIndex = 1;
 
+    const followsCache = new WeakMap();
+
     while (prev.length) {
       const inLLAnalysis = this.llState <= maxLL;
       const inFFAnalysis = followIndex <= maxFF;
 
-      if (
-        !inLLAnalysis &&
-        inFFAnalysis &&
-        followIndex === 1 &&
-        allFollows.size === 0
-      ) {
-        for (const [goto, node] of initialGSSs) {
-          // TODO this over-approximates (compare with reference result of "endAux" or "GLLAuxOptional1")
-          allFollows.set(
-            goto,
-            buildFollow(this, node, maxFF, nonNull(gllAnalyzers.get(goto)))
-          );
-        }
-      }
-
       for (const tree of prev) {
-        assertion(tree.hasDecisions());
+        if (!tree.hasDecisions() && tree.owner) inverted.add(tree.owner);
+        if (tree.hasAnyDecisions()) inverted.addAny(tree);
         for (const decision of tree.iterate()) {
           if (DEBUG.keepGoing || decision.isAmbiguous()) {
             if (inLLAnalysis) {
               const nextTree = decision.ensureNextTokenTree();
               assertion(nextTree.ll === this.llState);
               for (const { desc, gotos } of decision) {
-                if (desc) {
-                  const a = new AnalysisGLL(
-                    this,
-                    ll1,
-                    rule.name,
-                    state,
-                    desc.label.goto
-                  );
-                  a.setTree(nextTree, gotos);
-                  a.doContinue(desc);
-                } else {
-                  nextTree.addEof(gotos);
-                }
+                const a = new AnalysisGLL(
+                  this,
+                  ll1,
+                  rule.name,
+                  state,
+                  desc.label.goto
+                );
+                a.setTree(nextTree, gotos);
+                a.doContinue(desc);
               }
-              next.push(nextTree.ensureDecisions(decision.getGotos()));
+              next.push(nextTree);
             } else if (inFFAnalysis) {
               const nextTree = decision.ensureNextFollowTree();
               assertion(nextTree.ff === followIndex);
               for (const { desc, gotos } of decision) {
-                if (desc) {
-                  const follows = nonNull(allFollows.get(desc.label.goto));
-                  for (const follow of follows) {
-                    nextTree.addDecision(
-                      rule.name,
-                      this.follows,
-                      getInFollowStack(follow, followIndex),
-                      [desc.label.goto],
-                      desc
-                    );
-                  }
-                  if (follows.length === 0) {
-                    nextTree.addEof(gotos);
-                  }
-                } else {
-                  nextTree.addEof(gotos);
+                let follows = followsCache.get(desc);
+                if (!follows) {
+                  follows = buildFollow(
+                    this,
+                    nonNull(initialGSSs.get(desc.label.goto)),
+                    desc.node,
+                    maxFF
+                  );
+                  followsCache.set(desc, follows);
                 }
+                for (const follow of follows) {
+                  nextTree.addDecision(
+                    rule.name,
+                    this.follows,
+                    getInFollowStack(follow, followIndex),
+                    [desc.label.goto],
+                    desc
+                  );
+                }
+                assertion(follows.length > 0);
               }
-              next.push(nextTree.ensureDecisions(decision.getGotos()));
+              next.push(nextTree);
             } else {
               inverted.add(decision);
             }
@@ -228,87 +207,122 @@ export class Analyzer implements IAnalyzer<AnalysisPoint> {
     this.cache.set(state, result);
     return result;
   }
+}
 
-  printAmbiguities(
-    rule: AugmentedDeclaration,
-    state: DState,
-    maxLL: number,
-    inverted: InvertedDecisionTree<AnalysisPoint>
-  ) {
-    const { ambiguities } = inverted;
-    if (ambiguities.length === 0) {
-      return;
-    }
-    const gen = new ParserGenerator(this.grammar, this, rule);
-    console.log("-----------");
-    console.log(
-      `Ambiguities in rule ${rule.name}, state ${state.id}, ll = ${maxLL}`
-    );
-    for (const { decision, condition } of ambiguities) {
-      console.log(
-        `Condition ${gen.renderDecision(
-          condition,
-          true
-        )} is not enough to choose between:`
-      );
-      for (const goto of decision.getGotos()) {
-        console.log(
-          ` - ${gen.renderExpectBlock("", {
-            type: "expect_block",
-            transition: goto,
-          })}`
-        );
+function* gssChildren(analyzer: Analyzer, node: GSSNode<StateInRule>) {
+  assertion(node.level === 0);
+  if (node.hasChildren()) {
+    for (const [l, set] of node.children()) {
+      for (const c of set) {
+        yield [
+          analyzer.follows.getByRuleExitState(l.rule, l.state).id,
+          c,
+        ] as const;
       }
     }
-    console.log("-----------");
+  } else {
+    const follow = analyzer.follows.get(node.rule);
+    for (const info of follow) {
+      yield [info.id, new GSSNode<StateInRule>(info.rule, 0)] as const;
+    }
+    if (follow.length === 0) {
+      yield [-1, new GSSNode<StateInRule>("$", 0)] as const;
+    }
   }
+}
+
+function lookforZeros(start: GSSNode<StateInRule>) {
+  const found = new Set<string>();
+  let prev: GSSNode<StateInRule>[] = [start];
+  let next: GSSNode<StateInRule>[] = [];
+  const seen = new Set();
+  while (prev.length) {
+    for (const n of prev) {
+      if (n.level === 0) {
+        found.add(n.rule);
+      } else {
+        for (const [l, set] of n.children()) {
+          for (const c of set) {
+            if (!seen.has(c)) {
+              seen.add(c);
+              next.push(c);
+            }
+          }
+        }
+      }
+    }
+    prev = next;
+    next = [];
+  }
+  return found;
+}
+
+function lookfor(
+  analyzer: Analyzer,
+  start: GSSNode<StateInRule>,
+  goal: Set<string>
+) {
+  if (goal.has(start.rule)) {
+    return true;
+  }
+  let prev: GSSNode<StateInRule>[] = [start];
+  let next: GSSNode<StateInRule>[] = [];
+  const seen = new Set<string>();
+  while (prev.length) {
+    for (const n of prev) {
+      for (const [fId, c] of gssChildren(analyzer, n)) {
+        if (goal.has(c.rule)) {
+          return true;
+        }
+        if (!seen.has(c.rule)) {
+          seen.add(c.rule);
+          next.push(c);
+        }
+      }
+    }
+    prev = next;
+    next = [];
+  }
+  return false;
 }
 
 function buildFollow(
   analyzer: Analyzer,
   initialGSS: GSSNode<StateInRule>,
-  maxFF: number,
-  gllAnalyzer: AnalysisGLL
+  destinationGSS: GSSNode<StateInRule>,
+  maxFF: number
 ) {
+  assertion(initialGSS.level === 0);
+  const zeros = lookforZeros(destinationGSS);
   let prev: {
     n: GSSNode<StateInRule>;
     f: FollowStack | null;
-  }[] = [{ n: initialGSS, f: null }];
+    b: boolean;
+  }[] = [
+    {
+      n: initialGSS,
+      f: null,
+      b: zeros.has(initialGSS.rule),
+    },
+  ];
   let next: {
     n: GSSNode<StateInRule>;
     f: FollowStack | null;
+    b: boolean;
   }[] = [];
   const follows: FollowStack[] = [];
 
   while (prev.length) {
-    for (const { n, f } of prev) {
+    for (const { n, f, b } of prev) {
       if ((f?.size ?? 0) >= maxFF) {
-        follows.push(nonNull(f));
+        if (b || lookfor(analyzer, n, zeros)) follows.push(nonNull(f));
       } else {
-        if (n.hasChildren()) {
-          for (const [l, set] of n.children()) {
-            for (const c of set) {
-              next.push({
-                n: c,
-                f: new FollowStack(
-                  analyzer,
-                  f,
-                  analyzer.follows.getByRuleExitState(l.rule, l.state).id
-                ),
-              });
-            }
-          }
-        } else {
-          const follow = analyzer.follows.get(n.rule);
-          for (const info of follow) {
-            next.push({
-              n: gllAnalyzer.ensureGLLNode(info.rule, 0),
-              f: new FollowStack(analyzer, f, info.id),
-            });
-          }
-          if (follow.length === 0) {
-            if (f) follows.push(f);
-          }
+        for (const [fId, c] of gssChildren(analyzer, n)) {
+          next.push({
+            n: c,
+            f: new FollowStack(analyzer, f, fId),
+            b: b || zeros.has(c.rule),
+          });
         }
       }
     }

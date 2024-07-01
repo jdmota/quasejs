@@ -384,6 +384,10 @@ class GrammarParser extends Parser {
               $dd = 0;
             } else { //$ll2 === 3 /*#string:C*/
               $ll3 = this.$ll(3);
+              if(true){
+                throw new Error("Left recursion");
+                $dd = 2;
+              }
               if($ll3 === -1 /*#eof*/ || $ll3 === 0 /*#string:O*/ || $ll3 === 1 /*#string:A*/ || $ll3 === 2 /*#string:B*/ || $ll3 === 6 /*#string:F*/ || $ll3 === 7 /*#string:STRING*/){
                 $dd = 2;
               } else { //$ll3 === 4 /*#string:D*/
@@ -437,38 +441,55 @@ class GrammarParser extends Parser {
     this.$e(3 /*#string:C*/);
     s7:do{
       l1:while(1){
-        switch(this.$ll(1)){
-          case -1 /*#eof*/:
-          case 1 /*#string:A*/:
-          case 2 /*#string:B*/:
-          case 7 /*#string:STRING*/:
-            break s7;
-          case 4 /*#string:D*/:
-            D.push(this.$e(4 /*#string:D*/));
-            this.$e(5 /*#string:E*/);
-            continue;
-          case 0 /*#string:O*/:
-            break l1;
-          case 6 /*#string:F*/:
-            while(1){
-              this.$e(6 /*#string:F*/);
-              switch(this.$ll(1)){
-                case -1 /*#eof*/:
-                case 1 /*#string:A*/:
-                case 2 /*#string:B*/:
-                case 7 /*#string:STRING*/:
-                  break s7;
-                case 0 /*#string:O*/:
-                  break l1;
-                case 6 /*#string:F*/:
-                  continue;
-                default:
-                  this.$err();
-              }
+        $ll1 = this.$ll(1);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+        }
+        if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
+          $dd = 0;
+        } else if($ll1 === 0 /*#string:O*/){
+          $dd = 2;
+        } else if($ll1 === 4 /*#string:D*/){
+          $dd = 1;
+        } else { //$ll1 === 6 /*#string:F*/
+          $dd = 3;
+        }
+        if($dd === 0){
+          break s7;
+        } else if($dd === 1){
+          D.push(this.$e(4 /*#string:D*/));
+          this.$e(5 /*#string:E*/);
+          continue;
+        } else if($dd === 2){
+          break;
+        } else if($dd === 3){
+          while(1){
+            this.$e(6 /*#string:F*/);
+            $ll1 = this.$ll(1);
+            if(true){
+              throw new Error("Left recursion");
+              $dd = 0;
             }
-            break;
-          default:
-            this.$err();
+            if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
+              $dd = 0;
+            } else if($ll1 === 0 /*#string:O*/){
+              $dd = 1;
+            } else { //$ll1 === 6 /*#string:F*/
+              $dd = 2;
+            }
+            if($dd === 0){
+              break s7;
+            } else if($dd === 1){
+              break l1;
+            } else if($dd === 2){
+              continue;
+            } else {
+              this.$err();
+            }
+          }
+        } else {
+          this.$err();
         }
       }
       this.$e(0 /*#string:O*/);
@@ -568,20 +589,25 @@ class GrammarParser extends Parser {
     return {$loc};
   }
   ruleC(x,y) {
-    let $startPos=null, text=null, ret=null, $loc=null;
+    let $dd, $ll1, $startPos=null, text=null, ret=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case -1 /*#eof*/:
-      case 1 /*#string:A*/:
-      case 2 /*#string:B*/:
-        ret = {x: y, y: x};
-        break;
-      case 7 /*#string:STRING*/:
-        text = this.$e(7 /*#string:STRING*/);
-        ret = {x, y};
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
+    if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
+      $dd = 0;
+    } else { //$ll1 === 7 /*#string:STRING*/
+      $dd = 1;
+    }
+    if($dd === 0){
+      ret = {x: y, y: x};
+    } else if($dd === 1){
+      text = this.$e(7 /*#string:STRING*/);
+      ret = {x, y};
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {ret, text, $loc};
@@ -616,7 +642,7 @@ class GrammarParser extends Parser {
           $ll3 = this.$ll(3);
           { //$ll3 === -1 /*#eof*/
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            { //$ff1 === 4 /* parent 3 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -631,21 +657,7 @@ class GrammarParser extends Parser {
           }
         } else { //$ll2 === 1 /*#string:A*/
           $ll3 = this.$ll(3);
-          if($ll3 === -1 /*#eof*/){
-            $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
-              $ff2 = this.ctx.ff(2);
-              { //$ff2 === -1
-                $ff3 = this.ctx.ff(3);
-                { //$ff3 === -1
-                  throw new Error("Ambiguity");
-                  $dd = 0;
-                  //Ambiguity
-                  $dd = 1;
-                }
-              }
-            }
-          } else { //$ll3 === 1 /*#string:A*/
+          { //$ll3 === -1 /*#eof*/ || $ll3 === 1 /*#string:A*/
             $ff1 = this.ctx.ff(1);
             { //$ff1 === 4 /* parent 3 */
               $ff2 = this.ctx.ff(2);
@@ -719,13 +731,32 @@ class GrammarParser extends Parser {
     $startPos = this.$getPos();
     do{
       $ll1 = this.$ll(1);
+      if(true){
+        throw new Error("Left recursion");
+        $dd = 0;
+        //Ambiguity
+        $dd = 2;
+      }
       if($ll1 === -1 /*#eof*/){
         $ll2 = this.$ll(2);
         { //$ll2 === -1 /*#eof*/
           $ll3 = this.$ll(3);
           { //$ll3 === -1 /*#eof*/
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  $dd = 0;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  $dd = 0;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -738,11 +769,38 @@ class GrammarParser extends Parser {
         }
       } else if($ll1 === 1 /*#string:A*/){
         $ll2 = this.$ll(2);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+          //Ambiguity
+          $dd = 1;
+          //Ambiguity
+          $dd = 2;
+        }
         if($ll2 === -1 /*#eof*/){
           $ll3 = this.$ll(3);
           { //$ll3 === -1 /*#eof*/
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -757,9 +815,36 @@ class GrammarParser extends Parser {
           }
         } else if($ll2 === 1 /*#string:A*/){
           $ll3 = this.$ll(3);
+          if(true){
+            throw new Error("Left recursion");
+            $dd = 0;
+            //Ambiguity
+            $dd = 1;
+            //Ambiguity
+            $dd = 2;
+          }
           if($ll3 === -1 /*#eof*/){
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -792,7 +877,62 @@ class GrammarParser extends Parser {
           $ll3 = this.$ll(3);
           if($ll3 === -1 /*#eof*/){
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                  //Ambiguity
+                  $dd = 2;
+                } else { //$ff3 === 8 /* Tricky1 11 */
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              } else if($ff2 === 8 /* Tricky1 11 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                  //Ambiguity
+                  $dd = 2;
+                }
+              }
+            } else if($ff1 === 8 /* Tricky1 11 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -889,7 +1029,46 @@ class GrammarParser extends Parser {
           $ll3 = this.$ll(3);
           { //$ll3 === -1 /*#eof*/
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 2;
+                } else { //$ff3 === 8 /* Tricky1 11 */
+                  $dd = 0;
+                }
+              } else if($ff2 === 8 /* Tricky1 11 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  $dd = 0;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 2;
+                }
+              }
+            } else if($ff1 === 8 /* Tricky1 11 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  $dd = 0;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  $dd = 0;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
               $ff2 = this.ctx.ff(2);
               { //$ff2 === -1
                 $ff3 = this.ctx.ff(3);
@@ -906,14 +1085,65 @@ class GrammarParser extends Parser {
           $ll3 = this.$ll(3);
           if($ll3 === -1 /*#eof*/){
             $ff1 = this.ctx.ff(1);
-            { //$ff1 === -1
+            if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
               $ff2 = this.ctx.ff(2);
-              { //$ff2 === -1
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 2;
+                } else { //$ff3 === 29 /* TrickyAfterEmpty 4 */
+                  $dd = 2;
+                }
+              } else if($ff2 === 8 /* Tricky1 11 */){
+                $ff3 = this.ctx.ff(3);
+                if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 2;
+                } else { //$ff3 === 8 /* Tricky1 11 */
+                  $dd = 0;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
+                  $dd = 2;
+                }
+              }
+            } else if($ff1 === 8 /* Tricky1 11 */){
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                $ff3 = this.ctx.ff(3);
+                if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 2;
+                } else { //$ff3 === 8 /* Tricky1 11 */
+                  $dd = 0;
+                }
+              } else if($ff2 === 8 /* Tricky1 11 */){
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                  $dd = 0;
+                }
+              } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
                 $ff3 = this.ctx.ff(3);
                 { //$ff3 === -1
                   throw new Error("Ambiguity");
                   $dd = 0;
                   //Ambiguity
+                  $dd = 2;
+                }
+              }
+            } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
+              $ff2 = this.ctx.ff(2);
+              { //$ff2 === -1
+                $ff3 = this.ctx.ff(3);
+                { //$ff3 === -1
                   $dd = 2;
                 }
               }
@@ -974,13 +1204,36 @@ class GrammarParser extends Parser {
       if($dd === 0){
         1;
         $ll1 = this.$ll(1);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+        }
         if($ll1 === -1 /*#eof*/){
           $ll2 = this.$ll(2);
           { //$ll2 === -1 /*#eof*/
             $ll3 = this.$ll(3);
             { //$ll3 === -1 /*#eof*/
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  }
+                }
+              } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
                 $ff2 = this.ctx.ff(2);
                 { //$ff2 === -1
                   $ff3 = this.ctx.ff(3);
@@ -996,11 +1249,28 @@ class GrammarParser extends Parser {
           }
         } else if($ll1 === 1 /*#string:A*/){
           $ll2 = this.$ll(2);
+          if(true){
+            throw new Error("Left recursion");
+            $dd = 0;
+          }
           if($ll2 === -1 /*#eof*/){
             $ll3 = this.$ll(3);
             { //$ll3 === -1 /*#eof*/
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
+              } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
                 $ff2 = this.ctx.ff(2);
                 { //$ff2 === -1
                   $ff3 = this.ctx.ff(3);
@@ -1012,9 +1282,26 @@ class GrammarParser extends Parser {
             }
           } else if($ll2 === 1 /*#string:A*/){
             $ll3 = this.$ll(3);
+            if(true){
+              throw new Error("Left recursion");
+              $dd = 0;
+            }
             if($ll3 === -1 /*#eof*/){
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
+              } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
                 $ff2 = this.ctx.ff(2);
                 { //$ff2 === -1
                   $ff3 = this.ctx.ff(3);
@@ -1039,7 +1326,38 @@ class GrammarParser extends Parser {
             $ll3 = this.$ll(3);
             if($ll3 === -1 /*#eof*/){
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else if($ff2 === 8 /* Tricky1 11 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
+              } else if($ff1 === 8 /* Tricky1 11 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
+              } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
                 $ff2 = this.ctx.ff(2);
                 { //$ff2 === -1
                   $ff3 = this.ctx.ff(3);
@@ -1085,9 +1403,43 @@ class GrammarParser extends Parser {
             $ll3 = this.$ll(3);
             { //$ll3 === -1 /*#eof*/
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
                 $ff2 = this.ctx.ff(2);
-                { //$ff2 === -1
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */){
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  } else { //$ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else if($ff2 === 8 /* Tricky1 11 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
+              } else if($ff1 === 8 /* Tricky1 11 */){
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
                   $ff3 = this.ctx.ff(3);
                   { //$ff3 === -1
                     throw new Error("Ambiguity");
@@ -1096,21 +1448,65 @@ class GrammarParser extends Parser {
                     $dd = 1;
                   }
                 }
+              } else { //$ff1 === 29 /* TrickyAfterEmpty 4 */
+                $ff2 = this.ctx.ff(2);
+                { //$ff2 === -1
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
+                  }
+                }
               }
             }
           } else { //$ll2 === 2 /*#string:B*/
             $ll3 = this.$ll(3);
             if($ll3 === -1 /*#eof*/){
               $ff1 = this.ctx.ff(1);
-              { //$ff1 === -1
+              if($ff1 === 6 /* Tricky1 4 */ || $ff1 === 7 /* Tricky1 9 */){
                 $ff2 = this.ctx.ff(2);
-                { //$ff2 === -1
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
                   $ff3 = this.ctx.ff(3);
-                  { //$ff3 === -1
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */
                     throw new Error("Ambiguity");
                     $dd = 0;
                     //Ambiguity
                     $dd = 1;
+                  }
+                } else { //$ff2 === 8 /* Tricky1 11 */
+                  $ff3 = this.ctx.ff(3);
+                  if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */){
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  } else { //$ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                }
+              } else { //$ff1 === 8 /* Tricky1 11 */
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 6 /* Tricky1 4 */ || $ff2 === 7 /* Tricky1 9 */){
+                  $ff3 = this.ctx.ff(3);
+                  if($ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 8 /* Tricky1 11 */){
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  } else { //$ff3 === 29 /* TrickyAfterEmpty 4 */
+                    $dd = 0;
+                  }
+                } else if($ff2 === 8 /* Tricky1 11 */){
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === 6 /* Tricky1 4 */ || $ff3 === 7 /* Tricky1 9 */ || $ff3 === 29 /* TrickyAfterEmpty 4 */
+                    throw new Error("Ambiguity");
+                    $dd = 0;
+                    //Ambiguity
+                    $dd = 1;
+                  }
+                } else { //$ff2 === 29 /* TrickyAfterEmpty 4 */
+                  $ff3 = this.ctx.ff(3);
+                  { //$ff3 === -1
+                    $dd = 0;
                   }
                 }
               }
@@ -1183,14 +1579,30 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, y=null, z=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
     if($ll1 === -1 /*#eof*/){
       $dd = 1;
     } else if($ll1 === 1 /*#string:A*/){
       $ll2 = this.$ll(2);
+      if(true){
+        throw new Error("Left recursion");
+        $dd = 0;
+        //Ambiguity
+        $dd = 2;
+      }
       if($ll2 === -1 /*#eof*/){
         $dd = 2;
       } else if($ll2 === 1 /*#string:A*/){
         $ll3 = this.$ll(3);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+          //Ambiguity
+          $dd = 2;
+        }
         if($ll3 === -1 /*#eof*/){
           $dd = 2;
         } else if($ll3 === 1 /*#string:A*/){
@@ -1347,11 +1759,23 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          if($ff1 === 3 /* A 9 */){
+            $dd = 0;
+          } else if($ff1 === 9 /* Tricky2 3 */){
+            $dd = 1;
+          } else { //$ff1 === 10 /* Tricky2 4 */
             $ff2 = this.ctx.ff(2);
-            { //$ff2 === -1
+            if($ff2 === 3 /* A 9 */){
+              $dd = 0;
+            } else if($ff2 === 9 /* Tricky2 3 */){
+              $dd = 1;
+            } else { //$ff2 === 10 /* Tricky2 4 */
               $ff3 = this.ctx.ff(3);
-              { //$ff3 === -1
+              if($ff3 === 3 /* A 9 */){
+                $dd = 0;
+              } else if($ff3 === 9 /* Tricky2 3 */){
+                $dd = 1;
+              } else { //$ff3 === 10 /* Tricky2 4 */
                 throw new Error("Ambiguity");
                 $dd = 0;
                 //Ambiguity
@@ -1478,10 +1902,32 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $ff3, $startPos=null, x=null, y=null, z=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+      //Ambiguity
+      $dd = 1;
+    }
     if($ll1 === 1 /*#string:A*/){
       $ll2 = this.$ll(2);
+      if(true){
+        throw new Error("Left recursion");
+        $dd = 0;
+        //Ambiguity
+        $dd = 1;
+        //Ambiguity
+        $dd = 3;
+      }
       if($ll2 === 1 /*#string:A*/){
         $ll3 = this.$ll(3);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+          //Ambiguity
+          $dd = 1;
+          //Ambiguity
+          $dd = 3;
+        }
         if($ll3 === 1 /*#string:A*/){
           throw new Error("Ambiguity");
           $dd = 0;
@@ -1644,6 +2090,10 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
     if($ll1 === -1 /*#eof*/){
       $ll2 = this.$ll(2);
       if($ll2 === -1 /*#eof*/){
@@ -1735,11 +2185,9 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
-    { //false
-      throw new Error("Ambiguity");
+    if(true){
+      throw new Error("Left recursion");
       $dd = 0;
-      //Ambiguity
-      $dd = 1;
     }
     if($dd === 0){
       this.ctx.p(16 /* Rec2 3 */, () => this.ruleRec2());
@@ -1755,6 +2203,10 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
     { //$ll1 === 1 /*#string:A*/
       throw new Error("Ambiguity");
       $dd = 0;
@@ -1772,13 +2224,34 @@ class GrammarParser extends Parser {
     return 10;
   }
   ruleRec4() {
-    let $ff1, $ff2, $ll1, $ll2, $ll3, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $ll3, $ff1, $ff2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-     $ff1 = this.$ff(1); $ff2 = this.$ff(2);
-    if(($ll1 === 2 /*#string:B*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/ && $ff1 === 18 /* Rec4 3 */ && $ff2 === -1)){
+    $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
+    { //$ll1 === 2 /*#string:B*/
+      $ll2 = this.$ll(2);
+      { //$ll2 === 1 /*#string:A*/
+        $ll3 = this.$ll(3);
+        { //$ll3 === 1 /*#string:A*/
+          $ff1 = this.ctx.ff(1);
+          { //$ff1 === 18 /* Rec4 3 */
+            $ff2 = this.ctx.ff(2);
+            if($ff2 === -1){
+              $dd = 0;
+            } else { //$ff2 === 18 /* Rec4 3 */
+              $dd = 1;
+            }
+          }
+        }
+      }
+    }
+    if($dd === 0){
       this.ctx.p(18 /* Rec4 3 */, () => this.ruleRec4());
       this.$e(1 /*#string:A*/);
-    } else if(($ll1 === 2 /*#string:B*/ && $ll2 === 1 /*#string:A*/ && $ll3 === 1 /*#string:A*/ && $ff1 === 18 /* Rec4 3 */ && $ff2 === 18 /* Rec4 3 */)){
+    } else if($dd === 1){
       this.$e(2 /*#string:B*/);
     } else {
       this.$err();
@@ -1791,10 +2264,24 @@ class GrammarParser extends Parser {
     $startPos = this.$getPos();
     do{
       $ll1 = this.$ll(1);
+      if(true){
+        throw new Error("Left recursion");
+        $dd = 0;
+        //Ambiguity
+        $dd = 2;
+      }
       if($ll1 === -1 /*#eof*/){
         $dd = 0;
       } else if($ll1 === 1 /*#string:A*/){
         $ll2 = this.$ll(2);
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+          //Ambiguity
+          $dd = 1;
+          //Ambiguity
+          $dd = 2;
+        }
         if($ll2 === -1 /*#eof*/){
           throw new Error("Ambiguity");
           $dd = 0;
@@ -1802,6 +2289,14 @@ class GrammarParser extends Parser {
           $dd = 1;
         } else if($ll2 === 1 /*#string:A*/){
           $ll3 = this.$ll(3);
+          if(true){
+            throw new Error("Left recursion");
+            $dd = 0;
+            //Ambiguity
+            $dd = 1;
+            //Ambiguity
+            $dd = 2;
+          }
           if($ll3 === -1 /*#eof*/){
             throw new Error("Ambiguity");
             $dd = 0;
@@ -1818,12 +2313,23 @@ class GrammarParser extends Parser {
         } else { //$ll2 === 2 /*#string:B*/
           $ll3 = this.$ll(3);
           if($ll3 === -1 /*#eof*/){
-            throw new Error("Ambiguity");
-            $dd = 0;
-            //Ambiguity
-            $dd = 1;
-            //Ambiguity
-            $dd = 2;
+            $ff1 = this.ctx.ff(1);
+            { //$ff1 === 22 /* RecTricky2 3 */
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 19 /* RecTricky1 4 */ || $ff2 === 20 /* RecTricky1 9 */ || $ff2 === 23 /* RecTricky3 3 */){
+                throw new Error("Ambiguity");
+                $dd = 0;
+                //Ambiguity
+                $dd = 1;
+                //Ambiguity
+                $dd = 2;
+              } else { //$ff2 === 21 /* RecTricky1 11 */
+                throw new Error("Ambiguity");
+                $dd = 0;
+                //Ambiguity
+                $dd = 1;
+              }
+            }
           } else { //$ll3 === 2 /*#string:B*/
             $ff1 = this.ctx.ff(1);
             { //$ff1 === 22 /* RecTricky2 3 */
@@ -1856,17 +2362,36 @@ class GrammarParser extends Parser {
       } else { //$ll1 === 2 /*#string:B*/
         $ll2 = this.$ll(2);
         if($ll2 === -1 /*#eof*/){
-          throw new Error("Ambiguity");
-          $dd = 0;
-          //Ambiguity
-          $dd = 2;
+          $ll3 = this.$ll(3);
+          { //$ll3 === -1 /*#eof*/
+            $ff1 = this.ctx.ff(1);
+            { //$ff1 === 22 /* RecTricky2 3 */
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 19 /* RecTricky1 4 */ || $ff2 === 20 /* RecTricky1 9 */ || $ff2 === 23 /* RecTricky3 3 */){
+                throw new Error("Ambiguity");
+                $dd = 0;
+                //Ambiguity
+                $dd = 2;
+              } else { //$ff2 === 21 /* RecTricky1 11 */
+                $dd = 0;
+              }
+            }
+          }
         } else { //$ll2 === 2 /*#string:B*/
           $ll3 = this.$ll(3);
           if($ll3 === -1 /*#eof*/){
-            throw new Error("Ambiguity");
-            $dd = 0;
-            //Ambiguity
-            $dd = 2;
+            $ff1 = this.ctx.ff(1);
+            { //$ff1 === 22 /* RecTricky2 3 */
+              $ff2 = this.ctx.ff(2);
+              if($ff2 === 19 /* RecTricky1 4 */ || $ff2 === 20 /* RecTricky1 9 */ || $ff2 === 21 /* RecTricky1 11 */){
+                throw new Error("Ambiguity");
+                $dd = 0;
+                //Ambiguity
+                $dd = 2;
+              } else { //$ff2 === 23 /* RecTricky3 3 */
+                $dd = 2;
+              }
+            }
           } else { //$ll3 === 2 /*#string:B*/
             $ff1 = this.ctx.ff(1);
             { //$ff1 === 22 /* RecTricky2 3 */
@@ -1894,13 +2419,41 @@ class GrammarParser extends Parser {
       if($dd === 0){
         1;
         $ll1 = this.$ll(1);
-        if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
+        if(true){
+          throw new Error("Left recursion");
+          $dd = 0;
+        }
+        if($ll1 === -1 /*#eof*/){
           throw new Error("Ambiguity");
           $dd = 0;
           //Ambiguity
           $dd = 1;
-        } else { //$ll1 === 1 /*#string:A*/
+        } else if($ll1 === 1 /*#string:A*/){
           $dd = 0;
+        } else { //$ll1 === 2 /*#string:B*/
+          $ll2 = this.$ll(2);
+          if($ll2 === -1 /*#eof*/){
+            $ll3 = this.$ll(3);
+            { //$ll3 === -1 /*#eof*/
+              $ff1 = this.ctx.ff(1);
+              { //$ff1 === 22 /* RecTricky2 3 */
+                $ff2 = this.ctx.ff(2);
+                if($ff2 === 19 /* RecTricky1 4 */ || $ff2 === 20 /* RecTricky1 9 */ || $ff2 === 21 /* RecTricky1 11 */){
+                  throw new Error("Ambiguity");
+                  $dd = 0;
+                  //Ambiguity
+                  $dd = 1;
+                } else { //$ff2 === 23 /* RecTricky3 3 */
+                  $dd = 0;
+                }
+              }
+            }
+          } else { //$ll2 === 2 /*#string:B*/
+            throw new Error("Ambiguity");
+            $dd = 0;
+            //Ambiguity
+            $dd = 1;
+          }
         }
         if($dd === 0){
           this.ctx.p(19 /* RecTricky1 4 */, () => this.ruleRecTricky2());
@@ -1937,19 +2490,24 @@ class GrammarParser extends Parser {
     return {$loc};
   }
   ruleRecTricky3() {
-    let $startPos=null, $loc=null;
+    let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case -1 /*#eof*/:
-      case 1 /*#string:A*/:
-      case 2 /*#string:B*/:
-        this.ctx.p(23 /* RecTricky3 3 */, () => this.ruleRecTricky2());
-        break;
-      case 3 /*#string:C*/:
-        this.$e(3 /*#string:C*/);
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
+    if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
+      $dd = 0;
+    } else { //$ll1 === 3 /*#string:C*/
+      $dd = 1;
+    }
+    if($dd === 0){
+      this.ctx.p(23 /* RecTricky3 3 */, () => this.ruleRecTricky2());
+    } else if($dd === 1){
+      this.$e(3 /*#string:C*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
@@ -1958,6 +2516,10 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
     if($ll1 === 2 /*#string:B*/){
       throw new Error("Ambiguity");
       $dd = 0;
@@ -1980,6 +2542,10 @@ class GrammarParser extends Parser {
     let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
     $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
     if($ll1 === 2 /*#string:B*/){
       $dd = 0;
     } else { //$ll1 === 3 /*#string:C*/
@@ -2023,31 +2589,54 @@ class GrammarParser extends Parser {
     return {$loc};
   }
   ruleEmptyOrNot() {
-    let $startPos=null, $loc=null;
+    let $dd, $ll1, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    switch(this.$ll(1)){
-      case -1 /*#eof*/:
-      case 1 /*#string:A*/:
-      case 2 /*#string:B*/:
-        // epsilon
-        break;
-      case 0 /*#string:O*/:
-        this.$e(0 /*#string:O*/);
-        break;
-      default:
-        this.$err();
+    $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
+    if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
+      $dd = 0;
+    } else { //$ll1 === 0 /*#string:O*/
+      $dd = 1;
+    }
+    if($dd === 0){
+      // epsilon
+    } else if($dd === 1){
+      this.$e(0 /*#string:O*/);
+    } else {
+      this.$err();
     }
     $loc = this.$getLoc($startPos);
     return {$loc};
   }
   ruleTrickyAfterEmpty() {
-    let $ll1, $ll2, $startPos=null, $loc=null;
+    let $dd, $ll1, $ll2, $startPos=null, $loc=null;
     $startPos = this.$getPos();
-    $ll1 = this.$ll(1); $ll2 = this.$ll(2); 
-    if(($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || ($ll1 === 0 /*#string:O*/ && $ll2 === -1 /*#eof*/) || ($ll1 === 0 /*#string:O*/ && $ll2 === 1 /*#string:A*/) || ($ll1 === 0 /*#string:O*/ && $ll2 === 2 /*#string:B*/))){
+    $ll1 = this.$ll(1);
+    if(true){
+      throw new Error("Left recursion");
+      $dd = 0;
+    }
+    if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
+      $dd = 0;
+    } else { //$ll1 === 0 /*#string:O*/
+      $ll2 = this.$ll(2);
+      if(true){
+        throw new Error("Left recursion");
+        $dd = 0;
+      }
+      if($ll2 === -1 /*#eof*/ || $ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
+        $dd = 0;
+      } else { //$ll2 === 11 /*#string:P*/
+        $dd = 1;
+      }
+    }
+    if($dd === 0){
       this.ctx.p(28 /* TrickyAfterEmpty 6 */, () => this.ruleEmptyOrNot());
       this.ctx.p(29 /* TrickyAfterEmpty 4 */, () => this.ruleTricky1());
-    } else if(($ll1 === 0 /*#string:O*/ && $ll2 === 11 /*#string:P*/)){
+    } else if($dd === 1){
       this.$e(0 /*#string:O*/);
       this.$e(11 /*#string:P*/);
     } else {
@@ -2150,7 +2739,7 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          { //$ff1 === 36 /* GLL1FollowContext2 3 */
             $ff2 = this.ctx.ff(2);
             { //$ff2 === -1
               $ff3 = this.ctx.ff(3);
@@ -2170,7 +2759,7 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          { //$ff1 === 36 /* GLL1FollowContext2 3 */
             $ff2 = this.ctx.ff(2);
             { //$ff2 === -1
               $ff3 = this.ctx.ff(3);
@@ -2229,7 +2818,15 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          if($ff1 === 35 /* GLL1Follow2 4 */){
+            $ff2 = this.ctx.ff(2);
+            { //$ff2 === 36 /* GLL1FollowContext2 3 */
+              $ff3 = this.ctx.ff(3);
+              { //$ff3 === -1
+                $dd = 0;
+              }
+            }
+          } else { //$ff1 === 37 /* GLL1FollowContext2 4 */
             $ff2 = this.ctx.ff(2);
             { //$ff2 === -1
               $ff3 = this.ctx.ff(3);
@@ -2246,14 +2843,22 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          if($ff1 === 35 /* GLL1Follow2 4 */){
             $ff2 = this.ctx.ff(2);
-            { //$ff2 === -1
+            { //$ff2 === 36 /* GLL1FollowContext2 3 */
               $ff3 = this.ctx.ff(3);
               { //$ff3 === -1
                 throw new Error("Ambiguity");
                 $dd = 0;
                 //Ambiguity
+                $dd = 1;
+              }
+            }
+          } else { //$ff1 === 37 /* GLL1FollowContext2 4 */
+            $ff2 = this.ctx.ff(2);
+            { //$ff2 === -1
+              $ff3 = this.ctx.ff(3);
+              { //$ff3 === -1
                 $dd = 1;
               }
             }
@@ -2372,7 +2977,7 @@ class GrammarParser extends Parser {
         $ll3 = this.$ll(3);
         { //$ll3 === -1 /*#eof*/
           $ff1 = this.ctx.ff(1);
-          { //$ff1 === -1
+          { //$ff1 === 41 /* end 3 */
             $ff2 = this.ctx.ff(2);
             { //$ff2 === -1
               $ff3 = this.ctx.ff(3);

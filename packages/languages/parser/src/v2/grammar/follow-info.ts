@@ -1,7 +1,7 @@
 import { DState } from "../automaton/state.ts";
 import { CallTransition } from "../automaton/transitions.ts";
 import { assertion, nonNull } from "../utils/index.ts";
-import { EOF_RANGE } from "../utils/range-utils.ts";
+import { EOF_RANGE, Range } from "../utils/range-utils.ts";
 import { LEXER_RULE_NAME } from "./tokens.ts";
 
 export type FollowInfo = {
@@ -16,6 +16,10 @@ export class FollowInfoDB {
   private followsByTransition = new Map<CallTransition, FollowInfo>();
   private followsByRuleExit = new Map<string, FollowInfo>();
   private uuid = 0;
+
+  anyRange(): Range {
+    return { from: -1, to: this.uuid - 1 };
+  }
 
   getIdRangeByIndex(rule: string, index: number) {
     let arr = this.get(rule);

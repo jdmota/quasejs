@@ -291,6 +291,20 @@ export class ParserGenerator {
       )} = this.ctx.ff(${ff});\n${indent}`;
     }
 
+    if (tree.hasAnyDecisions()) {
+      code += lines([
+        `if(true){`,
+        this.renderDecisions(
+          block,
+          t => tree.hasAnyGoto(t),
+          indent,
+          true,
+          "Left recursion"
+        ),
+        `${indent}}`,
+      ]);
+    }
+
     const bodyToIf = new Map<string, DecisionExpr>();
     for (const decision of tree.iterate()) {
       const nextTree = decision.getNextTree();
@@ -298,26 +312,12 @@ export class ParserGenerator {
       if (nextTree?.worthIt()) {
         nestedCode = this.renderDecisionTree(block, `${indent}  `, nextTree);
       } else {
-        const nestedBlocks = block.choices
-          .map(
-            ([transition, block], idx) =>
-              [transition, block, idx, decision.hasGoto(transition)] as const
-          )
-          .filter(([_1, _2, _3, has]) => has);
-        const nestedBlocksCode = nestedBlocks.map(
-          ([transition, block, decisionIdx], idx) =>
-            this.renderDecisionBlock(
-              `${indent}  `,
-              transition,
-              block,
-              decisionIdx,
-              idx === 0
-            )
-        );
-        nestedCode = lines(
-          nestedBlocksCode.length === 1
-            ? nestedBlocksCode
-            : [`${indent}  throw new Error("Ambiguity");`, ...nestedBlocksCode]
+        nestedCode = this.renderDecisions(
+          block,
+          t => decision.hasGoto(t),
+          indent,
+          decision.isAmbiguous(),
+          "Ambiguity"
         );
       }
 
@@ -327,24 +327,62 @@ export class ParserGenerator {
       bodyToIf.set(nestedCode, currExpr.or(decision.decision));
     }
 
-    const bodyToIfArr = Array.from(bodyToIf);
-    for (const [nestedCode, condition] of bodyToIfArr.slice(0, -1)) {
-      code += lines([
-        `if(${this.renderDecision(this.optimizeDecision(condition), true)}){`,
-        nestedCode,
-        `${indent}} else `,
-      ]);
-    }
+    if (bodyToIf.size) {
+      if (tree.hasAnyDecisions()) code += `\n${indent}`;
 
-    // Optimize: no need for the last "if", just use "else"
-    const [nestedCode, condition] = bodyToIfArr[bodyToIfArr.length - 1];
-    code += lines([
-      `{ //${this.renderDecision(this.optimizeDecision(condition), true)}`,
-      nestedCode,
-      `${indent}}`,
-    ]);
-    // code += `{\n${indent}  this.$err();\n${indent}}`;
+      const bodyToIfArr = Array.from(bodyToIf);
+      for (const [nestedCode, condition] of bodyToIfArr.slice(0, -1)) {
+        code += lines([
+          `if(${this.renderDecision(this.optimizeDecision(condition), true)}){`,
+          nestedCode,
+          `${indent}} else `,
+        ]);
+      }
+
+      // Optimize: no need for the last "if", just use "else"
+      const [nestedCode, condition] = bodyToIfArr[bodyToIfArr.length - 1];
+      code += lines([
+        `{ //${this.renderDecision(this.optimizeDecision(condition), true)}`,
+        nestedCode,
+        `${indent}}`,
+      ]);
+      // code += `{\n${indent}  this.$err();\n${indent}}`;
+    }
     return code;
+  }
+
+  private renderDecisions(
+    block: DecisionBlock<DState, AnyTransition>,
+    hasGoto: (goto: AnyTransition) => boolean,
+    indent: string,
+    error: boolean,
+    errorMessage: string
+  ) {
+    const nestedBlocks = block.choices
+      .map(
+        ([transition, block], idx) =>
+          [transition, block, idx, hasGoto(transition)] as const
+      )
+      .filter(([_1, _2, _3, has]) => has);
+    const nestedBlocksCode = nestedBlocks.map(
+      ([transition, block, decisionIdx], idx) =>
+        this.renderDecisionBlock(
+          `${indent}  `,
+          transition,
+          block,
+          decisionIdx,
+          idx === 0
+        )
+    );
+    const nestedCode = lines(
+      error
+        ? [
+            `${indent}  throw new Error("${errorMessage}");`,
+            ...nestedBlocksCode,
+          ]
+        : nestedBlocksCode
+    );
+    return nestedCode;
   }
 
   private r(indent: string, block: CodeBlock<DState, AnyTransition>): string {
@@ -360,7 +398,7 @@ export class ParserGenerator {
           this.rule,
           block.state
         );
-        if (choices.ambiguities.length === 0) {
+        if (choices.ok) {
           if (choices.compatibleWithSwitch) {
             this.breaksStack.push("");
             code = lines([

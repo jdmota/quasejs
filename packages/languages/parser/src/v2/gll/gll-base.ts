@@ -82,7 +82,11 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
   addEdgeTo(edge: GLLLabel, u: GSSNode<GLLLabel>) {
     const set = this.childNodes.computeIfAbsent(edge, () => new Set());
     // u.parentNodes.computeIfAbsent(edge, () => new Set()).add(this);
-    return setAdd(set, u);
+    const added = setAdd(set, u);
+    if (added && !this.hasLeftRecursionCache) {
+      this.hasLeftRecursionCache = null;
+    }
+    return added;
   }
 
   // In each GLL algorithm instance, there should only be one GSSNode instance with these properties
@@ -97,6 +101,34 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
       this.rule === other.rule &&
       this.level === other.level
     );
+  }
+
+  private hasLeftRecursionCache: boolean | null = null;
+
+  hasLeftRecursion() {
+    if (this.hasLeftRecursionCache == null) {
+      let prev: GSSNode<GLLLabel>[] = [this];
+      let next: GSSNode<GLLLabel>[] = [];
+      while (prev.length) {
+        for (const n of prev) {
+          // As we traverse the children, the level can never increase
+          for (const [l, set] of n.children()) {
+            for (const c of set) {
+              if (c.equals(this)) {
+                return (this.hasLeftRecursionCache = true);
+              }
+              if (c.level === this.level) {
+                next.push(c);
+              }
+            }
+          }
+        }
+        prev = next;
+        next = [];
+      }
+      return (this.hasLeftRecursionCache = false);
+    }
+    return this.hasLeftRecursionCache;
   }
 }
 
@@ -187,6 +219,7 @@ export abstract class GLLBase<L extends IGLLLabel> {
 
   // 'l' is the label we will return to after popping what we are pushing now
   // 'dest' is the label we are going to
+  // Returns true if a new node was created
   protected create(l: L, dest: L) {
     const u = this.curr;
     const j = this.pos;
@@ -198,14 +231,17 @@ export abstract class GLLBase<L extends IGLLLabel> {
           this.add(l, u, k);
         }
       }
+      return false;
     } else {
       this.nodes.set(newNode, newNode);
       v = newNode;
       v.addEdgeTo(l, u);
       this.add(dest, v, j);
+      return true;
     }
   }
 
+  // Returns true if it popped something
   protected pop() {
     const v = this.curr;
     const k = this.pos;

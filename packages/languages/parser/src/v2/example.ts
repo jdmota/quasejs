@@ -506,10 +506,12 @@ const opts: ToolInput = {
   },
 };
 
+console.time("REF-BENCHMARK");
 const resultReference = tool({
   ...opts,
   _useReferenceAnalysis: true,
 });
+console.timeEnd("REF-BENCHMARK");
 
 console.time("BENCHMARK");
 const result = tool(opts);

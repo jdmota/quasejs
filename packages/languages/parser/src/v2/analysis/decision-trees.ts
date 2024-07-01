@@ -9,14 +9,13 @@ import {
   FALSE,
   TRUE,
 } from "./decision-expr.ts";
-import { EOF_RANGE, IMPOSSIBLE_RANGE, Range } from "../utils/range-utils.ts";
+import { EOF_RANGE, Range } from "../utils/range-utils.ts";
 import { FollowInfoDB } from "../grammar/follow-info.ts";
 import { MapKeyToValue } from "../utils/map-key-to-value.ts";
 import { DEBUG } from "./analysis-debug.ts";
-import { IAnalyzer } from "./analysis-reference.ts";
 
 type GotoDecision<P> = Readonly<{
-  desc: P | null;
+  desc: P;
   gotos: Iterable<AnyTransition>;
 }>;
 
@@ -29,8 +28,8 @@ class DecisionNode<P extends ObjectHashEquals>
   implements SpecialSet<GotoDecision<P>>
 {
   readonly parent: DecisionTree<P>;
-  private readonly gotos: MapKeyToSet<AnyTransition, P | null>;
-  private readonly gotos2: MapKeyToSet<P | null, AnyTransition>;
+  private readonly gotos: MapKeyToSet<AnyTransition, P>;
+  private readonly gotos2: MapKeyToSet<P, AnyTransition>;
   private nextTree: DecisionTree<P> | null;
   //
   readonly decision: DecisionExpr;
@@ -98,6 +97,7 @@ class DecisionNode<P extends ObjectHashEquals>
 abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
   private readonly map: MapRangeToSpecialSet<GotoDecision<P>, DecisionNode<P>>;
   private readonly gotos: MapKeyToValue<AnyTransition, boolean>;
+  private readonly anyGotos: MapKeyToValue<AnyTransition, boolean>;
   readonly owner: DecisionNode<P> | null;
 
   constructor(
@@ -106,6 +106,7 @@ abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
   ) {
     this.owner = owner;
     this.gotos = new MapKeyToValue();
+    this.anyGotos = new MapKeyToValue();
     this.map = new MapRangeToSpecialSet(fn);
   }
 
@@ -125,7 +126,7 @@ abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
     from: number,
     to: number,
     gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
-    desc: P | null
+    desc: P
   ) {
     let hasGotos = false;
     for (const goto of gotos) {
@@ -142,30 +143,41 @@ abstract class AbstractDecisionTree<P extends ObjectHashEquals> {
     }
   }
 
-  /*addAny(analyzer: IAnalyzer<P>, gotos: readonly AnyTransition[]) {
-    const range = analyzer.getAnyRange();
-    this.addRange(range.from, range.to, gotos, null);
-  }*/
-
-  addEof(gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>) {
-    this.addRange(EOF_RANGE.from, EOF_RANGE.to, gotos, null);
-  }
-
-  ensureDecisions(gotos: readonly AnyTransition[]) {
-    this.addRange(
-      IMPOSSIBLE_RANGE.from,
-      IMPOSSIBLE_RANGE.to,
-      gotos.filter(g => !this.hasDecision(g)),
-      null
-    );
-    assertion(gotos.length === this.decisions());
-    return this;
-  }
-
   *iterate(): Iterable<DecisionNodeNoAdd<P>> {
     for (const [_, decision] of this.map) {
       yield decision;
     }
+  }
+
+  hasAnyGoto(t: AnyTransition) {
+    return this.anyGotos.get(t) === true;
+  }
+
+  hasAnyDecisions() {
+    return this.anyGotos.size > 0;
+  }
+
+  anyDecisions() {
+    return this.anyGotos.size;
+  }
+
+  addAny(gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>) {
+    for (const goto of gotos) {
+      this.anyGotos.set(goto, true);
+    }
+  }
+
+  *iterateAny(): Iterable<AnyTransition> {
+    for (const [goto] of this.anyGotos) {
+      yield goto;
+    }
+  }
+
+  addEof(
+    gotos: readonly AnyTransition[] | ReadonlySet<AnyTransition>,
+    desc: P
+  ) {
+    this.addRange(EOF_RANGE.from, EOF_RANGE.to, gotos, desc);
   }
 
   private worthItCache: boolean | null = null;
@@ -258,16 +270,20 @@ export type DecisionTree<P extends ObjectHashEquals> =
   | DecisionTokenTree<P>
   | DecisionFollowTree<P>;
 
-export type DecisionTreeNoAdd<P extends ObjectHashEquals> = Omit<
-  DecisionTree<P>,
-  "addDecision"
->;
+export type DecisionTreeNoAdd<P extends ObjectHashEquals> =
+  | Omit<DecisionTokenTree<P>, "addDecision">
+  | Omit<DecisionFollowTree<P>, "addDecision">;
 
 export class InvertedDecisionTree<P extends ObjectHashEquals> {
   private readonly map: MapKeyToValue<AnyTransition, DecisionExpr>;
   compatibleWithSwitch: boolean;
+  ok: boolean;
   ambiguities: Readonly<{
-    decision: DecisionNodeNoAdd<P>;
+    decisions: readonly AnyTransition[] | ReadonlySet<AnyTransition>;
+    condition: DecisionExpr;
+  }>[];
+  leftRecursions: Readonly<{
+    decisions: readonly AnyTransition[] | ReadonlySet<AnyTransition>;
     condition: DecisionExpr;
   }>[];
   maxLL: number;
@@ -276,7 +292,9 @@ export class InvertedDecisionTree<P extends ObjectHashEquals> {
   constructor() {
     this.map = new MapKeyToValue();
     this.compatibleWithSwitch = true;
+    this.ok = true;
     this.ambiguities = [];
+    this.leftRecursions = [];
     this.maxLL = 0;
     this.maxFF = 0;
   }
@@ -294,18 +312,42 @@ export class InvertedDecisionTree<P extends ObjectHashEquals> {
       }
     }
 
-    this.compatibleWithSwitch &&=
-      condition instanceof DecisionTestToken && condition.from === condition.to;
-
-    if (decision.parent instanceof DecisionTokenTree) {
+    if ("ll" in decision.parent) {
       this.maxLL = Math.max(this.maxLL, decision.parent.ll);
     } else {
       this.maxFF = Math.max(this.maxFF, decision.parent.ff);
     }
 
     if (decision.isAmbiguous()) {
-      this.ambiguities.push({ decision, condition });
+      this.ambiguities.push({ decisions: decision.getGotos(), condition });
+      this.compatibleWithSwitch = false;
+      this.ok = false;
+    } else {
+      this.compatibleWithSwitch &&=
+        condition instanceof DecisionTestToken &&
+        condition.from === condition.to;
     }
+  }
+
+  addAny(tree: DecisionTreeNoAdd<P>) {
+    const condition = tree.owner
+      ? InvertedDecisionTree.decisionToTest(tree.owner)
+      : TRUE;
+
+    const gotos = Array.from(tree.iterateAny());
+    for (const goto of gotos) {
+      this.map.update(goto, old => (old ? old.or(condition) : condition));
+    }
+
+    if ("ll" in tree) {
+      this.maxLL = Math.max(this.maxLL, tree.ll);
+    } else {
+      this.maxFF = Math.max(this.maxFF, tree.ff);
+    }
+
+    this.leftRecursions.push({ decisions: gotos, condition });
+    this.compatibleWithSwitch = false;
+    this.ok = false;
   }
 
   static decisionToTest<P extends ObjectHashEquals>(

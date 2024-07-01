@@ -89,6 +89,14 @@ export class AnalysisGLL extends GLLBase<StateInRule> {
     this.run();
   }
 
+  // Returns false if it hit left recursion
+  override create(l: StateInRule, dest: StateInRule): boolean {
+    return (
+      super.create(l, dest) ||
+      !this.ensureGLLNode(dest.getRule(), this.pos).hasLeftRecursion()
+    );
+  }
+
   override pop() {
     const v = this.curr;
     const k = this.pos;
@@ -118,18 +126,22 @@ export class AnalysisGLL extends GLLBase<StateInRule> {
       const dest = new StateInRule(l.rule, destState, false, l.goto);
 
       if (edge instanceof CallTransition) {
-        this.create(
-          dest,
-          new StateInRule(
-            edge.ruleName,
-            this.analyzer.initialStates.get(edge.ruleName)!!,
-            false,
-            l.goto
+        if (
+          !this.create(
+            dest,
+            new StateInRule(
+              edge.ruleName,
+              this.analyzer.initialStates.get(edge.ruleName)!!,
+              false,
+              l.goto
+            )
           )
-        );
+        ) {
+          this.map.addAny([l.goto]);
+        }
       } else if (edge instanceof ReturnTransition) {
         if (!this.pop()) {
-          this.map.addEof([l.goto]);
+          this.map.addEof([l.goto], desc);
         }
       } else if (edge instanceof RangeTransition) {
         this.map.addDecision(

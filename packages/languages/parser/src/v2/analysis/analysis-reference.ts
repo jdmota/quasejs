@@ -191,13 +191,26 @@ class StackFrame implements ObjectHashEquals {
   }
 }
 
-export interface IAnalyzer<P extends ObjectHashEquals> {
+export abstract class IAnalyzer<P extends ObjectHashEquals> {
   readonly grammar: Grammar;
   readonly follows: FollowInfoDB;
   readonly initialStates: ReadonlyMap<RuleName, DState>;
-  getLLState(): number;
-  getAnyRange(): Range;
-  analyze(
+
+  constructor({
+    grammar,
+    initialStates,
+  }: {
+    grammar: Grammar;
+    initialStates: ReadonlyMap<RuleName, DState>;
+  }) {
+    this.grammar = grammar;
+    this.follows = grammar.follows;
+    this.initialStates = initialStates;
+  }
+
+  abstract getLLState(): number;
+  abstract getAnyRange(): Range;
+  abstract analyze(
     rule: AugmentedDeclaration,
     state: DState,
     maxLL?: number,
@@ -211,13 +224,53 @@ export interface IAnalyzer<P extends ObjectHashEquals> {
     state: DState,
     maxLL: number,
     inverted: InvertedDecisionTree<P>
-  ): void;
+  ) {
+    if (inverted.ok) {
+      return;
+    }
+    const { ambiguities, leftRecursions } = inverted;
+    const gen = new ParserGenerator(this.grammar, this, rule);
+    console.log("-----------");
+    console.log(
+      `Ambiguities in rule ${rule.name}, state ${state.id}, ll = ${maxLL}`
+    );
+    for (const { decisions, condition } of ambiguities) {
+      console.log(
+        `Condition ${gen.renderDecision(
+          condition,
+          true
+        )} is not enough to choose between:`
+      );
+      for (const goto of decisions) {
+        console.log(
+          ` - ${gen.renderExpectBlock("", {
+            type: "expect_block",
+            transition: goto,
+          })}`
+        );
+      }
+    }
+    for (const { decisions, condition } of leftRecursions) {
+      console.log(
+        `Condition ${gen.renderDecision(
+          condition,
+          true
+        )} may lead to left recursions via these decisions:`
+      );
+      for (const goto of decisions) {
+        console.log(
+          ` - ${gen.renderExpectBlock("", {
+            type: "expect_block",
+            transition: goto,
+          })}`
+        );
+      }
+    }
+    console.log("-----------");
+  }
 }
 
-export class AnalyzerReference implements IAnalyzer<StackFrame> {
-  readonly grammar: Grammar;
-  readonly follows: FollowInfoDB;
-  readonly initialStates: ReadonlyMap<RuleName, DState>;
+export class AnalyzerReference extends IAnalyzer<StackFrame> {
   // This value is used to distinguish StackFrame's and FollowStack's
   // generated in different phases of the analysis process.
   // We use this because we do not want to avoid pushing/poping
@@ -231,9 +284,10 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
     grammar: Grammar;
     initialStates: ReadonlyMap<RuleName, DState>;
   }) {
-    this.grammar = grammar;
-    this.follows = grammar.follows;
-    this.initialStates = initialStates;
+    super({
+      grammar,
+      initialStates,
+    });
     this.llState = 0;
   }
 
@@ -267,6 +321,7 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
             if (pushed) {
               next.push(pushed);
             } else {
+              map.addAny(gotos);
               if (empty.has(edge.ruleName)) {
                 next.push(ret);
               } else {
@@ -278,7 +333,7 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
             if (popped) {
               next.push(...popped);
             } else {
-              map.addEof(gotos);
+              map.addEof(gotos, stack);
             }
             // Deal with empty rules
             if (!empty.has(edge.ruleName) && stack.wasPushed(edge.ruleName)) {
@@ -361,7 +416,7 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
         if (popped) {
           this.ll1(popped, [goto], ll1, maxFF);
         } else {
-          ll1.addEof([goto]);
+          ll1.addEof([goto], stack);
         }
       } else if (goto instanceof RangeTransition) {
         ll1.addDecision(goto, [goto], stack.move(this, dest));
@@ -370,9 +425,7 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
       }
     }
 
-    let prev: readonly DecisionTreeNoAdd<StackFrame>[] = [
-      ll1.ensureDecisions(Array.from(state.transitions())),
-    ];
+    let prev: readonly DecisionTreeNoAdd<StackFrame>[] = [ll1];
     let next: DecisionTreeNoAdd<StackFrame>[] = [];
 
     this.llState = 2;
@@ -384,47 +437,40 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
       const inFFAnalysis = followIndex <= maxFF;
 
       for (const tree of prev) {
-        assertion(tree.hasDecisions());
+        if (!tree.hasDecisions() && tree.owner) inverted.add(tree.owner);
+        if (tree.hasAnyDecisions()) inverted.addAny(tree);
         for (const decision of tree.iterate()) {
           if (DEBUG.keepGoing || decision.isAmbiguous()) {
             if (inLLAnalysis) {
               const nextTree = decision.ensureNextTokenTree();
               assertion(nextTree.ll === this.llState);
               for (const { desc: stack, gotos } of decision) {
-                if (stack) {
-                  this.ll1([stack], gotos, nextTree, maxFF);
-                } else {
-                  nextTree.addEof(gotos);
-                }
+                this.ll1([stack], gotos, nextTree, maxFF);
               }
-              next.push(nextTree.ensureDecisions(decision.getGotos()));
+              next.push(nextTree);
             } else if (inFFAnalysis) {
               const nextTree = decision.ensureNextFollowTree();
               assertion(nextTree.ff === followIndex);
               for (const { desc: stack, gotos } of decision) {
-                if (stack) {
-                  if (stack.follow) {
-                    nextTree.addDecision(
-                      rule.name,
-                      this.follows,
-                      getInFollowStack(stack.follow, followIndex),
-                      gotos,
-                      stack
-                    );
-                  } else {
-                    nextTree.addDecision(
-                      rule.name,
-                      this.follows,
-                      null,
-                      gotos,
-                      stack
-                    );
-                  }
+                if (stack.follow) {
+                  nextTree.addDecision(
+                    rule.name,
+                    this.follows,
+                    getInFollowStack(stack.follow, followIndex),
+                    gotos,
+                    stack
+                  );
                 } else {
-                  nextTree.addEof(gotos);
+                  nextTree.addDecision(
+                    rule.name,
+                    this.follows,
+                    null,
+                    gotos,
+                    stack
+                  );
                 }
               }
-              next.push(nextTree.ensureDecisions(decision.getGotos()));
+              next.push(nextTree);
             } else {
               inverted.add(decision);
             }
@@ -452,39 +498,5 @@ export class AnalyzerReference implements IAnalyzer<StackFrame> {
     };
     this.cache.set(state, result);
     return result;
-  }
-
-  printAmbiguities(
-    rule: AugmentedDeclaration,
-    state: DState,
-    maxLL: number,
-    inverted: InvertedDecisionTree<StackFrame>
-  ) {
-    const { ambiguities } = inverted;
-    if (ambiguities.length === 0) {
-      return;
-    }
-    const gen = new ParserGenerator(this.grammar, this, rule);
-    console.log("-----------");
-    console.log(
-      `Ambiguities in rule ${rule.name}, state ${state.id}, ll = ${maxLL}`
-    );
-    for (const { decision, condition } of ambiguities) {
-      console.log(
-        `Condition ${gen.renderDecision(
-          condition,
-          true
-        )} is not enough to choose between:`
-      );
-      for (const goto of decision.getGotos()) {
-        console.log(
-          ` - ${gen.renderExpectBlock("", {
-            type: "expect_block",
-            transition: goto,
-          })}`
-        );
-      }
-    }
-    console.log("-----------");
   }
 }
