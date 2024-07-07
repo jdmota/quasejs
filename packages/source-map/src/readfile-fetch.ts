@@ -1,44 +1,24 @@
+const win = typeof window !== "undefined" && window;
+
 export class GetFile {
   private fileCache: Map<string, Promise<string>>;
   private fetchCache: Map<string, Promise<Response>>;
-  private window: Window | false;
-  private fs: {
-    readFile(
-      path: string,
-      encoding: string,
-      callback: (err: NodeJS.ErrnoException | null, data: string) => void
-    ): void;
-  } | null;
 
   constructor() {
     this.fileCache = new Map();
     this.fetchCache = new Map();
-    this.window = typeof window !== "undefined" && window; // eslint-disable-line no-undef
-    this.fs = require("fs");
   }
 
   private _fetchResponse(file: string) {
-    const { window } = this;
-    if (!window) {
+    if (!win) {
       throw new Error(`No window`);
     }
-    return window.fetch(file);
+    return win.fetch(file);
   }
 
-  private _readFile(file: string) {
-    const { fs } = this;
-    if (!fs) {
-      throw new Error(`No fs`);
-    }
-    return new Promise<string>((resolve, reject) => {
-      fs.readFile(file, "utf8", (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
+  private async _readFile(file: string) {
+    const fs = await import("fs-extra");
+    return fs.default.readFile(file, "utf8");
   }
 
   fetchResponse(file: string) {

@@ -1,13 +1,13 @@
 import { ComputationDescription } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { Result } from "../utils/result";
+import { ComputationResult } from "../utils/result";
 import { BasicComputationDescription } from "./basic";
 import { RawComputation } from "./raw";
 import type { SubscribableComputation } from "./mixins/subscribable";
 
 export type SimpleComputationExec<T> = (
   ctx: SimpleComputationContext
-) => Promise<Result<T>>;
+) => Promise<ComputationResult<T>>;
 
 type SimpleComputationConfig<T> = {
   readonly exec: SimpleComputationExec<T>;
@@ -20,7 +20,7 @@ type SimpleComputationContext = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
 };
 
 const anyValue: ValueDefinition<any> = {

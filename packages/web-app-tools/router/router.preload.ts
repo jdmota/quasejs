@@ -47,7 +47,6 @@ function setupPreload<E extends RouterEvents>(
   function afterNavigate() {
     observer.disconnect();
 
-    //@ts-expect-error
     for (const a of container.querySelectorAll("a")) {
       if (considerAnchor(a)) {
         if (strategy === "viewport") {
@@ -89,7 +88,7 @@ export type PreloadOpts = {
 };
 
 export class PreloadMixin<
-  E extends PreloadEvents & RouterEvents
+  E extends PreloadEvents & RouterEvents,
 > extends RouterMixin<E> {
   private opts: PreloadOpts;
 

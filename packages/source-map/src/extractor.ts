@@ -1,9 +1,9 @@
+import { isUrl, makeAbsolute, resolveAsUrl } from "../../util/path-url";
 import SourceMapExtractorBase, {
   Original,
   SourceMapInfoWithMap,
 } from "./extractor-base";
 import { GetFile } from "./readfile-fetch";
-import { makeAbsolute, resolveAsUrl, isUrl } from "@quase/path-url";
 
 export default class SourceMapExtractor extends SourceMapExtractorBase {
   private fileGetter: GetFile;

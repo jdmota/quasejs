@@ -1,13 +1,13 @@
 import { ComputationDescription } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { Result } from "../utils/result";
+import { ComputationResult } from "../utils/result";
 import { RawComputation } from "./raw";
 import { CleanupFn, EffectComputationDescription } from "./effect";
 import type { SubscribableComputation } from "./mixins/subscribable";
 
 export type SimpleEffectComputationExec<T> = (
   ctx: SimpleEffectComputationContext
-) => Promise<Result<T>>;
+) => Promise<ComputationResult<T>>;
 
 type SimpleEffectComputationConfig<T> = {
   readonly exec: SimpleEffectComputationExec<T>;
@@ -19,7 +19,7 @@ type SimpleEffectComputationContext = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
   readonly cleanup: (fn: CleanupFn) => void;
 };
 

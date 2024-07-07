@@ -1,6 +1,6 @@
 // import { from } from "ix/asynciterable";
 // import { filter, map } from "ix/asynciterable/operators";
-import { Defer, createDefer } from "../utils/deferred";
+import { Defer, createDefer } from "../../util/deferred";
 
 type JobPoolOptions<Req, Res> = {
   readonly exec: (req: Req) => Promise<Res>;

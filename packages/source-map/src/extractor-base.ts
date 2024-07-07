@@ -1,6 +1,6 @@
+import { resolveAsUrl } from "../../util/path-url";
 import encoding from "./encoding";
 import { RawSourceMap, RawIndexMap, SourceMapConsumer } from "source-map";
-import { resolveAsUrl } from "@quase/path-url";
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
   // Matches /* ... */ comments

@@ -1,22 +1,15 @@
-import findUp from "find-up";
-import pkgConf from "pkg-conf";
+import { findUp } from "find-up";
+import { packageConfig, packageJsonPath } from "package-config";
 
-export function loadConfigFrom(location: string, arg: unknown): unknown {
-  const e = require(location);
-  const x = e && e.__esModule ? e.default : e;
-  return typeof x === "function" ? x(arg) : x;
-}
-
-type Options = {
+type Options = Readonly<{
   cwd?: string;
-  configFiles?: string | string[];
-  arg?: unknown;
+  configFiles?: string[];
   configKey?: string;
   failIfNotFound?: boolean;
-};
+}>;
 
 export async function getConfig(opts: Options = {}) {
-  const { cwd, configFiles, arg, configKey, failIfNotFound } = opts;
+  const { cwd, configFiles, configKey, failIfNotFound } = opts;
   let config: any;
   let location: string | undefined;
 
@@ -24,25 +17,23 @@ export async function getConfig(opts: Options = {}) {
     const loc = await findUp(configFiles, { cwd });
 
     if (loc) {
-      config = await loadConfigFrom(loc, arg);
+      config = await import(loc);
       location = loc;
     } else if (failIfNotFound) {
-      throw new Error(`Config file was not found: ${configFiles.toString()}`);
+      throw new Error(`Config file was not found: ${configFiles}`);
     }
   }
 
   if (!config && configKey) {
-    config = await pkgConf(configKey, { cwd, skipOnFalse: true });
-    location = pkgConf.filepath(config) || undefined;
-
-    if (location == null) {
-      config = undefined;
-      location = undefined;
-    }
+    config = await packageConfig(configKey, {
+      cwd,
+      skipOnFalse: true,
+    });
+    location = packageJsonPath(config);
   }
 
   return {
     config,
     location,
-  };
+  } as const;
 }

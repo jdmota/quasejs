@@ -1,12 +1,12 @@
 // import { default as parcelWatcher } from "@parcel/watcher";
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
+import { normalizePath } from "../../../util/path-url";
 import {
   ComputationDescription,
   ComputationRegistry,
 } from "../../incremental-lib";
-import { makeAbsolute } from "../../utils/path";
-import { Result, ok } from "../../utils/result";
+import { ComputationResult, ok } from "../../utils/result";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
@@ -83,7 +83,7 @@ class FileComputation
 
   protected async exec(
     ctx: FileComputationDescription
-  ): Promise<Result<undefined>> {
+  ): Promise<ComputationResult<undefined>> {
     if (this.registry.invalidationsAllowed()) {
       await this.desc.fs._sub(this);
     }
@@ -98,7 +98,7 @@ class FileComputation
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: Result<undefined>): void {
+  protected finishRoutine(result: ComputationResult<undefined>): void {
     this.subscribableMixin.finishRoutine(result);
   }
 
@@ -117,7 +117,7 @@ class FileComputation
     return false;
   }
 
-  onNewResult(result: Result<undefined>): void {}
+  onNewResult(result: ComputationResult<undefined>): void {}
 }
 
 class FileInfo {
@@ -138,7 +138,7 @@ class FileInfo {
   constructor(fs: FileSystem, path: string) {
     this.ready = null;
     this.path = path;
-    this.parentPath = makeAbsolute(dirname(path));
+    this.parentPath = normalizePath(dirname(path));
     this.events = {
       ADD_OR_REMOVE: {
         desc: new FileComputationDescription(
@@ -216,7 +216,7 @@ export class FileSystem {
 
   private react(event: FileChange, path: string) {
     console.log(event, path);
-    const info = this.files.get(makeAbsolute(path));
+    const info = this.files.get(normalizePath(path));
     if (info) {
       for (const c of info.events[event].computations) {
         c.externalInvalidate();
@@ -260,7 +260,7 @@ export class FileSystem {
   }
 
   get(originalPath: string, type: FileChange): FileComputationDescription {
-    return this.getInfo(makeAbsolute(originalPath)).events[type].desc;
+    return this.getInfo(normalizePath(originalPath)).events[type].desc;
   }
 
   async depend<T>(
@@ -284,5 +284,5 @@ type SimpleContext = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
 };

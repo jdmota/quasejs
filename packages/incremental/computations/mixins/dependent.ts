@@ -1,6 +1,6 @@
+import { setAdd } from "../../../util/maps-sets";
 import { ComputationDescription } from "../../incremental-lib";
-import { Result } from "../../utils/result";
-import { setAdd } from "../../utils/maps-sets";
+import { ComputationResult } from "../../utils/result";
 import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
@@ -9,7 +9,7 @@ export type DependentContext = {
     description: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
 };
 
 export interface DependentComputation {
@@ -56,7 +56,7 @@ export class DependentComputationMixin {
       RawComputation<any, T> & SubscribableComputation<T>
     >,
     runId: RunId
-  ): Promise<Result<T>> {
+  ): Promise<ComputationResult<T>> {
     this.source.checkActive(runId);
     return this.subscribe(this.source.registry.make(description)).run();
   }

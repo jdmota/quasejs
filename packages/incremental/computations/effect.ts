@@ -16,11 +16,11 @@ import {
   ComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { Result, ok } from "../utils/result";
+import { ComputationResult, ok } from "../utils/result";
 
 type EffectComputationExec<Req, Res> = (
   ctx: EffectComputationContext<Req>
-) => Promise<Result<Res>>;
+) => Promise<ComputationResult<Res>>;
 
 type EffectComputationConfig<Req, Res> = {
   readonly exec: EffectComputationExec<Req, Res>;
@@ -38,7 +38,7 @@ type EffectComputationContext<Req> = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
   readonly cleanup: (fn: CleanupFn) => void;
 };
 
@@ -95,7 +95,7 @@ export class EffectComputation<Req, Res>
 
   protected async exec(
     ctx: EffectComputationContext<Req>
-  ): Promise<Result<Res>> {
+  ): Promise<ComputationResult<Res>> {
     const { cleanup } = this;
     this.cleanup = NOOP_CLEANUP;
     try {
@@ -123,7 +123,7 @@ export class EffectComputation<Req, Res>
     return !this.rooted;
   }
 
-  protected finishRoutine(result: Result<Res>): void {}
+  protected finishRoutine(result: ComputationResult<Res>): void {}
 
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();

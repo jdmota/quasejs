@@ -1,4 +1,3 @@
-import { never, type ObjRecord } from "../utils";
 import { sessionGet, sessionSet } from "../session-storage";
 import lifecycle from "./lifecycle/export";
 import { type NormalizedHash } from "./pathname";
@@ -11,6 +10,7 @@ import {
 } from "./router";
 import { TypedEvent } from "../events";
 import { SSR } from "../support";
+import { never, ObjRecord } from "../../util/miscellaneous";
 
 const SCROLL_KEY = "quase_router_scroll";
 
@@ -63,7 +63,7 @@ export type ScrollOpts = {
 };
 
 export class ScrollMixin<
-  E extends ScrollEvents & RouterEvents
+  E extends ScrollEvents & RouterEvents,
 > extends RouterMixin<E> {
   private readonly opts: ScrollOpts;
   private scrollPositions: ObjRecord<string, ScrollPosition>;

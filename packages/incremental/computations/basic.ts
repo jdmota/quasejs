@@ -19,11 +19,11 @@ import {
   ComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { Result } from "../utils/result";
+import { ComputationResult } from "../utils/result";
 
 type BasicComputationExec<Req, Res> = (
   ctx: BasicComputationContext<Req>
-) => Promise<Result<Res>>;
+) => Promise<ComputationResult<Res>>;
 
 type BasicComputationConfig<Req, Res> = {
   readonly exec: BasicComputationExec<Req, Res>;
@@ -39,7 +39,7 @@ type BasicComputationContext<Req> = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
 };
 
 export function newComputationBuilder<Req, Res>(
@@ -104,7 +104,9 @@ export class BasicComputation<Req, Res>
     this.mark(State.PENDING);
   }
 
-  protected exec(ctx: BasicComputationContext<Req>): Promise<Result<Res>> {
+  protected exec(
+    ctx: BasicComputationContext<Req>
+  ): Promise<ComputationResult<Res>> {
     return this.config.exec(ctx);
   }
 
@@ -120,7 +122,7 @@ export class BasicComputation<Req, Res>
     return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: Result<Res>): void {
+  protected finishRoutine(result: ComputationResult<Res>): void {
     this.subscribableMixin.finishRoutine(result);
   }
 
@@ -140,7 +142,7 @@ export class BasicComputation<Req, Res>
     return this.config.responseDef.equal(a, b);
   }
 
-  onNewResult(result: Result<Res>): void {}
+  onNewResult(result: ComputationResult<Res>): void {}
 
   unroot() {
     this.rooted = false;

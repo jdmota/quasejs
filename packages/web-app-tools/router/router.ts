@@ -10,8 +10,8 @@
 // TODO support state and key (based on index)
 // TODO https://codepen.io/morten-olsen/post/when-safari-broke-webapps
 
+import { noop } from "../../util/miscellaneous";
 import { TypedEvent, TypedEventTarget } from "../events";
-import { noop } from "../utils";
 import { findAnchor } from "./anchors";
 import {
   createSimpleLocation,

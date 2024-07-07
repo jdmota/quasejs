@@ -2,7 +2,7 @@ import {
   ComputationRegistry,
   ComputationDescription,
 } from "../../incremental-lib";
-import { Result } from "../../utils/result";
+import { ComputationResult } from "../../utils/result";
 import { ChildComputation, ChildComputationMixin } from "../mixins/child";
 import {
   DependentComputation,
@@ -58,7 +58,7 @@ export type ComputationJobContext<Req> = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
   readonly compute: (req: Req) => void;
   readonly request: Req;
 };
@@ -94,7 +94,9 @@ class ComputationJob<Req, Res>
     this.mark(State.PENDING);
   }
 
-  protected exec(ctx: ComputationJobContext<Req>): Promise<Result<Res>> {
+  protected exec(
+    ctx: ComputationJobContext<Req>
+  ): Promise<ComputationResult<Res>> {
     return this.source.config.exec(ctx);
   }
 
@@ -110,7 +112,7 @@ class ComputationJob<Req, Res>
     return !this.reachableMixin.isReachable();
   }
 
-  protected finishRoutine(result: Result<Res>): void {
+  protected finishRoutine(result: ComputationResult<Res>): void {
     this.reachableMixin.finishOrDeleteRoutine();
     this.source.onFieldFinish(
       this.reachableMixin.isReachable(),

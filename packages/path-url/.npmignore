@@ -1,5 +1,0 @@
-*.txt
-__dev__
-test
-node_modules
-yarn.lock

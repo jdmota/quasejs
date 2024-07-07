@@ -1,4 +1,4 @@
-import { Result, error } from "../utils/result";
+import { ComputationResult, error } from "../utils/result";
 import {
   ComputationRegistry,
   ComputationDescription,
@@ -43,10 +43,10 @@ export abstract class RawComputation<Ctx, Res> {
   // Current state
   private state: State;
   private runId: RunId | null;
-  private running: Promise<Result<Res>> | null;
+  private running: Promise<ComputationResult<Res>> | null;
   private deleting: boolean;
   // Latest result
-  protected result: Result<Res> | null;
+  protected result: ComputationResult<Res> | null;
   // Requirements of SpecialQueue
   public prev: AnyRawComputation | null;
   public next: AnyRawComputation | null;
@@ -75,14 +75,14 @@ export abstract class RawComputation<Ctx, Res> {
     throw new Error("Invariant violation: no error");
   }
 
-  protected abstract exec(ctx: Ctx): Promise<Result<Res>>;
+  protected abstract exec(ctx: Ctx): Promise<ComputationResult<Res>>;
   protected abstract makeContext(runId: RunId): Ctx;
   protected abstract isOrphan(): boolean;
   protected abstract onStateChange(
     from: StateNotDeleted,
     to: StateNotCreating
   ): void;
-  protected abstract finishRoutine(result: Result<Res>): void;
+  protected abstract finishRoutine(result: ComputationResult<Res>): void;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
   //protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
@@ -124,7 +124,7 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  run(): Promise<Result<Res>> {
+  run(): Promise<ComputationResult<Res>> {
     this.inv();
     if (!this.running) {
       const runId = newRunId();
@@ -141,7 +141,10 @@ export abstract class RawComputation<Ctx, Res> {
     return this.running;
   }
 
-  private finish(result: Result<Res>, runId: RunId): Result<Res> {
+  private finish(
+    result: ComputationResult<Res>,
+    runId: RunId
+  ): ComputationResult<Res> {
     if (this.runId === runId) {
       this.runId = null;
       this.result = result;

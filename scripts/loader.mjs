@@ -1,6 +1,5 @@
 // https://nodejs.org/docs/latest-v21.x/api/module.html#hooks
 import { readFile } from "node:fs/promises";
-import { resolve as pnpResolve, load as pnpLoad } from "../.pnp.loader.mjs";
 
 const babelOptions = {
   sourceMaps: "inline",
@@ -17,9 +16,9 @@ const extensionsRegex = /\.ts$/;
 
 export async function resolve(specifier, context, nextResolve) {
   try {
-    return await pnpResolve(specifier, context, nextResolve);
+    return await nextResolve(specifier, context);
   } catch (err) {
-    return await pnpResolve(specifier + ".ts", context, nextResolve);
+    return await nextResolve(specifier + ".ts", context);
   }
 }
 
@@ -42,5 +41,5 @@ export async function load(url, context, nextLoad) {
       source: transformedSource,
     };
   }
-  return pnpLoad(url, context, nextLoad);
+  return nextLoad(url, context);
 }

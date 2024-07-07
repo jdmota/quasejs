@@ -45,6 +45,7 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
   private readonly optimistic: OptimisticFn<P, R> | null;
   private readonly equalProps: (a: P, b: P) => boolean;
   private result: AsyncResult<P, R> | null;
+  public readonly run: (props: P) => void;
 
   constructor({ initial, fetch, optimistic, equalProps }: AsyncOpts<P, R>) {
     super();
@@ -61,6 +62,7 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
           previous: null,
         }
       : null;
+    this.run = this.setProps.bind(this);
   }
 
   peek() {
@@ -136,8 +138,8 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
         this.result == null
           ? null
           : this.result.isPending
-          ? this.result.previous
-          : this.result,
+            ? this.result.previous
+            : this.result,
     });
   }
 

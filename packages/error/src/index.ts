@@ -1,15 +1,17 @@
 import stackParser from "error-stack-parser";
-import { slash, prettify } from "@quase/path-url";
+import { slash, prettify } from "../../util/path-url";
 
-export const ignoreStackTraceRe = /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
-export const ignoreFileRe = /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
+export const ignoreStackTraceRe =
+  /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
+export const ignoreFileRe =
+  /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
-type Opts = {
+type Opts = Readonly<{
   extractor?: any;
   ignore?: {
     test(text: string): boolean;
   };
-};
+}>;
 
 type StackFrame = stackParser.StackFrame & { fileName: string };
 
@@ -19,7 +21,7 @@ function excludeFramesWithoutFilename(
   return !!v.fileName;
 }
 
-export async function beautify(originalStack: string, options: Opts = {}) {
+export async function beautify(originalStack: string = "", options: Opts = {}) {
   const extractor = options && options.extractor;
   const ignore = options && options.ignore;
   const error = { name: "", message: "", stack: originalStack };
@@ -30,7 +32,7 @@ export async function beautify(originalStack: string, options: Opts = {}) {
 
   const frames = originalFrames.filter(({ fileName, functionName }) => {
     const file = slash(fileName);
-    if (ignore && ignore.test(file)) {
+    if (ignore && (ignore.test(fileName) || ignore.test(file))) {
       return false;
     }
     // Electron
@@ -116,12 +118,11 @@ export function getStack(offset?: number) {
 
   // Not all browsers generate the `stack` property
   // Safari <=7 only, IE <=10 - 11 only
-  /* istanbul ignore if */
   if (!error.stack) {
     try {
       throw error;
-    } catch (err) {
-      error = err;
+    } catch (err: unknown) {
+      error = err as Error;
     }
   }
 
@@ -131,10 +132,10 @@ export function getStack(offset?: number) {
   return arr.join("\n");
 }
 
-type Loc = {
+type Loc = Readonly<{
   line?: number | null | undefined;
   column?: number | null | undefined;
-};
+}>;
 
 export function locToString(loc: Loc) {
   if (loc.line != null) {

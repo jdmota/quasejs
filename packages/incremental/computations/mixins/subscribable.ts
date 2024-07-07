@@ -1,12 +1,12 @@
-import { joinIterators } from "../../utils/join-iterators";
-import { Result, resultEqual } from "../../utils/result";
+import { joinIterators } from "../../../util/join-iterators";
+import { ComputationResult, resultEqual } from "../../utils/result";
 import { DependentComputation } from "./dependent";
 import { AnyRawComputation, RawComputation } from "../raw";
 
 export interface SubscribableComputation<Res> {
   readonly subscribableMixin: SubscribableComputationMixin<Res>;
   responseEqual(a: Res, b: Res): boolean;
-  onNewResult(result: Result<Res>): void;
+  onNewResult(result: ComputationResult<Res>): void;
 }
 
 function transferSetItems<T>(from: Set<T>, to: Set<T>) {
@@ -20,12 +20,12 @@ export class SubscribableComputationMixin<Res> {
   public readonly source: RawComputation<any, Res> &
     SubscribableComputation<Res>;
   // Subscribers that saw the latest result
-  private result: Result<Res> | null;
+  private result: ComputationResult<Res> | null;
   readonly subscribers: Set<AnyRawComputation & DependentComputation>;
   // If not null, it means all oldSubscribers saw this value
   // It is important to keep oldResult separate from result
   // See invalidate()
-  private oldResult: Result<Res> | null;
+  private oldResult: ComputationResult<Res> | null;
   readonly oldSubscribers: Set<AnyRawComputation & DependentComputation>;
   // Compare ok result's values
   private readonly equal: (a: Res, b: Res) => boolean;
@@ -51,7 +51,7 @@ export class SubscribableComputationMixin<Res> {
     return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
   }
 
-  finishRoutine(result: Result<Res>): void {
+  finishRoutine(result: ComputationResult<Res>): void {
     const old = this.oldResult;
     this.oldResult = null;
     this.result = result;

@@ -1,10 +1,10 @@
 import { newSimpleComputation } from "../computations/simple";
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
-import { Result, error, ok } from "../utils/result";
+import { ComputationResult, error, ok } from "../utils/result";
 import { FileSystem } from "../computations/file-system/file-system";
 import path from "path";
-import { readJSON } from "fs-extra";
+import fsextra from "fs-extra";
 
 function deepClone(value: any): any {
   if (Array.isArray(value)) {
@@ -20,7 +20,7 @@ function deepClone(value: any): any {
 
 type FILE = {
   content: string;
-  deps: string[];
+  deps?: string[];
 };
 
 const fs = new FileSystem();
@@ -38,11 +38,11 @@ const pool = newComputationPool<string, FILE>({
 
     const json: FILE = await fs.depend(
       ctx,
-      path.resolve(__dirname, "fs", ctx.request + ".json"),
-      p => readJSON(p)
+      path.resolve(import.meta.dirname, "fs", ctx.request + ".json"),
+      p => fsextra.readJson(p)
     );
 
-    for (const dep of json.deps) {
+    for (const dep of json.deps ?? []) {
       ctx.compute(dep);
     }
     return ok(json);
@@ -57,7 +57,7 @@ const pool = newComputationPool<string, FILE>({
   },
   responseDef: {
     hash(a) {
-      return a.deps.length;
+      return a.deps?.length ?? 0;
     },
     equal(a, b) {
       return a === b;
@@ -67,7 +67,7 @@ const pool = newComputationPool<string, FILE>({
 
 export async function main() {
   const controller = ComputationRegistry.run(async ctx => {
-    let map: Map<string, Result<FILE>> | null = null;
+    let map: Map<string, ComputationResult<FILE>> | null = null;
     ctx.cleanup(() => {
       console.log("Cleanup. Previous results:", map);
     });

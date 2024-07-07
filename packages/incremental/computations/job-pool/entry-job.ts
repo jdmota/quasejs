@@ -2,7 +2,7 @@ import {
   ComputationRegistry,
   ComputationDescription,
 } from "../../incremental-lib";
-import { Result } from "../../utils/result";
+import { ComputationResult } from "../../utils/result";
 import {
   DependentComputation,
   DependentComputationMixin,
@@ -57,7 +57,7 @@ export type ComputationEntryJobContext<Req> = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
   readonly compute: (req: Req) => void;
 };
 
@@ -91,7 +91,7 @@ export class ComputationEntryJob<Req, Res>
 
   protected exec(
     ctx: ComputationEntryJobContext<Req>
-  ): Promise<Result<undefined>> {
+  ): Promise<ComputationResult<undefined>> {
     return this.source.config.startExec(ctx);
   }
 
@@ -106,7 +106,7 @@ export class ComputationEntryJob<Req, Res>
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: Result<undefined>): void {
+  protected finishRoutine(result: ComputationResult<undefined>): void {
     this.subscribableMixin.finishRoutine(result);
     this.reachableMixin.finishOrDeleteRoutine();
   }
@@ -132,5 +132,5 @@ export class ComputationEntryJob<Req, Res>
     return a === b;
   }
 
-  onNewResult(result: Result<undefined>): void {}
+  onNewResult(result: ComputationResult<undefined>): void {}
 }

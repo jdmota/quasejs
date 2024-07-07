@@ -1,4 +1,4 @@
-import { noop } from "./utils";
+import { noop } from "../util/miscellaneous";
 
 export function onEnter(fn: () => void) {
   return (evt: KeyboardEvent) => {

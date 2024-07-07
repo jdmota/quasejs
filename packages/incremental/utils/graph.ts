@@ -1,12 +1,5 @@
-import { DefaultMap } from "./default-map";
-
-const defaultSet = <T>() => new Set<T>();
-
-function add<T>(set: Set<T>, value: T): boolean {
-  const size = set.size;
-  set.add(value);
-  return set.size > size;
-}
+import { DefaultMap } from "../../util/data-structures/default-map";
+import { defaultSet, setAdd } from "../../util/miscellaneous";
 
 export function createGraphTemplate<N, E>() {
   class GraphNode {
@@ -40,7 +33,7 @@ export function createGraphTemplate<N, E>() {
 
     static addEdge(from: GraphNode, edge: E, to: GraphNode) {
       from.outEdges.get(edge).add(to);
-      if (add(to.inEdges.get(edge), from)) {
+      if (setAdd(to.inEdges.get(edge), from)) {
         from.outEdgesAmount++;
         to.inEdgesAmount++;
         to.onInEdgeAddition();

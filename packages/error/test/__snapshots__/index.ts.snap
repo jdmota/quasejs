@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`beautify 1`] = `
+"Error: 
+    Object.getStack (packages/error/test/index.ts:38:17)"
+`;
+
+exports[`beautify with title 1`] = `
+"Error: title
+    Object.<anonymous> (packages/error/test/index.ts:47:17)"
+`;
+
+exports[`getStack: -1 1`] = `
+"Error: 
+    at getStack (/packages/error/test/index.ts:25:16)
+    at c (/packages/error/test/index.ts:21:10)
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:30:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`getStack: 0 1`] = `
+"Error: 
+    at getStack (/packages/error/test/index.ts:25:16)
+    at c (/packages/error/test/index.ts:21:10)
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:31:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`getStack: 1 1`] = `
+"Error: 
+    at getStack (/packages/error/test/index.ts:25:16)
+    at c (/packages/error/test/index.ts:21:10)
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:32:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`getStack: 2 1`] = `
+"Error: 
+    at c (/packages/error/test/index.ts:21:10)
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:33:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`getStack: 3 1`] = `
+"Error: 
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:34:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`getStack: undefined 1`] = `
+"Error: 
+    at getStack (/packages/error/test/index.ts:25:16)
+    at c (/packages/error/test/index.ts:21:10)
+    at b (/packages/error/test/index.ts:17:10)
+    at Object.a (/packages/error/test/index.ts:29:10)
+    at new Promise (<anonymous>)"
+`;
+
+exports[`handle just the title fine 1`] = `
+"multine
+error
+message"
+`;
+
+exports[`handle multine error message correctly 1`] = `
+"Error: multine
+error
+message
+    Object.<anonymous> (packages/error/test/index.ts:56:17)"
+`;
+
+exports[`keep at least one stack line 1`] = `
+"Error: 
+    Promise.then.completed (node_modules/jest-circus/build/utils.js:298:28)"
+`;

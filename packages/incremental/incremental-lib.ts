@@ -4,12 +4,12 @@
 // They may also be associated with equality functions to avoid unnecessary recomputations
 // Since computations may be asynchronous, to ensure determinism, they may only depend on other computations and on the (immutable) arguments
 
-import { createDefer } from "./utils/deferred";
+import { SpecialQueue } from "../util/data-structures/linked-list";
+import { Scheduler } from "../util/schedule";
+import { createDefer } from "../util/deferred";
 import { HashMap } from "./utils/hash-map";
-import { SpecialQueue } from "./utils/linked-list";
 import { AnyRawComputation, State } from "./computations/raw";
-import { Result } from "./utils/result";
-import { Scheduler } from "./utils/schedule";
+import { ComputationResult } from "./utils/result";
 import {
   SimpleEffectComputationExec,
   newSimpleEffectComputation,
@@ -50,7 +50,7 @@ export class ComputationRegistry {
     SpecialQueue<AnyRawComputation>,
     SpecialQueue<AnyRawComputation>,
     SpecialQueue<AnyRawComputation>,
-    SpecialQueue<AnyRawComputation>
+    SpecialQueue<AnyRawComputation>,
   ];
   private readonly pending: SpecialQueue<AnyRawComputation>;
   private readonly running: SpecialQueue<AnyRawComputation>;
@@ -175,7 +175,7 @@ export class ComputationRegistry {
 
   static async singleRun<T>(
     exec: SimpleEffectComputationExec<T>
-  ): Promise<Result<T>> {
+  ): Promise<ComputationResult<T>> {
     const registry = new ComputationRegistry({ canInvalidate: false });
     const desc = newSimpleEffectComputation({ exec });
     const computation = registry.make(desc);
@@ -187,7 +187,7 @@ export class ComputationRegistry {
   static run<T>(
     exec: SimpleEffectComputationExec<T>
   ): ComputationController<T> {
-    const defer = createDefer<Result<T>>();
+    const defer = createDefer<ComputationResult<T>>();
     const registry = new ComputationRegistry({ canInvalidate: true });
     const desc = newSimpleEffectComputation({ exec });
     const computation = registry.make(desc);
@@ -218,7 +218,7 @@ export class ComputationRegistry {
 }
 
 type ComputationController<T> = {
-  readonly promise: Promise<Result<T>>;
+  readonly promise: Promise<ComputationResult<T>>;
   readonly interrupt: () => void;
   readonly finish: () => void;
 };

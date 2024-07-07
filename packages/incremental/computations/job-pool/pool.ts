@@ -1,3 +1,5 @@
+import { createNotifier, Notifier } from "../../../util/deferred";
+import { LinkedList } from "../../../util/data-structures/linked-list";
 import {
   DependentComputation,
   DependentComputationMixin,
@@ -18,14 +20,13 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../../incremental-lib";
-import { Notifier, createNotifier } from "../../utils/deferred";
 import {
   ValueDefinition,
   ReadonlySnapshotHashMap,
   HashMap,
   MapEvent,
 } from "../../utils/hash-map";
-import { Result, resultEqual, ok } from "../../utils/result";
+import { ComputationResult, resultEqual, ok } from "../../utils/result";
 import { ComputationJobContext, ComputationJobDescription } from "./job";
 import {
   ComputationEntryJobContext,
@@ -36,13 +37,12 @@ import {
   EmitterComputationMixin,
   EmitterContext,
 } from "../mixins/events/emitter";
-import { LinkedList } from "../../utils/linked-list";
 
 type ComputationPoolEvent<Req, Res> =
-  | MapEvent<Req, Result<Res>>
+  | MapEvent<Req, ComputationResult<Res>>
   | {
       readonly type: "done";
-      readonly map: ReadonlySnapshotHashMap<Req, Result<Res>>;
+      readonly map: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>;
     };
 
 class ObservableHashMap<K, V> extends HashMap<K, V> {
@@ -69,10 +69,10 @@ type ComputationPoolContext<Req, Res> = {
     dep: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
-  ) => Promise<Result<T>>;
+  ) => Promise<ComputationResult<T>>;
 } & EmitterContext<ComputationPoolEvent<Req, Res>>;
 
-type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<Result<Res>>;
+type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<ComputationResult<Res>>;
 
 export type ComputationPoolConfig<Req, Res> = {
   readonly startExec: ComputationExec<
@@ -121,16 +121,18 @@ class ComputationPoolDescription<Req, Res>
 export class ComputationPool<Req, Res>
   extends RawComputation<
     ComputationPoolContext<Req, Res>,
-    ReadonlySnapshotHashMap<Req, Result<Res>>
+    ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   >
   implements
     DependentComputation,
-    SubscribableComputation<ReadonlySnapshotHashMap<Req, Result<Res>>>,
+    SubscribableComputation<
+      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
+    >,
     EmitterComputation<ComputationPoolEvent<Req, Res>>
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<
-    ReadonlySnapshotHashMap<Req, Result<Res>>
+    ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   >;
   public readonly emitterMixin: EmitterComputationMixin<
     ComputationPoolEvent<Req, Res>
@@ -140,17 +142,20 @@ export class ComputationPool<Req, Res>
   private readonly entryDescription: ComputationEntryJobDescription<Req, Res>;
   private readonly data: {
     readonly reachable: {
-      results: ObservableHashMap<Req, Result<Res>>;
+      results: ObservableHashMap<Req, ComputationResult<Res>>;
       status: [number, number, number, number];
     };
     readonly unreachable: {
-      results: HashMap<Req, Result<Res>>;
+      results: HashMap<Req, ComputationResult<Res>>;
       status: [number, number, number, number];
     };
   };
   private readonly notifier: Notifier<null>;
-  private lastSeen: ReadonlySnapshotHashMap<Req, Result<Res>> | null;
-  private readonly equal: (a: Result<Res>, b: Result<Res>) => boolean;
+  private lastSeen: ReadonlySnapshotHashMap<Req, ComputationResult<Res>> | null;
+  private readonly equal: (
+    a: ComputationResult<Res>,
+    b: ComputationResult<Res>
+  ) => boolean;
 
   constructor(
     registry: ComputationRegistry,
@@ -165,13 +170,14 @@ export class ComputationPool<Req, Res>
     this.entryDescription = new ComputationEntryJobDescription(this);
     this.data = {
       reachable: {
-        results: new ObservableHashMap<Req, Result<Res>>(config.requestDef, e =>
-          this.emit(e)
+        results: new ObservableHashMap<Req, ComputationResult<Res>>(
+          config.requestDef,
+          e => this.emit(e)
         ),
         status: [0, 0, 0, 0],
       },
       unreachable: {
-        results: new HashMap<Req, Result<Res>>(config.requestDef),
+        results: new HashMap<Req, ComputationResult<Res>>(config.requestDef),
         status: [0, 0, 0, 0],
       },
     };
@@ -183,7 +189,9 @@ export class ComputationPool<Req, Res>
 
   protected async exec(
     ctx: ComputationPoolContext<Req, Res>
-  ): Promise<Result<ReadonlySnapshotHashMap<Req, Result<Res>>>> {
+  ): Promise<
+    ComputationResult<ReadonlySnapshotHashMap<Req, ComputationResult<Res>>>
+  > {
     // Wait for the entry computation to finish
     const startResult = await ctx.get(this.entryDescription);
 
@@ -224,7 +232,9 @@ export class ComputationPool<Req, Res>
   }
 
   protected finishRoutine(
-    result: Result<ReadonlySnapshotHashMap<Req, Result<Res>>>
+    result: ComputationResult<
+      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
+    >
   ): void {
     this.subscribableMixin.finishRoutine(result);
   }
@@ -249,14 +259,16 @@ export class ComputationPool<Req, Res>
   }
 
   responseEqual(
-    a: ReadonlySnapshotHashMap<Req, Result<Res>>,
-    b: ReadonlySnapshotHashMap<Req, Result<Res>>
+    a: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>,
+    b: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   ): boolean {
     return false;
   }
 
   onNewResult(
-    result: Result<ReadonlySnapshotHashMap<Req, Result<Res>>>
+    result: ComputationResult<
+      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
+    >
   ): void {}
 
   make(request: Req) {
@@ -268,7 +280,11 @@ export class ComputationPool<Req, Res>
     return status[State.PENDING] + status[State.RUNNING] === 0;
   }
 
-  onFieldFinish(reachable: boolean, req: Req, result: Result<Res>): void {
+  onFieldFinish(
+    reachable: boolean,
+    req: Req,
+    result: ComputationResult<Res>
+  ): void {
     if (this.isDeleting()) return;
     const map = reachable
       ? this.data.reachable.results

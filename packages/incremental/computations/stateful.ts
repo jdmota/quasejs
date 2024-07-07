@@ -2,7 +2,7 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../incremental-lib";
-import { Result } from "../utils/result";
+import { ComputationResult } from "../utils/result";
 import {
   EmitterComputation,
   EmitterComputationMixin,
@@ -33,7 +33,7 @@ export type AnyStatefulComputation = StatefulComputation<any, any, any>;
 
 type StatefulComputationExec<S, E, R> = (
   ctx: StatefulComputationCtx<S, E>
-) => Promise<Result<R>>;
+) => Promise<ComputationResult<R>>;
 
 type StatefulComputationConfig<S, E, R> = {
   readonly initialState: () => S;
@@ -94,7 +94,9 @@ export class StatefulComputation<S, E, R>
     this.mark(State.PENDING);
   }
 
-  protected async exec(ctx: StatefulComputationCtx<S, E>): Promise<Result<R>> {
+  protected async exec(
+    ctx: StatefulComputationCtx<S, E>
+  ): Promise<ComputationResult<R>> {
     try {
       // Execute this computation
       return await this.config.exec(ctx);
@@ -124,7 +126,7 @@ export class StatefulComputation<S, E, R>
     throw new Error("Method not implemented.");
   }
 
-  protected finishRoutine(result: Result<R>): void {}
+  protected finishRoutine(result: ComputationResult<R>): void {}
 
   protected invalidateRoutine(): void {
     this.observerMixin.invalidateRoutine();

@@ -1,7 +1,7 @@
 import { localStorage } from "./support";
 import { AbstractDatabase } from "./database";
 import { Subscribable } from "./subscribable";
-import { noop } from "./utils";
+import { noop } from "../util/miscellaneous";
 
 const DEFAULT_KEY = "theme-mode";
 

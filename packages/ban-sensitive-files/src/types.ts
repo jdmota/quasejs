@@ -11,9 +11,9 @@ export type Rule = {
   description: string | null;
 };
 
-export const PART_VALUES = [ "filename", "extension", "path" ];
+export const PART_VALUES = ["filename", "extension", "path"];
 
-export const TYPE_VALUES = [ "regex", "match" ];
+export const TYPE_VALUES = ["regex", "match"];
 
 export type Banned = {
   filename: string;

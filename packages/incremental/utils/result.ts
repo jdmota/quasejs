@@ -1,4 +1,4 @@
-export type Result<T, E = unknown> =
+export type ComputationResult<T, E = unknown> =
   | {
       ok: true;
       value: T;
@@ -9,18 +9,21 @@ export type Result<T, E = unknown> =
       deterministic: boolean;
     };
 
-export function ok<T, E = unknown>(value: T): Result<T, E> {
+export function ok<T, E = unknown>(value: T): ComputationResult<T, E> {
   return { ok: true, value };
 }
 
-export function error<T, E>(error: E, deterministic: boolean): Result<T, E> {
+export function error<T, E>(
+  error: E,
+  deterministic: boolean
+): ComputationResult<T, E> {
   return { ok: false, error, deterministic };
 }
 
 export function resultEqual<T>(
   equal: (a: T, b: T) => boolean,
-  prev: Result<T>,
-  next: Result<T>
+  prev: ComputationResult<T>,
+  next: ComputationResult<T>
 ): boolean {
   if (prev.ok) {
     return next.ok && equal(prev.value, next.value);

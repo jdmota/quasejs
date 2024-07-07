@@ -1,5 +1,5 @@
-import { CounterMap } from "../../utils/counter-map";
-import { LinkedList } from "../../utils/linked-list";
+import { CounterMap } from "../../../util/data-structures/counter-map";
+import { LinkedList } from "../../../util/data-structures/linked-list";
 import { AnyRawComputation } from "../raw";
 
 type ReachabilityId = {

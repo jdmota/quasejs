@@ -1,4 +1,4 @@
-import { LinkedList } from "./linked-list";
+import { LinkedList } from "../../util/data-structures/linked-list";
 
 export type ValueDefinition<T> = {
   readonly equal: (a: T, b: T) => boolean;
