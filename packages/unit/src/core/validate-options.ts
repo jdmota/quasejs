@@ -1,7 +1,8 @@
-import { getOnePlugin } from "@quase/get-plugins";
+import path from "path";
 import turbocolor from "turbocolor";
 import isCi from "is-ci";
 import os from "os";
+import { importPlugin } from "../../../util/get-plugins";
 import NodeReporter from "../reporters/node";
 import { assertTimeout } from "./util/assert-args";
 import {
@@ -11,13 +12,7 @@ import {
 import randomizerFn from "./random";
 import { validationError } from "../node-runner/util";
 import { CliOptions, NormalizedOptions } from "../types";
-
-function arrify<T>(val: T | T[] | undefined): T[] {
-  if (val == null) {
-    return [];
-  }
-  return Array.isArray(val) ? val : [val];
-}
+import { arrify } from "../../../util/miscellaneous";
 
 const schemaCompiler = require("@quase/schema/dist/compiler").default;
 
@@ -59,17 +54,19 @@ type Schema {
 }
 `;
 
-const compiledSchema = eval(schemaCompiler(schema)); // eslint-disable-line no-eval
+const compiledSchema = eval(schemaCompiler(schema));
 
 export function cliValidate(opts: any): CliOptions {
   return compiledSchema.validateAndMerge({}, opts);
 }
 
-export default function (
+export default async function (
   options: CliOptions,
   slashSlash?: string[] | undefined,
   configLocation?: string | undefined
-): NormalizedOptions {
+): Promise<NormalizedOptions> {
+  const cwd = configLocation ? path.dirname(configLocation) : process.cwd();
+
   if (options.forceSerial) {
     if (options.concurrency != null && options.concurrency !== 1) {
       throw validationError(`You cannot use "concurrency" with --force-serial`);
@@ -107,24 +104,27 @@ export default function (
   }
 
   const reporter = options.reporter
-    ? getOnePlugin(options.reporter).plugin
+    ? await importPlugin(options.reporter, cwd)
     : NodeReporter;
 
   if (typeof reporter !== "function") {
     throw validationError(`Reporter should be a constructor`);
   }
 
-  const env = options.env ? getOnePlugin(options.env).plugin : {};
+  const env =
+    typeof options.env === "string"
+      ? await importPlugin(options.env, cwd)
+      : options.env;
 
   if (env == null || typeof env !== "object") {
     throw validationError(`Environment variables should be an object`);
   }
 
   const concordanceOptions = options.concordanceOptions
-    ? getOnePlugin(options.concordanceOptions).plugin
+    ? await importPlugin(options.concordanceOptions, cwd)
     : options.color
-    ? colorConcordanceOptions
-    : plainConcordanceOptions;
+      ? colorConcordanceOptions
+      : plainConcordanceOptions;
 
   if (concordanceOptions == null || typeof concordanceOptions !== "object") {
     throw validationError(`Concordance options should be an object`);

@@ -8,6 +8,10 @@ export type ObjRecord<K extends PropertyKey, V> = {
   [P in K]?: V | undefined;
 };
 
+export function isObject(o: unknown): o is {} {
+  return o != null && typeof o === "object";
+}
+
 export function noop() {}
 
 export function assertion(bool: boolean) {
@@ -31,6 +35,13 @@ export function nonNull<T>(val: T | undefined | null): T {
     throw new Error("Value is " + val);
   }
   return val;
+}
+
+export function arrify<T>(val: T | T[] | undefined): T[] {
+  if (val == null) {
+    return [];
+  }
+  return Array.isArray(val) ? val : [val];
 }
 
 export interface ObjectHashEquals {

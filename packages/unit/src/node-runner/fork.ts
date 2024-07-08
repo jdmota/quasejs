@@ -1,4 +1,4 @@
-import defer from "../core/util/defer";
+import { createDefer, Defer } from "../../../util/deferred";
 import SnapshotsManager from "../snapshots";
 import whyIsNodeRunning, {
   enable as enableAsyncHooks,
@@ -8,9 +8,8 @@ import {
   RunnerToChildEvents,
   ChildEvents,
   CoreRunnerEventTypes,
-  Deferred,
   EventAskSourceContent,
-  NormalizedOptions,
+  TestRunnerOptions,
 } from "../types";
 
 const send = (() => {
@@ -81,20 +80,13 @@ async function saveSnapshots(snapshotManagers: Map<string, SnapshotsManager>) {
   return finalStat;
 }
 
-function start(options: NormalizedOptions, files: string[]) {
+function start(options: TestRunnerOptions, files: string[]) {
   const snapshotManagers: Map<string, SnapshotsManager> = new Map();
   const testsWaitingAnswer: Map<
     number,
-    Deferred<EventAskSourceContent>
+    Defer<EventAskSourceContent>
   > = new Map();
   let uuid = 1;
-
-  if (
-    options.configLocation &&
-    !/(\\|\/)package\.json$/.test(options.configLocation)
-  ) {
-    options = Object.assign({}, require(options.configLocation), options);
-  }
 
   const g = global as any;
   g.quaseUnit = { _fork: true, options };
@@ -121,7 +113,7 @@ function start(options: NormalizedOptions, files: string[]) {
             sendEvent(eventType, arg);
 
             if (arg.whyIsRunning.length === 0) {
-              (process as any).channel.unref();
+              process.channel?.unref();
             }
           })
           .catch(err => {
@@ -146,10 +138,10 @@ function start(options: NormalizedOptions, files: string[]) {
       something: unknown;
       stack: string;
       key: string;
-      deferred: Deferred<void>;
+      deferred: Defer<void>;
     }) => {
       const id = uuid++;
-      const answerDefer = defer<EventAskSourceContent>();
+      const answerDefer = createDefer<EventAskSourceContent>();
       testsWaitingAnswer.set(id, answerDefer);
 
       send({

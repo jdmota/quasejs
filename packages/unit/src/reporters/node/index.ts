@@ -10,6 +10,7 @@ import {
   SnapshotStats,
   TestStart,
   EventAskSourceContent,
+  TestRunnerOptions,
 } from "../../types";
 import { log, log as printLog, logEol, indentString } from "./log";
 import { NodeRunner } from "../../node-runner";
@@ -100,7 +101,7 @@ export default class NodeReporter {
     });
   }
 
-  static showOptions(options: any) {
+  static showOptions(options: TestRunnerOptions) {
     logEol();
     log(turbocolor.bold.green("Patterns: ") + options.files.join(" ") + "\n");
     if (options.ignore.length > 0) {
@@ -503,8 +504,8 @@ export default class NodeReporter {
       status === "failed"
         ? turbocolor.red(status)
         : status === "passed"
-        ? turbocolor.green(status)
-        : turbocolor.yellow(status);
+          ? turbocolor.green(status)
+          : turbocolor.yellow(status);
 
     printLog(
       `\n${turbocolor.bold(

@@ -1,6 +1,6 @@
-import { prettifyPath } from "@quase/path-url";
 import crypto from "crypto";
 import zlib from "zlib";
+import { prettifyPath } from "../../../util/path-url";
 
 const MD5_HASH_LENGTH = 16;
 
@@ -49,7 +49,7 @@ class ReadableBuffer {
     const start = this.byteOffset;
     const index = this.buffer.indexOf("\n", start);
     this.byteOffset = index + 1;
-    return this.buffer.slice(start, index);
+    return this.buffer.subarray(start, index);
   }
 
   readLineString(): string {
@@ -59,13 +59,13 @@ class ReadableBuffer {
   readAmount(size: number): Buffer {
     const start = this.byteOffset;
     this.byteOffset += size;
-    return this.buffer.slice(start, start + size);
+    return this.buffer.subarray(start, start + size);
   }
 
   readLeft(): Buffer {
     const start = this.byteOffset;
     this.byteOffset = this.buffer.length;
-    return this.buffer.slice(start);
+    return this.buffer.subarray(start);
   }
 
   canRead(): boolean {
@@ -97,6 +97,9 @@ class WritableBuffer {
 }
 
 export type Snapshots = Map<string, Buffer>;
+
+// TODO https://github.com/avajs/ava/pull/3323/files
+// TODO https://sindresorhus.com/blog/goodbye-nodejs-buffer
 
 export function encode(snapshots: Snapshots): Buffer {
   const buffer = new WritableBuffer();

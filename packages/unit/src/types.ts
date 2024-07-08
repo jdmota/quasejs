@@ -1,11 +1,5 @@
 import { ContextRef } from "./core/context";
 
-export type Deferred<T> = {
-  promise: Promise<T>;
-  resolve: (x: T) => void;
-  reject: (err: Error) => void;
-};
-
 export type WhyIsRunning = {
   type: string;
   stack: string;
@@ -173,7 +167,7 @@ export type EventAskSourceContent = {
 export type RunnerToChildEvents =
   | {
       type: "quase-unit-start";
-      options: NormalizedOptions;
+      options: TestRunnerOptions;
       files: string[];
     }
   | {
@@ -233,7 +227,6 @@ export interface GenericRunnable<T extends IRunnableResult> {
   runTodo(): T;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IRunnable extends GenericRunnable<IRunnableResult> {}
 
 export interface ITestResult extends IRunnableResult {
@@ -315,3 +308,56 @@ export type NormalizedOptions = BaseOptions & {
   globals: (string | boolean)[];
   reporter: any;
 };
+
+export type TestRunnerOptions = Readonly<{
+  ["--"]: string[];
+  files: readonly string[]; // @mergeStrategy("override") @description("Glob patterns of files to include");
+  ignore: readonly string[]; // @mergeStrategy("concat") @description("Glob patterns of files to ignore");
+  match: readonly string[]; // @description("Only run tests with matching title (Can be repeated)");
+  watch: boolean; // @description("Watch files for changes and re-run the related tests");
+  bail: boolean; // @description("Stop after first test failure");
+  forceSerial: boolean; // @description("Run tests serially. It forces --concurrency=1");
+  concurrency: number; // @description("Max number of test files running at the same time (Default: CPU logical cores or 2 if running in CI)");
+  updateSnapshots: boolean; // @description("Update snapshots");
+  globals: readonly string[]; // @description("Specify which global variables can be created by the tests. 'true' for any. Default is 'false'.");
+  random: boolean | string | null; // @description("Randomize your tests. Optionally specify a seed or one will be generated");
+  timeout: number | null; // @description("Set test timeout");
+  slow: number | null; // @description("Set 'slow' test threshold");
+  only: boolean; // @description("Only run tests marked with '.only' modifier");
+  strict: boolean; // @description("Disallow the usage of 'only', 'failing', 'todo', 'skipped' modifiers");
+  allowNoPlan: boolean; // @description("Make tests still succeed if no assertions are run and no planning was done");
+  snapshotLocation: (file: string) => string; // @description("Specify a fixed location for storing the snapshot files");
+  env: Record<string, unknown>; // @description("The test environment used for all tests. This can point to any file or node module");
+  diff: boolean; // @description("Enable/disable diff on failure");
+  stack: boolean; // @description("Enable/disable stack trace on failure");
+  codeFrame: boolean | Record<string, unknown>; // @description("Enable/disable code frame [and options]");
+  stackIgnore: RegExp | null; // @description("Regular expression to ignore some stacktrace files");
+  color: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
+  timeouts: boolean; // @description("Enable/disable test timeouts. Disabled by default with --debug");
+  globalTimeout: number; // @default(20000) @description("Global timeout. Zero to disable. Disabled by default with --debug");
+  verbose: boolean; // @description("Enable verbose output");
+  debug: boolean; // @description("Same as --inspect-brk on nodejs.");
+  logHeapUsage: boolean; // @description("Logs the heap usage after every test. Useful to debug memory leaks.");
+  concordanceOptions: Record<string, unknown>; // @description("Concordance options.");
+  reporter: any; // @description("Specify the reporter to use");
+}>;
+
+export type GlobalTestRunnerOptions = Readonly<{
+  ["--"]: string[];
+  files: readonly string[]; // @mergeStrategy("override") @description("Glob patterns of files to include");
+  ignoreFiles: readonly string[]; // @mergeStrategy("concat") @description("Glob patterns of files to ignore");
+  filterFiles: (f: string) => boolean;
+  concurrentFiles: number;
+  worker: "main" | "workers" | "processes";
+  watch: boolean; // @description("Watch files for changes and re-run the related tests");
+  color: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
+  env: Record<string, unknown>; // @description("The test environment used for all tests. This can point to any file or node module");
+  verbose: boolean; // @description("Enable verbose output");
+  debug: boolean; // @description("Same as --inspect-brk on nodejs.");
+  concordanceOptions: Record<string, unknown>; // @description("Concordance options.");
+  reporter: any; // @description("Specify the reporter to use");
+  //
+  changedSince: string | undefined;
+  findRelatedTests: string[];
+  ci: boolean;
+}>;

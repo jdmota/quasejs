@@ -3,7 +3,7 @@ import { GroupPlaceholder, TestPlaceholder } from "./placeholders";
 import { MetadataTypes, TestMetadata, GroupMetadata } from "../types";
 import Runner from "./runner";
 
-function validateHelper(metadata: any, callback: any) {
+function validateHelper(metadata: TestMetadata | GroupMetadata, callback: any) {
   if (metadata.type !== "test" && metadata.type !== "group") {
     if (metadata.serial) {
       return "The `serial` modifier cannot be used with hooks.";
@@ -46,7 +46,7 @@ function validateHelper(metadata: any, callback: any) {
   }
 }
 
-function validate(metadata: any, callback: any) {
+function validate(metadata: TestMetadata | GroupMetadata, callback: any) {
   const msg = validateHelper(metadata, callback);
   if (msg) {
     throw new Error(msg);
@@ -54,12 +54,12 @@ function validate(metadata: any, callback: any) {
 }
 
 function createTest(
+  this: Runner,
   metadata: TestMetadata | GroupMetadata,
   name: any,
   callback: any
 ) {
-  // @ts-ignore
-  const runner: any = this;
+  const runner = this;
   const parent = runner._current;
 
   if (typeof name === "function") {
@@ -99,7 +99,7 @@ function createTest(
 }
 
 function handleType(type: MetadataTypes) {
-  return (data: any) => {
+  return (data: TestMetadata | GroupMetadata) => {
     if (data.type !== "test") {
       throw new Error(`Cannot use '${type}' and '${data.type}' together`);
     }
@@ -108,8 +108,7 @@ function handleType(type: MetadataTypes) {
 }
 
 const errors = {
-  todo:
-    "The `todo` modifier is only for documentation and cannot be used with skip, only, or failing.",
+  todo: "The `todo` modifier is only for documentation and cannot be used with skip, only, or failing.",
   onlyAndSkip: "`only` tests cannot be skipped.",
 };
 
@@ -129,13 +128,13 @@ const chain = {
     beforeEach: handleType("beforeEach"),
     afterEach: handleType("afterEach"),
     group: handleType("group"),
-    strict: (data: any) => {
+    strict: (data: TestMetadata | GroupMetadata) => {
       data.strict = true;
     },
-    serial: (data: any) => {
+    serial: (data: TestMetadata | GroupMetadata) => {
       data.serial = true;
     },
-    only: (data: any) => {
+    only: (data: TestMetadata | GroupMetadata) => {
       if (data.status === "todo") {
         throw new Error(errors.todo);
       }
@@ -144,7 +143,7 @@ const chain = {
       }
       data.exclusive = true;
     },
-    skip: (data: any) => {
+    skip: (data: TestMetadata | GroupMetadata) => {
       if (data.status === "todo") {
         throw new Error(errors.todo);
       }
@@ -153,7 +152,7 @@ const chain = {
       }
       data.status = "skipped";
     },
-    todo: (data: any) => {
+    todo: (data: TestMetadata | GroupMetadata) => {
       if (
         data.status === "failing" ||
         data.status === "skipped" ||
@@ -163,13 +162,13 @@ const chain = {
       }
       data.status = "todo";
     },
-    failing: (data: any) => {
+    failing: (data: TestMetadata | GroupMetadata) => {
       if (data.status === "todo") {
         throw new Error(errors.todo);
       }
       data.status = "failing";
     },
-    allowNoPlan: (data: any) => {
+    allowNoPlan: (data: TestMetadata | GroupMetadata) => {
       data.allowNoPlan = true;
     },
   },

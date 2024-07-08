@@ -1,40 +1,16 @@
-import globby from "globby";
+import { globby } from "globby";
 import ora from "ora";
 import turbocolor from "turbocolor";
-import { printError } from "./node-runner/util";
-import validateOptions, { schema } from "./core/validate-options";
 import NodeReporter from "./reporters/node";
 import { NodeRunner } from "./node-runner";
-import { CliOptions } from "./types";
+import { TestRunnerOptions } from "./types";
 
-export { schema };
-
-export default async function cli({
-  input,
-  flags,
-  options,
-  configLocation,
-}: {
-  input: string[];
-  flags: { ["--"]: string[] | undefined };
-  options: CliOptions;
-  configLocation: string | undefined;
-}) {
-  if (input.length > 0) {
-    options.files = input;
+export default async function cli(options: TestRunnerOptions) {
+  if (options.color != null) {
+    turbocolor.enabled = options.color;
   }
 
-  let normalizedOpts;
-
-  try {
-    normalizedOpts = validateOptions(options, flags["--"], configLocation);
-  } catch (err) {
-    return printError(err);
-  }
-
-  turbocolor.enabled = normalizedOpts.color;
-
-  NodeReporter.showOptions(normalizedOpts);
+  NodeReporter.showOptions(options);
 
   const spinner = ora("Looking for files...").start();
   const fileSearchTime = Date.now();
@@ -42,12 +18,12 @@ export default async function cli({
   let files;
 
   try {
-    files = await globby(normalizedOpts.files, {
-      ignore: normalizedOpts.ignore,
+    files = await globby(options.files, {
+      ignoreFiles: options.ignore,
       absolute: true,
       gitignore: false, // FIXME revert to true after this is fixed: https://github.com/sindresorhus/globby/issues/133
     });
-  } catch (err) {
+  } catch (err: any) {
     spinner.stop();
     return NodeReporter.fatalError(err.stack);
   }
@@ -62,10 +38,9 @@ export default async function cli({
 
   NodeReporter.showFilesCount(files.length, Date.now() - fileSearchTime);
 
-  const Reporter = normalizedOpts.reporter;
-  const runner = new NodeRunner(normalizedOpts, files);
+  const runner = new NodeRunner(options, files);
 
-  new Reporter(runner); // eslint-disable-line no-new
+  new NodeReporter(runner);
 
   runner.start();
 }

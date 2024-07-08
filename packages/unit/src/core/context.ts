@@ -16,7 +16,7 @@ export class ContextRef {
   }
 
   copy(): ContextRef {
-    return new LateBinding(this); // eslint-disable-line no-use-before-define
+    return new LateBinding(this);
   }
 }
 
@@ -30,27 +30,27 @@ export class LateBinding extends ContextRef {
     this.bound = false;
   }
 
-  get(): any {
+  override get(): any {
     if (!this.bound) {
       this.set(Object.assign({}, this.ref.get()));
     }
     return super.get();
   }
 
-  set(newValue: any) {
+  override set(newValue: any) {
     this.bound = true;
     super.set(newValue);
   }
 }
 
 class EmptyRef extends ContextRef {
-  get(): any {
+  override get(): any {
     return {};
   }
 
-  set(_newValue: any) {}
+  override set(_newValue: any) {}
 
-  copy() {
+  override copy() {
     return this;
   }
 }

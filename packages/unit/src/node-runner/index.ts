@@ -1,15 +1,15 @@
 import { EventEmitter } from "events";
-import { SourceMapExtractor } from "@quase/source-map";
-import { beautify as beautifyStack } from "@quase/error";
 import { RunnerProcess } from "./child";
 import {
   RunStart,
   RunEnd,
   ChildEvents,
-  NormalizedOptions,
   ChildEventsEmit,
+  TestRunnerOptions,
 } from "../types";
 import { setExitCode } from "./util";
+import { SourceMapExtractor } from "../../../source-map/src";
+import { beautify } from "../../../error/src";
 
 const CircularJSON = require("circular-json");
 
@@ -69,12 +69,12 @@ function concat<T>(original: T[], array: T[]) {
 }
 
 export class NodeRunner extends EventEmitter {
-  options: NormalizedOptions;
-  files: string[];
+  readonly options: TestRunnerOptions;
+  readonly files: string[];
   division: string[][];
-  forks: RunnerProcess[];
-  debuggersPromises: Promise<string>[];
-  debuggersWaitingPromises: Promise<void>[];
+  readonly forks: RunnerProcess[];
+  readonly debuggersPromises: Promise<string>[];
+  readonly debuggersWaitingPromises: Promise<void>[];
   private timeStart: number | undefined;
   private runStarts: number;
   private runEnds: number;
@@ -91,7 +91,7 @@ export class NodeRunner extends EventEmitter {
   private sentSigint: number;
   private onSigint: () => void;
 
-  constructor(options: NormalizedOptions, files: string[]) {
+  constructor(options: TestRunnerOptions, files: string[]) {
     super();
     this.options = options;
     this.files = files;
@@ -200,6 +200,7 @@ export class NodeRunner extends EventEmitter {
   }
 
   killAllForks() {
+    setExitCode(1);
     for (const fork of this.forks) {
       fork.notifyWhyIsRunning();
       fork.kill();
@@ -374,7 +375,7 @@ export class NodeRunner extends EventEmitter {
   }
 
   async beautifyStack(stack: string) {
-    return beautifyStack(stack, {
+    return beautify(stack, {
       extractor: this.extractor,
       ignore: this.options.stackIgnore,
     });
@@ -383,7 +384,7 @@ export class NodeRunner extends EventEmitter {
   async divide() {
     const num = this.options.concurrency;
     const final: string[][] = [];
-    const map = new Map(); // Map<original, Set<generated>>
+    const map = new Map<string, Set<string>>(); // Map<original, Set<generated>>
     // The snapshot managers are in the fork process
     // and we try to point to the original sources.
     // If a original is used more than once, we have to join
@@ -395,7 +396,7 @@ export class NodeRunner extends EventEmitter {
     await Promise.all(
       this.files.map(async file => {
         for (const src of await this.extractor.getOriginalSources(file)) {
-          const set = map.get(src) || new Set();
+          const set = map.get(src) ?? new Set();
           set.add(file);
           map.set(src, set);
         }
@@ -451,7 +452,7 @@ export class NodeRunner extends EventEmitter {
     }
 
     if (options.debug) {
-      execArgv.push("--inspect-brk=0");
+      execArgv.push("--inspect-brk");
       debugging = true;
     }
 

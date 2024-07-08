@@ -1,9 +1,4 @@
-/*!
- * This file is a modified version of https://github.com/avajs/option-chain/blob/master/index.js
- *
- * License: https://github.com/avajs/option-chain/blob/master/license
- *
- */
+// Modified version of https://github.com/avajs/option-chain/blob/master/index.js
 
 const noop = () => {};
 

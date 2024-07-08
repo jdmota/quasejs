@@ -15,10 +15,11 @@ import { ContextRef } from "./context";
 import isPromise from "./util/is-promise";
 
 class ProxyImpl<R extends IRunnableResult, T extends GenericRunnable<R>>
-  implements GenericRunnable<R> {
+  implements GenericRunnable<R>
+{
   test: T;
-  seq: SequenceImpl<R, T>; // eslint-disable-line no-use-before-define
-  proxyFn: (ref: ContextRef, x: T, seq: SequenceImpl<R, T>) => IRunReturn<R>; // eslint-disable-line no-use-before-define
+  seq: SequenceImpl<R, T>;
+  proxyFn: (ref: ContextRef, x: T, seq: SequenceImpl<R, T>) => IRunReturn<R>;
   constructor(
     test: T,
     seq: SequenceImpl<R, T>,
@@ -53,9 +54,11 @@ class ClonableProxy extends ProxyImpl<ITestResult, ITest> implements ITest {
 }
 
 abstract class SequenceImpl<
-  R extends IRunnableResult,
-  T extends GenericRunnable<R>
-> implements IRunnableResult, GenericRunnable<R> {
+    R extends IRunnableResult,
+    T extends GenericRunnable<R>,
+  >
+  implements IRunnableResult, GenericRunnable<R>
+{
   tests: T[];
   runner: Runner;
   isConcurrent: boolean;
@@ -99,8 +102,8 @@ abstract class SequenceImpl<
     this.status = this.failTest
       ? "failed"
       : this.skipTest
-      ? "skipped"
-      : "passed";
+        ? "skipped"
+        : "passed";
     if (this.failTest) {
       this.skipReason = undefined;
     }
@@ -188,7 +191,8 @@ abstract class SequenceImpl<
 
 export class Sequence
   extends SequenceImpl<IRunnableResult, IRunnable>
-  implements IRunnableResult, IRunnable {
+  implements IRunnableResult, IRunnable
+{
   static proxy(
     context: ContextRef,
     t: IRunnable,
@@ -224,7 +228,8 @@ export class Sequence
 
 export class InTestSequence
   extends SequenceImpl<ITestResult, ITest>
-  implements ITestResult, ITest {
+  implements ITestResult, ITest
+{
   slow: boolean;
   metadata: TestMetadata;
   errors: any[];
@@ -335,7 +340,8 @@ export class InTestSequence
 
 export class BeforeTestsAfterSequence
   extends SequenceImpl<IRunnableResult, IRunnable>
-  implements IRunnableResult, IRunnable {
+  implements IRunnableResult, IRunnable
+{
   constructor(runner: Runner, level: number) {
     super(runner, false, level);
   }

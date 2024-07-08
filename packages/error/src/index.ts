@@ -8,9 +8,12 @@ export const ignoreFileRe =
 
 type Opts = Readonly<{
   extractor?: any;
-  ignore?: {
-    test(text: string): boolean;
-  };
+  ignore?:
+    | {
+        test(text: string): boolean;
+      }
+    | null
+    | undefined;
 }>;
 
 type StackFrame = stackParser.StackFrame & { fileName: string };

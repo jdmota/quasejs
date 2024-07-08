@@ -1,5 +1,5 @@
-import { getStack } from "@quase/error";
 import asyncHooks from "async_hooks";
+import { getStack } from "../../../error/src";
 import { WhyIsRunning } from "../types";
 
 const FAKE_RESOURCE = new asyncHooks.AsyncResource("QUASEJS");

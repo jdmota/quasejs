@@ -4,9 +4,9 @@ import { setExitCode } from "./util";
 import { NodeRunner } from ".";
 import {
   WhyIsRunning,
-  NormalizedOptions,
   ChildEvents,
   RunnerToChildEvents,
+  TestRunnerOptions,
 } from "../types";
 
 export class RunnerProcess {
@@ -25,7 +25,7 @@ export class RunnerProcess {
   constructor(
     runner: NodeRunner,
     files: string[],
-    options: NormalizedOptions,
+    options: TestRunnerOptions,
     args: string[],
     env: ForkOptions["env"],
     execArgv: ForkOptions["execArgv"]
@@ -155,7 +155,6 @@ export class RunnerProcess {
     if (!this.finished) {
       this.cleanup();
       this.process.kill();
-      setExitCode(1);
     }
   }
 }

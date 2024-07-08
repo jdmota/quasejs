@@ -5,14 +5,19 @@ type ProvidedPlugins<P> = readonly (P | [string, Obj] | null | undefined)[];
 
 const relative = /^(\.|\.\.)(\/|\\)/;
 
+export async function importPlugin<P>(name: string, cwd: string): Promise<P> {
+  const plugin = relative.test(name)
+    ? await import(resolve(cwd, name))
+    : await import(name);
+  return plugin;
+}
+
 export async function getOnePlugin<P>(
   name: string,
   options: Obj,
   cwd: string
 ): Promise<P> {
-  const plugin = relative.test(name)
-    ? await import(resolve(cwd, name))
-    : await import(name);
+  const plugin = await importPlugin(name, cwd);
 
   if (typeof plugin !== "function") {
     throw new Error(`Plugin ${name} is not a function`);

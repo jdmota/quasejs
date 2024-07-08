@@ -22,5 +22,5 @@ export function printError(error: Error) {
   } else {
     message = error.stack;
   }
-  console.error(`${turbocolor.red(message)}\n`); // eslint-disable-line no-console
+  console.error(`${turbocolor.red(message)}\n`);
 }

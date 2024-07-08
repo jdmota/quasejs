@@ -1,4 +1,4 @@
-import { getStack } from "@quase/error";
+import { getStack } from "../../../error/src";
 import {
   TestMetadata,
   GroupMetadata,
