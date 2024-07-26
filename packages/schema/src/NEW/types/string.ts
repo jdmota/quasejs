@@ -1,35 +1,27 @@
-import { PickSchemaType } from "../schema";
+import { createSchemaType } from "../schema";
 import { SchemaOpCtx } from "../util/context";
-import { Result } from "../util/result";
 
 type StringTypeOpts = Partial<{
   readonly nonEmpty: boolean;
   readonly regex: RegExp;
 }>;
 
-export class StringType
-  implements PickSchemaType<"validate" | "decodeJS", string>
-{
-  readonly opts: StringTypeOpts;
-  constructor(opts: StringTypeOpts) {
-    this.opts = opts;
-  }
-
-  validate(value: string, ctx: SchemaOpCtx): void {
-    const { nonEmpty, regex } = this.opts;
-    if (nonEmpty) {
-      if (value.length === 0) {
-        ctx.pushError(value, "Expected non-empty string");
+export function stringType(opts: StringTypeOpts = {}) {
+  return createSchemaType<unknown, string>(
+    (value: unknown, ctx: SchemaOpCtx) => {
+      if (typeof value === "string") {
+        const { nonEmpty, regex } = opts;
+        if (nonEmpty && value.length === 0) {
+          ctx.addError("Expected non-empty string");
+        }
+        if (regex && !regex.test(value)) {
+          ctx.addError(`Expected string matching ${regex}`);
+        }
+        return ctx.result(value);
       }
+      return ctx.validate(false, "a string", value);
     }
-    if (regex) {
-      if (!regex.test(value)) {
-        ctx.pushError(value, `Expected string matching ${regex}`);
-      }
-    }
-  }
-
-  decodeJS(value: unknown, ctx: SchemaOpCtx): Result<string> {
-    return ctx.directDecode(typeof value === "string", "a string", value);
-  }
+  );
 }
+
+export const stringTypeSingleton = stringType();

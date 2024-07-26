@@ -1,13 +1,12 @@
-import { PickSchemaType } from "../schema";
+import { createSchemaType } from "../schema";
 import { SchemaOpCtx } from "../util/context";
-import { Result } from "../util/result";
 
-export class BooleanType
-  implements PickSchemaType<"validate" | "decodeJS", boolean>
-{
-  validate(value: boolean, ctx: SchemaOpCtx): void {}
-
-  decodeJS(value: unknown, ctx: SchemaOpCtx): Result<boolean> {
-    return ctx.directDecode(typeof value === "boolean", "a boolean", value);
+export const booleanType = createSchemaType<unknown, boolean>(
+  (value: unknown, ctx: SchemaOpCtx) => {
+    return ctx.validate<boolean>(
+      typeof value === "boolean",
+      "a boolean",
+      value
+    );
   }
-}
+);

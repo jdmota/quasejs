@@ -1,46 +1,36 @@
 import { DateTime } from "luxon";
 import { SchemaOpCtx } from "../util/context";
-import { Result } from "../util/result";
-import { PickSchemaType } from "../schema";
+import { createSchemaType } from "../schema";
 
-export class DateTimeType
-  implements PickSchemaType<"validate" | "decodeJS", DateTime>
-{
-  readonly format: string;
-
-  constructor(format: string) {
-    this.format = format;
-  }
-
-  validate(value: DateTime, ctx: SchemaOpCtx): void {
-    if (!value.isValid) {
-      ctx.pushError(
-        value,
-        `Expected a valid date-time but got ${value} (${value.invalidReason}: ${value.invalidExplanation})`
-      );
-    }
-  }
-
-  decodeJS(value: unknown, ctx: SchemaOpCtx): Result<DateTime> {
-    if (typeof value === "string") {
-      try {
-        const datetime = DateTime.fromFormat(value, this.format);
-        if (datetime.invalidReason === "unparsable") {
-          throw new Error(datetime.invalidExplanation!);
+export function dateTimeType(format: string) {
+  return createSchemaType<unknown, DateTime>(
+    (value: unknown, ctx: SchemaOpCtx) => {
+      if (typeof value === "string") {
+        try {
+          const datetime = DateTime.fromFormat(value, format);
+          if (datetime.invalidReason === "unparsable") {
+            throw new Error(datetime.invalidExplanation!);
+          }
+          value = datetime;
+        } catch (err: any) {
+          return ctx.error(
+            `Error parsing date-time with format ${format} (${err.message})`
+          );
         }
-        return Result.ok(datetime);
-      } catch (err: any) {
-        return ctx.resultError(
-          value,
-          `Error parsing date-time with format ${this.format} (${err.message})`
+      }
+      if (value instanceof DateTime) {
+        if (value.isValid) {
+          return ctx.result(value);
+        }
+        return ctx.error(
+          `Expected a valid date-time but got ${value} (${value.invalidReason}: ${value.invalidExplanation})`
         );
       }
+      return ctx.error(
+        `Expected a date-time string with format ${
+          format
+        } but got ${ctx.format(value)}`
+      );
     }
-    return ctx.resultError(
-      value,
-      `Expected a date-time string with format ${
-        this.format
-      } but got ${ctx.format(value)}`
-    );
-  }
+  );
 }

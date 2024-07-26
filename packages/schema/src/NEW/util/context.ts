@@ -1,29 +1,46 @@
+import { type JsType } from "../types/js-types";
 import { SchemaError } from "./errors";
-import { Formatter } from "./format";
+import { format, Formatter } from "./format";
 import { Path } from "./path";
-import { Result } from "./result";
+import { ValidationError, ValidationResult } from "./result";
+
+export type SchemaOpCtxOpts = {
+  formatter?: Formatter;
+  abortEarly?: boolean;
+  allowCircular?: boolean;
+};
 
 export class SchemaOpCtx {
   private path: Path;
-  private readonly errors: SchemaError[];
-  private readonly formatter: Formatter;
+  private readonly errorArr: SchemaError[];
+  public readonly formatter: Formatter;
+  public readonly abortEarly: boolean;
+  public readonly allowCircular: boolean;
+  private readonly busy: WeakMap<WeakKey, Set<JsType<any>>>;
 
-  constructor(formatter: Formatter) {
+  constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
     this.path = Path.create();
-    this.errors = [];
-    this.formatter = formatter;
+    this.errorArr = [];
+    this.formatter = opts.formatter ?? format;
+    this.abortEarly = opts.abortEarly ?? false;
+    this.allowCircular = opts.allowCircular ?? false;
+    this.busy = new WeakMap();
   }
 
-  pushError(value: unknown, message: string) {
-    this.errors.push(this.error(value, message));
+  static new(ctx: SchemaOpCtxOpts | SchemaOpCtx) {
+    return new SchemaOpCtx(ctx);
   }
 
-  resultError(value: unknown, message: string) {
-    return Result.error(this.error(value, message));
+  shouldAbort() {
+    return this.abortEarly && this.errorArr.length > 0;
   }
 
-  error(value: unknown, message: string) {
-    return new SchemaError(value, this.path, message);
+  createError(message: string) {
+    return new SchemaError(this.path, message);
+  }
+
+  addError(message: string) {
+    this.errorArr.push(this.createError(message));
   }
 
   format(value: unknown) {
@@ -31,8 +48,8 @@ export class SchemaOpCtx {
     return formatter(value);
   }
 
-  push(key: string) {
-    this.path = this.path.push(key);
+  push(key: string | number, inKey = false) {
+    this.path = this.path.push(key, inKey);
   }
 
   pop() {
@@ -40,18 +57,71 @@ export class SchemaOpCtx {
   }
 
   hasErrors() {
-    return this.errors.length === 0;
+    return this.errorArr.length === 0;
   }
 
   getErrors(): readonly SchemaError[] {
-    return this.errors;
+    return this.errorArr;
   }
 
-  directDecode<T>(valid: boolean, whatDesc: string, value: unknown): Result<T> {
-    return valid
-      ? Result.ok(value as T)
-      : Result.error(
-          this.error(value, `Expected ${whatDesc} (got ${this.format(value)})`)
-        );
+  error(message: string): ValidationError {
+    this.addError(message);
+    return ValidationResult.errors(this.errorArr);
+  }
+
+  result<T>(value: T): ValidationResult<T> {
+    return this.errorArr.length === 0
+      ? ValidationResult.ok(value as T)
+      : ValidationResult.errors(this.errorArr);
+  }
+
+  returnErrors() {
+    return ValidationResult.errors(this.errorArr);
+  }
+
+  validate<T>(
+    valid: boolean,
+    whatDesc: string,
+    value: unknown
+  ): ValidationResult<T> {
+    if (!valid) {
+      this.addError(`Expected ${whatDesc} (got ${this.format(value)})`);
+    }
+    return this.result(value as T);
+  }
+
+  transferTo(ctx: SchemaOpCtx) {
+    for (const error of ctx.errorArr) {
+      ctx.errorArr.push(error);
+    }
+  }
+
+  resetErrors() {
+    this.errorArr.length = 0;
+  }
+
+  pushValue(value: unknown, type: JsType<any>) {
+    if (typeof value === "object" && value != null) {
+      const seenTypes = this.busy.get(value);
+      if (seenTypes) {
+        if (seenTypes.has(type)) {
+          if (!this.allowCircular) {
+            this.addError("Circular reference");
+          }
+          return false;
+        } else {
+          seenTypes.add(type);
+        }
+      } else {
+        this.busy.set(value, new Set([type]));
+      }
+    }
+    return true;
+  }
+
+  popValue(value: unknown) {
+    if (typeof value === "object" && value != null) {
+      this.busy.delete(value);
+    }
   }
 }

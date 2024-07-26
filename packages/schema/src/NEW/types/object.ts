@@ -1,69 +1,55 @@
 import { formatKey } from "../util/format";
 import { SchemaOpCtx } from "../util/context";
-import { Result } from "../util/result";
-import { GetSchemaTS, PickSchemaType } from "../schema";
+import { GetSchemaOutput, SchemaTypeSync, createSchemaType } from "../schema";
 
 export type ObjectFields = {
-  readonly [field: string]: PickSchemaType<"validate" | "decodeJS", unknown>;
+  readonly [field: string]: SchemaTypeSync<unknown, unknown>;
 };
 
 export type ObjectValue<F extends ObjectFields> = {
-  readonly [key in keyof F]: GetSchemaTS<F[key]>;
+  readonly [key in keyof F]: GetSchemaOutput<F[key]>;
 };
 
 const hasOwn = Object.prototype.hasOwnProperty;
 const hasProp = (o: any, k: string) => hasOwn.call(o, k);
 const getProp = (o: any, k: string) => (hasProp(o, k) ? o[k] : undefined);
 
-export class ObjectType<F extends ObjectFields>
-  implements PickSchemaType<"validate" | "decodeJS", ObjectValue<F>>
-{
-  private readonly fields: F;
-  private readonly entries: readonly [
-    string,
-    PickSchemaType<"validate" | "decodeJS", unknown>
-  ][];
+const PROTO_KEY = "__proto__";
 
-  constructor(fields: F) {
-    this.fields = fields;
-    this.entries = Object.entries(this.fields);
+export function objectType<F extends ObjectFields>(fields: F, exact = true) {
+  const entries = Object.entries(fields);
+  if (hasProp(fields, PROTO_KEY)) {
+    throw new Error("Object schema includes __proto__ key");
   }
-
-  validate(object: ObjectValue<F>, ctx: SchemaOpCtx): void {
-    for (const [key, field] of this.entries) {
-      ctx.push(key);
-      field.validate(getProp(object, key), ctx);
-      ctx.pop();
-    }
-  }
-
-  decodeJS(object: unknown, ctx: SchemaOpCtx): Result<ObjectValue<F>> {
-    if (typeof object === "object" && object != null) {
-      const newEntries = [];
-      const extraneousKeys = new Set(Object.keys(object));
-      for (const [key, field] of this.entries) {
-        ctx.push(key);
-        const decoded = field.decodeJS(getProp(object, key), ctx);
-        if (decoded.ok) {
-          newEntries.push([key, decoded.value] as const);
-        } else {
-          return decoded;
+  return createSchemaType<unknown, ObjectValue<F>>(
+    (object: unknown, ctx: SchemaOpCtx) => {
+      if (typeof object === "object" && object != null) {
+        const newEntries = [];
+        const extraneousKeys = new Set(Object.keys(object));
+        if (extraneousKeys.has(PROTO_KEY)) {
+          ctx.addError("Object has own property __proto__");
         }
-        ctx.pop();
-        extraneousKeys.delete(key);
-      }
-      if (extraneousKeys.size > 0) {
-        return Result.error(
-          ctx.error(
-            object,
+        for (const [key, field] of entries) {
+          ctx.push(key);
+          const decoded = field.parse(getProp(object, key), ctx);
+          if (decoded.ok) {
+            newEntries.push([key, decoded.value] as const);
+          } else {
+            return decoded;
+          }
+          ctx.pop();
+          extraneousKeys.delete(key);
+        }
+        if (exact && extraneousKeys.size > 0) {
+          return ctx.error(
             `Extraneous properties: ${Array.from(extraneousKeys)
               .map(k => formatKey(k))
               .join(", ")}`
-          )
-        );
+          );
+        }
+        return ctx.result(Object.fromEntries(newEntries) as ObjectValue<F>);
       }
-      return Result.ok(Object.fromEntries(newEntries) as ObjectValue<F>);
+      return ctx.validate(false, "an object", object);
     }
-    return ctx.directDecode(false, "an object", object);
-  }
+  );
 }

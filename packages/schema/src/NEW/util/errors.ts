@@ -1,11 +1,9 @@
 import type { Path } from "./path";
 
 export class SchemaError {
-  readonly value: unknown;
   readonly path: Path;
   readonly message: string;
-  constructor(value: unknown, path: Path, message: string) {
-    this.value = value;
+  constructor(path: Path, message: string) {
     this.path = path;
     this.message = message;
   }

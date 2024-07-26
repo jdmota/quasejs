@@ -1,58 +1,74 @@
-type IntlKey = {
-  readonly value: string;
-};
+export function makeFormCreator<
+  LabelKey extends string,
+  IntlKey extends string,
+>() {
+  type Value = {
+    readonly type: "value";
+    readonly label: LabelKey;
+    readonly initial: string | null;
+    readonly placeholder: IntlKey;
+    readonly description: IntlKey;
+    readonly kind: "text" | "number" | "date"; // TODO others
+  };
 
-type Text = {
-  readonly type: "text";
-  readonly label: string;
-  readonly initial: string;
-  readonly placeholder: IntlKey;
-  readonly description: IntlKey;
-};
+  type Toggle = {
+    readonly type: "toggle";
+    readonly label: LabelKey;
+    readonly initial: boolean;
+    readonly description: IntlKey;
+    readonly kind: "checkbox" | "switch";
+  };
 
-type Checkbox = {
-  readonly type: "checkbox";
-  readonly label: string;
-  readonly initial: boolean;
-  readonly description: IntlKey;
-};
+  type Option = {
+    readonly key: string;
+    readonly description: IntlKey;
+  };
 
-type Option = {
-  readonly key: string;
-  readonly description: IntlKey;
-};
+  type Options = {
+    readonly type: "options";
+    readonly label: LabelKey;
+    readonly initial: string | null;
+    readonly options: readonly (Option | FormSeparator)[];
+    readonly description: IntlKey;
+    readonly kind: "radio" | "select";
+  };
 
-type Options = {
-  readonly type: "options";
-  readonly label: string;
-  readonly initial: string;
-  readonly options: readonly Option[];
-  readonly description: IntlKey;
-};
+  type Group = {
+    readonly type: "group";
+    readonly children: readonly (FormElement | FormSeparator)[];
+    readonly description: IntlKey | null;
+  };
 
-type Group = {
-  readonly type: "group";
-  readonly label: string;
-  readonly children: readonly FormElement[];
-  readonly description: IntlKey | null;
-};
+  type FormPage = {
+    readonly type: "page";
+    readonly children: readonly (FormElement | FormSeparator)[];
+    readonly description: IntlKey | null;
+  };
 
-type FormElement = Text | Checkbox | Options | Group;
+  type FormElement = Text | Toggle | Options | Group;
 
-export const formCreator = {
-  intl(value: string): IntlKey {
-    return { value };
-  },
-  text(opts: Omit<Text, "type">): Text {
-    return { type: "text", ...opts };
-  },
-  checkbox(opts: Omit<Checkbox, "type">): Checkbox {
-    return { type: "checkbox", ...opts };
-  },
-  options(opts: Omit<Options, "type">): Options {
-    return { type: "options", ...opts };
-  },
-  group(opts: Omit<Group, "type">): Group {
-    return { type: "group", ...opts };
-  },
-};
+  type FormSeparator = {
+    readonly type: "separator";
+  };
+
+  return {
+    sep: {
+      type: "separator",
+    } satisfies FormSeparator,
+    value(opts: Omit<Value, "type">): Value {
+      return { type: "value", ...opts };
+    },
+    toggle(opts: Omit<Toggle, "type">): Toggle {
+      return { type: "toggle", ...opts };
+    },
+    options(opts: Omit<Options, "type">): Options {
+      return { type: "options", ...opts };
+    },
+    group(opts: Omit<Group, "type">): Group {
+      return { type: "group", ...opts };
+    },
+    page(opts: Omit<Group, "type">): FormPage {
+      return { type: "page", ...opts };
+    },
+  } as const;
+}

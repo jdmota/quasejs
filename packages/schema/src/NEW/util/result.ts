@@ -1,57 +1,61 @@
 import type { SchemaError } from "./errors";
 
-const OK = { ok: true } as const;
+export type ValidationOK<T> = {
+  readonly ok: true;
+  readonly value: T;
+};
 
-export type ValidationResult =
+export type ValidationError = {
+  readonly ok: false;
+  readonly errors: readonly SchemaError[];
+};
+
+export type ValidationResult<T> = ValidationOK<T> | ValidationError;
+
+export type ValidationResultMaybeAsync<T> =
+  | ValidationResult<T>
+  | Promise<ValidationResult<T>>;
+
+export const ValidationResult = {
+  ok<T>(value: T): ValidationOK<T> {
+    return { ok: true, value };
+  },
+  error(error: SchemaError): ValidationError {
+    return { ok: false, errors: [error] };
+  },
+  errors(errors: readonly SchemaError[]): ValidationError {
+    return { ok: false, errors };
+  },
+};
+
+export type TransformResult<T> =
   | {
       readonly ok: true;
+      readonly value: T;
     }
   | {
       readonly ok: false;
       readonly errors: readonly SchemaError[];
     };
 
-export const ValidationResult = {
-  ok() {
-    return OK;
+export const TransformResult = {
+  ok<T>(value: T): TransformResult<T> {
+    return { ok: true, value };
   },
-  errors(errors: readonly SchemaError[]) {
-    return { ok: false, errors } as const;
+  error<T>(error: SchemaError): TransformResult<T> {
+    return { ok: false, errors: [error] };
   },
-};
-
-export type Result<T> =
-  | {
-      readonly ok: true;
-      readonly value: T;
-    }
-  | {
-      readonly ok: false;
-      readonly error: SchemaError;
-    };
-
-export const Result = {
-  ok<T>(value: T) {
-    return { ok: true, value } as const;
-  },
-  error(error: SchemaError) {
-    return { ok: false, error } as const;
+  errors<T>(errors: readonly SchemaError[]): TransformResult<T> {
+    return { ok: false, errors };
   },
 };
 
-export type Option<T> =
-  | {
-      readonly some: true;
-      readonly value: T;
-    }
-  | {
-      readonly some: false;
-    };
-
-export function some<T>(value: T): Option<T> {
-  return { some: true, value };
-}
-
-export function none<T>(): Option<T> {
-  return { some: false };
+export function then<A, B>(
+  value: A | Promise<A>,
+  fn: (value: A) => B | Promise<B>
+) {
+  if (value instanceof Promise) {
+    return value.then(fn);
+  }
+  return fn(value);
 }
