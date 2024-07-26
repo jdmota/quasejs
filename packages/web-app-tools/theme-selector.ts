@@ -19,6 +19,10 @@ type BroadcastMsg = Readonly<{
   value: ThemeModeOrDefault;
 }>;
 
+function validate(value: string | null): ThemeModeOrDefault {
+  return value === "light" || value === "dark" ? value : "default";
+}
+
 class ThemeModeSaved extends AbstractDatabase<BroadcastMsg> {
   private key: string;
   private value: ThemeModeOrDefault;
@@ -29,12 +33,8 @@ class ThemeModeSaved extends AbstractDatabase<BroadcastMsg> {
     this.value = "default";
   }
 
-  private validate(value: string | null): ThemeModeOrDefault {
-    return value === "light" || value === "dark" ? value : "default";
-  }
-
   private getFromStorage() {
-    return this.validate(localStorage?.getItem(this.key) ?? this.value);
+    return validate(localStorage?.getItem(this.key) ?? this.value);
   }
 
   async reload() {

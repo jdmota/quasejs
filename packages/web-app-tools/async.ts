@@ -36,8 +36,8 @@ type AsyncOpts<P, R> = Readonly<{
     data: R;
   }> | null;
   fetch: FetchFn<P, R>;
-  optimistic: OptimisticFn<P, R> | null;
-  equalProps: (a: P, b: P) => boolean;
+  optimistic?: OptimisticFn<P, R> | null;
+  equalProps?: (a: P, b: P) => boolean;
 }>;
 
 export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
@@ -50,8 +50,8 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
   constructor({ initial, fetch, optimistic, equalProps }: AsyncOpts<P, R>) {
     super();
     this.fetch = fetch;
-    this.optimistic = optimistic;
-    this.equalProps = equalProps;
+    this.optimistic = optimistic ?? null;
+    this.equalProps = equalProps ?? Object.is;
     this.result = initial
       ? {
           props: initial.props,
@@ -117,17 +117,15 @@ export class Async<P, R> extends Subscribable<AsyncResult<P, R>> {
     };
   }
 
-  cancel(error: Error) {
+  cancel(error: Error | null) {
     if (this.result != null && this.result.isPending) {
       this.result.cancel(error);
     }
   }
 
   reload(props: P) {
-    if (this.result != null && this.result.isPending) {
-      // Cancel previous request without an error so that we do not call setResult twice
-      this.result.cancel(null);
-    }
+    // Cancel previous request without an error so that we do not call setResult twice
+    this.cancel(null);
     this.setResult({
       props,
       data: this.optimistic ? this.optimistic(props) : null,

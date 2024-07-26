@@ -7,6 +7,10 @@ export class Subscribable<T> {
     this.subscribers = new Set();
   }
 
+  subscribersCount() {
+    return this.subscribers.size;
+  }
+
   subscribe(fn: Fn<T>) {
     this.subscribers.add(fn);
     return () => {

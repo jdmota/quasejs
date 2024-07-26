@@ -1,5 +1,4 @@
-import type { BroadcastChannelType } from "./support";
-import { BroadcastChannel } from "./support";
+import { type BroadcastChannelType, BroadcastChannel } from "./support";
 
 export class Broadcast<T> {
   static new<T>(name: string, Channel: BroadcastChannelType) {
@@ -10,27 +9,27 @@ export class Broadcast<T> {
     return BroadcastChannel ? new Broadcast<T>(name, BroadcastChannel) : null;
   }
 
-  private cannel: BroadcastChannel;
+  private channel: BroadcastChannel;
 
   private constructor(name: string, Channel: BroadcastChannelType) {
-    this.cannel = new Channel(name);
+    this.channel = new Channel(name);
   }
 
   send(data: T) {
-    this.cannel.postMessage(data);
+    this.channel.postMessage(data);
   }
 
   subscribe(fn: (data: T) => void) {
     const sub = (event: MessageEvent<any>) => {
       fn(event.data);
     };
-    this.cannel.addEventListener("message", sub);
+    this.channel.addEventListener("message", sub);
     return () => {
-      this.cannel.removeEventListener("message", sub);
+      this.channel.removeEventListener("message", sub);
     };
   }
 
   close() {
-    this.cannel.close();
+    this.channel.close();
   }
 }

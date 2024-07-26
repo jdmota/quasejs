@@ -16,10 +16,6 @@ export abstract class AbstractDatabase<Event> extends Subscribable<Event> {
   abstract reload(): Promise<void>;
 
   protected dataChange(data: Event, broadcast: boolean) {
-    this.notify(data, broadcast);
-  }
-
-  private notify(data: Event, broadcast: boolean) {
     if (broadcast) {
       this.broadcast?.send(data);
     }
@@ -28,14 +24,7 @@ export abstract class AbstractDatabase<Event> extends Subscribable<Event> {
 
   override close() {
     super.close();
-
-    const { broadcast, unsub } = this;
-
-    if (unsub) {
-      unsub();
-    }
-    if (broadcast) {
-      broadcast.close();
-    }
+    this.unsub?.();
+    this.broadcast?.close();
   }
 }

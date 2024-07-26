@@ -16,6 +16,7 @@ export function considerAnchor(anchor: HTMLAnchorElement): boolean {
 
   return true;
 }
+
 export function findAnchor(event: Event) {
   // Adapted from https://github.com/Polymer/pwa-helpers/blob/master/src/router.ts
   const anchor = event
