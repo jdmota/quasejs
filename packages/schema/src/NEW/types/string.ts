@@ -1,5 +1,4 @@
-import { createSchemaType } from "../schema";
-import { SchemaOpCtx } from "../util/context";
+import { string } from "./js-types";
 
 type StringTypeOpts = Partial<{
   readonly nonEmpty: boolean;
@@ -7,21 +6,13 @@ type StringTypeOpts = Partial<{
 }>;
 
 export function stringType(opts: StringTypeOpts = {}) {
-  return createSchemaType<unknown, string>(
-    (value: unknown, ctx: SchemaOpCtx) => {
-      if (typeof value === "string") {
-        const { nonEmpty, regex } = opts;
-        if (nonEmpty && value.length === 0) {
-          ctx.addError("Expected non-empty string");
-        }
-        if (regex && !regex.test(value)) {
-          ctx.addError(`Expected string matching ${regex}`);
-        }
-        return ctx.result(value);
-      }
-      return ctx.validate(false, "a string", value);
+  return string.refineMore((value, ctx) => {
+    const { nonEmpty, regex } = opts;
+    if (nonEmpty && value.length === 0) {
+      ctx.addError("Expected non-empty string");
     }
-  );
+    if (regex && !regex.test(value)) {
+      ctx.addError(`Expected string matching ${regex}`);
+    }
+  });
 }
-
-export const stringTypeSingleton = stringType();

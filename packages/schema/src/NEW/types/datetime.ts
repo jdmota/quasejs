@@ -1,36 +1,40 @@
 import { DateTime } from "luxon";
-import { SchemaOpCtx } from "../util/context";
-import { createSchemaType } from "../schema";
+import { string, union } from "./js-types";
 
-export function dateTimeType(format: string) {
-  return createSchemaType<unknown, DateTime>(
-    (value: unknown, ctx: SchemaOpCtx) => {
-      if (typeof value === "string") {
-        try {
-          const datetime = DateTime.fromFormat(value, format);
-          if (datetime.invalidReason === "unparsable") {
-            throw new Error(datetime.invalidExplanation!);
-          }
-          value = datetime;
-        } catch (err: any) {
-          return ctx.error(
-            `Error parsing date-time with format ${format} (${err.message})`
+export function dateTime(format: string) {
+  return union([string]).transform((_value, ctx, NEVER) => {
+    let value: unknown = _value;
+    if (typeof value === "string") {
+      try {
+        const datetime = DateTime.fromFormat(value, format);
+        if (datetime.invalidReason === "unparsable") {
+          ctx.addError(
+            `Error parsing date-time with format ${format} (${datetime.invalidExplanation!})`
           );
+          return NEVER;
         }
+        value = datetime;
+      } catch (err: any) {
+        ctx.addError(
+          `Error parsing date-time with format ${format} (${err.message})`
+        );
+        return NEVER;
       }
-      if (value instanceof DateTime) {
-        if (value.isValid) {
-          return ctx.result(value);
-        }
-        return ctx.error(
+    }
+    if (value instanceof DateTime) {
+      if (!value.isValid) {
+        ctx.addError(
           `Expected a valid date-time but got ${value} (${value.invalidReason}: ${value.invalidExplanation})`
         );
+        return NEVER;
       }
-      return ctx.error(
-        `Expected a date-time string with format ${
-          format
-        } but got ${ctx.format(value)}`
-      );
+      return value as DateTime<true>;
     }
-  );
+    ctx.addError(
+      `Expected a date-time string with format ${
+        format
+      } but got ${ctx.format(value)}`
+    );
+    return NEVER;
+  });
 }

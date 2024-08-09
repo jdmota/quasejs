@@ -26,10 +26,9 @@ export type Option<T> =
       readonly some: false;
     };
 
-export function some<T>(value: T): Option<T> {
-  return { some: true, value };
-}
-
-export function none<T>(): Option<T> {
-  return { some: false };
-}
+export const Option = {
+  some<T>(value: T): Option<T> {
+    return { some: true, value };
+  },
+  none: { some: false } as const,
+};

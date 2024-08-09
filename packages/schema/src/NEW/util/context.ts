@@ -1,3 +1,6 @@
+import { setAdd } from "../../../../util/maps-sets";
+import { assertion } from "../../../../util/miscellaneous";
+import { type SchemaType } from "../schema";
 import { type JsType } from "../types/js-types";
 import { SchemaError } from "./errors";
 import { format, Formatter } from "./format";
@@ -10,13 +13,16 @@ export type SchemaOpCtxOpts = {
   allowCircular?: boolean;
 };
 
-export class SchemaOpCtx {
+export class SchemaOpCtx implements SchemaOpCtxOpts {
   private path: Path;
   private readonly errorArr: SchemaError[];
   public readonly formatter: Formatter;
   public readonly abortEarly: boolean;
   public readonly allowCircular: boolean;
-  private readonly busy: WeakMap<WeakKey, Set<JsType<any>>>;
+  private readonly busy: WeakMap<
+    WeakKey,
+    Set<SchemaType<any, any> | JsType<any>>
+  >;
 
   constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
     this.path = Path.create();
@@ -43,21 +49,29 @@ export class SchemaOpCtx {
     this.errorArr.push(this.createError(message));
   }
 
+  assert(bool: boolean, message: string) {
+    if (!bool) this.addError(message);
+  }
+
   format(value: unknown) {
     const { formatter } = this;
     return formatter(value);
   }
 
-  push(key: string | number, inKey = false) {
-    this.path = this.path.push(key, inKey);
+  push(key: string | number | null, context: string | null = null) {
+    this.path = this.path.push(key, context);
   }
 
   pop() {
     this.path = this.path.pop();
   }
 
-  hasErrors() {
+  isOK() {
     return this.errorArr.length === 0;
+  }
+
+  hasErrors() {
+    return this.errorArr.length > 0;
   }
 
   getErrors(): readonly SchemaError[] {
@@ -69,14 +83,22 @@ export class SchemaOpCtx {
     return ValidationResult.errors(this.errorArr);
   }
 
+  defaultError(message: string): ValidationError {
+    if (this.errorArr.length === 0) {
+      this.addError(message);
+    }
+    return ValidationResult.errors(this.errorArr);
+  }
+
+  returnErrors() {
+    assertion(this.hasErrors());
+    return ValidationResult.errors(this.errorArr);
+  }
+
   result<T>(value: T): ValidationResult<T> {
     return this.errorArr.length === 0
       ? ValidationResult.ok(value as T)
       : ValidationResult.errors(this.errorArr);
-  }
-
-  returnErrors() {
-    return ValidationResult.errors(this.errorArr);
   }
 
   validate<T>(
@@ -100,18 +122,14 @@ export class SchemaOpCtx {
     this.errorArr.length = 0;
   }
 
-  pushValue(value: unknown, type: JsType<any>) {
+  pushValue(value: unknown, type: SchemaType<any, any> | JsType<any>) {
     if (typeof value === "object" && value != null) {
       const seenTypes = this.busy.get(value);
       if (seenTypes) {
-        if (seenTypes.has(type)) {
-          if (!this.allowCircular) {
-            this.addError("Circular reference");
-          }
+        if (!this.allowCircular) {
           return false;
-        } else {
-          seenTypes.add(type);
         }
+        return setAdd(seenTypes, type);
       } else {
         this.busy.set(value, new Set([type]));
       }

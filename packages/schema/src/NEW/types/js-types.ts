@@ -1,43 +1,50 @@
-import { Opaque } from "../../../../util/miscellaneous";
-import { SchemaOpCtx as Ctx } from "../util/context";
+import { type Class } from "../../../../util/miscellaneous";
+import { SchemaInput, SchemaOutput, SchemaType } from "../schema";
+import { SchemaOpCtx as Ctx, SchemaOpCtxOpts } from "../util/context";
 import { formatKey } from "../util/format";
 import { ValidationResult } from "../util/result";
 
-const INTERNAL = Symbol();
-
-// TODO should clone object? what if the same object appears in different places with different types that clone in different ways?
-
-export abstract class JsType<T> {
-  readonly [INTERNAL]!: T;
-
-  constructor(public readonly type: string) {}
-
-  validate(value: unknown, ctx: Ctx = new Ctx()): ValidationResult<T> {
-    if (ctx.pushValue(value, this)) {
-      this.validate(value, ctx);
-      ctx.popValue(value);
-    }
-    return ctx.result(value as any);
+export abstract class JsType<In, Out> extends SchemaType<In, Out> {
+  constructor(public readonly type: string) {
+    super();
   }
 
-  protected abstract val(value: unknown, ctx: Ctx): ValidationResult<T>;
+  override getDecorators() {
+    return { description: null, form: null };
+  }
 }
 
-export type JsTypeStatic<D extends JsType<any>> = D[typeof INTERNAL];
+export abstract class JsTypeCircularCheck<In, Out> extends JsType<In, Out> {
+  override par(value: unknown, ctx: Ctx): ValidationResult<Out> {
+    if (ctx.pushValue(value, this)) {
+      const r = this.parImpl(value, ctx);
+      ctx.popValue(value);
+      return r;
+    }
+    return ctx.error(
+      ctx.allowCircular
+        ? "Parsing a circular reference with the same type"
+        : "Circular reference disallowed"
+    );
+  }
+
+  protected abstract parImpl(value: unknown, ctx: Ctx): ValidationResult<Out>;
+}
 
 type MaybeReadonly<T, R extends boolean> = R extends false ? T : Readonly<T>;
 
 export class JsTypeLiteral<
-  T extends number | bigint | string | boolean | symbol,
-> extends JsType<T> {
+  const T extends number | bigint | string | boolean | symbol,
+> extends JsType<T, T> {
   constructor(public readonly value: T) {
     super("literal");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (value === this.value) {
       return ctx.result(this.value);
     }
@@ -45,61 +52,22 @@ export class JsTypeLiteral<
   }
 }
 
-const ss = Symbol();
-const ll = new JsTypeLiteral(ss);
-type LL = JsTypeStatic<typeof ll>;
-
-export class JsTypeAny extends JsType<any> {
-  constructor() {
-    super("any");
-  }
-
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    return ctx.result(value);
-  }
+export function literal<
+  const T extends number | bigint | string | boolean | symbol,
+>(value: T) {
+  return new JsTypeLiteral(value);
 }
 
-export class JsTypeUnknown extends JsType<unknown> {
+export class JsTypeVoid extends JsTypeCircularCheck<void, void> {
   constructor() {
-    super("unknown");
+    super("void");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    return ctx.result(value);
-  }
-}
-
-const u = new JsTypeUnknown();
-type U = JsTypeStatic<typeof u>;
-
-export class JsTypeNever extends JsType<never> {
-  constructor() {
-    super("never");
+  override getInputType() {
+    return this;
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    return ctx.error("Never");
-  }
-}
-
-export class JsTypeUndefined extends JsType<undefined> {
-  constructor() {
-    super("undefined");
-  }
-
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  protected parImpl(value: unknown, ctx: Ctx) {
     if (value === undefined) {
       return ctx.result(value);
     }
@@ -107,15 +75,85 @@ export class JsTypeUndefined extends JsType<undefined> {
   }
 }
 
-export class JsTypeNull extends JsType<null> {
+export const voidT = new JsTypeVoid();
+
+export class JsTypeAny extends JsTypeCircularCheck<any, any> {
+  constructor() {
+    super("any");
+  }
+
+  override getInputType() {
+    return this;
+  }
+
+  protected parImpl(value: unknown, ctx: Ctx) {
+    return ctx.result(value);
+  }
+}
+
+export const any = new JsTypeAny();
+
+export class JsTypeUnknown extends JsTypeCircularCheck<unknown, unknown> {
+  constructor() {
+    super("unknown");
+  }
+
+  override getInputType() {
+    return this;
+  }
+
+  protected parImpl(value: unknown, ctx: Ctx) {
+    return ctx.result(value);
+  }
+}
+
+export const unknown = new JsTypeUnknown();
+
+export class JsTypeNever extends JsType<never, never> {
+  constructor() {
+    super("never");
+  }
+
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
+    return ctx.error("Never");
+  }
+}
+
+export const never = new JsTypeNever();
+
+export class JsTypeUndefined extends JsType<undefined, undefined> {
+  constructor() {
+    super("undefined");
+  }
+
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
+    if (value === undefined) {
+      return ctx.result(value);
+    }
+    return ctx.error("Value is not undefined");
+  }
+}
+
+export const undefinedT = new JsTypeUndefined();
+
+export class JsTypeNull extends JsType<null, null> {
   constructor() {
     super("null");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (value === null) {
       return ctx.result(value);
     }
@@ -123,15 +161,18 @@ export class JsTypeNull extends JsType<null> {
   }
 }
 
-export class JsTypeString extends JsType<string> {
+export const nullT = new JsTypeNull();
+
+export class JsTypeString extends JsType<string, string> {
   constructor() {
     super("string");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (typeof value === "string") {
       return ctx.result(value);
     }
@@ -139,15 +180,18 @@ export class JsTypeString extends JsType<string> {
   }
 }
 
-export class JsTypeNumber extends JsType<number> {
+export const string = new JsTypeString();
+
+export class JsTypeNumber extends JsType<number, number> {
   constructor() {
     super("number");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (typeof value === "number") {
       return ctx.result(value);
     }
@@ -155,15 +199,18 @@ export class JsTypeNumber extends JsType<number> {
   }
 }
 
-export class JsTypeBigint extends JsType<bigint> {
+export const number = new JsTypeNumber();
+
+export class JsTypeBigint extends JsType<bigint, bigint> {
   constructor() {
     super("bigint");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (typeof value === "bigint") {
       return ctx.result(value);
     }
@@ -171,15 +218,18 @@ export class JsTypeBigint extends JsType<bigint> {
   }
 }
 
-export class JsTypeBoolean extends JsType<boolean> {
+export const bigint = new JsTypeBigint();
+
+export class JsTypeBoolean extends JsType<boolean, boolean> {
   constructor() {
     super("boolean");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (typeof value === "boolean") {
       return ctx.result(value);
     }
@@ -187,15 +237,18 @@ export class JsTypeBoolean extends JsType<boolean> {
   }
 }
 
-export class JsTypeSymbol extends JsType<symbol> {
+export const boolean = new JsTypeBoolean();
+
+export class JsTypeSymbol extends JsType<symbol, symbol> {
   constructor() {
     super("symbol");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx) {
     if (typeof value === "symbol") {
       return ctx.result(value);
     }
@@ -203,10 +256,15 @@ export class JsTypeSymbol extends JsType<symbol> {
   }
 }
 
+export const symbol = new JsTypeSymbol();
+
 export class JsTypeArray<
-  T extends JsType<any>,
-  R extends boolean,
-> extends JsType<MaybeReadonly<JsTypeStatic<T>[], R>> {
+  const T extends SchemaType<any, any>,
+  const R extends boolean,
+> extends JsTypeCircularCheck<
+  MaybeReadonly<SchemaInput<T>[], R>,
+  MaybeReadonly<SchemaOutput<T>[], R>
+> {
   constructor(
     public readonly element: T,
     public readonly readonly: R
@@ -214,35 +272,55 @@ export class JsTypeArray<
     super("array");
   }
 
-  protected val(
+  override getInputType() {
+    return new JsTypeArray(this.element.getInputType(), this.readonly);
+  }
+
+  protected parImpl(
     value: unknown,
     ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  ): ValidationResult<SchemaOutput<this>> {
     if (Array.isArray(value)) {
+      const newArray: SchemaOutput<T>[] = [];
       for (let i = 0; i < value.length; i++) {
         ctx.push(i);
-        this.element.validate(value[i], ctx);
+        const result = this.element.par(value[i], ctx);
+        if (result.ok) newArray.push(result.value);
         ctx.pop();
         if (ctx.shouldAbort()) break;
       }
-      return ctx.result(value);
+      return ctx.result(newArray);
     }
     return ctx.error("Value is not an array");
   }
 }
 
-const aa = new JsTypeArray(new JsTypeBigint(), true);
-type AA = JsTypeStatic<typeof aa>;
+export function array<const T extends SchemaType<any, any>>(
+  item: T
+): JsTypeArray<T, true>;
+export function array<
+  const T extends SchemaType<any, any>,
+  const R extends boolean,
+>(item: T, readonly: R): JsTypeArray<T, R>;
+export function array(item: any, readonly: any = true) {
+  return new JsTypeArray(item, readonly);
+}
 
 export class JsTypeTuple<
-  const T extends readonly JsType<any>[],
-  const Rest extends JsType<any> | null,
+  const T extends readonly SchemaType<any, any>[],
+  const Rest extends SchemaType<any, any> | null,
   const R extends boolean,
-> extends JsType<
+> extends JsTypeCircularCheck<
   MaybeReadonly<
-    Rest extends JsType<any>
-      ? [...{ [K in keyof T]: JsTypeStatic<T[K]> }, ...JsTypeStatic<Rest>[]]
-      : { [K in keyof T]: JsTypeStatic<T[K]> },
+    Rest extends SchemaType<any, any>
+      ? [...{ [K in keyof T]: SchemaInput<T[K]> }, ...SchemaInput<Rest>[]]
+      : { [K in keyof T]: SchemaInput<T[K]> },
+    R
+  >,
+  MaybeReadonly<
+    Rest extends SchemaType<any, any>
+      ? [...{ [K in keyof T]: SchemaOutput<T[K]> }, ...SchemaOutput<Rest>[]]
+      : { [K in keyof T]: SchemaOutput<T[K]> },
     R
   >
 > {
@@ -254,45 +332,66 @@ export class JsTypeTuple<
     super("tuple");
   }
 
-  protected val(
+  override getInputType() {
+    return new JsTypeTuple(
+      this.elements.map(t => t.getInputType()),
+      this.rest?.getInputType() ?? null,
+      this.readonly
+    );
+  }
+
+  protected parImpl(
     value: unknown,
     ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  ): ValidationResult<SchemaOutput<this>> {
     if (
       Array.isArray(value) &&
       (this.rest == null
         ? this.elements.length === value.length
         : this.elements.length <= value.length)
     ) {
+      const newTuple = [];
       for (let i = 0; i < this.elements.length; i++) {
         ctx.push(i);
-        this.elements[i].validate(value[i], ctx);
+        const result = this.elements[i].par(value[i], ctx);
+        if (result.ok) newTuple.push(result.value);
         ctx.pop();
         if (ctx.shouldAbort()) return ctx.returnErrors();
       }
       for (let i = this.elements.length; i < value.length; i++) {
         ctx.push(i);
-        this.rest!.validate(value[i], ctx);
+        const result = this.rest!.par(value[i], ctx);
+        if (result.ok) newTuple.push(result.value);
         ctx.pop();
         if (ctx.shouldAbort()) return ctx.returnErrors();
       }
-      return ctx.result(value as any);
+      return ctx.result(newTuple as any);
     }
     return ctx.error("Value is not a tuple of size " + this.elements.length);
   }
 }
 
-const str = new JsTypeString();
-type Str = JsTypeStatic<typeof str>;
-
-const tt = new JsTypeTuple([new JsTypeNull()], new JsTypeBigint(), true);
-type TT = JsTypeStatic<typeof tt>;
+export function tuple<const T extends readonly SchemaType<any, any>[]>(
+  elements: T
+): JsTypeTuple<T, null, true>;
+export function tuple<
+  const T extends readonly SchemaType<any, any>[],
+  const Rest extends SchemaType<any, any>,
+>(elements: T, rest: Rest): JsTypeTuple<T, Rest, true>;
+export function tuple<
+  const T extends readonly SchemaType<any, any>[],
+  const Rest extends SchemaType<any, any> | null,
+  const R extends boolean,
+>(elements: T, rest: Rest, readonly: R): JsTypeTuple<T, Rest, R>;
+export function tuple(elements: any, rest: any = null, readonly: any = true) {
+  return new JsTypeTuple(elements, rest, readonly);
+}
 
 type ObjStructure = {
   readonly [key: string]: Readonly<{
     readonly: boolean;
     partial: boolean;
-    type: JsType<unknown>;
+    type: SchemaType<any, any>;
   }>;
 };
 
@@ -328,19 +427,51 @@ type ExtractNotReadPartial<S extends ObjStructure> = {
     : never;
 }[keyof S];
 
-type ExtractTsTypeFromObj<S extends ObjStructure> = {
-  readonly [K in ExtractReadonlyPartial<S>]?: JsTypeStatic<S[K]["type"]>;
+type ExtractInputTypeFromObj<
+  S extends ObjStructure,
+  E extends boolean | UnknownKeys,
+> = {
+  readonly [K in ExtractReadonlyPartial<S>]?: SchemaInput<S[K]["type"]>;
 } & {
-  readonly [K in ExtractReadonly<S>]: JsTypeStatic<S[K]["type"]>;
+  readonly [K in ExtractReadonly<S>]: SchemaInput<S[K]["type"]>;
 } & {
-  [K in ExtractPartial<S>]?: JsTypeStatic<S[K]["type"]>;
+  [K in ExtractPartial<S>]?: SchemaInput<S[K]["type"]>;
 } & {
-  [K in ExtractNotReadPartial<S>]: JsTypeStatic<S[K]["type"]>;
-};
+  [K in ExtractNotReadPartial<S>]: SchemaInput<S[K]["type"]>;
+} & (E extends UnknownKeys
+    ? E["readonly"] extends false
+      ? E["partial"] extends false
+        ? { [key in SchemaInput<E["key"]>]: SchemaInput<E["value"]> }
+        : { [key in SchemaInput<E["key"]>]?: SchemaInput<E["value"]> }
+      : E["partial"] extends false
+        ? { readonly [key in SchemaInput<E["key"]>]: SchemaInput<E["value"]> }
+        : {
+            readonly [key in SchemaInput<E["key"]>]?: SchemaInput<E["value"]>;
+          }
+    : {});
 
-type A = ExtractTsTypeFromObj<{
-  a: { readonly: false; partial: false; type: JsTypeNumber };
-}>;
+type ExtractOutputTypeFromObj<
+  S extends ObjStructure,
+  E extends boolean | UnknownKeys,
+> = {
+  readonly [K in ExtractReadonlyPartial<S>]?: SchemaOutput<S[K]["type"]>;
+} & {
+  readonly [K in ExtractReadonly<S>]: SchemaOutput<S[K]["type"]>;
+} & {
+  [K in ExtractPartial<S>]?: SchemaOutput<S[K]["type"]>;
+} & {
+  [K in ExtractNotReadPartial<S>]: SchemaOutput<S[K]["type"]>;
+} & (E extends UnknownKeys
+    ? E["readonly"] extends false
+      ? E["partial"] extends false
+        ? { [key in SchemaOutput<E["key"]>]: SchemaOutput<E["value"]> }
+        : { [key in SchemaOutput<E["key"]>]?: SchemaOutput<E["value"]> }
+      : E["partial"] extends false
+        ? { readonly [key in SchemaOutput<E["key"]>]: SchemaOutput<E["value"]> }
+        : {
+            readonly [key in SchemaOutput<E["key"]>]?: SchemaOutput<E["value"]>;
+          }
+    : {});
 
 const hasOwn = Object.prototype.hasOwnProperty;
 const hasProp = (o: any, k: string) => hasOwn.call(o, k);
@@ -348,20 +479,26 @@ const getProp = (o: any, k: string) => (hasProp(o, k) ? o[k] : undefined);
 
 const PROTO_KEY = "__proto__";
 
+type UnknownKeys = Readonly<{
+  key: SchemaType<any, any>;
+  value: SchemaType<any, any>;
+  readonly: boolean;
+  partial: boolean;
+}>;
+
 export class JsTypeObject<
   const S extends ObjStructure,
-  const E extends boolean,
-> extends JsType<
-  E extends false
-    ? ExtractTsTypeFromObj<S> & { [key: PropertyKey]: unknown }
-    : ExtractTsTypeFromObj<S>
+  const E extends boolean | UnknownKeys,
+> extends JsTypeCircularCheck<
+  ExtractInputTypeFromObj<S, E>,
+  ExtractOutputTypeFromObj<S, E>
 > {
-  private readonly entries: [
+  public readonly entries: readonly [
     string,
     Readonly<{
       readonly: boolean;
       partial: boolean;
-      type: JsType<unknown>;
+      type: SchemaType<any, any>;
     }>,
   ][];
 
@@ -376,12 +513,34 @@ export class JsTypeObject<
     }
   }
 
-  protected val(
+  override getInputType() {
+    return new JsTypeObject(
+      Object.fromEntries(
+        this.entries.map(([key, entry]) => [
+          key,
+          {
+            ...entry,
+            type: entry.type.getInputType(),
+          },
+        ])
+      ),
+      typeof this.exact === "boolean"
+        ? this.exact
+        : {
+            key: this.exact.key.getInputType(),
+            value: this.exact.value.getInputType(),
+            readonly: this.exact.readonly,
+            partial: this.exact.partial,
+          }
+    );
+  }
+
+  protected parImpl(
     object: unknown,
     ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  ): ValidationResult<SchemaOutput<this>> {
     if (typeof object === "object" && object != null) {
-      // const newEntries = [];
+      const newEntries = [];
       const extraneousKeys = new Set(Object.keys(object));
       if (extraneousKeys.has(PROTO_KEY)) {
         ctx.addError("Object has own property __proto__");
@@ -391,108 +550,159 @@ export class JsTypeObject<
         ctx.push(key);
         const value = getProp(object, key);
         if (!partial || value !== undefined) {
-          const decoded = type.validate(value, ctx);
+          const decoded = type.par(value, ctx);
           if (decoded.ok) {
-            // newEntries.push([key, decoded.value] as const);
+            newEntries.push([key, decoded.value] as const);
           }
         }
         ctx.pop();
         if (ctx.shouldAbort()) return ctx.returnErrors();
         extraneousKeys.delete(key);
       }
-      if (this.exact && extraneousKeys.size > 0) {
-        return ctx.error(
-          `Extraneous properties: ${Array.from(extraneousKeys)
-            .map(k => formatKey(k))
-            .join(", ")}`
-        );
+      if (this.exact === true) {
+        // Strict
+        if (extraneousKeys.size > 0) {
+          return ctx.error(
+            `Extraneous properties: ${Array.from(extraneousKeys)
+              .map(k => formatKey(k))
+              .join(", ")}`
+          );
+        }
+      } else if (this.exact === false) {
+        // Strip
+      } else {
+        // Catch unknown keys
+        for (const key of extraneousKeys) {
+          ctx.push(key, "key");
+          const keyResult = this.exact.key.par(key, ctx);
+          ctx.pop();
+          if (ctx.shouldAbort()) return ctx.returnErrors();
+          ctx.push(key, "value");
+          const value = getProp(object, key);
+          if (!this.exact.partial || value !== undefined) {
+            const valueResult = this.exact.value.par(value, ctx);
+            if (keyResult.ok && valueResult.ok) {
+              newEntries.push([keyResult.value, valueResult.value] as const);
+            }
+          }
+          ctx.pop();
+          if (ctx.shouldAbort()) return ctx.returnErrors();
+        }
       }
-      return ctx.result(object as any); // Object.fromEntries(newEntries)
+      return ctx.result(Object.fromEntries(newEntries) as any);
     }
     return ctx.error("Value is not an object");
   }
 }
 
-const A = new JsTypeObject(
-  {
-    a: { readonly: false, partial: false, type: new JsTypeNumber() },
-  },
-  false
-);
+export function object<const S extends ObjStructure>(
+  structure: S
+): JsTypeObject<S, true>;
+export function object<
+  const S extends ObjStructure,
+  const E extends true | UnknownKeys,
+>(structure: S, exact: E): JsTypeObject<S, E>;
+export function object(structure: any, exact: any = true) {
+  return new JsTypeObject(structure, exact);
+}
 
-type A2 = JsTypeStatic<typeof A>;
-
-const obj: A2 = { a: 10, b: true };
-
-export class JsTypeRecord<K extends PropertyKey, V> extends JsType<
-  Record<K, V>
+export class JsTypeRecord<
+  const K extends SchemaType<any, any>,
+  const V extends SchemaType<any, any>,
+> extends JsTypeCircularCheck<
+  Record<SchemaInput<K>, SchemaInput<V>>,
+  Record<SchemaOutput<K>, SchemaOutput<V>>
 > {
   constructor(
-    public readonly key: JsType<K>,
-    public readonly value: JsType<V>
+    public readonly key: K,
+    public readonly value: V
   ) {
     super("record");
   }
 
-  protected val(
+  override getInputType() {
+    return new JsTypeRecord(this.key.getInputType(), this.value.getInputType());
+  }
+
+  protected parImpl(
     object: unknown,
     ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  ): ValidationResult<SchemaOutput<this>> {
     if (typeof object === "object" && object != null) {
       if (hasProp(object, PROTO_KEY)) {
         ctx.addError("Object has own property __proto__");
         if (ctx.shouldAbort()) return ctx.returnErrors();
       }
+      const newEntries = [];
       for (const [key, value] of Object.entries(object)) {
-        ctx.push(key, true);
-        this.key.validate(key, ctx);
+        ctx.push(key, "key");
+        const keyResult = this.key.par(key, ctx);
         ctx.pop();
         if (ctx.shouldAbort()) return ctx.returnErrors();
-        ctx.push(key, false);
-        this.value.validate(value, ctx);
+        ctx.push(key, "false");
+        const valueResult = this.value.par(value, ctx);
         ctx.pop();
         if (ctx.shouldAbort()) return ctx.returnErrors();
+        if (keyResult.ok && valueResult.ok) {
+          newEntries.push([keyResult.value, valueResult.value] as const);
+        }
       }
-      return ctx.result(object as any);
+      return ctx.result(Object.fromEntries(newEntries) as any);
     }
     return ctx.error("Value is not an object");
   }
 }
 
-export class JsTypeUnion<const I extends readonly JsType<any>[]> extends JsType<
+export function record<
+  const K extends SchemaType<any, any>,
+  const V extends SchemaType<any, any>,
+>(key: K, value: V) {
+  return new JsTypeRecord(key, value);
+}
+
+export class JsTypeUnion<
+  const I extends readonly SchemaType<any, any>[],
+> extends JsType<
   {
-    [K in keyof I]: JsTypeStatic<I[K]>;
+    [K in keyof I]: SchemaInput<I[K]>;
+  }[number],
+  {
+    [K in keyof I]: SchemaOutput<I[K]>;
   }[number]
 > {
   constructor(public readonly items: I) {
     super("union");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return new JsTypeUnion(this.items.map(t => t.getInputType()));
+  }
+
+  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
     for (const item of this.items) {
       const itemCtx = Ctx.new(ctx);
-      item.validate(value, itemCtx);
-      if (!itemCtx.hasErrors()) {
-        return ctx.result(value as any);
+      const result = item.par(value, itemCtx);
+      if (itemCtx.isOK()) {
+        return result;
       }
     }
     return ctx.error("Value does not belong to union");
   }
 }
 
-const uu = new JsTypeUnion([
-  new JsTypeArray(new JsTypeString(), true),
-  new JsTypeNull(),
-]);
-type UU = JsTypeStatic<typeof uu>;
+export function union<const I extends readonly SchemaType<any, any>[]>(
+  items: I
+) {
+  return new JsTypeUnion<I>(items);
+}
 
 export class JsTypeIntersection<
-  L extends JsType<any>,
-  R extends JsType<any>,
-> extends JsType<JsTypeStatic<L> & JsTypeStatic<R>> {
+  const L extends SchemaType<any, any>,
+  const R extends SchemaType<any, any>,
+> extends JsType<
+  SchemaInput<L> & SchemaInput<R>,
+  SchemaOutput<L> & SchemaOutput<R>
+> {
   constructor(
     public readonly left: L,
     public readonly right: R
@@ -500,86 +710,146 @@ export class JsTypeIntersection<
     super("intersection");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    this.left.validate(value, ctx);
-    if (ctx.shouldAbort()) return ctx.returnErrors();
-    this.right.validate(value, ctx);
-    return ctx.result(value);
+  override getInputType() {
+    return new JsTypeIntersection(
+      this.left.getInputType(),
+      this.right.getInputType()
+    );
+  }
+
+  override par(): ValidationResult<SchemaOutput<this>> {
+    throw new Error("TODO"); // TODO
   }
 }
 
-const inter = new JsTypeIntersection(
-  new JsTypeArray(new JsTypeString(), true),
-  new JsTypeArray(new JsTypeString(), false)
-);
-type Inter = JsTypeStatic<typeof inter>;
+export function intersection<
+  const L extends SchemaType<any, any>,
+  const R extends SchemaType<any, any>,
+>(left: L, right: R) {
+  return new JsTypeIntersection(left, right);
+}
 
 export class JsTypeFunction<
   const Args extends JsTypeTuple<any, any, any>,
-  const Ret extends JsType<any>,
+  const Ret extends SchemaType<any, any>,
+  const This extends SchemaType<any, any>,
 > extends JsType<
-  (...args: JsTypeStatic<Args>) => ValidationResult<JsTypeStatic<Ret>>
+  (this: SchemaOutput<This>, ...args: SchemaOutput<Args>) => SchemaInput<Ret>,
+  (
+    this: SchemaInput<This>,
+    ...args: SchemaInput<Args>
+  ) => ValidationResult<SchemaOutput<Ret>>
 > {
   constructor(
     public readonly args: Args,
-    public readonly ret: Ret
+    public readonly ret: Ret,
+    public readonly thisS: This
   ) {
     super("function");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return new JsTypeFunction(
+      this.args,
+      this.ret.getInputType(),
+      this.thisS.getInputType()
+    );
+  }
+
+  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
     if (typeof value === "function") {
-      const newCtx = Ctx.new(ctx);
-      return ctx.result(function (this: any, ...args: any[]) {
-        this.args.validate(args, newCtx);
-        if (newCtx.shouldAbort()) return newCtx.returnErrors();
-        const result = Reflect.apply(value, this, args);
-        this.ret.validate(result, newCtx);
-        return newCtx.result(result);
-      });
+      return ctx.result(this._implement(value, Ctx.new(ctx)));
     }
     return ctx.error("Value is not a function");
   }
+
+  private _implement(value: Function, ctx: Ctx): SchemaOutput<this> {
+    const funcType = this;
+    return function (this: unknown, ...args: any[]) {
+      const newCtx = Ctx.new(ctx);
+      newCtx.push(null, "this");
+      const thisResult = funcType.thisS.par(this, newCtx);
+      newCtx.pop();
+      if (newCtx.shouldAbort()) return newCtx.returnErrors();
+      newCtx.push(null, "arguments");
+      const argsResult = funcType.args.par(args, newCtx);
+      newCtx.pop();
+      if (!thisResult.ok || !argsResult.ok) return argsResult;
+      const result = Reflect.apply(value, thisResult.value, argsResult.value);
+      newCtx.push(null, "return");
+      return funcType.ret.par(result, newCtx);
+    };
+  }
+
+  implement(
+    value: SchemaInput<this>,
+    ctx: SchemaOpCtxOpts = {}
+  ): SchemaOutput<this> {
+    return this._implement(value, Ctx.new(ctx));
+  }
 }
 
-export class JsTypePromise<T> extends JsType<Promise<ValidationResult<T>>> {
-  constructor(public readonly item: JsType<T>) {
+export function func<
+  const Args extends JsTypeTuple<any, any, any>,
+  const Ret extends SchemaType<any, any>,
+>(args: Args, ret: Ret): JsTypeFunction<Args, Ret, JsTypeVoid>;
+export function func<
+  const Args extends JsTypeTuple<any, any, any>,
+  const Ret extends SchemaType<any, any>,
+  const This extends SchemaType<any, any>,
+>(args: Args, ret: Ret, thisS: This): JsTypeFunction<Args, Ret, This>;
+export function func(
+  args: JsTypeTuple<any, any, any>,
+  ret: SchemaType<any, any>,
+  thisS: SchemaType<any, any> = voidT
+) {
+  return new JsTypeFunction(args, ret, thisS);
+}
+
+export class JsTypePromise<const T extends SchemaType<any, any>> extends JsType<
+  Promise<SchemaInput<T>>,
+  Promise<ValidationResult<SchemaOutput<T>>>
+> {
+  constructor(public readonly item: T) {
     super("promise");
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  override getInputType() {
+    return new JsTypePromise(this.item.getInputType());
+  }
+
+  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
     if (value instanceof Promise) {
       const newCtx = Ctx.new(ctx);
-      return ctx.result(value.then(v => this.item.validate(v, newCtx)));
+      return ctx.result(value.then(v => this.item.par(v, newCtx)));
     }
     return ctx.error("Value is not a promise");
   }
+
+  implement(
+    fn: (
+      resolve: (value: SchemaInput<T>) => void,
+      reject: (err: any) => void
+    ) => void,
+    ctx: SchemaOpCtxOpts = {}
+  ): SchemaOutput<this> {
+    const newCtx = Ctx.new(ctx);
+    return new Promise(fn).then(v => this.item.par(v, newCtx));
+  }
 }
 
-const func = new JsTypeFunction(
-  new JsTypeTuple(
-    [new JsTypeArray(new JsTypeBigint(), true), new JsTypeString()],
-    new JsTypeLiteral(10),
-    true
-  ),
-  new JsTypePromise(new JsTypeBoolean())
-);
-type Func = JsTypeStatic<typeof func>;
+export function promise<const T extends SchemaType<any, any>>(item: T) {
+  return new JsTypePromise(item);
+}
 
 type EnumLike = {
   readonly [k: string]: string | number;
 };
 
-export class JsTypeEnum<T extends EnumLike> extends JsType<T[keyof T]> {
+export class JsTypeEnum<const T extends EnumLike> extends JsType<
+  T[keyof T],
+  T[keyof T]
+> {
   private values: readonly (string | number)[];
 
   constructor(public readonly enumeration: T) {
@@ -587,7 +857,11 @@ export class JsTypeEnum<T extends EnumLike> extends JsType<T[keyof T]> {
     this.values = Object.values(enumeration);
   }
 
-  protected val(value: unknown, ctx: Ctx): ValidationResult<T[keyof T]> {
+  override getInputType() {
+    return this;
+  }
+
+  override par(value: unknown, ctx: Ctx): ValidationResult<T[keyof T]> {
     if (this.values.includes(value as any)) {
       return ctx.result(value as any);
     }
@@ -595,62 +869,53 @@ export class JsTypeEnum<T extends EnumLike> extends JsType<T[keyof T]> {
   }
 }
 
-enum ENUM {
-  a,
-  b,
-  c,
+export function enumeration<const T extends EnumLike>(enumeration: T) {
+  return new JsTypeEnum(enumeration);
 }
-const EE = new JsTypeEnum(ENUM);
-type ee = JsTypeStatic<typeof EE>;
 
-export class JsTypeRecursive<T> extends JsType<T> {
-  public readonly content: JsType<T>;
+export class JsTypeRecursive<
+  const T extends SchemaType<any, any>,
+> extends JsType<SchemaInput<T>, SchemaOutput<T>> {
+  public readonly content: T;
+  private constructing: boolean;
 
-  constructor(fn: (that: JsTypeRecursive<T>) => JsType<T>) {
+  constructor(public readonly fn: (that: JsTypeRecursive<any>) => T) {
     super("recursive");
+    this.constructing = true;
     this.content = fn(this);
+    this.constructing = false;
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    return this.content.validate(value, ctx);
-  }
-}
-
-export class JsTypeOpaque<T, B extends PropertyKey> extends JsType<
-  Opaque<T, B>
-> {
-  constructor(
-    public readonly inner: JsType<T>,
-    public readonly brand: B
-  ) {
-    super("opaque");
+  override getInputType() {
+    return this.constructing
+      ? this
+      : new JsTypeRecursive(that => this.fn(that).getInputType());
   }
 
-  protected val(
-    value: unknown,
-    ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
-    return this.inner.validate(value, ctx) as any;
+  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
+    return this.content.par(value, ctx);
   }
 }
 
-type Class<T, Arguments extends unknown[] = any[]> = {
-  prototype: Pick<T, keyof T>;
-  new (...arguments_: Arguments): T;
-};
+export function recursive<const Out, const In = Out>(
+  fn: (that: JsTypeRecursive<SchemaType<In, Out>>) => SchemaType<In, Out>
+) {
+  return new JsTypeRecursive(fn);
+}
 
-export class JsTypeInstanceof<T> extends JsType<T> {
+export class JsTypeInstanceOf<const T> extends JsTypeCircularCheck<T, T> {
   constructor(public readonly clazz: Class<T>) {
     super("instanceof");
   }
 
-  protected val(
+  override getInputType() {
+    return this;
+  }
+
+  protected parImpl(
     value: unknown,
     ctx: Ctx
-  ): ValidationResult<JsTypeStatic<this>> {
+  ): ValidationResult<SchemaOutput<this>> {
     if (value instanceof this.clazz) {
       return ctx.result(value);
     }
@@ -658,71 +923,12 @@ export class JsTypeInstanceof<T> extends JsType<T> {
   }
 }
 
-const ii = new JsTypeInstanceof(
-  class A {
-    a: number = 10;
-  }
-);
-type II = JsTypeStatic<typeof ii>;
+export function instanceOf<const T>(clazz: Class<T>) {
+  return new JsTypeInstanceOf(clazz);
+}
 
-export const jsType = {
-  any: new JsTypeAny(),
-  unknown: new JsTypeUnknown(),
-  never: new JsTypeNever(),
-  undefined: new JsTypeUndefined(),
-  null: new JsTypeNull(),
-  string: new JsTypeString(),
-  number: new JsTypeNumber(),
-  bigint: new JsTypeBigint(),
-  boolean: new JsTypeBoolean(),
-  symbol: new JsTypeSymbol(),
-  literal<T extends number | bigint | string | boolean | symbol>(value: T) {
-    return new JsTypeLiteral(value);
-  },
-  array<T, R extends boolean>(item: JsType<T>, readonly: R) {
-    return new JsTypeArray(item, readonly);
-  },
-  tuple<
-    T extends readonly JsType<any>[],
-    Rest extends JsType<any>,
-    R extends boolean,
-  >(elements: T, rest: Rest, readonly: R) {
-    return new JsTypeTuple(elements, rest, readonly);
-  },
-  object<S extends ObjStructure, E extends boolean>(structure: S, exact: E) {
-    return new JsTypeObject(structure, exact);
-  },
-  record<K extends PropertyKey, V>(key: JsType<K>, value: JsType<V>) {
-    return new JsTypeRecord(key, value);
-  },
-  union<I extends readonly JsType<any>[]>(items: I) {
-    return new JsTypeUnion<I>(items);
-  },
-  intersection<L, R>(left: JsType<L>, right: JsType<R>) {
-    return new JsTypeIntersection(left, right);
-  },
-  function<Args extends JsTypeTuple<any, any, any>, Ret extends JsType<any>>(
-    args: Args,
-    ret: Ret
-  ) {
-    return new JsTypeFunction(args, ret);
-  },
-  promise<T>(item: JsType<T>) {
-    return new JsTypePromise(item);
-  },
-  enum<T extends EnumLike>(enumeration: T) {
-    return new JsTypeEnum(enumeration);
-  },
-  recursive<T>(fn: (that: JsTypeRecursive<T>) => JsType<T>) {
-    return new JsTypeRecursive(fn);
-  },
-  opaque<T, B extends PropertyKey>(inner: JsType<T>, brand: B) {
-    return new JsTypeOpaque(inner, brand);
-  },
-  instanceof<T>(clazz: Class<T>) {
-    return new JsTypeInstanceof(clazz);
-  },
-  generic<A, T>(fn: (t: JsType<A>) => JsType<T>) {
-    return fn;
-  },
-};
+export function generic<const A, const T>(
+  fn: (t: SchemaType<unknown, A>) => SchemaType<unknown, T>
+) {
+  return fn;
+}

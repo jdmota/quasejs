@@ -26,6 +26,8 @@ export function never(_: never): never {
 
 export function expect<T>(_: T) {}
 
+export function expectType<Expected, Actual extends Expected>() {}
+
 export function unreachable(): never {
   throw new Error("Assertion error");
 }
@@ -126,3 +128,8 @@ export type Opaque<
   TagName extends PropertyKey,
   TagMetadata = never,
 > = Type & Tag<TagName, TagMetadata>;
+
+export type Class<T, Arguments extends unknown[] = any[]> = {
+  prototype: Pick<T, keyof T>;
+  new (...args: Arguments): T;
+};

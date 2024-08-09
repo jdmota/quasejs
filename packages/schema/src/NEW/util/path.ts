@@ -1,26 +1,30 @@
 export class Path {
   public readonly parent: Path | null;
   public readonly key: string | number | null;
-  public readonly inKey: boolean;
+  public readonly context: string | null;
 
-  constructor(parent: Path, key: string | number, inKey: boolean);
-  constructor(parent: null, key: null, inKey: false);
+  constructor(
+    parent: Path,
+    key: string | number | null,
+    context: string | null
+  );
+  constructor(parent: null, key: null, context: null);
   constructor(
     parent: Path | null,
     key: string | number | null,
-    inKey: boolean
+    context: string | null
   ) {
     this.parent = parent;
     this.key = key;
-    this.inKey = inKey;
+    this.context = context;
   }
 
   isRoot() {
     return this.parent == null;
   }
 
-  push(key: string | number, inKey = false) {
-    return new Path(this, key, inKey);
+  push(key: string | number | null, context: string | null = null) {
+    return new Path(this, key, context);
   }
 
   pop(): Path {
@@ -30,6 +34,6 @@ export class Path {
   }
 
   static create() {
-    return new Path(null, null, false);
+    return new Path(null, null, null);
   }
 }

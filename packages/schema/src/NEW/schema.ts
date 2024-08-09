@@ -1,171 +1,330 @@
-import { then, ValidationResult } from "./util/result";
-import { SchemaOpCtx as Ctx } from "./util/context";
-import { CompilableOrNotFun, getFunc } from "./compilable-fun";
-
-// Inspired in https://zod.dev/ and https://gcanti.github.io/io-ts/
-
-export type GetSchemaInput<S> =
-  S extends SchemaType<infer I, infer _> ? I : never;
-
-export type GetSchemaOutput<S> =
-  S extends SchemaType<infer _, infer O> ? O : never;
-
-export type SchemaType<I, O> = SchemaTypeSync<I, O> | SchemaTypeAsync<I, O>;
-
-export type SchemaTypeSync<I, O> = ISchemaType<I, O, SchemaSyncKind.sync>;
-
-export type SchemaTypeAsync<I, O> = ISchemaType<I, O, SchemaSyncKind.async>;
-
-export enum SchemaSyncKind {
-  sync = 0,
-  async = 1,
-}
-
-export function createSchemaType<I, O>(
-  fn: PipeFn<I, O, SchemaSyncKind.sync>
-): SchemaTypeSync<I, O>;
-
-export function createSchemaType<I, O>(
-  fn: PipeFn<I, O, SchemaSyncKind.async>
-): SchemaTypeAsync<I, O>;
-
-export function createSchemaType<I, O, A extends SchemaSyncKind>(
-  fn: PipeFn<I, O, A>
-): any {
-  return new SchemaTypeImpl(fn);
-}
-
-interface ISchemaType<I, O, A extends SchemaSyncKind> {
-  parse(value: I, ctx?: Ctx): FuncResult<ValidationResult<O>, A>;
-
-  use<I2, O2>(
-    fn: (
-      value: I2,
-      ctx: Ctx,
-      prev: (value: I, ctx: Ctx) => FuncResult<ValidationResult<O>, A>
-    ) => FuncResult<ValidationResult<O2>, A>
-  ): ISchemaType<I2, O2, A>;
-
-  use<I2, O2>(
-    fn: (
-      value: I2,
-      ctx: Ctx,
-      prev: (value: I, ctx: Ctx) => FuncResult<ValidationResult<O>, A>
-    ) => Promise<ValidationResult<O2>>
-  ): ISchemaType<I2, O2, SchemaSyncKind.async>;
-
-  pipe<T>(
-    fn: (value: O, ctx: Ctx) => ValidationResult<T>
-  ): ISchemaType<I, T, A>;
-
-  pipe<T>(
-    fn: (value: O, ctx: Ctx) => Promise<ValidationResult<T>>
-  ): ISchemaType<I, T, SchemaSyncKind.async>;
-
-  transform<T>(fn: (value: O) => T): ISchemaType<I, T, A>;
-
-  transform<T>(
-    fn: (value: O) => Promise<T>
-  ): ISchemaType<I, T, SchemaSyncKind.async>;
-
-  refine(fn: (value: O) => boolean, opts?: RefinerOpts): ISchemaType<I, O, A>;
-
-  refine(
-    fn: (value: O) => Promise<boolean>,
-    opts?: RefinerOpts
-  ): ISchemaType<I, O, SchemaSyncKind.async>;
-
-  refineMore(fn: (value: O, ctx: Ctx) => void): ISchemaType<I, O, A>;
-
-  refineMore(
-    fn: (value: O, ctx: Ctx) => Promise<void>
-  ): ISchemaType<I, O, SchemaSyncKind.async>;
-}
-
-class SchemaTypeImpl<I, O, A extends SchemaSyncKind>
-  implements ISchemaType<I, O, A>
-{
-  constructor(protected readonly fn: PipeFn<I, O, A>) {}
-
-  parse(value: I, ctx: Ctx = new Ctx()): FuncResult<ValidationResult<O>, A> {
-    return getFunc(this.fn)(value, ctx);
-  }
-
-  use(fn: any): any {
-    return new SchemaTypeImpl((value, ctx) => fn(value, ctx, this.fn));
-  }
-
-  pipe<T>(
-    fn: (
-      value: O,
-      ctx: Ctx
-    ) => ValidationResult<T> | Promise<ValidationResult<T>>
-  ): any {
-    return new SchemaTypeImpl<I, T, any>((value, ctx) =>
-      then(getFunc(this.fn)(value, ctx), r => (r.ok ? fn(r.value, ctx) : r))
-    );
-  }
-
-  transform<T>(fn: (value: O) => T | Promise<T>) {
-    return this.pipe((value, ctx) => then(fn(value), v => ctx.result(v)));
-  }
-
-  refine(fn: (value: O) => boolean | Promise<boolean>, opts: RefinerOpts = {}) {
-    return this.pipe((value, ctx) =>
-      then(fn(value), bool => {
-        if (!bool) {
-          if (opts.path) for (const p of opts.path) ctx.push(p);
-          ctx.addError(opts.message ?? "Validation error");
-        }
-        return ctx.result(value);
-      })
-    );
-  }
-
-  refineMore(fn: (value: O, ctx: Ctx) => void | Promise<void>) {
-    return this.pipe((value, ctx) =>
-      then(fn(value, ctx), () => ctx.result(value))
-    );
-  }
-}
-
-type FuncResult<T, A extends SchemaSyncKind> = A extends SchemaSyncKind.sync
-  ? T
-  : Promise<T>;
-
-type PipeFn<I, O, A extends SchemaSyncKind> = CompilableOrNotFun<
-  [value: I, ctx: Ctx],
-  FuncResult<ValidationResult<O>, A>
->;
+import { Opaque } from "../../../util/miscellaneous";
+import { FormElementOrPage } from "./forms/forms";
+import { SchemaOpCtx, SchemaOpCtxOpts } from "./util/context";
+import { ValidationResult } from "./util/result";
 
 export type RefinerOpts = Partial<{
   readonly message: string;
   readonly path: readonly string[];
 }>;
 
-export abstract class MutableSchemaImpl<I, O> {
-  abstract parse(value: I, ctx?: Ctx): ValidationResultMaybeAsync<O>;
+const INPUT = Symbol();
+const OUTPUT = Symbol();
 
-  abstract use<I2, O2>(
-    fn: (
-      value: I2,
-      ctx: Ctx,
-      prev: (value: I, ctx: Ctx) => ValidationResultMaybeAsync<O>
-    ) => ValidationResultMaybeAsync<O2>
-  ): MutableSchemaImpl<I2, O2>;
+export type SchemaInput<D extends SchemaType<any, any>> = D[typeof INPUT];
 
-  abstract pipe<T>(
-    fn: (value: O, ctx: Ctx) => ValidationResultMaybeAsync<T>
-  ): MutableSchemaImpl<I, T>;
+export type SchemaOutput<D extends SchemaType<any, any>> = D[typeof OUTPUT];
 
-  abstract transform<T>(fn: (value: O) => T): MutableSchemaImpl<I, T>;
+export type SchemaDecorators = {
+  readonly description: string | null;
+  readonly form: FormElementOrPage<string, string> | null;
+};
 
-  abstract refine(
-    fn: (value: O) => boolean,
+export abstract class SchemaType<In, Out> {
+  readonly [INPUT]!: In;
+  readonly [OUTPUT]!: Out;
+
+  abstract getInputType(): SchemaType<any, any>;
+
+  abstract getDecorators(): SchemaDecorators;
+
+  parse(value: unknown, opts: SchemaOpCtxOpts = {}): ValidationResult<Out> {
+    const ctx = SchemaOpCtx.new(opts);
+    return this.par(value, ctx);
+  }
+
+  abstract par(value: unknown, ctx: SchemaOpCtx): ValidationResult<Out>;
+
+  decorators(opts: Partial<SchemaDecorators>) {
+    return new SchemaDecorated(this, opts);
+  }
+
+  opaque<B extends PropertyKey>(brand: B) {
+    return new SchemaTypeOpaque(this, brand);
+  }
+
+  refine(
+    fn: (value: Out, ctx: SchemaOpCtx) => boolean,
     opts?: RefinerOpts
-  ): MutableSchemaImpl<I, O>;
+  ): SchemaType<In, Out>;
+  refine<Refined extends Out>(
+    fn: (value: Out, ctx: SchemaOpCtx) => value is Refined,
+    opts?: RefinerOpts
+  ): SchemaType<In, Refined>;
+  refine<Refined extends Out>(
+    fn: (value: Out, ctx: SchemaOpCtx) => value is Refined,
+    opts: RefinerOpts = {}
+  ): SchemaType<In, Refined> {
+    return new SchemaTypeRefineSimple(this, fn, opts);
+  }
 
-  abstract refineMore(
-    fn: (value: O, ctx: Ctx) => void
-  ): MutableSchemaImpl<I, O>;
+  refineMore(fn: (value: Out, ctx: SchemaOpCtx) => void): SchemaType<In, Out> {
+    return new SchemaTypeRefineMore(this, fn);
+  }
+
+  merge(dest: Out, value: Out): Out {
+    throw new Error("");
+  }
+
+  default(
+    defaultValue: Exclude<Out, undefined>
+  ): SchemaDefault<"undefined", In, Out>;
+  default<const D extends DefaultMode>(
+    defaultValue: D extends "nullish"
+      ? Exclude<Out, undefined | null>
+      : Exclude<Out, undefined>,
+    mode: D
+  ): SchemaDefault<D, In, Out>;
+  default(defaultValue: any, mode: DefaultMode = "undefined") {
+    return new SchemaDefault(this, defaultValue, mode);
+  }
+
+  transform<Out2>(
+    fn: (
+      value: Out,
+      ctx: SchemaOpCtx,
+      never: typeof SCHEMA_NEVER
+    ) => Out2 | typeof SCHEMA_NEVER
+  ): SchemaType<In, Out2> {
+    return new SchemaTransform(this, fn);
+  }
+
+  pipe<Out2>(out: SchemaType<unknown, Out2>): SchemaType<In, Out2> {
+    return new SchemaPipe(this, out);
+  }
+}
+
+const DEFAULT_REFINE_ERROR = "Refinement validation error";
+
+export class SchemaTypeRefineSimple<
+  const In,
+  const Out,
+  const Refined extends Out,
+> extends SchemaType<In, Refined> {
+  constructor(
+    private readonly parent: SchemaType<In, Out>,
+    private readonly fn: (value: Out, ctx: SchemaOpCtx) => value is Refined,
+    private readonly opts: RefinerOpts = {}
+  ) {
+    super();
+  }
+
+  override getInputType() {
+    const parentRootType = this.parent.getInputType();
+    return this.parent === parentRootType ? this : parentRootType;
+  }
+
+  override getDecorators() {
+    return this.parent.getDecorators();
+  }
+
+  override par(value: unknown, ctx: SchemaOpCtx) {
+    const r = this.parent.par(value, ctx);
+    if (r.ok) {
+      if (!this.fn(r.value, ctx)) {
+        if (this.opts.path) for (const p of this.opts.path) ctx.push(p);
+        ctx.addError(this.opts.message ?? DEFAULT_REFINE_ERROR);
+        if (this.opts.path) for (const p of this.opts.path) ctx.pop();
+        return ctx.returnErrors();
+      }
+      return ctx.result(r.value);
+    }
+    return r;
+  }
+}
+
+export class SchemaTypeRefineMore<const In, const Out> extends SchemaType<
+  In,
+  Out
+> {
+  constructor(
+    private readonly parent: SchemaType<In, Out>,
+    private readonly fn: (value: Out, ctx: SchemaOpCtx) => void
+  ) {
+    super();
+  }
+
+  override getInputType() {
+    const parentRootType = this.parent.getInputType();
+    return this.parent === parentRootType ? this : parentRootType;
+  }
+
+  override getDecorators() {
+    return this.parent.getDecorators();
+  }
+
+  override par(value: unknown, ctx: SchemaOpCtx) {
+    const r = this.parent.par(value, ctx);
+    if (r.ok) {
+      this.fn(r.value, ctx);
+      return ctx.result(r.value);
+    }
+    return r;
+  }
+}
+
+export class SchemaTypeOpaque<
+  const In,
+  const Out,
+  const B extends PropertyKey,
+> extends SchemaType<In, Opaque<Out, B>> {
+  constructor(
+    public readonly inner: SchemaType<In, Out>,
+    public readonly brand: B
+  ) {
+    super();
+  }
+
+  override getInputType(): SchemaType<any, any> {
+    const parentRootType = this.inner.getInputType();
+    return this.inner === parentRootType ? this : parentRootType;
+  }
+
+  override getDecorators() {
+    return this.inner.getDecorators();
+  }
+
+  override par(
+    value: unknown,
+    ctx: SchemaOpCtx
+  ): ValidationResult<Opaque<Out, B>> {
+    return this.inner.par(value, ctx) as any;
+  }
+}
+
+export class SchemaDecorated<const In, const Out> extends SchemaType<In, Out> {
+  constructor(
+    public readonly inner: SchemaType<In, Out>,
+    public readonly decorations: Partial<SchemaDecorators>
+  ) {
+    super();
+  }
+
+  override getInputType(): SchemaType<any, any> {
+    const parentRootType = this.inner.getInputType();
+    return this.inner === parentRootType ? this : parentRootType;
+  }
+
+  override getDecorators() {
+    return {
+      ...this.inner.getDecorators(),
+      ...this.decorations,
+    };
+  }
+
+  override par(value: unknown, ctx: SchemaOpCtx): ValidationResult<Out> {
+    return this.inner.par(value, ctx);
+  }
+}
+
+export type DefaultMode = "undefined" | "nullish";
+
+export class SchemaDefault<
+  const D extends DefaultMode,
+  const In,
+  const Out,
+> extends SchemaType<
+  In,
+  D extends "nullish" ? Exclude<Out, undefined | null> : Exclude<Out, undefined>
+> {
+  constructor(
+    private readonly parent: SchemaType<
+      In,
+      D extends "nullish" ? Out | undefined | null : Out | undefined
+    >,
+    private readonly defaultValue: D extends "nullish"
+      ? Exclude<Out, undefined | null>
+      : Exclude<Out, undefined>,
+    private readonly mode: D
+  ) {
+    super();
+  }
+
+  override getInputType() {
+    return this.parent.getInputType();
+  }
+
+  override getDecorators() {
+    return this.parent.getDecorators();
+  }
+
+  override par(
+    value: unknown,
+    ctx: SchemaOpCtx
+  ): ValidationResult<
+    D extends "nullish"
+      ? Exclude<Out, undefined | null>
+      : Exclude<Out, undefined>
+  > {
+    const r = this.parent.par(value, ctx);
+    if (r.ok) {
+      if (this.mode === "undefined") {
+        if (r.value === undefined) return ctx.result(this.defaultValue);
+      } else {
+        if (r.value == null) return ctx.result(this.defaultValue);
+      }
+      return ctx.result(r.value as any);
+    }
+    return r;
+  }
+}
+
+export const SCHEMA_NEVER = Symbol("never");
+
+export class SchemaTransform<In, Out, Out2> extends SchemaType<In, Out2> {
+  constructor(
+    private readonly parent: SchemaType<In, Out>,
+    private readonly fn: (
+      value: Out,
+      ctx: SchemaOpCtx,
+      never: typeof SCHEMA_NEVER
+    ) => Out2 | typeof SCHEMA_NEVER
+  ) {
+    super();
+  }
+
+  override getInputType() {
+    return this.parent.getInputType();
+  }
+
+  override getDecorators() {
+    return this.parent.getDecorators();
+  }
+
+  override par(value: unknown, ctx: SchemaOpCtx) {
+    const r = this.parent.par(value, ctx);
+    if (r.ok) {
+      const transformed = this.fn(r.value, ctx, SCHEMA_NEVER);
+      if (transformed === SCHEMA_NEVER) {
+        return ctx.defaultError("Transformation error");
+      }
+      return ctx.result(transformed);
+    }
+    return r;
+  }
+}
+
+export class SchemaPipe<In, Out> extends SchemaType<In, Out> {
+  constructor(
+    private readonly inSchema: SchemaType<In, unknown>,
+    private readonly outSchema: SchemaType<unknown, Out>
+  ) {
+    super();
+  }
+
+  override getInputType() {
+    return this.inSchema.getInputType();
+  }
+
+  override getDecorators() {
+    return this.inSchema.getDecorators();
+  }
+
+  override par(value: unknown, ctx: SchemaOpCtx) {
+    const r = this.inSchema.par(value, ctx);
+    if (r.ok) {
+      return this.outSchema.par(r.value, ctx);
+    }
+    return r;
+  }
 }
