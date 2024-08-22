@@ -341,23 +341,3 @@ export type TestRunnerOptions = Readonly<{
   concordanceOptions: Record<string, unknown>; // @description("Concordance options.");
   reporter: any; // @description("Specify the reporter to use");
 }>;
-
-export type GlobalTestRunnerOptions = Readonly<{
-  ["--"]: string[];
-  files: readonly string[]; // @mergeStrategy("override") @description("Glob patterns of files to include");
-  ignoreFiles: readonly string[]; // @mergeStrategy("concat") @description("Glob patterns of files to ignore");
-  filterFiles: (f: string) => boolean;
-  concurrentFiles: number;
-  worker: "main" | "workers" | "processes";
-  watch: boolean; // @description("Watch files for changes and re-run the related tests");
-  color: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
-  env: Record<string, unknown>; // @description("The test environment used for all tests. This can point to any file or node module");
-  verbose: boolean; // @description("Enable verbose output");
-  debug: boolean; // @description("Same as --inspect-brk on nodejs.");
-  concordanceOptions: Record<string, unknown>; // @description("Concordance options.");
-  reporter: any; // @description("Specify the reporter to use");
-  //
-  changedSince: string | undefined;
-  findRelatedTests: string[];
-  ci: boolean;
-}>;

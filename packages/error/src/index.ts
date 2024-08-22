@@ -4,7 +4,7 @@ import { slash, prettify } from "../../util/path-url";
 export const ignoreStackTraceRe =
   /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
 export const ignoreFileRe =
-  /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
+  /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|node:[^()\s]+|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
 type Opts = Readonly<{
   extractor?: any;
@@ -148,4 +148,26 @@ export function locToString(loc: Loc) {
     return `${loc.line}`;
   }
   return "";
+}
+
+export function getCallSites(traceLimit: number = 20) {
+  const target: { stack: readonly NodeJS.CallSite[] } = {} as any;
+
+  const originalPrepare = Error.prepareStackTrace;
+  const originalStackLimit = Error.stackTraceLimit;
+
+  Error.stackTraceLimit = traceLimit;
+  Error.prepareStackTrace = (error, stackTraces) => stackTraces;
+  Error.captureStackTrace(target, getCallSites);
+
+  const capturedTraces = target.stack;
+
+  Error.prepareStackTrace = originalPrepare;
+  Error.stackTraceLimit = originalStackLimit;
+
+  return capturedTraces;
+}
+
+export function getCallSite(offset = 0) {
+  return getCallSites(2 + offset)[1 + offset];
 }
