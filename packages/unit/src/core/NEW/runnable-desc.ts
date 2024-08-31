@@ -1,14 +1,14 @@
-import { getCallSite } from "../../../../error/src/index";
+import { getStack } from "../../../../error/src/index";
 import { Optional } from "../../../../util/miscellaneous";
 import { is32bitInteger } from "./random";
-import { RunningContext } from "./runnable";
+import type { RunningContext } from "./runnable";
 
 const TRUE_FN = () => true;
 
 export type RunnableOpts = Readonly<{
   strict: boolean;
   runOnly: boolean;
-  filter: (title: string) => boolean;
+  filter: Optional<string>;
   signal: Optional<AbortSignal>;
   plan: Optional<number>;
   only: boolean;
@@ -41,7 +41,7 @@ export type RunnableOpts = Readonly<{
 export const defaultOpts: RunnableOpts = {
   strict: false,
   runOnly: false,
-  filter: TRUE_FN,
+  filter: null,
   signal: null,
   plan: null,
   only: false,
@@ -85,7 +85,7 @@ export class RunnableCtx {
       {
         ...this.opts,
         strict,
-        filter: TRUE_FN,
+        filter: null,
         runOnly: false,
         only: false,
         failing: false,
@@ -99,8 +99,8 @@ export class RunnableCtx {
     );
   }
 
-  filter(filter: (title: string) => boolean) {
-    if (this.opts.strict && filter !== TRUE_FN) {
+  filter(filter: Optional<string>) {
+    if (this.opts.strict && filter != null) {
       throw new Error("In strict mode");
     }
     return new RunnableCtx(
@@ -346,9 +346,10 @@ export class RunnableCtx {
   test(fn: (ctx: RunningContext) => Promise<void> | void): RunnableDesc;
   test(
     title: string,
-    fn: (ctx: RunningContext) => Promise<void> | void
+    fn: (ctx: RunningContext) => Promise<void> | void,
+    _internal?: boolean
   ): RunnableDesc;
-  test(title: any, fn?: any) {
+  test(title: any, fn?: any, _internal: boolean = false) {
     if (typeof title === "function") {
       fn = title;
       title = "";
@@ -357,7 +358,7 @@ export class RunnableCtx {
       title,
       fn,
       this.opts,
-      getCallSite(1).toString()
+      getStack(_internal ? 3 : 2)
     );
     this.runnerTests.ref?.push(desc);
     return desc;

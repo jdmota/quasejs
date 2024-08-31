@@ -87,9 +87,12 @@ export function prettifyUrl(
   url: Url,
   opts?: { readonly lastSlash: boolean }
 ): string {
-  let { hash, origin, pathname, search } = new URL(url, LOCATION);
+  let { hash, origin, pathname, search, protocol } = new URL(url, LOCATION);
   pathname = opts && opts.lastSlash ? pathname : removeLastSlash(pathname);
   origin = origin === LOCATION.origin ? "" : origin;
+  if (protocol === "file:") {
+    return "file://" + pathname + search + hash;
+  }
   return origin + pathname + search + hash;
 }
 
@@ -102,7 +105,7 @@ export function removeLastSlash(url: Url) {
 const urlRegex = urlRegexDefault({ exact: true });
 
 export function isUrl(url: string) {
-  return urlRegex.test(url.trim());
+  return urlRegex.test(url.trim()) || url.startsWith("file://");
 }
 
 export function isAbsolute(name: Url | Path) {

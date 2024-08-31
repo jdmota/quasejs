@@ -1,27 +1,30 @@
 import { ChildProcessParent, WorkerParent } from "../../../../util/workers";
 import { runner, _setup } from "./index";
-import { RunnableResult } from "./runnable";
 import { RunnableOpts } from "./runnable-desc";
-import { GlobalRunnerOptions } from "./runner";
+import { GlobalRunnerOptions, RunnerEvents } from "./runner";
 
 export type FromParentToFork =
-  | {
+  | Readonly<{
       type: "setup";
-    }
-  | {
-      type: "test-files";
-    }
-  | {
+      runnerOpts: RunnableOpts;
+      runnerGlobalOpts: GlobalRunnerOptions;
+      tOpts: RunnableOpts;
+    }>
+  | Readonly<{
       type: "start";
-    };
+      files: readonly string[];
+    }>;
 
-export type FromForkToParent = { type: "result"; result: RunnableResult };
+export type FromForkToParent = {
+  [K in keyof RunnerEvents]: Readonly<{
+    type: K;
+    value: RunnerEvents[K][0];
+  }>;
+}[keyof RunnerEvents];
 
-const workerConfig = process.argv.includes("$quase-unit-workers$")
-  ? "workers"
-  : process.argv.includes("$quase-unit-processes$")
-    ? "processes"
-    : "main";
+const workerConfig = process.env[
+  "$quase-unit$"
+] as GlobalRunnerOptions["worker"];
 
 const parent =
   workerConfig === "workers"
@@ -34,13 +37,10 @@ if (parent) {
   parent.on("message", msg => {
     switch (msg.type) {
       case "setup":
-        setup();
-        break;
-      case "test-files":
-        testFiles();
+        setup(msg.runnerOpts, msg.runnerGlobalOpts, msg.tOpts);
         break;
       case "start":
-        start();
+        start(msg.files);
         break;
     }
   });
@@ -52,14 +52,50 @@ export function setup(
   tOpts: RunnableOpts
 ) {
   _setup(runnerOpts, runnerGlobalOpts, tOpts);
+
+  if (parent) {
+    listen(msg => {
+      parent.send(msg);
+    });
+  }
 }
 
-export function testFiles() {
-  // TODO import files
+export function start(files: readonly string[]) {
+  runner.executeTests(files);
 }
 
-export function start() {
-  runner.executeTests().then(result => {
-    parent?.send({ type: "result", result });
+export function listen(callback: (message: FromForkToParent) => void) {
+  runner.emitter.on("started", value => {
+    callback({ type: "started", value });
+  });
+
+  runner.emitter.on("finished", value => {
+    callback({ type: "finished", value });
+    setTimeout(() => {
+      parent?.disconnect();
+    });
+    // TODO when to disconnect? there might be uncaught errors later...
+  });
+
+  runner.emitter.on("testStart", value => {
+    callback({ type: "testStart", value });
+  });
+
+  runner.emitter.on("testFinish", value => {
+    callback({ type: "testFinish", value });
+  });
+
+  runner.emitter.on("testFinish", value => {
+    callback({ type: "testFinish", value });
+  });
+
+  runner.emitter.on("uncaughtError", value => {
+    callback({ type: "uncaughtError", value });
+  });
+
+  runner.emitter.on("matchesSnapshot", value => {
+    callback({ type: "matchesSnapshot", value });
   });
 }
+
+export function terminate() {}

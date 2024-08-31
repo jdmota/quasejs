@@ -16,7 +16,7 @@ export function test(
   fn: (ctx: RunningContext) => Promise<void> | void
 ): RunnableDesc;
 export function test(title: any, fn?: any) {
-  return t.test(title, fn);
+  return t.test(title, fn, true);
 }
 
 export function _setup(

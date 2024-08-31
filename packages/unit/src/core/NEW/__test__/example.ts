@@ -1,16 +1,5 @@
-import { EventEmitter } from "node:events";
-import { defaultOpts } from "./runnable-desc";
-import { t, test, runner, _setup } from "./index";
-import { Reporter } from "./reporter";
-
-_setup(
-  defaultOpts,
-  {
-    verbose: true,
-    errorOpts: { diff: true, stack: true, codeFrame: true, stackIgnore: null },
-  },
-  defaultOpts
-);
+import EventEmitter from "node:events";
+import { t, test } from "../index";
 
 test("test 1", async ctx => {
   await ctx.step(
@@ -28,10 +17,8 @@ test("test 1", async ctx => {
   );
 });
 
-let intervalId: NodeJS.Timeout;
-
 test("test 2", () => {
-  intervalId = setInterval(() => {}, 3000);
+  setTimeout(() => {}, 3000);
 });
 
 t.skip(true, "cause").test("test 3", async ctx => {
@@ -57,11 +44,4 @@ test("test 6", ctx => {
   ctx.cleanup(() => {
     throw new Error("Clean up error");
   });
-});
-
-const reporter = new Reporter(runner);
-
-Promise.resolve(runner.executeTests()).then(r => {
-  // console.log(inspect(r, { depth: 10 }));
-  clearInterval(intervalId);
 });

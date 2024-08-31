@@ -3,18 +3,14 @@ import logSymbols from "log-symbols";
 import ora, { Ora } from "ora";
 import { codeFrameColumns } from "@babel/code-frame";
 import { prettify } from "../../../../util/path-url";
+import { never } from "../../../../util/miscellaneous";
 import { BeautifiedStackLine, beautify } from "../../../../error/src/index";
 import { SourceMapExtractor } from "../../../../source-map/src/extractor";
 import { IRunner } from "./runner";
-import {
-  RunnableResult,
-  SimpleError,
-  SKIP_ABORTED,
-  SKIP_BAILED,
-  SKIP_INTERRUPTED,
-} from "./runnable";
-import { never } from "../../../../util/miscellaneous";
+import { type RunnableResult, type SimpleError } from "./runnable";
 import { concordanceOptions } from "./concordance-options";
+import { SKIP_ABORTED, SKIP_BAILED, SKIP_INTERRUPTED } from "./constants";
+import { inspect } from "util";
 
 const eol = turbocolor.reset("\n");
 
@@ -57,13 +53,14 @@ export class Reporter {
       }
     });
 
-    runner.emitter.on("start", () => {
+    runner.emitter.on("started", ({ amount, total }) => {
       // TODO this.showConcurrency(runner);
       // TODO this.showDebuggers(runner);
-      this.runnerStarted();
+      this.runnerStarted(amount, total);
     });
 
     runner.emitter.on("finished", async result => {
+      // console.log(inspect(result, { depth: 100 }));
       await this.runnerFinished(result);
       await this.logOtherErrors();
 
@@ -157,7 +154,7 @@ export class Reporter {
     logEol();
   }
 
-  runnerStarted() {
+  runnerStarted(amount: number, total: number) {
     this.spinner.start();
     this.spinner.text = "Running tests...";
   }
@@ -289,7 +286,7 @@ export class Reporter {
   async beautifyStack(stack: string) {
     return beautify(stack, {
       extractor: new SourceMapExtractor(),
-      ignore: this.runner.runnerOpts.errorOpts.stackIgnore,
+      ignore: this.runner.runnerGlobalOpts.errorOpts.stackIgnore,
     });
   }
 
@@ -305,7 +302,7 @@ export class Reporter {
       return "";
     }
 
-    const frame = this.runner.runnerOpts.errorOpts.codeFrame
+    const frame = this.runner.runnerGlobalOpts.errorOpts.codeFrame
       ? codeFrameColumns(code, { start: { line } }, {}) + "\n\n"
       : "";
 
@@ -343,7 +340,7 @@ export class Reporter {
 
   async logError(error: SimpleError) {
     const { diff: showDiff, stack: showStack } =
-      this.runner.runnerOpts.errorOpts;
+      this.runner.runnerGlobalOpts.errorOpts;
 
     let text = "\n";
 
@@ -369,7 +366,7 @@ export class Reporter {
 
   async logResult(parentTitle: string, result: RunnableResult) {
     if (result.type === "hidden") return;
-    if (!this.runner.runnerOpts.verbose) {
+    if (!this.runner.runnerGlobalOpts.verbose) {
       switch (result.type) {
         case "passed":
           if (!result.slow && !result.logs.length) {

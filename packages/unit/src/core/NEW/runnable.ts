@@ -1,5 +1,6 @@
 import { inspect } from "node:util";
 import concordance from "concordance";
+import type { JsonValue } from "type-fest";
 import { getStack } from "../../../../error/src/index";
 import { createDefer, Defer } from "../../../../util/deferred";
 import { assertion, Optional } from "../../../../util/miscellaneous";
@@ -16,6 +17,7 @@ import {
 } from "./sanitizers/handles-sanitizer";
 import { enableExitsTracker } from "./sanitizers/process-sanitizer";
 import { enableWarningsTracker } from "./sanitizers/warnings-sanitizer";
+import { SKIP_ABORTED, SKIP_BAILED } from "./constants";
 
 export type ErrorOpts = Readonly<{
   error: unknown;
@@ -32,6 +34,13 @@ export type SimpleError = Readonly<{
   user: boolean;
   uncaught: boolean;
 }>;
+
+function filter(pattern: Optional<string>, title: string) {
+  if (pattern == null) return true;
+  if (pattern.length > 2 && pattern.startsWith("/") && pattern.endsWith("/"))
+    return new RegExp(pattern).test(title);
+  return title.includes(pattern);
+}
 
 export function processError(opts: ErrorOpts): SimpleError {
   const { error, stack, user, uncaught } = opts;
@@ -77,8 +86,9 @@ export type RunnableResult =
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
-      children?: readonly RunnableResult[];
+      children: readonly RunnableResult[];
       stack: string;
+      userMetadata: JsonValue | undefined;
     }>
   | Readonly<{
       title: string;
@@ -90,45 +100,32 @@ export type RunnableResult =
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
-      children?: readonly RunnableResult[];
+      children: readonly RunnableResult[];
       stack: string;
+      userMetadata: JsonValue | undefined;
     }>
   | Readonly<{
       title: string;
       type: "skipped";
       reason: Optional<string>;
       stack: string;
+      userMetadata: JsonValue | undefined;
     }>
   | Readonly<{
       title: string;
       type: "todo";
       description: Optional<string>;
       stack: string;
+      userMetadata: JsonValue | undefined;
     }>
   | Readonly<{
       title: string;
       type: "hidden";
       stack: string;
+      userMetadata: JsonValue | undefined;
     }>;
 
 export type RunnableStatus = RunnableResult["type"];
-
-export const HIDDEN = { type: "hidden" } as const;
-
-export const SKIP_BAILED = {
-  type: "skipped",
-  reason: "Bailed",
-} as const;
-
-export const SKIP_INTERRUPTED = {
-  type: "skipped",
-  reason: "Interrupted",
-} as const;
-
-export const SKIP_ABORTED = {
-  type: "skipped",
-  reason: "Aborted",
-} as const;
 
 export interface RunningContext {
   step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult>;
@@ -138,6 +135,7 @@ export interface RunningContext {
   addError(error: unknown): void;
   log(...args: unknown[]): void;
   matchesSnapshot(something: unknown, key?: string): void;
+  setUserMetadata(data: JsonValue): void;
 }
 
 export enum RunnableState {
@@ -166,6 +164,7 @@ export class RunnableTest {
   private timeStart: number;
   private globals: GlobalsSanitizer | null;
   private random: Randomizer | null;
+  private userMetadata: JsonValue | undefined;
   private cleanups: (() => void | Promise<void>)[];
   private cleanAbort: (() => void) | null;
 
@@ -191,6 +190,7 @@ export class RunnableTest {
     this.timeStart = 0;
     this.globals = null;
     this.random = randomizer(this.desc.opts.random);
+    this.userMetadata = undefined;
     this.cleanups = [];
     this.cleanAbort = null;
   }
@@ -220,6 +220,14 @@ export class RunnableTest {
       this.logs.push(args.map(a => inspect(a)).join(" "));
     } else {
       this.addCtxError("Calling log after the test has finished");
+    }
+  }
+
+  private setUserMetadata(metadata: JsonValue) {
+    if (this.state === RunnableState.Running) {
+      this.userMetadata = metadata;
+    } else {
+      this.addCtxError("Calling setUserMetadata after the test has finished");
     }
   }
 
@@ -310,6 +318,7 @@ export class RunnableTest {
       title: desc.title,
       type: "hidden",
       stack: desc.stack,
+      userMetadata: undefined,
     };
   }
 
@@ -339,6 +348,7 @@ export class RunnableTest {
         type: "skipped",
         reason: errorMsg,
         stack: this.desc.stack,
+        userMetadata: this.userMetadata,
       });
     } else if (this.state === RunnableState.Running) {
       this.interrupted = errorMsg;
@@ -389,10 +399,15 @@ export class RunnableTest {
     this.state = RunnableState.Running;
     this.runner?.emitter.emit("testStart", title);
 
-    const { runOnly, filter } = parent?.desc.opts ?? defaultOpts;
+    const { runOnly, filter: pattern } = parent?.desc.opts ?? defaultOpts;
 
-    if (!opts.if || (runOnly && !opts.only) || !filter(title)) {
-      return this.finish({ title, type: "hidden", stack });
+    if (!opts.if || (runOnly && !opts.only) || !filter(pattern, title)) {
+      return this.finish({
+        title,
+        type: "hidden",
+        stack,
+        userMetadata: this.userMetadata,
+      });
     }
 
     if (opts.skip) {
@@ -401,6 +416,7 @@ export class RunnableTest {
         type: "skipped",
         reason: opts.skipReason,
         stack,
+        userMetadata: this.userMetadata,
       });
     }
 
@@ -410,6 +426,7 @@ export class RunnableTest {
         type: "todo",
         description: opts.todoDesc,
         stack,
+        userMetadata: this.userMetadata,
       });
     }
 
@@ -419,6 +436,7 @@ export class RunnableTest {
         type: "skipped",
         reason: SKIP_ABORTED.reason,
         stack,
+        userMetadata: this.userMetadata,
       });
     }
 
@@ -457,6 +475,7 @@ export class RunnableTest {
       matchesSnapshot: (something: unknown, key?: string) => {
         // TODO
       },
+      setUserMetadata: data => this.setUserMetadata(data),
     };
 
     this.timeStart = Date.now();
@@ -523,6 +542,7 @@ export class RunnableTest {
       logs,
       tests,
       cleanups,
+      userMetadata,
     } = this;
     const random = this.random?.hex ?? null;
 
@@ -655,6 +675,7 @@ export class RunnableTest {
           random,
           children,
           stack,
+          userMetadata,
         })
       : this.finish({
           title,
@@ -668,6 +689,7 @@ export class RunnableTest {
           random,
           children,
           stack,
+          userMetadata,
         });
   }
 }
