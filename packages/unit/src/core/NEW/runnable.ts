@@ -72,36 +72,43 @@ export type RunnableResult =
   | Readonly<{
       title: string;
       type: "passed";
+      logs: readonly string[];
       duration: number;
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
       children?: readonly RunnableResult[];
+      stack: string;
     }>
   | Readonly<{
       title: string;
       type: "failed";
       userErrors: readonly SimpleError[];
       nonUserErrors: readonly SimpleError[];
+      logs: readonly string[];
       duration: number;
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
       children?: readonly RunnableResult[];
+      stack: string;
     }>
   | Readonly<{
       title: string;
       type: "skipped";
       reason: Optional<string>;
+      stack: string;
     }>
   | Readonly<{
       title: string;
       type: "todo";
       description: Optional<string>;
+      stack: string;
     }>
   | Readonly<{
       title: string;
       type: "hidden";
+      stack: string;
     }>;
 
 export type RunnableStatus = RunnableResult["type"];
@@ -133,17 +140,16 @@ export interface RunningContext {
   matchesSnapshot(something: unknown, key?: string): void;
 }
 
-// Lifecycle:
-// NotStarted : { !started, !running, !exiting, !finished }
-// Running : { started, running, !exiting, !finished }
-// Cleanup : { started, !running, !exiting, !finished }
-// Exiting : { started, !running, exiting, !finished }
-// Finished : { started, !running, exiting, finished }
+export enum RunnableState {
+  NotStarted,
+  Running,
+  Cleanup,
+  Exiting,
+  Finished,
+}
 
 export class RunnableTest {
-  private started: boolean;
-  private running: boolean;
-  private exiting: boolean;
+  private state: RunnableState;
   private finished: RunnableResult | null;
   private interrupted: string | null;
   private killed: boolean;
@@ -164,12 +170,11 @@ export class RunnableTest {
   private cleanAbort: (() => void) | null;
 
   constructor(
+    readonly runner: Runner | null,
     readonly desc: RunnableDesc,
     readonly parent: RunnableTest | null
   ) {
-    this.started = false;
-    this.running = false;
-    this.exiting = false;
+    this.state = RunnableState.NotStarted;
     this.finished = null;
     this.interrupted = null;
     this.killed = false;
@@ -195,7 +200,7 @@ export class RunnableTest {
   }
 
   private addCleanup(fn: () => void | Promise<void>) {
-    if (this.running) {
+    if (this.state === RunnableState.Running) {
       this.cleanups.push(fn);
     } else {
       this.addCtxError("Calling cleanup after the test has finished");
@@ -203,7 +208,7 @@ export class RunnableTest {
   }
 
   private incAssertionCount() {
-    if (this.running) {
+    if (this.state === RunnableState.Running) {
       this.assertionCount++;
     } else {
       this.addCtxError("Calling incAssertionCount after the test has finished");
@@ -211,7 +216,7 @@ export class RunnableTest {
   }
 
   private addLog(args: readonly unknown[]) {
-    if (this.running) {
+    if (this.state === RunnableState.Running) {
       this.logs.push(args.map(a => inspect(a)).join(" "));
     } else {
       this.addCtxError("Calling log after the test has finished");
@@ -256,7 +261,7 @@ export class RunnableTest {
   private async group(
     descs: readonly RunnableDesc[]
   ): Promise<readonly RunnableResult[]> {
-    if (!this.running) {
+    if (this.state !== RunnableState.Running) {
       this.addCtxError("Cannot run child tests of a finished test");
       return [];
     }
@@ -292,8 +297,8 @@ export class RunnableTest {
   }
 
   private step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult> {
-    if (this.running) {
-      const runnable = new RunnableTest(desc, this);
+    if (this.state === RunnableState.Running) {
+      const runnable = new RunnableTest(this.runner, desc, this);
       this.tests.push(runnable);
       if (this.interrupted) {
         runnable.interrupt(`From parent: ${this.interrupted}`, false);
@@ -304,6 +309,7 @@ export class RunnableTest {
     return {
       title: desc.title,
       type: "hidden",
+      stack: desc.stack,
     };
   }
 
@@ -318,23 +324,28 @@ export class RunnableTest {
 
   // Called by self or parent test
   interrupt(errorMsg: string, kill: boolean) {
-    if (this.exiting || this.finished) return;
+    if (
+      this.state === RunnableState.Exiting ||
+      this.state === RunnableState.Finished
+    )
+      return;
     if (this.killed) return;
     if (!kill && this.interrupted) return;
 
-    if (!this.started) {
+    if (this.state === RunnableState.NotStarted) {
       this.interrupted = errorMsg;
-      this.finished = {
+      this.finish({
         title: this.desc.title,
         type: "skipped",
         reason: errorMsg,
-      };
-    } else if (this.running) {
+        stack: this.desc.stack,
+      });
+    } else if (this.state === RunnableState.Running) {
       this.interrupted = errorMsg;
       this.deferred1?.resolve();
       this.tests.forEach(t => t.interrupt(`From parent: ${errorMsg}`, kill));
     } else if (kill) {
-      // If started && !running && !exiting && !finished, it is cleaning up
+      // this.state === RunnableTestState.Cleanup
       this.interrupted = errorMsg;
       this.deferred2?.resolve();
       this.tests.forEach(t => t.interrupt(`From parent: ${errorMsg}`, kill));
@@ -360,8 +371,9 @@ export class RunnableTest {
   }
 
   private finish(r: RunnableResult) {
-    this.running = false;
+    this.state = RunnableState.Finished;
     this.finished = r;
+    this.runner?.emitter.emit("testFinish", this.desc.title);
     if (r.type === "failed") {
       this.parent?.childFailed();
     }
@@ -369,18 +381,18 @@ export class RunnableTest {
   }
 
   private exec(): RunnableResult | Promise<RunnableResult> {
-    this.started = true;
-    this.running = true;
-
     const {
       parent,
-      desc: { title, fn, opts },
+      desc: { title, fn, opts, stack },
     } = this;
+
+    this.state = RunnableState.Running;
+    this.runner?.emitter.emit("testStart", title);
 
     const { runOnly, filter } = parent?.desc.opts ?? defaultOpts;
 
     if (!opts.if || (runOnly && !opts.only) || !filter(title)) {
-      return this.finish({ title, type: "hidden" });
+      return this.finish({ title, type: "hidden", stack });
     }
 
     if (opts.skip) {
@@ -388,6 +400,7 @@ export class RunnableTest {
         title,
         type: "skipped",
         reason: opts.skipReason,
+        stack,
       });
     }
 
@@ -396,6 +409,7 @@ export class RunnableTest {
         title,
         type: "todo",
         description: opts.todoDesc,
+        stack,
       });
     }
 
@@ -404,6 +418,7 @@ export class RunnableTest {
         title,
         type: "skipped",
         reason: SKIP_ABORTED.reason,
+        stack,
       });
     }
 
@@ -493,11 +508,11 @@ export class RunnableTest {
   }
 
   private async exit(returnValue: unknown): Promise<RunnableResult> {
-    this.running = false;
+    this.state = RunnableState.Cleanup;
     this.deferred2 = createDefer();
 
     const {
-      desc: { title, opts },
+      desc: { title, opts, stack },
       timeStart,
       timeoutId,
       cleanAbort,
@@ -505,6 +520,7 @@ export class RunnableTest {
       assertionCount,
       userErrors,
       nonUserErrors,
+      logs,
       tests,
       cleanups,
     } = this;
@@ -533,7 +549,7 @@ export class RunnableTest {
         } catch (error) {
           this.addError({
             error,
-            stack: this.desc.stack,
+            stack,
             user: true,
           });
         }
@@ -542,7 +558,7 @@ export class RunnableTest {
 
     const duration = Date.now() - timeStart;
 
-    this.exiting = true;
+    this.state = RunnableState.Exiting;
     this.deferred1 = null;
     this.deferred2 = null;
 
@@ -632,22 +648,26 @@ export class RunnableTest {
       ? this.finish({
           title,
           type: "passed",
+          logs,
           duration,
           slow,
           memoryUsage,
           random,
           children,
+          stack,
         })
       : this.finish({
           title,
           type: "failed",
           userErrors,
           nonUserErrors,
+          logs,
           duration,
           slow,
           memoryUsage,
           random,
           children,
+          stack,
         });
   }
 }

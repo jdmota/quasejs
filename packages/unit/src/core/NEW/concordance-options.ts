@@ -110,4 +110,4 @@ export const plain: Options = {
   theme: createTheme(false, fakeAnsiStyles),
 };
 
-export const concordanceOptions = plain;
+export const concordanceOptions = color;

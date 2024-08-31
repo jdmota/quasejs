@@ -1,5 +1,5 @@
 import encoding from "./encoding";
-import SourceMapExtractor from "./extractor";
+import { SourceMapExtractor } from "./extractor";
 import SourceMapExtractorBase, { SourceMapType } from "./extractor-base";
 import { SourceMapConsumer, SourceMapGenerator, Position } from "source-map";
 

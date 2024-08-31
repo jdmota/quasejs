@@ -1,6 +1,11 @@
 import EventEmitter from "node:events";
 import { nonNull, Optional } from "../../../../util/miscellaneous";
-import { RunnableTest, RunningContext, SimpleError } from "./runnable";
+import {
+  RunnableResult,
+  RunnableTest,
+  RunningContext,
+  SimpleError,
+} from "./runnable";
 import { RunnableCtx, RunnableDesc } from "./runnable-desc";
 import { Defer } from "../../../../util/deferred";
 
@@ -29,16 +34,27 @@ export type GlobalRunnerOptions = Readonly<{
     diff: boolean;
     codeFrame: boolean;
     stack: boolean;
-    stackIgnore: Optional<string | RegExp>;
+    stackIgnore: Optional<{
+      test(text: string): boolean;
+    }>;
   }>;
 }>;
 
 export type RunnerEvents = {
+  start: [];
+  finished: [RunnableResult];
+  testStart: [string];
+  testFinish: [string];
   uncaughtError: [SimpleError];
   matchesSnapshot: [any];
 };
 
-export class Runner extends RunnableTest {
+export interface IRunner {
+  readonly emitter: EventEmitter<RunnerEvents>;
+  executeTests(): Promise<RunnableResult>;
+}
+
+export class Runner extends RunnableTest implements IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
 
   constructor(
@@ -46,7 +62,11 @@ export class Runner extends RunnableTest {
     readonly runnerOpts: GlobalRunnerOptions,
     readonly runnerTests: { ref: RunnableDesc[] | null }
   ) {
-    super(new RunnableDesc("", ctx => this.fn(ctx), runnerCtx.opts, ""), null);
+    super(
+      null,
+      new RunnableDesc("", ctx => this.fn(ctx), runnerCtx.opts, ""),
+      null
+    );
     this.emitter = new EventEmitter();
   }
 
@@ -54,6 +74,14 @@ export class Runner extends RunnableTest {
     const tests = nonNull(this.runnerTests.ref);
     this.runnerTests.ref = null;
     await ctx.group(tests);
+  }
+
+  async executeTests() {
+    this.emitter.emit("start");
+    const result = await this.run();
+    if (result.type === "failed") process.exitCode = 1;
+    this.emitter.emit("finished", result);
+    return result;
   }
 
   uncaughtError(err: SimpleError) {

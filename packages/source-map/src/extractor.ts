@@ -5,7 +5,7 @@ import SourceMapExtractorBase, {
 } from "./extractor-base";
 import { GetFile } from "./readfile-fetch";
 
-export default class SourceMapExtractor extends SourceMapExtractorBase {
+export class SourceMapExtractor extends SourceMapExtractorBase {
   private fileGetter: GetFile;
   private mapRequest: Map<string, Promise<SourceMapInfoWithMap | null>>;
 

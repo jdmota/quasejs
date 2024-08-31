@@ -5,7 +5,7 @@ import {
   joinSourceMaps,
   SourceMapExtractor,
   SourceMapExtractorBase,
-} from "../src";
+} from "../src/index";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 

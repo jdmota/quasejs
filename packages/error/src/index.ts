@@ -1,5 +1,6 @@
 import stackParser from "error-stack-parser";
 import { slash, prettify } from "../../util/path-url";
+import { type SourceMapExtractor } from "../../source-map/src/extractor";
 
 export const ignoreStackTraceRe =
   /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
@@ -7,7 +8,7 @@ export const ignoreFileRe =
   /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|node:[^()\s]+|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
 type Opts = Readonly<{
-  extractor?: any;
+  extractor?: SourceMapExtractor;
   ignore?:
     | {
         test(text: string): boolean;
@@ -23,6 +24,15 @@ function excludeFramesWithoutFilename(
 ): v is StackFrame {
   return !!v.fileName;
 }
+
+export type BeautifiedStackLine = {
+  textLine: string;
+  file: string | null;
+  code: string | null;
+  name: string | null;
+  line: number | null;
+  column: number | null;
+};
 
 export async function beautify(originalStack: string = "", options: Opts = {}) {
   const extractor = options && options.extractor;
@@ -58,29 +68,29 @@ export async function beautify(originalStack: string = "", options: Opts = {}) {
 
   const promises = frames.map(
     async ({ fileName, functionName, args, lineNumber, columnNumber }) => {
-      const stackLine = {
+      const stackLine: BeautifiedStackLine = {
         textLine: "",
         file: fileName,
         code: null,
-        name: functionName,
-        line: lineNumber,
-        column: columnNumber,
+        name: functionName ?? null,
+        line: lineNumber ?? null,
+        column: columnNumber ?? null,
       };
 
-      if (extractor) {
+      if (extractor && stackLine.line && stackLine.column) {
         try {
-          const pos = await extractor.getOriginalLocation(stackLine.file, {
+          const pos = await extractor.getOriginalLocation(fileName, {
             line: stackLine.line,
             column: stackLine.column,
           });
-          if (pos.line == null) {
-            stackLine.code = pos.code;
-          } else {
+          if ("line" in pos) {
             stackLine.file = pos.originalFile;
             stackLine.code = pos.originalCode;
             stackLine.name = pos.name || stackLine.name;
             stackLine.line = pos.line;
             stackLine.column = pos.column;
+          } else {
+            stackLine.code = pos.code;
           }
         } catch (e) {
           // Ignore
@@ -97,7 +107,7 @@ export async function beautify(originalStack: string = "", options: Opts = {}) {
   const cleaned = await Promise.all(promises);
   const cleanedText = cleaned.map(
     ({ textLine, file, line, column }) =>
-      `${textLine} (${prettify(file)}:${line}:${column})`
+      `${textLine} (${file ? prettify(file) : "<unknown file>"}:${line}:${column})`
   );
 
   const title =

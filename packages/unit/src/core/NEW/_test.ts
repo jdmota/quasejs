@@ -1,9 +1,16 @@
 import { EventEmitter } from "node:events";
 import { defaultOpts } from "./runnable-desc";
 import { t, test, runner, _setup } from "./index";
-import { inspect } from "util";
+import { Reporter } from "./reporter";
 
-_setup(defaultOpts, {}, defaultOpts);
+_setup(
+  defaultOpts,
+  {
+    verbose: true,
+    errorOpts: { diff: true, stack: true, codeFrame: true, stackIgnore: null },
+  },
+  defaultOpts
+);
 
 test("test 1", async ctx => {
   await ctx.step(
@@ -52,11 +59,9 @@ test("test 6", ctx => {
   });
 });
 
-runner.emitter.on("uncaughtError", err => {
-  console.log("uncaughtError", err);
-});
+const reporter = new Reporter(runner);
 
-Promise.resolve(runner.run()).then(r => {
-  console.log(inspect(r, { depth: 10 }));
+Promise.resolve(runner.executeTests()).then(r => {
+  // console.log(inspect(r, { depth: 10 }));
   clearInterval(intervalId);
 });
