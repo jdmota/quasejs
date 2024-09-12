@@ -1,14 +1,11 @@
 import EventEmitter from "node:events";
-import { nonNull, Optional } from "../../../../util/miscellaneous";
+import { type Optional } from "../../../../util/miscellaneous";
 import { getStack } from "../../../../error/src/index";
-import {
-  RunnableResult,
-  RunnableTest,
-  RunningContext,
-  SimpleError,
-} from "./runnable";
+import { RunnableResult, RunnableTest, RunningContext } from "./runnable";
 import { RunnableCtx, RunnableDesc } from "./runnable-desc";
 import { Defer } from "../../../../util/deferred";
+import { prettify } from "../../../../util/path-url";
+import { SimpleError } from "./errors";
 
 export type GlobalRunnerOptions = Readonly<{
   ["--"]?: string[];
@@ -54,6 +51,8 @@ export interface IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
   readonly runnerGlobalOpts: GlobalRunnerOptions;
   executeTests(files: readonly string[]): void;
+  sigint(force: boolean): void;
+  killForks(): Promise<void>;
 }
 
 export class Runner extends RunnableTest implements IRunner {
@@ -75,19 +74,35 @@ export class Runner extends RunnableTest implements IRunner {
   }
 
   private async fn(ctx: RunningContext) {
+    const testsPerFile = [];
+
     for (const file of this.files) {
+      const tests: RunnableDesc[] = (this.runnerTests.ref = []);
       await import(file);
+      this.runnerTests.ref = null;
+      testsPerFile.push([file, tests] as const);
     }
-    const tests = nonNull(this.runnerTests.ref);
-    this.runnerTests.ref = null;
-    await ctx.group(tests);
+
+    for (const [file, tests] of testsPerFile) {
+      await ctx.step(
+        new RunnableDesc(
+          prettify(file),
+          async ctx => {
+            // Random option will be applied to each group (i.e. file),
+            // giving consistent results!
+            await ctx.group(tests);
+          },
+          this.desc.opts,
+          this.desc.stack
+        )
+      );
+    }
   }
 
   async executeTests(files: readonly string[]) {
     this.files = files;
     this.emitter.emit("started", { amount: 1, total: 1 });
     const result = await this.run();
-    if (result.type === "failed") process.exitCode = 1;
     this.emitter.emit("finished", result);
   }
 
@@ -108,4 +123,6 @@ export class Runner extends RunnableTest implements IRunner {
       deferred,
     });
   }
+
+  async killForks() {}
 }

@@ -91,7 +91,10 @@ export function prettifyUrl(
   pathname = opts && opts.lastSlash ? pathname : removeLastSlash(pathname);
   origin = origin === LOCATION.origin ? "" : origin;
   if (protocol === "file:") {
-    return "file://" + pathname + search + hash;
+    if (search || hash) {
+      return "file://" + pathname + search + hash;
+    }
+    return prettifyPath(pathname.slice(1)); // Remove the third slash
   }
   return origin + pathname + search + hash;
 }

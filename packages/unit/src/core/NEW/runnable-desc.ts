@@ -3,8 +3,6 @@ import { Optional } from "../../../../util/miscellaneous";
 import { is32bitInteger } from "./random";
 import type { RunningContext } from "./runnable";
 
-const TRUE_FN = () => true;
-
 export type RunnableOpts = Readonly<{
   strict: boolean;
   runOnly: boolean;

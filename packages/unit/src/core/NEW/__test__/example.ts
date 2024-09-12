@@ -18,7 +18,7 @@ test("test 1", async ctx => {
 });
 
 test("test 2", () => {
-  setTimeout(() => {}, 3000);
+  setTimeout(() => {}, 5000);
 });
 
 t.skip(true, "cause").test("test 3", async ctx => {

@@ -1,3 +1,4 @@
+import { never } from "../../../../util/miscellaneous";
 import { ChildProcessParent, WorkerParent } from "../../../../util/workers";
 import { runner, _setup } from "./index";
 import { RunnableOpts } from "./runnable-desc";
@@ -13,7 +14,8 @@ export type FromParentToFork =
   | Readonly<{
       type: "start";
       files: readonly string[];
-    }>;
+    }>
+  | Readonly<{ type: "sigint"; force: boolean }>;
 
 export type FromForkToParent = {
   [K in keyof RunnerEvents]: Readonly<{
@@ -42,7 +44,16 @@ if (parent) {
       case "start":
         start(msg.files);
         break;
+      case "sigint":
+        sigint(msg.force);
+        break;
+      default:
+        never(msg);
     }
+  });
+
+  process.on("SIGINT", () => {
+    // Catch
   });
 }
 
@@ -74,7 +85,6 @@ export function listen(callback: (message: FromForkToParent) => void) {
     setTimeout(() => {
       parent?.disconnect();
     });
-    // TODO when to disconnect? there might be uncaught errors later...
   });
 
   runner.emitter.on("testStart", value => {
@@ -98,4 +108,12 @@ export function listen(callback: (message: FromForkToParent) => void) {
   });
 }
 
-export function terminate() {}
+export function sigint(force: boolean) {
+  runner.sigint(force);
+}
+
+export function terminate(signal?: NodeJS.Signals) {
+  return true;
+}
+
+export function justForget() {}

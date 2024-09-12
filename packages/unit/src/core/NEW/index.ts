@@ -2,7 +2,7 @@ import { RunningContext } from "./runnable";
 import { RunnableCtx, RunnableDesc, RunnableOpts } from "./runnable-desc";
 import { Runner, GlobalRunnerOptions } from "./runner";
 
-const runnerTests: { ref: RunnableDesc[] | null } = { ref: [] };
+const runnerTests: { ref: RunnableDesc[] | null } = { ref: null };
 
 export let runner: Runner;
 

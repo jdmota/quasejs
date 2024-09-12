@@ -31,7 +31,7 @@ export interface SimpleFork<
   Receive extends Serializable,
 > extends EventEmitter<ForkEvents<Receive>> {
   send(message: Send): void;
-  terminate(): boolean;
+  terminate(signal?: NodeJS.Signals): boolean;
   justForget(): void;
 }
 
@@ -153,7 +153,7 @@ export class ChildProcessFork<
     }
   }
 
-  terminate(signal?: NodeJS.Signals | number) {
+  terminate(signal?: NodeJS.Signals) {
     if (this.state === WorkerState.SHUT_DOWN) {
       return true;
     }
@@ -169,6 +169,7 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
   private readonly worker: Worker;
   private state: WorkerState;
   private errors: Error[] = [];
+  private signal: NodeJS.Signals | null;
 
   constructor(
     file: string,
@@ -178,6 +179,7 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
   ) {
     super();
     this.state = WorkerState.RUNNING;
+    this.signal = null;
 
     this.worker = new Worker(file, {
       argv: args,
@@ -202,7 +204,7 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
 
     this.worker.on("exit", code => {
       this.cleanup();
-      this.shutdown(code, null);
+      this.shutdown(this.signal ? null : code, this.signal);
     });
   }
 
@@ -250,10 +252,11 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
     }
   }
 
-  terminate() {
+  terminate(signal?: NodeJS.Signals) {
     if (this.state === WorkerState.SHUT_DOWN) {
       return true;
     }
+    this.signal = signal ?? null;
     this.cleanup();
     this.worker.terminate();
     return true;

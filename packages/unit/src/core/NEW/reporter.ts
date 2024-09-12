@@ -7,10 +7,11 @@ import { never } from "../../../../util/miscellaneous";
 import { BeautifiedStackLine, beautify } from "../../../../error/src/index";
 import { SourceMapExtractor } from "../../../../source-map/src/extractor";
 import { IRunner } from "./runner";
-import { type RunnableResult, type SimpleError } from "./runnable";
+import { type RunnableResult } from "./runnable";
+import { type SimpleError } from "./errors";
 import { concordanceOptions } from "./concordance-options";
 import { SKIP_ABORTED, SKIP_BAILED, SKIP_INTERRUPTED } from "./constants";
-import { inspect } from "util";
+import { SnapshotStats } from "./snapshots";
 
 const eol = turbocolor.reset("\n");
 
@@ -34,17 +35,19 @@ export class Reporter {
   private spinner: Ora;
   private ended: boolean;
   private didShowMoreErrors: boolean;
-  private interrupted: boolean;
   private runningTests: Set<string>;
   private otherErrors: SimpleError[];
 
   constructor(private readonly runner: IRunner) {
-    this.spinner = ora("Waiting...");
+    this.spinner = ora({
+      text: "Waiting...",
+      hideCursor: false, // https://github.com/sindresorhus/ora/pull/80
+    });
     this.ended = false;
     this.didShowMoreErrors = false;
-    this.interrupted = false;
     this.runningTests = new Set();
     this.otherErrors = [];
+    this.onSigint = this.onSigint.bind(this);
 
     runner.emitter.on("uncaughtError", err => {
       this.otherErrors.push(err);
@@ -54,8 +57,6 @@ export class Reporter {
     });
 
     runner.emitter.on("started", ({ amount, total }) => {
-      // TODO this.showConcurrency(runner);
-      // TODO this.showDebuggers(runner);
       this.runnerStarted(amount, total);
     });
 
@@ -63,10 +64,6 @@ export class Reporter {
       // console.log(inspect(result, { depth: 100 }));
       await this.runnerFinished(result);
       await this.logOtherErrors();
-
-      if (this.interrupted) {
-        log(`\n${turbocolor.bold.red("Interrupted.")}\n\n`);
-      }
 
       if (process.exitCode) {
         log(turbocolor.bold.red("Exit code: " + process.exitCode));
@@ -92,14 +89,41 @@ export class Reporter {
       }
     });
 
-    runner.emitter.on("sigint", _try => {
-      this.interrupted = true;
-      this.spinner.stop();
-      log(`\nStopping tests... (${_try} try)\n`);
+    process.on("SIGINT", this.onSigint);
+
+    process.on("beforeExit", () => {
+      this.logOtherErrors();
     });
   }
 
-  showOptions(options: TestRunnerOptions) {
+  private sigintTry = 0;
+  onSigint() {
+    this.sigintTry++;
+    log(
+      `\n${[
+        (this.sigintTry === 1 ? "--> " : "    ") +
+          "1 sigint: interrupt tests but run cleanups",
+        (this.sigintTry === 2 ? "--> " : "    ") +
+          "2 sigints: interrupt tests forcefully",
+        (this.sigintTry === 3 ? "--> " : "    ") + "3 sigints: kill forks",
+      ].join("\n")}\n`
+    );
+    if (this.sigintTry === 1) {
+      this.runner.sigint(false);
+    } else if (this.sigintTry === 2) {
+      this.runner.sigint(true);
+    } else if (this.sigintTry === 3) {
+      process.off("SIGINT", this.onSigint);
+      this.runner.killForks().then(async () => {
+        if (this.runner.runnerGlobalOpts.worker === "main") {
+          await this.logOtherErrors();
+          process.exit(1);
+        }
+      });
+    }
+  }
+
+  /*showOptions(options: TestRunnerOptions) {
     logEol();
     log(turbocolor.bold.green("Patterns: ") + options.files.join(" ") + "\n");
     if (options.ignore.length > 0) {
@@ -110,19 +134,14 @@ export class Reporter {
       );
     }
     logEol();
-  }
+  }*/
 
   showFilesCount(count: number, time: number) {
     log(`${turbocolor.bold.green(`Found ${count} files`)} in ${time} ms\n`);
     logEol();
   }
 
-  showConcurrency() {
-    log(turbocolor.bold.green("Child processes: ") + this.forks.length + "\n");
-    logEol();
-  }
-
-  showDebuggers() {
+  /*showDebuggers() {
     if (!this.debuggersPromises.length) {
       return;
     }
@@ -145,7 +164,7 @@ export class Reporter {
       }
       logEol();
     });
-  }
+  }*/
 
   static fatalError(error: string) {
     process.exitCode = 1;
@@ -155,6 +174,18 @@ export class Reporter {
   }
 
   runnerStarted(amount: number, total: number) {
+    // TODO this.showDebuggers(runner);
+    log(
+      "\n" +
+        turbocolor.bold.green(
+          this.runner.runnerGlobalOpts.worker === "main"
+            ? "Using main thread"
+            : this.runner.runnerGlobalOpts.worker === "workers"
+              ? `Using ${total} worker(s)`
+              : `Using ${total} process(es)`
+        ) +
+        "\n\n"
+    );
     this.spinner.start();
     this.spinner.text = "Running tests...";
   }
@@ -162,104 +193,63 @@ export class Reporter {
   async runnerFinished(result: RunnableResult) {
     this.spinner.stop();
     await this.logResult("", result);
-    this.ended = true;
-    return;
 
-    setTimeout(async () => {
-      const notStartedForks = t.notStartedForks;
-      const hasPending = t.pendingTests && t.pendingTests.size > 0;
+    let lines;
 
-      // If we had pending tests, don't trust the stats
-      if (notStartedForks.length > 0 || hasPending) {
-        if (notStartedForks.length > 0) {
-          log(
-            `\n${turbocolor.bold.red(
-              `${notStartedForks.length} child ${
-                notStartedForks.length === 1 ? "process" : "processes"
-              }` + ` did not emit "runStart" event.`
-            )}\n`
-          );
-          log(`\nPossible causes:\n`);
-
-          for (const { didCrash, notImportedFiles } of notStartedForks) {
-            if (didCrash || notImportedFiles.size === 0) {
-              log(`  - Some error during setup. See below.\n`);
-            } else {
-              for (const file of notImportedFiles) {
-                log(`  - Infinite loop or error in ${prettify(file)}\n`);
-                break; // Only show the first one, since files are imported by order
-              }
-            }
-          }
-        }
-
-        if (hasPending) {
-          log(
-            `\n${turbocolor.bold.red(
-              `${t.pendingTests.size} Pending tests:`
-            )}\n`
-          );
-
-          for (const stack of t.pendingTests) {
-            await this.logDefault(stack);
-          }
-        }
+    if (result.type === "hidden") {
+      lines = [turbocolor.red("\n  Hidden test stute.")];
+    } else if (result.type === "todo") {
+      lines = [turbocolor.red("\n  Todo test stute.")];
+    } else if (result.type === "skipped") {
+      lines = [turbocolor.red("\n  Skipped test stute.")];
+    } else {
+      if (result.children.length === 0) {
+        lines = [turbocolor.red("\n  The total number of tests was 0.")];
       } else {
-        const { passed, skipped, todo, failed, total } = t.testCounts;
-
-        let lines;
-
-        if (total === 0) {
-          lines = [turbocolor.red("\n  The total number of tests was 0.")];
-        } else {
-          lines = [
-            passed > 0 ? "\n  " + turbocolor.green(passed + " passed") : "",
-            skipped > 0 ? "\n  " + turbocolor.yellow(skipped + " skipped") : "",
-            todo > 0 ? "\n  " + turbocolor.blue(todo + " todo") : "",
-            failed > 0 ? "\n  " + turbocolor.red(failed + " failed") : "",
-            "\n\n  " + turbocolor.gray(t.runtime + " ms"),
-            t.onlyCount
-              ? `\n\n  The '.only' modifier was used ${t.onlyCount} time${
-                  t.onlyCount === 1 ? "" : "s"
-                }.`
-              : "",
-          ].filter(Boolean);
+        const counts = {
+          passed: 0,
+          skipped: 0,
+          todo: 0,
+          failed: 0,
+        };
+        for (const test of result.children) {
+          if (test.type !== "hidden") counts[test.type]++;
         }
-
-        if (this.runner.options.only) {
-          lines.push("\n  --only option was used.");
-        }
-
-        if (this.runner.options.bail) {
-          lines.push("\n  --bail option was used.");
-        }
-
-        if (t.snapshotStats) {
-          this.showSnapshotStats(lines, t.snapshotStats);
-        }
-
-        process.stdout.write(lines.join("") + "\n");
+        const { passed, skipped, todo, failed } = counts;
+        lines = [
+          passed > 0 ? "\n  " + turbocolor.green(passed + " passed") : "",
+          skipped > 0 ? "\n  " + turbocolor.yellow(skipped + " skipped") : "",
+          todo > 0 ? "\n  " + turbocolor.blue(todo + " todo") : "",
+          failed > 0 ? "\n  " + turbocolor.red(failed + " failed") : "",
+          "\n\n  " + turbocolor.gray(result.duration + " ms"),
+        ].filter(Boolean);
       }
 
-      log(`\n${turbocolor.gray(`[${new Date().toLocaleTimeString()}]`)}\n\n`);
-
-      this.ended = true;
-
-      const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
-
-      if (debuggersWaitingPromises.length) {
-        Promise.race(debuggersWaitingPromises).then(() => {
-          log(
-            turbocolor.bold.yellow(
-              "At least 1 of " +
-                debuggersWaitingPromises.length +
-                " processes are waiting for the debugger to disconnect...\n"
-            )
-          );
-          logEol();
-        });
+      if (result.snapshots) {
+        this.showSnapshotStats(lines, result.snapshots);
       }
-    });
+    }
+
+    process.stdout.write(lines.join("") + "\n");
+
+    log(`\n${turbocolor.gray(`[${new Date().toLocaleTimeString()}]`)}\n\n`);
+
+    this.ended = true;
+
+    /*const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
+
+    if (debuggersWaitingPromises.length) {
+      Promise.race(debuggersWaitingPromises).then(() => {
+        log(
+          turbocolor.bold.yellow(
+            "At least 1 of " +
+              debuggersWaitingPromises.length +
+              " processes are waiting for the debugger to disconnect...\n"
+          )
+        );
+        logEol();
+      });
+    }*/
   }
 
   showSnapshotStats(
@@ -284,6 +274,12 @@ export class Reporter {
   }
 
   async beautifyStack(stack: string) {
+    if (!stack) {
+      return {
+        stack: "",
+        source: null,
+      };
+    }
     return beautify(stack, {
       extractor: new SourceMapExtractor(),
       ignore: this.runner.runnerGlobalOpts.errorOpts.stackIgnore,
@@ -318,7 +314,7 @@ export class Reporter {
     if (otherErrors.length > 0) {
       if (!this.didShowMoreErrors) {
         this.didShowMoreErrors = true;
-        log(`\n${turbocolor.bold("More errors:")}\n`);
+        log(`\n${turbocolor.red.bold("More errors:")}\n`);
       }
 
       for (let i = 0; i < otherErrors.length; i++) {
@@ -328,14 +324,8 @@ export class Reporter {
   }
 
   async logDefault(defaultStack: string) {
-    let { source } = await this.beautifyStack(defaultStack);
-    let text = "\n";
-
-    if (source) {
-      text += this.showSource(source);
-    }
-
-    log(text, 4);
+    const { source } = await this.beautifyStack(defaultStack);
+    log("\n" + this.showSource(source), 4);
   }
 
   async logError(error: SimpleError) {

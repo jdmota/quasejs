@@ -1,5 +1,4 @@
 import { inspect } from "node:util";
-import concordance from "concordance";
 import type { JsonValue } from "type-fest";
 import { getStack } from "../../../../error/src/index";
 import { createDefer, Defer } from "../../../../util/deferred";
@@ -8,7 +7,6 @@ import { GlobalsSanitizer } from "./sanitizers/globals-sanitizer";
 import { defaultOpts, RunnableDesc } from "./runnable-desc";
 import { Randomizer, randomizer } from "./random";
 import { Runner } from "./runner";
-import { concordanceOptions } from "./concordance-options";
 import { runWithCtx } from "./sanitizers/context-tracker";
 import { enableUncaughtErrorsTracker } from "./sanitizers/uncaught-errors";
 import {
@@ -18,63 +16,14 @@ import {
 import { enableExitsTracker } from "./sanitizers/process-sanitizer";
 import { enableWarningsTracker } from "./sanitizers/warnings-sanitizer";
 import { SKIP_ABORTED, SKIP_BAILED } from "./constants";
-
-export type ErrorOpts = Readonly<{
-  error: unknown;
-  stack: string;
-  user: boolean;
-  uncaught?: boolean;
-}>;
-
-export type SimpleError = Readonly<{
-  name: string;
-  message: string;
-  stack: string;
-  diff?: string;
-  user: boolean;
-  uncaught: boolean;
-}>;
+import { SnapshotStats } from "./snapshots";
+import { ErrorOpts, processError, SimpleError } from "./errors";
 
 function filter(pattern: Optional<string>, title: string) {
   if (pattern == null) return true;
   if (pattern.length > 2 && pattern.startsWith("/") && pattern.endsWith("/"))
     return new RegExp(pattern).test(title);
   return title.includes(pattern);
-}
-
-export function processError(opts: ErrorOpts): SimpleError {
-  const { error, stack, user, uncaught } = opts;
-  if (error != null && typeof error === "object") {
-    let diff = undefined;
-    if ("actual" in error && "expected" in error) {
-      diff = concordance.diff(error.actual, error.expected, concordanceOptions);
-    }
-    const err = error as Record<string, unknown>;
-    return {
-      name: (err.name ?? "Error") + "",
-      message: (err.message ?? "") + "",
-      stack: (err.stack ?? stack) + "",
-      diff,
-      user,
-      uncaught: uncaught ?? false,
-    };
-  }
-  if (typeof error === "string") {
-    return {
-      name: "Error",
-      message: error,
-      stack,
-      user,
-      uncaught: uncaught ?? false,
-    };
-  }
-  return {
-    name: "UnknownError",
-    message: error + "",
-    stack,
-    user,
-    uncaught: uncaught ?? false,
-  };
 }
 
 export type RunnableResult =
@@ -86,6 +35,7 @@ export type RunnableResult =
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
+      snapshots?: SnapshotStats;
       children: readonly RunnableResult[];
       stack: string;
       userMetadata: JsonValue | undefined;
@@ -100,6 +50,7 @@ export type RunnableResult =
       slow: boolean;
       memoryUsage: number | null;
       random: string | null;
+      snapshots?: SnapshotStats;
       children: readonly RunnableResult[];
       stack: string;
       userMetadata: JsonValue | undefined;
@@ -281,7 +232,7 @@ export class RunnableTest {
 
     let group = [];
     for (let i = 0; i < descs.length; i++) {
-      group.push(descs[i]);
+      group.push(this.createRunnableStep(descs[i]));
       if (group.length === groupSize) {
         groups.push(group);
         group = [];
@@ -296,27 +247,33 @@ export class RunnableTest {
     return results.flat();
   }
 
-  private async runGroup(descs: readonly RunnableDesc[]) {
+  private async runGroup(tests: readonly RunnableTest[]) {
     const results = [];
-    for (const desc of descs) {
-      results.push(await this.step(desc));
+    for (const runnable of tests) {
+      results.push(await runnable.run());
     }
     return results;
   }
 
+  // @pre: this.state === RunnableState.Running
+  private createRunnableStep(desc: RunnableDesc) {
+    const runnable = new RunnableTest(this.runner, desc, this);
+    this.tests.push(runnable);
+    if (this.interrupted) {
+      runnable.interrupt(`From parent: ${this.interrupted}`, false);
+    }
+    return runnable;
+  }
+
   private step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult> {
     if (this.state === RunnableState.Running) {
-      const runnable = new RunnableTest(this.runner, desc, this);
-      this.tests.push(runnable);
-      if (this.interrupted) {
-        runnable.interrupt(`From parent: ${this.interrupted}`, false);
-      }
+      const runnable = this.createRunnableStep(desc);
       return runnable.run();
     }
     this.addCtxError("Cannot run a child test of a finished test");
     return {
-      title: desc.title,
       type: "hidden",
+      title: desc.title,
       stack: desc.stack,
       userMetadata: undefined,
     };
@@ -344,8 +301,8 @@ export class RunnableTest {
     if (this.state === RunnableState.NotStarted) {
       this.interrupted = errorMsg;
       this.finish({
-        title: this.desc.title,
         type: "skipped",
+        title: this.desc.title,
         reason: errorMsg,
         stack: this.desc.stack,
         userMetadata: this.userMetadata,
@@ -367,8 +324,8 @@ export class RunnableTest {
   }
 
   // Called by parent test
-  kill() {
-    this.interrupt("Forced shutdown", true);
+  sigint(force: boolean) {
+    this.interrupt(force ? "Forced shutdown" : "Interrupted", force);
   }
 
   private job: Promise<RunnableResult> | null = null;
@@ -403,8 +360,8 @@ export class RunnableTest {
 
     if (!opts.if || (runOnly && !opts.only) || !filter(pattern, title)) {
       return this.finish({
-        title,
         type: "hidden",
+        title,
         stack,
         userMetadata: this.userMetadata,
       });
@@ -412,8 +369,8 @@ export class RunnableTest {
 
     if (opts.skip) {
       return this.finish({
-        title,
         type: "skipped",
+        title,
         reason: opts.skipReason,
         stack,
         userMetadata: this.userMetadata,
@@ -422,8 +379,8 @@ export class RunnableTest {
 
     if (opts.todo) {
       return this.finish({
-        title,
         type: "todo",
+        title,
         description: opts.todoDesc,
         stack,
         userMetadata: this.userMetadata,
@@ -432,8 +389,8 @@ export class RunnableTest {
 
     if (opts.signal?.aborted) {
       return this.finish({
-        title,
         type: "skipped",
+        title,
         reason: SKIP_ABORTED.reason,
         stack,
         userMetadata: this.userMetadata,
