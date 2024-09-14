@@ -100,14 +100,12 @@ function createTheme(withColor: boolean, ansi: typeof Styles) {
   return theme;
 }
 
-export const color: Options = {
+export const coloredConcordanceOptions: Options = {
   maxDepth: 3,
   theme: createTheme(true, turbocolor.Styles),
 };
 
-export const plain: Options = {
+export const plainConcordanceOptions: Options = {
   maxDepth: 3,
   theme: createTheme(false, fakeAnsiStyles),
 };
-
-export const concordanceOptions = color;

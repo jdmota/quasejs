@@ -9,9 +9,10 @@ import { SourceMapExtractor } from "../../../../source-map/src/extractor";
 import { IRunner } from "./runner";
 import { type RunnableResult } from "./runnable";
 import { type SimpleError } from "./errors";
-import { concordanceOptions } from "./concordance-options";
+import { coloredConcordanceOptions } from "./concordance-options";
 import { SKIP_ABORTED, SKIP_BAILED, SKIP_INTERRUPTED } from "./constants";
 import { SnapshotStats } from "./snapshots";
+import { exit } from "./sanitizers/process-sanitizer";
 
 const eol = turbocolor.reset("\n");
 
@@ -117,7 +118,7 @@ export class Reporter {
       this.runner.killForks().then(async () => {
         if (this.runner.runnerGlobalOpts.worker === "main") {
           await this.logOtherErrors();
-          process.exit(1);
+          exit(1);
         }
       });
     }
@@ -192,7 +193,7 @@ export class Reporter {
 
   async runnerFinished(result: RunnableResult) {
     this.spinner.stop();
-    await this.logResult("", result);
+    await this.logResult(result);
 
     let lines;
 
@@ -308,6 +309,8 @@ export class Reporter {
   }
 
   async logOtherErrors() {
+    this.spinner.stop();
+
     const otherErrors = this.otherErrors;
     this.otherErrors = [];
 
@@ -343,7 +346,7 @@ export class Reporter {
     text += this.showSource(source);
 
     if (showDiff && error.diff) {
-      const { diffGutters } = concordanceOptions.theme;
+      const { diffGutters } = coloredConcordanceOptions.theme;
       text += `${diffGutters.actual}Actual ${diffGutters.expected}Expected\n\n${indentString(error.diff)}\n\n`;
     }
 
@@ -354,7 +357,7 @@ export class Reporter {
     log(text, 4);
   }
 
-  async logResult(parentTitle: string, result: RunnableResult) {
+  async logResult(result: RunnableResult) {
     if (result.type === "hidden") return;
     if (!this.runner.runnerGlobalOpts.verbose) {
       switch (result.type) {
@@ -380,10 +383,6 @@ export class Reporter {
           never(result);
       }
     }
-
-    const title = parentTitle
-      ? `${parentTitle} > ${result.title}`
-      : result.title;
 
     const statusText =
       result.type === "failed"
@@ -420,7 +419,7 @@ export class Reporter {
         ? result.children
         : undefined;
 
-    log(`\n${turbocolor.bold(title)}\n`);
+    log(`\n${turbocolor.bold(result.title)}\n`);
 
     if (slow || duration) {
       log(
@@ -450,7 +449,7 @@ export class Reporter {
     }
 
     if (logs.length) {
-      log("Logs:\n\n", 4);
+      log("\nLogs:\n\n", 4);
 
       for (const line of logs) {
         const logLines = indentString(turbocolor.gray(line), 6);
@@ -475,7 +474,7 @@ export class Reporter {
         logEol();
       }
       for (const child of children) {
-        await this.logResult(title, child);
+        await this.logResult(child);
       }
     }
   }

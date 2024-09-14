@@ -160,6 +160,8 @@ export function locToString(loc: Loc) {
   return "";
 }
 
+// TODO use https://nodejs.org/en/blog/release/v22.9.0#new-api-to-retrieve-execution-stack-trace
+
 export function getCallSites(traceLimit: number = 20) {
   const target: { stack: readonly NodeJS.CallSite[] } = {} as any;
 

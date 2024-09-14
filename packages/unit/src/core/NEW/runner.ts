@@ -3,9 +3,10 @@ import { type Optional } from "../../../../util/miscellaneous";
 import { getStack } from "../../../../error/src/index";
 import { RunnableResult, RunnableTest, RunningContext } from "./runnable";
 import { RunnableCtx, RunnableDesc } from "./runnable-desc";
-import { Defer } from "../../../../util/deferred";
 import { prettify } from "../../../../util/path-url";
 import { SimpleError } from "./errors";
+import { SnapshotsOfFile } from "./snapshots";
+import { pathToFileURL } from "node:url";
 
 export type GlobalRunnerOptions = Readonly<{
   ["--"]?: string[];
@@ -66,7 +67,7 @@ export class Runner extends RunnableTest implements IRunner {
   ) {
     super(
       null,
-      new RunnableDesc("", ctx => this.fn(ctx), runnerCtx.opts, getStack(1)),
+      new RunnableDesc("", ctx => this.fn(ctx), runnerCtx.opts, getStack(2)),
       null
     );
     this.emitter = new EventEmitter();
@@ -78,12 +79,13 @@ export class Runner extends RunnableTest implements IRunner {
 
     for (const file of this.files) {
       const tests: RunnableDesc[] = (this.runnerTests.ref = []);
-      await import(file);
+      await import(pathToFileURL(file).href);
       this.runnerTests.ref = null;
       testsPerFile.push([file, tests] as const);
     }
 
     for (const [file, tests] of testsPerFile) {
+      const snap = await SnapshotsOfFile.decode(file);
       await ctx.step(
         new RunnableDesc(
           prettify(file),
@@ -93,9 +95,15 @@ export class Runner extends RunnableTest implements IRunner {
             await ctx.group(tests);
           },
           this.desc.opts,
-          this.desc.stack
+          `Error\n    at <anonymous> (${file}:1:1)`,
+          snap
         )
       );
+      const { stats, warnings } = await snap.save();
+      if (stats.total > 0) ctx.log(`Snapshot stats: ${JSON.stringify(stats)}`);
+      if (warnings.length > 0)
+        ctx.log(`Snapshot warnings: ${JSON.stringify(warnings)}`);
+      // TODO improve
     }
   }
 
@@ -108,20 +116,6 @@ export class Runner extends RunnableTest implements IRunner {
 
   uncaughtError(err: SimpleError) {
     this.emitter.emit("uncaughtError", err);
-  }
-
-  matchesSnapshot(
-    something: unknown,
-    stack: string,
-    key: string,
-    deferred: Defer<void>
-  ) {
-    this.emitter.emit("matchesSnapshot", {
-      something,
-      stack,
-      key,
-      deferred,
-    });
   }
 
   async killForks() {}

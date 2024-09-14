@@ -155,7 +155,7 @@ export class RunnerPool implements IRunner {
               nonUserErrors.push(...result.nonUserErrors);
             }
 
-            if (children.length === this.forks.length) {
+            if (this.forks.every(f => f.finished)) {
               const slow = this.runnerOpts.slow
                 ? duration >= this.runnerOpts.slow
                 : false;

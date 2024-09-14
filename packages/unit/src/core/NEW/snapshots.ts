@@ -3,71 +3,73 @@ import path from "path";
 import _writeFileAtomic from "write-file-atomic";
 import crypto from "crypto";
 import zlib from "zlib";
+import { promisify } from "util";
 import concordance, {
   type Options as ConcordanceOpts,
   type Descriptor,
 } from "concordance";
-import { concordanceOptions } from "./concordance-options";
+import {
+  coloredConcordanceOptions,
+  plainConcordanceOptions,
+} from "./concordance-options";
 import { prettify, prettifyPath } from "../../../../util/path-url";
+import { UUIDMap } from "../../../../util/data-structures/uuid-map";
 
-// TODO https://github.com/avajs/ava/pull/3323/files
-// TODO https://sindresorhus.com/blog/goodbye-nodejs-buffer
+const zip = promisify(zlib.gzip);
+const unzip = promisify(zlib.gunzip);
 
 export type SnapshotStats = {
   added: number;
   updated: number;
   removed: number;
+  //
+  missing: number;
+  missmatch: number;
   obsolete: number;
+  //
+  total: number;
 };
 
-function writeFileAtomic(filename: string, data: string | Buffer) {
-  return new Promise<void>((resolve, reject) => {
-    _writeFileAtomic(filename, data, {}, (err: Error | undefined) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
+export type SnapshotResult =
+  | Readonly<{
+      type: "ok";
+    }>
+  | Readonly<{
+      type: "missing";
+      expectedDescribe: Descriptor;
+      actualDescribe: Descriptor;
+      diff: string;
+    }>
+  | Readonly<{
+      type: "missmatch";
+      expectedDescribe: Descriptor;
+      actualDescribe: Descriptor;
+      diff: string;
+    }>;
 
-export class SnapshotMissmatch {
-  readonly expectedDescribe: Descriptor;
-  readonly actualDescribe: Descriptor;
-
-  constructor(expectedDescribe: Descriptor, actualDescribe: Descriptor) {
-    this.expectedDescribe = expectedDescribe;
-    this.actualDescribe = actualDescribe;
-  }
-}
-
-export class SnapshotMissing {
-  readonly expectedDescribe: Descriptor;
-  readonly actualDescribe: Descriptor;
-
-  constructor(actualDescribe: Descriptor) {
-    this.expectedDescribe = concordance.describe(undefined, concordanceOptions);
-    this.actualDescribe = actualDescribe;
+export class SnapshotError extends Error {
+  constructor(
+    message: string,
+    public readonly diff: string
+  ) {
+    super(message);
   }
 }
 
 type SnapLoc = undefined | string | ((file: string) => string);
 
-function getFile(
-  projectDir: string,
+export function getSnapshotLocation(
   filePath: string,
   snapshotLocation: SnapLoc
 ): string {
   if (snapshotLocation) {
     if (typeof snapshotLocation === "string") {
-      const relative = path.relative(projectDir, filePath);
-      return path.resolve(projectDir, snapshotLocation, relative);
+      return path.resolve(snapshotLocation);
     }
     if (typeof snapshotLocation === "function") {
       const out = snapshotLocation(filePath);
       if (typeof out === "string") {
-        return path.resolve(projectDir, out);
+        return path.resolve(out);
       }
     }
     throw new Error(
@@ -77,124 +79,134 @@ function getFile(
   return path.resolve(filePath, "..", "__snapshots__", path.basename(filePath));
 }
 
-export default class SnapshotsManager {
-  private filePath: string;
-  private snapPath: string;
-  private reportPath: string;
-  private decodingError: Error | null;
-  private snapshotKeys: Map<string, number>;
-  private prevSnapshots: ReadonlyMap<string, Buffer>;
-  private newSnapshots: Map<
-    string,
-    {
-      key: string;
-      title: string;
-      describe: Descriptor;
-      buffer: Buffer;
-    }
-  >;
-  private matches: { key: string; title: string }[];
-  private updating: boolean;
-  private stats: SnapshotStats;
-  private concordanceOptions: ConcordanceOpts;
+export class Snapshot {
+  constructor(
+    public readonly key: string,
+    public readonly message: string,
+    private readonly manager: SnapshotsOfFile,
+    private descriptor: Descriptor | null,
+    private buffer: Buffer | null
+  ) {}
+
+  getDescriptor(): Descriptor {
+    return (
+      this.descriptor ??
+      (this.descriptor = concordance.deserialize(
+        this.getBuffer(),
+        this.manager.plainOpts
+      ))
+    );
+  }
+
+  getBuffer(): Buffer {
+    return (
+      this.buffer ?? (this.buffer = concordance.serialize(this.getDescriptor()))
+    );
+  }
+
+  format() {
+    return concordance.formatDescriptor(
+      this.getDescriptor(),
+      this.manager.plainOpts
+    );
+  }
+}
+
+export class SnapshotsOfTest {
+  private updating: boolean = false;
+  private snapshotKeys = new UUIDMap();
+  private newSnapshots: Map<string, Snapshot> = new Map();
+  private stats: SnapshotStats = {
+    added: 0,
+    updated: 0,
+    removed: 0,
+    missing: 0,
+    missmatch: 0,
+    obsolete: 0,
+    total: 0,
+  };
 
   constructor(
-    projectDir: string,
-    filePath: string,
-    snapshotLocation: SnapLoc,
-    updating: boolean
-  ) {
-    const file = getFile(projectDir, filePath, snapshotLocation);
-    this.filePath = filePath;
-    this.snapPath = file + ".snap";
-    this.reportPath = file + ".md";
-    this.decodingError = null;
-    this.snapshotKeys = new Map();
-    this.prevSnapshots = new Map();
-    this.newSnapshots = new Map();
-    this.matches = [];
+    private readonly manager: SnapshotsOfFile,
+    public readonly key: string,
+    public readonly title: readonly string[],
+    private readonly prevSnapshots: ReadonlyMap<string, Snapshot>
+  ) {}
+
+  setUpdating(updating: boolean) {
     this.updating = updating;
-    this.stats = {
-      added: 0,
-      updated: 0,
-      removed: 0,
-      obsolete: 0,
-    };
-    this.concordanceOptions = concordanceOptions;
   }
 
-  async load() {
-    try {
-      this.prevSnapshots = decode(
-        await fs.readFile(this.snapPath),
-        this.snapPath
-      );
-    } catch (err: any) {
-      if (err.code !== "ENOENT") {
-        this.decodingError = err;
-      }
-    }
-  }
+  matchesSnapshot(message: string, something: unknown): SnapshotResult {
+    const { id: snapKey, first } = this.snapshotKeys.makeUnique(message);
 
-  matchesSnapshot(_key: string, title: string, something: unknown) {
-    if (this.decodingError) {
-      throw this.decodingError;
+    if (!first) {
+      this.manager.addWarning(`Duplicate snapshot message: ${message}`);
     }
 
-    const index = this.snapshotKeys.get(_key) ?? 1;
-    this.snapshotKeys.set(_key, index + 1);
-
-    const testKey = _key + " " + index;
-
-    this.matches.push({
-      key: testKey,
-      title,
-    });
-
-    const actualDescribe = concordance.describe(
-      something,
-      this.concordanceOptions
+    const actual = new Snapshot(
+      snapKey,
+      message,
+      this.manager,
+      concordance.describe(something, this.manager.plainOpts),
+      null
     );
+    this.newSnapshots.set(snapKey, actual);
+    this.stats.total++;
 
-    const expectedBuffer = this.prevSnapshots.get(testKey);
+    const expected = this.prevSnapshots.get(snapKey);
 
     if (this.updating) {
-      const actualBuffer = concordance.serialize(actualDescribe);
-
-      // Add new snapshot
-      this.newSnapshots.set(testKey, {
-        key: testKey,
-        title,
-        describe: actualDescribe,
-        buffer: actualBuffer,
-      });
-
-      if (expectedBuffer == null) {
+      if (expected == null) {
         this.stats.added++;
-      } else if (!expectedBuffer.equals(actualBuffer)) {
+      } else if (!expected.getBuffer().equals(actual.getBuffer())) {
         this.stats.updated++;
       }
-
-      return true;
+      return { type: "ok" };
     }
 
-    if (expectedBuffer == null) {
-      return new SnapshotMissing(actualDescribe);
+    if (expected == null) {
+      this.stats.missing++;
+      const expectedDescriptor = concordance.describe(
+        undefined,
+        this.manager.plainOpts
+      );
+      return {
+        type: "missing",
+        expectedDescribe: expectedDescriptor,
+        actualDescribe: actual.getDescriptor(),
+        diff: concordance.diffDescriptors(
+          actual.getDescriptor(),
+          expectedDescriptor,
+          this.manager.coloredOpts
+        ),
+      };
     }
 
-    const expectedDescribe = concordance.deserialize(
-      expectedBuffer,
-      this.concordanceOptions
-    );
-
-    if (concordance.compareDescriptors(expectedDescribe, actualDescribe)) {
-      return true;
+    if (
+      concordance.compareDescriptors(
+        expected.getDescriptor(),
+        actual.getDescriptor()
+      )
+    ) {
+      return { type: "ok" };
     }
 
-    return new SnapshotMissmatch(expectedDescribe, actualDescribe);
+    this.stats.missmatch++;
+
+    return {
+      type: "missing",
+      expectedDescribe: expected.getDescriptor(),
+      actualDescribe: actual.getDescriptor(),
+      diff: concordance.diffDescriptors(
+        actual.getDescriptor(),
+        expected.getDescriptor(),
+        this.manager.coloredOpts
+      ),
+    };
   }
 
-  async save(): Promise<SnapshotStats> {
+  saveStats(stats: SnapshotStats) {
     for (const key of this.prevSnapshots.keys()) {
       if (!this.newSnapshots.has(key)) {
         if (this.updating) {
@@ -204,44 +216,271 @@ export default class SnapshotsManager {
         }
       }
     }
+    stats.added += this.stats.added;
+    stats.updated += this.stats.updated;
+    stats.removed += this.stats.removed;
+    stats.missing += this.stats.missing;
+    stats.missmatch += this.stats.missmatch;
+    stats.obsolete += this.stats.obsolete;
+    stats.total += this.stats.total;
+  }
 
-    if (this.updating) {
-      if (this.newSnapshots.size === 0) {
+  makeReport(lines: string[]) {
+    const map = this.updating ? this.newSnapshots : this.prevSnapshots;
+    if (map.size) {
+      lines.push(`## ${this.title.join(" > ")}\n`);
+      for (const snapshot of map.values()) {
+        lines.push(`> ${snapshot.message}\n`);
+        lines.push("```");
+        lines.push(snapshot.format());
+        lines.push("```\n");
+      }
+    }
+  }
+
+  makeSnapshot(encoder: Encoder) {
+    const map = this.updating ? this.newSnapshots : this.prevSnapshots;
+    if (map.size) {
+      encoder.pushString(this.key);
+      encoder.pushString(JSON.stringify(this.title));
+      encoder.pushInt(map.size);
+      for (const snapshot of map.values()) {
+        encoder.pushString(snapshot.key);
+        encoder.pushString(snapshot.message);
+        encoder.pushData(snapshot.getBuffer());
+      }
+    }
+  }
+
+  static decode(decoder: Decoder, manager: SnapshotsOfFile) {
+    const key = decoder.readString();
+    const title = JSON.parse(decoder.readString()) as readonly string[];
+    const snapNum = decoder.readInt();
+
+    const prevSnapshots = new Map<string, Snapshot>();
+    for (let i = 0; i < snapNum; i++) {
+      const snapKey = decoder.readString();
+      const snapMsg = decoder.readString();
+      prevSnapshots.set(
+        snapKey,
+        new Snapshot(
+          snapKey,
+          snapMsg,
+          manager,
+          null,
+          Buffer.from(decoder.readData())
+        )
+      );
+    }
+
+    return new SnapshotsOfTest(manager, key, title, prevSnapshots);
+  }
+}
+
+export class SnapshotsOfFile {
+  public readonly snapPath: string;
+  public readonly reportPath: string;
+  private testKeys = new UUIDMap();
+  private tests: Map<string, SnapshotsOfTest> = new Map();
+  private warnings: string[] = [];
+
+  constructor(
+    public readonly plainOpts: ConcordanceOpts,
+    public readonly coloredOpts: ConcordanceOpts,
+    private readonly filePath: string
+  ) {
+    const adaptedPath = getSnapshotLocation(filePath, undefined); // TODO customize
+    this.snapPath = adaptedPath + ".snap";
+    this.reportPath = adaptedPath + ".md";
+  }
+
+  addWarning(warn: string) {
+    this.warnings.push(warn);
+  }
+
+  getSnapshotsForTest(title: readonly string[], updating: boolean) {
+    const { id: testKey, first } = this.testKeys.makeUnique(
+      JSON.stringify(title)
+    );
+
+    if (!first) {
+      this.addWarning(`Duplicate test title: ${title.join(" > ")}`);
+    }
+
+    const manager =
+      this.tests.get(testKey) ??
+      new SnapshotsOfTest(this, testKey, title, new Map());
+    this.tests.set(testKey, manager);
+
+    manager.setUpdating(updating);
+    return manager;
+  }
+
+  async save(): Promise<{ stats: SnapshotStats; warnings: readonly string[] }> {
+    const stats: SnapshotStats = {
+      added: 0,
+      updated: 0,
+      removed: 0,
+      missing: 0,
+      missmatch: 0,
+      obsolete: 0,
+      total: 0,
+    };
+
+    for (const manager of this.tests.values()) {
+      manager.saveStats(stats);
+    }
+
+    if (stats.added || stats.updated || stats.removed) {
+      if (stats.total) {
+        const p = fs.ensureDir(path.dirname(this.snapPath));
+        const array = this.makeSnapshot();
+        const report = this.makeReport();
+
+        await p;
+        await Promise.all([
+          writeSnapFile(this.snapPath, array),
+          writeFileAtomic(this.reportPath, report),
+        ]);
+      } else {
         await Promise.all([
           fs.remove(this.snapPath),
           fs.remove(this.reportPath),
         ]);
-      } else {
-        if (this.stats.added || this.stats.updated || this.stats.removed) {
-          const p = fs.ensureDir(path.dirname(this.snapPath));
-          const buffer = encode(this.newSnapshots);
-          const report = this.makeReport();
-
-          await p;
-          await Promise.all([
-            writeFileAtomic(this.snapPath, buffer),
-            writeFileAtomic(this.reportPath, report),
-          ]);
-        }
       }
     }
 
-    return this.stats;
+    return { stats, warnings: this.warnings };
   }
 
-  makeReport(): string {
+  makeReport() {
     const lines = [
       `# Quase-unit Snapshot Report for \`${prettify(this.filePath)}\`\n`,
     ];
-    for (const { title, describe } of this.newSnapshots.values()) {
-      lines.push(`## ${title}\n`);
-      lines.push("```");
-      lines.push(
-        concordance.formatDescriptor(describe, this.concordanceOptions)
-      );
-      lines.push("```\n");
+    for (const manager of this.tests.values()) {
+      manager.makeReport(lines);
     }
     return lines.join("\n");
+  }
+
+  makeSnapshot() {
+    const encoder = new Encoder();
+    encoder.pushString(HEADER);
+    encoder.pushInt(this.tests.size);
+    for (const snapshot of this.tests.values()) {
+      snapshot.makeSnapshot(encoder);
+    }
+    return encoder.result();
+  }
+
+  static async decode(filePath: string) {
+    const manager = new SnapshotsOfFile(
+      plainConcordanceOptions,
+      coloredConcordanceOptions,
+      filePath
+    );
+    const array = await readSnapFile(manager.snapPath);
+    if (array == null) {
+      return manager;
+    }
+
+    const decoder = new Decoder(array);
+
+    if (!decoder.checkDigest()) {
+      throw new ChecksumError(manager.snapPath);
+    }
+
+    const header = decoder.readString();
+    if (header !== HEADER) {
+      throw new HeaderMismatchError(header, manager.snapPath);
+    }
+
+    const testsNum = decoder.readInt();
+    for (let i = 0; i < testsNum; i++) {
+      const test = SnapshotsOfTest.decode(decoder, manager);
+      manager.tests.set(test.key, test);
+    }
+
+    return manager;
+  }
+}
+
+class Encoder {
+  private readonly chunks: Uint8Array[] = [];
+  private readonly md5sum = crypto.createHash("md5");
+
+  private push(array: Uint8Array) {
+    this.chunks.push(array);
+    this.md5sum.update(array);
+  }
+
+  pushInt(int: number) {
+    const array = new Uint8Array(4);
+    new DataView(array.buffer).setInt32(0, int);
+    this.push(array);
+  }
+
+  pushString(str: string) {
+    this.pushData(new TextEncoder().encode(str));
+  }
+
+  pushData(array: Uint8Array) {
+    this.pushInt(array.byteLength);
+    this.push(array);
+  }
+
+  result() {
+    this.chunks.push(this.md5sum.digest());
+
+    const { chunks } = this;
+    const buffer = new Uint8Array(chunks.reduce((a, c) => a + c.byteLength, 0));
+    let offset = 0;
+    for (let i = 0; i < chunks.length; i++) {
+      buffer.set(chunks[i], offset);
+      offset += chunks[i].byteLength;
+    }
+    return buffer;
+  }
+}
+
+class Decoder {
+  private index: number = 0;
+  private readonly view: DataView;
+
+  constructor(private readonly array: Uint8Array) {
+    this.view = new DataView(array.buffer);
+  }
+
+  readInt() {
+    const int = this.view.getInt32(this.index);
+    this.index += 4;
+    return int;
+  }
+
+  readString() {
+    return new TextDecoder().decode(this.readData());
+  }
+
+  readData() {
+    const byteLen = this.readInt();
+    const array = this.array.subarray(this.index, this.index + byteLen);
+    this.index += byteLen;
+    return array;
+  }
+
+  readDigest() {
+    return this.array.subarray(
+      this.array.byteLength - MD5_HASH_LENGTH,
+      this.array.byteLength
+    );
+  }
+
+  checkDigest() {
+    const digest = crypto
+      .createHash("md5")
+      .update(this.array.subarray(0, this.array.byteLength - MD5_HASH_LENGTH))
+      .digest();
+    return this.readDigest().every((b, i) => b === digest[i]);
   }
 }
 
@@ -250,14 +489,14 @@ const MD5_HASH_LENGTH = 16;
 // Update this on major updates of concordance or quase-unit
 const HEADER = "Quase-unit Snapshot v1";
 
-class SnapshotError extends Error {
+class SnapshotReadError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "SnapshotError";
   }
 }
 
-class ChecksumError extends SnapshotError {
+class ChecksumError extends SnapshotReadError {
   snapPath: string;
   constructor(snapPath: string) {
     super(`Checksum mismatch (${prettifyPath(snapPath)})`);
@@ -266,7 +505,7 @@ class ChecksumError extends SnapshotError {
   }
 }
 
-class HeaderMismatchError extends SnapshotError {
+class HeaderMismatchError extends SnapshotReadError {
   snapPath: string;
   actual: string;
   expected: string;
@@ -279,121 +518,32 @@ class HeaderMismatchError extends SnapshotError {
   }
 }
 
-class ReadableBuffer {
-  buffer: Buffer;
-  byteOffset: number;
-
-  constructor(buffer: Buffer) {
-    this.buffer = buffer;
-    this.byteOffset = 0;
-  }
-
-  readLine(): Buffer {
-    const start = this.byteOffset;
-    const index = this.buffer.indexOf("\n", start);
-    this.byteOffset = index + 1;
-    return this.buffer.subarray(start, index);
-  }
-
-  readLineString(): string {
-    return this.readLine().toString();
-  }
-
-  readAmount(size: number): Buffer {
-    const start = this.byteOffset;
-    this.byteOffset += size;
-    return this.buffer.subarray(start, start + size);
-  }
-
-  readLeft(): Buffer {
-    const start = this.byteOffset;
-    this.byteOffset = this.buffer.length;
-    return this.buffer.subarray(start);
-  }
-
-  canRead(): boolean {
-    return this.byteOffset !== this.buffer.length;
+async function readSnapFile(snapPath: string) {
+  try {
+    const compressed = await fs.readFile(snapPath);
+    return await unzip(compressed);
+  } catch (err: any) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+    return null;
   }
 }
 
-class WritableBuffer {
-  entries: Buffer[];
-  size: number;
-
-  constructor() {
-    this.entries = [];
-    this.size = 0;
-  }
-
-  write(buffer: Buffer) {
-    this.entries.push(buffer);
-    this.size += buffer.length;
-  }
-
-  writeLineString(str: string) {
-    this.write(Buffer.from(str + "\n"));
-  }
-
-  toBuffer(): Buffer {
-    return Buffer.concat(this.entries, this.size);
-  }
-}
-
-export function encode(
-  snapshots: ReadonlyMap<string, { buffer: Buffer }>
-): Buffer {
-  const buffer = new WritableBuffer();
-
-  for (const key of Array.from(snapshots.keys()).sort()) {
-    const value = snapshots.get(key)!.buffer;
-    buffer.writeLineString(key);
-    buffer.writeLineString(value.length + "");
-    buffer.write(value);
-  }
-
-  const compressed = zlib.gzipSync(buffer.toBuffer());
+async function writeSnapFile(snapPath: string, array: Uint8Array) {
+  const compressed = await zip(array);
   compressed[9] = 0x03; // Override the GZip header containing the OS to always be Linux
-  const md5sum = crypto.createHash("md5").update(compressed).digest();
-
-  const finalBuffer = new WritableBuffer();
-  finalBuffer.writeLineString(HEADER);
-  finalBuffer.write(md5sum);
-  finalBuffer.write(compressed);
-  return finalBuffer.toBuffer();
+  await writeFileAtomic(snapPath, compressed);
 }
 
-export function decode(
-  _buffer: Buffer,
-  snapPath: string
-): ReadonlyMap<string, Buffer> {
-  const snapshots = new Map();
-
-  const wrapperBuffer = new ReadableBuffer(_buffer);
-
-  const header = wrapperBuffer.readLineString();
-  if (header !== HEADER) {
-    throw new HeaderMismatchError(header, snapPath);
-  }
-
-  const expectedSum = wrapperBuffer.readAmount(MD5_HASH_LENGTH);
-
-  const compressed = wrapperBuffer.readLeft();
-
-  const actualSum = crypto.createHash("md5").update(compressed).digest();
-
-  if (!actualSum.equals(expectedSum)) {
-    throw new ChecksumError(snapPath);
-  }
-
-  const decompressed = zlib.gunzipSync(compressed);
-  const buffer = new ReadableBuffer(decompressed);
-
-  while (buffer.canRead()) {
-    const key = buffer.readLineString();
-    const length = Number(buffer.readLineString());
-    const value = buffer.readAmount(length);
-    snapshots.set(key, value);
-  }
-
-  return snapshots;
+function writeFileAtomic(filename: string, data: string | Buffer) {
+  return new Promise<void>((resolve, reject) => {
+    _writeFileAtomic(filename, data, {}, (err: Error | undefined) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 }

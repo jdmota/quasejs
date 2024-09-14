@@ -2,7 +2,12 @@ import { inspect } from "node:util";
 import type { JsonValue } from "type-fest";
 import { getStack } from "../../../../error/src/index";
 import { createDefer, Defer } from "../../../../util/deferred";
-import { assertion, Optional } from "../../../../util/miscellaneous";
+import {
+  assertion,
+  never,
+  nonNull,
+  Optional,
+} from "../../../../util/miscellaneous";
 import { GlobalsSanitizer } from "./sanitizers/globals-sanitizer";
 import { defaultOpts, RunnableDesc } from "./runnable-desc";
 import { Randomizer, randomizer } from "./random";
@@ -16,7 +21,7 @@ import {
 import { enableExitsTracker } from "./sanitizers/process-sanitizer";
 import { enableWarningsTracker } from "./sanitizers/warnings-sanitizer";
 import { SKIP_ABORTED, SKIP_BAILED } from "./constants";
-import { SnapshotStats } from "./snapshots";
+import { SnapshotError, SnapshotsOfTest, SnapshotStats } from "./snapshots";
 import { ErrorOpts, processError, SimpleError } from "./errors";
 
 function filter(pattern: Optional<string>, title: string) {
@@ -98,6 +103,9 @@ export enum RunnableState {
 }
 
 export class RunnableTest {
+  public readonly fullTitle: readonly string[];
+  public readonly title: string;
+  public snapshots: SnapshotsOfTest | null;
   private state: RunnableState;
   private finished: RunnableResult | null;
   private interrupted: string | null;
@@ -124,6 +132,9 @@ export class RunnableTest {
     readonly desc: RunnableDesc,
     readonly parent: RunnableTest | null
   ) {
+    this.fullTitle = parent ? [...parent.fullTitle, desc.title] : [];
+    this.title = this.fullTitle.join(" > ");
+    this.snapshots = null;
     this.state = RunnableState.NotStarted;
     this.finished = null;
     this.interrupted = null;
@@ -150,11 +161,25 @@ export class RunnableTest {
     return this.desc.opts;
   }
 
+  // Assuming only child tests of the runner will call this
+  private getSnapshots() {
+    if (!this.snapshots) {
+      const { desc, parent, fullTitle } = this;
+      this.snapshots = nonNull(
+        desc.snapshots ?? parent?.desc.snapshots
+      ).getSnapshotsForTest(
+        fullTitle.slice(1), // The first component is the name of the file (see runner.ts)
+        desc.opts.updateSnapshots
+      );
+    }
+    return this.snapshots;
+  }
+
   private addCleanup(fn: () => void | Promise<void>) {
     if (this.state === RunnableState.Running) {
       this.cleanups.push(fn);
     } else {
-      this.addCtxError("Calling cleanup after the test has finished");
+      this.addCtxError("Calling cleanup after test has finished");
     }
   }
 
@@ -162,7 +187,7 @@ export class RunnableTest {
     if (this.state === RunnableState.Running) {
       this.assertionCount++;
     } else {
-      this.addCtxError("Calling incAssertionCount after the test has finished");
+      this.addCtxError("Calling incAssertionCount after test has finished");
     }
   }
 
@@ -170,7 +195,40 @@ export class RunnableTest {
     if (this.state === RunnableState.Running) {
       this.logs.push(args.map(a => inspect(a)).join(" "));
     } else {
-      this.addCtxError("Calling log after the test has finished");
+      this.addCtxError("Calling log after test has finished");
+    }
+  }
+
+  private matchesSnapshot(something: unknown, message: string | undefined) {
+    if (this.state !== RunnableState.Running) {
+      return this.addCtxError(
+        "Calling matchesSnapshot after test has finished"
+      );
+    }
+    this.incAssertionCount();
+    const result = this.getSnapshots().matchesSnapshot(
+      message ?? "",
+      something
+    );
+    switch (result.type) {
+      case "ok":
+        return;
+      case "missing":
+        return this.addError({
+          error: new SnapshotError("Missing snapshot", result.diff),
+          stack: getStack(3),
+          user: true,
+          overrideStack: true,
+        });
+      case "missmatch":
+        return this.addError({
+          error: new SnapshotError("Snapshot missmatch", result.diff),
+          stack: getStack(3),
+          user: true,
+          overrideStack: true,
+        });
+      default:
+        never(result);
     }
   }
 
@@ -178,7 +236,7 @@ export class RunnableTest {
     if (this.state === RunnableState.Running) {
       this.userMetadata = metadata;
     } else {
-      this.addCtxError("Calling setUserMetadata after the test has finished");
+      this.addCtxError("Calling setUserMetadata after test has finished");
     }
   }
 
@@ -273,7 +331,7 @@ export class RunnableTest {
     this.addCtxError("Cannot run a child test of a finished test");
     return {
       type: "hidden",
-      title: desc.title,
+      title: this.title + " > " + desc.title,
       stack: desc.stack,
       userMetadata: undefined,
     };
@@ -302,7 +360,7 @@ export class RunnableTest {
       this.interrupted = errorMsg;
       this.finish({
         type: "skipped",
-        title: this.desc.title,
+        title: this.title,
         reason: errorMsg,
         stack: this.desc.stack,
         userMetadata: this.userMetadata,
@@ -340,7 +398,7 @@ export class RunnableTest {
   private finish(r: RunnableResult) {
     this.state = RunnableState.Finished;
     this.finished = r;
-    this.runner?.emitter.emit("testFinish", this.desc.title);
+    this.runner?.emitter.emit("testFinish", this.title);
     if (r.type === "failed") {
       this.parent?.childFailed();
     }
@@ -350,7 +408,8 @@ export class RunnableTest {
   private exec(): RunnableResult | Promise<RunnableResult> {
     const {
       parent,
-      desc: { title, fn, opts, stack },
+      title,
+      desc: { fn, opts, stack },
     } = this;
 
     this.state = RunnableState.Running;
@@ -429,9 +488,8 @@ export class RunnableTest {
           user: true,
         }),
       log: (...args: unknown[]) => this.addLog(args),
-      matchesSnapshot: (something: unknown, key?: string) => {
-        // TODO
-      },
+      matchesSnapshot: (something: unknown, message?: string) =>
+        this.matchesSnapshot(something, message),
       setUserMetadata: data => this.setUserMetadata(data),
     };
 
@@ -488,7 +546,8 @@ export class RunnableTest {
     this.deferred2 = createDefer();
 
     const {
-      desc: { title, opts, stack },
+      desc: { opts, stack },
+      title,
       timeStart,
       timeoutId,
       cleanAbort,
