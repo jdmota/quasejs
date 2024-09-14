@@ -58,5 +58,8 @@ declare module "concordance" {
   export function formatDescriptor(desc: Descriptor, options: Options): string;
 
   export function serialize(desc: Descriptor): Buffer;
-  export function deserialize(buffer: Buffer): Descriptor;
+  export function deserialize(
+    buffer: Buffer,
+    options: DescribeOptions
+  ): Descriptor;
 }
