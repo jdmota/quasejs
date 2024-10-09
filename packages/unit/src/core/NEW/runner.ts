@@ -1,43 +1,17 @@
 import EventEmitter from "node:events";
-import { type Optional } from "../../../../util/miscellaneous";
+import { pathToFileURL } from "node:url";
 import { getStack } from "../../../../error/src/index";
-import { RunnableResult, RunnableTest, RunningContext } from "./runnable";
+import {
+  RunnableResult,
+  RunnableTest,
+  RunningContext,
+  SET_SNAPSHOTS_OF_FILE,
+} from "./runnable";
 import { RunnableCtx, RunnableDesc } from "./runnable-desc";
 import { prettify } from "../../../../util/path-url";
 import { SimpleError } from "./errors";
 import { SnapshotsOfFile } from "./snapshots";
-import { pathToFileURL } from "node:url";
-
-export type GlobalRunnerOptions = Readonly<{
-  ["--"]?: string[];
-  files: readonly string[]; // @mergeStrategy("override") @description("Glob patterns of files to include");
-  ignoreFiles?: readonly string[]; // @mergeStrategy("concat") @description("Glob patterns of files to ignore");
-  filterFiles?: (f: string) => boolean;
-  worker: "main" | "workers" | "processes";
-  maxWorkers: number;
-  watch?: boolean; // @description("Watch files for changes and re-run the related tests");
-  color?: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
-  env?: Record<string, unknown>; // @description("The test environment used for all tests. This can point to any file or node module");
-  globalTimeout?: number; // @default(20000) @description("Global timeout. Zero to disable. Disabled by default with --debug");
-  coverage?: boolean;
-  verbose: boolean; // @description("Enable verbose output");
-  debug?: boolean; // @description("Same as --inspect-brk on nodejs.");
-  concordanceOptions?: Record<string, unknown>; // @description("Concordance options");
-  reporter?: any; // @description("Specify the reporter to use");
-  //
-  changedSince?: string | undefined;
-  findRelatedTests?: string[];
-  ci?: boolean;
-  //
-  errorOpts: Readonly<{
-    diff: boolean;
-    codeFrame: boolean;
-    stack: boolean;
-    stackIgnore: Optional<{
-      test(text: string): boolean;
-    }>;
-  }>;
-}>;
+import { type GlobalRunnerOptions } from "./runner-pool";
 
 export type RunnerEvents = {
   started: [{ amount: number; total: number }];
@@ -45,16 +19,20 @@ export type RunnerEvents = {
   testStart: [string];
   testFinish: [string];
   uncaughtError: [SimpleError];
-  matchesSnapshot: [any];
 };
 
 export interface IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
   readonly runnerGlobalOpts: GlobalRunnerOptions;
+  filesNumber(): number;
   executeTests(files: readonly string[]): void;
-  sigint(force: boolean): void;
+  sigint(force: boolean, reason: string | null): void;
   killForks(): Promise<void>;
 }
+
+// TODO config file
+// TODO support custom serializable for snapshots? support something like Deno?
+// TODO detect duplicate test titles?
 
 export class Runner extends RunnableTest implements IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
@@ -85,26 +63,36 @@ export class Runner extends RunnableTest implements IRunner {
     }
 
     for (const [file, tests] of testsPerFile) {
-      const snap = await SnapshotsOfFile.decode(file);
       await ctx.step(
         new RunnableDesc(
           prettify(file),
           async ctx => {
+            // Init snapshot tester
+            const snap = await SnapshotsOfFile.decode(file);
+            ctx[SET_SNAPSHOTS_OF_FILE](snap);
+
+            // Cleanup and save snapshot
+            ctx.cleanup(async () => {
+              const { warnings } = await snap.save();
+              for (const w of warnings) {
+                ctx.log(`Snapshot warning: ${w}`);
+              }
+              // TODO make this an error?
+            });
+
             // Random option will be applied to each group (i.e. file),
             // giving consistent results!
             await ctx.group(tests);
           },
           this.desc.opts,
-          `Error\n    at <anonymous> (${file}:1:1)`,
-          snap
+          `Error\n    at <anonymous> (${file}:1:1)`
         )
       );
-      const { stats, warnings } = await snap.save();
-      if (stats.total > 0) ctx.log(`Snapshot stats: ${JSON.stringify(stats)}`);
-      if (warnings.length > 0)
-        ctx.log(`Snapshot warnings: ${JSON.stringify(warnings)}`);
-      // TODO improve
     }
+  }
+
+  filesNumber(): number {
+    return this.files.length;
   }
 
   async executeTests(files: readonly string[]) {

@@ -18,22 +18,57 @@ import { UUIDMap } from "../../../../util/data-structures/uuid-map";
 const zip = promisify(zlib.gzip);
 const unzip = promisify(zlib.gunzip);
 
-export type SnapshotStats = {
+export type SnapshotStats = Readonly<{
   added: number;
   updated: number;
   removed: number;
   //
   missing: number;
-  missmatch: number;
+  missmatched: number;
   obsolete: number;
   //
   total: number;
+}>;
+
+export type MutableSnapshotStats = {
+  -readonly [K in keyof SnapshotStats]: SnapshotStats[K];
+};
+
+export function newMutableSnapshotStats() {
+  return {
+    added: 0,
+    updated: 0,
+    removed: 0,
+    missing: 0,
+    missmatched: 0,
+    obsolete: 0,
+    total: 0,
+  };
+}
+
+export function addSnapshotStats(
+  stats: MutableSnapshotStats,
+  others: SnapshotStats
+) {
+  stats.added += others.added;
+  stats.updated += others.updated;
+  stats.removed += others.removed;
+  stats.missing += others.missing;
+  stats.missmatched += others.missmatched;
+  stats.obsolete += others.obsolete;
+  stats.total += others.total;
+}
+
+export type SnapshotOfTestResults = {
+  readonly stats: SnapshotStats;
+  readonly warnings: readonly string[];
 };
 
 export type SnapshotResult =
   | Readonly<{
       type: "ok";
     }>
+  | Readonly<{ type: "duplicateMessage"; message: string }>
   | Readonly<{
       type: "missing";
       expectedDescribe: Descriptor;
@@ -116,12 +151,12 @@ export class SnapshotsOfTest {
   private updating: boolean = false;
   private snapshotKeys = new UUIDMap();
   private newSnapshots: Map<string, Snapshot> = new Map();
-  private stats: SnapshotStats = {
+  private stats: MutableSnapshotStats = {
     added: 0,
     updated: 0,
     removed: 0,
     missing: 0,
-    missmatch: 0,
+    missmatched: 0,
     obsolete: 0,
     total: 0,
   };
@@ -137,11 +172,14 @@ export class SnapshotsOfTest {
     this.updating = updating;
   }
 
-  matchesSnapshot(message: string, something: unknown): SnapshotResult {
+  matchesSnapshot(
+    message: string | undefined = "",
+    something: unknown
+  ): SnapshotResult {
     const { id: snapKey, first } = this.snapshotKeys.makeUnique(message);
 
-    if (!first) {
-      this.manager.addWarning(`Duplicate snapshot message: ${message}`);
+    if (!first && message != null) {
+      return { type: "duplicateMessage", message };
     }
 
     const actual = new Snapshot(
@@ -192,7 +230,7 @@ export class SnapshotsOfTest {
       return { type: "ok" };
     }
 
-    this.stats.missmatch++;
+    this.stats.missmatched++;
 
     return {
       type: "missing",
@@ -206,7 +244,7 @@ export class SnapshotsOfTest {
     };
   }
 
-  saveStats(stats: SnapshotStats) {
+  finish(): SnapshotStats {
     for (const key of this.prevSnapshots.keys()) {
       if (!this.newSnapshots.has(key)) {
         if (this.updating) {
@@ -216,13 +254,12 @@ export class SnapshotsOfTest {
         }
       }
     }
-    stats.added += this.stats.added;
-    stats.updated += this.stats.updated;
-    stats.removed += this.stats.removed;
-    stats.missing += this.stats.missing;
-    stats.missmatch += this.stats.missmatch;
-    stats.obsolete += this.stats.obsolete;
-    stats.total += this.stats.total;
+    return this.stats;
+  }
+
+  // To be called after finish() is called
+  saveStats(stats: MutableSnapshotStats) {
+    addSnapshotStats(stats, this.stats);
   }
 
   makeReport(lines: string[]) {
@@ -294,17 +331,13 @@ export class SnapshotsOfFile {
     this.reportPath = adaptedPath + ".md";
   }
 
-  addWarning(warn: string) {
-    this.warnings.push(warn);
-  }
-
   getSnapshotsForTest(title: readonly string[], updating: boolean) {
     const { id: testKey, first } = this.testKeys.makeUnique(
       JSON.stringify(title)
     );
 
     if (!first) {
-      this.addWarning(`Duplicate test title: ${title.join(" > ")}`);
+      this.warnings.push(`Duplicate test title: ${title.join(" > ")}`);
     }
 
     const manager =
@@ -316,13 +349,13 @@ export class SnapshotsOfFile {
     return manager;
   }
 
-  async save(): Promise<{ stats: SnapshotStats; warnings: readonly string[] }> {
+  async save(): Promise<SnapshotOfTestResults> {
     const stats: SnapshotStats = {
       added: 0,
       updated: 0,
       removed: 0,
       missing: 0,
-      missmatch: 0,
+      missmatched: 0,
       obsolete: 0,
       total: 0,
     };

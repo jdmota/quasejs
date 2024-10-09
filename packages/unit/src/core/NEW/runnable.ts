@@ -21,7 +21,12 @@ import {
 import { enableExitsTracker } from "./sanitizers/process-sanitizer";
 import { enableWarningsTracker } from "./sanitizers/warnings-sanitizer";
 import { SKIP_ABORTED, SKIP_BAILED } from "./constants";
-import { SnapshotError, SnapshotsOfTest, SnapshotStats } from "./snapshots";
+import {
+  SnapshotError,
+  SnapshotsOfFile,
+  SnapshotsOfTest,
+  SnapshotStats,
+} from "./snapshots";
 import { ErrorOpts, processError, SimpleError } from "./errors";
 
 function filter(pattern: Optional<string>, title: string) {
@@ -83,6 +88,8 @@ export type RunnableResult =
 
 export type RunnableStatus = RunnableResult["type"];
 
+export const SET_SNAPSHOTS_OF_FILE = Symbol("QUASE_UNIT_SET_SNAPSHOTS_OF_FILE");
+
 export interface RunningContext {
   step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult>;
   group(descs: readonly RunnableDesc[]): Promise<readonly RunnableResult[]>;
@@ -92,6 +99,7 @@ export interface RunningContext {
   log(...args: unknown[]): void;
   matchesSnapshot(something: unknown, key?: string): void;
   setUserMetadata(data: JsonValue): void;
+  [SET_SNAPSHOTS_OF_FILE](s: SnapshotsOfFile): void;
 }
 
 export enum RunnableState {
@@ -105,7 +113,8 @@ export enum RunnableState {
 export class RunnableTest {
   public readonly fullTitle: readonly string[];
   public readonly title: string;
-  public snapshots: SnapshotsOfTest | null;
+  private snapshotsOfFile: SnapshotsOfFile | null;
+  private snapshots: SnapshotsOfTest | null;
   private state: RunnableState;
   private finished: RunnableResult | null;
   private interrupted: string | null;
@@ -134,6 +143,7 @@ export class RunnableTest {
   ) {
     this.fullTitle = parent ? [...parent.fullTitle, desc.title] : [];
     this.title = this.fullTitle.join(" > ");
+    this.snapshotsOfFile = parent?.snapshotsOfFile ?? null;
     this.snapshots = null;
     this.state = RunnableState.NotStarted;
     this.finished = null;
@@ -161,13 +171,11 @@ export class RunnableTest {
     return this.desc.opts;
   }
 
-  // Assuming only child tests of the runner will call this
+  // Assuming the runner itself will never call this
   private getSnapshots() {
     if (!this.snapshots) {
-      const { desc, parent, fullTitle } = this;
-      this.snapshots = nonNull(
-        desc.snapshots ?? parent?.desc.snapshots
-      ).getSnapshotsForTest(
+      const { desc, fullTitle, snapshotsOfFile } = this;
+      this.snapshots = nonNull(snapshotsOfFile).getSnapshotsForTest(
         fullTitle.slice(1), // The first component is the name of the file (see runner.ts)
         desc.opts.updateSnapshots
       );
@@ -192,7 +200,10 @@ export class RunnableTest {
   }
 
   private addLog(args: readonly unknown[]) {
-    if (this.state === RunnableState.Running) {
+    if (
+      this.state === RunnableState.Running ||
+      this.state === RunnableState.Cleanup
+    ) {
       this.logs.push(args.map(a => inspect(a)).join(" "));
     } else {
       this.addCtxError("Calling log after test has finished");
@@ -206,10 +217,7 @@ export class RunnableTest {
       );
     }
     this.incAssertionCount();
-    const result = this.getSnapshots().matchesSnapshot(
-      message ?? "",
-      something
-    );
+    const result = this.getSnapshots().matchesSnapshot(message, something);
     switch (result.type) {
       case "ok":
         return;
@@ -223,6 +231,13 @@ export class RunnableTest {
       case "missmatch":
         return this.addError({
           error: new SnapshotError("Snapshot missmatch", result.diff),
+          stack: getStack(3),
+          user: true,
+          overrideStack: true,
+        });
+      case "duplicateMessage":
+        return this.addError({
+          error: new Error("Duplicate snapshot message: " + result.message),
           stack: getStack(3),
           user: true,
           overrideStack: true,
@@ -382,8 +397,11 @@ export class RunnableTest {
   }
 
   // Called by parent test
-  sigint(force: boolean) {
-    this.interrupt(force ? "Forced shutdown" : "Interrupted", force);
+  sigint(force: boolean, reason: string | null) {
+    this.interrupt(
+      reason ?? (force ? "Forced shutdown" : "Interrupted"),
+      force
+    );
   }
 
   private job: Promise<RunnableResult> | null = null;
@@ -491,6 +509,9 @@ export class RunnableTest {
       matchesSnapshot: (something: unknown, message?: string) =>
         this.matchesSnapshot(something, message),
       setUserMetadata: data => this.setUserMetadata(data),
+      [SET_SNAPSHOTS_OF_FILE]: s => {
+        this.snapshotsOfFile = s;
+      },
     };
 
     this.timeStart = Date.now();
@@ -598,6 +619,9 @@ export class RunnableTest {
     this.deferred1 = null;
     this.deferred2 = null;
 
+    // Finish stats
+    const snapshots = this.snapshots?.finish();
+
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -692,6 +716,7 @@ export class RunnableTest {
           children,
           stack,
           userMetadata,
+          snapshots,
         })
       : this.finish({
           title,
@@ -706,6 +731,7 @@ export class RunnableTest {
           children,
           stack,
           userMetadata,
+          snapshots,
         });
   }
 }

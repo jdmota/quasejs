@@ -2,7 +2,8 @@ import { never } from "../../../../util/miscellaneous";
 import { ChildProcessParent, WorkerParent } from "../../../../util/workers";
 import { runner, _setup } from "./index";
 import { RunnableOpts } from "./runnable-desc";
-import { GlobalRunnerOptions, RunnerEvents } from "./runner";
+import type { RunnerEvents } from "./runner";
+import type { GlobalRunnerOptions } from "./runner-pool";
 
 export type FromParentToFork =
   | Readonly<{
@@ -15,7 +16,7 @@ export type FromParentToFork =
       type: "start";
       files: readonly string[];
     }>
-  | Readonly<{ type: "sigint"; force: boolean }>;
+  | Readonly<{ type: "sigint"; force: boolean; reason: string | null }>;
 
 export type FromForkToParent = {
   [K in keyof RunnerEvents]: Readonly<{
@@ -45,7 +46,7 @@ if (parent) {
         start(msg.files);
         break;
       case "sigint":
-        sigint(msg.force);
+        sigint(msg.force, msg.reason);
         break;
       default:
         never(msg);
@@ -102,14 +103,10 @@ export function listen(callback: (message: FromForkToParent) => void) {
   runner.emitter.on("uncaughtError", value => {
     callback({ type: "uncaughtError", value });
   });
-
-  runner.emitter.on("matchesSnapshot", value => {
-    callback({ type: "matchesSnapshot", value });
-  });
 }
 
-export function sigint(force: boolean) {
-  runner.sigint(force);
+export function sigint(force: boolean, reason: string | null) {
+  runner.sigint(force, reason);
 }
 
 export function terminate(signal?: NodeJS.Signals) {

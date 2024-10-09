@@ -11,7 +11,11 @@ import { type RunnableResult } from "./runnable";
 import { type SimpleError } from "./errors";
 import { coloredConcordanceOptions } from "./concordance-options";
 import { SKIP_ABORTED, SKIP_BAILED, SKIP_INTERRUPTED } from "./constants";
-import { SnapshotStats } from "./snapshots";
+import {
+  addSnapshotStats,
+  newMutableSnapshotStats,
+  SnapshotStats,
+} from "./snapshots";
 import { exit } from "./sanitizers/process-sanitizer";
 
 const eol = turbocolor.reset("\n");
@@ -38,6 +42,7 @@ export class Reporter {
   private didShowMoreErrors: boolean;
   private runningTests: Set<string>;
   private otherErrors: SimpleError[];
+  private snapshotStats = newMutableSnapshotStats();
 
   constructor(private readonly runner: IRunner) {
     this.spinner = ora({
@@ -110,9 +115,9 @@ export class Reporter {
       ].join("\n")}\n`
     );
     if (this.sigintTry === 1) {
-      this.runner.sigint(false);
+      this.runner.sigint(false, "SIGINT");
     } else if (this.sigintTry === 2) {
-      this.runner.sigint(true);
+      this.runner.sigint(true, "SIGINT (2)");
     } else if (this.sigintTry === 3) {
       process.off("SIGINT", this.onSigint);
       this.runner.killForks().then(async () => {
@@ -123,19 +128,6 @@ export class Reporter {
       });
     }
   }
-
-  /*showOptions(options: TestRunnerOptions) {
-    logEol();
-    log(turbocolor.bold.green("Patterns: ") + options.files.join(" ") + "\n");
-    if (options.ignore.length > 0) {
-      log(
-        turbocolor.bold.green("Ignore patterns: ") +
-          options.ignore.join(" ") +
-          "\n"
-      );
-    }
-    logEol();
-  }*/
 
   showFilesCount(count: number, time: number) {
     log(`${turbocolor.bold.green(`Found ${count} files`)} in ${time} ms\n`);
@@ -174,38 +166,31 @@ export class Reporter {
     logEol();
   }
 
+  private workersAmount = 0;
+
   runnerStarted(amount: number, total: number) {
     // TODO this.showDebuggers(runner);
-    log(
-      "\n" +
-        turbocolor.bold.green(
-          this.runner.runnerGlobalOpts.worker === "main"
-            ? "Using main thread"
-            : this.runner.runnerGlobalOpts.worker === "workers"
-              ? `Using ${total} worker(s)`
-              : `Using ${total} process(es)`
-        ) +
-        "\n\n"
-    );
+    this.workersAmount = total;
     this.spinner.start();
     this.spinner.text = "Running tests...";
   }
 
   async runnerFinished(result: RunnableResult) {
     this.spinner.stop();
-    await this.logResult(result);
+    await this.logResult(result, true);
 
-    let lines;
+    logEol();
+    logEol();
 
     if (result.type === "hidden") {
-      lines = [turbocolor.red("\n  Hidden test stute.")];
+      log(turbocolor.red("\n  Hidden test suite.") + "\n");
     } else if (result.type === "todo") {
-      lines = [turbocolor.red("\n  Todo test stute.")];
+      log(turbocolor.red("\n  Todo test suite.") + "\n");
     } else if (result.type === "skipped") {
-      lines = [turbocolor.red("\n  Skipped test stute.")];
+      log(turbocolor.red("\n  Skipped test suite.") + "\n");
     } else {
       if (result.children.length === 0) {
-        lines = [turbocolor.red("\n  The total number of tests was 0.")];
+        log(turbocolor.red("\n  The total number of tests was 0.") + "\n");
       } else {
         const counts = {
           passed: 0,
@@ -217,21 +202,42 @@ export class Reporter {
           if (test.type !== "hidden") counts[test.type]++;
         }
         const { passed, skipped, todo, failed } = counts;
-        lines = [
-          passed > 0 ? "\n  " + turbocolor.green(passed + " passed") : "",
-          skipped > 0 ? "\n  " + turbocolor.yellow(skipped + " skipped") : "",
-          todo > 0 ? "\n  " + turbocolor.blue(todo + " todo") : "",
-          failed > 0 ? "\n  " + turbocolor.red(failed + " failed") : "",
-          "\n\n  " + turbocolor.gray(result.duration + " ms"),
-        ].filter(Boolean);
-      }
+        if (passed) {
+          log(turbocolor.green(passed + " passed") + "\n");
+        }
+        if (skipped) {
+          log(turbocolor.yellow(skipped + " skipped") + "\n");
+        }
+        if (todo) {
+          log(turbocolor.blue(todo + " todo") + "\n");
+        }
+        if (failed) {
+          log(turbocolor.red(failed + " failed") + "\n");
+        }
 
-      if (result.snapshots) {
-        this.showSnapshotStats(lines, result.snapshots);
+        this.showSnapshotStats(this.snapshotStats);
+
+        log("\n" + turbocolor.gray(result.duration + " ms") + "\n");
       }
     }
 
-    process.stdout.write(lines.join("") + "\n");
+    log(
+      "\n" +
+        turbocolor.bold.white(
+          this.runner.runnerGlobalOpts.worker === "main"
+            ? "Used main thread"
+            : this.runner.runnerGlobalOpts.worker === "workers"
+              ? `Used ${this.workersAmount} worker(s)`
+              : `Used ${this.workersAmount} process(es)`
+        ) +
+        "\n"
+    );
+
+    log(
+      turbocolor.bold.white(
+        `Executed ${this.runner.filesNumber()} test file(s)`
+      ) + "\n"
+    );
 
     log(`\n${turbocolor.gray(`[${new Date().toLocaleTimeString()}]`)}\n\n`);
 
@@ -253,24 +259,35 @@ export class Reporter {
     }*/
   }
 
-  showSnapshotStats(
-    lines: string[],
-    { added, updated, removed, obsolete }: SnapshotStats
-  ) {
-    if (added || updated || removed || obsolete) {
-      lines.push(turbocolor.blue("\n\n  Snapshots"));
+  showSnapshotStats({
+    added,
+    updated,
+    removed,
+    missing,
+    missmatched,
+    obsolete,
+    total,
+  }: SnapshotStats) {
+    if (added || updated || removed || missing || missmatched || obsolete) {
+      logEol();
     }
     if (added) {
-      lines.push(turbocolor.green(`\n    Added: ${added}`));
+      log(turbocolor.green(`Snapshots added: ${added}`) + "\n");
     }
     if (updated) {
-      lines.push(turbocolor.green(`\n    Updated: ${updated}`));
+      log(turbocolor.green(`Snapshots updated: ${updated}`) + "\n");
     }
     if (removed) {
-      lines.push(turbocolor.red(`\n    Removed: ${removed}`));
+      log(turbocolor.red(`Snapshots removed: ${removed}`) + "\n");
+    }
+    if (missing) {
+      log(turbocolor.red(`Snapshots missing: ${missing}`) + "\n");
+    }
+    if (missmatched) {
+      log(turbocolor.red(`Snapshots missmatched: ${missmatched}`) + "\n");
     }
     if (obsolete) {
-      lines.push(turbocolor.red(`\n    Obsolete: ${obsolete}`));
+      log(turbocolor.red(`Snapshots obsolete: ${obsolete}`) + "\n");
     }
   }
 
@@ -294,18 +311,18 @@ export class Reporter {
 
     if (!file || !code || line == null) {
       if (file) {
-        return `${turbocolor.gray(`${prettify(file)}:${line}:${column}`)}\n\n`;
+        return `${turbocolor.gray(`${prettify(file)}:${line}:${column}`)}\n`;
       }
       return "";
     }
 
     const frame = this.runner.runnerGlobalOpts.errorOpts.codeFrame
-      ? codeFrameColumns(code, { start: { line } }, {}) + "\n\n"
+      ? codeFrameColumns(code, { start: { line } }, {}) + "\n"
       : "";
 
     return `${turbocolor.gray(
       `${prettify(file)}:${line}:${column}`
-    )}\n\n${frame}`;
+    )}\n${frame}`;
   }
 
   async logOtherErrors() {
@@ -328,7 +345,10 @@ export class Reporter {
 
   async logDefault(defaultStack: string) {
     const { source } = await this.beautifyStack(defaultStack);
-    log("\n" + this.showSource(source), 4);
+    const text = this.showSource(source);
+    if (text) {
+      log("\n" + text, 4);
+    }
   }
 
   async logError(error: SimpleError) {
@@ -347,7 +367,7 @@ export class Reporter {
 
     if (showDiff && error.diff) {
       const { diffGutters } = coloredConcordanceOptions.theme;
-      text += `${diffGutters.actual}Actual ${diffGutters.expected}Expected\n\n${indentString(error.diff)}\n\n`;
+      text += `\n${diffGutters.actual}Actual ${diffGutters.expected}Expected\n\n${indentString(error.diff)}\n\n`;
     }
 
     if (showStack && stack) {
@@ -357,8 +377,14 @@ export class Reporter {
     log(text, 4);
   }
 
-  async logResult(result: RunnableResult) {
+  async logResult(result: RunnableResult, isRunner = false) {
     if (result.type === "hidden") return;
+
+    if (result.type === "passed" || result.type === "failed") {
+      if (result.snapshots)
+        addSnapshotStats(this.snapshotStats, result.snapshots);
+    }
+
     if (!this.runner.runnerGlobalOpts.verbose) {
       switch (result.type) {
         case "passed":
@@ -419,7 +445,7 @@ export class Reporter {
         ? result.children
         : undefined;
 
-    log(`\n${turbocolor.bold(result.title)}\n`);
+    log(`\n${turbocolor.bold(isRunner ? "RUNNER" : result.title)}\n`);
 
     if (slow || duration) {
       log(
@@ -464,13 +490,13 @@ export class Reporter {
     }
 
     if (memoryUsage) {
-      log(turbocolor.yellow(`Memory usage: ${memoryUsage}\n`), 4);
+      log("\n" + turbocolor.yellow(`Memory usage: ${memoryUsage}\n`), 4);
       logEol();
     }
 
     if (children) {
       if (random) {
-        log(turbocolor.bold.yellow("Random seed: ") + random + "\n");
+        log("\n" + turbocolor.bold.yellow("Random seed: ") + random + "\n");
         logEol();
       }
       for (const child of children) {

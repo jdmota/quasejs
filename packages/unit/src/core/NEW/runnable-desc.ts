@@ -2,7 +2,6 @@ import { getStack } from "../../../../error/src/index";
 import { Optional } from "../../../../util/miscellaneous";
 import { is32bitInteger } from "./random";
 import type { RunningContext } from "./runnable";
-import type { SnapshotsOfFile } from "./snapshots";
 
 export type RunnableOpts = Readonly<{
   strict: boolean;
@@ -369,7 +368,6 @@ export class RunnableDesc {
     readonly title: string,
     readonly fn: (ctx: RunningContext) => Promise<void> | void,
     readonly opts: RunnableOpts,
-    readonly stack: string,
-    readonly snapshots: SnapshotsOfFile | null = null
+    readonly stack: string
   ) {}
 }

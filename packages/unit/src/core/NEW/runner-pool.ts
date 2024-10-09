@@ -1,6 +1,6 @@
 import { resolve } from "path";
 import EventEmitter from "events";
-import { never } from "../../../../util/miscellaneous";
+import { never, type Optional } from "../../../../util/miscellaneous";
 import {
   ChildProcessFork,
   WorkerFork,
@@ -8,12 +8,43 @@ import {
 } from "../../../../util/workers";
 import { sleep } from "../../../../util/async";
 import { prettify } from "../../../../util/path-url";
-import type { GlobalRunnerOptions, IRunner, RunnerEvents } from "./runner";
+import type { IRunner, RunnerEvents } from "./runner";
 import type * as forkInterface from "./fork";
 import type { FromForkToParent, FromParentToFork } from "./fork";
 import { RunnableOpts } from "./runnable-desc";
 import { RunnableResult } from "./runnable";
 import { SimpleError, processError } from "./errors";
+
+export type GlobalRunnerOptions = Readonly<{
+  files: readonly string[]; // @mergeStrategy("override") @description("Glob patterns of files to include");
+  worker: "main" | "workers" | "processes";
+  maxWorkers: number;
+  globalTimeout?: number; // @default(20000) @description("Global timeout. Zero to disable. Disabled by default with --debug");
+  verbose: boolean; // @description("Enable verbose output");
+  errorOpts: Readonly<{
+    diff: boolean;
+    codeFrame: boolean;
+    stack: boolean;
+    stackIgnore: Optional<{
+      test(text: string): boolean;
+    }>;
+  }>;
+  // TODO use below
+  ["--"]?: string[];
+  ignoreFiles?: readonly string[]; // @mergeStrategy("concat") @description("Glob patterns of files to ignore");
+  filterFiles?: (f: string) => boolean;
+  watch?: boolean; // @description("Watch files for changes and re-run the related tests");
+  color?: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
+  env?: Record<string, unknown>; // @description("The test environment used for all tests. This can point to any file or node module");
+  coverage?: boolean;
+  debug?: boolean; // @description("Same as --inspect-brk on nodejs.");
+  concordanceOptions?: Record<string, unknown>; // @description("Concordance options");
+  reporter?: any; // @description("Specify the reporter to use");
+  //
+  changedSince?: string | undefined;
+  findRelatedTests?: string[];
+  ci?: boolean;
+}>;
 
 type RunnerFork = {
   id: number;
@@ -71,16 +102,26 @@ export class RunnerPool implements IRunner {
     readonly runnerOpts: RunnableOpts,
     readonly runnerGlobalOpts: GlobalRunnerOptions,
     readonly tOpts: RunnableOpts,
-    readonly files: readonly string[]
+    private readonly files: readonly string[]
   ) {
     this.emitter = new EventEmitter();
     this.forks = [];
     this.runnerOpts = { ...runnerOpts, signal: null }; // To avoid serialization errors
   }
 
+  filesNumber(): number {
+    return this.files.length;
+  }
+
   async executeTests() {
-    const { worker, maxWorkers } = this.runnerGlobalOpts;
+    const { worker, maxWorkers, globalTimeout } = this.runnerGlobalOpts;
     const workersNum = worker === "main" ? 1 : maxWorkers;
+
+    if (globalTimeout) {
+      setTimeout(() => {
+        this.sigint(false, "Global timeout exceeded");
+      }, globalTimeout);
+    }
 
     const filesPerWorker: string[][] = [];
     for (let i = 0; i < workersNum; i++) {
@@ -201,9 +242,6 @@ export class RunnerPool implements IRunner {
           case "uncaughtError":
             this.emitError(msg.value);
             break;
-          case "matchesSnapshot":
-            this.emitter.emit("matchesSnapshot", msg.value);
-            break;
           default:
             never(msg);
         }
@@ -267,10 +305,11 @@ export class RunnerPool implements IRunner {
       listen(callback) {
         fork.on("message", callback);
       },
-      sigint(force: boolean) {
+      sigint(force: boolean, reason: string | null) {
         fork.send({
           type: "sigint",
           force,
+          reason,
         });
       },
       terminate(signal?: NodeJS.Signals) {
@@ -282,9 +321,9 @@ export class RunnerPool implements IRunner {
     });
   }
 
-  sigint(force: boolean) {
+  sigint(force: boolean, reason: string | null) {
     for (const fork of this.forks) {
-      fork.interface.sigint(force);
+      fork.interface.sigint(force, reason);
     }
   }
 
