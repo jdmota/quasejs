@@ -9,7 +9,7 @@ import {
   Optional,
 } from "../../../../util/miscellaneous";
 import { GlobalsSanitizer } from "./sanitizers/globals-sanitizer";
-import { defaultOpts, RunnableDesc } from "./runnable-desc";
+import { defaultOpts, RunnableCtx, RunnableDesc } from "./runnable-desc";
 import { Randomizer, randomizer } from "./random";
 import { Runner } from "./runner";
 import { runWithCtx } from "./sanitizers/context-tracker";
@@ -91,6 +91,7 @@ export type RunnableStatus = RunnableResult["type"];
 export const SET_SNAPSHOTS_OF_FILE = Symbol("QUASE_UNIT_SET_SNAPSHOTS_OF_FILE");
 
 export interface RunningContext {
+  readonly t: RunnableCtx;
   step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult>;
   group(descs: readonly RunnableDesc[]): Promise<readonly RunnableResult[]>;
   cleanup(fn: () => void | Promise<void>): void;
@@ -495,6 +496,7 @@ export class RunnableTest {
     }
 
     const ctx: RunningContext = {
+      t: new RunnableCtx(this.desc.opts, { ref: null }),
       step: desc => this.step(desc),
       group: descs => this.group(descs),
       cleanup: fn => this.addCleanup(fn),

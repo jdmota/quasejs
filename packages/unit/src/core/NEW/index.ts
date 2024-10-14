@@ -1,6 +1,6 @@
 import { RunningContext } from "./runnable";
 import { RunnableCtx, RunnableDesc, RunnableOpts } from "./runnable-desc";
-import { Runner, GlobalRunnerOptions } from "./runner";
+import { Runner } from "./runner";
 
 const runnerTests: { ref: RunnableDesc[] | null } = { ref: null };
 
@@ -19,18 +19,10 @@ export function test(title: any, fn?: any) {
   return t.test(title, fn, true);
 }
 
-export function _setup(
-  runnerOpts: RunnableOpts,
-  runnerGlobalOpts: GlobalRunnerOptions,
-  tOpts: RunnableOpts
-) {
+export function _setup(runnerOpts: RunnableOpts, tOpts: RunnableOpts) {
   if (runner) {
     throw new Error("Already setup");
   }
-  runner = new Runner(
-    new RunnableCtx(runnerOpts, runnerTests),
-    runnerGlobalOpts,
-    runnerTests
-  );
+  runner = new Runner(new RunnableCtx(runnerOpts, runnerTests), runnerTests);
   t = new RunnableCtx(tOpts, runnerTests);
 }

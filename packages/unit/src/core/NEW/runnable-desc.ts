@@ -60,7 +60,7 @@ export const defaultOpts: RunnableOpts = {
   reruns: 0, // TODO use
   rerunDelay: 0, // TODO use
   updateSnapshots: false,
-  snapshotLocation: null, // TODO use
+  snapshotLocation: null, // TODO use and custom serializer?
   sanitize: {
     globals: [],
     handles: true,

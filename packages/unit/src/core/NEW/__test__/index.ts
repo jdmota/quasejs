@@ -5,19 +5,22 @@ import { RunnerPool } from "../runner-pool";
 const pool = new RunnerPool(
   defaultOpts,
   {
-    files: [],
-    worker: "workers",
+    ["--"]: [],
+    files: [
+      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/example.ts",
+      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/snapshot_example.ts",
+    ],
+    ignoreFiles: [],
+    filterFiles: () => true,
+    worker: "processes",
     maxWorkers: 1,
     verbose: true,
     errorOpts: { diff: true, stack: true, codeFrame: true, stackIgnore: null },
+    // debug: true,
   },
-  defaultOpts,
-  [
-    // "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/example.ts",
-    "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/snapshot_example.ts",
-  ]
+  defaultOpts
 );
 
-const reporter = new Reporter(pool);
+const reporter = new Reporter(pool, pool.runnerGlobalOpts);
 
 pool.executeTests();

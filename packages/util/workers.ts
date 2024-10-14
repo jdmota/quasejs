@@ -6,6 +6,8 @@ import {
   isMainThread,
 } from "node:worker_threads";
 import EventEmitter from "events";
+import type internal from "node:stream";
+import { nonNull } from "./miscellaneous";
 
 type ForkEvents<Receive extends Serializable> = {
   message: [Receive];
@@ -33,6 +35,9 @@ export interface SimpleFork<
   send(message: Send): void;
   terminate(signal?: NodeJS.Signals): boolean;
   justForget(): void;
+  stdin: internal.Writable;
+  stdout: internal.Readable;
+  stderr: internal.Readable;
 }
 
 export class ChildProcessFork<
@@ -51,17 +56,17 @@ export class ChildProcessFork<
 
   constructor(
     file: string,
-    args: string[] = [],
+    args: readonly string[] = [],
     env: ForkOptions["env"] = {},
-    execArgv: ForkOptions["execArgv"] = []
+    execArgv: readonly string[] = []
   ) {
     super();
     this.state = WorkerState.RUNNING;
 
-    this.process = fork(file, args, {
+    this.process = fork(file, [...args], {
       cwd: process.cwd(),
       env,
-      execArgv,
+      execArgv: [...execArgv],
       serialization: "advanced",
       silent: true,
     });
@@ -94,6 +99,18 @@ export class ChildProcessFork<
         this.cleanup();
       }
     };
+  }
+
+  get stdin() {
+    return nonNull(this.process.stdin);
+  }
+
+  get stdout() {
+    return nonNull(this.process.stdout);
+  }
+
+  get stderr() {
+    return nonNull(this.process.stderr);
   }
 
   private canSend() {
@@ -173,18 +190,18 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
 
   constructor(
     file: string,
-    args: string[] = [],
+    args: readonly string[] = [],
     env: ForkOptions["env"] = {},
-    execArgv: ForkOptions["execArgv"] = []
+    execArgv: readonly string[] = []
   ) {
     super();
     this.state = WorkerState.RUNNING;
     this.signal = null;
 
     this.worker = new Worker(file, {
-      argv: args,
+      argv: [...args],
       env,
-      execArgv,
+      execArgv: [...execArgv],
       stdin: true,
       stdout: true,
       stderr: true,
@@ -206,6 +223,18 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
       this.cleanup();
       this.shutdown(this.signal ? null : code, this.signal);
     });
+  }
+
+  get stdin() {
+    return nonNull(this.worker.stdin);
+  }
+
+  get stdout() {
+    return this.worker.stdout;
+  }
+
+  get stderr() {
+    return this.worker.stderr;
   }
 
   private canSend() {

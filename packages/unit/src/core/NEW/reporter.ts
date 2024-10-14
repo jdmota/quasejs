@@ -3,7 +3,7 @@ import logSymbols from "log-symbols";
 import ora, { Ora } from "ora";
 import { codeFrameColumns } from "@babel/code-frame";
 import { prettify } from "../../../../util/path-url";
-import { never } from "../../../../util/miscellaneous";
+import { never, Optional } from "../../../../util/miscellaneous";
 import { BeautifiedStackLine, beautify } from "../../../../error/src/index";
 import { SourceMapExtractor } from "../../../../source-map/src/extractor";
 import { IRunner } from "./runner";
@@ -36,6 +36,19 @@ export function logEol() {
   process.stdout.write(eol);
 }
 
+export type ReporterOpts = Readonly<{
+  color?: boolean | null; // @default("auto") @description("Force or disable. Default: auto detection");
+  verbose: boolean;
+  errorOpts: Readonly<{
+    diff: boolean;
+    codeFrame: boolean;
+    stack: boolean;
+    stackIgnore: Optional<{
+      test(text: string): boolean;
+    }>;
+  }>;
+}>;
+
 export class Reporter {
   private spinner: Ora;
   private ended: boolean;
@@ -44,7 +57,10 @@ export class Reporter {
   private otherErrors: SimpleError[];
   private snapshotStats = newMutableSnapshotStats();
 
-  constructor(private readonly runner: IRunner) {
+  constructor(
+    private readonly runner: IRunner,
+    private readonly opts: ReporterOpts
+  ) {
     this.spinner = ora({
       text: "Waiting...",
       hideCursor: false, // https://github.com/sindresorhus/ora/pull/80
@@ -70,13 +86,6 @@ export class Reporter {
       // console.log(inspect(result, { depth: 100 }));
       await this.runnerFinished(result);
       await this.logOtherErrors();
-
-      if (process.exitCode) {
-        log(turbocolor.bold.red("Exit code: " + process.exitCode));
-      } else {
-        log(turbocolor.bold.green("Exit code: 0"));
-      }
-      logEol();
     });
 
     runner.emitter.on("testStart", title => {
@@ -95,10 +104,27 @@ export class Reporter {
       }
     });
 
+    runner.emitter.on("debuggerListening", ({ socket, files }) => {
+      // TODO
+      console.log("Debugging...", socket, files);
+    });
+
+    runner.emitter.on("debuggerWaitingDisconnect", ({ socket, files }) => {
+      // TODO
+      console.log("Waiting debugger disconnect...", socket, files);
+    });
+
     process.on("SIGINT", this.onSigint);
 
     process.on("beforeExit", () => {
       this.logOtherErrors();
+
+      if (process.exitCode) {
+        log(turbocolor.bold.red("Exit code: " + process.exitCode));
+      } else {
+        log(turbocolor.bold.green("Exit code: 0"));
+      }
+      logEol();
     });
   }
 
@@ -121,7 +147,7 @@ export class Reporter {
     } else if (this.sigintTry === 3) {
       process.off("SIGINT", this.onSigint);
       this.runner.killForks().then(async () => {
-        if (this.runner.runnerGlobalOpts.worker === "main") {
+        if (this.runner.workerType() === "main") {
           await this.logOtherErrors();
           exit(1);
         }
@@ -156,6 +182,21 @@ export class Reporter {
         }
       }
       logEol();
+
+      const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
+
+      if (debuggersWaitingPromises.length) {
+        Promise.race(debuggersWaitingPromises).then(() => {
+          log(
+            turbocolor.bold.yellow(
+              "At least 1 of " +
+                debuggersWaitingPromises.length +
+                " processes are waiting for the debugger to disconnect...\n"
+            )
+          );
+          logEol();
+        });
+      }
     });
   }*/
 
@@ -224,9 +265,9 @@ export class Reporter {
     log(
       "\n" +
         turbocolor.bold.white(
-          this.runner.runnerGlobalOpts.worker === "main"
+          this.runner.workerType() === "main"
             ? "Used main thread"
-            : this.runner.runnerGlobalOpts.worker === "workers"
+            : this.runner.workerType() === "workers"
               ? `Used ${this.workersAmount} worker(s)`
               : `Used ${this.workersAmount} process(es)`
         ) +
@@ -242,21 +283,6 @@ export class Reporter {
     log(`\n${turbocolor.gray(`[${new Date().toLocaleTimeString()}]`)}\n\n`);
 
     this.ended = true;
-
-    /*const debuggersWaitingPromises = this.runner.debuggersWaitingPromises;
-
-    if (debuggersWaitingPromises.length) {
-      Promise.race(debuggersWaitingPromises).then(() => {
-        log(
-          turbocolor.bold.yellow(
-            "At least 1 of " +
-              debuggersWaitingPromises.length +
-              " processes are waiting for the debugger to disconnect...\n"
-          )
-        );
-        logEol();
-      });
-    }*/
   }
 
   showSnapshotStats({
@@ -300,7 +326,7 @@ export class Reporter {
     }
     return beautify(stack, {
       extractor: new SourceMapExtractor(),
-      ignore: this.runner.runnerGlobalOpts.errorOpts.stackIgnore,
+      ignore: this.opts.errorOpts.stackIgnore,
     });
   }
 
@@ -316,7 +342,7 @@ export class Reporter {
       return "";
     }
 
-    const frame = this.runner.runnerGlobalOpts.errorOpts.codeFrame
+    const frame = this.opts.errorOpts.codeFrame
       ? codeFrameColumns(code, { start: { line } }, {}) + "\n"
       : "";
 
@@ -352,8 +378,7 @@ export class Reporter {
   }
 
   async logError(error: SimpleError) {
-    const { diff: showDiff, stack: showStack } =
-      this.runner.runnerGlobalOpts.errorOpts;
+    const { diff: showDiff, stack: showStack } = this.opts.errorOpts;
 
     let text = "\n";
 
@@ -385,7 +410,7 @@ export class Reporter {
         addSnapshotStats(this.snapshotStats, result.snapshots);
     }
 
-    if (!this.runner.runnerGlobalOpts.verbose) {
+    if (!this.opts.verbose) {
       switch (result.type) {
         case "passed":
           if (!result.slow && !result.logs.length) {

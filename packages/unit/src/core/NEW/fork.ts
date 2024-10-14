@@ -9,7 +9,6 @@ export type FromParentToFork =
   | Readonly<{
       type: "setup";
       runnerOpts: RunnableOpts;
-      runnerGlobalOpts: GlobalRunnerOptions;
       tOpts: RunnableOpts;
     }>
   | Readonly<{
@@ -25,9 +24,9 @@ export type FromForkToParent = {
   }>;
 }[keyof RunnerEvents];
 
-const workerConfig = process.env[
-  "$quase-unit$"
-] as GlobalRunnerOptions["worker"];
+const workerConfig = process.env["$quase-unit$"] as
+  | Exclude<GlobalRunnerOptions["worker"], "main">
+  | undefined;
 
 const parent =
   workerConfig === "workers"
@@ -40,7 +39,7 @@ if (parent) {
   parent.on("message", msg => {
     switch (msg.type) {
       case "setup":
-        setup(msg.runnerOpts, msg.runnerGlobalOpts, msg.tOpts);
+        setup(msg.runnerOpts, msg.tOpts);
         break;
       case "start":
         start(msg.files);
@@ -58,12 +57,8 @@ if (parent) {
   });
 }
 
-export function setup(
-  runnerOpts: RunnableOpts,
-  runnerGlobalOpts: GlobalRunnerOptions,
-  tOpts: RunnableOpts
-) {
-  _setup(runnerOpts, runnerGlobalOpts, tOpts);
+export function setup(runnerOpts: RunnableOpts, tOpts: RunnableOpts) {
+  _setup(runnerOpts, tOpts);
 
   if (parent) {
     listen(msg => {
@@ -83,9 +78,9 @@ export function listen(callback: (message: FromForkToParent) => void) {
 
   runner.emitter.on("finished", value => {
     callback({ type: "finished", value });
-    setTimeout(() => {
-      parent?.disconnect();
-    });
+    if (parent) {
+      setTimeout(() => parent.disconnect());
+    }
   });
 
   runner.emitter.on("testStart", value => {

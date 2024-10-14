@@ -64,6 +64,7 @@
     "concordance": "^5.0.4",
     "error-stack-parser": "^2.1.4",
     "execa": "^9.3.0",
+    "fast-glob": "^3.3.2",
     "find-up": "^7.0.0",
     "fs-extra": "^11.2.0",
     "globby": "^14.0.2",

@@ -11,7 +11,7 @@ import { RunnableCtx, RunnableDesc } from "./runnable-desc";
 import { prettify } from "../../../../util/path-url";
 import { SimpleError } from "./errors";
 import { SnapshotsOfFile } from "./snapshots";
-import { type GlobalRunnerOptions } from "./runner-pool";
+import { hasInspectArg } from "./utils";
 
 export type RunnerEvents = {
   started: [{ amount: number; total: number }];
@@ -19,20 +19,18 @@ export type RunnerEvents = {
   testStart: [string];
   testFinish: [string];
   uncaughtError: [SimpleError];
+  debuggerListening: [{ socket: string; files: readonly string[] }];
+  debuggerWaitingDisconnect: [{ socket: string; files: readonly string[] }];
 };
 
 export interface IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
-  readonly runnerGlobalOpts: GlobalRunnerOptions;
+  workerType(): "main" | "workers" | "processes";
   filesNumber(): number;
   executeTests(files: readonly string[]): void;
   sigint(force: boolean, reason: string | null): void;
   killForks(): Promise<void>;
 }
-
-// TODO config file
-// TODO support custom serializable for snapshots? support something like Deno?
-// TODO detect duplicate test titles?
 
 export class Runner extends RunnableTest implements IRunner {
   readonly emitter: EventEmitter<RunnerEvents>;
@@ -40,7 +38,6 @@ export class Runner extends RunnableTest implements IRunner {
 
   constructor(
     readonly runnerCtx: RunnableCtx,
-    readonly runnerGlobalOpts: GlobalRunnerOptions,
     readonly runnerTests: { ref: RunnableDesc[] | null }
   ) {
     super(
@@ -52,8 +49,21 @@ export class Runner extends RunnableTest implements IRunner {
     this.files = [];
   }
 
+  async executeTests(files: readonly string[]) {
+    this.files = files;
+    this.emitter.emit("started", { amount: 1, total: 1 });
+    const result = await this.run();
+    this.emitter.emit("finished", result);
+  }
+
   private async fn(ctx: RunningContext) {
     const testsPerFile = [];
+
+    if (hasInspectArg(process.execArgv)) {
+      // The debugger breaks here before running the test files
+      // Click "next" in the debugger when you are ready!
+      debugger;
+    }
 
     for (const file of this.files) {
       const tests: RunnableDesc[] = (this.runnerTests.ref = []);
@@ -91,15 +101,12 @@ export class Runner extends RunnableTest implements IRunner {
     }
   }
 
-  filesNumber(): number {
-    return this.files.length;
+  workerType() {
+    return "main" as const;
   }
 
-  async executeTests(files: readonly string[]) {
-    this.files = files;
-    this.emitter.emit("started", { amount: 1, total: 1 });
-    const result = await this.run();
-    this.emitter.emit("finished", result);
+  filesNumber() {
+    return this.files.length;
   }
 
   uncaughtError(err: SimpleError) {
