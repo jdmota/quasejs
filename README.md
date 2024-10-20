@@ -22,10 +22,6 @@ Utilities to get configuration from files or `package.json`.
 
 Some tools to work with Error objects and their stack.
 
-**[eslint-config-quase](packages/eslint-config-quase)**
-
-The Eslint configuration that we use.
-
 **[parser](packages/languages/parser)**
 
 Parser generator.
