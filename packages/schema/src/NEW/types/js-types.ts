@@ -749,11 +749,7 @@ export class JsTypeFunction<
   }
 
   override getInputType() {
-    return new JsTypeFunction(
-      this.args,
-      this.ret.getInputType(),
-      this.thisS.getInputType()
-    );
+    return new JsTypeFunction(this.args, this.ret.getInputType(), this.thisS);
   }
 
   override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
@@ -873,36 +869,6 @@ export function enumeration<const T extends EnumLike>(enumeration: T) {
   return new JsTypeEnum(enumeration);
 }
 
-export class JsTypeRecursive<
-  const T extends SchemaType<any, any>,
-> extends JsType<SchemaInput<T>, SchemaOutput<T>> {
-  public readonly content: T;
-  private constructing: boolean;
-
-  constructor(public readonly fn: (that: JsTypeRecursive<any>) => T) {
-    super("recursive");
-    this.constructing = true;
-    this.content = fn(this);
-    this.constructing = false;
-  }
-
-  override getInputType() {
-    return this.constructing
-      ? this
-      : new JsTypeRecursive(that => this.fn(that).getInputType());
-  }
-
-  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
-    return this.content.par(value, ctx);
-  }
-}
-
-export function recursive<const Out, const In = Out>(
-  fn: (that: JsTypeRecursive<SchemaType<In, Out>>) => SchemaType<In, Out>
-) {
-  return new JsTypeRecursive(fn);
-}
-
 export class JsTypeInstanceOf<const T> extends JsTypeCircularCheck<T, T> {
   constructor(public readonly clazz: Class<T>) {
     super("instanceof");
@@ -925,6 +891,36 @@ export class JsTypeInstanceOf<const T> extends JsTypeCircularCheck<T, T> {
 
 export function instanceOf<const T>(clazz: Class<T>) {
   return new JsTypeInstanceOf(clazz);
+}
+
+export class JsTypeRecursive<
+  const T extends SchemaType<any, any>,
+> extends JsType<SchemaInput<T>, SchemaOutput<T>> {
+  public readonly content: T;
+  private constructing: boolean;
+
+  constructor(public readonly fn: (that: JsTypeRecursive<T>) => T) {
+    super("recursive");
+    this.constructing = true;
+    this.content = fn(this);
+    this.constructing = false;
+  }
+
+  override getInputType() {
+    return this.constructing
+      ? this
+      : new JsTypeRecursive(that => this.fn(that as any).getInputType());
+  }
+
+  override par(value: unknown, ctx: Ctx): ValidationResult<SchemaOutput<this>> {
+    return this.content.par(value, ctx);
+  }
+}
+
+export function recursive<const Out, const In = Out>(
+  fn: (that: JsTypeRecursive<SchemaType<In, Out>>) => SchemaType<In, Out>
+) {
+  return new JsTypeRecursive(fn);
 }
 
 export function generic<const A, const T>(
