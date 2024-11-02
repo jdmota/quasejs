@@ -1,64 +1,42 @@
-# QuaseJS
+# 🚧 QuaseJS
 
-The purpose of QuaseJS is to include various packages, smaller ones or bigger ones, that are useful for different tasks and that make the lives of JavaScript developers easier.
+This project has the objective of creating a set of useful tools to assist and help developers in common tasks.
+As of now, this is just a work in progress experiment.
+A lot of what is here is intended to investigate new ideas and patterns, or adapt ones that already exist, applying them to JavaScript and, possibly, in a future programming language that would provide them out of the box.
+Since this is an experiment, there will be constant breaking changes.
+Who knows, maybe something novel and useful might come out from this several years-old personal project.
+In any case, it has been a great learning experience.
 
-As of now, this is just an experiment. A lot of what is here is intended to investigate new tools/patterns or adapt ones that already exist, making them work in JavaScript, and maybe in a future programming language, that would provide them out of the box.
+## Some tools
 
-## Work in progress
+**[builder](packages/builder)**: Web bundler.
 
-**[builder](packages/builder)**
+**[cli](packages/cli)**: Allows you to create a command line interface very easily.
 
-It's a bundler with easy configuration, good performance and support for javascript + html + css.
+**[config](packages/config)**: Utilities to get configuration from files or `package.json`.
 
-**[cli](packages/cli)**
+**[error](packages/error)**: Some tools to work with Error objects and their stack.
 
-Allows you to create a command line interface very easily.
+**[incremental](packages/incremental)**: A library for incremental computations.
 
-**[config](packages/config)**
+**[parser](packages/languages/parser)**: Parser generator.
 
-Utilities to get configuration from files or `package.json`.
+**[path-url](packages/path-url)**: Utilities to handle paths and urls.
 
-**[error](packages/error)**
+**[schema](packages/schema)**: Data validation, defaults application, merging.
 
-Some tools to work with Error objects and their stack.
+**[source-map](packages/source-map)**: Tools to work with source maps.
 
-**[parser](packages/languages/parser)**
+**[unit](packages/unit)**: A unit testing framework.
 
-Parser generator.
+**[view](packages/view)**: UI framework.
 
-**[path-url](packages/path-url)**
+**[web-app-tools](packages/web-app-tools)**: Tools for Web apps.
 
-Utilities to handle paths and urls.
-
-**[publisher](packages/publisher)**
-
-A package publisher heavily inspired by [np](https://github.com/sindresorhus/np).
-
-**[schema](packages/schema)**
-
-Data validation, defaults application, merging.
-
-**[source-map](packages/source-map)**
-
-Tools to work with source maps.
-
-**[unit](packages/unit)**
-
-A unit testing library.
-
-**[util/get-plugins](packages/util/get-plugins)**
-
-Utility to help you get all the requested plugins.
-
-**[view](packages/view)**
-
-- Create declarative user interfaces with JSX.
-- Makes use of the Custom Elements and Shadow Root specs.
-- Implements one-way data flow.
-- Has a compiler that removes the need for a diffing algorithm.
+And several others...
 
 ## FAQ
 
-**What name is that?**
+**What does the name mean?**
 
-`Quase` means `almost` in portuguese. The idea came because we wanted this to include "almost everything".
+`Quase` means `almost` in portuguese. The idea was for this project to include "almost everything"... Well, one can dream right?
