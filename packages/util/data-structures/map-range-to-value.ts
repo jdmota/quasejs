@@ -16,6 +16,17 @@ export class MapRangeToValue<T> {
     this.size = 0;
   }
 
+  getSpecific(from: number, to: number) {
+    let node = this.head;
+    while (node) {
+      if (node.range.from === from && node.range.to === to) {
+        return node.value;
+      }
+      node = node.next;
+    }
+    return undefined;
+  }
+
   addRange(from: number, to: number, value: T) {
     let curr = this.head;
     let node = this._node(from, to, value);

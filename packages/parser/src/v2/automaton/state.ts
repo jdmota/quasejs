@@ -101,6 +101,13 @@ export class DState extends AbstractDFAState<DState, AnyTransition> {
     return `DState{${this.id}}`;
   }
 
+  getDestination(transition: AnyTransition) {
+    if (transition instanceof RangeTransition && transition.field === null) {
+      return this.rangeList.getSpecific(transition.from, transition.to);
+    }
+    return this.transitionsMap.get(transition);
+  }
+
   addTransition(transition: AnyTransition, dest: DState) {
     let added = false;
     if (transition instanceof RangeTransition && transition.field === null) {

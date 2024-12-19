@@ -316,7 +316,7 @@ const ruleGLLAuxOptional1 = rule(
 
 const ruleGLLFollowTest2 = rule(
   "GLL1Follow2",
-  seq(choice(seq(int(1), call("GLLAuxOptional1", [])), int(2))),
+  choice(seq(int(1), call("GLLAuxOptional1", [])), int(2)),
   [],
   { _debug: { worthIt: true, keepGoing: true } },
   null
@@ -430,6 +430,7 @@ const tokenW = token(
   id("text")
 );
 
+// TODO report errors on empty tokens!
 const tokenY = token(
   "TY",
   field("num", int(10)),
@@ -522,6 +523,10 @@ if (result) {
     path.join(import.meta.dirname, "example.gen.mjs"),
     result.code
   );
+  fs.writeFileSync(
+    path.join(import.meta.dirname, "example.analysis.txt"),
+    result.grammar._debugAnalysis.join("\n")
+  );
   const { types } = inferAndCheckTypes(result.grammar);
   fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
 }
@@ -530,6 +535,10 @@ if (resultReference) {
   fs.writeFileSync(
     path.join(import.meta.dirname, "example.reference.gen.mjs"),
     resultReference.code
+  );
+  fs.writeFileSync(
+    path.join(import.meta.dirname, "example.reference.analysis.txt"),
+    resultReference.grammar._debugAnalysis.join("\n")
   );
 }
 

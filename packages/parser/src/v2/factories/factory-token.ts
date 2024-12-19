@@ -4,7 +4,6 @@ import {
   FieldRule,
   RegExpRule,
   StringRule,
-  TokenDeclaration,
   TokenRules,
   CallRule,
   builder,
@@ -25,17 +24,25 @@ import { AbstractFactory } from "./abstract-factory.ts";
 import { State } from "../automaton/state.ts";
 
 export class FactoryToken extends AbstractFactory {
-  readonly rule: TokenDeclaration;
+  readonly rule: AugmentedTokenDeclaration;
+  readonly fields: Map<string, boolean>;
 
-  constructor(grammar: Grammar, rule: TokenDeclaration, automaton: Automaton) {
+  constructor(
+    grammar: Grammar,
+    rule: AugmentedTokenDeclaration,
+    automaton: Automaton,
+    fields: Map<string, boolean>
+  ) {
     super(grammar, automaton);
     this.rule = rule;
+    this.fields = fields;
   }
 
   static process(
     grammar: Grammar,
     token: TokenRules | AugmentedTokenDeclaration,
-    automaton: Automaton
+    automaton: Automaton,
+    fields: Map<string, boolean>
   ) {
     switch (token.type) {
       case "string":
@@ -45,7 +52,9 @@ export class FactoryToken extends AbstractFactory {
       case "eof":
         return FactoryToken.eof(automaton, token);
       case "token":
-        return new FactoryToken(grammar, token, automaton).genToken(token);
+        return new FactoryToken(grammar, token, automaton, fields).genToken(
+          token
+        );
       default:
         never(token);
     }
@@ -100,16 +109,19 @@ export class FactoryToken extends AbstractFactory {
   }
 
   field(node: FieldRule): Frag<State, AnyTransition> {
+    this.fields.set(node.name, node.multiple);
     const innerRule = node.rule;
     if (
       innerRule.type === "string" ||
       innerRule.type === "regexp" ||
       innerRule.type === "eof"
     ) {
+      this.fields.set("$startMarker", false);
       const fragment = FactoryToken.process(
         this.grammar,
         innerRule,
-        this.automaton
+        this.automaton,
+        this.fields
       );
       const start = this.automaton.newState();
       // $startMarker = $startText();

@@ -1,14 +1,12 @@
 import { lines } from "../../../../util/miscellaneous.ts";
-import { Grammar } from "../grammar/grammar.ts";
-import {
-  TokenDeclaration,
-  RuleDeclaration,
-} from "../grammar/grammar-builder.ts";
+import { INTERNAL_START_RULE, type Grammar } from "../grammar/grammar.ts";
+import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 
 export function generateAll(
   grammar: Grammar,
-  tokensCode: ReadonlyMap<TokenDeclaration, string>,
-  rulesCode: ReadonlyMap<RuleDeclaration, string>
+  tokensCode: readonly string[],
+  rulesCode: readonly string[],
+  needsGLL: boolean
 ) {
   return lines([
     `import { Input } from "./runtime/input";`,
@@ -42,7 +40,13 @@ export function generateAll(
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input, external);`,
     `  const parser = new GrammarParser(tokenizer, external);`,
-    `  return ${`parser.rule${grammar.startRule.name}(${grammar.startRule.args.map(a => `$${a.arg}`).join(", ")})`};`,
+    needsGLL
+      ? `  const tokGll = new GLL("token",tokenizer,"${LEXER_RULE_NAME}",[]); tokenizer.$setGLL(tokGll);`
+      : "",
+    needsGLL
+      ? `  const parserGll = new GLL("rule",parser,"${INTERNAL_START_RULE}",[${grammar.startRule.args.map(a => `$${a.arg}`).join(",")}]); parser.$setGLL(parserGll);`
+      : "",
+    `  return ${needsGLL ? `parserGll.run()` : `parser.rule${grammar.startRule.name}_0(${grammar.startRule.args.map(a => `$${a.arg}`).join(",")})`};`,
     `}\n`,
   ]);
 }

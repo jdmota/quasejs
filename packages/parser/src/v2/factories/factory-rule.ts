@@ -24,22 +24,26 @@ import { State } from "../automaton/state.ts";
 
 export class FactoryRule extends AbstractFactory {
   readonly rule: AugmentedRuleDeclaration;
+  readonly fields: Map<string, boolean>;
 
   constructor(
     grammar: Grammar,
     rule: AugmentedRuleDeclaration,
-    automaton: Automaton
+    automaton: Automaton,
+    fields: Map<string, boolean>
   ) {
     super(grammar, automaton);
     this.rule = rule;
+    this.fields = fields;
   }
 
   static process(
     grammar: Grammar,
     rule: AugmentedRuleDeclaration,
-    automaton: Automaton
+    automaton: Automaton,
+    fields: Map<string, boolean>
   ) {
-    return new FactoryRule(grammar, rule, automaton).genRule(rule);
+    return new FactoryRule(grammar, rule, automaton, fields).genRule(rule);
   }
 
   protected callTransition(
@@ -70,6 +74,9 @@ export class FactoryRule extends AbstractFactory {
     node: Assignables,
     field: FieldInfo | null
   ): CallTransition | ActionTransition | RangeTransition {
+    if (field) {
+      this.fields.set(field.name, field.multiple);
+    }
     switch (node.type) {
       case "string":
       case "regexp":

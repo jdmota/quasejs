@@ -6,7 +6,7 @@ import type {
   Program,
   IfStatement,
 } from "@babel/types";
-import { never } from "../../../util/miscellaneous";
+import { never } from "../../util/miscellaneous";
 
 class CFGNode<Code, Decision> {
   readonly code: Code;

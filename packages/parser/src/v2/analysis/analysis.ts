@@ -1,5 +1,5 @@
 import { DState } from "../automaton/state.ts";
-import { assertion, nonNull } from "../../../../util/miscellaneous.ts";
+import { assertion, first, nonNull } from "../../../../util/miscellaneous.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import {
   DecisionTokenTree,
@@ -9,7 +9,12 @@ import {
 import { getInFollowStack } from "./decision-expr.ts";
 import { DEBUG, DEBUG_apply, DEBUG_unapply } from "./analysis-debug.ts";
 import { FollowStack } from "./follow-stack.ts";
-import { AnalysisGLL, AnalysisPoint, StateInRule } from "./analysis-gll.ts";
+import {
+  AnalysisGLL,
+  AnalysisGLLArgs,
+  AnalysisGSSNode,
+  AnalysisPoint,
+} from "./analysis-gll.ts";
 import { GSSNode } from "../gll/gll-base.ts";
 import { IAnalyzer } from "./analysis-reference.ts";
 import { AnyTransition } from "../automaton/transitions.ts";
@@ -89,13 +94,17 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
       : ANY_CHAR_RANGE;
   }
 
-  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 3) {
+  analyze(rule: AugmentedDeclaration, state: DState) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
 
+    let maxLL, maxFF;
     if (rule.name === LEXER_RULE_NAME) {
       maxLL = 1;
       maxFF = 0;
+    } else {
+      maxLL = this.grammar.maxLL;
+      maxFF = this.grammar.maxFF;
     }
 
     DEBUG_apply(rule);
@@ -109,12 +118,10 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
 
     this.llState = 1;
 
-    // const gllAnalyzers = new Map<AnyTransition, AnalysisGLL>();
-    const initialGSSs = new Map<AnyTransition, GSSNode<StateInRule>>();
+    const initialGSSs = new Map<AnyTransition, AnalysisGSSNode>();
 
     for (const [goto, dest] of state) {
-      const a = new AnalysisGLL(this, ll1, rule.name, state, goto);
-      // gllAnalyzers.set(goto, a);
+      const a = new AnalysisGLL(this, ll1, goto, rule.name, state);
       initialGSSs.set(goto, a.getInitialGSS());
       a.addInitial(1);
       a.run();
@@ -142,14 +149,17 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
               const nextTree = decision.ensureNextTokenTree();
               assertion(nextTree.ll === this.llState);
               for (const { desc, gotos } of decision) {
+                // "gotos.size === 1" occurs because nodes from the initial GLL analyzers are considered different
+                // this is actually what we want, to avoid confusion and preserve soundness
+                // the example rule GLL1Follow2 is a regression test
+                assertion(gotos.size === 1);
                 const a = new AnalysisGLL(
                   this,
-                  ll1,
+                  nextTree,
+                  first(gotos),
                   rule.name,
-                  state,
-                  desc.label.goto
+                  state
                 );
-                a.setTree(nextTree, gotos);
                 a.doContinue(desc);
               }
               next.push(nextTree);
@@ -157,11 +167,13 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
               const nextTree = decision.ensureNextFollowTree();
               assertion(nextTree.ff === followIndex);
               for (const { desc, gotos } of decision) {
+                assertion(gotos.size === 1);
+                const goto = first(gotos);
                 let follows = followsCache.get(desc);
                 if (!follows) {
                   follows = buildFollow(
                     this,
-                    nonNull(initialGSSs.get(desc.label.goto)),
+                    nonNull(initialGSSs.get(goto)),
                     desc.node,
                     maxFF
                   );
@@ -172,7 +184,7 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
                     rule.name,
                     this.follows,
                     getInFollowStack(follow, followIndex),
-                    [desc.label.goto],
+                    [goto],
                     desc
                   );
                 }
@@ -209,13 +221,16 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
   }
 }
 
-function* gssChildren(analyzer: Analyzer, node: GSSNode<StateInRule>) {
+function* gssChildren(
+  analyzer: Analyzer,
+  node: AnalysisGSSNode
+): Generator<readonly [number, AnalysisGSSNode], void, unknown> {
   assertion(node.level === 0);
   if (node.hasChildren()) {
-    for (const [l, set] of node.children()) {
+    for (const [{ label }, set] of node.children()) {
       for (const c of set) {
         yield [
-          analyzer.follows.getByRuleExitState(l.rule, l.state).id,
+          analyzer.follows.getByRuleExitState(label.rule, label.state).id,
           c,
         ] as const;
       }
@@ -223,18 +238,21 @@ function* gssChildren(analyzer: Analyzer, node: GSSNode<StateInRule>) {
   } else {
     const follow = analyzer.follows.get(node.rule);
     for (const info of follow) {
-      yield [info.id, new GSSNode<StateInRule>(info.rule, 0)] as const;
+      yield [
+        info.id,
+        new GSSNode(info.rule, AnalysisGLLArgs.SINGLETON, 0),
+      ] as const;
     }
     if (follow.length === 0) {
-      yield [-1, new GSSNode<StateInRule>("$", 0)] as const;
+      yield [-1, new GSSNode("$", AnalysisGLLArgs.SINGLETON, 0)] as const;
     }
   }
 }
 
-function lookforZeros(start: GSSNode<StateInRule>) {
+function lookforZeros(start: AnalysisGSSNode) {
   const found = new Set<string>();
-  let prev: GSSNode<StateInRule>[] = [start];
-  let next: GSSNode<StateInRule>[] = [];
+  let prev: AnalysisGSSNode[] = [start];
+  let next: AnalysisGSSNode[] = [];
   const seen = new Set();
   while (prev.length) {
     for (const n of prev) {
@@ -259,14 +277,14 @@ function lookforZeros(start: GSSNode<StateInRule>) {
 
 function lookfor(
   analyzer: Analyzer,
-  start: GSSNode<StateInRule>,
+  start: AnalysisGSSNode,
   goal: Set<string>
 ) {
   if (goal.has(start.rule)) {
     return true;
   }
-  let prev: GSSNode<StateInRule>[] = [start];
-  let next: GSSNode<StateInRule>[] = [];
+  let prev: AnalysisGSSNode[] = [start];
+  let next: AnalysisGSSNode[] = [];
   const seen = new Set<string>();
   while (prev.length) {
     for (const n of prev) {
@@ -288,14 +306,14 @@ function lookfor(
 
 function buildFollow(
   analyzer: Analyzer,
-  initialGSS: GSSNode<StateInRule>,
-  destinationGSS: GSSNode<StateInRule>,
+  initialGSS: AnalysisGSSNode,
+  destinationGSS: AnalysisGSSNode,
   maxFF: number
 ) {
-  assertion(initialGSS.level === 0);
+  // assertion(initialGSS.level === 0);
   const zeros = lookforZeros(destinationGSS);
   let prev: {
-    n: GSSNode<StateInRule>;
+    n: AnalysisGSSNode;
     f: FollowStack | null;
     b: boolean;
   }[] = [
@@ -306,7 +324,7 @@ function buildFollow(
     },
   ];
   let next: {
-    n: GSSNode<StateInRule>;
+    n: AnalysisGSSNode;
     f: FollowStack | null;
     b: boolean;
   }[] = [];

@@ -27,3 +27,11 @@ export function copy<V>(a: ReadonlySet<V>, b: Set<V>): boolean {
   }
   return originalSize < b.size;
 }
+
+export function intersection<V>(a: ReadonlySet<V>, b: ReadonlySet<V>): Set<V> {
+  const set = new Set<V>();
+  for (const value of a) {
+    if (b.has(value)) set.add(value);
+  }
+  return set;
+}

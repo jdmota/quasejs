@@ -32,14 +32,14 @@ export function unreachable(): never {
   throw new Error("Assertion error");
 }
 
-export function nonNull<T>(val: T | undefined | null): T {
+export function nonNull<T>(val: T | undefined | null | void): T {
   if (val == null) {
     throw new Error("Value is " + val);
   }
   return val;
 }
 
-export function arrify<T>(val: T | T[] | undefined): T[] {
+export function arrify<T>(val: T | T[] | undefined | void): T[] {
   if (val == null) {
     return [];
   }

@@ -2,6 +2,7 @@ import { AnyTransition } from "../automaton/transitions.ts";
 import {
   ObjectHashEquals,
   assertion,
+  nonNull,
   unreachable,
 } from "../../../../util/miscellaneous.ts";
 import {
@@ -21,6 +22,8 @@ import {
 } from "./decision-expr.ts";
 import { FollowInfoDB } from "../grammar/follow-info.ts";
 import { DEBUG } from "./analysis-debug.ts";
+import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
+import { DState } from "../automaton/state.ts";
 
 type GotoDecision<P> = Readonly<{
   desc: P;
@@ -38,6 +41,7 @@ class DecisionNode<P extends ObjectHashEquals>
   readonly parent: DecisionTree<P>;
   private readonly gotos: MapKeyToSet<AnyTransition, P>;
   private readonly gotos2: MapKeyToSet<P, AnyTransition>;
+  private singleGoto: AnyTransition | null;
   private nextTree: DecisionTree<P> | null;
   //
   readonly decision: DecisionExpr;
@@ -48,6 +52,13 @@ class DecisionNode<P extends ObjectHashEquals>
     this.gotos2 = new MapKeyToSet();
     this.nextTree = null;
     this.decision = decision;
+    this.singleGoto = null;
+  }
+
+  // Optimized method for getting a single goto when there is no ambiguity
+  getSingleGoto() {
+    // There is at least one
+    return nonNull(this.singleGoto);
   }
 
   getGotos(): readonly AnyTransition[] {
@@ -62,6 +73,7 @@ class DecisionNode<P extends ObjectHashEquals>
     assertion(this.nextTree === null);
     for (const goto of gotos) {
       this.gotos.addOne(goto, desc);
+      this.singleGoto = goto;
     }
     this.gotos2.add(desc, gotos);
     return this;
@@ -284,8 +296,8 @@ export type DecisionTreeNoAdd<P extends ObjectHashEquals> =
 
 export class InvertedDecisionTree<P extends ObjectHashEquals> {
   private readonly map: MapKeyToValue<AnyTransition, DecisionExpr>;
+  private ok: boolean;
   compatibleWithSwitch: boolean;
-  ok: boolean;
   ambiguities: Readonly<{
     decisions: readonly AnyTransition[] | ReadonlySet<AnyTransition>;
     condition: DecisionExpr;
@@ -305,6 +317,15 @@ export class InvertedDecisionTree<P extends ObjectHashEquals> {
     this.leftRecursions = [];
     this.maxLL = 0;
     this.maxFF = 0;
+  }
+
+  _debugPrint(grammar: Grammar, rule: AugmentedDeclaration, state: DState) {
+    grammar._debugAnalysis.push(`RULE ${rule.name} STATE ${state}`);
+    for (const [goto, expr] of this.map) {
+      grammar._debugAnalysis.push(
+        `    GOTO ${goto.toString()} WHEN ${expr.toString()}\n`
+      );
+    }
   }
 
   get(goto: AnyTransition): DecisionExpr {
@@ -356,6 +377,10 @@ export class InvertedDecisionTree<P extends ObjectHashEquals> {
     this.leftRecursions.push({ decisions: gotos, condition });
     this.compatibleWithSwitch = false;
     this.ok = false;
+  }
+
+  hasAmbiguities() {
+    return !this.ok;
   }
 
   static decisionToTest<P extends ObjectHashEquals>(

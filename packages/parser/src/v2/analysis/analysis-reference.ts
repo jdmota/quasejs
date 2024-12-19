@@ -14,7 +14,10 @@ import {
 } from "../../../../util/miscellaneous.ts";
 import { MapSet } from "../../../../util/data-structures/map-set.ts";
 import { Range } from "../../../../util/range-utils.ts";
-import { ParserGenerator } from "../generators/generate-parser.ts";
+import {
+  LabelsManager,
+  ParserGenerator,
+} from "../generators/generate-parser.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { FollowInfo, FollowInfoDB } from "../grammar/follow-info.ts";
 import { getInFollowStack } from "./decision-expr.ts";
@@ -27,6 +30,7 @@ import {
 } from "./decision-trees.ts";
 import { ANY_CHAR_RANGE } from "../constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
+import { DFA } from "../optimizer/abstract-optimizer.ts";
 
 // IMPORTANT!
 // This reference implementation does not find all the possible "follow" sequences
@@ -191,6 +195,11 @@ class StackFrame implements ObjectHashEquals {
   }
 }
 
+export type AnalysisResult<P extends ObjectHashEquals> = {
+  readonly tree: DecisionTokenTree<P>;
+  readonly inverted: InvertedDecisionTree<P>;
+};
+
 export abstract class IAnalyzer<P extends ObjectHashEquals> {
   readonly grammar: Grammar;
   readonly follows: FollowInfoDB;
@@ -206,30 +215,33 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
     this.grammar = grammar;
     this.follows = grammar.follows;
     this.initialStates = initialStates;
+    grammar._debugAnalysis.push(`--------------------`);
   }
 
   abstract getLLState(): number;
   abstract getAnyRange(): Range;
   abstract analyze(
     rule: AugmentedDeclaration,
-    state: DState,
-    maxLL?: number,
-    maxFF?: number
-  ): {
-    readonly tree: DecisionTokenTree<P>;
-    readonly inverted: InvertedDecisionTree<P>;
-  };
+    state: DState
+  ): AnalysisResult<P>;
+
   printAmbiguities(
     rule: AugmentedDeclaration,
     state: DState,
     maxLL: number,
     inverted: InvertedDecisionTree<P>
   ) {
-    if (inverted.ok) {
+    inverted._debugPrint(this.grammar, rule, state);
+    if (!inverted.hasAmbiguities()) {
       return;
     }
     const { ambiguities, leftRecursions } = inverted;
-    const gen = new ParserGenerator(this.grammar, this, rule);
+    const gen = new ParserGenerator(
+      this.grammar,
+      this,
+      rule,
+      new LabelsManager(new Set())
+    );
     console.log("-----------");
     console.log(
       `Ambiguities in rule ${rule.name}, state ${state.id}, ll = ${maxLL}`
@@ -243,10 +255,14 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
       );
       for (const goto of decisions) {
         console.log(
-          ` - ${gen.renderExpectBlock("", {
-            type: "expect_block",
-            transition: goto,
-          })}`
+          ` - ${gen.renderExpectBlock(
+            "",
+            {
+              type: "expect_block",
+              transition: goto,
+            },
+            false
+          )}`
         );
       }
     }
@@ -259,10 +275,14 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
       );
       for (const goto of decisions) {
         console.log(
-          ` - ${gen.renderExpectBlock("", {
-            type: "expect_block",
-            transition: goto,
-          })}`
+          ` - ${gen.renderExpectBlock(
+            "",
+            {
+              type: "expect_block",
+              transition: goto,
+            },
+            false
+          )}`
         );
       }
     }
@@ -369,13 +389,17 @@ export class AnalyzerReference extends IAnalyzer<StackFrame> {
       : ANY_CHAR_RANGE;
   }
 
-  analyze(rule: AugmentedDeclaration, state: DState, maxLL = 3, maxFF = 3) {
+  analyze(rule: AugmentedDeclaration, state: DState) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
 
+    let maxLL, maxFF;
     if (rule.name === LEXER_RULE_NAME) {
       maxLL = 1;
       maxFF = 0;
+    } else {
+      maxLL = this.grammar.maxLL;
+      maxFF = this.grammar.maxFF;
     }
 
     DEBUG_apply(rule);

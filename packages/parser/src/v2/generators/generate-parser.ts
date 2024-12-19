@@ -1,4 +1,9 @@
-import { lines, never } from "../../../../util/miscellaneous.ts";
+import {
+  assertion,
+  lines,
+  never,
+  nonNull,
+} from "../../../../util/miscellaneous.ts";
 import { range } from "../../../../util/range-utils.ts";
 import { DEBUG_apply, DEBUG_unapply } from "../analysis/analysis-debug.ts";
 import { DecisionTree } from "../analysis/decision-trees.ts";
@@ -17,50 +22,114 @@ import {
   CallTransition,
   EpsilonTransition,
   FieldInfo,
+  FieldTransition,
   PredicateTransition,
   RangeTransition,
   ReturnTransition,
 } from "../automaton/transitions.ts";
 import { AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { ExprRule } from "../grammar/grammar-builder.ts";
+import { DecisionBlock, endsWithFlowBreak } from "./dfa-to-code/cfg-to-code.ts";
 import {
-  CodeBlock,
-  DecisionBlock,
-  endsWithFlowBreak,
-  ExpectBlock,
-  ReturnBlock,
-} from "./dfa-to-code/cfg-to-code.ts";
-import { ParserCFGEdge, ParserCFGNode } from "./dfa-to-code/dfa-to-cfg.ts";
+  DStateEdge,
+  ParserCFGEdge,
+  ParserCFGNode,
+} from "./parser-dfa-to-cfg.ts";
+import type {
+  ParserCodeBlock,
+  ParserSimpleBlock,
+} from "./parser-cfg-to-code.ts";
 import { DState } from "../automaton/state.ts";
-import { minimizeDecision } from "../analysis/decision-expr-optimizer.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
+import { MapKeyToValue } from "../../../../util/data-structures/map-key-to-value.ts";
+import { labelToStr } from "../runtime/gll.ts";
+
+export class LabelsManager {
+  private readonly map = new MapKeyToValue<DStateEdge, number>();
+  private readonly queue: [DStateEdge, number][] = [];
+  private uuid = 0;
+
+  constructor(private readonly needGLL: ReadonlySet<string>) {}
+
+  needsGLL(name: string) {
+    return this.needGLL.has(name);
+  }
+
+  needsGLLCall<I extends AnyTransition | null, T>(
+    t: I,
+    then: (t: CallTransition) => T,
+    elsee: (t: I) => T
+  ) {
+    return t instanceof CallTransition && this.needGLL.has(t.ruleName)
+      ? then(t)
+      : elsee(t);
+  }
+
+  private process(t: AnyTransition | null) {
+    return this.needsGLLCall(
+      t,
+      t => (t.field ? new FieldTransition(t.field) : null),
+      t => t
+    );
+  }
+
+  get(t: AnyTransition | null, dest: DState) {
+    return nonNull(this.map.get(new DStateEdge(this.process(t), dest)));
+  }
+
+  add(t: AnyTransition | null, dest: DState) {
+    const edge = new DStateEdge(this.process(t), dest);
+    const nextId = this.uuid;
+    const id = this.map.computeIfAbsent(edge, () => this.uuid++);
+    if (nextId < this.uuid) {
+      this.queue.push([edge, id]);
+    }
+    return id;
+  }
+
+  *[Symbol.iterator]() {
+    let next;
+    while ((next = this.queue.shift())) {
+      yield next;
+    }
+  }
+}
 
 export class ParserGenerator {
-  private readonly grammar: Grammar;
-  private readonly analyzer: IAnalyzer<any>;
-  private readonly rule: AugmentedDeclaration;
-  private nodes: Map<ParserCFGNode<DState, AnyTransition>, number>;
+  private nodes: Map<ParserCFGNode, number>;
   private nodeUuid: number;
   private internalVars: Set<string>;
   private breaksStack: string[];
   private continuesStack: string[];
   private neededLabels: Set<string>;
+  private readonly needsGLL: boolean;
+  private useStackContext = true;
   private DEBUG = true;
 
   constructor(
-    grammar: Grammar,
-    analyzer: IAnalyzer<any>,
-    rule: AugmentedDeclaration
+    private readonly grammar: Grammar,
+    private readonly analyzer: IAnalyzer<any>,
+    private readonly decl: AugmentedDeclaration,
+    private readonly labels: LabelsManager,
+    private readonly fields: Map<string, boolean>
   ) {
-    this.grammar = grammar;
-    this.analyzer = analyzer;
-    this.rule = rule;
     this.nodes = new Map();
     this.nodeUuid = 1;
     this.internalVars = new Set();
     this.breaksStack = [];
     this.continuesStack = [];
     this.neededLabels = new Set();
+    this.needsGLL = labels.needsGLL(decl.name);
+  }
+
+  reset() {
+    this.nodes.clear();
+    this.nodeUuid = 1;
+    this.internalVars.clear();
+    this.breaksStack.length = 0;
+    this.continuesStack.length = 0;
+    this.neededLabels.clear();
+    this.useStackContext = true;
   }
 
   private lastBreakScope() {
@@ -71,7 +140,7 @@ export class ParserGenerator {
     return this.continuesStack[this.continuesStack.length - 1];
   }
 
-  private nodeId(node: ParserCFGNode<DState, AnyTransition>) {
+  private nodeId(node: ParserCFGNode) {
     const curr = this.nodes.get(node);
     if (curr == null) {
       const id = this.nodeUuid++;
@@ -81,10 +150,8 @@ export class ParserGenerator {
     return curr;
   }
 
-  private markVar(name: string) {
-    if (!this.rule.fields.has(name)) {
-      this.internalVars.add(name);
-    }
+  private markInternalVar(name: string) {
+    this.internalVars.add(name);
     return name;
   }
 
@@ -126,7 +193,7 @@ export class ParserGenerator {
       this.DEBUG
         ? ` /*${this.grammar.userFriendlyName(
             num,
-            this.rule.type === "token"
+            this.decl.type === "token"
           )}*/`
         : ""
     }`;
@@ -140,9 +207,13 @@ export class ParserGenerator {
     return `${id}${this.DEBUG ? ` /* ${info.rule} ${info.exitState.id} */` : ""}`;
   }
 
+  private renderFollowInfoOfCall(t: CallTransition) {
+    return this.renderFollowInfo(this.analyzer.follows.getByTransition(t).id);
+  }
+
   private renderFollowCondition(test: DecisionTestFollow) {
     const { ff, from, to } = test;
-    this.markVar("$ff" + ff);
+    this.markInternalVar("$ff" + ff);
     return from === to
       ? `$ff${ff} === ${this.renderFollowInfo(from)}`
       : `${from} <= $ff${ff} && $ff${ff} <= ${to}`;
@@ -150,7 +221,7 @@ export class ParserGenerator {
 
   private renderRangeCondition(test: DecisionTestToken) {
     const { ll, from, to } = test;
-    this.markVar("$ll" + ll);
+    this.markInternalVar("$ll" + ll);
     return from === to
       ? `$ll${ll} === ${this.renderNum(from)}`
       : `${this.renderNum(from)} <= $ll${ll} && $ll${ll} <= ${this.renderNum(
@@ -161,7 +232,7 @@ export class ParserGenerator {
   private renderCode(code: ExprRule): string {
     switch (code.type) {
       case "id":
-        return code.id;
+        return this.renderId(code.id);
       case "bool":
       case "int":
         return `${code.value}`;
@@ -173,59 +244,101 @@ export class ParserGenerator {
         return code.fields.length === 0
           ? "$$EMPTY_OBJ"
           : `{${code.fields
-              .map(([k, v]) =>
-                v.type === "id" && v.id === k
-                  ? k
-                  : `${k}: ${this.renderCode(v)}`
-              )
-              .join(", ")}}`;
+              .map(([k, v]) => {
+                const vCode = this.renderCode(v);
+                return k === vCode ? k : `${k}:${vCode}`;
+              })
+              .join(",")}}`;
       case "call2":
         return `this.${
           code.id.startsWith("$") ? code.id : `external.${code.id}`
-        }(${code.args.map(e => this.renderCode(e)).join(", ")})`;
+        }(${code.args.map(e => this.renderCode(e)).join(",")})`;
       default:
         never(code);
     }
   }
 
+  private renderId(id: string) {
+    return this.needsGLL ? `$env.${id}` : id;
+  }
+
   private renderField(t: FieldInfo, what: string) {
-    this.markVar(t.name);
-    return t.multiple ? `${t.name}.push(${what})` : `${t.name} = ${what}`;
+    return t.multiple
+      ? `${this.renderId(t.name)}.push(${what})`
+      : `${this.renderId(t.name)} = ${what}`;
+  }
+
+  private renderRuleName(rule: AugmentedDeclaration, label: number) {
+    return labelToStr(rule.type, { rule: rule.name, label });
   }
 
   renderExpectBlock(
     indent: string,
-    block: ExpectBlock<AnyTransition> | ReturnBlock<AnyTransition>
+    block: ParserSimpleBlock,
+    returnn: boolean
   ): string {
-    const t = block.transition;
-    if (t instanceof AssignableTransition) {
-      if (t.field) {
-        return `${indent}${this.renderField(
-          t.field,
-          this.renderTransition(block.transition)
-        )};`;
+    switch (block.type) {
+      case "expect_block": {
+        const t = block.transition;
+        const end =
+          returnn && !(t instanceof ReturnTransition)
+            ? `\n${indent}return;`
+            : "";
+        if (t instanceof AssignableTransition && t.field) {
+          return `${indent}${this.renderField(
+            t.field,
+            this.renderTransition(block.transition, block.dest)
+          )};${end}`;
+        }
+        return `${indent}${this.renderTransition(block.transition, block.dest)};${end}`;
       }
+      case "ambiguity_block": {
+        assertion(this.needsGLL);
+        return lines([
+          `${indent}// Ambiguity`,
+          `${indent}this.gll.u(this.$i(),$env);`,
+          ...block.choices.map(({ transition: t, label }) =>
+            this.labels.needsGLLCall(
+              t,
+              t =>
+                `${indent}this.gll.c("${this.decl.name}",${label},"${t.ruleName}",[${t.args.map(a => this.renderCode(a)).join(",")}]);`,
+              t => `${indent}this.gll.a("${this.decl.name}",${label},$env);`
+            )
+          ),
+          `${indent}return;`,
+        ]);
+      }
+      default:
+        never(block);
     }
-    return `${indent}${this.renderTransition(block.transition)};`;
   }
 
-  private renderTransition(t: AnyTransition): string {
+  private renderTransition(t: AnyTransition, dest: DState): string {
     if (t instanceof RangeTransition) {
       if (t.from === t.to) {
         return `this.$e(${this.renderNum(t.from)})`;
       }
       return `this.$e2(${this.renderNum(t.from)}, ${this.renderNum(t.to)})`;
     }
+    if (t instanceof FieldTransition) {
+      return this.renderField(t.field, `$env["#tmp"]`);
+    }
     if (t instanceof CallTransition) {
-      const type = this.grammar.getRule(t.ruleName).type;
-      const code = `this.${type}${t.ruleName}(${t.args
-        .map(a => this.renderCode(a))
-        .join(", ")})`;
-      return this.useStackContext
-        ? `this.ctx.p(${this.renderFollowInfo(
-            this.analyzer.follows.getByTransition(t).id
-          )}, () => ${code})`
-        : code;
+      const renderedFollowInfo = this.renderFollowInfoOfCall(t);
+      const renderedArgs = t.args.map(a => this.renderCode(a)).join(",");
+      return this.labels.needsGLLCall(
+        t,
+        t => {
+          return `(this.gll.u(this.$i(),$env), this.gll.c("${this.decl.name}",${this.labels.get(t, dest)},"${t.ruleName}",[${renderedArgs}]))`;
+        },
+        t => {
+          const rule = this.grammar.getRule(t.ruleName);
+          const code = `this.${this.renderRuleName(rule, 0)}(${renderedArgs})`;
+          return this.useStackContext
+            ? `this.ctx.p(${renderedFollowInfo}, () => ${code})`
+            : code;
+        }
+      );
     }
     if (t instanceof ActionTransition) {
       return this.renderCode(t.code);
@@ -234,6 +347,9 @@ export class ParserGenerator {
       return "/* TODO predicate */";
     }
     if (t instanceof ReturnTransition) {
+      if (this.needsGLL) {
+        return `return (this.gll.u(this.$i(),$env), this.gll.p(${this.renderCode(t.returnCode)}))`;
+      }
       return `return ${this.renderCode(t.returnCode)}`;
     }
     if (t instanceof EpsilonTransition) {
@@ -242,12 +358,9 @@ export class ParserGenerator {
     never(t);
   }
 
-  private markTransitionAfterDispatch(
-    indent: string,
-    edge: ParserCFGEdge<DState, AnyTransition>
-  ) {
+  private markTransitionAfterDispatch(indent: string, edge: ParserCFGEdge) {
     return edge.originalDest
-      ? `${indent}  ${this.markVar(
+      ? `${indent}  ${this.markInternalVar(
           `$d${this.nodeId(edge.dest)}`
         )} = ${this.nodeId(edge.originalDest)};`
       : "";
@@ -256,31 +369,35 @@ export class ParserGenerator {
   private renderDecisionBlock(
     indent: string,
     transition: AnyTransition,
-    block: CodeBlock<DState, AnyTransition>,
+    block: ParserCodeBlock,
     idx: number,
     first: boolean
   ) {
     let code = first ? "" : `${indent}//Ambiguity\n`;
-    return code + `${indent}${this.markVar("$dd")} = ${idx};`;
+    return code + `${indent}${this.markInternalVar("$dd")} = ${idx};`;
     // return code + this.r(indent, block);
   }
 
   private renderDecisionTree(
-    block: DecisionBlock<DState, AnyTransition>,
+    block: DecisionBlock<
+      ParserCFGNode<DState, AnyTransition>,
+      DState,
+      AnyTransition
+    >,
     indent: string,
     tree: DecisionTree<any>
   ) {
-    this.markVar("$dd");
+    this.markInternalVar("$dd");
 
     let code;
     if ("ll" in tree) {
       const ll = tree.ll;
-      code = `${indent}${this.markVar(
+      code = `${indent}${this.markInternalVar(
         "$ll" + ll
       )} = this.$ll(${ll});\n${indent}`;
     } else {
       const ff = tree.ff;
-      code = `${indent}${this.markVar(
+      code = `${indent}${this.markInternalVar(
         "$ff" + ff
       )} = this.ctx.ff(${ff});\n${indent}`;
     }
@@ -346,7 +463,11 @@ export class ParserGenerator {
   }
 
   private renderDecisions(
-    block: DecisionBlock<DState, AnyTransition>,
+    block: DecisionBlock<
+      ParserCFGNode<DState, AnyTransition>,
+      DState,
+      AnyTransition
+    >,
     hasGoto: (goto: AnyTransition) => boolean,
     indent: string,
     error: boolean,
@@ -379,16 +500,32 @@ export class ParserGenerator {
     return nestedCode;
   }
 
-  private r(indent: string, block: CodeBlock<DState, AnyTransition>): string {
+  private r(indent: string, block: ParserCodeBlock): string {
     switch (block.type) {
-      case "expect_block":
-      case "return_block":
-        return this.renderExpectBlock(indent, block);
+      case "simple_block":
+        return this.renderExpectBlock(indent, block.block, block.return);
       case "seq_block":
         return lines(block.blocks.map(b => this.r(indent, b)));
       case "decision_block": {
-        let code = "";
-        const { tree, inverted: choices } = this.analyzer.analyze(
+        const bodyToIf = new Map<string, DecisionExpr>();
+        for (const [expr, d] of block.choices) {
+          const nestedCode = this.r(`${indent}  `, d);
+          const currExpr = bodyToIf.get(nestedCode) ?? FALSE;
+          bodyToIf.set(nestedCode, currExpr.or(expr));
+        }
+
+        let code = `${indent}`;
+        const bodyToIfArr = Array.from(bodyToIf);
+        for (const [nestedCode, condition] of bodyToIfArr) {
+          code += lines([
+            `if(${this.renderDecision(this.optimizeDecision(condition), true)}){`,
+            nestedCode,
+            `${indent}} else `,
+          ]);
+        }
+        code += `{\n${indent}  this.$err();\n${indent}}`;
+
+        /*const { tree, inverted: choices } = this.analyzer.analyze(
           this.rule,
           block.state
         );
@@ -435,17 +572,6 @@ export class ParserGenerator {
                 [
                   ...block.choices.map(([t, d], decisionIdx) => {
                     const decision = choices.get(t);
-                    /*console.log("++++++++++++++++++++++");
-                    console.log(decision.toString());
-                    console.log(
-                      minimizeDecision(
-                        this.grammar,
-                        this.analyzer,
-                        this.rule,
-                        decision
-                      )
-                    );
-                    console.log("++++++++++++++++++++++");*/
                     return lines([
                       `if(${this.renderDecision(this.optimizeDecision(decision))}){`,
                       this.r(`${indent}  `, d),
@@ -477,7 +603,7 @@ export class ParserGenerator {
               ],
               " else "
             );
-        }
+        }*/
         return code;
       }
       case "scope_block": {
@@ -542,29 +668,137 @@ export class ParserGenerator {
     }
   }
 
-  process(indent: string, block: CodeBlock<DState, AnyTransition>) {
-    DEBUG_apply(this.rule);
-    const { type, name, args, fields } = this.rule;
-
+  process(block: ParserCodeBlock, label: number) {
+    DEBUG_apply(this.decl);
+    const indent = "  ";
+    const { args } = this.decl;
     const rendered = this.r(`${indent}  `, block);
-    const vars = [
-      ...Array.from(this.internalVars),
-      ...Array.from(fields).map(([name, [{ multiple }]]) =>
-        multiple ? `${name}=[]` : `${name}=null`
-      ),
-    ].filter(Boolean);
 
-    const decls = vars.length > 0 ? `\n${indent}  let ${vars.join(", ")};` : "";
-    const result = `${indent}${type}${name}(${args
-      .map(a => `${a.arg}`)
-      .join(",")}) {${decls}\n${rendered}\n${indent}}`;
+    const env = this.needsGLL
+      ? Array.from(this.internalVars)
+      : [
+          ...Array.from(this.internalVars),
+          ...Array.from(this.fields).map(([name, multiple]) =>
+            multiple ? `${name}=[]` : `${name}=null`
+          ),
+        ].filter(Boolean);
+
+    const decls = env.length > 0 ? `\n${indent}  let ${env.join(",")};` : "";
+    const result = `${indent}${this.renderRuleName(this.decl, label)}(${
+      this.needsGLL ? "$env" : args.map(a => `${a.arg}`).join(",")
+    }) {${decls}\n${rendered}\n${indent}}`;
+
     DEBUG_unapply();
     return result;
   }
 
-  private useStackContext = true;
-
   setUseStackContext(bool: boolean) {
     this.useStackContext = bool;
+  }
+
+  static genCreateInitialEnvFunc(
+    allFields: Map<AugmentedDeclaration, Map<string, boolean>>,
+    needGLL: ReadonlySet<string>
+  ) {
+    let forTokens = "  $createEnv(name,args){\n";
+    let forRules = "  $createEnv(name,args){\n";
+    for (const [decl, fields] of allFields) {
+      if (needGLL.has(decl.name)) {
+        const env = Array.from(fields)
+          .map(([name, multiple]) => `${name}:${multiple ? "[]" : "null"}`)
+          .concat(decl.args.map(({ arg }, i) => `${arg}:args[${i}]`))
+          .join(",");
+        const code = `    if(name==="${decl.name}") return {${env}};\n`;
+        if (decl.type === "token") {
+          forTokens += code;
+        } else {
+          forRules += code;
+        }
+      }
+    }
+    const endCode = `    throw new Error("Never");\n  }`;
+    forTokens += endCode;
+    forRules += endCode;
+    return { forTokens, forRules };
+  }
+
+  generateV2(indent: string, state: DState) {
+    let code = "";
+    if (choices.ok) {
+      if (choices.compatibleWithSwitch) {
+        this.breaksStack.push("");
+        code = lines([
+          `${indent}switch(this.$ll(1)){`,
+          ...block.choices.map(([t, d]) => {
+            const caseConditions = choices.get(t);
+            const cases =
+              caseConditions instanceof DecisionOr
+                ? caseConditions.exprs
+                : [caseConditions];
+            const casesStr = cases.map(
+              c =>
+                `${indent}  case ${this.renderNum(
+                  (c as DecisionTestToken).from
+                )}:`
+            );
+            return lines([
+              ...(casesStr.length ? casesStr : [`${indent}  case NaN:`]),
+              this.r(`${indent}    `, d),
+              // TODO this.markTransitionAfterDispatch(indent, t),
+              endsWithFlowBreak(d) ? "" : `${indent}    break;`,
+            ]);
+          }),
+          `${indent}  default:\n${indent}    this.$err();\n${indent}}`,
+        ]);
+        this.breaksStack.pop();
+      } else {
+        code +=
+          `${indent}` +
+          Array.from(range(1, choices.maxLL))
+            .map(n => `${this.markVar("$ll" + n)} = this.$ll(${n});`)
+            .join(" ") +
+          " " +
+          Array.from(range(1, choices.maxFF))
+            .map(n => `${this.markVar("$ff" + n)} = this.$ff(${n});`)
+            .join(" ");
+        code +=
+          `\n${indent}` +
+          lines(
+            [
+              ...block.choices.map(([t, d], decisionIdx) => {
+                const decision = choices.get(t);
+                return lines([
+                  `if(${this.renderDecision(this.optimizeDecision(decision))}){`,
+                  this.r(`${indent}  `, d),
+                  // TODO this.markTransitionAfterDispatch(indent, t),
+                  `${indent}}`,
+                ]);
+              }),
+              `{\n${indent}  this.$err();\n${indent}}`,
+            ],
+            " else "
+          );
+      }
+    } else {
+      code += this.renderDecisionTree(block, indent, tree);
+      code +=
+        `\n${indent}` +
+        lines(
+          [
+            ...block.choices.map(([t, d], decisionIdx) => {
+              // const decision = choices.get(t);
+              return lines([
+                `if($dd === ${decisionIdx}){`, // this.renderDecision(this.optimizeDecision(decision))
+                this.r(`${indent}  `, d),
+                // TODO this.markTransitionAfterDispatch(indent, t),
+                `${indent}}`,
+              ]);
+            }),
+            `{\n${indent}  this.$err();\n${indent}}`,
+          ],
+          " else "
+        );
+    }
+    return code;
   }
 }

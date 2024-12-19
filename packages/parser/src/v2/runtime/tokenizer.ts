@@ -1,5 +1,6 @@
 import { RuntimeContext } from "./context.ts";
 import { error } from "./error.ts";
+import { GLL } from "./gll.ts";
 import { Position, Location, Input } from "./input.ts";
 import { BufferedStream, Marker } from "./stream.ts";
 
@@ -24,6 +25,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
   private idToLabels: IdToLabel;
   private idToChannels: IdToChannels;
   private channels: { [key: string]: Token[] | undefined };
+  protected gll: GLL | null;
 
   constructor(input: Input, external: T) {
     super();
@@ -33,6 +35,11 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     this.idToLabels = this.$getIdToLabel();
     this.idToChannels = this.$getIdToChannels();
     this.channels = {};
+    this.gll = null;
+  }
+
+  $setGLL(gll: GLL) {
+    this.gll = gll;
   }
 
   protected override fetchMore(amountFetched: number, amountToFetch: number) {
@@ -130,5 +137,9 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
       }`,
       pos
     );
+  }
+
+  $i() {
+    return this.input.index();
   }
 }

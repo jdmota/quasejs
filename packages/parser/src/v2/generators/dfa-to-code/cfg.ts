@@ -7,6 +7,7 @@ export class CFGNode<Code, Decision> {
   readonly inEdges: Set<CFGEdge<Code, Decision>>;
   readonly outEdges: Set<CFGEdge<Code, Decision>>;
   entry: boolean;
+
   constructor(code: Code | null) {
     this.code = code;
     this.inEdges = new Set();
@@ -88,14 +89,14 @@ export class CFGGroup<Code, Decision> {
   ): CFGNodeOrGroup<Code, Decision> {
     const { parent, parentIdx, contents } = this;
     for (let i = startIdx; i < contents.length; i++) {
-      const nodes = contents[i];
-      if (nodes instanceof CFGGroup) {
-        if (nodes.entry === target) {
-          return nodes;
+      const content = contents[i];
+      if (content instanceof CFGGroup) {
+        if (content.entry === target) {
+          return content;
         }
       } else {
-        if (nodes === target) {
-          return nodes;
+        if (content === target) {
+          return content;
         }
       }
     }

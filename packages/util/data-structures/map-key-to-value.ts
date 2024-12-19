@@ -31,12 +31,12 @@ export class MapKeyToValue<K extends MapKey, V> {
     };
   }
 
-  get(key: K): V | null {
+  get(key: K): V | undefined {
     const { entry } = this.entry(key);
     if (entry) {
       return entry.value;
     }
-    return null;
+    return undefined;
   }
 
   add(key: K, value: V) {
@@ -67,16 +67,16 @@ export class MapKeyToValue<K extends MapKey, V> {
       value,
     });
     this.size++;
-    return null;
+    return undefined;
   }
 
-  update(key: K, fn: (old: V | null) => V): V {
+  update(key: K, fn: (old: V | undefined) => V): V {
     const { entry, list } = this.entry(key);
     if (entry) {
       entry.value = fn(entry.value);
       return entry.value;
     }
-    const value = fn(null);
+    const value = fn(undefined);
     list.push({
       key,
       value,

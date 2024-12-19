@@ -1,5 +1,4 @@
-import { never } from "../../../../util/miscellaneous.ts";
-import type { Grammar } from "../grammar/grammar.ts";
+import { never } from "../../util/miscellaneous.ts";
 
 type SomeTransition =
   | {
@@ -208,14 +207,3 @@ console.log("Start");
 console.log("Ok", run(example, new InputState("abc", 0), Stack.new()).oks);
 console.log("Error", run(example, new InputState("ab", 0), Stack.new()).errors);
 console.log("Error", run(example, new InputState("ac", 0), Stack.new()).errors);
-
-export function parse(grammar: Grammar, input: string) {
-  const start = grammar.getRule(grammar.startRule.name);
-  run({ transitions: [] }, new InputState(input, 0), Stack.new());
-  // TODO expect eof
-}
-
-// TODO work first in building a kind of "interpreter" that if necessary, run many recognizers in parallel
-// TODO implement error recovery, and filling the missing tokens
-// TODO implement incremental parsings
-// TODO follow left recursion removal as in https://www.antlr.org/papers/allstar-techreport.pdf

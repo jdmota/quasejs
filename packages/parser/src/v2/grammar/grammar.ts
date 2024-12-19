@@ -1,3 +1,4 @@
+import { Graph } from "../../../../util/graph.ts";
 import { never } from "../../../../util/miscellaneous.ts";
 import { Location } from "../runtime/input.ts";
 import { ToolInput } from "../tool.ts";
@@ -36,6 +37,7 @@ type GrammarOrErrors =
   | Readonly<{
       grammar: Grammar;
       errors: null;
+      referencesGraph: Graph<string, null>;
     }>
   | Readonly<{
       grammar: null;
@@ -60,6 +62,8 @@ function augmentToolInput({
   tokenDecls = [],
   startArguments = [],
   externalFuncReturns = {},
+  maxLL = 3,
+  maxFF = 3,
 }: ToolInput) {
   const augmentedRules = ruleDecls.map(r =>
     augmentRule(cloneRuleDeclaration(r))
@@ -85,17 +89,27 @@ function augmentToolInput({
     externalFuncReturns,
     tokens,
     decls,
+    maxLL,
+    maxFF,
   };
 }
 
-const INTERNAL_START_RULE = "$$START$$";
+export const INTERNAL_START_RULE = "$$START$$";
 
 export function createGrammar(options: ToolInput): GrammarOrErrors {
   const errors: GrammarError[] = [];
   const externalCalls = new ExternalCallsCollector();
+  const referencesGraph = new Graph<string, null>();
 
-  const { name, startArguments, externalFuncReturns, decls, tokens } =
-    augmentToolInput(options);
+  const {
+    name,
+    startArguments,
+    externalFuncReturns,
+    decls,
+    tokens,
+    maxLL,
+    maxFF,
+  } = augmentToolInput(options);
 
   // Find start rule
   const startRules = decls.filter(
@@ -137,7 +151,7 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
   );
   declarations.set(INTERNAL_START_RULE, internalStartRule);
 
-  // Detect duplicate rules
+  // Detect duplicate declarations
   for (const rule of decls) {
     const curr = declarations.get(rule.name);
     if (curr) {
@@ -147,8 +161,8 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
     }
   }
 
-  // Check that normal tokens do not have arguments
   for (const decl of declarations.values()) {
+    // Check that normal tokens do not have arguments
     if (
       decl.args.length > 0 &&
       decl.type === "token" &&
@@ -221,6 +235,11 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
           if (!referenced) {
             errors.push(err(`Cannot find rule ${id}`, ref.loc));
           } else {
+            // Register in references graph
+            if (decl.type === referenced.type) {
+              referencesGraph.edge(decl.name, null, referenced.name);
+            }
+
             // Detect wrong number of arguments
             const expected = referenced.args.length;
             if (expected !== ref.args.length) {
@@ -312,12 +331,15 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
       tokens,
       internalStartRule,
       startArguments,
-      externalFuncReturns
+      externalFuncReturns,
+      maxLL,
+      maxFF
     );
 
     return {
       grammar,
       errors: null,
+      referencesGraph,
     };
   }
 
@@ -335,6 +357,7 @@ export class Grammar {
   public readonly startArguments: readonly GType[];
   public readonly externalFuncReturns: Readonly<Record<string, GType>>;
   public readonly follows: FollowInfoDB;
+  public readonly _debugAnalysis: string[] = [];
 
   constructor(
     name: string,
@@ -342,7 +365,9 @@ export class Grammar {
     tokens: TokensStore,
     startRule: AugmentedRuleDeclaration,
     startArguments: readonly GType[],
-    externalFuncReturns: Readonly<Record<string, GType>>
+    externalFuncReturns: Readonly<Record<string, GType>>,
+    public readonly maxLL: number,
+    public readonly maxFF: number
   ) {
     this.name = name;
     this.rules = rules;
@@ -507,11 +532,4 @@ function augmentReturn(
         .map(f => [f, builder.id(f)])
     )
   );
-}
-
-function augmentDecl(rule: Declaration) {
-  if (rule.type === "rule") {
-    return augmentRule(rule);
-  }
-  return augmentToken(rule);
 }

@@ -1,4 +1,6 @@
 /*
+Resources:
+
 Original GLL paper: https://dotat.at/tmp/gll.pdf
 
 GLL parse-tree generation: https://www.sciencedirect.com/science/article/pii/S0167642312000627
@@ -19,11 +21,23 @@ https://pure.royalholloway.ac.uk/ws/portalfiles/portal/26408385/postprint.pdf
 Another optimization using CRF instead of GSS: "Derivation representation using binary subtree sets"
 */
 
+/*
+The following implementation uses the better GSS structure from "Faster, Practical GLL Parsing"
+It also draws from "One Parser to Rule Them All"
+https://dl.acm.org/doi/pdf/10.1145/2814228.2814242
+And the thesis "Practical General Top-down Parsers"
+https://pure.uva.nl/ws/files/36086100/Thesis.pdf
+*/
+
 import { MapKeyToValue } from "../../../../util/data-structures/map-key-to-value";
 import { ObjectHashEquals, setAdd } from "../../../../util/miscellaneous";
 
 export interface IGLLLabel extends ObjectHashEquals {
   getRule(): string;
+}
+
+export interface IEnv<E extends IEnv<E>> extends ObjectHashEquals {
+  assign(key: string, value: unknown): E;
 }
 
 class SSet<T extends ObjectHashEquals> {
@@ -54,22 +68,46 @@ class SSet<T extends ObjectHashEquals> {
 
 type InputPosition = number;
 
-export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
-  readonly rule: string;
-  readonly level: InputPosition;
-  private readonly childNodes: MapKeyToValue<GLLLabel, Set<GSSNode<GLLLabel>>>;
-  // private readonly parentNodes: MapKeyToValue<GLLLabel, Set<GSSNode<GLLLabel>>>;
+// Edge (grammar slot, env)
+export class GSSEdge<GLLLabel extends IGLLLabel, Env extends IEnv<Env>>
+  implements ObjectHashEquals
+{
+  constructor(
+    readonly label: GLLLabel,
+    readonly env: Env
+  ) {}
 
-  constructor(rule: string, pos: InputPosition) {
-    this.rule = rule;
-    this.level = pos;
-    this.childNodes = new MapKeyToValue();
-    // this.parentNodes = new MapKeyToValue();
+  hashCode(): number {
+    return this.label.hashCode() * this.env.hashCode();
   }
 
-  /*parents() {
-    return this.parentNodes[Symbol.iterator]();
-  }*/
+  equals(other: unknown): boolean {
+    return (
+      other instanceof GSSEdge &&
+      this.label.equals(other.label) &&
+      this.env.equals(other.env)
+    );
+  }
+}
+
+export class GSSNode<
+  GLLLabel extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+> implements ObjectHashEquals
+{
+  private readonly childNodes: MapKeyToValue<
+    GSSEdge<GLLLabel, Env>,
+    Set<GSSNode<GLLLabel, Args, Env>>
+  >;
+
+  constructor(
+    readonly rule: string,
+    readonly args: Args,
+    readonly level: InputPosition
+  ) {
+    this.childNodes = new MapKeyToValue();
+  }
 
   children() {
     return this.childNodes[Symbol.iterator]();
@@ -79,9 +117,11 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
     return this.childNodes.size > 0;
   }
 
-  addEdgeTo(edge: GLLLabel, u: GSSNode<GLLLabel>) {
-    const set = this.childNodes.computeIfAbsent(edge, () => new Set());
-    // u.parentNodes.computeIfAbsent(edge, () => new Set()).add(this);
+  addEdgeTo(label: GLLLabel, env: Env, u: GSSNode<GLLLabel, Args, Env>) {
+    const set = this.childNodes.computeIfAbsent(
+      new GSSEdge(label, env),
+      () => new Set()
+    );
     const added = setAdd(set, u);
     if (added && !this.hasLeftRecursionCache) {
       this.hasLeftRecursionCache = null;
@@ -92,14 +132,15 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
   // In each GLL algorithm instance, there should only be one GSSNode instance with these properties
 
   hashCode(): number {
-    return this.rule.length * (this.level + 1);
+    return this.rule.length * this.args.hashCode() * (this.level + 1);
   }
 
   equals(other: unknown): boolean {
     return (
       other instanceof GSSNode &&
       this.rule === other.rule &&
-      this.level === other.level
+      this.level === other.level &&
+      this.args.equals(other.args)
     );
   }
 
@@ -107,8 +148,8 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
 
   hasLeftRecursion() {
     if (this.hasLeftRecursionCache == null) {
-      let prev: GSSNode<GLLLabel>[] = [this];
-      let next: GSSNode<GLLLabel>[] = [];
+      let prev: GSSNode<GLLLabel, Args, Env>[] = [this];
+      let next: GSSNode<GLLLabel, Args, Env>[] = [];
       while (prev.length) {
         for (const n of prev) {
           // As we traverse the children, the level can never increase
@@ -132,18 +173,27 @@ export class GSSNode<GLLLabel extends IGLLLabel> implements ObjectHashEquals {
   }
 }
 
-// Tuple (grammar slot, GSS node, input position)
-export class GLLDescriptor<GLLLabel extends IGLLLabel>
-  implements ObjectHashEquals
+// Tuple (grammar slot, GSS node, input position, env)
+export class GLLDescriptor<
+  GLLLabel extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+> implements ObjectHashEquals
 {
   constructor(
     readonly label: GLLLabel,
-    readonly node: GSSNode<GLLLabel>,
-    readonly pos: InputPosition
+    readonly node: GSSNode<GLLLabel, Args, Env>,
+    readonly pos: InputPosition,
+    readonly env: Env
   ) {}
 
   hashCode(): number {
-    return this.label.hashCode() * this.node.hashCode() * (this.pos + 1);
+    return (
+      this.label.hashCode() *
+      this.node.hashCode() *
+      this.env.hashCode() *
+      (this.pos + 1)
+    );
   }
 
   equals(other: unknown): boolean {
@@ -151,43 +201,83 @@ export class GLLDescriptor<GLLLabel extends IGLLLabel>
       other instanceof GLLDescriptor &&
       this.label.equals(other.label) &&
       this.node === other.node && // Use === instead of equals() so that descriptors from different analyzers are not considered equal
-      this.pos === other.pos
+      this.pos === other.pos &&
+      this.env.equals(other.env)
+    );
+  }
+}
+
+// Tuple (input position, returned value)
+export class GLLPop<Ret extends ObjectHashEquals> implements ObjectHashEquals {
+  constructor(
+    readonly pos: InputPosition,
+    readonly retValue: Ret
+  ) {}
+
+  hashCode(): number {
+    return this.retValue.hashCode() * (this.pos + 1);
+  }
+
+  equals(other: unknown): boolean {
+    return (
+      other instanceof GLLPop &&
+      this.pos === other.pos &&
+      this.retValue.equals(other.retValue)
     );
   }
 }
 
 // A set of the descriptors that still have to be processed by the GLL algorithm
-type GLL_R<GLLLabel extends IGLLLabel> = Array<GLLDescriptor<GLLLabel>>;
+type GLL_R<
+  GLLLabel extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+> = Array<GLLDescriptor<GLLLabel, Args, Env>>;
 
 // A set of descriptors that have been processed by the GLL algorithm
-type GLL_U<GLLLabel extends IGLLLabel> = SSet<GLLDescriptor<GLLLabel>>;
+type GLL_U<
+  GLLLabel extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+> = SSet<GLLDescriptor<GLLLabel, Args, Env>>;
 
-// A set of tuples (GSSNode, input position) for which the GLL algorithm has performed a pop() statement
-type GLL_P<GLLLabel extends IGLLLabel> = MapKeyToValue<
-  GSSNode<GLLLabel>,
-  Set<InputPosition>
->;
+// A set of tuples (GSSNode, input position, returned value) for which the GLL algorithm has performed a pop() statement
+type GLL_P<
+  GLLLabel extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+  Ret extends ObjectHashEquals,
+> = MapKeyToValue<GSSNode<GLLLabel, Args, Env>, SSet<GLLPop<Ret>>>;
 
-// The base GLL algorithm with the GSS optimization from "Faster, Practical GLL Parsing"
-export abstract class GLLBase<L extends IGLLLabel> {
-  protected curr: GSSNode<L>;
+export abstract class GLLBase<
+  L extends IGLLLabel,
+  Args extends ObjectHashEquals,
+  Env extends IEnv<Env>,
+  Ret extends ObjectHashEquals,
+> {
+  protected curr: GSSNode<L, Args, Env>;
   protected pos: InputPosition;
   protected currL: L;
+  protected currEnv: Env;
 
-  protected readonly rSet: GLL_R<L> = [];
-  protected readonly uSet: GLL_U<L> = new SSet();
-  protected readonly pSet: GLL_P<L> = new MapKeyToValue();
+  protected readonly rSet: GLL_R<L, Args, Env> = [];
+  protected readonly uSet: GLL_U<L, Args, Env> = new SSet();
+  protected readonly pSet: GLL_P<L, Args, Env, Ret> = new MapKeyToValue();
 
-  protected readonly nodes = new MapKeyToValue<GSSNode<L>, GSSNode<L>>();
+  protected readonly nodes = new MapKeyToValue<
+    GSSNode<L, Args, Env>,
+    GSSNode<L, Args, Env>
+  >();
 
-  constructor(initialLabel: L) {
+  constructor(initialLabel: L, initialArgs: Args, initialEnv: Env) {
     this.pos = 0;
-    this.curr = this.ensureGLLNode(initialLabel.getRule(), 0);
+    this.curr = this.ensureGLLNode(initialLabel.getRule(), initialArgs, 0);
     this.currL = initialLabel;
+    this.currEnv = initialEnv;
   }
 
   addInitial(pos: InputPosition) {
-    this.add(this.currL, this.curr, pos);
+    this.add(this.currL, this.curr, pos, this.currEnv);
   }
 
   run() {
@@ -197,11 +287,12 @@ export abstract class GLLBase<L extends IGLLLabel> {
   protected loop() {
     if (this.rSet.length > 0) {
       const desc = this.rSet.pop()!;
-      const { label: l, node: u, pos: j } = desc;
+      const { label: l, node: u, pos: j, env } = desc;
       this.curr = u;
       this.pos = j;
       this.currL = l;
-      this.goto(l, desc);
+      this.currEnv = env;
+      this.goto(desc);
       return true;
     }
     this.checkEnd();
@@ -210,50 +301,52 @@ export abstract class GLLBase<L extends IGLLLabel> {
 
   protected checkEnd(): void {}
 
-  protected add(l: L, u: GSSNode<L>, j: InputPosition) {
-    const d = new GLLDescriptor(l, u, j);
+  protected add(l: L, u: GSSNode<L, Args, Env>, j: InputPosition, env: Env) {
+    const d = new GLLDescriptor(l, u, j, env);
     if (this.uSet.add(d)) {
       this.rSet.push(d);
     }
   }
 
+  protected abstract createEnv(rule: string, args: Args): Env;
+
   // 'l' is the label we will return to after popping what we are pushing now
   // 'dest' is the label we are going to
   // Returns true if a new node was created
-  protected create(l: L, dest: L) {
+  protected create(l: L, dest: L, args: Args) {
     const u = this.curr;
     const j = this.pos;
-    const newNode = new GSSNode<L>(dest.getRule(), j);
+    const env = this.currEnv;
+    const newNode = new GSSNode<L, Args, Env>(dest.getRule(), args, j);
     let v = this.nodes.get(newNode);
     if (v) {
-      if (v.addEdgeTo(l, u)) {
-        for (const k of this.pSet.get(v) ?? new Set()) {
-          this.add(l, u, k);
+      if (v.addEdgeTo(l, env, u)) {
+        for (const { pos, retValue } of this.pSet.get(v) ?? new SSet()) {
+          this.add(l, u, pos, env.assign("#tmp", retValue));
         }
       }
       return false;
     } else {
       this.nodes.set(newNode, newNode);
       v = newNode;
-      v.addEdgeTo(l, u);
-      this.add(dest, v, j);
+      v.addEdgeTo(l, env, u);
+      this.add(dest, v, j, this.createEnv(dest.getRule(), args));
       return true;
     }
   }
 
   // Returns true if it popped something
-  protected pop() {
+  protected pop(retValue: Ret) {
     const v = this.curr;
     const k = this.pos;
-    const added = setAdd(
-      this.pSet.computeIfAbsent(v, () => new Set()),
-      k
-    ); // add (v, k)
+    const added = this.pSet
+      .computeIfAbsent(v, () => new SSet())
+      .add(new GLLPop(k, retValue));
     if (added) {
       let hasChildren = false;
-      for (const [l, us] of v.children()) {
+      for (const [{ label, env }, us] of v.children()) {
         for (const u of us) {
-          this.add(l, u, k);
+          this.add(label, u, k, env.assign("#tmp", retValue));
         }
         hasChildren = true;
       }
@@ -262,10 +355,14 @@ export abstract class GLLBase<L extends IGLLLabel> {
     return true;
   }
 
-  ensureGLLNode(rule: string, pos: InputPosition): GSSNode<L> {
-    const newNode = new GSSNode<L>(rule, pos);
+  ensureGLLNode(
+    rule: string,
+    args: Args,
+    pos: InputPosition
+  ): GSSNode<L, Args, Env> {
+    const newNode = new GSSNode<L, Args, Env>(rule, args, pos);
     return this.nodes.computeIfAbsent(newNode, () => newNode);
   }
 
-  abstract goto(l: L, desc: GLLDescriptor<L>): void;
+  abstract goto(desc: GLLDescriptor<L, Args, Env>): void;
 }

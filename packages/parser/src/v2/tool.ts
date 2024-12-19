@@ -4,11 +4,12 @@ import { Automaton, Frag } from "./automaton/automaton.ts";
 import { DState, State } from "./automaton/state.ts";
 import { FactoryRule } from "./factories/factory-rule.ts";
 import { FactoryToken } from "./factories/factory-token.ts";
-import { CfgToCode, CodeBlock } from "./generators/dfa-to-code/cfg-to-code.ts";
-import { ParserGenerator } from "./generators/generate-parser.ts";
 import {
-  AugmentedRuleDeclaration,
-  AugmentedTokenDeclaration,
+  LabelsManager,
+  ParserGenerator,
+} from "./generators/generate-parser.ts";
+import {
+  AugmentedDeclaration,
   createGrammar,
   Grammar,
 } from "./grammar/grammar.ts";
@@ -26,6 +27,21 @@ import { runtimeTypes } from "./grammar/type-checker/default-types.ts";
 import { typeFormatter } from "./grammar/type-checker/types-formatter.ts";
 import { AnyTransition } from "./automaton/transitions.ts";
 import { LEXER_RULE_NAME } from "./grammar/tokens.ts";
+import { ParserCfgToCode } from "./generators/parser-cfg-to-code.ts";
+import {
+  convertDFAtoCFG,
+  ParserCFGNode,
+} from "./generators/parser-dfa-to-cfg.ts";
+import { setAdd } from "../../../util/maps-sets.ts";
+import { traverse, walkUp } from "../../../util/graph.ts";
+import { nonNull } from "../../../util/miscellaneous.ts";
+
+// TODO runtime follow stack will not with gll
+// TODO work with markers to make gll work, and connect everything (and support parallel lexers?)
+
+// TODO implement error recovery, and filling the missing tokens
+// TODO implement incremental parsings
+// TODO left recursion removal https://www.antlr.org/papers/allstar-techreport.pdf
 
 export type ToolInput = Readonly<{
   name: string;
@@ -33,6 +49,8 @@ export type ToolInput = Readonly<{
   tokenDecls?: readonly TokenDeclaration[];
   startArguments?: readonly GType[];
   externalFuncReturns?: Readonly<Record<string, GType>>;
+  maxLL?: number;
+  maxFF?: number;
   _useReferenceAnalysis?: boolean;
 }>;
 
@@ -46,7 +64,7 @@ export function tool(opts: ToolInput) {
     return null;
   }
 
-  const grammar = result.grammar;
+  const { grammar, referencesGraph } = result;
   const rulesAutomaton = new Automaton();
   const tokensAutomaton = new Automaton();
 
@@ -68,21 +86,28 @@ export function tool(opts: ToolInput) {
     );
   }
 
+  const automatons = new Map<AugmentedDeclaration, DFA<DState>>();
+  const allFields = new Map<AugmentedDeclaration, Map<string, boolean>>();
+
   // Process rule declarations
-  const ruleAutomatons = new Map<AugmentedRuleDeclaration, DFA<DState>>();
   for (const rule of grammar.getRules()) {
-    const frag = FactoryRule.process(grammar, rule, rulesAutomaton);
+    const fields = new Map<string, boolean>();
+    allFields.set(rule, fields);
+
+    const frag = FactoryRule.process(grammar, rule, rulesAutomaton, fields);
     const automaton = minimize(rule.name, frag);
-    ruleAutomatons.set(rule, automaton);
+    automatons.set(rule, automaton);
     initialStates.set(rule.name, automaton.start);
   }
 
-  // Process tokens
-  const tokenAutomatons = new Map<AugmentedTokenDeclaration, DFA<DState>>();
+  // Process token declarations
   for (const token of grammar.getTokens()) {
-    const frag = FactoryToken.process(grammar, token, tokensAutomaton);
+    const fields = new Map<string, boolean>();
+    allFields.set(token, fields);
+
+    const frag = FactoryToken.process(grammar, token, tokensAutomaton, fields);
     const automaton = minimize(token.name, frag);
-    tokenAutomatons.set(token, automaton);
+    automatons.set(token, automaton);
     initialStates.set(token.name, automaton.start);
     if (token.name === LEXER_RULE_NAME) {
       grammar.follows.addLexerFollow(automaton.start);
@@ -100,49 +125,100 @@ export function tool(opts: ToolInput) {
         initialStates,
       });
 
-  // Create code blocks for tokens
-  const tokenCodeBlocks = new Map<
-    AugmentedTokenDeclaration,
-    CodeBlock<DState, AnyTransition>
+  // Rules that need GLL
+  const needGLL = new Set<string>();
+
+  // Detect rules that need GLL
+  for (const [decl, automaton] of automatons) {
+    if (needGLL.has(decl.name)) continue;
+    for (const state of automaton.states) {
+      // The analyzer performs caching, so this is ok
+      const { inverted } = analyzer.analyze(decl, state);
+      if (inverted.hasAmbiguities()) {
+        // Mark this rule and others that use this one as needing GLL
+        const it = traverse(referencesGraph.node(decl.name), walkUp);
+        for (let step = it.next(); !step.done; ) {
+          step = it.next(setAdd(needGLL, step.value.data));
+        }
+        break;
+      }
+    }
+  }
+
+  const cfgs = new Map<
+    AugmentedDeclaration,
+    {
+      labels: LabelsManager;
+      thisCfgs: (readonly [
+        Readonly<{ start: ParserCFGNode; nodes: ReadonlySet<ParserCFGNode> }>,
+        number,
+      ])[];
+    }
   >();
-  for (const [token, automaton] of tokenAutomatons) {
-    tokenCodeBlocks.set(
-      token,
-      new CfgToCode<DState, AnyTransition>().process(automaton)
-    );
+
+  // Produce cfgs from automatons
+  for (const [decl, automaton] of automatons) {
+    const thisCfgs = [];
+    const labels = new LabelsManager(needGLL);
+    // Add start
+    labels.add(null, automaton.start);
+    // Generate all labels for this declaration
+    for (const [edge, id] of labels) {
+      thisCfgs.push([
+        convertDFAtoCFG(
+          analyzer,
+          needGLL,
+          decl,
+          labels,
+          automaton.acceptingSet,
+          edge.transition,
+          edge.dest
+        ),
+        id,
+      ] as const);
+    }
+    cfgs.set(decl, { labels, thisCfgs });
   }
 
-  // Produce code for tokens
-  const tokenCode = new Map<AugmentedTokenDeclaration, string>();
-  for (const [rule, block] of tokenCodeBlocks) {
-    tokenCode.set(
-      rule,
-      new ParserGenerator(grammar, analyzer, rule).process("  ", block)
+  const tokensCode: string[] = [];
+  const rulesCode: string[] = [];
+
+  // Produce code from cfgs
+  for (const [decl, { labels, thisCfgs }] of cfgs) {
+    const cfgToCode = new ParserCfgToCode();
+    const generator = new ParserGenerator(
+      grammar,
+      analyzer,
+      decl,
+      labels,
+      nonNull(allFields.get(decl))
     );
+    for (const [cfg, id] of thisCfgs) {
+      const code = generator.process(
+        cfgToCode.process(cfg.start, cfg.nodes),
+        id
+      );
+      if (decl.type === "token") {
+        tokensCode.push(code);
+      } else {
+        rulesCode.push(code);
+      }
+      cfgToCode.reset();
+      generator.reset();
+    }
   }
 
-  // Create code blocks for rules
-  const ruleCodeBlocks = new Map<
-    AugmentedRuleDeclaration,
-    CodeBlock<DState, AnyTransition>
-  >();
-  for (const [rule, automaton] of ruleAutomatons) {
-    ruleCodeBlocks.set(
-      rule,
-      new CfgToCode<DState, AnyTransition>().process(automaton)
-    );
-  }
+  const { forTokens, forRules } = ParserGenerator.genCreateInitialEnvFunc(
+    allFields,
+    needGLL
+  );
+  tokensCode.push(forTokens);
+  rulesCode.push(forRules);
 
-  // Produce code for rules
-  const ruleCode = new Map<AugmentedRuleDeclaration, string>();
-  for (const [rule, block] of ruleCodeBlocks) {
-    ruleCode.set(
-      rule,
-      new ParserGenerator(grammar, analyzer, rule).process("  ", block)
-    );
-  }
-
-  return { code: generateAll(grammar, tokenCode, ruleCode), grammar };
+  return {
+    code: generateAll(grammar, tokensCode, rulesCode, needGLL.size > 0),
+    grammar,
+  };
 }
 
 export function inferAndCheckTypes(grammar: Grammar) {

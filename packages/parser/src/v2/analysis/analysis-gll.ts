@@ -5,29 +5,38 @@ import {
   RangeTransition,
   AnyTransition,
 } from "../automaton/transitions.ts";
-import { assertion, equals } from "../../../../util/miscellaneous";
+import { assertion, ObjectHashEquals } from "../../../../util/miscellaneous";
 import { Analyzer } from "./analysis.ts";
 import { DecisionTokenTree } from "./decision-trees.ts";
-import { GLLBase, GLLDescriptor, IGLLLabel } from "../gll/gll-base.ts";
+import {
+  GLLBase,
+  GLLDescriptor,
+  GSSNode,
+  IEnv,
+  IGLLLabel,
+} from "../gll/gll-base.ts";
 
-export type AnalysisPoint = GLLDescriptor<StateInRule>;
+export type AnalysisPoint = GLLDescriptor<
+  StateInRule,
+  AnalysisGLLArgs,
+  AnalysisGLLEnv
+>;
+
+export type AnalysisGSSNode = GSSNode<
+  StateInRule,
+  AnalysisGLLArgs,
+  AnalysisGLLEnv
+>;
 
 export class StateInRule implements IGLLLabel {
   readonly rule: string;
   readonly state: DState;
   readonly initial: boolean;
-  readonly goto: AnyTransition;
 
-  constructor(
-    rule: string,
-    state: DState,
-    initial: boolean,
-    goto: AnyTransition
-  ) {
+  constructor(rule: string, state: DState, initial: boolean) {
     this.rule = rule;
     this.state = state;
     this.initial = initial;
-    this.goto = goto;
   }
 
   getRule(): string {
@@ -35,7 +44,7 @@ export class StateInRule implements IGLLLabel {
   }
 
   hashCode(): number {
-    return this.rule.length * this.state.id * (this.goto?.hashCode() ?? 1);
+    return this.rule.length * this.state.id;
   }
 
   equals(other: unknown): boolean {
@@ -46,84 +55,117 @@ export class StateInRule implements IGLLLabel {
       return (
         this.rule === other.rule &&
         this.state === other.state &&
-        this.initial === other.initial &&
-        equals(this.goto, other.goto)
+        this.initial === other.initial
       );
     }
     return false;
   }
 }
 
-// The GLL algorithm
-export class AnalysisGLL extends GLLBase<StateInRule> {
-  private gotos: Iterable<AnyTransition>;
+export class AnalysisGLLEnv implements IEnv<AnalysisGLLEnv> {
+  static SINGLETON = new AnalysisGLLEnv();
+  assign(key: string, value: unknown): this {
+    return this;
+  }
+  hashCode(): number {
+    return 0;
+  }
+  equals(other: unknown): boolean {
+    return this === other;
+  }
+}
 
+export class AnalysisGLLArgs implements ObjectHashEquals {
+  static SINGLETON = new AnalysisGLLArgs();
+  hashCode(): number {
+    return 0;
+  }
+  equals(other: unknown): boolean {
+    return this === other;
+  }
+}
+
+export class AnalysisGLLRet implements ObjectHashEquals {
+  static SINGLETON = new AnalysisGLLRet();
+  hashCode(): number {
+    return 0;
+  }
+  equals(other: unknown): boolean {
+    return this === other;
+  }
+}
+
+// The GLL algorithm
+export class AnalysisGLL extends GLLBase<
+  StateInRule,
+  AnalysisGLLArgs,
+  AnalysisGLLEnv,
+  AnalysisGLLRet
+> {
   constructor(
     private readonly analyzer: Analyzer,
-    private map: DecisionTokenTree<AnalysisPoint>,
+    private tree: DecisionTokenTree<AnalysisPoint>,
+    private gotoTransition: AnyTransition,
     rule: string,
-    state: DState,
-    goto: AnyTransition
+    state: DState
   ) {
-    const initialLabel = new StateInRule(rule, state, true, goto);
-    super(initialLabel);
-    this.gotos = [goto];
+    const initialLabel = new StateInRule(rule, state, true);
+    super(initialLabel, AnalysisGLLArgs.SINGLETON, AnalysisGLLEnv.SINGLETON);
+  }
+
+  protected override createEnv(
+    rule: string,
+    args: AnalysisGLLArgs
+  ): AnalysisGLLEnv {
+    return AnalysisGLLEnv.SINGLETON;
   }
 
   getInitialGSS() {
     return this.curr;
   }
 
-  setTree(
-    nextTree: DecisionTokenTree<AnalysisPoint>,
-    gotos: Iterable<AnyTransition>
-  ) {
-    this.map = nextTree;
-    this.gotos = gotos;
-  }
-
   // It is fine to use GSS nodes from previous runs because their "pos" values are smaller
   // And will not confuse with GSS nodes created in this run (which have higher "pos" values)
-  doContinue(desc: GLLDescriptor<StateInRule>) {
-    this.add(desc.label, desc.node, desc.pos);
+  doContinue(desc: AnalysisPoint) {
+    this.add(desc.label, desc.node, desc.pos, desc.env);
     this.run();
   }
 
   // Returns false if it hit left recursion
-  override create(l: StateInRule, dest: StateInRule): boolean {
+  override create(
+    l: StateInRule,
+    dest: StateInRule,
+    args: AnalysisGLLArgs
+  ): boolean {
     return (
-      super.create(l, dest) ||
-      !this.ensureGLLNode(dest.getRule(), this.pos).hasLeftRecursion()
+      super.create(l, dest, args) ||
+      !this.ensureGLLNode(dest.getRule(), args, this.pos).hasLeftRecursion()
     );
   }
 
-  override pop() {
+  override pop(retValue: AnalysisGLLRet) {
     const v = this.curr;
     const k = this.pos;
-    if (!super.pop()) {
+    if (!super.pop(retValue)) {
       const f = this.analyzer.follows.get(v.rule);
       for (const info of f) {
-        const l = new StateInRule(
-          info.rule,
-          info.exitState,
-          false,
-          this.currL.goto
-        );
+        const l = new StateInRule(info.rule, info.exitState, false);
         assertion(v.level === 0);
-        const u = this.ensureGLLNode(info.rule, 0);
-        v.addEdgeTo(l, u);
-        this.add(l, u, k);
+        const u = this.ensureGLLNode(info.rule, AnalysisGLLEnv.SINGLETON, 0);
+        v.addEdgeTo(l, AnalysisGLLEnv.SINGLETON, u);
+        this.add(l, u, k, AnalysisGLLEnv.SINGLETON);
       }
       return f.length > 0;
     }
     return true;
   }
 
-  goto(l: StateInRule, desc: GLLDescriptor<StateInRule>): void {
+  goto(desc: AnalysisPoint): void {
+    const l = desc.label;
     assertion(l.state.transitionAmount() > 0);
     for (const [edge, destState] of l.state) {
-      if (l.initial && !l.goto.equals(edge)) continue;
-      const dest = new StateInRule(l.rule, destState, false, l.goto);
+      if (l.initial && !this.gotoTransition.equals(edge)) continue;
+      const dest = new StateInRule(l.rule, destState, false);
 
       if (edge instanceof CallTransition) {
         if (
@@ -132,25 +174,25 @@ export class AnalysisGLL extends GLLBase<StateInRule> {
             new StateInRule(
               edge.ruleName,
               this.analyzer.initialStates.get(edge.ruleName)!!,
-              false,
-              l.goto
-            )
+              false
+            ),
+            AnalysisGLLArgs.SINGLETON
           )
         ) {
-          this.map.addAny([l.goto]);
+          this.tree.addAny([this.gotoTransition]);
         }
       } else if (edge instanceof ReturnTransition) {
-        if (!this.pop()) {
-          this.map.addEof([l.goto], desc);
+        if (!this.pop(AnalysisGLLRet.SINGLETON)) {
+          this.tree.addEof([this.gotoTransition], desc);
         }
       } else if (edge instanceof RangeTransition) {
-        this.map.addDecision(
+        this.tree.addDecision(
           edge,
-          [l.goto], // == this.gotos
-          new GLLDescriptor(dest, desc.node, desc.pos + 1)
+          [this.gotoTransition],
+          new GLLDescriptor(dest, desc.node, desc.pos + 1, desc.env)
         );
       } else {
-        this.add(dest, desc.node, desc.pos);
+        this.add(dest, desc.node, desc.pos, desc.env);
       }
     }
   }

@@ -1,66 +1,51 @@
-import {
-  first,
-  never,
-  nonNull,
-  ObjectHashEquals,
-} from "../../../../../util/miscellaneous.ts";
-import { AbstractDFAState } from "../../automaton/state.ts";
-import { DFA } from "../../optimizer/abstract-optimizer.ts";
-import { cfgToGroups, CFGGroup } from "./cfg.ts";
-import {
-  ParserCFGEdge,
-  ParserCFGGroup,
-  ParserCFGNode,
-  ParserCFGNodeOrGroup,
-  RegularBlock,
-  convertDFAtoCFG,
-} from "./dfa-to-cfg.ts";
+import { never } from "../../../../../util/miscellaneous.ts";
+import { CFGGroup, CFGNode, CFGEdge, CFGNodeOrGroup } from "./cfg.ts";
 
-export type CodeBlock<S, T> =
-  | ExpectBlock<T>
-  | SeqBlock<S, T>
-  | DecisionBlock<S, T>
-  | ScopeBlock<S, T>
-  | LoopBlock<S, T>
-  | ReturnBlock<T>
+export type CodeBlock<N, B, S, T> =
+  | SimpleBlock<B>
+  | SeqBlock<N, B, S, T>
+  | DecisionBlock<N, B, S, T>
+  | ScopeBlock<N, B, S, T>
+  | LoopBlock<N, B, S, T>
   | ContinueBlock
   | BreakScopeBlock
   | EmptyBlock
-  | DispatchBlock<S, T>;
+  | DispatchBlock<N>;
 
 type Label = string;
 
-export type ExpectBlock<T> = Readonly<{
-  type: "expect_block";
-  transition: T;
+export type SimpleBlock<B> = Readonly<{
+  type: "simple_block";
+  block: B; // This is metadata, and cannot be other blocks
+  return: boolean;
 }>;
 
-export type SeqBlock<S, T> = Readonly<{
+export type SeqBlock<N, B, S, T> = Readonly<{
   type: "seq_block";
-  blocks: readonly CodeBlock<S, T>[];
+  blocks: readonly CodeBlock<N, B, S, T>[];
 }>;
 
-export type DecisionBlock<S, T> = Readonly<{
+export type DecisionBlock<N, B, S, T> = Readonly<{
   type: "decision_block";
-  choices: readonly (readonly [T, CodeBlock<S, T>])[];
+  choices: readonly (readonly [T, CodeBlock<N, B, S, T>])[];
   state: S;
 }>;
 
-export type DispatchBlock<S, T> = Readonly<{
+export type DispatchBlock<N> = Readonly<{
   type: "dispatch_block";
-  node: ParserCFGNode<S, T>;
+  node: N;
 }>;
 
-export type ScopeBlock<S, T> = Readonly<{
+export type ScopeBlock<N, B, S, T> = Readonly<{
   type: "scope_block";
   label: Label;
-  block: CodeBlock<S, T>;
+  block: CodeBlock<N, B, S, T>;
 }>;
 
-export type LoopBlock<S, T> = Readonly<{
+export type LoopBlock<N, B, S, T> = Readonly<{
   type: "loop_block";
   label: Label;
-  block: CodeBlock<S, T>;
+  block: CodeBlock<N, B, S, T>;
 }>;
 
 export type ContinueBlock = Readonly<{
@@ -73,11 +58,6 @@ export type BreakScopeBlock = Readonly<{
   label: Label;
 }>;
 
-export type ReturnBlock<T> = Readonly<{
-  type: "return_block";
-  transition: T;
-}>;
-
 export type EmptyBlock = Readonly<{
   type: "empty_block";
 }>;
@@ -86,7 +66,9 @@ const empty: EmptyBlock = {
   type: "empty_block",
 };
 
-export function endsWithFlowBreak<S, T>(block: CodeBlock<S, T>): boolean {
+export function endsWithFlowBreak<N, B, S, T>(
+  block: CodeBlock<N, B, S, T>
+): boolean {
   if (block.type === "seq_block") {
     const { blocks } = block;
     const last = blocks[blocks.length - 1];
@@ -98,11 +80,14 @@ export function endsWithFlowBreak<S, T>(block: CodeBlock<S, T>): boolean {
   return (
     block.type === "break_block" ||
     block.type === "continue_block" ||
-    block.type === "return_block"
+    (block.type === "simple_block" && block.return)
   );
 }
 
-function usesLabel<S, T>(block: CodeBlock<S, T>, label: string): boolean {
+function usesLabel<N, B, S, T>(
+  block: CodeBlock<N, B, S, T>,
+  label: string
+): boolean {
   switch (block.type) {
     case "scope_block":
     case "loop_block":
@@ -114,8 +99,7 @@ function usesLabel<S, T>(block: CodeBlock<S, T>, label: string): boolean {
     case "break_block":
     case "continue_block":
       return block.label === label;
-    case "expect_block":
-    case "return_block":
+    case "simple_block":
     case "empty_block":
       return false;
     case "dispatch_block":
@@ -125,17 +109,22 @@ function usesLabel<S, T>(block: CodeBlock<S, T>, label: string): boolean {
   }
 }
 
-export class CfgToCode<
-  S extends AbstractDFAState<S, T>,
-  T extends ObjectHashEquals,
-> {
-  private readonly processed = new Set<ParserCFGNodeOrGroup<S, T>>();
-  private readonly scopeLabels = new Map<ParserCFGNode<S, T>, number>();
-  private readonly loopLabels = new Map<ParserCFGNode<S, T>, number>();
+export abstract class CfgToCode<Code, Decision, N, B, S, T> {
+  private readonly processed = new Set<CFGNodeOrGroup<Code, Decision>>();
+  private readonly scopeLabels = new Map<CFGNode<Code, Decision>, number>();
+  private readonly loopLabels = new Map<CFGNode<Code, Decision>, number>();
   private scopeLabelUuid = 1;
   private loopLabelUuid = 1;
 
-  private makeSeq(_blocks: CodeBlock<S, T>[]): CodeBlock<S, T> {
+  reset() {
+    this.processed.clear();
+    this.scopeLabels.clear();
+    this.loopLabels.clear();
+    this.scopeLabelUuid = 1;
+    this.loopLabelUuid = 1;
+  }
+
+  protected makeSeq(_blocks: CodeBlock<N, B, S, T>[]): CodeBlock<N, B, S, T> {
     const blocks = _blocks
       .flatMap(b => (b.type === "seq_block" ? b.blocks : b))
       .filter(b => b.type !== "empty_block");
@@ -159,9 +148,9 @@ export class CfgToCode<
 
   // The optimization removes "breaks" with this label if they are the last statement
   private removeBreaksOf(
-    block: CodeBlock<S, T>,
+    block: CodeBlock<N, B, S, T>,
     label: Label
-  ): CodeBlock<S, T> {
+  ): CodeBlock<N, B, S, T> {
     switch (block.type) {
       case "scope_block":
         return {
@@ -195,8 +184,7 @@ export class CfgToCode<
       case "break_block":
         return block.label === label ? empty : block;
       case "continue_block":
-      case "expect_block":
-      case "return_block":
+      case "simple_block":
       case "empty_block":
         return block;
       case "dispatch_block":
@@ -209,9 +197,9 @@ export class CfgToCode<
   // The optimization turns "breaks" of a scope to "breaks" of a loop
   private replaceBreaksInLoop(
     loopLabel: Label,
-    block: CodeBlock<S, T>,
+    block: CodeBlock<N, B, S, T>,
     label: Label
-  ): CodeBlock<S, T> {
+  ): CodeBlock<N, B, S, T> {
     switch (block.type) {
       case "scope_block":
         return {
@@ -241,8 +229,7 @@ export class CfgToCode<
       case "break_block":
         return block.label === label ? this.createBreak(loopLabel) : block;
       case "continue_block":
-      case "expect_block":
-      case "return_block":
+      case "simple_block":
       case "empty_block":
         return block;
       case "dispatch_block":
@@ -254,8 +241,8 @@ export class CfgToCode<
 
   private surroundWithScope(
     label: Label,
-    block: CodeBlock<S, T>
-  ): CodeBlock<S, T> {
+    block: CodeBlock<N, B, S, T>
+  ): CodeBlock<N, B, S, T> {
     const optimized = this.removeBreaksOf(block, label);
     if (optimized.type === "seq_block") {
       const { blocks } = optimized;
@@ -282,7 +269,10 @@ export class CfgToCode<
     return optimized;
   }
 
-  private makeLoop(label: Label, block: CodeBlock<S, T>): CodeBlock<S, T> {
+  protected makeLoop(
+    label: Label,
+    block: CodeBlock<N, B, S, T>
+  ): CodeBlock<N, B, S, T> {
     if (block.type === "empty_block") {
       throw new Error(`Empty infinite loop?`);
     }
@@ -293,14 +283,14 @@ export class CfgToCode<
     };
   }
 
-  private createBreak(label: string): BreakScopeBlock {
+  protected createBreak(label: string): BreakScopeBlock {
     return {
       type: "break_block",
       label,
     };
   }
 
-  private getScopeLabel(nodes: ParserCFGNodeOrGroup<S, T>): string {
+  protected getScopeLabel(nodes: CFGNodeOrGroup<Code, Decision>): string {
     let n = nodes;
     while (n instanceof CFGGroup) n = n.entry;
 
@@ -311,7 +301,7 @@ export class CfgToCode<
     return `s${label}`;
   }
 
-  private getLoopLabel(nodes: ParserCFGNodeOrGroup<S, T>): string {
+  protected getLoopLabel(nodes: CFGNodeOrGroup<Code, Decision>): string {
     let n = nodes;
     while (n instanceof CFGGroup) n = n.entry;
 
@@ -322,10 +312,10 @@ export class CfgToCode<
     return `l${label}`;
   }
 
-  private handleEdge(
-    parent: ParserCFGGroup<S, T>,
-    node: ParserCFGNode<S, T>,
-    { dest, type }: ParserCFGEdge<S, T>
+  protected handleEdge(
+    parent: CFGGroup<Code, Decision>,
+    node: CFGNode<Code, Decision>,
+    { dest, type }: CFGEdge<Code, Decision>
   ) {
     if (type === "forward") {
       const destGroup = parent.find(dest);
@@ -342,7 +332,7 @@ export class CfgToCode<
         };
       }
     } else {
-      const result: CodeBlock<S, T> = {
+      const result: CodeBlock<N, B, S, T> = {
         type: "continue_block",
         label: this.getLoopLabel(dest),
       };
@@ -353,101 +343,18 @@ export class CfgToCode<
     }
   }
 
-  // Return the next field assignment if the same
-  private following(
-    node: ParserCFGNode<S, T>,
-    ref: { stop: boolean; state: T },
-    fn: (
-      node: ParserCFGNode<S, T>,
-      block: RegularBlock<S, T>,
-      ref: { stop: boolean; state: T }
-    ) => void,
-    seen = new Set()
-  ) {
-    const size = seen.size;
-    seen.add(node);
-    if (size !== seen.size) {
-      for (const { dest } of node.outEdges) {
-        if (ref.stop) {
-          break;
-        }
-        if (dest.code?.type === "regular_block") {
-          fn(dest, dest.code, ref);
-        } else {
-          this.following(dest, ref, fn, seen);
-        }
-      }
-    }
-    return ref.state;
-  }
+  abstract handleNode(
+    node: CFGNode<Code, Decision>,
+    parent: CFGGroup<Code, Decision>
+  ): CodeBlock<N, B, S, T>;
 
-  private handleNode(
-    node: ParserCFGNode<S, T>,
-    parent: ParserCFGGroup<S, T>
-  ): CodeBlock<S, T> {
-    const { code } = node;
-    let block: CodeBlock<S, T>;
-    let isLoop = false;
-
-    switch (code?.type) {
-      case "regular_block": {
-        const edge = first(node.outEdges);
-        const { loop, result } = this.handleEdge(parent, node, edge);
-        block = this.makeSeq([
-          code.final
-            ? { type: "return_block", transition: code.expr }
-            : {
-                type: "expect_block",
-                transition: code.expr,
-              },
-          result,
-        ]);
-        isLoop = loop;
-        break;
-      }
-      case "conditional_block": {
-        const choices = [];
-        for (const edge of node.outEdges) {
-          const { loop, result } = this.handleEdge(parent, node, edge);
-          isLoop ||= loop;
-          choices.push([nonNull(edge.decision), result] as const);
-        }
-        block = {
-          type: "decision_block",
-          choices,
-          state: code.state,
-        };
-        break;
-      }
-      case undefined:
-        block = {
-          type: "dispatch_block",
-          node,
-        };
-        throw new Error("TODO");
-        break;
-      default:
-        never(code);
-    }
-
-    if (isLoop) {
-      const label = this.getLoopLabel(node);
-      block = this.makeLoop(
-        label,
-        this.makeSeq([block, this.createBreak(label)])
-      );
-    }
-
-    return block;
-  }
-
-  private handleLoop(group: ParserCFGGroup<S, T>): CodeBlock<S, T> {
+  private handleLoop(group: CFGGroup<Code, Decision>): CodeBlock<N, B, S, T> {
     return this.makeLoop(this.getLoopLabel(group), this.processGroup(group));
   }
 
   private handleNodes(
-    nodes: ParserCFGNodeOrGroup<S, T>,
-    parent: ParserCFGGroup<S, T>
+    nodes: CFGNodeOrGroup<Code, Decision>,
+    parent: CFGGroup<Code, Decision>
   ) {
     this.processed.add(nodes);
     if (nodes instanceof CFGGroup) {
@@ -457,8 +364,8 @@ export class CfgToCode<
     }
   }
 
-  private processGroup(ordered: ParserCFGGroup<S, T>) {
-    let lastBlock: CodeBlock<S, T> = empty;
+  processGroup(ordered: CFGGroup<Code, Decision>) {
+    let lastBlock: CodeBlock<N, B, S, T> = empty;
     for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
       lastBlock = this.makeSeq([
@@ -467,12 +374,5 @@ export class CfgToCode<
       ]);
     }
     return lastBlock;
-  }
-
-  // Based on https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
-  process(dfa: DFA<S>) {
-    const { start, nodes } = convertDFAtoCFG<S, T>(dfa);
-    const ordered = cfgToGroups(start, nodes);
-    return this.processGroup(ordered);
   }
 }

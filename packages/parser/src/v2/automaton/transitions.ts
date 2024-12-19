@@ -10,6 +10,7 @@ import { GrammarFormatter } from "../grammar/grammar-formatter.ts";
 export type AnyTransition =
   | EpsilonTransition
   | CallTransition
+  | FieldTransition
   | ActionTransition
   | PredicateTransition
   | RangeTransition
@@ -222,29 +223,24 @@ export class ReturnTransition extends AbstractEpsilonTransition {
   }
 }
 
-/*export class FieldTransition extends AbstractEpsilonTransition {
-  readonly name: string;
-  readonly multiple: boolean;
-
-  constructor(name: string, multiple: boolean) {
+export class FieldTransition extends AbstractEpsilonTransition {
+  constructor(readonly field: FieldInfo) {
     super();
-    this.name = name;
-    this.multiple = multiple;
   }
 
   hashCode() {
-    return 7 * this.name.length;
+    return 7;
   }
 
   equals(other: unknown): other is FieldTransition {
     return (
       other instanceof FieldTransition &&
-      this.name === other.name &&
-      this.multiple === other.multiple
+      this.field.name === other.field.name &&
+      this.field.multiple === other.field.multiple
     );
   }
 
   toString() {
-    return `[${this.name} ${this.multiple ? "+=" : ""} $val]`;
+    return `[${this.field.name} ${this.field.multiple ? "+=" : ""} $val]`;
   }
-}*/
+}
