@@ -156,7 +156,8 @@ const ruleF = rule(
   id("w")
 );
 
-const ruleG = rule("G", choice(string("<<<"), string("<<")), [], {}, null);
+// TODO restore "<<<" | "<<"
+const ruleG = rule("G", choice(string("<<"), string("<<")), [], {}, null);
 
 const ruleH = rule(
   "H",
@@ -422,9 +423,10 @@ const endAux = rule("endAux", choice(int(1), int(2)), [], {
   _debug: { worthIt: true, keepGoing: true },
 });
 
+// TODO restore string("W")
 const tokenW = token(
   "W",
-  field("text", string("W")),
+  field("text", string("1W")),
   [],
   { type: "normal", channels: ["channel1"] },
   id("text")
@@ -470,7 +472,7 @@ const opts: ToolInput = {
     ruleTricky2,
     ruleTricky3,
     ruleTricky4,
-    ruleY,
+    // TODO restore ruleY,
     ruleRecursive1,
     ruleRecursive2,
     ruleRecursive3,
@@ -500,7 +502,10 @@ const opts: ToolInput = {
     grammarNotEnd,
     endAux,
   ],
-  tokenDecls: [tokenW, tokenY],
+  tokenDecls: [
+    tokenW,
+    // TODO restore tokenY
+  ],
   startArguments: [typeBuilder.string()],
   externalFuncReturns: {
     externalCall: typeBuilder.bool(),
@@ -527,7 +532,7 @@ if (result) {
     path.join(import.meta.dirname, "example.analysis.txt"),
     result.grammar._debugAnalysis.join("\n")
   );
-  const { types } = inferAndCheckTypes(result.grammar);
+  const { types } = inferAndCheckTypes(result.grammar, true);
   fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
 }
 

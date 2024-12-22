@@ -76,16 +76,16 @@ RULE child STATE DState{2}
 
 RULE F STATE DState{0}
 RULE F STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (range ll1 13 13)
+    GOTO [Action @$getPos()] WHEN (range ll1 12 12)
 
 RULE F STATE DState{2}
-    GOTO [Action { x: arg }] WHEN (range ll1 13 13)
+    GOTO [Action { x: arg }] WHEN (range ll1 12 12)
 
 RULE F STATE DState{3}
-    GOTO [Range [13,13]] WHEN (range ll1 13 13)
+    GOTO [Range [12,12]] WHEN (range ll1 12 12)
 
 RULE F STATE DState{4}
-    GOTO [Rule H] WHEN (or (range ll1 -1 -1) (range ll1 10 10))
+    GOTO [Rule H] WHEN (or (range ll1 -1 -1) (range ll1 9 9))
 
 RULE F STATE DState{5}
     GOTO [Action @$getLoc($startPos)] WHEN (range ll1 -1 -1)
@@ -96,12 +96,10 @@ RULE F STATE DState{6}
 RULE F STATE DState{7}
 RULE G STATE DState{0}
 RULE G STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (or (range ll1 8 8) (range ll1 9 9))
+    GOTO [Action @$getPos()] WHEN (range ll1 8 8)
 
 RULE G STATE DState{2}
     GOTO [Range [8,8]] WHEN (range ll1 8 8)
-
-    GOTO [Range [9,9]] WHEN (range ll1 9 9)
 
 RULE G STATE DState{3}
     GOTO [Action @$getLoc($startPos)] WHEN (range ll1 -1 -1)
@@ -112,12 +110,12 @@ RULE G STATE DState{4}
 RULE G STATE DState{5}
 RULE H STATE DState{0}
 RULE H STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (or (range ll1 -1 -1) (range ll1 10 10))
+    GOTO [Action @$getPos()] WHEN (or (range ll1 -1 -1) (range ll1 9 9))
 
 RULE H STATE DState{2}
     GOTO [Action x] WHEN (range ll1 -1 -1)
 
-    GOTO [Range [10,10]] WHEN (range ll1 10 10)
+    GOTO [Range [9,9]] WHEN (range ll1 9 9)
 
 RULE H STATE DState{3}
     GOTO [Action @$getLoc($startPos)] WHEN (range ll1 -1 -1)
@@ -142,20 +140,6 @@ RULE Tricky4 STATE DState{0}
 RULE Tricky4 STATE DState{1}
     GOTO [Action @$getPos()] WHEN (or (and ) (range ll1 -1 -1) (range ll1 -1 -1) (range ll1 1 1) (range ll1 1 1))
 
-RULE Y STATE DState{0}
-RULE Y STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (range ll1 14 14)
-
-RULE Y STATE DState{2}
-    GOTO [Range [14,14]] WHEN (range ll1 14 14)
-
-RULE Y STATE DState{3}
-    GOTO [Action @$getLoc($startPos)] WHEN (range ll1 -1 -1)
-
-RULE Y STATE DState{4}
-    GOTO [Return] WHEN (range ll1 -1 -1)
-
-RULE Y STATE DState{5}
 RULE Rec1 STATE DState{0}
 RULE Rec1 STATE DState{1}
     GOTO [Action @$getPos()] WHEN (and )
@@ -225,18 +209,18 @@ RULE EmptyOrNot STATE DState{1}
 
 RULE GLL1 STATE DState{0}
 RULE GLL1 STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 12 12) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 2 2) (range ll2 3 3) (range ll3 0 0) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1)))
+    GOTO [Action @$getPos()] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 11 11) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 2 2) (range ll2 3 3) (range ll3 0 0) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1)))
 
 RULE GLL1 STATE DState{2}
-    GOTO [Rule GLLAux1] WHEN (and (range ll1 1 1) (range ll2 0 0) (range ll3 12 12) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Rule GLLAux1] WHEN (and (range ll1 1 1) (range ll2 0 0) (range ll3 11 11) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
     GOTO [Rule GLLAux2] WHEN (and (range ll1 2 2) (range ll2 3 3) (range ll3 0 0) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLL1 STATE DState{3}
-    GOTO [Range [0,0]] WHEN (and (range ll1 0 0) (range ll2 12 12) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Range [0,0]] WHEN (and (range ll1 0 0) (range ll2 11 11) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLL1 STATE DState{4}
-    GOTO [Range [12,12]] WHEN (and (range ll1 12 12) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Range [11,11]] WHEN (and (range ll1 11 11) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLL1 STATE DState{5}
     GOTO [Action @$getLoc($startPos)] WHEN (and (range ll1 -1 -1) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
@@ -247,16 +231,16 @@ RULE GLL1 STATE DState{6}
 RULE GLL1 STATE DState{7}
 RULE GLLAux1 STATE DState{0}
 RULE GLLAux1 STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 12 12) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 1 1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
+    GOTO [Action @$getPos()] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 11 11) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 1 1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
 
 RULE GLLAux1 STATE DState{2}
-    GOTO [Range [1,1]] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 12 12) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 1 1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
+    GOTO [Range [1,1]] WHEN (or (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 11 11) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 1 1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
 
 RULE GLLAux1 STATE DState{3}
-    GOTO [Action @$getLoc($startPos)] WHEN (or (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 12 12) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
+    GOTO [Action @$getLoc($startPos)] WHEN (or (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 11 11) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
 
 RULE GLLAux1 STATE DState{4}
-    GOTO [Return] WHEN (or (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 12 12) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
+    GOTO [Return] WHEN (or (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 34 34) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 0 0) (range ll2 11 11) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 33 33) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 1 1) (range ll3 0 0) (follow ff1 31 31) (follow ff2 32 32) (follow ff3 -1 -1)))
 
 RULE GLLAux1 STATE DState{5}
 RULE GLLAux2 STATE DState{0}
@@ -267,13 +251,13 @@ RULE GLLAux2 STATE DState{2}
     GOTO [Range [2,2]] WHEN (and (range ll1 2 2) (range ll2 3 3) (range ll3 0 0) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLLAux2 STATE DState{3}
-    GOTO [Range [3,3]] WHEN (and (range ll1 3 3) (range ll2 0 0) (range ll3 12 12) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Range [3,3]] WHEN (and (range ll1 3 3) (range ll2 0 0) (range ll3 11 11) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLLAux2 STATE DState{4}
-    GOTO [Action @$getLoc($startPos)] WHEN (and (range ll1 0 0) (range ll2 12 12) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Action @$getLoc($startPos)] WHEN (and (range ll1 0 0) (range ll2 11 11) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLLAux2 STATE DState{5}
-    GOTO [Return] WHEN (and (range ll1 0 0) (range ll2 12 12) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
+    GOTO [Return] WHEN (and (range ll1 0 0) (range ll2 11 11) (range ll3 -1 -1) (follow ff1 30 30) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
 RULE GLLAux2 STATE DState{6}
 RULE GLL1Follow STATE DState{0}
@@ -414,15 +398,191 @@ RULE endAux STATE DState{2}
 
 RULE $lexer STATE DState{0}
 RULE $lexer STATE DState{1}
-    GOTO [Action @$getPos()] WHEN (or (range ll1 -1 -1) (range ll1 -1 -1) (range ll1 60 60) (range ll1 60 60) (range ll1 65 65) (range ll1 65 65) (range ll1 66 66) (range ll1 66 66) (range ll1 67 67) (range ll1 67 67) (range ll1 68 68) (range ll1 68 68) (range ll1 69 69) (range ll1 69 69) (range ll1 70 70) (range ll1 70 70) (range ll1 79 79) (range ll1 79 79) (range ll1 80 80) (range ll1 80 80) (range ll1 83 83) (range ll1 83 83) (range ll1 87 87) (range ll1 87 87) (range ll1 97 97) (range ll1 97 97))
+    GOTO [Action @$getPos()] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
 
 RULE $lexer STATE DState{2}
-    GOTO [Action 10] WHEN (or (range ll1 -1 -1) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
-
-    GOTO [Action @$startText()] WHEN (or (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+    GOTO [Action @$startText()] WHEN (or (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
 
     GOTO [Range [-1,-1]] WHEN (range ll1 -1 -1)
 
+RULE $lexer STATE DState{3}
+    GOTO [Range [60,60]] WHEN (range ll1 60 60)
+
+    GOTO [Range [80,80]] WHEN (range ll1 80 80)
+
+    GOTO [Range [49,49]] WHEN (range ll1 49 49)
+
+    GOTO [Range [97,97]] WHEN (range ll1 97 97)
+
+    GOTO [Range [68,68]] WHEN (range ll1 68 68)
+
+    GOTO [Range [65,65]] WHEN (range ll1 65 65)
+
+    GOTO [Range [79,79]] WHEN (range ll1 79 79)
+
+    GOTO [Range [67,67]] WHEN (range ll1 67 67)
+
+    GOTO [Range [83,83]] WHEN (range ll1 83 83)
+
+    GOTO [Range [70,70]] WHEN (range ll1 70 70)
+
+    GOTO [Range [66,66]] WHEN (range ll1 66 66)
+
+    GOTO [Range [69,69]] WHEN (range ll1 69 69)
+
+    GOTO [Range [87,87]] WHEN (range ll1 87 87)
+
+RULE $lexer STATE DState{4}
+    GOTO [Range [87,87]] WHEN (range ll1 87 87)
+
+RULE $lexer STATE DState{5}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{6}
+    GOTO [Action 12] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{7}
+    GOTO [Action $12_text] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{8}
+    GOTO [Action @$getLoc($startPos)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{9}
+    GOTO [Return] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{10}
+    GOTO [Range [60,60]] WHEN (range ll1 60 60)
+
+RULE $lexer STATE DState{11}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{12}
+    GOTO [Action 8] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{13}
+    GOTO [Action $8_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{14}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{15}
+    GOTO [Action 1] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{16}
+    GOTO [Action $1_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{17}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{18}
+    GOTO [Action 2] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{19}
+    GOTO [Action $2_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{20}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{21}
+    GOTO [Action 3] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{22}
+    GOTO [Action $3_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{23}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{24}
+    GOTO [Action 4] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{25}
+    GOTO [Action $4_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{26}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{27}
+    GOTO [Action 5] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{28}
+    GOTO [Action $5_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{29}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{30}
+    GOTO [Action 6] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{31}
+    GOTO [Action $6_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{32}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{33}
+    GOTO [Action 0] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{34}
+    GOTO [Action $0_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{35}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{36}
+    GOTO [Action 10] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{37}
+    GOTO [Action $10_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{38}
+    GOTO [Range [84,84]] WHEN (range ll1 84 84)
+
+RULE $lexer STATE DState{39}
+    GOTO [Range [82,82]] WHEN (range ll1 82 82)
+
+RULE $lexer STATE DState{40}
+    GOTO [Range [73,73]] WHEN (range ll1 73 73)
+
+RULE $lexer STATE DState{41}
+    GOTO [Range [78,78]] WHEN (range ll1 78 78)
+
+RULE $lexer STATE DState{42}
+    GOTO [Range [71,71]] WHEN (range ll1 71 71)
+
+RULE $lexer STATE DState{43}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{44}
+    GOTO [Action 7] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{45}
+    GOTO [Action $7_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{46}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{47}
+    GOTO [Action 11] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{48}
+    GOTO [Action $11_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{49}
+    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{50}
+    GOTO [Action 9] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{51}
+    GOTO [Action $9_t] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{52}
+    GOTO [Action -1] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{53}
+    GOTO [Action null] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
+
+RULE $lexer STATE DState{54}
 RULE $_1 STATE DState{0}
 RULE $_1 STATE DState{1}
     GOTO [Range [-1,-1]] WHEN (range ll1 -1 -1)
@@ -569,38 +729,32 @@ RULE $8 STATE DState{3}
     GOTO [Range [60,60]] WHEN (range ll1 60 60)
 
 RULE $8 STATE DState{4}
-    GOTO [Range [60,60]] WHEN (range ll1 60 60)
+    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
 
 RULE $8 STATE DState{5}
-    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
+    GOTO [Return] WHEN (range ll1 -1 -1)
 
 RULE $8 STATE DState{6}
-    GOTO [Return] WHEN (range ll1 -1 -1)
-
-RULE $8 STATE DState{7}
 RULE $9 STATE DState{0}
 RULE $9 STATE DState{1}
-    GOTO [Action @$startText()] WHEN (range ll1 60 60)
-
-RULE $9 STATE DState{2}
-    GOTO [Range [60,60]] WHEN (range ll1 60 60)
-
-RULE $9 STATE DState{3}
-    GOTO [Range [60,60]] WHEN (range ll1 60 60)
-
-RULE $9 STATE DState{4}
-    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
-
-RULE $9 STATE DState{5}
-    GOTO [Return] WHEN (range ll1 -1 -1)
-
-RULE $9 STATE DState{6}
-RULE $10 STATE DState{0}
-RULE $10 STATE DState{1}
     GOTO [Action @$startText()] WHEN (range ll1 97 97)
 
-RULE $10 STATE DState{2}
+RULE $9 STATE DState{2}
     GOTO [Range [97,97]] WHEN (range ll1 97 97)
+
+RULE $9 STATE DState{3}
+    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
+
+RULE $9 STATE DState{4}
+    GOTO [Return] WHEN (range ll1 -1 -1)
+
+RULE $9 STATE DState{5}
+RULE $10 STATE DState{0}
+RULE $10 STATE DState{1}
+    GOTO [Action @$startText()] WHEN (range ll1 80 80)
+
+RULE $10 STATE DState{2}
+    GOTO [Range [80,80]] WHEN (range ll1 80 80)
 
 RULE $10 STATE DState{3}
     GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
@@ -611,10 +765,10 @@ RULE $10 STATE DState{4}
 RULE $10 STATE DState{5}
 RULE $11 STATE DState{0}
 RULE $11 STATE DState{1}
-    GOTO [Action @$startText()] WHEN (range ll1 80 80)
+    GOTO [Action @$startText()] WHEN (range ll1 87 87)
 
 RULE $11 STATE DState{2}
-    GOTO [Range [80,80]] WHEN (range ll1 80 80)
+    GOTO [Range [87,87]] WHEN (range ll1 87 87)
 
 RULE $11 STATE DState{3}
     GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
@@ -623,42 +777,23 @@ RULE $11 STATE DState{4}
     GOTO [Return] WHEN (range ll1 -1 -1)
 
 RULE $11 STATE DState{5}
-RULE $12 STATE DState{0}
-RULE $12 STATE DState{1}
-    GOTO [Action @$startText()] WHEN (range ll1 87 87)
-
-RULE $12 STATE DState{2}
-    GOTO [Range [87,87]] WHEN (range ll1 87 87)
-
-RULE $12 STATE DState{3}
-    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
-
-RULE $12 STATE DState{4}
-    GOTO [Return] WHEN (range ll1 -1 -1)
-
-RULE $12 STATE DState{5}
 RULE W STATE DState{0}
 RULE W STATE DState{1}
-    GOTO [Action @$startText()] WHEN (range ll1 87 87)
+    GOTO [Action @$startText()] WHEN (range ll1 49 49)
 
 RULE W STATE DState{2}
-    GOTO [Range [87,87]] WHEN (range ll1 87 87)
+    GOTO [Range [49,49]] WHEN (range ll1 49 49)
 
 RULE W STATE DState{3}
-    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
+    GOTO [Range [87,87]] WHEN (range ll1 87 87)
 
 RULE W STATE DState{4}
-    GOTO [Return] WHEN (range ll1 -1 -1)
+    GOTO [Action @$endText($startMarker)] WHEN (range ll1 -1 -1)
 
 RULE W STATE DState{5}
-RULE TY STATE DState{0}
-RULE TY STATE DState{1}
-    GOTO [Action 10] WHEN (range ll1 -1 -1)
-
-RULE TY STATE DState{2}
     GOTO [Return] WHEN (range ll1 -1 -1)
 
-RULE TY STATE DState{3}
+RULE W STATE DState{6}
 RULE A STATE DState{5}
     GOTO [Range [0,0]] WHEN (range ll1 0 0)
 
@@ -793,7 +928,7 @@ RULE EmptyOrNot STATE DState{2}
     GOTO [Action @$getLoc($startPos)] WHEN (or (and ) (range ll1 -1 -1) (range ll1 1 1) (range ll1 2 2))
 
 RULE TrickyAfterEmpty STATE DState{2}
-    GOTO [Range [0,0]] WHEN (and (range ll1 0 0) (range ll2 11 11))
+    GOTO [Range [0,0]] WHEN (and (range ll1 0 0) (range ll2 10 10))
 
     GOTO [Rule EmptyOrNot] WHEN (or (and ) (range ll1 -1 -1) (range ll1 1 1) (range ll1 2 2) (range ll1 0 0) (and (range ll1 0 0) (range ll2 -1 -1)) (and (range ll1 0 0) (range ll2 1 1)) (and (range ll1 0 0) (range ll2 2 2)))
 
@@ -801,38 +936,3 @@ RULE GLL1FollowContext STATE DState{4}
     GOTO [Range [0,0]] WHEN (and (range ll1 0 0) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
 
     GOTO [Rule GLLAux1] WHEN (and (range ll1 1 1) (range ll2 0 0) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
-
-RULE $lexer STATE DState{3}
-    GOTO [Range [60,60]] WHEN (range ll1 60 60)
-
-    GOTO [Range [80,80]] WHEN (range ll1 80 80)
-
-    GOTO [Range [97,97]] WHEN (range ll1 97 97)
-
-    GOTO [Range [68,68]] WHEN (range ll1 68 68)
-
-    GOTO [Range [65,65]] WHEN (range ll1 65 65)
-
-    GOTO [Range [79,79]] WHEN (range ll1 79 79)
-
-    GOTO [Range [67,67]] WHEN (range ll1 67 67)
-
-    GOTO [Range [83,83]] WHEN (range ll1 83 83)
-
-    GOTO [Range [70,70]] WHEN (range ll1 70 70)
-
-    GOTO [Range [66,66]] WHEN (range ll1 66 66)
-
-    GOTO [Range [69,69]] WHEN (range ll1 69 69)
-
-    GOTO [Range [87,87]] WHEN (range ll1 87 87)
-
-RULE $lexer STATE DState{45}
-    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
-
-    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))
-
-RULE $lexer STATE DState{5}
-    GOTO [Range [60,60]] WHEN (range ll1 60 60)
-
-    GOTO [Action @$endText($startMarker)] WHEN (or (range ll1 -1 -1) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))

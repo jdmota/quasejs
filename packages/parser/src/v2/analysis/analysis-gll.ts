@@ -87,6 +87,7 @@ export class AnalysisGLLArgs implements ObjectHashEquals {
 
 export class AnalysisGLLRet implements ObjectHashEquals {
   static SINGLETON = new AnalysisGLLRet();
+  readonly value = null;
   hashCode(): number {
     return 0;
   }

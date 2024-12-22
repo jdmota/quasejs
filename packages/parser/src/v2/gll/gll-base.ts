@@ -40,6 +40,10 @@ export interface IEnv<E extends IEnv<E>> extends ObjectHashEquals {
   assign(key: string, value: unknown): E;
 }
 
+export interface IRet extends ObjectHashEquals {
+  readonly value: unknown;
+}
+
 class SSet<T extends ObjectHashEquals> {
   private readonly map = new MapKeyToValue<T, boolean>();
 
@@ -253,7 +257,7 @@ export abstract class GLLBase<
   L extends IGLLLabel,
   Args extends ObjectHashEquals,
   Env extends IEnv<Env>,
-  Ret extends ObjectHashEquals,
+  Ret extends IRet,
 > {
   protected curr: GSSNode<L, Args, Env>;
   protected pos: InputPosition;
@@ -322,7 +326,7 @@ export abstract class GLLBase<
     if (v) {
       if (v.addEdgeTo(l, env, u)) {
         for (const { pos, retValue } of this.pSet.get(v) ?? new SSet()) {
-          this.add(l, u, pos, env.assign("#tmp", retValue));
+          this.add(l, u, pos, env.assign("#tmp", retValue.value));
         }
       }
       return false;
@@ -346,7 +350,7 @@ export abstract class GLLBase<
       let hasChildren = false;
       for (const [{ label, env }, us] of v.children()) {
         for (const u of us) {
-          this.add(label, u, k, env.assign("#tmp", retValue));
+          this.add(label, u, k, env.assign("#tmp", retValue.value));
         }
         hasChildren = true;
       }

@@ -15,19 +15,16 @@ import {
 } from "./dfa-to-code/cfg.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
 import { AugmentedDeclaration } from "../grammar/grammar.ts";
-import {
-  ActionTransition,
-  AnyTransition,
-  CallTransition,
-  FieldTransition,
-} from "../automaton/transitions.ts";
-import { DecisionTree } from "../analysis/decision-trees.ts";
+import { AnyTransition } from "../automaton/transitions.ts";
+import { DecisionTokenTree, DecisionTree } from "../analysis/decision-trees.ts";
 import { DecisionExpr } from "../analysis/decision-expr.ts";
 import { LabelsManager } from "./generate-parser.ts";
 
 export type ConditionalBlock = Readonly<{
   type: "conditional_block";
   state: DState;
+  decisionOn: "ll" | "ff";
+  decisionIdx: number;
 }>;
 
 export type RegularBlock = Readonly<{
@@ -156,6 +153,8 @@ export function convertDFAtoCFG(
       const node = newNode({
         type: "conditional_block",
         state,
+        decisionOn: tree instanceof DecisionTokenTree ? "ll" : "ff",
+        decisionIdx: tree instanceof DecisionTokenTree ? tree.ll : tree.ff,
       });
       const anyGotos = [...tree.iterateAny()]; // Deal the left recursive rules
       for (const decision of tree.iterate()) {

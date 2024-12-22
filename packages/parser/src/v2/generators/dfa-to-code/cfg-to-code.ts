@@ -1,12 +1,12 @@
 import { never } from "../../../../../util/miscellaneous.ts";
 import { CFGGroup, CFGNode, CFGEdge, CFGNodeOrGroup } from "./cfg.ts";
 
-export type CodeBlock<N, B, S, T> =
+export type CodeBlock<N, B, S, T, M> =
   | SimpleBlock<B>
-  | SeqBlock<N, B, S, T>
-  | DecisionBlock<N, B, S, T>
-  | ScopeBlock<N, B, S, T>
-  | LoopBlock<N, B, S, T>
+  | SeqBlock<N, B, S, T, M>
+  | DecisionBlock<N, B, S, T, M>
+  | ScopeBlock<N, B, S, T, M>
+  | LoopBlock<N, B, S, T, M>
   | ContinueBlock
   | BreakScopeBlock
   | EmptyBlock
@@ -20,15 +20,16 @@ export type SimpleBlock<B> = Readonly<{
   return: boolean;
 }>;
 
-export type SeqBlock<N, B, S, T> = Readonly<{
+export type SeqBlock<N, B, S, T, M> = Readonly<{
   type: "seq_block";
-  blocks: readonly CodeBlock<N, B, S, T>[];
+  blocks: readonly CodeBlock<N, B, S, T, M>[];
 }>;
 
-export type DecisionBlock<N, B, S, T> = Readonly<{
+export type DecisionBlock<N, B, S, T, M> = Readonly<{
   type: "decision_block";
-  choices: readonly (readonly [T, CodeBlock<N, B, S, T>])[];
+  choices: readonly (readonly [T, CodeBlock<N, B, S, T, M>])[];
   state: S;
+  metadata: M;
 }>;
 
 export type DispatchBlock<N> = Readonly<{
@@ -36,16 +37,16 @@ export type DispatchBlock<N> = Readonly<{
   node: N;
 }>;
 
-export type ScopeBlock<N, B, S, T> = Readonly<{
+export type ScopeBlock<N, B, S, T, M> = Readonly<{
   type: "scope_block";
   label: Label;
-  block: CodeBlock<N, B, S, T>;
+  block: CodeBlock<N, B, S, T, M>;
 }>;
 
-export type LoopBlock<N, B, S, T> = Readonly<{
+export type LoopBlock<N, B, S, T, M> = Readonly<{
   type: "loop_block";
   label: Label;
-  block: CodeBlock<N, B, S, T>;
+  block: CodeBlock<N, B, S, T, M>;
 }>;
 
 export type ContinueBlock = Readonly<{
@@ -66,8 +67,8 @@ const empty: EmptyBlock = {
   type: "empty_block",
 };
 
-export function endsWithFlowBreak<N, B, S, T>(
-  block: CodeBlock<N, B, S, T>
+export function endsWithFlowBreak<N, B, S, T, M>(
+  block: CodeBlock<N, B, S, T, M>
 ): boolean {
   if (block.type === "seq_block") {
     const { blocks } = block;
@@ -84,8 +85,8 @@ export function endsWithFlowBreak<N, B, S, T>(
   );
 }
 
-function usesLabel<N, B, S, T>(
-  block: CodeBlock<N, B, S, T>,
+function usesLabel<N, B, S, T, M>(
+  block: CodeBlock<N, B, S, T, M>,
   label: string
 ): boolean {
   switch (block.type) {
@@ -109,7 +110,7 @@ function usesLabel<N, B, S, T>(
   }
 }
 
-export abstract class CfgToCode<Code, Decision, N, B, S, T> {
+export abstract class CfgToCode<Code, Decision, N, B, S, T, M> {
   private readonly processed = new Set<CFGNodeOrGroup<Code, Decision>>();
   private readonly scopeLabels = new Map<CFGNode<Code, Decision>, number>();
   private readonly loopLabels = new Map<CFGNode<Code, Decision>, number>();
@@ -124,7 +125,9 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
     this.loopLabelUuid = 1;
   }
 
-  protected makeSeq(_blocks: CodeBlock<N, B, S, T>[]): CodeBlock<N, B, S, T> {
+  protected makeSeq(
+    _blocks: CodeBlock<N, B, S, T, M>[]
+  ): CodeBlock<N, B, S, T, M> {
     const blocks = _blocks
       .flatMap(b => (b.type === "seq_block" ? b.blocks : b))
       .filter(b => b.type !== "empty_block");
@@ -148,9 +151,9 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
 
   // The optimization removes "breaks" with this label if they are the last statement
   private removeBreaksOf(
-    block: CodeBlock<N, B, S, T>,
+    block: CodeBlock<N, B, S, T, M>,
     label: Label
-  ): CodeBlock<N, B, S, T> {
+  ): CodeBlock<N, B, S, T, M> {
     switch (block.type) {
       case "scope_block":
         return {
@@ -174,6 +177,7 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
             this.removeBreaksOf(choice, label),
           ]),
           state: block.state,
+          metadata: block.metadata,
         };
       case "loop_block":
         return {
@@ -197,9 +201,9 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
   // The optimization turns "breaks" of a scope to "breaks" of a loop
   private replaceBreaksInLoop(
     loopLabel: Label,
-    block: CodeBlock<N, B, S, T>,
+    block: CodeBlock<N, B, S, T, M>,
     label: Label
-  ): CodeBlock<N, B, S, T> {
+  ): CodeBlock<N, B, S, T, M> {
     switch (block.type) {
       case "scope_block":
         return {
@@ -219,6 +223,7 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
             this.replaceBreaksInLoop(loopLabel, choice, label),
           ]),
           state: block.state,
+          metadata: block.metadata,
         };
       case "loop_block":
         return {
@@ -241,8 +246,8 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
 
   private surroundWithScope(
     label: Label,
-    block: CodeBlock<N, B, S, T>
-  ): CodeBlock<N, B, S, T> {
+    block: CodeBlock<N, B, S, T, M>
+  ): CodeBlock<N, B, S, T, M> {
     const optimized = this.removeBreaksOf(block, label);
     if (optimized.type === "seq_block") {
       const { blocks } = optimized;
@@ -271,8 +276,8 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
 
   protected makeLoop(
     label: Label,
-    block: CodeBlock<N, B, S, T>
-  ): CodeBlock<N, B, S, T> {
+    block: CodeBlock<N, B, S, T, M>
+  ): CodeBlock<N, B, S, T, M> {
     if (block.type === "empty_block") {
       throw new Error(`Empty infinite loop?`);
     }
@@ -332,7 +337,7 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
         };
       }
     } else {
-      const result: CodeBlock<N, B, S, T> = {
+      const result: CodeBlock<N, B, S, T, M> = {
         type: "continue_block",
         label: this.getLoopLabel(dest),
       };
@@ -346,9 +351,11 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
   abstract handleNode(
     node: CFGNode<Code, Decision>,
     parent: CFGGroup<Code, Decision>
-  ): CodeBlock<N, B, S, T>;
+  ): CodeBlock<N, B, S, T, M>;
 
-  private handleLoop(group: CFGGroup<Code, Decision>): CodeBlock<N, B, S, T> {
+  private handleLoop(
+    group: CFGGroup<Code, Decision>
+  ): CodeBlock<N, B, S, T, M> {
     return this.makeLoop(this.getLoopLabel(group), this.processGroup(group));
   }
 
@@ -365,7 +372,7 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T> {
   }
 
   processGroup(ordered: CFGGroup<Code, Decision>) {
-    let lastBlock: CodeBlock<N, B, S, T> = empty;
+    let lastBlock: CodeBlock<N, B, S, T, M> = empty;
     for (const nodes of ordered.contents) {
       if (this.processed.has(nodes)) continue;
       lastBlock = this.makeSeq([

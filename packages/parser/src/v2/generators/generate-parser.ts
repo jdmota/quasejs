@@ -514,7 +514,12 @@ export class ParserGenerator {
           bodyToIf.set(nestedCode, currExpr.or(expr));
         }
 
-        let code = `${indent}`;
+        const {
+          metadata: { decisionOn, decisionIdx },
+        } = block;
+
+        let code = `${indent}${this.markInternalVar(`$${decisionOn}${decisionIdx}`)}=this.$${decisionOn}(${decisionIdx});\n${indent}`;
+
         const bodyToIfArr = Array.from(bodyToIf);
         for (const [nestedCode, condition] of bodyToIfArr) {
           code += lines([
@@ -716,7 +721,7 @@ export class ParserGenerator {
         }
       }
     }
-    const endCode = `    throw new Error("Never");\n  }`;
+    const endCode = `    throw new Error(\`Never: \${name} \${args}\`);\n  }`;
     forTokens += endCode;
     forRules += endCode;
     return { forTokens, forRules };

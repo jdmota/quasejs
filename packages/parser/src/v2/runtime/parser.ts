@@ -14,6 +14,11 @@ export abstract class Parser<T> {
     this.tokenizer = tokenizer;
     this.external = external;
     this.gll = null;
+    tokenizer.mark(); // TODO optimize to allow buffer to be released
+  }
+
+  $jump(pos: number) {
+    this.tokenizer.seek(pos);
   }
 
   $setGLL(gll: GLL) {

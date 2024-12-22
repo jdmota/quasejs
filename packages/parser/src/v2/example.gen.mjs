@@ -1,6 +1,7 @@
 import { Input } from "./runtime/input";
 import { Tokenizer } from "./runtime/tokenizer";
 import { Parser } from "./runtime/parser";
+import { GLL } from "./runtime/gll";
 
 const $$EMPTY_OBJ = {};
 
@@ -15,13 +16,11 @@ class GrammarTokenizer extends Tokenizer {
       "5": "#string:E",
       "6": "#string:F",
       "7": "#string:STRING",
-      "8": "#string:<<<",
-      "9": "#string:<<",
-      "10": "#string:a",
-      "11": "#string:P",
-      "12": "#string:W",
-      "13": "W",
-      "14": "TY",
+      "8": "#string:<<",
+      "9": "#string:a",
+      "10": "#string:P",
+      "11": "#string:W",
+      "12": "W",
       "-1": "#eof"
     };
   }
@@ -77,16 +76,6 @@ class GrammarTokenizer extends Tokenizer {
       },
       "12": {
         "s": false,
-        "c": []
-      },
-      "13": {
-        "s": false,
-        "c": [
-          "channel1"
-        ]
-      },
-      "14": {
-        "s": false,
         "c": [
           "channel1"
         ]
@@ -97,105 +86,75 @@ class GrammarTokenizer extends Tokenizer {
       }
     };
   }
-  token$lexer_0($env) {
-    let $ll1;
-    $env.$startPos = this.$getPos();
-    if($ll1 === -1 /*-1*/){
-      // Ambiguity
-      this.gll.u(this.$i(),$env);
-      this.gll.a("$lexer",1,$env);
-      this.gll.a("$lexer",2,$env);
-      return;
-    } else if($ll1 === 60 /*'<'*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
-      // Ambiguity
-      this.gll.u(this.$i(),$env);
-      this.gll.a("$lexer",3,$env);
-      this.gll.a("$lexer",1,$env);
-      return;
-    } else {
-      this.$err();
-    }
-  }
-  token$lexer_1($env) {
-    $env.$14_num = 10;
-    $env.id = 14;
-    $env.token = $env.$14_num;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_2($env) {
-    this.$e(-1 /*-1*/);
-    $env.id = -1;
-    $env.token = null;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_3($env) {
-    let $ll1;
-    $env.$startMarker = this.$startText();
+  token$lexer_0() {
+    let $ll1,$startPos=null,id=null,token=null,$0_t=null,$startMarker=null,$1_t=null,$2_t=null,$3_t=null,$4_t=null,$5_t=null,$6_t=null,$7_t=null,$8_t=null,$9_t=null,$10_t=null,$11_t=null,$12_text=null,$loc=null;
+    $startPos = this.$getPos();
     do{
-      if($ll1 === 60 /*'<'*/){
+      $ll1=this.$ll(1);
+      if($ll1 === -1 /*-1*/){
+        this.$e(-1 /*-1*/);
+        id = -1;
+        token = null;
+        break;
+      } else if($ll1 === 49 /*'1'*/ || $ll1 === 60 /*'<'*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
+        // epsilon
+      } else {
+        this.$err();
+      }
+      $startMarker = this.$startText();
+      $ll1=this.$ll(1);
+      if($ll1 === 49 /*'1'*/){
+        this.$e(49 /*'1'*/);
+        this.$e(87 /*'W'*/);
+        $12_text = this.$endText($startMarker);
+        id = 12;
+        token = $12_text;
+      } else if($ll1 === 60 /*'<'*/){
         this.$e(60 /*'<'*/);
         this.$e(60 /*'<'*/);
-        if($ll1 === -1 /*-1*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
-          // epsilon
-        } else if($ll1 === 60 /*'<'*/){
-          // Ambiguity
-          this.gll.u(this.$i(),$env);
-          this.gll.a("$lexer",6,$env);
-          this.gll.a("$lexer",7,$env);
-          return;
-        } else {
-          this.$err();
-        }
+        $8_t = this.$endText($startMarker);
+        id = 8;
+        token = $8_t;
       } else if($ll1 === 65 /*'A'*/){
         this.$e(65 /*'A'*/);
-        $env.$1_t = this.$endText($env.$startMarker);
-        $env.id = 1;
-        $env.token = $env.$1_t;
-        break;
+        $1_t = this.$endText($startMarker);
+        id = 1;
+        token = $1_t;
       } else if($ll1 === 66 /*'B'*/){
         this.$e(66 /*'B'*/);
-        $env.$2_t = this.$endText($env.$startMarker);
-        $env.id = 2;
-        $env.token = $env.$2_t;
-        break;
+        $2_t = this.$endText($startMarker);
+        id = 2;
+        token = $2_t;
       } else if($ll1 === 67 /*'C'*/){
         this.$e(67 /*'C'*/);
-        $env.$3_t = this.$endText($env.$startMarker);
-        $env.id = 3;
-        $env.token = $env.$3_t;
-        break;
+        $3_t = this.$endText($startMarker);
+        id = 3;
+        token = $3_t;
       } else if($ll1 === 68 /*'D'*/){
         this.$e(68 /*'D'*/);
-        $env.$4_t = this.$endText($env.$startMarker);
-        $env.id = 4;
-        $env.token = $env.$4_t;
-        break;
+        $4_t = this.$endText($startMarker);
+        id = 4;
+        token = $4_t;
       } else if($ll1 === 69 /*'E'*/){
         this.$e(69 /*'E'*/);
-        $env.$5_t = this.$endText($env.$startMarker);
-        $env.id = 5;
-        $env.token = $env.$5_t;
-        break;
+        $5_t = this.$endText($startMarker);
+        id = 5;
+        token = $5_t;
       } else if($ll1 === 70 /*'F'*/){
         this.$e(70 /*'F'*/);
-        $env.$6_t = this.$endText($env.$startMarker);
-        $env.id = 6;
-        $env.token = $env.$6_t;
-        break;
+        $6_t = this.$endText($startMarker);
+        id = 6;
+        token = $6_t;
       } else if($ll1 === 79 /*'O'*/){
         this.$e(79 /*'O'*/);
-        $env.$0_t = this.$endText($env.$startMarker);
-        $env.id = 0;
-        $env.token = $env.$0_t;
-        break;
+        $0_t = this.$endText($startMarker);
+        id = 0;
+        token = $0_t;
       } else if($ll1 === 80 /*'P'*/){
         this.$e(80 /*'P'*/);
-        $env.$11_t = this.$endText($env.$startMarker);
-        $env.id = 11;
-        $env.token = $env.$11_t;
-        break;
+        $10_t = this.$endText($startMarker);
+        id = 10;
+        token = $10_t;
       } else if($ll1 === 83 /*'S'*/){
         this.$e(83 /*'S'*/);
         this.$e(84 /*'T'*/);
@@ -203,65 +162,25 @@ class GrammarTokenizer extends Tokenizer {
         this.$e(73 /*'I'*/);
         this.$e(78 /*'N'*/);
         this.$e(71 /*'G'*/);
-        $env.$7_t = this.$endText($env.$startMarker);
-        $env.id = 7;
-        $env.token = $env.$7_t;
-        break;
+        $7_t = this.$endText($startMarker);
+        id = 7;
+        token = $7_t;
       } else if($ll1 === 87 /*'W'*/){
         this.$e(87 /*'W'*/);
-        if($ll1 === -1 /*-1*/ || $ll1 === 60 /*'<'*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
-          // Ambiguity
-          this.gll.u(this.$i(),$env);
-          this.gll.a("$lexer",4,$env);
-          this.gll.a("$lexer",5,$env);
-          return;
-        } else {
-          this.$err();
-        }
+        $11_t = this.$endText($startMarker);
+        id = 11;
+        token = $11_t;
       } else if($ll1 === 97 /*'a'*/){
         this.$e(97 /*'a'*/);
-        $env.$10_t = this.$endText($env.$startMarker);
-        $env.id = 10;
-        $env.token = $env.$10_t;
-        break;
+        $9_t = this.$endText($startMarker);
+        id = 9;
+        token = $9_t;
       } else {
         this.$err();
       }
-      $env.$9_t = this.$endText($env.$startMarker);
-      $env.id = 9;
-      $env.token = $env.$9_t;
     }while(0);
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_4($env) {
-    $env.$12_t = this.$endText($env.$startMarker);
-    $env.id = 12;
-    $env.token = $env.$12_t;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_5($env) {
-    $env.$13_text = this.$endText($env.$startMarker);
-    $env.id = 13;
-    $env.token = $env.$13_text;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_6($env) {
-    this.$e(60 /*'<'*/);
-    $env.$8_t = this.$endText($env.$startMarker);
-    $env.id = 8;
-    $env.token = $env.$8_t;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
-  }
-  token$lexer_7($env) {
-    $env.$9_t = this.$endText($env.$startMarker);
-    $env.id = 9;
-    $env.token = $env.$9_t;
-    $env.$loc = this.$getLoc($env.$startPos);
-    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
+    $loc = this.$getLoc($startPos);
+    return {id,token,$loc};
   }
   token$_1_0() {
     this.$e(-1 /*-1*/);
@@ -333,33 +252,24 @@ class GrammarTokenizer extends Tokenizer {
     $startMarker = this.$startText();
     this.$e(60 /*'<'*/);
     this.$e(60 /*'<'*/);
-    this.$e(60 /*'<'*/);
     t = this.$endText($startMarker);
     return t;
   }
   token$9_0() {
     let t=null,$startMarker=null;
     $startMarker = this.$startText();
-    this.$e(60 /*'<'*/);
-    this.$e(60 /*'<'*/);
+    this.$e(97 /*'a'*/);
     t = this.$endText($startMarker);
     return t;
   }
   token$10_0() {
     let t=null,$startMarker=null;
     $startMarker = this.$startText();
-    this.$e(97 /*'a'*/);
-    t = this.$endText($startMarker);
-    return t;
-  }
-  token$11_0() {
-    let t=null,$startMarker=null;
-    $startMarker = this.$startText();
     this.$e(80 /*'P'*/);
     t = this.$endText($startMarker);
     return t;
   }
-  token$12_0() {
+  token$11_0() {
     let t=null,$startMarker=null;
     $startMarker = this.$startText();
     this.$e(87 /*'W'*/);
@@ -369,18 +279,13 @@ class GrammarTokenizer extends Tokenizer {
   tokenW_0() {
     let text=null,$startMarker=null;
     $startMarker = this.$startText();
+    this.$e(49 /*'1'*/);
     this.$e(87 /*'W'*/);
     text = this.$endText($startMarker);
     return text;
   }
-  tokenTY_0() {
-    let num=null;
-    num = 10;
-    return num;
-  }
   $createEnv(name,args){
-    if(name==="$lexer") return {$startPos:null,id:null,token:null,$0_t:null,$startMarker:null,$1_t:null,$2_t:null,$3_t:null,$4_t:null,$5_t:null,$6_t:null,$7_t:null,$8_t:null,$9_t:null,$10_t:null,$11_t:null,$12_t:null,$13_text:null,$14_num:null,$loc:null};
-    throw new Error("Never");
+    throw new Error(`Never: ${name} ${args}`);
   }
 }
 
@@ -402,8 +307,10 @@ class GrammarParser extends Parser {
     s5:do{
       s2:do{
         do{
+          $ll1=this.$ll(1);
           if($ll1 === 0 /*#string:O*/){
             this.$e(0 /*#string:O*/);
+            $ll1=this.$ll(1);
             if($ll1 === 1 /*#string:A*/){
               break s2;
             } else if($ll1 === 2 /*#string:B*/){
@@ -412,9 +319,11 @@ class GrammarParser extends Parser {
               this.$err();
             }
           } else if($ll1 === 1 /*#string:A*/){
+            $ll2=this.$ll(2);
             if($ll2 === 0 /*#string:O*/ || $ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
               // epsilon
             } else if($ll2 === 3 /*#string:C*/){
+              $ll3=this.$ll(3);
               if($ll3 === -1 /*#eof*/ || $ll3 === 0 /*#string:O*/ || $ll3 === 1 /*#string:A*/ || $ll3 === 2 /*#string:B*/ || $ll3 === 6 /*#string:F*/ || $ll3 === 7 /*#string:STRING*/){
                 break s2;
               } else if($ll3 === 4 /*#string:D*/){
@@ -443,6 +352,7 @@ class GrammarParser extends Parser {
       this.$e(1 /*#string:A*/);
     }while(0);
     this.$e(3 /*#string:C*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -475,8 +385,10 @@ class GrammarParser extends Parser {
     $env.B = $env["#tmp"];
     s4:do{
       do{
+        $ll1=this.$ll(1);
         if($ll1 === 0 /*#string:O*/){
           this.$e(0 /*#string:O*/);
+          $ll1=this.$ll(1);
           if($ll1 === 1 /*#string:A*/){
             // epsilon
           } else if($ll1 === 2 /*#string:B*/){
@@ -497,6 +409,7 @@ class GrammarParser extends Parser {
       this.$e(2 /*#string:B*/);
     }while(0);
     this.$e(3 /*#string:C*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -528,6 +441,7 @@ class GrammarParser extends Parser {
     let $ll1;
     this.$e(1 /*#string:A*/);
     this.$e(3 /*#string:C*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -570,6 +484,7 @@ class GrammarParser extends Parser {
     let $ll1;
     $env.D.push(this.$e(4 /*#string:D*/));
     this.$e(5 /*#string:E*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -600,6 +515,7 @@ class GrammarParser extends Parser {
   ruleA_6($env) {
     let $ll1;
     this.$e(6 /*#string:F*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/ || $ll1 === 7 /*#string:STRING*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -635,11 +551,15 @@ class GrammarParser extends Parser {
     let $ll2,$ll1;
     $env.$startPos = this.$getPos();
     this.$e(1 /*#string:A*/);
+    $ll1=this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
+      $ll2=this.$ll(2);
       if($ll2 === 0 /*#string:O*/){
         while(1){
           this.$e(0 /*#string:O*/);
+          $ll1=this.$ll(1);
           if($ll1 === 0 /*#string:O*/){
+            $ll2=this.$ll(2);
             if($ll2 === 0 /*#string:O*/){
               continue;
             } else if($ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
@@ -669,15 +589,18 @@ class GrammarParser extends Parser {
     } else if($ll1 === 1 /*#string:A*/){
       // epsilon
     } else if($ll1 === 2 /*#string:B*/){
+      $ll2=this.$ll(2);
       if($ll2 === 3 /*#string:C*/){
         // epsilon
       } else if($ll2 === 4 /*#string:D*/){
         while(1){
           this.$e(2 /*#string:B*/);
           this.$e(4 /*#string:D*/);
+          $ll1=this.$ll(1);
           if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/){
             break;
           } else if($ll1 === 2 /*#string:B*/){
+            $ll2=this.$ll(2);
             if($ll2 === 3 /*#string:C*/){
               break;
             } else if($ll2 === 4 /*#string:D*/){
@@ -696,6 +619,7 @@ class GrammarParser extends Parser {
       while(1){
         this.$e(3 /*#string:C*/);
         this.$e(4 /*#string:D*/);
+        $ll1=this.$ll(1);
         if($ll1 === 0 /*#string:O*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
           break;
         } else if($ll1 === 3 /*#string:C*/){
@@ -714,7 +638,9 @@ class GrammarParser extends Parser {
     let $ll2,$ll1;
     while(1){
       this.$e(0 /*#string:O*/);
+      $ll1=this.$ll(1);
       if($ll1 === 0 /*#string:O*/){
+        $ll2=this.$ll(2);
         if($ll2 === 0 /*#string:O*/){
           continue;
         } else if($ll2 === 1 /*#string:A*/ || $ll2 === 2 /*#string:B*/){
@@ -742,6 +668,7 @@ class GrammarParser extends Parser {
   ruleC_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
       // epsilon
     } else if($ll1 === 7 /*#string:STRING*/){
@@ -776,6 +703,7 @@ class GrammarParser extends Parser {
   ruleparent_1($env) {
     let $ll1;
     while(1){
+      $ll1=this.$ll(1);
       if($ll1 === -1 /*#eof*/){
         $env.$loc = this.$getLoc($env.$startPos);
         return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
@@ -790,6 +718,7 @@ class GrammarParser extends Parser {
   rulechild_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/){
       $env.$loc = this.$getLoc($env.$startPos);
       return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
@@ -810,6 +739,7 @@ class GrammarParser extends Parser {
   rulechild_2($env) {
     let $ll1;
     this.$e(1 /*#string:A*/);
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/){
       $env.$loc = this.$getLoc($env.$startPos);
       return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
@@ -827,31 +757,26 @@ class GrammarParser extends Parser {
     let $startPos=null,ret=null,w=null,$loc=null;
     $startPos = this.$getPos();
     ret = {x:arg};
-    w = this.$e(13 /*W*/);
+    w = this.$e(12 /*W*/);
     this.ctx.p(5 /* F 5 */, () => this.ruleH_0(10));
     $loc = this.$getLoc($startPos);
     return w;
   }
   ruleG_0() {
-    let $ll1,$startPos=null,$loc=null;
+    let $startPos=null,$loc=null;
     $startPos = this.$getPos();
-    if($ll1 === 8 /*#string:<<<*/){
-      this.$e(8 /*#string:<<<*/);
-    } else if($ll1 === 9 /*#string:<<*/){
-      this.$e(9 /*#string:<<*/);
-    } else {
-      this.$err();
-    }
+    this.$e(8 /*#string:<<*/);
     $loc = this.$getLoc($startPos);
     return {$loc};
   }
   ruleH_0(x) {
     let $ll1,$startPos=null,y=null,$loc=null;
     $startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/){
       y = x;
-    } else if($ll1 === 10 /*#string:a*/){
-      y = this.$e(10 /*#string:a*/);
+    } else if($ll1 === 9 /*#string:a*/){
+      y = this.$e(9 /*#string:a*/);
     } else {
       this.$err();
     }
@@ -861,6 +786,7 @@ class GrammarParser extends Parser {
   ruleTricky1_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -881,6 +807,7 @@ class GrammarParser extends Parser {
   ruleTricky1_1($env) {
     let $ll1;
     1;
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -929,6 +856,7 @@ class GrammarParser extends Parser {
   ruleTricky2_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -968,6 +896,7 @@ class GrammarParser extends Parser {
   ruleTricky3_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1014,6 +943,7 @@ class GrammarParser extends Parser {
   ruleTricky4_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1032,6 +962,7 @@ class GrammarParser extends Parser {
   }
   ruleTricky4_1($env) {
     let $ll1;
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/){
       // epsilon
     } else if($ll1 === 2 /*#string:B*/){
@@ -1058,13 +989,6 @@ class GrammarParser extends Parser {
     $env.$loc = this.$getLoc($env.$startPos);
     return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
   }
-  ruleY_0() {
-    let $startPos=null,y=null,$loc=null;
-    $startPos = this.$getPos();
-    y = this.$e(14 /*TY*/);
-    $loc = this.$getLoc($startPos);
-    return y;
-  }
   ruleRec1_0($env) {
     $env.$startPos = this.$getPos();
     (this.gll.u(this.$i(),$env), this.gll.c("Rec1",1,"Rec1",[]));
@@ -1075,7 +999,9 @@ class GrammarParser extends Parser {
     return (this.gll.u(this.$i(),$env), this.gll.p(10));
   }
   ruleRec2_0($env) {
+    let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     {
       this.$err();
     }
@@ -1083,6 +1009,7 @@ class GrammarParser extends Parser {
   ruleRec3_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1105,6 +1032,7 @@ class GrammarParser extends Parser {
   ruleRec4_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1128,6 +1056,7 @@ class GrammarParser extends Parser {
   ruleRecTricky1_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1148,6 +1077,7 @@ class GrammarParser extends Parser {
   ruleRecTricky1_1($env) {
     let $ll1;
     1;
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1205,6 +1135,7 @@ class GrammarParser extends Parser {
   ruleRecTricky3_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
       // epsilon
     } else if($ll1 === 3 /*#string:C*/){
@@ -1231,6 +1162,7 @@ class GrammarParser extends Parser {
   ruleRecMutual1_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 2 /*#string:B*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1256,6 +1188,7 @@ class GrammarParser extends Parser {
   ruleRecMutual2_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 2 /*#string:B*/){
       (this.gll.u(this.$i(),$env), this.gll.c("RecMutual2",1,"RecMutual1",[]));
       return;
@@ -1281,7 +1214,9 @@ class GrammarParser extends Parser {
   ruleUsesEmpty_0() {
     let $ll2,$ll1,$startPos=null,$loc=null;
     $startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
+      $ll2=this.$ll(2);
       if($ll2 === 2 /*#string:B*/){
         this.ctx.p(26 /* UsesEmpty 3 */, () => this.ruleEmpty_0());
         this.$e(1 /*#string:A*/);
@@ -1308,6 +1243,7 @@ class GrammarParser extends Parser {
   ruleEmptyOrNot_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -1334,6 +1270,7 @@ class GrammarParser extends Parser {
   ruleTrickyAfterEmpty_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === -1 /*#eof*/ || $ll1 === 1 /*#string:A*/ || $ll1 === 2 /*#string:B*/){
       // epsilon
     } else if($ll1 === 0 /*#string:O*/){
@@ -1354,7 +1291,7 @@ class GrammarParser extends Parser {
   }
   ruleTrickyAfterEmpty_2($env) {
     this.$e(0 /*#string:O*/);
-    this.$e(11 /*#string:P*/);
+    this.$e(10 /*#string:P*/);
     $env.$loc = this.$getLoc($env.$startPos);
     return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
   }
@@ -1365,6 +1302,7 @@ class GrammarParser extends Parser {
   ruleGLL1_0() {
     let $ll1,$startPos=null,$loc=null;
     $startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       this.ctx.p(30 /* GLL1 3 */, () => this.ruleGLLAux1_0());
     } else if($ll1 === 2 /*#string:B*/){
@@ -1373,7 +1311,7 @@ class GrammarParser extends Parser {
       this.$err();
     }
     this.$e(0 /*#string:O*/);
-    this.$e(12 /*#string:W*/);
+    this.$e(11 /*#string:W*/);
     $loc = this.$getLoc($startPos);
     return {$loc};
   }
@@ -1395,6 +1333,7 @@ class GrammarParser extends Parser {
   ruleGLL1Follow_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1425,6 +1364,7 @@ class GrammarParser extends Parser {
   ruleGLL1FollowContext_1($env) {
     let $ll1;
     this.ctx.p(33 /* GLL1FollowContext 4 */, () => this.ruleGLLAux1_0());
+    $ll1=this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
       // epsilon
     } else if($ll1 === 1 /*#string:A*/){
@@ -1439,6 +1379,7 @@ class GrammarParser extends Parser {
   ruleGLL1Follow2_0($env) {
     let $ll2,$ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1446,6 +1387,7 @@ class GrammarParser extends Parser {
       this.gll.a("GLL1Follow2",2,$env);
       return;
     } else if($ll1 === 1 /*#string:A*/){
+      $ll2=this.$ll(2);
       if($ll2 === 0 /*#string:O*/){
         // Ambiguity
         this.gll.u(this.$i(),$env);
@@ -1494,9 +1436,11 @@ class GrammarParser extends Parser {
   ruleGLLAuxOptional1_0($env) {
     let $ll2,$ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
       // epsilon
     } else if($ll1 === 1 /*#string:A*/){
+      $ll2=this.$ll(2);
       if($ll2 === 0 /*#string:O*/){
         // Ambiguity
         this.gll.u(this.$i(),$env);
@@ -1556,6 +1500,7 @@ class GrammarParser extends Parser {
   rulefollow0_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1601,6 +1546,7 @@ class GrammarParser extends Parser {
   ruleendAux_0($env) {
     let $ll1;
     $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
     if($ll1 === 1 /*#string:A*/){
       // Ambiguity
       this.gll.u(this.$i(),$env);
@@ -1655,7 +1601,7 @@ class GrammarParser extends Parser {
     if(name==="end") return {$startPos:null,$loc:null};
     if(name==="notEnd") return {$startPos:null,$loc:null};
     if(name==="endAux") return {$startPos:null,$loc:null};
-    throw new Error("Never");
+    throw new Error(`Never: ${name} ${args}`);
   }
 }
 
@@ -1663,7 +1609,6 @@ export function parse(external, string, $arg) {
   const input = new Input({ string });
   const tokenizer = new GrammarTokenizer(input, external);
   const parser = new GrammarParser(tokenizer, external);
-  const tokGll = new GLL("token",tokenizer,"$lexer",[]); tokenizer.$setGLL(tokGll);
   const parserGll = new GLL("rule",parser,"$$START$$",[$arg]); parser.$setGLL(parserGll);
   return parserGll.run();
 }

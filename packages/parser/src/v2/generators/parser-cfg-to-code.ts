@@ -16,6 +16,11 @@ import {
   ParserCFGNode,
 } from "./parser-dfa-to-cfg";
 
+export type ParserDecisionMetadata = Readonly<{
+  decisionOn: "ll" | "ff";
+  decisionIdx: number;
+}>;
+
 export type ParserSimpleBlock =
   | Readonly<{
       type: "expect_block";
@@ -28,7 +33,8 @@ export type ParserCodeBlock = CodeBlock<
   ParserCFGNode,
   ParserSimpleBlock,
   DState,
-  DecisionExpr
+  DecisionExpr,
+  ParserDecisionMetadata
 >;
 
 export class ParserCfgToCode extends CfgToCode<
@@ -37,7 +43,8 @@ export class ParserCfgToCode extends CfgToCode<
   ParserCFGNode,
   ParserSimpleBlock,
   DState,
-  DecisionExpr
+  DecisionExpr,
+  ParserDecisionMetadata
 > {
   constructor() {
     super();
@@ -46,7 +53,7 @@ export class ParserCfgToCode extends CfgToCode<
   override handleNode(
     node: ParserCFGNode,
     parent: ParserCFGGroup
-  ): CodeBlock<ParserCFGNode, ParserSimpleBlock, DState, DecisionExpr> {
+  ): ParserCodeBlock {
     const { code } = node;
     let block: ParserCodeBlock;
     let isLoop = false;
@@ -85,6 +92,10 @@ export class ParserCfgToCode extends CfgToCode<
           type: "decision_block",
           choices,
           state: code.state,
+          metadata: {
+            decisionOn: code.decisionOn,
+            decisionIdx: code.decisionIdx,
+          },
         };
         break;
       }

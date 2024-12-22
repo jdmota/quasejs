@@ -36,8 +36,8 @@ import { setAdd } from "../../../util/maps-sets.ts";
 import { traverse, walkUp } from "../../../util/graph.ts";
 import { nonNull } from "../../../util/miscellaneous.ts";
 
-// TODO runtime follow stack will not with gll
-// TODO work with markers to make gll work, and connect everything (and support parallel lexers?)
+// TODO runtime follow stack will not work with gll
+// TODO support parallel lexers?
 
 // TODO implement error recovery, and filling the missing tokens
 // TODO implement incremental parsings
@@ -216,12 +216,12 @@ export function tool(opts: ToolInput) {
   rulesCode.push(forRules);
 
   return {
-    code: generateAll(grammar, tokensCode, rulesCode, needGLL.size > 0),
+    code: generateAll(grammar, tokensCode, rulesCode, needGLL),
     grammar,
   };
 }
 
-export function inferAndCheckTypes(grammar: Grammar) {
+export function inferAndCheckTypes(grammar: Grammar, needsGLL: boolean) {
   const inferrer = new TypesInferrer(grammar);
 
   const knownNames = new Map();
@@ -276,6 +276,6 @@ export function inferAndCheckTypes(grammar: Grammar) {
       .join("\n")}\nexport function parse(external: $Externals, ${[
       "string: string",
       ...grammar.startRule.args.map((a, i) => `$${a.arg}: ${argTypes[i]}`),
-    ].join(", ")}): $AST;\n`,
+    ].join(", ")}): ${needsGLL ? "readonly $AST[]" : "$AST"};\n`,
   };
 }

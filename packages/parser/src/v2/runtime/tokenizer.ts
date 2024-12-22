@@ -45,7 +45,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
   protected override fetchMore(amountFetched: number, amountToFetch: number) {
     while (amountToFetch--) {
       while (true) {
-        const token = this.token$lexer();
+        const token = this.token$lexer_0();
         const channels = this.idToChannels[token.id];
         for (const chan of channels.c) {
           const array = this.channels[chan] || (this.channels[chan] = []);
@@ -68,7 +68,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     throw new Error("Out of bounds");
   }
 
-  abstract token$lexer(): Token;
+  abstract token$lexer_0(): Token;
   abstract $getIdToChannels(): IdToChannels;
   abstract $getIdToLabel(): IdToLabel;
 
@@ -105,23 +105,25 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
   }
 
   $expect(id: number) {
+    const pos = this.$getPos();
     const token = this.lookahead(1);
     const foundId = token.id;
     if (foundId === id) {
       this.advance();
       return token;
     }
-    this.$unexpected(this.$getPos(), token, id);
+    this.$unexpected(pos, token, id);
   }
 
   $expect2(a: number, b: number) {
+    const pos = this.$getPos();
     const token = this.lookahead(1);
     const foundId = token.id;
     if (a <= foundId && foundId <= b) {
       this.advance();
       return token;
     }
-    this.$unexpected(this.$getPos(), token, a);
+    this.$unexpected(pos, token, a);
   }
 
   $unexpected(pos: Position, found: Token, expected?: number | string): never {

@@ -1,6 +1,7 @@
 import { jsonEquals, jsonHashCode } from "../../../../util/json";
 import { ObjectHashEquals } from "../../../../util/miscellaneous";
 import { GLLBase, GLLDescriptor, IEnv, IGLLLabel } from "../gll/gll-base";
+import { INTERNAL_START_RULE } from "../grammar/grammar";
 
 class GLLLabel implements IGLLLabel {
   constructor(
@@ -64,6 +65,7 @@ export class GLL extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
     private readonly type: "rule" | "token",
     private readonly parser: {
       $createEnv: (rule: string, args: readonly unknown[]) => EnvObj;
+      $jump: (pos: number) => void;
     },
     rule: string,
     args: readonly unknown[]
@@ -81,9 +83,9 @@ export class GLL extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
   }
 
   // Sync the internal state of the GLL algorithm
-  public u(pos: number, env: GLLEnv) {
+  public u(pos: number, env: EnvObj) {
     this.pos = pos;
-    this.currEnv = env;
+    this.currEnv = new GLLEnv(env);
   }
 
   public a(rule: string, label: number, env: EnvObj) {
@@ -108,9 +110,28 @@ export class GLL extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
   }
 
   override goto(desc: GLLDescriptor<GLLLabel, GLLArgs, GLLEnv>): void {
+    this.parser.$jump(this.pos);
     const method = labelToStr(this.type, desc.label);
     const parser = this.parser as any;
-    parser[method]({ ...desc.env.obj });
+    try {
+      parser[method]({ ...desc.env.obj });
+    } catch (err) {
+      // Ignore
+      // console.log("Error", err);
+    }
+  }
+
+  override run(): readonly unknown[] {
+    super.run();
+    const asts = [];
+    for (const [node, results] of this.pSet) {
+      if (node.rule === INTERNAL_START_RULE) {
+        for (const result of results) {
+          asts.push(result.retValue.value);
+        }
+      }
+    }
+    return asts;
   }
 }
 

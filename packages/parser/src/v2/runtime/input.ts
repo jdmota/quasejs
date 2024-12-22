@@ -101,21 +101,23 @@ export class Input extends BufferedStream<number> {
   }
 
   $expect(id: number) {
+    const pos = this.$getPos();
     const found = this.lookahead(1);
     if (found === id) {
       this.advance();
       return found;
     }
-    this.$unexpected(this.$getPos(), found, id);
+    this.$unexpected(pos, found, id);
   }
 
   $expect2(a: number, b: number) {
+    const pos = this.$getPos();
     const found = this.lookahead(1);
     if (a <= found && found <= b) {
       this.advance();
       return found;
     }
-    this.$unexpected(this.$getPos(), found, a);
+    this.$unexpected(pos, found, a);
   }
 
   $unexpected(pos: Position, found: number, expected?: string | number): never {
