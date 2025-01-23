@@ -147,6 +147,33 @@ export class ComputationRegistry {
     }
   }
 
+  peekErrors() {
+    const deterministic = [];
+    const nonDeterministic = [];
+    for (const c of this.computations[State.SETTLED_STABLE].iterateAll()) {
+      const res = c.peekResult();
+      if (!res.ok) {
+        if (res.deterministic) {
+          deterministic.push(res.error);
+        } else {
+          nonDeterministic.push(res.error);
+        }
+      }
+    }
+    for (const c of this.computations[State.SETTLED_UNSTABLE].iterateAll()) {
+      const res = c.peekError();
+      if (res.deterministic) {
+        deterministic.push(res.error);
+      } else {
+        nonDeterministic.push(res.error);
+      }
+    }
+    return {
+      deterministic,
+      nonDeterministic,
+    };
+  }
+
   // TODO The computations also have an implementation version so that results cached in disk can be invalidated if the plugin gets a new version?
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations during execution?
@@ -213,6 +240,9 @@ export class ComputationRegistry {
             .then(defer.resolve, defer.reject);
         }
       },
+      peekErrors() {
+        return registry.peekErrors();
+      },
     };
   }
 }
@@ -221,4 +251,8 @@ type ComputationController<T> = {
   readonly promise: Promise<ComputationResult<T>>;
   readonly interrupt: () => void;
   readonly finish: () => void;
+  peekErrors(): {
+    readonly deterministic: unknown[];
+    readonly nonDeterministic: unknown[];
+  };
 };

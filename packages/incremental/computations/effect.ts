@@ -66,7 +66,8 @@ export class EffectComputationDescription<Req, Res>
     return (
       other instanceof EffectComputationDescription &&
       this.config.exec === other.config.exec &&
-      this.config.requestDef === other.config.requestDef
+      this.config.requestDef === other.config.requestDef &&
+      this.config.requestDef.equal(this.request, other.request)
     );
   }
 

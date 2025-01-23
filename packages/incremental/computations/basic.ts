@@ -74,7 +74,8 @@ export class BasicComputationDescription<Req, Res>
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
       this.config.responseDef === other.config.responseDef &&
-      !!this.config.root === !!other.config.root
+      !!this.config.root === !!other.config.root &&
+      this.config.requestDef.equal(this.request, other.request)
     );
   }
 

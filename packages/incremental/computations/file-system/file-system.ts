@@ -277,6 +277,18 @@ export class FileSystem {
     }
     return fn(originalPath);
   }
+
+  async close() {
+    const { files, watcher } = this;
+    if ([...files.values()].some(f => f.subsCount() > 0)) {
+      throw new Error("There are dependencies on this file system");
+    }
+    files.clear();
+    if (watcher) {
+      this.watcher = null;
+      await watcher.close();
+    }
+  }
 }
 
 type SimpleContext = {

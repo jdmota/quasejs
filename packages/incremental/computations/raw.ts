@@ -1,4 +1,4 @@
-import { ComputationResult, error } from "../utils/result";
+import { ComputationResult, error, WrappedResult } from "../utils/result";
 import {
   ComputationRegistry,
   ComputationDescription,
@@ -68,9 +68,16 @@ export abstract class RawComputation<Ctx, Res> {
     if (mark) this.mark(State.PENDING);
   }
 
+  peekResult() {
+    if (this.result) {
+      return this.result;
+    }
+    throw new Error("Invariant violation: no result");
+  }
+
   peekError() {
     if (this.result?.ok === false) {
-      return this.result.error;
+      return this.result;
     }
     throw new Error("Invariant violation: no error");
   }
@@ -134,7 +141,11 @@ export abstract class RawComputation<Ctx, Res> {
         .then(() => this.exec(ctx))
         .then(
           v => this.finish(v, runId),
-          e => this.finish(error(e, false), runId)
+          e =>
+            this.finish(
+              e instanceof WrappedResult ? e.result : error(e, false),
+              runId
+            )
         );
       this.mark(State.RUNNING);
     }

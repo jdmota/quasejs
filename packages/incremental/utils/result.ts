@@ -38,14 +38,18 @@ export function resultEqual<T>(
   return false;
 }
 
-const noop = () => {};
+export class WrappedResult<T> {
+  constructor(readonly result: ComputationResult<T>) {}
+}
 
 export function promiseIfOk<T>(promise: Promise<ComputationResult<T>>) {
-  return new Promise<T>(resolve => {
+  return new Promise<T>((resolve, reject) => {
     promise.then(result => {
       if (result.ok) {
         resolve(result.value);
+      } else {
+        reject(new WrappedResult(result));
       }
-    }, noop);
+    });
   });
 }
