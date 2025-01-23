@@ -37,3 +37,15 @@ export function resultEqual<T>(
   }
   return false;
 }
+
+const noop = () => {};
+
+export function promiseIfOk<T>(promise: Promise<ComputationResult<T>>) {
+  return new Promise<T>(resolve => {
+    promise.then(result => {
+      if (result.ok) {
+        resolve(result.value);
+      }
+    }, noop);
+  });
+}

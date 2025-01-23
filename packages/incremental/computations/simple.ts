@@ -17,10 +17,15 @@ type SimpleComputationConfig<T> = {
 type SimpleComputationContext = {
   readonly checkActive: () => void;
   readonly get: <T>(
-    dep: ComputationDescription<
+    desc: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<ComputationResult<T>>;
+  readonly getOk: <T>(
+    desc: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) => Promise<T>;
 };
 
 const anyValue: ValueDefinition<any> = {

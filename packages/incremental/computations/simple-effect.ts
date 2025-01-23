@@ -16,10 +16,15 @@ type SimpleEffectComputationConfig<T> = {
 type SimpleEffectComputationContext = {
   readonly checkActive: () => void;
   readonly get: <T>(
-    dep: ComputationDescription<
+    desc: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<ComputationResult<T>>;
+  readonly getOk: <T>(
+    desc: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) => Promise<T>;
   readonly cleanup: (fn: CleanupFn) => void;
 };
 

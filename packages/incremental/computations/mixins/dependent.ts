@@ -1,6 +1,6 @@
 import { setAdd } from "../../../util/maps-sets";
 import { ComputationDescription } from "../../incremental-lib";
-import { ComputationResult } from "../../utils/result";
+import { ComputationResult, promiseIfOk } from "../../utils/result";
 import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
@@ -10,6 +10,11 @@ export type DependentContext = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<ComputationResult<T>>;
+  readonly getOk: <T>(
+    description: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) => Promise<T>;
 };
 
 export interface DependentComputation {
@@ -31,6 +36,7 @@ export class DependentComputationMixin {
   makeContextRoutine(runId: RunId): DependentContext {
     return {
       get: dep => this.getDep(dep, runId),
+      getOk: dep => promiseIfOk(this.getDep(dep, runId)),
     };
   }
 
