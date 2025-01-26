@@ -11,6 +11,7 @@ export type SimpleEffectComputationExec<T> = (
 
 type SimpleEffectComputationConfig<T> = {
   readonly exec: SimpleEffectComputationExec<T>;
+  readonly root?: boolean;
 };
 
 type SimpleEffectComputationContext = {
@@ -44,6 +45,8 @@ export function newSimpleEffectComputation<T>(
     {
       exec: config.exec,
       requestDef: anyValue,
+      responseDef: anyValue,
+      root: config.root,
     },
     undefined
   );

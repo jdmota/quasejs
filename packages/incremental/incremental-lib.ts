@@ -3,10 +3,9 @@
 // The arguments and results may be serialized and deserialized
 // They may also be associated with equality functions to avoid unnecessary recomputations
 // Since computations may be asynchronous, to ensure determinism, they may only depend on other computations and on the (immutable) arguments
-
+import EventEmitter from "node:events";
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
-import { createDefer } from "../util/deferred";
 import { HashMap } from "./utils/hash-map";
 import { AnyRawComputation, State } from "./computations/raw";
 import { ComputationResult } from "./utils/result";
@@ -42,7 +41,16 @@ type ComputationRegistryOpts = {
   readonly canInvalidate: boolean;
 };
 
-export class ComputationRegistry {
+export type ComputationRegistryEvents = {
+  uncaughtError: [
+    Readonly<{
+      description: ComputationDescription<any>;
+      error: unknown;
+    }>,
+  ];
+};
+
+export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
   private readonly canInvalidate: boolean;
   private canExternalInvalidate: boolean;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
@@ -55,8 +63,10 @@ export class ComputationRegistry {
   private readonly pending: SpecialQueue<AnyRawComputation>;
   private readonly running: SpecialQueue<AnyRawComputation>;
   private readonly settledUnstable: SpecialQueue<AnyRawComputation>;
+  private otherJobs: Promise<unknown>[];
 
   private constructor(opts: ComputationRegistryOpts) {
+    super();
     this.canInvalidate = opts.canInvalidate;
     this.canExternalInvalidate = opts.canInvalidate;
     this.map = new HashMap({
@@ -72,6 +82,19 @@ export class ComputationRegistry {
     this.pending = this.computations[State.PENDING];
     this.running = this.computations[State.RUNNING];
     this.settledUnstable = this.computations[State.SETTLED_UNSTABLE];
+    this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
+  }
+
+  queueOtherJob(fn: () => Promise<unknown>) {
+    this.otherJobs.push(Promise.resolve().then(fn));
+  }
+
+  emitUncaughtError(description: ComputationDescription<any>, error: unknown) {
+    if (this.listenerCount("uncaughtError") > 0) {
+      this.emit("uncaughtError", { description, error });
+    } else {
+      throw error;
+    }
   }
 
   private computationsCount() {
@@ -185,6 +208,8 @@ export class ComputationRegistry {
   */
 
   private cleanupRun(computation: EffectComputation<undefined, any>) {
+    this.scheduler1.cancel();
+    this.scheduler2.cancel();
     computation.unroot();
     computation.destroy();
     let count;
@@ -198,47 +223,50 @@ export class ComputationRegistry {
     if (this.computationsCount() > 0) {
       throw new Error("Invariant violation: Cleanup failed");
     }
+
+    const { otherJobs } = this;
+    this.otherJobs = [];
+    return Promise.all(otherJobs);
   }
 
   static async singleRun<T>(
     exec: SimpleEffectComputationExec<T>
   ): Promise<ComputationResult<T>> {
     const registry = new ComputationRegistry({ canInvalidate: false });
-    const desc = newSimpleEffectComputation({ exec });
+    const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     const result = await computation.run();
-    registry.cleanupRun(computation);
+    await registry.cleanupRun(computation);
     return result;
   }
 
   static run<T>(
     exec: SimpleEffectComputationExec<T>
   ): ComputationController<T> {
-    const defer = createDefer<ComputationResult<T>>();
     const registry = new ComputationRegistry({ canInvalidate: true });
-    const desc = newSimpleEffectComputation({ exec });
+    const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     registry.wake();
 
+    let interrupted = false;
+    let finishing = false;
+
     return {
-      promise: defer.promise,
-      interrupt() {
-        registry.cleanupRun(computation);
-        defer.reject(new Error("Interrupted"));
+      async interrupt() {
+        if (interrupted) throw new Error("Already interrupted");
+        interrupted = true;
+        await registry.cleanupRun(computation);
       },
-      finish() {
-        if (registry.externalInvalidationsAllowed()) {
-          registry.disableExternalInvalidations();
-          registry.invalidateSettledUnstable();
-          registry
-            .wait()
-            .then(async () => {
-              const result = await computation.run();
-              registry.cleanupRun(computation);
-              return result;
-            })
-            .then(defer.resolve, defer.reject);
-        }
+      async finish() {
+        if (interrupted) throw new Error("Already interrupted");
+        if (finishing) throw new Error("Already finishing");
+        finishing = true;
+        registry.disableExternalInvalidations();
+        registry.invalidateSettledUnstable();
+        await registry.wait();
+        const result = await computation.run();
+        await registry.cleanupRun(computation);
+        return result;
       },
       peekErrors() {
         return registry.peekErrors();
@@ -248,9 +276,8 @@ export class ComputationRegistry {
 }
 
 type ComputationController<T> = {
-  readonly promise: Promise<ComputationResult<T>>;
-  readonly interrupt: () => void;
-  readonly finish: () => void;
+  readonly interrupt: () => Promise<void>;
+  readonly finish: () => Promise<ComputationResult<T>>;
   peekErrors(): {
     readonly deterministic: unknown[];
     readonly nonDeterministic: unknown[];

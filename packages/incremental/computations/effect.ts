@@ -10,7 +10,10 @@ import {
   StateNotCreating,
   AnyRawComputation,
 } from "../computations/raw";
-import type { SubscribableComputation } from "./mixins/subscribable";
+import {
+  SubscribableComputation,
+  SubscribableComputationMixin,
+} from "./mixins/subscribable";
 import {
   ComputationDescription,
   ComputationRegistry,
@@ -25,9 +28,11 @@ type EffectComputationExec<Req, Res> = (
 type EffectComputationConfig<Req, Res> = {
   readonly exec: EffectComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
+  readonly responseDef: ValueDefinition<Res>;
+  readonly root?: boolean;
 };
 
-export type CleanupFn = () => void | Promise<void>;
+export type CleanupFn = (deleting: boolean) => void | Promise<void>;
 
 const NOOP_CLEANUP: CleanupFn = () => {};
 
@@ -46,6 +51,12 @@ type EffectComputationContext<Req> = {
   ) => Promise<T>;
   readonly cleanup: (fn: CleanupFn) => void;
 };
+
+export function newEffectComputationBuilder<Req, Res>(
+  config: EffectComputationConfig<Req, Res>
+) {
+  return (request: Req) => new EffectComputationDescription(config, request);
+}
 
 export class EffectComputationDescription<Req, Res>
   implements ComputationDescription<EffectComputation<Req, Res>>
@@ -67,20 +78,26 @@ export class EffectComputationDescription<Req, Res>
       other instanceof EffectComputationDescription &&
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
+      this.config.responseDef === other.config.responseDef &&
+      !!this.config.root === !!other.config.root &&
       this.config.requestDef.equal(this.request, other.request)
     );
   }
 
   hash() {
-    return this.config.requestDef.hash(this.request) + 31;
+    return (
+      this.config.requestDef.hash(this.request) +
+      31 * (this.config.root ? 1 : 0)
+    );
   }
 }
 
 export class EffectComputation<Req, Res>
   extends RawComputation<EffectComputationContext<Req>, Res>
-  implements DependentComputation
+  implements DependentComputation, SubscribableComputation<Res>
 {
   public readonly dependentMixin: DependentComputationMixin;
+  public readonly subscribableMixin: SubscribableComputationMixin<Res>;
   private readonly config: EffectComputationConfig<Req, Res>;
   private readonly request: Req;
   private rooted: boolean;
@@ -92,9 +109,10 @@ export class EffectComputation<Req, Res>
   ) {
     super(registry, description, false);
     this.dependentMixin = new DependentComputationMixin(this);
+    this.subscribableMixin = new SubscribableComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
-    this.rooted = true;
+    this.rooted = !!description.config.root;
     this.cleanup = NOOP_CLEANUP;
     this.mark(State.PENDING);
   }
@@ -102,15 +120,22 @@ export class EffectComputation<Req, Res>
   protected async exec(
     ctx: EffectComputationContext<Req>
   ): Promise<ComputationResult<Res>> {
+    await this.performCleanup(false);
+    return this.config.exec(ctx);
+  }
+
+  private async performCleanup(deleting: boolean) {
     const { cleanup } = this;
     this.cleanup = NOOP_CLEANUP;
     try {
-      await cleanup();
-    } catch (err: unknown) {
-      // TODO
-      throw err;
+      await cleanup(deleting);
+    } catch (err) {
+      if (deleting) {
+        this.registry.emitUncaughtError(this.description, err);
+      } else {
+        throw err;
+      }
     }
-    return this.config.exec(ctx);
   }
 
   protected makeContext(runId: RunId): EffectComputationContext<Req> {
@@ -126,20 +151,31 @@ export class EffectComputation<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return !this.rooted;
+    return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: ComputationResult<Res>): void {}
+  protected finishRoutine(result: ComputationResult<Res>): void {
+    this.subscribableMixin.finishRoutine(result);
+  }
 
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
+    this.subscribableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
+    this.subscribableMixin.deleteRoutine();
+    this.registry.queueOtherJob(() => this.performCleanup(true));
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
+
+  responseEqual(a: Res, b: Res): boolean {
+    return this.config.responseDef.equal(a, b);
+  }
+
+  onNewResult(result: ComputationResult<Res>): void {}
 
   unroot() {
     this.rooted = false;

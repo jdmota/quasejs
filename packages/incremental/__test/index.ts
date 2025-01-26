@@ -88,13 +88,12 @@ export async function main() {
     return results;
   });
 
-  process.once("SIGINT", () => {
-    console.log("SIGINT...");
-    controller.finish();
+  return new Promise(resolve => {
+    process.once("SIGINT", () => {
+      console.log("SIGINT...");
+      resolve(controller.finish());
+    });
   });
-
-  const result = await controller.promise;
-  console.log(result);
 }
 
 main().catch(error => console.log(error));

@@ -266,7 +266,7 @@ export class FileSystem {
   async depend<T>(
     ctx: SimpleContext,
     originalPath: string,
-    fn: (originalPath: string) => Promise<T>,
+    fn: (originalPath: string) => T | Promise<T>,
     type: FileChange | null = null
   ) {
     if (type == null) {
