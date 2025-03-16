@@ -57,7 +57,7 @@ export class DependentComputationMixin {
     }
   }
 
-  private getDep<T>(
+  protected getDep<T>(
     description: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >,

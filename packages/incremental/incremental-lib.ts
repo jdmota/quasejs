@@ -7,7 +7,7 @@ import EventEmitter from "node:events";
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
 import { HashMap } from "./utils/hash-map";
-import { AnyRawComputation, State } from "./computations/raw";
+import { AnyRawComputation, RawComputation, State } from "./computations/raw";
 import { ComputationResult } from "./utils/result";
 import {
   SimpleEffectComputationExec,
@@ -29,6 +29,9 @@ function deterministic<Arg, Ret>(
   };
 }
 
+export type ResultTypeOfComputation<C> =
+  C extends RawComputation<any, infer Res> ? Res : never;
+
 export type ComputationDescription<C extends AnyRawComputation> = {
   readonly create: (registry: ComputationRegistry) => C;
   readonly equal: <O extends AnyRawComputation>(
@@ -36,6 +39,9 @@ export type ComputationDescription<C extends AnyRawComputation> = {
   ) => boolean;
   readonly hash: () => number;
 };
+
+export type AnyComputationDescription =
+  ComputationDescription<AnyRawComputation>;
 
 type ComputationRegistryOpts = {
   readonly canInvalidate: boolean;

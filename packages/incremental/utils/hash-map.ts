@@ -48,15 +48,24 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
   private readonly map: Map<number, LinkedList<HashMapEntry<K, V>>>;
   private readonly hash: (key: K) => number;
   private readonly equal: (a: K, b: K) => boolean;
-  private snapshot: ReadonlySnapshotHashMap<K, V> | null;
   private sizeCount: number;
+  private snapshot: ReadonlySnapshotHashMap<K, V> | null;
 
   constructor(valueDef: ValueDefinition<K>) {
     this.map = new Map();
     this.hash = valueDef.hash;
     this.equal = valueDef.equal;
-    this.snapshot = null;
     this.sizeCount = 0;
+    this.snapshot = null;
+  }
+
+  clear() {
+    this.map.clear();
+    this.sizeCount = 0;
+    if (this.snapshot) {
+      this.snapshot.map = null;
+      this.snapshot = null;
+    }
   }
 
   getSnapshot(): ReadonlySnapshotHashMap<K, V> {

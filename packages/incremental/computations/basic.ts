@@ -21,18 +21,18 @@ import {
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult } from "../utils/result";
 
-type BasicComputationExec<Req, Res> = (
+export type BasicComputationExec<Req, Res> = (
   ctx: BasicComputationContext<Req>
 ) => Promise<ComputationResult<Res>>;
 
-type BasicComputationConfig<Req, Res> = {
+export type BasicComputationConfig<Req, Res> = {
   readonly exec: BasicComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
   readonly root?: boolean;
 };
 
-type BasicComputationContext<Req> = {
+export type BasicComputationContext<Req> = {
   readonly request: Req;
   readonly checkActive: () => void;
   readonly get: <T>(
@@ -91,23 +91,26 @@ export class BasicComputation<Req, Res>
   extends RawComputation<BasicComputationContext<Req>, Res>
   implements DependentComputation, SubscribableComputation<Res>
 {
+  public readonly desc: BasicComputationDescription<Req, Res>;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
-  private readonly config: BasicComputationConfig<Req, Res>;
-  private readonly request: Req;
+  protected readonly config: BasicComputationConfig<Req, Res>;
+  protected readonly request: Req;
   private rooted: boolean;
 
   constructor(
     registry: ComputationRegistry,
-    description: BasicComputationDescription<Req, Res>
+    description: BasicComputationDescription<Req, Res>,
+    mark: boolean = true
   ) {
     super(registry, description, false);
+    this.desc = description;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
     this.rooted = !!description.config.root;
-    this.mark(State.PENDING);
+    if (mark) this.mark(State.PENDING);
   }
 
   protected exec(
