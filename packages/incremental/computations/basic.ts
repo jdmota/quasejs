@@ -85,6 +85,10 @@ export class BasicComputationDescription<Req, Res>
       31 * (this.config.root ? 1 : 0)
     );
   }
+
+  serializer() {
+    return null;
+  }
 }
 
 export class BasicComputation<Req, Res>

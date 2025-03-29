@@ -38,6 +38,10 @@ export type ComputationDescription<C extends AnyRawComputation> = {
     other: ComputationDescription<O>
   ) => boolean;
   readonly hash: () => number;
+  readonly serializer: () => null | {
+    readonly serialize: (result: ResultTypeOfComputation<C>) => Buffer;
+    readonly deserialize: (result: Buffer) => ResultTypeOfComputation<C>;
+  };
 };
 
 export type AnyComputationDescription =

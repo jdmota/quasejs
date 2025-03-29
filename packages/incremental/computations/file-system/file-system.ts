@@ -58,6 +58,10 @@ export class FileComputationDescription
   hash() {
     return this.path.length + 31 * this.type.length;
   }
+
+  serializer() {
+    return null;
+  }
 }
 
 class FileComputation
