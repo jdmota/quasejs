@@ -1,54 +1,42 @@
-import { Option } from "../../util/monads";
-import { impl } from "../../util/traits";
 import {
-  ComputationRegistry,
-  ResultTypeOfComputation,
-  type AnyComputationDescription,
   type ComputationDescription,
+  ComputationRegistry,
 } from "../incremental-lib";
-import { type ValueDefinition, HashMap } from "../utils/hash-map";
-import { ComputationResult, ok } from "../utils/result";
+import {
+  type ValueDefinition,
+  HashMap,
+  ReadonlyHashMap,
+} from "../utils/hash-map";
+import { ComputationResult, ok, promiseIfOk } from "../utils/result";
 import {
   BasicComputationContext,
   BasicComputation,
   BasicComputationDescription,
 } from "./basic";
 import { SubscribableComputation } from "./mixins/subscribable";
-import { AnyRawComputation, RawComputation, State } from "./raw";
+import { RawComputation, State } from "./raw";
 
 export interface Serializable<T> {
   serialize(result: T): Buffer;
   deserialize(result: Buffer): T;
 }
 
-// null signals some error or unknown tag
-export type CacheableTag = string | null;
+export type CacheableTag = string;
 
-export class CacheableValue<T> {
+export abstract class CacheableValue<T> {
   constructor(readonly value: T) {}
-
-  getTag(): CacheableTag {
-    return ""; // TODO
-  }
-
-  checkTag(tag: CacheableTag): boolean {
-    return tag != null; // TODO
-  }
-
-  serialize(): Buffer {
-    return Buffer.from([]); // TODO
-  }
-
-  static deserialize(buf: Buffer) {
-    return new CacheableValue(); // TODO
-  }
+  abstract getTag(): CacheableTag;
+  abstract checkTag(tag: CacheableTag): boolean;
+  abstract serialize(): Buffer;
 }
 
 type AnySubscribableDescription = ComputationDescription<
   RawComputation<any, any> & SubscribableComputation<any>
 >;
 
-const defaultValDef1: ValueDefinition<AnyComputationDescription> = {
+const defaultValDef1: ValueDefinition<
+  BasicComputationDescription<any, CacheableValue<any>>
+> = {
   hash: a => a.hash(),
   equal: (a, b) => a.equal(b),
 };
@@ -58,67 +46,100 @@ const defaultValDef2: ValueDefinition<AnySubscribableDescription> = {
   equal: (a, b) => a.equal(b),
 };
 
-class CacheEntry<C extends AnyRawComputation> {
-  private result: Option<CacheableValue<ResultTypeOfComputation<C>>> =
-    Option.none;
-  private readonly deps: HashMap<AnySubscribableDescription, CacheableTag> =
-    new HashMap(defaultValDef2);
+class CacheEntryBuilder<Res> {
+  private readonly deps: HashMap<
+    AnySubscribableDescription,
+    CacheableTag | null // null signals some error or unknown tag
+  > = new HashMap(defaultValDef2);
 
-  constructor(readonly desc: ComputationDescription<C>) {}
-
-  addDependency(desc: AnySubscribableDescription, tag: CacheableTag) {
-    this.deps.set(desc, tag);
+  async getDependency<T>(
+    ctx: {
+      readonly checkActive: () => void;
+      readonly get: <T>(
+        desc: ComputationDescription<
+          RawComputation<any, T> & SubscribableComputation<T>
+        >
+      ) => Promise<ComputationResult<T>>;
+    },
+    desc: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) {
+    ctx.checkActive();
+    this.deps.set(desc, null);
+    const result = await ctx.get(desc);
+    if (result.ok && result.value instanceof CacheableValue) {
+      ctx.checkActive();
+      this.deps.set(desc, result.value.getTag());
+    }
+    return result;
   }
 
-  saveResult(value: CacheableValue<ResultTypeOfComputation<C>>) {
-    this.result = Option.some(value);
+  make(value: CacheableValue<Res>) {
+    return new CacheEntry(value, this.deps);
   }
+}
 
-  getResult() {
-    return this.result;
+class CacheEntry<Res> {
+  constructor(
+    readonly value: CacheableValue<Res>,
+    readonly deps: ReadonlyHashMap<
+      AnySubscribableDescription,
+      CacheableTag | null
+    >
+  ) {}
+
+  getValue() {
+    return this.value;
   }
 
   getDeps() {
     return this.deps[Symbol.iterator]();
   }
-
-  reset() {
-    this.result = Option.none;
-    this.deps.clear();
-  }
 }
 
 export class CacheDB {
-  private readonly map: HashMap<AnyComputationDescription, CacheEntry<any>> =
-    new HashMap(defaultValDef1);
+  private readonly map: HashMap<
+    BasicComputationDescription<any, CacheableValue<any>>,
+    CacheEntry<any>
+  > = new HashMap(defaultValDef1);
 
-  constructor() {}
-
-  get<C extends AnyRawComputation>(desc: ComputationDescription<C>) {
-    return this.map.get(desc) as CacheEntry<C> | undefined;
+  get<Req, Res>(desc: BasicComputationDescription<Req, CacheableValue<Res>>) {
+    return this.map.get(desc) as CacheEntry<Res> | undefined;
   }
 
-  set<C extends AnyRawComputation>(desc: ComputationDescription<C>) {
-    const entry = new CacheEntry(desc);
+  set<Req, Res>(
+    desc: BasicComputationDescription<Req, CacheableValue<Res>>,
+    entry: CacheEntry<Res>
+  ) {
     this.map.set(desc, entry);
-    return entry;
   }
 
-  delete<C extends AnyRawComputation>(desc: ComputationDescription<C>) {
+  delete<Req, Res>(
+    desc: BasicComputationDescription<Req, CacheableValue<Res>>
+  ) {
     this.map.delete(desc);
+  }
+
+  async save() {
+    // TODO
+  }
+
+  async load() {
+    // TODO
   }
 }
 
 export class CacheableBasicComputation<Req, Res> extends BasicComputation<
   Req,
-  Res
+  CacheableValue<Res>
 > {
   public readonly db: CacheDB;
 
   constructor(
     registry: ComputationRegistry,
     db: CacheDB,
-    description: BasicComputationDescription<Req, Res>,
+    description: BasicComputationDescription<Req, CacheableValue<Res>>,
     mark: boolean = true
   ) {
     super(registry, description, false);
@@ -128,14 +149,16 @@ export class CacheableBasicComputation<Req, Res> extends BasicComputation<
 
   protected override async exec(
     ctx: BasicComputationContext<Req>
-  ): Promise<ComputationResult<Res>> {
+  ): Promise<ComputationResult<CacheableValue<Res>>> {
     const currentEntry = this.db.get(this.desc);
     if (currentEntry) {
-      const cached = currentEntry.getResult();
-      // An entry is only considered if it has a value
-      if (cached.some) {
-        try {
-          for (const [depDesc, tag] of currentEntry.getDeps()) {
+      const cached = currentEntry.getValue();
+      try {
+        await Promise.all(
+          Array.from(currentEntry.getDeps()).map(async ([depDesc, tag]) => {
+            if (tag == null) {
+              throw new Error("Outdated");
+            }
             const result = await ctx.get(depDesc);
             const valid =
               result.ok &&
@@ -144,50 +167,30 @@ export class CacheableBasicComputation<Req, Res> extends BasicComputation<
             if (!valid) {
               throw new Error("Outdated");
             }
-          }
-          return ok(cached.value.value);
-        } catch (err) {}
-      }
+          })
+        );
+        return ok(cached);
+      } catch (err) {}
     }
     // Check we are still running
     ctx.checkActive();
-    // Reset dependencies
+    // Reset dependencies and cache
     this.dependentMixin.invalidateRoutine();
-    // Replace old entry with new entry
-    const newEntry = this.db.set(this.desc);
+    this.db.delete(this.desc);
+    // New entry
+    const newEntry = new CacheEntryBuilder<Res>();
     // Execute
     const result = await this.config.exec({
       ...ctx,
-      get: async desc => saveDep(desc, await ctx.get(desc)),
-      getOk: async desc => {
-        const result = await ctx.getOk(desc);
-        saveDep(desc, ok(result));
-        return result;
-      },
+      get: desc => newEntry.getDependency(ctx, desc),
+      getOk: desc => promiseIfOk(newEntry.getDependency(ctx, desc)),
     });
-    // Check we are still running
-    ctx.checkActive();
     // On success, save result
-    if (result.ok && result.value instanceof CacheableValue) {
-      newEntry.saveResult(result.value);
+    if (result.ok) {
+      ctx.checkActive();
+      this.db.set(this.desc, newEntry.make(result.value));
     }
     return result;
-
-    function saveDep<T>(
-      desc: ComputationDescription<
-        RawComputation<any, T> & SubscribableComputation<T>
-      >,
-      result: ComputationResult<T>
-    ) {
-      ctx.checkActive();
-      newEntry.addDependency(
-        desc,
-        result.ok && result.value instanceof CacheableValue
-          ? result.value.getTag()
-          : null
-      );
-      return result;
-    }
   }
 
   protected override invalidateRoutine(): void {
