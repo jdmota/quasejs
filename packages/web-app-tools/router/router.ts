@@ -103,7 +103,9 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
     );
   }
 
-  clientInstall() {
+  clientInstall(
+    external: (anchor: HTMLAnchorElement) => boolean = () => false
+  ) {
     // Set initial location and history entry
     this.setCurrent(createSimpleLocation(location), history.state?.[INDEX_KEY]);
 
@@ -127,6 +129,9 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
 
       const anchor = findAnchor(e);
       if (anchor) {
+        if (external(anchor)) {
+          return;
+        }
         e.preventDefault();
         this.navigate(anchor, { replace: false });
       }
