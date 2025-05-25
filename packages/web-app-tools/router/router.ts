@@ -10,7 +10,7 @@
 // TODO support state and key (based on index)
 // TODO https://codepen.io/morten-olsen/post/when-safari-broke-webapps
 
-import { noop } from "../../util/miscellaneous";
+import { never } from "../../util/miscellaneous";
 import { TypedEvent, TypedEventTarget } from "../events";
 import { findAnchor } from "./anchors";
 import {
@@ -46,9 +46,16 @@ export type Transition = {
 
 export type RouterEvents = {
   readonly ready: LocationAndIndex;
+  readonly "navigation-attempt": Readonly<{ confirm: () => void }>;
   readonly navigation: Transition;
   readonly "self-navigation": LocationAndIndex;
 };
+
+enum NAVIGATION_KIND {
+  PUSH = 0,
+  REPLACE = 1,
+  POPSTATE = 2,
+}
 
 export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
   private readonly mixins: readonly RouterMixin<E>[];
@@ -111,7 +118,15 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
 
     // Listen for popstate
     window.addEventListener("popstate", event => {
-      this.makeNavigation(location, noop, event.state?.[INDEX_KEY]);
+      this.makeNavigation(
+        {
+          pathname: location.pathname,
+          search: location.search,
+          hash: location.hash,
+        },
+        NAVIGATION_KIND.POPSTATE,
+        event.state?.[INDEX_KEY]
+      );
     });
 
     // Catch click events on anchors
@@ -130,6 +145,16 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
       const anchor = findAnchor(e);
       if (anchor) {
         if (external(anchor)) {
+          if (this.hasToApproveFlag) {
+            e.preventDefault();
+            this.dispatchEvent(
+              new TypedEvent("navigation-attempt", {
+                confirm: () => {
+                  window.open(anchor.href, "_self");
+                },
+              })
+            );
+          }
           return;
         }
         e.preventDefault();
@@ -164,16 +189,27 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
   ) {
     this.makeNavigation(
       rawTarget,
-      replace ? replaceNavigation : pushNavigation,
+      replace ? NAVIGATION_KIND.REPLACE : NAVIGATION_KIND.PUSH,
       null
     );
   }
 
+  private hasToApproveFlag = false;
+
+  hasToApprove() {
+    return this.hasToApproveFlag;
+  }
+
+  setHasToApprove(b: boolean) {
+    this.hasToApproveFlag = b;
+  }
+
   private makeNavigation(
     rawTo: RawSimpleLocation,
-    make: (target: SimpleLocation) => void,
+    kind: NAVIGATION_KIND,
     index: number | undefined | null
   ) {
+    const delta = index == null ? null : index - this.index;
     const prevIndex = this.index;
     if (prevIndex === index) return;
 
@@ -190,10 +226,40 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
       return;
     }
 
-    make(to);
+    if (this.hasToApproveFlag) {
+      if (delta != null) {
+        history.go(-delta); // Undo
+      }
+      this.dispatchEvent(
+        new TypedEvent("navigation-attempt", {
+          confirm: () => {
+            if (delta == null) {
+              this.navigate(rawTo, {
+                replace: kind === NAVIGATION_KIND.REPLACE,
+              });
+            } else {
+              history.go(delta);
+            }
+          },
+        })
+      );
+      return;
+    }
+
+    switch (kind) {
+      case NAVIGATION_KIND.PUSH:
+        pushNavigation(to);
+        break;
+      case NAVIGATION_KIND.REPLACE:
+        replaceNavigation(to);
+        break;
+      case NAVIGATION_KIND.POPSTATE:
+        break;
+      default:
+        never(kind);
+    }
 
     this.setCurrent(to, index);
-
     this.onTransition({
       from: {
         location: prev,
