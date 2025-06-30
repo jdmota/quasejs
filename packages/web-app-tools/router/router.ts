@@ -110,6 +110,18 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
     );
   }
 
+  // For No-Single-Page-App mode
+  clientInstallNoSpa() {
+    this.current = createSimpleLocation(location);
+
+    this.dispatchEvent(
+      new TypedEvent("ready", {
+        location: this.current,
+        index: this.index,
+      })
+    );
+  }
+
   clientInstall(
     external: (anchor: HTMLAnchorElement) => boolean = () => false
   ) {
