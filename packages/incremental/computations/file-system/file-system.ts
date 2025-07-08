@@ -1,5 +1,6 @@
 // import { default as parcelWatcher } from "@parcel/watcher";
 import chokidarWatcher from "chokidar";
+import { stat } from "fs-extra";
 import { dirname } from "path";
 import { normalizePath } from "../../../util/path-url";
 import {
@@ -19,6 +20,7 @@ import {
   StateNotCreating,
   StateNotDeleted,
 } from "../raw";
+import { CacheableTag, CacheableValue } from "../cacheable";
 
 export enum FileChange {
   ADD_OR_REMOVE = "ADD_OR_REMOVE",
@@ -31,13 +33,11 @@ export class FileComputationDescription
   readonly fs: FileSystem;
   readonly path: string;
   readonly type: FileChange;
-  readonly eventName: string;
 
   constructor(fs: FileSystem, path: string, type: FileChange) {
     this.fs = fs;
     this.path = path;
     this.type = type;
-    this.eventName = `${type}@${path}`;
   }
 
   create(registry: ComputationRegistry): FileComputation {
@@ -64,11 +64,25 @@ export class FileComputationDescription
   }
 }
 
+class CachedBigint extends CacheableValue<bigint> {
+  override getTag(): CacheableTag {
+    return this.value.toString();
+  }
+
+  override serialize(): Buffer {
+    return Buffer.from(this.value.toString(16));
+  }
+
+  deserialize(buf: Buffer): bigint {
+    return BigInt(`0x${buf.toString()}`);
+  }
+}
+
 class FileComputation
-  extends RawComputation<FileComputationDescription, undefined>
-  implements SubscribableComputation<undefined>
+  extends RawComputation<FileComputationDescription, CachedBigint>
+  implements SubscribableComputation<CachedBigint>
 {
-  public readonly subscribableMixin: SubscribableComputationMixin<undefined>;
+  public readonly subscribableMixin: SubscribableComputationMixin<CachedBigint>;
   public readonly desc: FileComputationDescription;
 
   constructor(
@@ -87,11 +101,12 @@ class FileComputation
 
   protected async exec(
     ctx: FileComputationDescription
-  ): Promise<ComputationResult<undefined>> {
+  ): Promise<ComputationResult<CachedBigint>> {
     if (this.registry.invalidationsAllowed()) {
       await this.desc.fs._sub(this);
     }
-    return ok(undefined);
+    const { mtimeNs } = await stat(this.desc.path, { bigint: true });
+    return ok(new CachedBigint(mtimeNs));
   }
 
   protected makeContext(runId: RunId): FileComputationDescription {
@@ -102,7 +117,7 @@ class FileComputation
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: ComputationResult<undefined>): void {
+  protected finishRoutine(result: ComputationResult<CachedBigint>): void {
     this.subscribableMixin.finishRoutine(result);
   }
 
@@ -117,11 +132,11 @@ class FileComputation
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  responseEqual(a: undefined, b: undefined): boolean {
-    return false;
+  responseEqual(a: CachedBigint, b: CachedBigint): boolean {
+    return a.value === b.value;
   }
 
-  onNewResult(result: ComputationResult<undefined>): void {}
+  onNewResult(result: ComputationResult<CachedBigint>): void {}
 }
 
 class FileInfo {

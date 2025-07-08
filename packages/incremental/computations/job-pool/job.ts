@@ -75,7 +75,7 @@ class ComputationJob<Req, Res>
     ChildComputation,
     ReachableComputation
 {
-  private readonly source: ComputationPool<Req, Res>;
+  private readonly pool: ComputationPool<Req, Res>;
   public readonly request: Req;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly parentMixin: ParentComputationMixin;
@@ -86,10 +86,10 @@ class ComputationJob<Req, Res>
     registry: ComputationRegistry,
     description: ComputationDescription<any>,
     request: Req,
-    source: ComputationPool<Req, Res>
+    pool: ComputationPool<Req, Res>
   ) {
     super(registry, description, false);
-    this.source = source;
+    this.pool = pool;
     this.request = request;
     this.dependentMixin = new DependentComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
@@ -101,13 +101,13 @@ class ComputationJob<Req, Res>
   protected exec(
     ctx: ComputationJobContext<Req>
   ): Promise<ComputationResult<Res>> {
-    return this.source.config.exec(ctx);
+    return this.pool.config.exec(ctx);
   }
 
   protected makeContext(runId: RunId): ComputationJobContext<Req> {
     return {
       request: this.request,
-      compute: req => this.parentMixin.compute(this.source.make(req), runId),
+      compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
     };
   }
@@ -118,7 +118,7 @@ class ComputationJob<Req, Res>
 
   protected finishRoutine(result: ComputationResult<Res>): void {
     this.reachableMixin.finishOrDeleteRoutine();
-    this.source.onFieldFinish(
+    this.pool.onFieldFinish(
       this.reachableMixin.isReachable(),
       this.request,
       result
@@ -134,7 +134,7 @@ class ComputationJob<Req, Res>
     this.dependentMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
     this.reachableMixin.finishOrDeleteRoutine();
-    this.source.onFieldDeleted(this.reachableMixin.isReachable(), this.request);
+    this.pool.onFieldDeleted(this.reachableMixin.isReachable(), this.request);
   }
 
   override onInEdgeAddition(node: AnyRawComputation): void {
@@ -150,11 +150,11 @@ class ComputationJob<Req, Res>
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
-    this.source.onFieldStateChange(this.reachableMixin.isReachable(), from, to);
+    this.pool.onFieldStateChange(this.reachableMixin.isReachable(), from, to);
   }
 
   onReachabilityChange(from: boolean, to: boolean): void {
-    this.source.onFieldReachabilityChange(
+    this.pool.onFieldReachabilityChange(
       this.getState(),
       this.request,
       from,

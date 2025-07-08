@@ -22,7 +22,7 @@ export class SubscribableComputationMixin<Res> {
   // Subscribers that saw the latest result
   private result: ComputationResult<Res> | null;
   readonly subscribers: Set<AnyRawComputation & DependentComputation>;
-  // If not null, it means all oldSubscribers saw this value
+  // If not "oldResult" is not null, it means all oldSubscribers saw this value
   // It is important to keep oldResult separate from result
   // See invalidate()
   private oldResult: ComputationResult<Res> | null;
@@ -67,7 +67,7 @@ export class SubscribableComputationMixin<Res> {
   invalidateRoutine(): void {
     // If a computation is invalidated, partially executed, and then invalidated again,
     // oldResult will be null.
-    // This will cause computations that subcribed in between both invalidations
+    // This will cause computations that subscribed in between both invalidations
     // to be propertly invalidated, preserving the invariant
     // that all oldSubscribers should have seen the same oldResult, if not null.
     this.oldResult = this.result;

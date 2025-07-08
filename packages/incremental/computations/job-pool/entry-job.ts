@@ -73,7 +73,7 @@ export class ComputationEntryJob<Req, Res>
     ParentComputation,
     ReachableComputation
 {
-  private readonly source: ComputationPool<Req, Res>;
+  private readonly pool: ComputationPool<Req, Res>;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<undefined>;
   public readonly parentMixin: ParentComputationMixin;
@@ -82,10 +82,10 @@ export class ComputationEntryJob<Req, Res>
   constructor(
     registry: ComputationRegistry,
     description: ComputationDescription<any>,
-    source: ComputationPool<Req, Res>
+    pool: ComputationPool<Req, Res>
   ) {
     super(registry, description, false);
-    this.source = source;
+    this.pool = pool;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
@@ -96,12 +96,12 @@ export class ComputationEntryJob<Req, Res>
   protected exec(
     ctx: ComputationEntryJobContext<Req>
   ): Promise<ComputationResult<undefined>> {
-    return this.source.config.startExec(ctx);
+    return this.pool.config.startExec(ctx);
   }
 
   protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
     return {
-      compute: req => this.parentMixin.compute(this.source.make(req), runId),
+      compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
     };
   }

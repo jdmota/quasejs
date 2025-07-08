@@ -1,33 +1,19 @@
-import { ComputationDescription } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { ComputationResult } from "../utils/result";
-import { RawComputation } from "./raw";
-import { CleanupFn, EffectComputationDescription } from "./effect";
-import type { SubscribableComputation } from "./mixins/subscribable";
+import {
+  EffectComputationDescription,
+  EffectComputationConfig,
+  EffectComputationExec,
+} from "./effect";
 
-export type SimpleEffectComputationExec<T> = (
-  ctx: SimpleEffectComputationContext
-) => Promise<ComputationResult<T>>;
+export type SimpleEffectComputationExec<T> = EffectComputationExec<
+  undefined,
+  T
+>;
 
-type SimpleEffectComputationConfig<T> = {
-  readonly exec: SimpleEffectComputationExec<T>;
-  readonly root?: boolean;
-};
-
-type SimpleEffectComputationContext = {
-  readonly checkActive: () => void;
-  readonly get: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<ComputationResult<T>>;
-  readonly getOk: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<T>;
-  readonly cleanup: (fn: CleanupFn) => void;
-};
+export type SimpleEffectComputationConfig<T> = Omit<
+  EffectComputationConfig<undefined, T>,
+  "requestDef" | "responseDef"
+>;
 
 const anyValue: ValueDefinition<any> = {
   hash(a) {

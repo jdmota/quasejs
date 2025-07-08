@@ -19,24 +19,25 @@ import {
   ComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { ComputationResult, ok } from "../utils/result";
+import { ComputationResult } from "../utils/result";
+import {
+  EffectComputationMixin,
+  IEffectComputation,
+  EffectContext,
+} from "./mixins/effect";
 
-type EffectComputationExec<Req, Res> = (
+export type EffectComputationExec<Req, Res> = (
   ctx: EffectComputationContext<Req>
 ) => Promise<ComputationResult<Res>>;
 
-type EffectComputationConfig<Req, Res> = {
+export type EffectComputationConfig<Req, Res> = {
   readonly exec: EffectComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
   readonly root?: boolean;
 };
 
-export type CleanupFn = (deleting: boolean) => void | Promise<void>;
-
-const NOOP_CLEANUP: CleanupFn = () => {};
-
-type EffectComputationContext<Req> = {
+export type EffectComputationContext<Req> = {
   readonly request: Req;
   readonly checkActive: () => void;
   readonly get: <T>(
@@ -49,8 +50,7 @@ type EffectComputationContext<Req> = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
-  readonly cleanup: (fn: CleanupFn) => void;
-};
+} & EffectContext;
 
 export function newEffectComputationBuilder<Req, Res>(
   config: EffectComputationConfig<Req, Res>
@@ -98,14 +98,17 @@ export class EffectComputationDescription<Req, Res>
 
 export class EffectComputation<Req, Res>
   extends RawComputation<EffectComputationContext<Req>, Res>
-  implements DependentComputation, SubscribableComputation<Res>
+  implements
+    DependentComputation,
+    SubscribableComputation<Res>,
+    IEffectComputation
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
+  public readonly effectMixin: EffectComputationMixin;
   private readonly config: EffectComputationConfig<Req, Res>;
   private readonly request: Req;
   private rooted: boolean;
-  private cleanup: CleanupFn;
 
   constructor(
     registry: ComputationRegistry,
@@ -114,43 +117,26 @@ export class EffectComputation<Req, Res>
     super(registry, description, false);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
+    this.effectMixin = new EffectComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
     this.rooted = !!description.config.root;
-    this.cleanup = NOOP_CLEANUP;
     this.mark(State.PENDING);
   }
 
   protected async exec(
     ctx: EffectComputationContext<Req>
   ): Promise<ComputationResult<Res>> {
-    await this.performCleanup(false);
+    await this.effectMixin.performCleanup(false);
     return this.config.exec(ctx);
-  }
-
-  private async performCleanup(deleting: boolean) {
-    const { cleanup } = this;
-    this.cleanup = NOOP_CLEANUP;
-    try {
-      await cleanup(deleting);
-    } catch (err) {
-      if (deleting) {
-        this.registry.emitUncaughtError(this.description, err);
-      } else {
-        throw err;
-      }
-    }
   }
 
   protected makeContext(runId: RunId): EffectComputationContext<Req> {
     return {
       request: this.request,
       checkActive: () => this.checkActive(runId),
-      cleanup: fn => {
-        this.checkActive(runId);
-        this.cleanup = fn;
-      },
       ...this.dependentMixin.makeContextRoutine(runId),
+      ...this.effectMixin.makeContextRoutine(runId),
     };
   }
 
@@ -170,7 +156,7 @@ export class EffectComputation<Req, Res>
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
-    this.registry.queueOtherJob(() => this.performCleanup(true));
+    this.effectMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}

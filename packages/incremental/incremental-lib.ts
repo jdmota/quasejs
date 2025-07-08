@@ -211,6 +211,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations during execution?
   // TODO peek errors and return a list of them? create a error pool and report only those?
+  // TODO maybe make the raw computations emit events, making that the base impl (this should allow for more interesting and reactive stuff)
   /*
     for (const c of this.errored.iterateAll()) {
       errors.push(c.peekError());

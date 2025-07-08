@@ -26,7 +26,6 @@ export type CacheableTag = string;
 export abstract class CacheableValue<T> {
   constructor(readonly value: T) {}
   abstract getTag(): CacheableTag;
-  abstract checkTag(tag: CacheableTag): boolean;
   abstract serialize(): Buffer;
 }
 
@@ -154,21 +153,24 @@ export class CacheableBasicComputation<Req, Res> extends BasicComputation<
     if (currentEntry) {
       const cached = currentEntry.getValue();
       try {
-        await Promise.all(
-          Array.from(currentEntry.getDeps()).map(async ([depDesc, tag]) => {
-            if (tag == null) {
-              throw new Error("Outdated");
-            }
-            const result = await ctx.get(depDesc);
-            const valid =
-              result.ok &&
-              result.value instanceof CacheableValue &&
-              result.value.checkTag(tag);
-            if (!valid) {
-              throw new Error("Outdated");
-            }
-          })
-        );
+        const jobs = [];
+        for (const [depDesc, tag] of currentEntry.getDeps()) {
+          if (tag == null) {
+            throw new Error("Outdated");
+          }
+          jobs.push(
+            ctx.get(depDesc).then(result => {
+              const valid =
+                result.ok &&
+                result.value instanceof CacheableValue &&
+                result.value.getTag() === tag;
+              if (!valid) {
+                throw new Error("Outdated");
+              }
+            })
+          );
+        }
+        await Promise.all(jobs);
         return ok(cached);
       } catch (err) {}
     }

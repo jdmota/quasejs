@@ -8,15 +8,15 @@ export type EffectContext = {
   readonly cleanup: (fn: CleanupFn) => void;
 };
 
-export interface EffectComputation {
+export interface IEffectComputation {
   readonly effectMixin: EffectComputationMixin;
 }
 
 export class EffectComputationMixin {
-  public readonly source: AnyRawComputation & EffectComputation;
+  public readonly source: AnyRawComputation & IEffectComputation;
   private cleanup: CleanupFn;
 
-  constructor(source: AnyRawComputation & EffectComputation) {
+  constructor(source: AnyRawComputation & IEffectComputation) {
     this.source = source;
     this.cleanup = NOOP_CLEANUP;
   }
