@@ -1,4 +1,4 @@
-import { ValueDefinition } from "../utils/hash-map";
+import { anyValue } from "../utils/hash-map";
 import {
   EffectComputationDescription,
   EffectComputationConfig,
@@ -14,15 +14,6 @@ export type SimpleEffectComputationConfig<T> = Omit<
   EffectComputationConfig<undefined, T>,
   "requestDef" | "responseDef"
 >;
-
-const anyValue: ValueDefinition<any> = {
-  hash(a) {
-    return 0;
-  },
-  equal(a, b) {
-    return a === b;
-  },
-};
 
 export function newSimpleEffectComputation<T>(
   config: SimpleEffectComputationConfig<T>

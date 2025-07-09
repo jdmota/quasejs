@@ -5,6 +5,25 @@ export type ValueDefinition<T> = {
   readonly hash: (a: T) => number;
 };
 
+export interface ObjectHashEquals {
+  hash(): number;
+  equal(other: unknown): boolean;
+}
+
+export const objValue: ValueDefinition<ObjectHashEquals> = {
+  hash: a => a.hash(),
+  equal: (a, b) => a.equal(b),
+};
+
+export const anyValue: ValueDefinition<any> = {
+  hash(a) {
+    return 0;
+  },
+  equal(a, b) {
+    return a === b;
+  },
+};
+
 type HashMapEntry<K, V> = {
   readonly key: K;
   value: V;

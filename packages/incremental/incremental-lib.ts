@@ -14,6 +14,8 @@ import {
   newSimpleEffectComputation,
 } from "./computations/simple-effect";
 import { EffectComputation } from "./computations/effect";
+import { CacheDB, SerializableSettings } from "./computations/mixins/cacheable";
+import { FileSystem } from "./computations/file-system/file-system";
 
 const determinismSym = Symbol("deterministic");
 
@@ -38,10 +40,10 @@ export type ComputationDescription<C extends AnyRawComputation> = {
     other: ComputationDescription<O>
   ) => boolean;
   readonly hash: () => number;
-  readonly serializer: () => null | {
-    readonly serialize: (result: ResultTypeOfComputation<C>) => Buffer;
-    readonly deserialize: (result: Buffer) => ResultTypeOfComputation<C>;
-  };
+  readonly serializer?: SerializableSettings<
+    ComputationDescription<C>,
+    ResultTypeOfComputation<C>
+  > | null;
 };
 
 export type AnyComputationDescription =
@@ -60,6 +62,14 @@ export type ComputationRegistryEvents = {
   ];
 };
 
+export class PublicComputationRegistry {
+  public readonly fs: FileSystem;
+
+  constructor() {
+    this.fs = new FileSystem();
+  }
+}
+
 export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
   private readonly canInvalidate: boolean;
   private canExternalInvalidate: boolean;
@@ -74,6 +84,9 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   private readonly running: SpecialQueue<AnyRawComputation>;
   private readonly settledUnstable: SpecialQueue<AnyRawComputation>;
   private otherJobs: Promise<unknown>[];
+
+  public readonly db: CacheDB;
+  public readonly public: PublicComputationRegistry;
 
   private constructor(opts: ComputationRegistryOpts) {
     super();
@@ -93,6 +106,9 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.running = this.computations[State.RUNNING];
     this.settledUnstable = this.computations[State.SETTLED_UNSTABLE];
     this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
+    //
+    this.db = new CacheDB();
+    this.public = new PublicComputationRegistry();
   }
 
   queueOtherJob(fn: () => Promise<unknown>) {
@@ -211,7 +227,6 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
   // TODO delete unneeed computations during execution?
   // TODO peek errors and return a list of them? create a error pool and report only those?
-  // TODO maybe make the raw computations emit events, making that the base impl (this should allow for more interesting and reactive stuff)
   /*
     for (const c of this.errored.iterateAll()) {
       errors.push(c.peekError());
@@ -234,6 +249,9 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     if (this.computationsCount() > 0) {
       throw new Error("Invariant violation: Cleanup failed");
     }
+
+    this.queueOtherJob(() => this.public.fs.close());
+    this.queueOtherJob(() => this.db.save());
 
     const { otherJobs } = this;
     this.otherJobs = [];

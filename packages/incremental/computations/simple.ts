@@ -1,5 +1,5 @@
 import { ComputationDescription } from "../incremental-lib";
-import { ValueDefinition } from "../utils/hash-map";
+import { anyValue } from "../utils/hash-map";
 import { ComputationResult } from "../utils/result";
 import { BasicComputationDescription } from "./basic";
 import { RawComputation } from "./raw";
@@ -26,15 +26,6 @@ type SimpleComputationContext = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
-};
-
-const anyValue: ValueDefinition<any> = {
-  hash(a) {
-    return 0;
-  },
-  equal(a, b) {
-    return a === b;
-  },
 };
 
 export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {

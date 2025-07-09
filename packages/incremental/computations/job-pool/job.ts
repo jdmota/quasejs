@@ -51,10 +51,6 @@ export class ComputationJobDescription<Req, Res>
   hash() {
     return this.source.config.requestDef.hash(this.request);
   }
-
-  serializer() {
-    return null;
-  }
 }
 
 export type ComputationJobContext<Req> = {

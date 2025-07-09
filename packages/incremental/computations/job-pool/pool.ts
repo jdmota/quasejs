@@ -116,10 +116,6 @@ class ComputationPoolDescription<Req, Res>
   hash() {
     return 0;
   }
-
-  serializer() {
-    return null;
-  }
 }
 
 export class ComputationPool<Req, Res>

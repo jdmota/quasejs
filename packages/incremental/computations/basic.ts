@@ -17,9 +17,14 @@ import {
 import {
   ComputationDescription,
   ComputationRegistry,
+  PublicComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult } from "../utils/result";
+import {
+  CacheableComputationMixin,
+  SerializableSettings,
+} from "./mixins/cacheable";
 
 export type BasicComputationExec<Req, Res> = (
   ctx: BasicComputationContext<Req>
@@ -30,6 +35,10 @@ export type BasicComputationConfig<Req, Res> = {
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
   readonly root?: boolean;
+  readonly serializer?: SerializableSettings<
+    BasicComputationDescription<Req, Res>,
+    Res
+  >;
 };
 
 export type BasicComputationContext<Req> = {
@@ -45,7 +54,7 @@ export type BasicComputationContext<Req> = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
-};
+} & PublicComputationRegistry;
 
 export function newComputationBuilder<Req, Res>(
   config: BasicComputationConfig<Req, Res>
@@ -58,10 +67,15 @@ export class BasicComputationDescription<Req, Res>
 {
   readonly config: BasicComputationConfig<Req, Res>;
   readonly request: Req;
+  readonly serializer: SerializableSettings<
+    BasicComputationDescription<Req, Res>,
+    Res
+  >;
 
   constructor(config: BasicComputationConfig<Req, Res>, request: Req) {
     this.config = config;
     this.request = request;
+    this.serializer = config.serializer;
   }
 
   create(registry: ComputationRegistry): BasicComputation<Req, Res> {
@@ -85,10 +99,6 @@ export class BasicComputationDescription<Req, Res>
       31 * (this.config.root ? 1 : 0)
     );
   }
-
-  serializer() {
-    return null;
-  }
 }
 
 export class BasicComputation<Req, Res>
@@ -98,29 +108,31 @@ export class BasicComputation<Req, Res>
   public readonly desc: BasicComputationDescription<Req, Res>;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
+  public readonly cacheableMixin: CacheableComputationMixin<Req, Res>;
   protected readonly config: BasicComputationConfig<Req, Res>;
   protected readonly request: Req;
   private rooted: boolean;
 
   constructor(
     registry: ComputationRegistry,
-    description: BasicComputationDescription<Req, Res>,
+    desc: BasicComputationDescription<Req, Res>,
     mark: boolean = true
   ) {
-    super(registry, description, false);
-    this.desc = description;
+    super(registry, desc, false);
+    this.desc = desc;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
-    this.config = description.config;
-    this.request = description.request;
-    this.rooted = !!description.config.root;
+    this.cacheableMixin = new CacheableComputationMixin(this, desc);
+    this.config = desc.config;
+    this.request = desc.request;
+    this.rooted = !!desc.config.root;
     if (mark) this.mark(State.PENDING);
   }
 
   protected exec(
     ctx: BasicComputationContext<Req>
   ): Promise<ComputationResult<Res>> {
-    return this.config.exec(ctx);
+    return this.cacheableMixin.exec(this.config.exec, ctx);
   }
 
   protected makeContext(runId: RunId): BasicComputationContext<Req> {
@@ -128,6 +140,7 @@ export class BasicComputation<Req, Res>
       request: this.request,
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
+      ...this.registry.public,
     };
   }
 
@@ -142,11 +155,13 @@ export class BasicComputation<Req, Res>
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
+    this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
+    this.cacheableMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
