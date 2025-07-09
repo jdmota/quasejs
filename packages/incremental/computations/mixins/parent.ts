@@ -6,6 +6,10 @@ export interface ParentComputation {
   readonly parentMixin: ParentComputationMixin;
 }
 
+export type ParentContext<Req> = {
+  readonly compute: (req: Req) => void;
+};
+
 export class ParentComputationMixin {
   public readonly source: AnyRawComputation & ParentComputation;
   private readonly children: Set<AnyRawComputation & ChildComputation>;

@@ -108,7 +108,7 @@ class FileComputation
     super(registry, desc, false);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);
-    this.fs = registry.public.fs;
+    this.fs = registry.fs;
     this.mark(State.PENDING);
   }
 
@@ -310,6 +310,13 @@ export class FileSystem {
     return fn(originalPath);
   }
 
+  extend<Ctx extends SimpleContext>(ctx: Ctx): Ctx & CtxWithFS {
+    return {
+      ...ctx,
+      fs: (a, b, c) => this.depend(ctx, a, b, c),
+    };
+  }
+
   async close() {
     const { files, watcher } = this;
     if ([...files.values()].some(f => f.subsCount() > 0)) {
@@ -322,6 +329,14 @@ export class FileSystem {
     }
   }
 }
+
+export type CtxWithFS = {
+  readonly fs: <T>(
+    a: string,
+    b: (originalPath: string) => T | Promise<T>,
+    c?: FileChange | null
+  ) => Promise<T>;
+};
 
 type SimpleContext = {
   readonly get: <T>(

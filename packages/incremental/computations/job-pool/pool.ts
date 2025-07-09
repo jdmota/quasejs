@@ -100,7 +100,7 @@ class ComputationPoolDescription<Req, Res>
   }
 
   create(registry: ComputationRegistry): ComputationPool<Req, Res> {
-    return new ComputationPool(registry, this, this.config);
+    return new ComputationPool(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
@@ -159,31 +159,32 @@ export class ComputationPool<Req, Res>
 
   constructor(
     registry: ComputationRegistry,
-    description: ComputationDescription<any>,
-    config: ComputationPoolConfig<Req, Res>
+    desc: ComputationPoolDescription<Req, Res>
   ) {
-    super(registry, description, false);
+    super(registry, desc, false);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.emitterMixin = new EmitterComputationMixin(this);
-    this.config = config;
+    this.config = desc.config;
     this.entryDescription = new ComputationEntryJobDescription(this);
     this.data = {
       reachable: {
         results: new ObservableHashMap<Req, ComputationResult<Res>>(
-          config.requestDef,
+          desc.config.requestDef,
           e => this.emit(e)
         ),
         status: [0, 0, 0, 0],
       },
       unreachable: {
-        results: new HashMap<Req, ComputationResult<Res>>(config.requestDef),
+        results: new HashMap<Req, ComputationResult<Res>>(
+          desc.config.requestDef
+        ),
         status: [0, 0, 0, 0],
       },
     };
     this.notifier = createNotifier();
     this.lastSeen = null;
-    this.equal = (a, b) => resultEqual(config.responseDef.equal, a, b);
+    this.equal = (a, b) => resultEqual(desc.config.responseDef.equal, a, b);
     this.mark(State.PENDING);
   }
 

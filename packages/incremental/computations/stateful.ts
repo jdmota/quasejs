@@ -72,10 +72,6 @@ export class StatefulComputationDescription<S, E, R>
   hash() {
     return 0;
   }
-
-  serializer() {
-    return null;
-  }
 }
 
 export class StatefulComputation<S, E, R>

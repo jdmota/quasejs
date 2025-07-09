@@ -17,7 +17,6 @@ import {
 import {
   ComputationDescription,
   ComputationRegistry,
-  PublicComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult } from "../utils/result";
@@ -25,6 +24,7 @@ import {
   CacheableComputationMixin,
   SerializableSettings,
 } from "./mixins/cacheable";
+import { CtxWithFS } from "./file-system/file-system";
 
 export type BasicComputationExec<Req, Res> = (
   ctx: BasicComputationContext<Req>
@@ -54,7 +54,7 @@ export type BasicComputationContext<Req> = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
-} & PublicComputationRegistry;
+} & CtxWithFS;
 
 export function newComputationBuilder<Req, Res>(
   config: BasicComputationConfig<Req, Res>
@@ -123,6 +123,8 @@ export class BasicComputation<Req, Res>
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
+    // TODO cacheable compatible with effect?
+    // TODO cache child dependencies
     this.config = desc.config;
     this.request = desc.request;
     this.rooted = !!desc.config.root;
@@ -136,12 +138,11 @@ export class BasicComputation<Req, Res>
   }
 
   protected makeContext(runId: RunId): BasicComputationContext<Req> {
-    return {
+    return this.registry.fs.extend({
       request: this.request,
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
-      ...this.registry.public,
-    };
+    });
   }
 
   protected isOrphan(): boolean {

@@ -1,9 +1,10 @@
-import { createDefer, Defer } from "../../../../util/deferred";
-import { never } from "../../../../util/miscellaneous";
-import { Result } from "../../../../util/monads";
+import { createDefer, Defer } from "./deferred";
+import { never } from "./miscellaneous";
+import { Result } from "./monads";
 
 export type TaskOpts = {
-  signal: AbortSignal;
+  readonly signal: AbortSignal;
+  readonly isActive: () => boolean;
 };
 
 export type TaskUserFn<Arg, Ret> = (
@@ -76,7 +77,10 @@ export class FuncTask<Arg, Ret> implements Task<Arg, Ret> {
     const { fn } = this;
     try {
       const result = await Promise.race([
-        fn(arg, { signal: this.controller.signal }),
+        fn(arg, {
+          signal: this.controller.signal,
+          isActive: () => this.state === TaskState.RUNNING,
+        }),
         this.defer.promise,
       ]);
       return this.finish({

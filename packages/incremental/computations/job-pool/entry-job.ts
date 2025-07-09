@@ -6,8 +6,13 @@ import { ComputationResult } from "../../utils/result";
 import {
   DependentComputation,
   DependentComputationMixin,
+  DependentContext,
 } from "../mixins/dependent";
-import { ParentComputation, ParentComputationMixin } from "../mixins/parent";
+import {
+  ParentComputation,
+  ParentComputationMixin,
+  ParentContext,
+} from "../mixins/parent";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
@@ -26,6 +31,7 @@ import {
   ReachableComputationMixin,
   ReachableComputationMixinRoot,
 } from "../mixins/reachable";
+import { CtxWithFS } from "../file-system/file-system";
 
 export class ComputationEntryJobDescription<Req, Res>
   implements ComputationDescription<ComputationEntryJob<Req, Res>>
@@ -52,14 +58,9 @@ export class ComputationEntryJobDescription<Req, Res>
   }
 }
 
-export type ComputationEntryJobContext<Req> = {
-  readonly get: <T>(
-    dep: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<ComputationResult<T>>;
-  readonly compute: (req: Req) => void;
-};
+export type ComputationEntryJobContext<Req> = DependentContext &
+  ParentContext<Req> &
+  CtxWithFS;
 
 export class ComputationEntryJob<Req, Res>
   extends RawComputation<ComputationEntryJobContext<Req>, undefined>
@@ -96,10 +97,10 @@ export class ComputationEntryJob<Req, Res>
   }
 
   protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
-    return {
+    return this.registry.fs.extend({
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
-    };
+    });
   }
 
   protected isOrphan(): boolean {

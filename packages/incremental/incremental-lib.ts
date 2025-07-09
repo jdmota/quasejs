@@ -62,14 +62,6 @@ export type ComputationRegistryEvents = {
   ];
 };
 
-export class PublicComputationRegistry {
-  public readonly fs: FileSystem;
-
-  constructor() {
-    this.fs = new FileSystem();
-  }
-}
-
 export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
   private readonly canInvalidate: boolean;
   private canExternalInvalidate: boolean;
@@ -86,7 +78,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   private otherJobs: Promise<unknown>[];
 
   public readonly db: CacheDB;
-  public readonly public: PublicComputationRegistry;
+  public readonly fs: FileSystem;
 
   private constructor(opts: ComputationRegistryOpts) {
     super();
@@ -108,7 +100,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
     //
     this.db = new CacheDB();
-    this.public = new PublicComputationRegistry();
+    this.fs = new FileSystem();
   }
 
   queueOtherJob(fn: () => Promise<unknown>) {
@@ -250,7 +242,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       throw new Error("Invariant violation: Cleanup failed");
     }
 
-    this.queueOtherJob(() => this.public.fs.close());
+    this.queueOtherJob(() => this.fs.close());
     this.queueOtherJob(() => this.db.save());
 
     const { otherJobs } = this;

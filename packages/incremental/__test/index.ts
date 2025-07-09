@@ -1,8 +1,6 @@
-import { newSimpleComputation } from "../computations/simple";
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
 import { ComputationResult, error, ok } from "../utils/result";
-import { FileSystem } from "../computations/file-system/file-system";
 import path from "path";
 import fsextra from "fs-extra";
 
@@ -23,11 +21,9 @@ type FILE = {
   deps?: string[];
 };
 
-const fs = new FileSystem();
-
 const pool = newComputationPool<string, FILE>({
   async startExec(ctx) {
-    console.log("Running entry pool...");
+    console.log("Running entry job...");
 
     ctx.compute("index.ts");
 
@@ -36,8 +32,7 @@ const pool = newComputationPool<string, FILE>({
   async exec(ctx) {
     console.log("Running pool job...", ctx.request);
 
-    const json: FILE = await fs.depend(
-      ctx,
+    const json: FILE = await ctx.fs(
       path.resolve(import.meta.dirname, "fs", ctx.request + ".json"),
       p => fsextra.readJson(p)
     );

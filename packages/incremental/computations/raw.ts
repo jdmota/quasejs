@@ -127,7 +127,7 @@ export abstract class RawComputation<Ctx, Res> {
 
   checkActive(runId: RunId) {
     if (!this.isActive(runId)) {
-      throw new Error("Computation was cancelled");
+      throw new Error("Computation not active");
     }
   }
 
@@ -167,7 +167,7 @@ export abstract class RawComputation<Ctx, Res> {
       );
       return result;
     }
-    return error(new Error("Computation was cancelled"), true);
+    return error(new Error("Computation was cancelled"), false);
   }
 
   invalidate() {
