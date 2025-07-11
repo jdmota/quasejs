@@ -258,7 +258,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     const computation = registry.make(desc);
     const result = await computation.run();
     await registry.cleanupRun(computation);
-    return result;
+    return result.result;
   }
 
   static run<T>(
@@ -287,7 +287,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
         await registry.wait();
         const result = await computation.run();
         await registry.cleanupRun(computation);
-        return result;
+        return result.result;
       },
       peekErrors() {
         return registry.peekErrors();

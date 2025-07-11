@@ -1,13 +1,18 @@
 export type ComputationResult<T, E = unknown> =
   | {
-      ok: true;
-      value: T;
+      readonly ok: true;
+      readonly value: T;
     }
   | {
-      ok: false;
-      error: E;
-      deterministic: boolean;
+      readonly ok: false;
+      readonly error: E;
+      readonly deterministic: boolean;
     };
+
+export type VersionedComputationResult<T, E = unknown> = {
+  readonly version: number;
+  readonly result: ComputationResult<T, E>;
+};
 
 export function ok<T, E = unknown>(value: T): ComputationResult<T, E> {
   return { ok: true, value };
@@ -40,6 +45,13 @@ export function resultEqual<T>(
 
 export class WrappedResult<T> {
   constructor(readonly result: ComputationResult<T>) {}
+}
+
+export class CachedResult<T> {
+  constructor(
+    readonly result: ComputationResult<T>,
+    readonly version: number
+  ) {}
 }
 
 export function promiseIfOk<T>(promise: Promise<ComputationResult<T>>) {

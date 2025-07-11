@@ -7,7 +7,6 @@ import { ChildComputation, ChildComputationMixin } from "../mixins/child";
 import {
   DependentComputation,
   DependentComputationMixin,
-  DependentContext,
 } from "../mixins/dependent";
 import {
   ParentComputation,
@@ -28,7 +27,7 @@ import {
   ReachableComputationMixin,
 } from "../mixins/reachable";
 import { ComputationEntryJob } from "./entry-job";
-import { CtxWithFS } from "../file-system/file-system";
+import { BasicComputationContext } from "../basic";
 
 export class ComputationJobDescription<Req, Res>
   implements ComputationDescription<ComputationJob<Req, Res>>
@@ -58,11 +57,8 @@ export class ComputationJobDescription<Req, Res>
   }
 }
 
-export type ComputationJobContext<Req> = {
-  readonly request: Req;
-} & DependentContext &
-  ParentContext<Req> &
-  CtxWithFS;
+export type ComputationJobContext<Req> = BasicComputationContext<Req> &
+  ParentContext<Req>;
 
 class ComputationJob<Req, Res>
   extends RawComputation<ComputationJobContext<Req>, Res>
@@ -101,9 +97,14 @@ class ComputationJob<Req, Res>
     return this.pool.config.exec(ctx);
   }
 
-  protected makeContext(runId: RunId): ComputationJobContext<Req> {
+  protected makeContext(
+    runId: RunId,
+    runVersion: number
+  ): ComputationJobContext<Req> {
     return this.registry.fs.extend({
+      version: runVersion,
       request: this.request,
+      checkActive: () => this.checkActive(runId),
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
     });

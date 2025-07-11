@@ -87,15 +87,18 @@ export function prettifyUrl(
   url: Url,
   opts?: { readonly lastSlash: boolean }
 ): string {
+  const keepLastSlash = opts && opts.lastSlash;
   let { hash, origin, pathname, search, protocol } = new URL(url, LOCATION);
-  pathname = opts && opts.lastSlash ? pathname : removeLastSlash(pathname);
-  origin = origin === LOCATION.origin ? "" : origin;
   if (protocol === "file:") {
     if (search || hash) {
+      pathname = keepLastSlash ? pathname : removeLastSlash(pathname);
       return "file://" + pathname + search + hash;
     }
-    return prettifyPath(pathname.slice(1)); // Remove the third slash
+    url = keepLastSlash ? url : removeLastSlash(url);
+    return prettifyPath(urlToPath(url));
   }
+  origin = origin === LOCATION.origin ? "" : origin;
+  pathname = keepLastSlash ? pathname : removeLastSlash(pathname);
   return origin + pathname + search + hash;
 }
 

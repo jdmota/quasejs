@@ -1,6 +1,7 @@
 import {
   DependentComputation,
   DependentComputationMixin,
+  DependentContext,
 } from "./mixins/dependent";
 import {
   RawComputation,
@@ -9,6 +10,7 @@ import {
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
+  RawComputationContext,
 } from "../computations/raw";
 import {
   SubscribableComputation,
@@ -39,18 +41,9 @@ export type EffectComputationConfig<Req, Res> = {
 
 export type EffectComputationContext<Req> = {
   readonly request: Req;
-  readonly checkActive: () => void;
-  readonly get: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<ComputationResult<T>>;
-  readonly getOk: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<T>;
-} & EffectContext;
+} & EffectContext &
+  DependentContext &
+  RawComputationContext;
 
 export function newEffectComputationBuilder<Req, Res>(
   config: EffectComputationConfig<Req, Res>
@@ -127,8 +120,12 @@ export class EffectComputation<Req, Res>
     return this.config.exec(ctx);
   }
 
-  protected makeContext(runId: RunId): EffectComputationContext<Req> {
+  protected makeContext(
+    runId: RunId,
+    runVersion: number
+  ): EffectComputationContext<Req> {
     return {
+      version: runVersion,
       request: this.request,
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),

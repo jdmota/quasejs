@@ -1,6 +1,10 @@
 import { setAdd } from "../../../util/maps-sets";
 import { ComputationDescription } from "../../incremental-lib";
-import { ComputationResult, promiseIfOk } from "../../utils/result";
+import {
+  ComputationResult,
+  promiseIfOk,
+  VersionedComputationResult,
+} from "../../utils/result";
 import { AnyRawComputation, RawComputation, RunId } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
@@ -15,6 +19,11 @@ export type DependentContext = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
+  readonly getVersioned: <T>(
+    description: ComputationDescription<
+      RawComputation<any, T> & SubscribableComputation<T>
+    >
+  ) => Promise<VersionedComputationResult<T>>;
 };
 
 export interface DependentComputation {
@@ -35,8 +44,9 @@ export class DependentComputationMixin {
 
   makeContextRoutine(runId: RunId): DependentContext {
     return {
-      get: dep => this.getDep(dep, runId),
-      getOk: dep => promiseIfOk(this.getDep(dep, runId)),
+      get: dep => this.getDep(dep, runId).then(r => r.result),
+      getOk: dep => promiseIfOk(this.getDep(dep, runId).then(r => r.result)),
+      getVersioned: dep => this.getDep(dep, runId),
     };
   }
 
@@ -62,7 +72,7 @@ export class DependentComputationMixin {
       RawComputation<any, T> & SubscribableComputation<T>
     >,
     runId: RunId
-  ): Promise<ComputationResult<T>> {
+  ): Promise<VersionedComputationResult<T>> {
     this.source.checkActive(runId);
     return this.subscribe(this.source.registry.make(description)).run();
   }

@@ -1,4 +1,10 @@
-import { ComputationResult, error, WrappedResult } from "../utils/result";
+import {
+  CachedResult,
+  ComputationResult,
+  error,
+  VersionedComputationResult,
+  WrappedResult,
+} from "../utils/result";
 import {
   ComputationRegistry,
   ComputationDescription,
@@ -27,6 +33,15 @@ export type StateNotDeleted =
   | State.SETTLED_STABLE
   | State.CREATING;
 
+export type RawComputationContext = {
+  readonly version: number;
+  readonly checkActive: () => void;
+};
+
+export type RawComputationExec<Ctx, Res> = (
+  ctx: Ctx
+) => Promise<ComputationResult<Res>>;
+
 export type RunId = {
   readonly __opaque__: unique symbol;
 };
@@ -43,10 +58,11 @@ export abstract class RawComputation<Ctx, Res> {
   // Current state
   private state: State;
   private runId: RunId | null;
-  private running: Promise<ComputationResult<Res>> | null;
+  private runVersion: number;
+  private running: Promise<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
   // Latest result
-  protected result: ComputationResult<Res> | null;
+  protected result: VersionedComputationResult<Res> | null;
   // Requirements of SpecialQueue
   public prev: AnyRawComputation | null;
   public next: AnyRawComputation | null;
@@ -60,6 +76,7 @@ export abstract class RawComputation<Ctx, Res> {
     this.description = description;
     this.state = State.CREATING;
     this.runId = null;
+    this.runVersion = 0;
     this.running = null;
     this.deleting = false;
     this.result = null;
@@ -70,20 +87,20 @@ export abstract class RawComputation<Ctx, Res> {
 
   peekResult() {
     if (this.result) {
-      return this.result;
+      return this.result.result;
     }
     throw new Error("Invariant violation: no result");
   }
 
   peekError() {
-    if (this.result?.ok === false) {
-      return this.result;
+    if (this.result?.result.ok === false) {
+      return this.result.result;
     }
     throw new Error("Invariant violation: no error");
   }
 
   protected abstract exec(ctx: Ctx): Promise<ComputationResult<Res>>;
-  protected abstract makeContext(runId: RunId): Ctx;
+  protected abstract makeContext(runId: RunId, runVersion: number): Ctx;
   protected abstract isOrphan(): boolean;
   protected abstract onStateChange(
     from: StateNotDeleted,
@@ -131,21 +148,27 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  run(): Promise<ComputationResult<Res>> {
+  run(): Promise<VersionedComputationResult<Res>> {
     this.inv();
     if (!this.running) {
       const runId = newRunId();
-      const ctx = this.makeContext(runId);
+      const runVersion = this.runVersion + 1;
+      const ctx = this.makeContext(runId, runVersion);
       this.runId = runId;
+      this.runVersion = runVersion;
       this.running = Promise.resolve()
         .then(() => this.exec(ctx))
         .then(
-          v => this.finish(v, runId),
-          e =>
-            this.finish(
-              e instanceof WrappedResult ? e.result : error(e, false),
-              runId
-            )
+          v => this.finish(v, runId, runVersion),
+          e => {
+            if (e instanceof WrappedResult) {
+              return this.finish(e.result, runId, runVersion);
+            }
+            if (e instanceof CachedResult) {
+              return this.finish(e.result, runId, e.version);
+            }
+            return this.finish(error(e, false), runId, runVersion);
+          }
         );
       this.mark(State.RUNNING);
     }
@@ -154,20 +177,28 @@ export abstract class RawComputation<Ctx, Res> {
 
   private finish(
     result: ComputationResult<Res>,
-    runId: RunId
-  ): ComputationResult<Res> {
-    if (this.runId === runId) {
+    runId: RunId,
+    runVersion: number
+  ): VersionedComputationResult<Res> {
+    if (this.isActive(runId)) {
+      const versionedResult: VersionedComputationResult<Res> = {
+        version: runVersion,
+        result,
+      };
       this.runId = null;
-      this.result = result;
+      this.result = versionedResult;
       this.finishRoutine(result);
       this.mark(
         result.ok || result.deterministic
           ? State.SETTLED_STABLE
           : State.SETTLED_UNSTABLE
       );
-      return result;
+      return versionedResult;
     }
-    return error(new Error("Computation was cancelled"), false);
+    return {
+      version: runVersion,
+      result: error(new Error("Computation was cancelled"), false),
+    };
   }
 
   invalidate() {

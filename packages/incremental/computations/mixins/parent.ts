@@ -6,8 +6,16 @@ export interface ParentComputation {
   readonly parentMixin: ParentComputationMixin;
 }
 
+export interface MaybeParentComputation {
+  readonly parentMixin?: ParentComputationMixin;
+}
+
 export type ParentContext<Req> = {
   readonly compute: (req: Req) => void;
+};
+
+export type MaybeParentContext<Req> = {
+  readonly compute?: (req: Req) => void;
 };
 
 export class ParentComputationMixin {

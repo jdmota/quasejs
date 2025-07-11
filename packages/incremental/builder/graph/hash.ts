@@ -1,9 +1,7 @@
 import crypto from "crypto";
 
-type Data = string | Buffer | Uint8Array;
-
 export function hashName(
-  input: Data,
+  input: crypto.BinaryLike,
   used: Set<string>,
   initialLen: number
 ): string {

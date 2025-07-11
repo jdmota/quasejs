@@ -24,6 +24,7 @@ import {
   StateNotCreating,
   RawComputation,
   AnyRawComputation,
+  RawComputationContext,
 } from "../raw";
 import { ComputationPool } from "./pool";
 import {
@@ -60,7 +61,8 @@ export class ComputationEntryJobDescription<Req, Res>
 
 export type ComputationEntryJobContext<Req> = DependentContext &
   ParentContext<Req> &
-  CtxWithFS;
+  CtxWithFS &
+  RawComputationContext;
 
 export class ComputationEntryJob<Req, Res>
   extends RawComputation<ComputationEntryJobContext<Req>, undefined>
@@ -96,8 +98,13 @@ export class ComputationEntryJob<Req, Res>
     return this.pool.config.startExec(ctx);
   }
 
-  protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
+  protected makeContext(
+    runId: RunId,
+    runVersion: number
+  ): ComputationEntryJobContext<Req> {
     return this.registry.fs.extend({
+      version: runVersion,
+      checkActive: () => this.checkActive(runId),
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
     });

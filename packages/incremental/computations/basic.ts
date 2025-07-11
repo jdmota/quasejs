@@ -1,6 +1,7 @@
 import {
   DependentComputation,
   DependentComputationMixin,
+  DependentContext,
 } from "./mixins/dependent";
 import {
   RawComputation,
@@ -9,6 +10,7 @@ import {
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
+  RawComputationContext,
 } from "../computations/raw";
 import {
   SubscribableComputation,
@@ -43,18 +45,9 @@ export type BasicComputationConfig<Req, Res> = {
 
 export type BasicComputationContext<Req> = {
   readonly request: Req;
-  readonly checkActive: () => void;
-  readonly get: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<ComputationResult<T>>;
-  readonly getOk: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<T>;
-} & CtxWithFS;
+} & DependentContext &
+  CtxWithFS &
+  RawComputationContext;
 
 export function newComputationBuilder<Req, Res>(
   config: BasicComputationConfig<Req, Res>
@@ -108,7 +101,9 @@ export class BasicComputation<Req, Res>
   public readonly desc: BasicComputationDescription<Req, Res>;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
-  public readonly cacheableMixin: CacheableComputationMixin<Req, Res>;
+  public readonly cacheableMixin: CacheableComputationMixin<
+    BasicComputation<Req, Res>
+  >;
   protected readonly config: BasicComputationConfig<Req, Res>;
   protected readonly request: Req;
   private rooted: boolean;
@@ -137,8 +132,12 @@ export class BasicComputation<Req, Res>
     return this.cacheableMixin.exec(this.config.exec, ctx);
   }
 
-  protected makeContext(runId: RunId): BasicComputationContext<Req> {
+  protected makeContext(
+    runId: RunId,
+    runVersion: number
+  ): BasicComputationContext<Req> {
     return this.registry.fs.extend({
+      version: runVersion,
       request: this.request,
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
