@@ -14,7 +14,7 @@ import {
   newSimpleEffectComputation,
 } from "./computations/simple-effect";
 import { EffectComputation } from "./computations/effect";
-import { CacheDB, SerializableSettings } from "./computations/mixins/cacheable";
+import { CacheDB } from "./computations/mixins/cacheable";
 import { FileSystem } from "./computations/file-system/file-system";
 
 const determinismSym = Symbol("deterministic");
@@ -40,10 +40,6 @@ export type ComputationDescription<C extends AnyRawComputation> = {
     other: ComputationDescription<O>
   ) => boolean;
   readonly hash: () => number;
-  readonly serializer?: SerializableSettings<
-    ComputationDescription<C>,
-    ResultTypeOfComputation<C>
-  > | null;
 };
 
 export type AnyComputationDescription =
@@ -217,7 +213,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
 
   // TODO The computations also have an implementation version so that results cached in disk can be invalidated if the plugin gets a new version?
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
-  // TODO delete unneeed computations during execution?
+
   // TODO peek errors and return a list of them? create a error pool and report only those?
   /*
     for (const c of this.errored.iterateAll()) {
@@ -225,11 +221,13 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     }
   */
 
-  private cleanupRun(computation: EffectComputation<undefined, any>) {
-    this.scheduler1.cancel();
-    this.scheduler2.cancel();
-    computation.unroot();
-    computation.destroy();
+  // TODO delete unneeed computations during execution?
+
+  // It is key that we only destroy computations that are not attached with anything
+  // Also because of the cache information:
+  // We do not want to get confused about the computation versions,
+  // since destroying and they creating again a computation will effectively reset the version to 1
+  private clearOrphans() {
     let count;
     do {
       count = this.computationsCount();
@@ -237,6 +235,20 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
         c.maybeDestroy();
       }
     } while (this.computationsCount() < count);
+  }
+
+  private cleanupRun(computation: EffectComputation<undefined, any>) {
+    this.scheduler1.cancel();
+    this.scheduler2.cancel();
+
+    // Basic clean up before locking the cache DB (preventing adding/deleting entries)
+    this.clearOrphans();
+    this.db.lock();
+
+    // Now clear everything
+    computation.unroot();
+    computation.destroy();
+    this.clearOrphans();
 
     if (this.computationsCount() > 0) {
       throw new Error("Invariant violation: Cleanup failed");

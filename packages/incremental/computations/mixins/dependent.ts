@@ -30,6 +30,10 @@ export interface DependentComputation {
   readonly dependentMixin: DependentComputationMixin;
 }
 
+export interface MaybeDependentComputation {
+  readonly dependentMixin?: DependentComputationMixin;
+}
+
 export class DependentComputationMixin {
   public readonly source: AnyRawComputation & DependentComputation;
   // Dependencies

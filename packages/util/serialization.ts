@@ -34,3 +34,13 @@ export function setObjSerializer<
 >(value: T, serializer: Serializer<T, Out>) {
   (value as any)[SERIALIZATION_SYM] = serializer;
 }
+
+export const bigintSerializer: Serializer<bigint, Buffer> = {
+  serialize(value) {
+    return Result.ok(Buffer.from(value.toString(16)));
+  },
+
+  deserialize(buf) {
+    return Result.ok(BigInt(`0x${buf.toString()}`));
+  },
+};

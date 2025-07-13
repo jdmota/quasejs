@@ -28,6 +28,7 @@ import {
 } from "../mixins/reachable";
 import { ComputationEntryJob } from "./entry-job";
 import { BasicComputationContext } from "../basic";
+import { CacheableComputationMixin } from "../mixins/cacheable";
 
 export class ComputationJobDescription<Req, Res>
   implements ComputationDescription<ComputationJob<Req, Res>>
@@ -74,27 +75,31 @@ class ComputationJob<Req, Res>
   public readonly parentMixin: ParentComputationMixin;
   public readonly childMixin: ChildComputationMixin;
   public readonly reachableMixin: ReachableComputationMixin;
+  public readonly cacheableMixin: CacheableComputationMixin<
+    ComputationJob<Req, Res>
+  >;
 
   constructor(
     registry: ComputationRegistry,
-    description: ComputationDescription<any>,
+    desc: ComputationDescription<any>,
     request: Req,
     pool: ComputationPool<Req, Res>
   ) {
-    super(registry, description, false);
+    super(registry, desc, false);
     this.pool = pool;
     this.request = request;
     this.dependentMixin = new DependentComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
     this.childMixin = new ChildComputationMixin(this);
     this.reachableMixin = new ReachableComputationMixin(this);
+    this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.mark(State.PENDING);
   }
 
   protected exec(
     ctx: ComputationJobContext<Req>
   ): Promise<ComputationResult<Res>> {
-    return this.pool.config.exec(ctx);
+    return this.cacheableMixin.exec(this.pool.config.exec, ctx);
   }
 
   protected makeContext(
@@ -126,11 +131,13 @@ class ComputationJob<Req, Res>
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
     this.parentMixin.invalidateRoutine();
+    this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
+    this.cacheableMixin.deleteRoutine();
     this.reachableMixin.finishOrDeleteRoutine();
     this.pool.onFieldDeleted(this.reachableMixin.isReachable(), this.request);
   }

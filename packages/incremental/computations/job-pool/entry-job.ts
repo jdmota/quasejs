@@ -33,6 +33,7 @@ import {
   ReachableComputationMixinRoot,
 } from "../mixins/reachable";
 import { CtxWithFS } from "../file-system/file-system";
+import { CacheableComputationMixin } from "../mixins/cacheable";
 
 export class ComputationEntryJobDescription<Req, Res>
   implements ComputationDescription<ComputationEntryJob<Req, Res>>
@@ -77,25 +78,29 @@ export class ComputationEntryJob<Req, Res>
   public readonly subscribableMixin: SubscribableComputationMixin<undefined>;
   public readonly parentMixin: ParentComputationMixin;
   public readonly reachableMixin: ReachableComputationMixin;
+  public readonly cacheableMixin: CacheableComputationMixin<
+    ComputationEntryJob<Req, Res>
+  >;
 
   constructor(
     registry: ComputationRegistry,
-    description: ComputationDescription<any>,
+    desc: ComputationDescription<any>,
     pool: ComputationPool<Req, Res>
   ) {
-    super(registry, description, false);
+    super(registry, desc, false);
     this.pool = pool;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
     this.reachableMixin = new ReachableComputationMixinRoot(this);
+    this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.mark(State.PENDING);
   }
 
   protected exec(
     ctx: ComputationEntryJobContext<Req>
   ): Promise<ComputationResult<undefined>> {
-    return this.pool.config.startExec(ctx);
+    return this.cacheableMixin.exec(this.pool.config.startExec, ctx);
   }
 
   protected makeContext(
@@ -123,12 +128,14 @@ export class ComputationEntryJob<Req, Res>
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
     this.parentMixin.invalidateRoutine();
+    this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
+    this.cacheableMixin.deleteRoutine();
     this.reachableMixin.finishOrDeleteRoutine();
   }
 

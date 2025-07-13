@@ -15,12 +15,13 @@ import {
 import {
   AnyRawComputation,
   RawComputation,
+  RawComputationContext,
   RunId,
   State,
   StateNotCreating,
   StateNotDeleted,
 } from "../raw";
-import { Serializable, SerializableSettings } from "../mixins/cacheable";
+import { CacheableComputationMixin } from "../mixins/cacheable";
 
 export enum FileChange {
   ADD_OR_REMOVE = "ADD_OR_REMOVE",
@@ -57,57 +58,22 @@ export class FileComputationDescription
   hash() {
     return this.path.length + 31 * this.type.length;
   }
-
-  readonly serializer: SerializableSettings<
-    ComputationDescription<FileComputation>,
-    bigint
-  > = {
-    valueSerializer: bigintSerializer,
-    descSerializer: fileDescSerializer,
-  };
 }
 
-const bigintSerializer: Serializable<bigint> = {
-  getTag(value) {
-    return value.toString();
-  },
-
-  serialize(value): Buffer {
-    return Buffer.from(value.toString(16));
-  },
-
-  deserialize(buf: Buffer): bigint {
-    return BigInt(`0x${buf.toString()}`);
-  },
-};
-
-const fileDescSerializer: Serializable<FileComputationDescription> = {
-  getTag(value) {
-    return value.json;
-  },
-
-  serialize(value): Buffer {
-    return Buffer.from(value.json);
-  },
-
-  deserialize(buf: Buffer) {
-    const { path, type } = JSON.parse(buf.toString());
-    return new FileComputationDescription(path, type);
-  },
-};
-
 class FileComputation
-  extends RawComputation<FileComputationDescription, bigint>
+  extends RawComputation<RawComputationContext, bigint>
   implements SubscribableComputation<bigint>
 {
   public readonly desc: FileComputationDescription;
   public readonly subscribableMixin: SubscribableComputationMixin<bigint>;
+  public readonly cacheableMixin: CacheableComputationMixin<FileComputation>;
   public readonly fs: FileSystem;
 
   constructor(registry: ComputationRegistry, desc: FileComputationDescription) {
     super(registry, desc, false);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);
+    this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.fs = registry.fs;
     this.mark(State.PENDING);
   }
@@ -117,17 +83,31 @@ class FileComputation
   }
 
   protected async exec(
-    ctx: FileComputationDescription
+    ctx: RawComputationContext
   ): Promise<ComputationResult<bigint>> {
-    if (this.registry.invalidationsAllowed()) {
-      await this.fs._sub(this);
-    }
-    const { mtimeNs } = await fsextra.stat(this.desc.path, { bigint: true });
-    return ok(mtimeNs);
+    return this.cacheableMixin.reExec(
+      async () => {
+        if (this.registry.invalidationsAllowed()) {
+          await this.fs._sub(this);
+        }
+        const { mtimeNs } = await fsextra.stat(this.desc.path, {
+          bigint: true,
+        });
+        return ok(mtimeNs);
+      },
+      ctx,
+      (a, b) => a === b
+    );
   }
 
-  protected makeContext(runId: RunId): FileComputationDescription {
-    return this.desc;
+  protected makeContext(
+    runId: RunId,
+    runVersion: number
+  ): RawComputationContext {
+    return {
+      version: runVersion,
+      checkActive: () => this.checkActive(runId),
+    };
   }
 
   protected isOrphan(): boolean {
@@ -140,11 +120,13 @@ class FileComputation
 
   protected invalidateRoutine(): void {
     this.subscribableMixin.invalidateRoutine();
+    this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.fs._unsub(this);
     this.subscribableMixin.deleteRoutine();
+    this.cacheableMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}

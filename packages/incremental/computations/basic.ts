@@ -22,10 +22,7 @@ import {
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult } from "../utils/result";
-import {
-  CacheableComputationMixin,
-  SerializableSettings,
-} from "./mixins/cacheable";
+import { CacheableComputationMixin } from "./mixins/cacheable";
 import { CtxWithFS } from "./file-system/file-system";
 
 export type BasicComputationExec<Req, Res> = (
@@ -37,10 +34,6 @@ export type BasicComputationConfig<Req, Res> = {
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
   readonly root?: boolean;
-  readonly serializer?: SerializableSettings<
-    BasicComputationDescription<Req, Res>,
-    Res
-  >;
 };
 
 export type BasicComputationContext<Req> = {
@@ -60,15 +53,10 @@ export class BasicComputationDescription<Req, Res>
 {
   readonly config: BasicComputationConfig<Req, Res>;
   readonly request: Req;
-  readonly serializer: SerializableSettings<
-    BasicComputationDescription<Req, Res>,
-    Res
-  >;
 
   constructor(config: BasicComputationConfig<Req, Res>, request: Req) {
     this.config = config;
     this.request = request;
-    this.serializer = config.serializer;
   }
 
   create(registry: ComputationRegistry): BasicComputation<Req, Res> {
@@ -119,7 +107,6 @@ export class BasicComputation<Req, Res>
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
     // TODO cacheable compatible with effect?
-    // TODO cache child dependencies
     this.config = desc.config;
     this.request = desc.request;
     this.rooted = !!desc.config.root;
