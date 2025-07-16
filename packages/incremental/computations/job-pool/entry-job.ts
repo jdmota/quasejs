@@ -2,7 +2,10 @@ import {
   ComputationRegistry,
   ComputationDescription,
 } from "../../incremental-lib";
-import { ComputationResult } from "../../utils/result";
+import {
+  ComputationResult,
+  VersionedComputationResult,
+} from "../../utils/result";
 import {
   DependentComputation,
   DependentComputationMixin,
@@ -103,12 +106,8 @@ export class ComputationEntryJob<Req, Res>
     return this.cacheableMixin.exec(this.pool.config.startExec, ctx);
   }
 
-  protected makeContext(
-    runId: RunId,
-    runVersion: number
-  ): ComputationEntryJobContext<Req> {
+  protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
     return this.registry.fs.extend({
-      version: runVersion,
       checkActive: () => this.checkActive(runId),
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
       ...this.dependentMixin.makeContextRoutine(runId),
@@ -119,8 +118,9 @@ export class ComputationEntryJob<Req, Res>
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: ComputationResult<undefined>): void {
+  protected finishRoutine(result: VersionedComputationResult<undefined>): void {
     this.subscribableMixin.finishRoutine(result);
+    this.cacheableMixin.finishRoutine(result);
     this.reachableMixin.finishOrDeleteRoutine();
   }
 
@@ -143,9 +143,5 @@ export class ComputationEntryJob<Req, Res>
 
   onReachabilityChange(from: boolean, to: boolean): void {}
 
-  responseEqual(a: undefined, b: undefined): boolean {
-    return a === b;
-  }
-
-  onNewResult(result: ComputationResult<undefined>): void {}
+  onNewResult(result: VersionedComputationResult<undefined>): void {}
 }

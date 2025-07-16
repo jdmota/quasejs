@@ -21,7 +21,7 @@ import {
   ComputationRegistry,
 } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
-import { ComputationResult } from "../utils/result";
+import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import {
   EffectComputationMixin,
   IEffectComputation,
@@ -120,12 +120,8 @@ export class EffectComputation<Req, Res>
     return this.config.exec(ctx);
   }
 
-  protected makeContext(
-    runId: RunId,
-    runVersion: number
-  ): EffectComputationContext<Req> {
+  protected makeContext(runId: RunId): EffectComputationContext<Req> {
     return {
-      version: runVersion,
       request: this.request,
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
@@ -137,7 +133,7 @@ export class EffectComputation<Req, Res>
     return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: ComputationResult<Res>): void {
+  protected finishRoutine(result: VersionedComputationResult<Res>): void {
     this.subscribableMixin.finishRoutine(result);
   }
 
@@ -154,11 +150,11 @@ export class EffectComputation<Req, Res>
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  responseEqual(a: Res, b: Res): boolean {
+  override responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
 
-  onNewResult(result: ComputationResult<Res>): void {}
+  onNewResult(result: VersionedComputationResult<Res>): void {}
 
   unroot() {
     this.rooted = false;

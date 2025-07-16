@@ -16,6 +16,7 @@ import {
 import { EffectComputation } from "./computations/effect";
 import { CacheDB } from "./computations/mixins/cacheable";
 import { FileSystem } from "./computations/file-system/file-system";
+import { SerializationDB } from "../util/serialization";
 
 const determinismSym = Symbol("deterministic");
 
@@ -47,6 +48,7 @@ export type AnyComputationDescription =
 
 type ComputationRegistryOpts = {
   readonly canInvalidate: boolean;
+  readonly cacheDir: string;
 };
 
 export type ComputationRegistryEvents = {
@@ -57,6 +59,12 @@ export type ComputationRegistryEvents = {
     }>,
   ];
 };
+
+export type IncrementalOpts = {
+  readonly cacheDir: string;
+};
+
+export const serializationDB = new SerializationDB();
 
 export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
   private readonly canInvalidate: boolean;
@@ -95,7 +103,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.settledUnstable = this.computations[State.SETTLED_UNSTABLE];
     this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
     //
-    this.db = new CacheDB();
+    this.db = new CacheDB(opts.cacheDir, serializationDB);
     this.fs = new FileSystem();
   }
 
@@ -263,9 +271,13 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   }
 
   static async singleRun<T>(
-    exec: SimpleEffectComputationExec<T>
+    exec: SimpleEffectComputationExec<T>,
+    opts: IncrementalOpts
   ): Promise<ComputationResult<T>> {
-    const registry = new ComputationRegistry({ canInvalidate: false });
+    const registry = new ComputationRegistry({
+      cacheDir: opts.cacheDir,
+      canInvalidate: false,
+    });
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     const result = await computation.run();
@@ -274,9 +286,13 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   }
 
   static run<T>(
-    exec: SimpleEffectComputationExec<T>
+    exec: SimpleEffectComputationExec<T>,
+    opts: IncrementalOpts
   ): ComputationController<T> {
-    const registry = new ComputationRegistry({ canInvalidate: true });
+    const registry = new ComputationRegistry({
+      cacheDir: opts.cacheDir,
+      canInvalidate: true,
+    });
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     registry.wake();

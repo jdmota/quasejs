@@ -34,7 +34,6 @@ export type StateNotDeleted =
   | State.CREATING;
 
 export type RawComputationContext = {
-  readonly version: number;
   readonly checkActive: () => void;
 };
 
@@ -42,13 +41,7 @@ export type RawComputationExec<Ctx, Res> = (
   ctx: Ctx
 ) => Promise<ComputationResult<Res>>;
 
-export type RunId = {
-  readonly __opaque__: unique symbol;
-};
-
-function newRunId() {
-  return {} as RunId;
-}
+export type RunId = number;
 
 export type AnyRawComputation = RawComputation<any, any>;
 
@@ -57,8 +50,8 @@ export abstract class RawComputation<Ctx, Res> {
   public readonly description: ComputationDescription<any>;
   // Current state
   private state: State;
-  private runId: RunId | null;
-  private runVersion: number;
+  private runId: RunId; // If negative, it is not active
+  private nextVersion: number;
   private running: Promise<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
   // Latest result
@@ -75,8 +68,8 @@ export abstract class RawComputation<Ctx, Res> {
     this.registry = registry;
     this.description = description;
     this.state = State.CREATING;
-    this.runId = null;
-    this.runVersion = 0;
+    this.runId = 1;
+    this.nextVersion = 1;
     this.running = null;
     this.deleting = false;
     this.result = null;
@@ -100,13 +93,15 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   protected abstract exec(ctx: Ctx): Promise<ComputationResult<Res>>;
-  protected abstract makeContext(runId: RunId, runVersion: number): Ctx;
+  protected abstract makeContext(runId: RunId): Ctx;
   protected abstract isOrphan(): boolean;
   protected abstract onStateChange(
     from: StateNotDeleted,
     to: StateNotCreating
   ): void;
-  protected abstract finishRoutine(result: ComputationResult<Res>): void;
+  protected abstract finishRoutine(
+    result: VersionedComputationResult<Res>
+  ): void;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
   //protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
@@ -123,6 +118,10 @@ export abstract class RawComputation<Ctx, Res> {
   onInEdgeAddition(node: AnyRawComputation) {}
 
   onInEdgeRemoval(node: AnyRawComputation) {}
+
+  responseEqual(a: Res, b: Res): boolean {
+    return a === b;
+  }
 
   protected isDeleting() {
     return this.deleting;
@@ -151,23 +150,21 @@ export abstract class RawComputation<Ctx, Res> {
   run(): Promise<VersionedComputationResult<Res>> {
     this.inv();
     if (!this.running) {
-      const runId = newRunId();
-      const runVersion = this.runVersion + 1;
-      const ctx = this.makeContext(runId, runVersion);
+      const runId = Math.abs(this.runId) + 1;
+      const ctx = this.makeContext(runId);
       this.runId = runId;
-      this.runVersion = runVersion;
       this.running = Promise.resolve()
         .then(() => this.exec(ctx))
         .then(
-          v => this.finish(v, runId, runVersion),
+          v => this.finish(v, runId, null),
           e => {
             if (e instanceof WrappedResult) {
-              return this.finish(e.result, runId, runVersion);
+              return this.finish(e.result, runId, null);
             }
             if (e instanceof CachedResult) {
               return this.finish(e.result, runId, e.version);
             }
-            return this.finish(error(e, false), runId, runVersion);
+            return this.finish(error(e, false), runId, null);
           }
         );
       this.mark(State.RUNNING);
@@ -178,16 +175,16 @@ export abstract class RawComputation<Ctx, Res> {
   private finish(
     result: ComputationResult<Res>,
     runId: RunId,
-    runVersion: number
+    runVersion: number | null
   ): VersionedComputationResult<Res> {
     if (this.isActive(runId)) {
       const versionedResult: VersionedComputationResult<Res> = {
-        version: runVersion,
+        version: runVersion == null ? this.nextVersion++ : runVersion,
         result,
       };
-      this.runId = null;
+      this.runId = -this.runId;
       this.result = versionedResult;
-      this.finishRoutine(result);
+      this.finishRoutine(versionedResult);
       this.mark(
         result.ok || result.deterministic
           ? State.SETTLED_STABLE
@@ -196,7 +193,7 @@ export abstract class RawComputation<Ctx, Res> {
       return versionedResult;
     }
     return {
-      version: runVersion,
+      version: 0,
       result: error(new Error("Computation was cancelled"), false),
     };
   }
@@ -206,7 +203,7 @@ export abstract class RawComputation<Ctx, Res> {
     if (!this.registry.invalidationsAllowed()) {
       throw new Error("Invariant violation: Invalidations are disabled");
     }
-    this.runId = null;
+    this.runId = -this.runId;
     this.running = null;
     this.result = null;
     this.invalidateRoutine();
@@ -223,7 +220,7 @@ export abstract class RawComputation<Ctx, Res> {
     }
     this.registry.delete(this); // Remove immediately from registry to be safe
     this.deleting = true;
-    this.runId = null;
+    this.runId = -this.runId;
     this.running = null;
     this.result = null;
     this.deleteRoutine();

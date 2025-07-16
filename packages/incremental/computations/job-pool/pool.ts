@@ -26,7 +26,12 @@ import {
   HashMap,
   MapEvent,
 } from "../../utils/hash-map";
-import { ComputationResult, resultEqual, ok } from "../../utils/result";
+import {
+  ComputationResult,
+  resultEqual,
+  ok,
+  VersionedComputationResult,
+} from "../../utils/result";
 import { ComputationJobContext, ComputationJobDescription } from "./job";
 import {
   ComputationEntryJobContext,
@@ -233,7 +238,7 @@ export class ComputationPool<Req, Res>
   }
 
   protected finishRoutine(
-    result: ComputationResult<
+    result: VersionedComputationResult<
       ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
     >
   ): void {
@@ -259,15 +264,15 @@ export class ComputationPool<Req, Res>
     }
   }
 
-  responseEqual(
+  override responseEqual(
     a: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>,
     b: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   ): boolean {
-    return false;
+    return a === b && !a.didChange();
   }
 
   onNewResult(
-    result: ComputationResult<
+    result: VersionedComputationResult<
       ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
     >
   ): void {}
@@ -284,13 +289,13 @@ export class ComputationPool<Req, Res>
   onFieldFinish(
     reachable: boolean,
     req: Req,
-    result: ComputationResult<Res>
+    result: VersionedComputationResult<Res>
   ): void {
     if (this.isDeleting()) return;
     const map = reachable
       ? this.data.reachable.results
       : this.data.unreachable.results;
-    map.set(req, result, this.equal);
+    map.set(req, result.result, this.equal);
   }
 
   onFieldDeleted(reachable: boolean, req: Req): void {

@@ -10,6 +10,7 @@ import {
   ComputationResult,
   ok,
   promiseIfOk,
+  VersionedComputationResult,
 } from "../../utils/result";
 import { SubscribableComputation } from "../mixins/subscribable";
 import {
@@ -25,7 +26,7 @@ import {
   ParentContext,
 } from "./parent";
 import { CtxWithFS } from "../file-system/file-system";
-import { getObjSerializer } from "../../../util/serialization";
+import { SerializationDB } from "../../../util/serialization";
 
 export type CacheableTag = string;
 
@@ -119,7 +120,10 @@ export class CacheDB {
   private readonly map: HashMap<ComputationDescription<any>, CacheEntry<any>> =
     new HashMap(defaultValDef);
 
-  constructor(private readonly dir: string) {}
+  constructor(
+    private readonly dir: string,
+    private readonly serializationDB: SerializationDB
+  ) {}
 
   lock() {
     this.locked = true;
@@ -151,6 +155,8 @@ export class CacheDB {
   }
 
   async save() {
+    await fsextra.ensureDir(this.dir);
+
     // TODO
     console.log("========SAVING CACHE==========");
     for (const [desc, entry] of this.map) {
@@ -164,14 +170,15 @@ export class CacheDB {
   }
 
   async load() {
-    // await fsextra.ensureDir(this.dir);
     // TODO
     // TODO make versions negative to avoid confusion between versions cached in disk (from a previous session),
     // and versions created at runtime in this session
   }
 }
 
-export interface CacheableComputation<C extends AnyRawComputation> {
+export interface CacheableComputation<
+  C extends RawComputation<any, ResultTypeOfComputation<C>>,
+> {
   readonly cacheableMixin: CacheableComputationMixin<C>;
 }
 
@@ -182,10 +189,13 @@ type CacheableCtx = RawComputationContext &
     readonly request?: any;
   };
 
-export class CacheableComputationMixin<C extends AnyRawComputation> {
+export class CacheableComputationMixin<
+  C extends RawComputation<any, ResultTypeOfComputation<C>>,
+> {
   public readonly db: CacheDB;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
+  private entry: CacheEntryBuilder;
 
   constructor(
     public readonly source: C &
@@ -194,25 +204,48 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
     public readonly desc: ComputationDescription<C>
   ) {
     this.db = source.registry.db;
-    this.isCacheable = true || !!getObjSerializer(source.description);
+    this.isCacheable = true;
     this.firstExec = true;
+    this.entry = new CacheEntryBuilder();
+  }
+
+  finishRoutine({
+    result,
+    version,
+  }: VersionedComputationResult<ResultTypeOfComputation<C>>): void {
+    if (this.isCacheable) {
+      if (result.ok) {
+        this.db.set(this.desc, this.entry.make(result.value, version));
+      }
+    }
+  }
+
+  invalidateRoutine() {
+    if (this.isCacheable) {
+      this.firstExec = false;
+      this.db.delete(this.desc);
+    }
+  }
+
+  deleteRoutine() {
+    if (this.isCacheable) {
+      this.firstExec = false;
+      this.db.delete(this.desc);
+    }
   }
 
   async reExec(
     baseExec: (
       ctx: RawComputationContext
     ) => Promise<ComputationResult<ResultTypeOfComputation<C>>>,
-    ctx: RawComputationContext,
-    equals: (
-      a: ResultTypeOfComputation<C>,
-      b: ResultTypeOfComputation<C>
-    ) => boolean
+    ctx: RawComputationContext
   ) {
     if (!this.isCacheable) {
       return baseExec(ctx);
     }
     const { firstExec } = this;
     this.firstExec = false;
+    this.entry = new CacheEntryBuilder();
 
     // Execute
     const result = await baseExec(ctx);
@@ -224,7 +257,7 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
       const currentEntry = this.db.get(this.desc);
       if (currentEntry) {
         const cached = currentEntry.value;
-        if (result.ok && equals(cached, result.value)) {
+        if (result.ok && this.source.responseEqual(cached, result.value)) {
           throw new CachedResult(ok(cached), currentEntry.version); // See RawComputation#run()
         }
         // Reset cache
@@ -232,12 +265,6 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
       }
     }
 
-    // New entry
-    const newEntry = new CacheEntryBuilder();
-    // On success, save result
-    if (result.ok) {
-      this.db.set(this.desc, newEntry.make(result.value, ctx.version));
-    }
     return result;
   }
 
@@ -249,10 +276,16 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
       return baseExec(ctx);
     }
 
-    if (this.firstExec) {
-      this.firstExec = false;
-      let cachedResult;
-      const currentEntry = this.db.get(this.desc);
+    const { firstExec } = this;
+    this.firstExec = false;
+
+    const newEntry = (this.entry = new CacheEntryBuilder());
+
+    let cachedResult;
+    let currentEntry;
+
+    if (firstExec) {
+      currentEntry = this.db.get(this.desc);
       if (currentEntry) {
         const cached = currentEntry.value;
         try {
@@ -296,11 +329,8 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
       }
     }
 
-    // New entry
-    const newEntry = new CacheEntryBuilder();
     // Create new context
     const newCtx: CacheableCtx = {
-      version: ctx.version,
       request: ctx.request,
       checkActive: () => {
         ctx.checkActive();
@@ -316,25 +346,15 @@ export class CacheableComputationMixin<C extends AnyRawComputation> {
     };
     // Execute
     const result = await baseExec(newCtx as any);
-    // On success, save result
-    if (result.ok) {
-      ctx.checkActive();
-      this.db.set(this.desc, newEntry.make(result.value, ctx.version));
+    // Even if dependencies changes, who knows if the value is the same
+    // To avoid re-execution of subscribers,
+    // it is useful to return the cached value with its version
+    if (result.ok && firstExec && currentEntry) {
+      const cached = currentEntry.value;
+      if (this.source.responseEqual(cached, result.value)) {
+        throw new CachedResult(ok(cached), currentEntry.version); // See RawComputation#run()
+      }
     }
     return result;
-  }
-
-  invalidateRoutine() {
-    if (this.isCacheable) {
-      this.firstExec = false;
-      this.db.delete(this.desc);
-    }
-  }
-
-  deleteRoutine() {
-    if (this.isCacheable) {
-      this.firstExec = false;
-      this.db.delete(this.desc);
-    }
   }
 }

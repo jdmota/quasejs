@@ -7,7 +7,11 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../../incremental-lib";
-import { ComputationResult, ok } from "../../utils/result";
+import {
+  ComputationResult,
+  ok,
+  VersionedComputationResult,
+} from "../../utils/result";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
@@ -85,27 +89,19 @@ class FileComputation
   protected async exec(
     ctx: RawComputationContext
   ): Promise<ComputationResult<bigint>> {
-    return this.cacheableMixin.reExec(
-      async () => {
-        if (this.registry.invalidationsAllowed()) {
-          await this.fs._sub(this);
-        }
-        const { mtimeNs } = await fsextra.stat(this.desc.path, {
-          bigint: true,
-        });
-        return ok(mtimeNs);
-      },
-      ctx,
-      (a, b) => a === b
-    );
+    return this.cacheableMixin.reExec(async () => {
+      if (this.registry.invalidationsAllowed()) {
+        await this.fs._sub(this);
+      }
+      const { mtimeNs } = await fsextra.stat(this.desc.path, {
+        bigint: true,
+      });
+      return ok(mtimeNs);
+    }, ctx);
   }
 
-  protected makeContext(
-    runId: RunId,
-    runVersion: number
-  ): RawComputationContext {
+  protected makeContext(runId: RunId): RawComputationContext {
     return {
-      version: runVersion,
       checkActive: () => this.checkActive(runId),
     };
   }
@@ -114,7 +110,7 @@ class FileComputation
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: ComputationResult<bigint>): void {
+  protected finishRoutine(result: VersionedComputationResult<bigint>): void {
     this.subscribableMixin.finishRoutine(result);
   }
 
@@ -131,11 +127,7 @@ class FileComputation
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  responseEqual(a: bigint, b: bigint): boolean {
-    return a === b;
-  }
-
-  onNewResult(result: ComputationResult<bigint>): void {}
+  onNewResult(result: VersionedComputationResult<bigint>): void {}
 }
 
 class FileInfo {

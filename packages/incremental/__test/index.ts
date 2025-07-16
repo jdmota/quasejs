@@ -61,27 +61,32 @@ const pool = newComputationPool<string, FILE>({
 });
 
 export async function main() {
-  const controller = ComputationRegistry.run(async ctx => {
-    let map: Map<string, ComputationResult<FILE>> | null = null;
-    ctx.cleanup(() => {
-      console.log("Cleanup. Previous results:", map);
-    });
+  const controller = ComputationRegistry.run(
+    async ctx => {
+      let map: Map<string, ComputationResult<FILE>> | null = null;
+      ctx.cleanup(() => {
+        console.log("Cleanup. Previous results:", map);
+      });
 
-    console.log("Running main computation...");
-    const results = await ctx.get(pool);
+      console.log("Running main computation...");
+      const results = await ctx.get(pool);
 
-    if (results.ok) {
-      map = new Map(results.value);
+      if (results.ok) {
+        map = new Map(results.value);
 
-      console.log("Results", results.value.size());
-      for (const [key, value] of results.value) {
-        console.log(key, value.ok ? value.value : value.error);
+        console.log("Results", results.value.size());
+        for (const [key, value] of results.value) {
+          console.log(key, value.ok ? value.value : value.error);
+        }
+      } else {
+        console.log(results);
       }
-    } else {
-      console.log(results);
+      return results;
+    },
+    {
+      cacheDir: "packages/incremental/__test/cache",
     }
-    return results;
-  });
+  );
 
   return new Promise(resolve => {
     process.once("SIGINT", () => {

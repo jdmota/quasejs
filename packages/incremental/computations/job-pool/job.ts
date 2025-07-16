@@ -2,7 +2,10 @@ import {
   ComputationRegistry,
   ComputationDescription,
 } from "../../incremental-lib";
-import { ComputationResult } from "../../utils/result";
+import {
+  ComputationResult,
+  VersionedComputationResult,
+} from "../../utils/result";
 import { ChildComputation, ChildComputationMixin } from "../mixins/child";
 import {
   DependentComputation,
@@ -102,12 +105,8 @@ class ComputationJob<Req, Res>
     return this.cacheableMixin.exec(this.pool.config.exec, ctx);
   }
 
-  protected makeContext(
-    runId: RunId,
-    runVersion: number
-  ): ComputationJobContext<Req> {
+  protected makeContext(runId: RunId): ComputationJobContext<Req> {
     return this.registry.fs.extend({
-      version: runVersion,
       request: this.request,
       checkActive: () => this.checkActive(runId),
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
@@ -119,7 +118,8 @@ class ComputationJob<Req, Res>
     return !this.reachableMixin.isReachable();
   }
 
-  protected finishRoutine(result: ComputationResult<Res>): void {
+  protected finishRoutine(result: VersionedComputationResult<Res>): void {
+    this.cacheableMixin.finishRoutine(result);
     this.reachableMixin.finishOrDeleteRoutine();
     this.pool.onFieldFinish(
       this.reachableMixin.isReachable(),
