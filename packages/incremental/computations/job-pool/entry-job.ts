@@ -141,7 +141,9 @@ export class ComputationEntryJob<Req, Res>
     this.reachableMixin.finishOrDeleteRoutine();
   }
 
-  protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
+  protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
+    this.pool.onEntryStateChange(from, to);
+  }
 
   onReachabilityChange(from: boolean, to: boolean): void {}
 

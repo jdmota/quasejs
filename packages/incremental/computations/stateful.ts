@@ -2,6 +2,7 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../incremental-lib";
+import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import {
   EmitterComputation,
@@ -14,58 +15,58 @@ import {
   ObserverContext,
 } from "./mixins/events/observer";
 import {
+  SubscribableComputation,
+  SubscribableComputationMixin,
+} from "./mixins/subscribable";
+import {
   AnyRawComputation,
   RawComputation,
+  RawComputationContext,
   RunId,
   State,
   StateNotCreating,
   StateNotDeleted,
 } from "./raw";
 
-type StatefulComputationCtx<S, E> = {
-  readonly isActive: () => void;
-  readonly checkActive: () => void;
-  readonly state: S;
-} & EmitterContext<E> &
+type StatefulComputationCtx<K, V, R> = EmitterContext<K, V, R> &
   ObserverContext;
 
 export type AnyStatefulComputation = StatefulComputation<any, any, any>;
 
-type StatefulComputationExec<S, E, R> = (
-  ctx: StatefulComputationCtx<S, E>
-) => Promise<ComputationResult<R>>;
+type StatefulComputationExec<K, V, R> = (
+  ctx: StatefulComputationCtx<K, V, R>
+) => void;
 
-type StatefulComputationConfig<S, E, R> = {
-  readonly initialState: () => S;
-  readonly exec: StatefulComputationExec<S, E, R>;
-  readonly cleanup: (ctx: StatefulComputationCtx<S, E>) => Promise<void>;
+type StatefulComputationConfig<K, V, R> = {
+  readonly init: StatefulComputationExec<K, V, R>;
+  readonly keyDef: ValueDefinition<K>;
+  readonly valueDef: ValueDefinition<V>;
 };
 
-export function newStatefulComputation<S, E, R>(
-  config: StatefulComputationConfig<S, E, R>
+export function newStatefulComputation<K, V, R>(
+  config: StatefulComputationConfig<K, V, R>
 ) {
   return new StatefulComputationDescription(config);
 }
 
-export class StatefulComputationDescription<S, E, R>
-  implements ComputationDescription<StatefulComputation<S, E, R>>
+export class StatefulComputationDescription<K, V, R>
+  implements ComputationDescription<StatefulComputation<K, V, R>>
 {
-  readonly config: StatefulComputationConfig<S, E, R>;
+  readonly config: StatefulComputationConfig<K, V, R>;
 
-  constructor(config: StatefulComputationConfig<S, E, R>) {
+  constructor(config: StatefulComputationConfig<K, V, R>) {
     this.config = config;
   }
 
-  create(registry: ComputationRegistry): StatefulComputation<S, E, R> {
+  create(registry: ComputationRegistry): StatefulComputation<K, V, R> {
     return new StatefulComputation(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof StatefulComputationDescription &&
-      this.config.exec === other.config.exec &&
-      this.config.cleanup === other.config.cleanup &&
-      this.config.initialState === other.config.initialState
+      this.config.init === other.config.init &&
+      this.config.keyDef === other.config.keyDef
     );
   }
 
@@ -74,74 +75,102 @@ export class StatefulComputationDescription<S, E, R>
   }
 }
 
-export class StatefulComputation<S, E, R>
-  extends RawComputation<StatefulComputationCtx<S, E>, R>
-  implements EmitterComputation<E>, ObserverComputation
-{
-  readonly emitterMixin: EmitterComputationMixin<E>;
-  readonly observerMixin: ObserverComputationMixin;
+enum StatefulPhase {
+  PENDING = 0,
+  INITIALIZING = 1,
+  READY = 2,
+}
 
-  private readonly config: StatefulComputationConfig<S, E, R>;
+export class StatefulComputation<K, V, R>
+  extends RawComputation<RawComputationContext, R>
+  implements
+    SubscribableComputation<R>,
+    EmitterComputation<K, V, R>,
+    ObserverComputation
+{
+  private readonly config: StatefulComputationConfig<K, V, R>;
+  readonly subscribableMixin: SubscribableComputationMixin<R>;
+  readonly emitterMixin: EmitterComputationMixin<K, V, R>;
+  readonly observerMixin: ObserverComputationMixin;
+  private phase: StatefulPhase;
 
   constructor(
     registry: ComputationRegistry,
-    description: StatefulComputationDescription<S, E, R>
+    desc: StatefulComputationDescription<K, V, R>,
+    mark: boolean = true
   ) {
-    super(registry, description, false);
-    this.emitterMixin = new EmitterComputationMixin(this);
+    super(registry, desc, false);
+    this.config = desc.config;
+    this.subscribableMixin = new SubscribableComputationMixin(this);
+    this.emitterMixin = new EmitterComputationMixin(
+      this,
+      this.config.keyDef,
+      this.config.valueDef.equal
+    );
     this.observerMixin = new ObserverComputationMixin(this);
-    this.config = description.config;
-    this.mark(State.PENDING);
+    this.phase = StatefulPhase.PENDING;
+    if (mark) this.mark(State.PENDING);
   }
 
   protected async exec(
-    ctx: StatefulComputationCtx<S, E>
+    ctx: RawComputationContext,
+    runId: RunId
   ): Promise<ComputationResult<R>> {
+    let emitId;
     try {
-      // Execute this computation
-      return await this.config.exec(ctx);
-    } finally {
-      // Clean up this run
-      // Even if this computation were to be invalidated in the middle of a run,
-      // this will execute eventually anyway
-      await this.config.cleanup(ctx);
+      if (this.phase === StatefulPhase.PENDING) {
+        this.phase = StatefulPhase.INITIALIZING;
+        emitId = this.emitterMixin.newEmitRunId();
+        const observerId = this.observerMixin.newObserverInitId();
+        this.config.init({
+          ...this.observerMixin.makeContextRoutine(runId, observerId),
+          ...this.emitterMixin.makeContextRoutine(emitId),
+        });
+        this.observerMixin.finishObserverInit();
+        this.observerMixin.askForInitial(runId);
+        this.phase = StatefulPhase.READY;
+      } else {
+        emitId = this.emitterMixin.getEmitRunId();
+      }
+    } catch (err) {
+      this.resetRoutine();
+      throw err;
     }
+    return this.emitterMixin.exec(runId, emitId);
   }
 
-  protected makeContext(runId: RunId): StatefulComputationCtx<S, E> {
-    const state = this.config.initialState();
+  protected makeContext(runId: RunId): RawComputationContext {
     return {
-      state,
-      isActive: () => this.isActive(runId),
       checkActive: () => this.checkActive(runId),
-      ...this.observerMixin.makeContextRoutine(runId),
-      ...this.emitterMixin.makeContextRoutine(),
     };
   }
 
-  // TODO work more on the idea of events and stateful computations, and how to cancel stuff or interrupt in the middle
-  // TODO can we emit or observe/unobserve outside of the time frame of a run?
-  // TODO allow to consume events with an async generator
-  getAllPastEvents(): IterableIterator<E> {
-    throw new Error("Method not implemented.");
+  protected isOrphan(): boolean {
+    return this.subscribableMixin.isOrphan() && this.emitterMixin.isOrphan();
   }
 
   protected finishRoutine(result: VersionedComputationResult<R>) {
+    result = this.subscribableMixin.finishRoutine(result);
     return result;
   }
 
-  protected invalidateRoutine(): void {
-    this.observerMixin.invalidateRoutine();
+  private resetRoutine() {
+    this.phase = StatefulPhase.PENDING;
+    this.subscribableMixin.deleteRoutine();
+    this.emitterMixin.resetRoutine();
+    this.observerMixin.resetRoutine();
   }
 
-  protected deleteRoutine(): void {
-    this.emitterMixin.deleteRoutine();
-    this.observerMixin.deleteRoutine();
+  protected invalidateRoutine() {
+    this.subscribableMixin.invalidateRoutine();
+    this.emitterMixin.invalidateRoutine();
   }
 
-  protected isOrphan(): boolean {
-    return this.emitterMixin.isOrphan();
+  protected deleteRoutine() {
+    this.resetRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
+
+  onNewResult(result: VersionedComputationResult<R>): void {}
 }

@@ -229,7 +229,7 @@ export class FileSystem {
   }
 
   private react(event: FileChange, path: string) {
-    console.log(event, path);
+    console.log("=====", event, path, "=====");
     const info = this.files.get(normalizePath(path));
     if (info) {
       for (const c of info.events[event].computations) {

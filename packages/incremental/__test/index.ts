@@ -1,6 +1,7 @@
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
-import { ComputationResult, error, ok } from "../utils/result";
+import { newStatefulComputation } from "../computations/stateful";
+import { ComputationResult, ok } from "../utils/result";
 import path from "path";
 import fsextra from "fs-extra";
 
@@ -60,6 +61,35 @@ const pool = newComputationPool<string, FILE>({
   },
 });
 
+const stateful = newStatefulComputation({
+  init(ctx) {
+    let num = 0;
+    ctx.listen(pool, event => {
+      console.log("EVENT", event);
+      num++;
+      if (event.type === "done") {
+        ctx.done(ok(num));
+      }
+    });
+  },
+  keyDef: {
+    hash(a) {
+      return 0;
+    },
+    equal(a, b) {
+      return a === b;
+    },
+  },
+  valueDef: {
+    hash(a) {
+      return 0;
+    },
+    equal(a, b) {
+      return a === b;
+    },
+  },
+});
+
 export async function main() {
   const controller = ComputationRegistry.run(
     async ctx => {
@@ -79,8 +109,12 @@ export async function main() {
           console.log(key, value.ok ? value.value : value.error);
         }
       } else {
-        console.log(results);
+        console.log("ERROR POOL RESULTS", results);
       }
+
+      const statefulNum = await ctx.get(stateful);
+      console.log("STATEFUL NUM", statefulNum);
+
       return results;
     },
     {

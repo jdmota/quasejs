@@ -162,7 +162,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     // and since there is memoing,
     // we actually do not need to start these in topological order.
     // Since some computations might not be removed from the "pending" set,
-    // in case they have no dependents, we use Array.from first.
+    // in case they have no dependents, we use Array.from first,
+    // also keeping in mind that "iterateAll" is not stable over modifications.
     for (const c of Array.from(this.pending.iterateAll())) {
       c.maybeRun();
     }
@@ -174,8 +175,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   // together with a new execution
   externalInvalidate(computation: AnyRawComputation) {
     if (this.externalInvalidationsAllowed()) {
-      computation.invalidate();
       this.scheduler2.schedule();
+      computation.invalidate();
     }
   }
 
@@ -234,7 +235,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   // It is key that we only destroy computations that are not attached with anything
   // Also because of the cache information:
   // We do not want to get confused about the computation versions,
-  // since destroying and they creating again a computation will effectively reset the version to 1
+  // since destroying and then creating again a computation will effectively reset the version to 1
   private clearOrphans() {
     let count;
     do {
@@ -245,7 +246,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     } while (this.computationsCount() < count);
   }
 
-  private cleanupRun(computation: EffectComputation<undefined, any>) {
+  private cleanupRun(rootComputation: EffectComputation<undefined, any>) {
     this.scheduler1.cancel();
     this.scheduler2.cancel();
 
@@ -254,8 +255,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.db.lock();
 
     // Now clear everything
-    computation.unroot();
-    computation.destroy();
+    rootComputation.unroot();
+    rootComputation.destroy();
     this.clearOrphans();
 
     if (this.computationsCount() > 0) {

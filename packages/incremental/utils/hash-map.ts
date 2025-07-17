@@ -241,6 +241,22 @@ class ReadonlySnapshotHashMap<K, V> implements ReadonlyHashMap<K, V> {
   [Symbol.iterator](): IterableIterator<readonly [K, V]> {
     return this.getMap()[Symbol.iterator]();
   }
+
+  strictContentEquals(other: ReadonlySnapshotHashMap<K, V>) {
+    const { map } = this;
+    const { map: otherMap } = other;
+    if (!map) return false;
+    if (this === other) return true;
+    if (!otherMap) return false;
+    if (map.size() !== otherMap.size()) return false;
+    for (const [key, value] of map) {
+      const otherVal = otherMap.get(key);
+      if (value !== otherVal) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 export type { ReadonlySnapshotHashMap };

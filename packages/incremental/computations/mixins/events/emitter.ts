@@ -1,55 +1,165 @@
-import { AnyRawComputation, RawComputation, RunId } from "../../raw";
-import { AnyStatefulComputation } from "../../stateful";
+import { createNotifier } from "../../../../util/deferred";
+import { HashMap, MapEvent, ValueDefinition } from "../../../utils/hash-map";
+import { ComputationResult } from "../../../utils/result";
+import { RawComputation, RunId } from "../../raw";
 import { ObserverComputation } from "./observer";
 
-export type EventFn<E> = (data: E, initial: boolean) => void;
+export type EmitterEvent<K, V, R> =
+  | MapEvent<K, V>
+  | Readonly<{
+      type: "done";
+      result: ComputationResult<R>;
+    }>;
 
-export type EmitterContext<E> = {
-  readonly emit: (data: E) => void;
-};
+class ObservableHashMap<K, V> extends HashMap<K, V> {
+  private readonly fn: (event: MapEvent<K, V>) => void;
 
-export interface EmitterComputation<E> {
-  readonly emitterMixin: EmitterComputationMixin<E>;
+  constructor(
+    valueDef: ValueDefinition<K>,
+    fn: (event: MapEvent<K, V>) => void
+  ) {
+    super(valueDef);
+    this.fn = fn;
+  }
 
-  getAllPastEvents(): IterableIterator<E>;
+  protected override changed(event: MapEvent<K, V>): void {
+    super.changed(event);
+    const { fn } = this;
+    fn(event);
+  }
 }
 
-export class EmitterComputationMixin<E> {
-  public readonly source: RawComputation<any, any> & EmitterComputation<E>;
-  readonly observers: Map<
-    AnyStatefulComputation & ObserverComputation,
-    EventFn<E>
-  >;
+export type EventFn<K, V, R> = (event: EmitterEvent<K, V, R>) => void;
 
-  constructor(source: RawComputation<any, any> & EmitterComputation<E>) {
+export type EmitterContext<K, V, R> = {
+  readonly emitSet: (key: K, value: V) => void;
+  readonly emitRemove: (key: K) => void;
+  readonly done: (result: ComputationResult<R>) => void;
+};
+
+export interface EmitterComputation<K, V, R> {
+  readonly emitterMixin: EmitterComputationMixin<K, V, R>;
+}
+
+// Observers cannot see emitted values from deleted computations
+// Because we can only delete the computation if we have zero observers
+// And we cannot add observers to a deleted computation
+// So it is fine to allow one to emit events even if the computation is not running
+
+export class EmitterComputationMixin<K, V, R> {
+  public readonly source: RawComputation<any, any> &
+    EmitterComputation<K, V, R>;
+  public readonly observers: Map<ObserverComputation, EventFn<K, V, R>>;
+  private readonly results: HashMap<K, V>;
+  private doneResult: ComputationResult<R> | null;
+  private readonly notifier = createNotifier();
+  private executed: boolean;
+  private emitRunId: number;
+
+  constructor(
+    source: RawComputation<any, any> & EmitterComputation<K, V, R>,
+    keyDef: ValueDefinition<K>,
+    private readonly equals: (a: V, b: V) => boolean
+  ) {
     this.source = source;
     this.observers = new Map();
+    this.results = new ObservableHashMap<K, V>(keyDef, e => this.emitEvent(e));
+    this.executed = false;
+    this.doneResult = null;
+    this.emitRunId = 0;
   }
 
-  makeContextRoutine(): EmitterContext<E> {
-    return {
-      emit: data => this.emit(data),
-    };
+  getResults() {
+    return this.results;
   }
 
-  // It is not possible for observers to see emitted values from deleted computations
-  // Because we can only delete the computation if we have zero observers
-  // And we cannot add observers to a deleted computation
-  // So it is fine to allow one to emit events even if the computation is not running
-  emit(data: E) {
-    this.source.inv();
-    // Do not fire observers that were added during this routine
-    const observers = Array.from(this.observers.values());
-    for (const fn of observers) {
-      fn(data, false);
+  getEmitRunId() {
+    return this.emitRunId;
+  }
+
+  newEmitRunId() {
+    this.emitRunId = Math.abs(this.emitRunId) + 1;
+    return this.emitRunId;
+  }
+
+  cancelEmit() {
+    this.emitRunId = -this.emitRunId;
+  }
+
+  checkEmitActive(emitRunId: number) {
+    if (emitRunId !== this.emitRunId) {
+      throw new Error("Cannot emit in this state");
     }
   }
 
-  emitInitialFor(observer: AnyStatefulComputation & ObserverComputation) {
+  makeContextRoutine(emitRunId: number): EmitterContext<K, V, R> {
+    return {
+      emitSet: (key, value) => this.emitSet(emitRunId, key, value),
+      emitRemove: key => this.emitRemove(emitRunId, key),
+      done: res => this.done(emitRunId, res),
+    };
+  }
+
+  emitSet(emitRunId: number, key: K, value: V) {
+    this.source.inv();
+    this.checkEmitActive(emitRunId);
+    this.results.set(key, value, this.equals);
+  }
+
+  emitRemove(emitRunId: number, key: K) {
+    this.source.inv();
+    this.checkEmitActive(emitRunId);
+    this.results.delete(key);
+  }
+
+  private emitEvent(event: MapEvent<K, V>): void {
+    this.setDone(null);
+    for (const fn of this.observers.values()) {
+      fn(event);
+    }
+  }
+
+  done(emitRunId: number, result: ComputationResult<R>) {
+    this.source.inv();
+    this.checkEmitActive(emitRunId);
+    this.setDone(result);
+    for (const fn of this.observers.values()) {
+      fn({
+        type: "done",
+        result,
+      });
+    }
+  }
+
+  private setDone(result: ComputationResult<R> | null) {
+    if (this.doneResult !== result) {
+      this.doneResult = result;
+      if (this.notifier.isWaiting()) {
+        if (result != null) {
+          this.notifier.done(null);
+        }
+      } else if (this.executed) {
+        this.source.invalidate();
+      }
+    }
+  }
+
+  emitInitialFor(observer: RawComputation<any, any> & ObserverComputation) {
     const fn = this.observers.get(observer);
     if (fn) {
-      for (const item of this.source.getAllPastEvents()) {
-        fn(item, true);
+      for (const [key, value] of this.results) {
+        fn({
+          type: "added",
+          key,
+          value,
+          oldValue: undefined,
+        });
+      }
+      if (this.doneResult != null) {
+        fn({
+          type: "done",
+          result: this.doneResult,
+        });
       }
     }
   }
@@ -58,15 +168,30 @@ export class EmitterComputationMixin<E> {
     return this.observers.size === 0;
   }
 
-  deleteRoutine(): void {
-    if (!this.isOrphan()) {
-      throw new Error(
-        "Invariant violation: Cannot delete computation with observers"
-      );
-    }
+  invalidateRoutine() {
+    this.executed = false;
+    this.notifier.cancel();
   }
 
-  /* inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.observers.keys();
-  } */
+  resetRoutine() {
+    this.cancelEmit();
+    this.executed = false;
+    this.notifier.cancel();
+    this.results.clear();
+    this.doneResult = null;
+  }
+
+  async exec(runId: RunId, emitRunId: number) {
+    this.executed = true;
+    // Wait for done...
+    while (this.doneResult == null) {
+      // Ensure this running version is active before doing side-effects
+      this.source.checkActive(runId);
+      this.checkEmitActive(emitRunId);
+      await this.notifier.wait();
+      // In case invalidations occured between notifier.done()
+      // and this computation resuming, keep waiting if !isDone()
+    }
+    return this.doneResult;
+  }
 }

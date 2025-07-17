@@ -42,8 +42,16 @@ class Notifier<T> {
     }
   }
 
-  wait() {
-    return (this.defer = createDefer()).promise;
+  isWaiting() {
+    return this.defer != null;
+  }
+
+  async wait() {
+    const defer = (this.defer = createDefer());
+    await defer.promise;
+    if (this.defer === defer) {
+      this.defer = null;
+    }
   }
 }
 

@@ -67,7 +67,7 @@ export abstract class RawComputation<Ctx, Res> {
     this.registry = registry;
     this.description = description;
     this.state = State.CREATING;
-    this.runId = 1;
+    this.runId = 0;
     this.nextVersion = 1;
     this.running = null;
     this.deleting = false;

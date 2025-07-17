@@ -227,6 +227,9 @@ export class CacheableComputationMixin<
     }
   }
 
+  // If a computation only relies on "ctx" calls, then we can use this
+  // Otherwise, do not use this, instead, just rely on the "finishRoutine"
+  // to give subscribers the correct version by using "responseEqual"
   async exec<Ctx extends CacheableCtx>(
     baseExec: RawComputationExec<Ctx, ResultTypeOfComputation<C>>,
     ctx: Ctx,
@@ -284,6 +287,6 @@ export class CacheableComputationMixin<
     }
 
     // Execute
-    return baseExec(ctx as any);
+    return baseExec(ctx);
   }
 }

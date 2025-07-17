@@ -1,25 +1,14 @@
 import { setAdd } from "../../../../util/maps-sets";
 import { ComputationDescription } from "../../../incremental-lib";
 import { AnyRawComputation, RawComputation, RunId } from "../../raw";
-import { AnyStatefulComputation } from "../../stateful";
 import { EmitterComputation, EventFn } from "./emitter";
 
 export type ObserverContext = {
-  readonly addListener: <E>(
+  readonly listen: <K, V, R>(
     description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
+      RawComputation<any, any> & EmitterComputation<K, V, R>
     >,
-    fn: EventFn<E>
-  ) => void;
-  readonly removeListener: <E>(
-    description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
-    >
-  ) => void;
-  readonly askForInitial: <E>(
-    description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
-    >
+    fn: EventFn<K, V, R>
   ) => void;
 };
 
@@ -28,74 +17,75 @@ export interface ObserverComputation {
 }
 
 export class ObserverComputationMixin {
-  public readonly source: AnyStatefulComputation & ObserverComputation;
-  private readonly emitters: Set<AnyRawComputation & EmitterComputation<any>>;
+  public readonly source: RawComputation<any, any> & ObserverComputation;
+  public readonly emitters: Set<
+    AnyRawComputation & EmitterComputation<any, any, any>
+  >;
+  private observerInitId: number;
 
-  constructor(source: AnyStatefulComputation & ObserverComputation) {
+  constructor(source: RawComputation<any, any> & ObserverComputation) {
     this.source = source;
     this.emitters = new Set();
+    this.observerInitId = 0;
   }
 
-  makeContextRoutine(runId: RunId): ObserverContext {
+  newObserverInitId() {
+    this.observerInitId = Math.abs(this.observerInitId) + 1;
+    return this.observerInitId;
+  }
+
+  finishObserverInit() {
+    this.observerInitId = -this.observerInitId;
+  }
+
+  checkInitActive(observerInitId: number) {
+    if (observerInitId !== this.observerInitId) {
+      throw new Error("Cannot listen in this state");
+    }
+  }
+
+  makeContextRoutine(runId: RunId, observerInitId: number): ObserverContext {
     return {
-      addListener: (desc, fn) => this.addListener(desc, fn, runId),
-      removeListener: desc => this.removeListener(desc, runId),
-      askForInitial: desc => this.askForInitial(desc, runId),
+      listen: (desc, fn) => this.listen(runId, observerInitId, desc, fn),
     };
   }
 
-  private subscribe<E>(
-    dep: AnyRawComputation & EmitterComputation<E>,
-    fn: EventFn<E>
-  ) {
-    dep.inv();
-    dep.emitterMixin.observers.set(this.source, fn);
-
-    if (setAdd(this.emitters, dep)) {
-      // dep.onInEdgeAddition(this.source);
-    }
-  }
-
-  private unsubscribe(dep: AnyRawComputation & EmitterComputation<any>) {
-    if (this.emitters.delete(dep)) {
-      dep.emitterMixin.observers.delete(this.source);
-      // dep.onInEdgeRemoval(this.source);
-    }
-  }
-
-  private addListener<E>(
+  private listen<K, V, R>(
+    runId: RunId,
+    observerInitId: number,
     description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
+      RawComputation<any, any> & EmitterComputation<K, V, R>
     >,
-    fn: EventFn<E>,
-    runId: RunId
+    fn: EventFn<K, V, R>
   ) {
     this.source.checkActive(runId);
-    this.subscribe(this.source.registry.make(description), fn);
+    this.checkInitActive(observerInitId);
+
+    const dep = this.source.registry.make(description);
+    dep.inv();
+
+    if (setAdd(this.emitters, dep)) {
+      dep.emitterMixin.observers.set(this.source, fn);
+    } else {
+      throw new Error("Cannot listen twice");
+    }
+  }
+
+  askForInitial(runId: RunId) {
+    this.source.checkActive(runId);
+    for (const emitter of this.emitters) {
+      emitter.emitterMixin.emitInitialFor(this.source);
+    }
     // Ensure progress
     this.source.registry.scheduleWake();
   }
 
-  private removeListener<E>(
-    description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
-    >,
-    runId: RunId
+  private unsubscribe(
+    dep: AnyRawComputation & EmitterComputation<any, any, any>
   ) {
-    this.source.checkActive(runId);
-    this.unsubscribe(this.source.registry.make(description));
-  }
-
-  private askForInitial<E>(
-    description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<E>
-    >,
-    runId: RunId
-  ) {
-    this.source.checkActive(runId);
-    this.source.registry
-      .make(description)
-      .emitterMixin.emitInitialFor(this.source);
+    if (this.emitters.delete(dep)) {
+      dep.emitterMixin.observers.delete(this.source);
+    }
   }
 
   private disconnect() {
@@ -103,20 +93,13 @@ export class ObserverComputationMixin {
     // The connection might be restored after rerunning this computation.
     // This is fine because our garbage collection of computations
     // only occurs after everything is stable.
-    for (const dep of this.emitters) {
+    for (const dep of this.emitters.keys()) {
       this.unsubscribe(dep);
     }
   }
 
-  invalidateRoutine(): void {
+  resetRoutine() {
+    this.finishObserverInit();
     this.disconnect();
-  }
-
-  deleteRoutine(): void {
-    this.disconnect();
-  }
-
-  outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.emitters.values();
   }
 }
