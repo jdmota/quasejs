@@ -52,14 +52,14 @@ export class ObserverComputationMixin {
     dep.emitterMixin.observers.set(this.source, fn);
 
     if (setAdd(this.emitters, dep)) {
-      dep.onInEdgeAddition(this.source);
+      // dep.onInEdgeAddition(this.source);
     }
   }
 
   private unsubscribe(dep: AnyRawComputation & EmitterComputation<any>) {
     if (this.emitters.delete(dep)) {
       dep.emitterMixin.observers.delete(this.source);
-      dep.onInEdgeRemoval(this.source);
+      // dep.onInEdgeRemoval(this.source);
     }
   }
 

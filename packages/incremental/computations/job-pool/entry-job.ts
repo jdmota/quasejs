@@ -101,9 +101,10 @@ export class ComputationEntryJob<Req, Res>
   }
 
   protected exec(
-    ctx: ComputationEntryJobContext<Req>
+    ctx: ComputationEntryJobContext<Req>,
+    runId: RunId
   ): Promise<ComputationResult<undefined>> {
-    return this.cacheableMixin.exec(this.pool.config.startExec, ctx);
+    return this.cacheableMixin.exec(this.pool.config.startExec, ctx, runId);
   }
 
   protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
@@ -118,10 +119,11 @@ export class ComputationEntryJob<Req, Res>
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: VersionedComputationResult<undefined>): void {
-    this.subscribableMixin.finishRoutine(result);
-    this.cacheableMixin.finishRoutine(result);
+  protected finishRoutine(result: VersionedComputationResult<undefined>) {
+    result = this.subscribableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result);
     this.reachableMixin.finishOrDeleteRoutine();
+    return result;
   }
 
   protected invalidateRoutine(): void {

@@ -2,7 +2,7 @@ import {
   ComputationDescription,
   ComputationRegistry,
 } from "../incremental-lib";
-import { ComputationResult } from "../utils/result";
+import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import {
   EmitterComputation,
   EmitterComputationMixin,
@@ -126,7 +126,9 @@ export class StatefulComputation<S, E, R>
     throw new Error("Method not implemented.");
   }
 
-  protected finishRoutine(result: ComputationResult<R>): void {}
+  protected finishRoutine(result: VersionedComputationResult<R>) {
+    return result;
+  }
 
   protected invalidateRoutine(): void {
     this.observerMixin.invalidateRoutine();

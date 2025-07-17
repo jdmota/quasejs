@@ -1,15 +1,28 @@
 import type { Class } from "type-fest";
 import { Result } from "./monads";
 
-export type Serializer<T, Out> = {
-  readonly serialize: (value: T) => Result<Out>;
-  readonly deserialize: (out: Out) => Result<T>;
+export enum SerializerOutput {
+  JSON = "json",
+  BUFFER = "buffer",
+}
+
+export type SerializerOutputToType<T extends SerializerOutput> =
+  T extends SerializerOutput.JSON
+    ? { [key: string]: unknown }
+    : T extends SerializerOutput.BUFFER
+      ? Buffer
+      : never;
+
+export type Serializer<T, Out extends SerializerOutput> = {
+  readonly serialize: (value: T) => Result<SerializerOutputToType<Out>>;
+  readonly deserialize: (out: SerializerOutputToType<Out>) => Result<T>;
 };
 
-export type NamedSerializer<T, Out> = {
+export type NamedSerializer<T, Out extends SerializerOutput> = {
   readonly name: string;
-  readonly serialize: (value: T) => Result<Out>;
-  readonly deserialize: (out: Out) => Result<T>;
+  readonly output: Out;
+  readonly serialize: (value: T) => Result<SerializerOutputToType<Out>>;
+  readonly deserialize: (out: SerializerOutputToType<Out>) => Result<T>;
 };
 
 export class SerializationDB {
@@ -17,11 +30,16 @@ export class SerializationDB {
   private ctorToSerializer: Map<Class<any>, NamedSerializer<any, any>> =
     new Map();
 
-  get<T, Out>(ctor: Class<T>): NamedSerializer<T, Out> | undefined {
+  get<T, Out extends SerializerOutput>(
+    ctor: Class<T>
+  ): NamedSerializer<T, Out> | undefined {
     return this.ctorToSerializer.get(ctor);
   }
 
-  register<T, Out>(ctor: Class<T>, serializer: NamedSerializer<T, Out>) {
+  register<T, Out extends SerializerOutput>(
+    ctor: Class<T>,
+    serializer: NamedSerializer<T, Out>
+  ) {
     if (this.names.has(serializer.name)) {
       throw new Error("Name for serializer already used");
     }
@@ -47,7 +65,7 @@ const SERIALIZATION_SYM = Symbol("quase_serialization");
 
 export function getObjSerializer<
   T extends { readonly [key: string | symbol | number]: unknown },
-  Out,
+  Out extends SerializerOutput,
 >(value: T): Serializer<T, Out> | null {
   let serializer = value[SERIALIZATION_SYM];
 
@@ -68,12 +86,12 @@ export function getObjSerializer<
 
 export function setObjSerializer<
   T extends { [key: string | symbol | number]: unknown },
-  Out,
+  Out extends SerializerOutput,
 >(value: T, serializer: Serializer<T, Out>) {
   (value as any)[SERIALIZATION_SYM] = serializer;
 }
 
-export const bigintSerializer: Serializer<bigint, Buffer> = {
+export const bigintSerializer: Serializer<bigint, SerializerOutput.BUFFER> = {
   serialize(value) {
     return Result.ok(Buffer.from(value.toString(16)));
   },

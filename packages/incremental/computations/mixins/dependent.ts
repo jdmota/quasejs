@@ -19,11 +19,6 @@ export type DependentContext = {
       RawComputation<any, T> & SubscribableComputation<T>
     >
   ) => Promise<T>;
-  readonly getVersioned: <T>(
-    description: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<VersionedComputationResult<T>>;
 };
 
 export interface DependentComputation {
@@ -34,23 +29,39 @@ export interface MaybeDependentComputation {
   readonly dependentMixin?: DependentComputationMixin;
 }
 
+export type GetCall = {
+  readonly kind: "get";
+  readonly computation: AnyRawComputation;
+  readonly version: number;
+};
+
 export class DependentComputationMixin {
   public readonly source: AnyRawComputation & DependentComputation;
   // Dependencies
   private readonly dependencies: Set<
     AnyRawComputation & SubscribableComputation<any>
   >;
+  // We don't know if by any chance we requested the same dependency twice
+  // and got different values (because subscribers invalidation is delayed - see SubscribableComputationMixin),
+  // so we keep an array instead of a map (important for CacheableMixin)
+  private getCallsAmount: number;
+  private getCalls: GetCall[];
 
   constructor(source: AnyRawComputation & DependentComputation) {
     this.source = source;
     this.dependencies = new Set();
+    this.getCallsAmount = 0;
+    this.getCalls = [];
+  }
+
+  getAllGetCalls(): null | readonly GetCall[] {
+    return this.getCallsAmount === this.getCalls.length ? this.getCalls : null;
   }
 
   makeContextRoutine(runId: RunId): DependentContext {
     return {
       get: dep => this.getDep(dep, runId).then(r => r.result),
       getOk: dep => promiseIfOk(this.getDep(dep, runId).then(r => r.result)),
-      getVersioned: dep => this.getDep(dep, runId),
     };
   }
 
@@ -58,7 +69,6 @@ export class DependentComputationMixin {
     dep.inv();
     if (setAdd(this.dependencies, dep)) {
       dep.subscribableMixin.subscribers.add(this.source);
-      dep.onInEdgeAddition(this.source);
     }
     return dep;
   }
@@ -67,18 +77,26 @@ export class DependentComputationMixin {
     if (this.dependencies.delete(dep)) {
       dep.subscribableMixin.subscribers.delete(this.source);
       dep.subscribableMixin.oldSubscribers.delete(this.source);
-      dep.onInEdgeRemoval(this.source);
     }
   }
 
-  protected getDep<T>(
+  async getDep<T>(
     description: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >,
     runId: RunId
   ): Promise<VersionedComputationResult<T>> {
     this.source.checkActive(runId);
-    return this.subscribe(this.source.registry.make(description)).run();
+    this.getCallsAmount++;
+    const computation = this.source.registry.make(description);
+    const result = await this.subscribe(computation).run();
+    this.source.checkActive(runId);
+    this.getCalls.push({
+      kind: "get",
+      computation,
+      version: result.version,
+    });
+    return result;
   }
 
   private disconnect() {
@@ -89,6 +107,9 @@ export class DependentComputationMixin {
     for (const dep of this.dependencies) {
       this.unsubscribe(dep);
     }
+    // Reset registry of "get" calls
+    this.getCallsAmount = 0;
+    this.getCalls = [];
   }
 
   invalidateRoutine(): void {

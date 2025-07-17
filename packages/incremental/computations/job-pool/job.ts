@@ -24,40 +24,48 @@ import {
   RawComputation,
   AnyRawComputation,
 } from "../raw";
-import { ComputationPool } from "./pool";
+import { ComputationPool, ComputationPoolDescription } from "./pool";
 import {
   ReachableComputation,
   ReachableComputationMixin,
 } from "../mixins/reachable";
-import { ComputationEntryJob } from "./entry-job";
 import { BasicComputationContext } from "../basic";
 import { CacheableComputationMixin } from "../mixins/cacheable";
+import {
+  SubscribableComputation,
+  SubscribableComputationMixin,
+} from "../mixins/subscribable";
 
 export class ComputationJobDescription<Req, Res>
   implements ComputationDescription<ComputationJob<Req, Res>>
 {
   private readonly request: Req;
-  private readonly source: ComputationPool<Req, Res>;
+  private readonly poolDesc: ComputationPoolDescription<Req, Res>;
 
-  constructor(request: Req, source: ComputationPool<Req, Res>) {
+  constructor(request: Req, source: ComputationPoolDescription<Req, Res>) {
     this.request = request;
-    this.source = source;
+    this.poolDesc = source;
   }
 
   create(registry: ComputationRegistry): ComputationJob<Req, Res> {
-    return new ComputationJob(registry, this, this.request, this.source);
+    return new ComputationJob(
+      registry,
+      this,
+      this.request,
+      registry.make(this.poolDesc)
+    );
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof ComputationJobDescription &&
-      this.source === other.source &&
-      this.source.config.requestDef.equal(this.request, other.request)
+      this.poolDesc.equal(other.poolDesc) &&
+      this.poolDesc.config.requestDef.equal(this.request, other.request)
     );
   }
 
   hash() {
-    return this.source.config.requestDef.hash(this.request);
+    return this.poolDesc.config.requestDef.hash(this.request);
   }
 }
 
@@ -67,6 +75,7 @@ export type ComputationJobContext<Req> = BasicComputationContext<Req> &
 class ComputationJob<Req, Res>
   extends RawComputation<ComputationJobContext<Req>, Res>
   implements
+    SubscribableComputation<Res>,
     DependentComputation,
     ParentComputation,
     ChildComputation,
@@ -74,6 +83,7 @@ class ComputationJob<Req, Res>
 {
   private readonly pool: ComputationPool<Req, Res>;
   public readonly request: Req;
+  public readonly subscribableMixin: SubscribableComputationMixin<Res>;
   public readonly dependentMixin: DependentComputationMixin;
   public readonly parentMixin: ParentComputationMixin;
   public readonly childMixin: ChildComputationMixin;
@@ -91,6 +101,7 @@ class ComputationJob<Req, Res>
     super(registry, desc, false);
     this.pool = pool;
     this.request = request;
+    this.subscribableMixin = new SubscribableComputationMixin(this);
     this.dependentMixin = new DependentComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
     this.childMixin = new ChildComputationMixin(this);
@@ -100,9 +111,10 @@ class ComputationJob<Req, Res>
   }
 
   protected exec(
-    ctx: ComputationJobContext<Req>
+    ctx: ComputationJobContext<Req>,
+    runId: RunId
   ): Promise<ComputationResult<Res>> {
-    return this.cacheableMixin.exec(this.pool.config.exec, ctx);
+    return this.cacheableMixin.exec(this.pool.config.exec, ctx, runId);
   }
 
   protected makeContext(runId: RunId): ComputationJobContext<Req> {
@@ -115,26 +127,32 @@ class ComputationJob<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return !this.reachableMixin.isReachable();
+    return (
+      this.subscribableMixin.isOrphan() && !this.reachableMixin.isReachable()
+    );
   }
 
-  protected finishRoutine(result: VersionedComputationResult<Res>): void {
-    this.cacheableMixin.finishRoutine(result);
+  protected finishRoutine(result: VersionedComputationResult<Res>) {
+    result = this.subscribableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result);
     this.reachableMixin.finishOrDeleteRoutine();
     this.pool.onFieldFinish(
       this.reachableMixin.isReachable(),
       this.request,
       result
     );
+    return result;
   }
 
   protected invalidateRoutine(): void {
+    this.subscribableMixin.invalidateRoutine();
     this.dependentMixin.invalidateRoutine();
     this.parentMixin.invalidateRoutine();
     this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
+    this.subscribableMixin.deleteRoutine();
     this.dependentMixin.deleteRoutine();
     this.parentMixin.deleteRoutine();
     this.cacheableMixin.deleteRoutine();
@@ -142,16 +160,12 @@ class ComputationJob<Req, Res>
     this.pool.onFieldDeleted(this.reachableMixin.isReachable(), this.request);
   }
 
-  override onInEdgeAddition(node: AnyRawComputation): void {
-    if (node instanceof ComputationJob || node instanceof ComputationEntryJob) {
-      this.reachableMixin.onInEdgeAdditionRoutine(node.reachableMixin);
-    }
+  onInEdgeAddition(node: ParentComputation): void {
+    this.reachableMixin.onInEdgeAdditionRoutine(node.reachableMixin);
   }
 
-  override onInEdgeRemoval(node: AnyRawComputation): void {
-    if (node instanceof ComputationJob || node instanceof ComputationEntryJob) {
-      this.reachableMixin.onInEdgeRemovalRoutine(node.reachableMixin);
-    }
+  onInEdgeRemoval(node: ParentComputation): void {
+    this.reachableMixin.onInEdgeRemovalRoutine(node.reachableMixin);
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {
@@ -166,4 +180,6 @@ class ComputationJob<Req, Res>
       to
     );
   }
+
+  onNewResult(result: VersionedComputationResult<Res>): void {}
 }

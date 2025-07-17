@@ -17,7 +17,6 @@ type ReachabilityStatus = {
 
 export interface ReachableComputation {
   readonly reachableMixin: ReachableComputationMixin;
-
   onReachabilityChange(from: boolean, to: boolean): void;
 }
 

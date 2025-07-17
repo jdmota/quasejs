@@ -106,7 +106,6 @@ export class BasicComputation<Req, Res>
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
-    // TODO cacheable compatible with effect?
     this.config = desc.config;
     this.request = desc.request;
     this.rooted = !!desc.config.root;
@@ -114,9 +113,10 @@ export class BasicComputation<Req, Res>
   }
 
   protected exec(
-    ctx: BasicComputationContext<Req>
+    ctx: BasicComputationContext<Req>,
+    runId: RunId
   ): Promise<ComputationResult<Res>> {
-    return this.cacheableMixin.exec(this.config.exec, ctx);
+    return this.cacheableMixin.exec(this.config.exec, ctx, runId);
   }
 
   protected makeContext(runId: RunId): BasicComputationContext<Req> {
@@ -131,9 +131,10 @@ export class BasicComputation<Req, Res>
     return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: VersionedComputationResult<Res>): void {
-    this.subscribableMixin.finishRoutine(result);
-    this.cacheableMixin.finishRoutine(result);
+  protected finishRoutine(result: VersionedComputationResult<Res>) {
+    result = this.subscribableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result);
+    return result;
   }
 
   protected invalidateRoutine(): void {
@@ -159,12 +160,4 @@ export class BasicComputation<Req, Res>
   unroot() {
     this.rooted = false;
   }
-
-  /*protected inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.subscribableMixin.inNodesRoutine();
-  }
-
-  protected outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.dependentMixin.outNodesRoutine();
-  }*/
 }

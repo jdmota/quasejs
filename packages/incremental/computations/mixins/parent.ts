@@ -1,9 +1,11 @@
 import { setAdd } from "../../../util/maps-sets";
 import { ChildComputation } from "./child";
 import { AnyRawComputation, RunId } from "../raw";
+import { ReachableComputationMixin } from "./reachable";
 
 export interface ParentComputation {
   readonly parentMixin: ParentComputationMixin;
+  readonly reachableMixin: ReachableComputationMixin;
 }
 
 export interface MaybeParentComputation {
@@ -25,6 +27,10 @@ export class ParentComputationMixin {
   constructor(source: AnyRawComputation & ParentComputation) {
     this.source = source;
     this.children = new Set();
+  }
+
+  getChildren(): ReadonlySet<AnyRawComputation> {
+    return this.children;
   }
 
   private own(child: AnyRawComputation & ChildComputation) {

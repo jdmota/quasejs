@@ -66,7 +66,7 @@ export class EmitterComputationMixin<E> {
     }
   }
 
-  inNodesRoutine(): IterableIterator<AnyRawComputation> {
+  /* inNodesRoutine(): IterableIterator<AnyRawComputation> {
     return this.observers.keys();
-  }
+  } */
 }

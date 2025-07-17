@@ -47,13 +47,6 @@ export class WrappedResult<T> {
   constructor(readonly result: ComputationResult<T>) {}
 }
 
-export class CachedResult<T> {
-  constructor(
-    readonly result: ComputationResult<T>,
-    readonly version: number
-  ) {}
-}
-
 export function promiseIfOk<T>(promise: Promise<ComputationResult<T>>) {
   return new Promise<T>((resolve, reject) => {
     promise.then(result => {

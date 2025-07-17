@@ -1,5 +1,4 @@
 import {
-  CachedResult,
   ComputationResult,
   error,
   VersionedComputationResult,
@@ -92,7 +91,10 @@ export abstract class RawComputation<Ctx, Res> {
     throw new Error("Invariant violation: no error");
   }
 
-  protected abstract exec(ctx: Ctx): Promise<ComputationResult<Res>>;
+  protected abstract exec(
+    ctx: Ctx,
+    runId: RunId
+  ): Promise<ComputationResult<Res>>;
   protected abstract makeContext(runId: RunId): Ctx;
   protected abstract isOrphan(): boolean;
   protected abstract onStateChange(
@@ -101,23 +103,9 @@ export abstract class RawComputation<Ctx, Res> {
   ): void;
   protected abstract finishRoutine(
     result: VersionedComputationResult<Res>
-  ): void;
+  ): VersionedComputationResult<Res>;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
-  //protected abstract inNodesRoutine(): IterableIterator<AnyRawComputation>;
-  //protected abstract outNodesRoutine(): IterableIterator<AnyRawComputation>;
-
-  /*inNodes() {
-    return this.inNodesRoutine();
-  }
-
-  outNodes() {
-    return this.outNodesRoutine();
-  }*/
-
-  onInEdgeAddition(node: AnyRawComputation) {}
-
-  onInEdgeRemoval(node: AnyRawComputation) {}
 
   responseEqual(a: Res, b: Res): boolean {
     return a === b;
@@ -154,17 +142,14 @@ export abstract class RawComputation<Ctx, Res> {
       const ctx = this.makeContext(runId);
       this.runId = runId;
       this.running = Promise.resolve()
-        .then(() => this.exec(ctx))
+        .then(() => this.exec(ctx, runId))
         .then(
-          v => this.finish(v, runId, null),
+          v => this.finish(v, runId),
           e => {
             if (e instanceof WrappedResult) {
-              return this.finish(e.result, runId, null);
+              return this.finish(e.result, runId);
             }
-            if (e instanceof CachedResult) {
-              return this.finish(e.result, runId, e.version);
-            }
-            return this.finish(error(e, false), runId, null);
+            return this.finish(error(e, false), runId);
           }
         );
       this.mark(State.RUNNING);
@@ -174,17 +159,15 @@ export abstract class RawComputation<Ctx, Res> {
 
   private finish(
     result: ComputationResult<Res>,
-    runId: RunId,
-    runVersion: number | null
+    runId: RunId
   ): VersionedComputationResult<Res> {
     if (this.isActive(runId)) {
       const versionedResult: VersionedComputationResult<Res> = {
-        version: runVersion == null ? this.nextVersion++ : runVersion,
+        version: this.nextVersion++,
         result,
       };
       this.runId = -this.runId;
-      this.result = versionedResult;
-      this.finishRoutine(versionedResult);
+      this.result = this.finishRoutine(versionedResult);
       this.mark(
         result.ok || result.deterministic
           ? State.SETTLED_STABLE

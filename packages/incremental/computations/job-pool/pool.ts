@@ -95,7 +95,7 @@ export function newComputationPool<Req, Res>(
   return new ComputationPoolDescription(config);
 }
 
-class ComputationPoolDescription<Req, Res>
+export class ComputationPoolDescription<Req, Res>
   implements ComputationDescription<ComputationPool<Req, Res>>
 {
   readonly config: ComputationPoolConfig<Req, Res>;
@@ -164,7 +164,7 @@ export class ComputationPool<Req, Res>
 
   constructor(
     registry: ComputationRegistry,
-    desc: ComputationPoolDescription<Req, Res>
+    private readonly desc: ComputationPoolDescription<Req, Res>
   ) {
     super(registry, desc, false);
     this.dependentMixin = new DependentComputationMixin(this);
@@ -241,8 +241,8 @@ export class ComputationPool<Req, Res>
     result: VersionedComputationResult<
       ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
     >
-  ): void {
-    this.subscribableMixin.finishRoutine(result);
+  ) {
+    return this.subscribableMixin.finishRoutine(result);
   }
 
   protected invalidateRoutine(): void {
@@ -278,7 +278,9 @@ export class ComputationPool<Req, Res>
   ): void {}
 
   make(request: Req) {
-    return this.registry.make(new ComputationJobDescription(request, this));
+    return this.registry.make(
+      new ComputationJobDescription(request, this.desc)
+    );
   }
 
   private isDone() {

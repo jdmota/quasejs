@@ -133,8 +133,8 @@ export class EffectComputation<Req, Res>
     return this.rooted ? false : this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: VersionedComputationResult<Res>): void {
-    this.subscribableMixin.finishRoutine(result);
+  protected finishRoutine(result: VersionedComputationResult<Res>) {
+    return this.subscribableMixin.finishRoutine(result);
   }
 
   protected invalidateRoutine(): void {

@@ -1,108 +1,48 @@
 import fsextra from "fs-extra";
 import { never } from "../../../util/miscellaneous";
 import {
+  AnyComputationDescription,
   ResultTypeOfComputation,
   type ComputationDescription,
 } from "../../incremental-lib";
 import { type ValueDefinition, HashMap, objValue } from "../../utils/hash-map";
 import {
-  CachedResult,
   ComputationResult,
   ok,
-  promiseIfOk,
   VersionedComputationResult,
 } from "../../utils/result";
-import { SubscribableComputation } from "../mixins/subscribable";
 import {
   AnyRawComputation,
   RawComputation,
   RawComputationContext,
   RawComputationExec,
+  RunId,
 } from "../raw";
 import { DependentContext, MaybeDependentComputation } from "./dependent";
-import {
-  MaybeParentComputation,
-  MaybeParentContext,
-  ParentContext,
-} from "./parent";
+import { MaybeParentComputation, MaybeParentContext } from "./parent";
 import { CtxWithFS } from "../file-system/file-system";
 import { SerializationDB } from "../../../util/serialization";
+import { SubscribableComputation } from "./subscribable";
+import { ChildComputation } from "./child";
 
 export type CacheableTag = string;
 
-type CachedGet<Desc extends SubscribableDescription<any>> = {
+export type CachedGet = {
   readonly kind: "get";
-  readonly desc: Desc;
+  readonly desc: ComputationDescription<
+    RawComputation<any, any> & SubscribableComputation<any>
+  >;
   readonly version: number;
 };
 
-type CachedCompute<ComputeReq> = {
+export type CachedCompute = {
   readonly kind: "compute";
-  readonly req: ComputeReq;
+  readonly desc: ComputationDescription<AnyRawComputation & ChildComputation>;
 };
 
-export type CachedDep = CachedGet<any> | CachedCompute<any>;
-
-type SubscribableDescription<T> = ComputationDescription<
-  RawComputation<any, T> & SubscribableComputation<T>
->;
+export type CachedDep = CachedGet | CachedCompute;
 
 const defaultValDef: ValueDefinition<ComputationDescription<any>> = objValue;
-
-class CacheEntryBuilder {
-  // We don't know if by any chance we requested the same dependency twice
-  // and got different values (because subscribers invalidation is delayed - see SubscribableComputationMixin),
-  // so we keep an array instead of a map
-  private readonly deps: CachedDep[] = [];
-
-  // Track the number of times ctx functions were called
-  private requested = 0;
-
-  // Prevent modifications of the dependencies array that could happen after user code executed
-  // but while ctx.checkActive() is still true
-  // (e.g., in the case the user forgot to await upon "ctx.get()")
-  private locked = false;
-
-  checkActive() {
-    if (this.locked) {
-      throw new Error("Computation not active");
-    }
-  }
-
-  async get<T>(ctx: DependentContext, desc: SubscribableDescription<T>) {
-    this.checkActive();
-    this.requested++;
-    const result = await ctx.getVersioned(desc);
-    if (result.result.ok) {
-      this.checkActive();
-      this.deps.push({
-        kind: "get",
-        desc,
-        version: result.version,
-      } satisfies CachedGet<typeof desc>);
-    }
-    return result;
-  }
-
-  compute<ComputeReq>(ctx: ParentContext<ComputeReq>, req: ComputeReq) {
-    this.checkActive();
-    this.requested++;
-    ctx.compute(req);
-    this.deps.push({
-      kind: "compute",
-      req,
-    } satisfies CachedCompute<ComputeReq>);
-  }
-
-  make<Res>(value: Res, version: number): CacheEntry<Res> | null {
-    if (this.requested !== this.deps.length) {
-      // There is no point in storing a cache entry if we could not save some of its dependencies
-      return null;
-    }
-    this.locked = true;
-    return new CacheEntry(value, this.deps, version);
-  }
-}
 
 class CacheEntry<Res> {
   constructor(
@@ -155,7 +95,7 @@ export class CacheDB {
   }
 
   async save() {
-    await fsextra.ensureDir(this.dir);
+    // await fsextra.ensureDir(this.dir);
 
     // TODO
     console.log("========SAVING CACHE==========");
@@ -163,10 +103,11 @@ export class CacheDB {
       console.log("========CACHE==========");
       console.log({
         ...desc,
-        source: null,
       });
       console.log(entry);
     }
+
+    // TODO garbage collect old cache entries
   }
 
   async load() {
@@ -195,7 +136,6 @@ export class CacheableComputationMixin<
   public readonly db: CacheDB;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
-  private entry: CacheEntryBuilder;
 
   constructor(
     public readonly source: C &
@@ -206,18 +146,71 @@ export class CacheableComputationMixin<
     this.db = source.registry.db;
     this.isCacheable = true;
     this.firstExec = true;
-    this.entry = new CacheEntryBuilder();
   }
 
   finishRoutine({
     result,
     version,
-  }: VersionedComputationResult<ResultTypeOfComputation<C>>): void {
+  }: VersionedComputationResult<
+    ResultTypeOfComputation<C>
+  >): VersionedComputationResult<ResultTypeOfComputation<C>> {
     if (this.isCacheable) {
+      const { firstExec } = this;
+      this.firstExec = false;
+
       if (result.ok) {
-        this.db.set(this.desc, this.entry.make(result.value, version));
+        const calls: CachedDep[] = [];
+
+        if (this.source.dependentMixin) {
+          const getCalls = this.source.dependentMixin.getAllGetCalls();
+          if (!getCalls) {
+            this.db.delete(this.desc);
+            return { result, version };
+          }
+          for (const dep of getCalls) {
+            calls.push({
+              kind: "get",
+              desc: dep.computation.description,
+              version: dep.version,
+            });
+          }
+        }
+
+        if (this.source.parentMixin) {
+          for (const child of this.source.parentMixin.getChildren()) {
+            calls.push({
+              kind: "compute",
+              desc: child.description,
+            });
+          }
+        }
+
+        let newEntry = new CacheEntry(result.value, calls, version);
+
+        if (firstExec) {
+          const currentEntry = this.db.get(this.desc);
+          if (currentEntry) {
+            const cached = currentEntry.value;
+            if (
+              cached === result.value ||
+              this.source.responseEqual(cached, result.value)
+            ) {
+              // If the final value is the same, keep the cached version number
+              newEntry = new CacheEntry(cached, calls, currentEntry.version);
+            }
+          }
+        }
+
+        this.db.set(this.desc, newEntry);
+        return {
+          result: ok(newEntry.value),
+          version: newEntry.version,
+        };
+      } else {
+        this.db.delete(this.desc);
       }
     }
+    return { result, version };
   }
 
   invalidateRoutine() {
@@ -234,58 +227,13 @@ export class CacheableComputationMixin<
     }
   }
 
-  async reExec(
-    baseExec: (
-      ctx: RawComputationContext
-    ) => Promise<ComputationResult<ResultTypeOfComputation<C>>>,
-    ctx: RawComputationContext
-  ) {
-    if (!this.isCacheable) {
-      return baseExec(ctx);
-    }
-    const { firstExec } = this;
-    this.firstExec = false;
-    this.entry = new CacheEntryBuilder();
-
-    // Execute
-    const result = await baseExec(ctx);
-
-    // Check we are still running
-    ctx.checkActive();
-
-    if (firstExec) {
-      const currentEntry = this.db.get(this.desc);
-      if (currentEntry) {
-        const cached = currentEntry.value;
-        if (result.ok && this.source.responseEqual(cached, result.value)) {
-          throw new CachedResult(ok(cached), currentEntry.version); // See RawComputation#run()
-        }
-        // Reset cache
-        this.db.delete(this.desc);
-      }
-    }
-
-    return result;
-  }
-
   async exec<Ctx extends CacheableCtx>(
     baseExec: RawComputationExec<Ctx, ResultTypeOfComputation<C>>,
-    ctx: Ctx
+    ctx: Ctx,
+    runId: RunId
   ): Promise<ComputationResult<ResultTypeOfComputation<C>>> {
-    if (!this.isCacheable) {
-      return baseExec(ctx);
-    }
-
-    const { firstExec } = this;
-    this.firstExec = false;
-
-    const newEntry = (this.entry = new CacheEntryBuilder());
-
-    let cachedResult;
-    let currentEntry;
-
-    if (firstExec) {
-      currentEntry = this.db.get(this.desc);
+    if (this.isCacheable && this.firstExec) {
+      const currentEntry = this.db.get(this.desc);
       if (currentEntry) {
         const cached = currentEntry.value;
         try {
@@ -293,18 +241,27 @@ export class CacheableComputationMixin<
           for (const dep of currentEntry.deps) {
             switch (dep.kind) {
               case "get": {
-                jobs.push(
-                  ctx.getVersioned(dep.desc).then(result => {
-                    if (!result.result.ok || result.version !== dep.version) {
-                      throw new Error("Outdated");
-                    }
-                  })
-                );
+                if (this.source.dependentMixin) {
+                  jobs.push(
+                    this.source.dependentMixin
+                      .getDep(dep.desc, runId)
+                      .then(({ result, version }) => {
+                        if (!result.ok || version !== dep.version) {
+                          throw new Error("Outdated");
+                        }
+                      })
+                  );
+                } else {
+                  throw new Error("Outdated");
+                }
                 break;
               }
               case "compute":
-                if (ctx.compute) {
-                  ctx.compute(dep.req);
+                if (this.source.parentMixin) {
+                  this.source.parentMixin.compute(
+                    this.source.registry.make(dep.desc),
+                    runId
+                  );
                 } else {
                   throw new Error("Outdated");
                 }
@@ -314,47 +271,19 @@ export class CacheableComputationMixin<
             }
           }
           await Promise.all(jobs);
-          cachedResult = new CachedResult(ok(cached), currentEntry.version);
+          return ok(cached);
         } catch (err) {
           // Check we are still running
           ctx.checkActive();
-          // Reset dependencies and cache
+          // Invalidate
           this.source.dependentMixin?.invalidateRoutine();
           this.source.parentMixin?.invalidateRoutine();
-          this.db.delete(this.desc);
-        }
-        if (cachedResult) {
-          throw cachedResult; // See RawComputation#run()
+          this.invalidateRoutine();
         }
       }
     }
 
-    // Create new context
-    const newCtx: CacheableCtx = {
-      request: ctx.request,
-      checkActive: () => {
-        ctx.checkActive();
-        newEntry.checkActive();
-      },
-      get: desc => newEntry.get(ctx, desc).then(r => r.result),
-      getOk: desc => promiseIfOk(newEntry.get(ctx, desc).then(r => r.result)),
-      getVersioned: desc => newEntry.get(ctx, desc),
-      fs: (a, b, c) => this.source.registry.fs.depend(newCtx, a, b, c),
-      compute: ctx.compute
-        ? req => newEntry.compute(ctx as ParentContext<any>, req)
-        : undefined,
-    };
     // Execute
-    const result = await baseExec(newCtx as any);
-    // Even if dependencies changes, who knows if the value is the same
-    // To avoid re-execution of subscribers,
-    // it is useful to return the cached value with its version
-    if (result.ok && firstExec && currentEntry) {
-      const cached = currentEntry.value;
-      if (this.source.responseEqual(cached, result.value)) {
-        throw new CachedResult(ok(cached), currentEntry.version); // See RawComputation#run()
-      }
-    }
-    return result;
+    return baseExec(ctx as any);
   }
 }

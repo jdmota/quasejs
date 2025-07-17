@@ -50,18 +50,23 @@ export class SubscribableComputationMixin<Res> {
     return this.subscribers.size === 0 && this.oldSubscribers.size === 0;
   }
 
-  finishRoutine(result: VersionedComputationResult<Res>): void {
+  finishRoutine(
+    result: VersionedComputationResult<Res>
+  ): VersionedComputationResult<Res> {
     const old = this.oldResult;
     this.oldResult = null;
-    this.result = result;
 
     if (old != null && resultEqual(this.equal, old.result, result.result)) {
+      // If the result is the same as before, preserve the old version
+      this.result = old;
       transferSetItems(this.oldSubscribers, this.subscribers);
-      // TODO use the old result with the old version
-    } else {
-      this.invalidateSubs(this.oldSubscribers);
-      this.source.onNewResult(result);
+      return old;
     }
+
+    this.result = result;
+    this.invalidateSubs(this.oldSubscribers);
+    this.source.onNewResult(result);
+    return result;
   }
 
   invalidateRoutine(): void {

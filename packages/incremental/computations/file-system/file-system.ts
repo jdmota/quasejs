@@ -26,6 +26,7 @@ import {
   StateNotDeleted,
 } from "../raw";
 import { CacheableComputationMixin } from "../mixins/cacheable";
+import { never } from "../../../util/miscellaneous";
 
 export enum FileChange {
   ADD_OR_REMOVE = "ADD_OR_REMOVE",
@@ -89,15 +90,20 @@ class FileComputation
   protected async exec(
     ctx: RawComputationContext
   ): Promise<ComputationResult<bigint>> {
-    return this.cacheableMixin.reExec(async () => {
-      if (this.registry.invalidationsAllowed()) {
-        await this.fs._sub(this);
-      }
-      const { mtimeNs } = await fsextra.stat(this.desc.path, {
-        bigint: true,
-      });
-      return ok(mtimeNs);
-    }, ctx);
+    if (this.registry.invalidationsAllowed()) {
+      await this.fs._sub(this);
+    }
+    const { birthtimeNs, mtimeNs } = await fsextra.stat(this.desc.path, {
+      bigint: true,
+    });
+    switch (this.desc.type) {
+      case FileChange.ADD_OR_REMOVE:
+        return ok(birthtimeNs);
+      case FileChange.CHANGE:
+        return ok(mtimeNs);
+      default:
+        never(this.desc.type);
+    }
   }
 
   protected makeContext(runId: RunId): RawComputationContext {
@@ -110,8 +116,10 @@ class FileComputation
     return this.subscribableMixin.isOrphan();
   }
 
-  protected finishRoutine(result: VersionedComputationResult<bigint>): void {
-    this.subscribableMixin.finishRoutine(result);
+  protected finishRoutine(result: VersionedComputationResult<bigint>) {
+    result = this.subscribableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result);
+    return result;
   }
 
   protected invalidateRoutine(): void {
