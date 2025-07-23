@@ -1,7 +1,4 @@
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../incremental-lib";
+import { ComputationRegistry } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import {
@@ -26,6 +23,7 @@ import {
   StateNotCreating,
   StateNotDeleted,
 } from "./raw";
+import { ComputationDescription } from "./description";
 
 type StatefulComputationCtx<K, V, R> = EmitterContext<K, V, R> &
   ObserverContext;
@@ -48,12 +46,15 @@ export function newStatefulComputation<K, V, R>(
   return new StatefulComputationDescription(config);
 }
 
-export class StatefulComputationDescription<K, V, R>
-  implements ComputationDescription<StatefulComputation<K, V, R>>
-{
+export class StatefulComputationDescription<
+  K,
+  V,
+  R,
+> extends ComputationDescription<StatefulComputation<K, V, R>> {
   readonly config: StatefulComputationConfig<K, V, R>;
 
   constructor(config: StatefulComputationConfig<K, V, R>) {
+    super();
     this.config = config;
   }
 
@@ -71,6 +72,10 @@ export class StatefulComputationDescription<K, V, R>
 
   hash() {
     return 0;
+  }
+
+  key() {
+    return `Stateful`;
   }
 }
 

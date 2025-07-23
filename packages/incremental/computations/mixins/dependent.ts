@@ -1,11 +1,11 @@
 import { setAdd } from "../../../util/maps-sets";
-import { ComputationDescription } from "../../incremental-lib";
 import {
   ComputationResult,
   promiseIfOk,
   VersionedComputationResult,
 } from "../../utils/result";
 import { AnyRawComputation, RawComputation } from "../raw";
+import { ComputationDescription } from "../description";
 import { SubscribableComputation } from "./subscribable";
 
 export type DependentContext = {
@@ -102,7 +102,7 @@ export class DependentComputationMixin {
     while (true) {
       const result = await computation.run();
       this.source.checkActive(runId);
-      if (computation.subscribableMixin.checkResult(result)) {
+      if (computation.checkResult(result)) {
         this.lockSubscribe(computation);
         this.getCalls.push({
           kind: "get",
@@ -133,9 +133,5 @@ export class DependentComputationMixin {
 
   deleteRoutine() {
     this.disconnect();
-  }
-
-  outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.dependencies.values();
   }
 }

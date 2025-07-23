@@ -34,10 +34,6 @@ export class SubscribableComputationMixin<Res> {
     }
   }
 
-  checkResult(result: VersionedComputationResult<Res>) {
-    return this.result?.version === result.version;
-  }
-
   isOrphan(): boolean {
     return (
       this.pendingSubscribers.size === 0 && this.lockedSubscribers.size === 0
@@ -46,6 +42,7 @@ export class SubscribableComputationMixin<Res> {
 
   // We only invalidate when we get a new result
   // And only invalidate locked subscribers (those that have seen the previous result)
+  // See DependentComputationMixin#getDep
   finishRoutine(
     result: VersionedComputationResult<Res>
   ): VersionedComputationResult<Res> {

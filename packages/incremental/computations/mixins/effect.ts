@@ -44,7 +44,7 @@ export class EffectComputationMixin {
     }
   }
 
-  deleteRoutine(): void {
+  deleteRoutine() {
     this.source.registry.queueOtherJob(() => this.performCleanup(true));
   }
 }

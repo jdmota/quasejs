@@ -4,6 +4,7 @@ import { newStatefulComputation } from "../computations/stateful";
 import { ComputationResult, ok } from "../utils/result";
 import path from "path";
 import fsextra from "fs-extra";
+import { serializationDB } from "../utils/serialization-db";
 
 function deepClone(value: any): any {
   if (Array.isArray(value)) {
@@ -22,50 +23,52 @@ type FILE = {
   deps?: string[];
 };
 
-const pool = newComputationPool<string, FILE>({
-  async startExec(ctx) {
-    console.log("Running entry job...");
+const pool = newComputationPool<string, FILE>(
+  serializationDB.uniqueObjDB.register("MY_POOL_CONFIG", 1, {
+    async startExec(ctx) {
+      console.log("Running entry job...");
 
-    ctx.compute("index.ts");
+      ctx.compute("index.ts");
 
-    return ok(undefined);
-  },
-  async exec(ctx) {
-    console.log("Running pool job...", ctx.request);
+      return ok(undefined);
+    },
+    async exec(ctx) {
+      console.log("Running pool job...", ctx.request);
 
-    const json: FILE = await ctx.fs(
-      path.resolve(import.meta.dirname, "fs", ctx.request + ".json"),
-      p => fsextra.readJson(p)
-    );
+      const json: FILE = await ctx.fs(
+        path.resolve(import.meta.dirname, "fs", ctx.request + ".json"),
+        p => fsextra.readJson(p)
+      );
 
-    for (const dep of json.deps ?? []) {
-      ctx.compute(dep);
-    }
-    return ok(json);
-  },
-  requestDef: {
-    hash(a) {
-      return a.length;
+      for (const dep of json.deps ?? []) {
+        ctx.compute(dep);
+      }
+      return ok(json);
     },
-    equal(a, b) {
-      return a === b;
+    requestDef: {
+      hash(a) {
+        return a.length;
+      },
+      equal(a, b) {
+        return a === b;
+      },
     },
-  },
-  responseDef: {
-    hash(a) {
-      return a.deps?.length ?? 0;
+    responseDef: {
+      hash(a) {
+        return a.deps?.length ?? 0;
+      },
+      equal(a, b) {
+        return a === b;
+      },
     },
-    equal(a, b) {
-      return a === b;
-    },
-  },
-});
+  })
+);
 
 const stateful = newStatefulComputation({
   init(ctx) {
     let num = 0;
     ctx.listen(pool, event => {
-      console.log("EVENT", event);
+      // console.log("EVENT", event);
       num++;
       if (event.type === "done") {
         ctx.done(ok(num));
@@ -91,7 +94,7 @@ const stateful = newStatefulComputation({
 });
 
 export async function main() {
-  const controller = ComputationRegistry.run(
+  const controller = await ComputationRegistry.run(
     async ctx => {
       let map: Map<string, ComputationResult<FILE>> | null = null;
       ctx.cleanup(() => {
@@ -119,6 +122,9 @@ export async function main() {
     },
     {
       cacheDir: "packages/incremental/__test/cache",
+      cacheSaveOpts: {
+        garbageCollect: true,
+      },
     }
   );
 
@@ -130,7 +136,7 @@ export async function main() {
   });
 }
 
-main().catch(error => console.log(error));
+main().catch(error => console.log("MAIN ERROR", error));
 
 // yarn n packages\incremental\__test\index.ts
 // yarn i packages\incremental\__test\index.ts

@@ -19,8 +19,4 @@ export class ChildComputationMixin {
   isOrphan(): boolean {
     return this.parents.size === 0;
   }
-
-  inNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.parents.values();
-  }
 }

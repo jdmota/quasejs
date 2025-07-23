@@ -1,7 +1,7 @@
 import { setAdd } from "../../../util/maps-sets";
-import { ComputationDescription } from "../../incremental-lib";
 import { RunId } from "../../utils/run-id";
 import { AnyRawComputation, RawComputation } from "../raw";
+import { ComputationDescription } from "../description";
 import { EmitterComputation, EventFn } from "./emitter";
 
 export type ObserverContext = {

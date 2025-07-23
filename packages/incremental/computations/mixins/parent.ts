@@ -65,11 +65,11 @@ export class ParentComputationMixin {
     }
   }
 
-  invalidateRoutine(): void {
+  invalidateRoutine() {
     this.disconnect();
   }
 
-  deleteRoutine(): void {
+  deleteRoutine() {
     this.disconnect();
   }
 }

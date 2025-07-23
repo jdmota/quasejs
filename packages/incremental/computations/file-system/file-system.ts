@@ -3,10 +3,8 @@ import chokidarWatcher from "chokidar";
 import fsextra from "fs-extra";
 import { dirname } from "path";
 import { normalizePath } from "../../../util/path-url";
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../../incremental-lib";
+import { ComputationRegistry } from "../../incremental-lib";
+import { serializationDB } from "../../utils/serialization-db";
 import {
   ComputationResult,
   ok,
@@ -24,6 +22,7 @@ import {
   StateNotCreating,
   StateNotDeleted,
 } from "../raw";
+import { ComputationDescription } from "../description";
 import { CacheableComputationMixin } from "../mixins/cacheable";
 import { never } from "../../../util/miscellaneous";
 
@@ -32,14 +31,21 @@ export enum FileChange {
   CHANGE = "CHANGE",
 }
 
+type FileComputationDescriptionJSON = {
+  readonly path: string;
+  readonly type: FileChange;
+};
+
 export class FileComputationDescription
-  implements ComputationDescription<FileComputation>
+  extends ComputationDescription<FileComputation>
+  implements FileComputationDescriptionJSON
 {
   readonly path: string;
   readonly type: FileChange;
   readonly json: string;
 
   constructor(path: string, type: FileChange) {
+    super();
     this.path = path;
     this.type = type;
     this.json = JSON.stringify({ path, type });
@@ -62,7 +68,27 @@ export class FileComputationDescription
   hash() {
     return this.path.length + 31 * this.type.length;
   }
+
+  key() {
+    return this.json;
+  }
 }
+
+serializationDB.register<
+  FileComputationDescription,
+  FileComputationDescriptionJSON
+>(FileComputationDescription, {
+  name: "FileComputationDescription",
+  serialize(value) {
+    return {
+      path: value.path,
+      type: value.type,
+    };
+  },
+  deserialize({ path, type }) {
+    return new FileComputationDescription(path, type);
+  },
+});
 
 class FileComputation
   extends RawComputation<RawComputationContext, bigint>
@@ -117,7 +143,7 @@ class FileComputation
 
   protected finishRoutine(result: VersionedComputationResult<bigint>) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result, false);
     return result;
   }
 

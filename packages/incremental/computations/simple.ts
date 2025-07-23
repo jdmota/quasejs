@@ -1,32 +1,16 @@
-import { ComputationDescription } from "../incremental-lib";
 import { anyValue } from "../utils/hash-map";
-import { ComputationResult } from "../utils/result";
-import { BasicComputationDescription } from "./basic";
-import { RawComputation } from "./raw";
-import type { SubscribableComputation } from "./mixins/subscribable";
+import {
+  BasicComputationConfig,
+  BasicComputationDescription,
+  BasicComputationExec,
+} from "./basic";
 
-export type SimpleComputationExec<T> = (
-  ctx: SimpleComputationContext
-) => Promise<ComputationResult<T>>;
+export type SimpleComputationExec<T> = BasicComputationExec<undefined, T>;
 
-type SimpleComputationConfig<T> = {
-  readonly exec: SimpleComputationExec<T>;
-  readonly root?: boolean;
-};
-
-type SimpleComputationContext = {
-  readonly checkActive: () => void;
-  readonly get: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<ComputationResult<T>>;
-  readonly getOk: <T>(
-    desc: ComputationDescription<
-      RawComputation<any, T> & SubscribableComputation<T>
-    >
-  ) => Promise<T>;
-};
+export type SimpleComputationConfig<T> = Omit<
+  BasicComputationConfig<undefined, T>,
+  "requestDef" | "responseDef"
+>;
 
 export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {
   return new BasicComputationDescription<undefined, T>(

@@ -1,7 +1,4 @@
-import {
-  ComputationRegistry,
-  ComputationDescription,
-} from "../../incremental-lib";
+import { ComputationRegistry } from "../../incremental-lib";
 import {
   ComputationResult,
   VersionedComputationResult,
@@ -23,6 +20,7 @@ import {
   RawComputation,
   AnyRawComputation,
 } from "../raw";
+import { ComputationDescription } from "../description";
 import { ComputationPool, ComputationPoolDescription } from "./pool";
 import {
   ReachableComputation,
@@ -34,16 +32,23 @@ import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "../mixins/subscribable";
+import { serializationDB } from "../../utils/serialization-db";
 
-export class ComputationJobDescription<Req, Res>
-  implements ComputationDescription<ComputationJob<Req, Res>>
-{
-  private readonly request: Req;
-  private readonly poolDesc: ComputationPoolDescription<Req, Res>;
+type ComputationJobDescriptionJSON<Req, Res> = {
+  readonly request: Req;
+  readonly poolDesc: ComputationPoolDescription<Req, Res>;
+};
 
-  constructor(request: Req, source: ComputationPoolDescription<Req, Res>) {
+export class ComputationJobDescription<Req, Res> extends ComputationDescription<
+  ComputationJob<Req, Res>
+> {
+  public readonly request: Req;
+  public readonly poolDesc: ComputationPoolDescription<Req, Res>;
+
+  constructor(request: Req, poolDesc: ComputationPoolDescription<Req, Res>) {
+    super();
     this.request = request;
-    this.poolDesc = source;
+    this.poolDesc = poolDesc;
   }
 
   create(registry: ComputationRegistry): ComputationJob<Req, Res> {
@@ -66,7 +71,27 @@ export class ComputationJobDescription<Req, Res>
   hash() {
     return this.poolDesc.config.requestDef.hash(this.request);
   }
+
+  key() {
+    return `PoolJob{${this.poolDesc.key()}}`;
+  }
 }
+
+serializationDB.register<
+  ComputationJobDescription<any, any>,
+  ComputationJobDescriptionJSON<any, any>
+>(ComputationJobDescription, {
+  name: "ComputationJobDescription",
+  serialize(value) {
+    return {
+      poolDesc: value.poolDesc,
+      request: value.request,
+    };
+  },
+  deserialize(out) {
+    return new ComputationJobDescription(out.request, out.poolDesc);
+  },
+});
 
 export type ComputationJobContext<Req> = BasicComputationContext<Req> &
   ParentContext<Req>;
@@ -133,7 +158,7 @@ class ComputationJob<Req, Res>
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result, true);
     this.reachableMixin.finishOrDeleteRoutine();
     this.pool.onFieldFinish(
       this.reachableMixin.isReachable(),

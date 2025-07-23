@@ -9,14 +9,12 @@ import {
   StateNotCreating,
   AnyRawComputation,
 } from "../raw";
+import { ComputationDescription } from "../description";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "../mixins/subscribable";
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../../incremental-lib";
+import { ComputationRegistry } from "../../incremental-lib";
 import {
   ValueDefinition,
   ReadonlySnapshotHashMap,
@@ -35,6 +33,7 @@ import {
 } from "./entry-job";
 import { EmitterComputation, EmitterComputationMixin } from "../mixins/emitter";
 import { CacheableComputationMixin } from "../mixins/cacheable";
+import { serializationDB } from "../../utils/serialization-db";
 
 type ComputationPoolContext = {
   readonly checkActive: () => void;
@@ -63,12 +62,14 @@ export function newComputationPool<Req, Res>(
   return new ComputationPoolDescription(config);
 }
 
-export class ComputationPoolDescription<Req, Res>
-  implements ComputationDescription<ComputationPool<Req, Res>>
-{
+export class ComputationPoolDescription<
+  Req,
+  Res,
+> extends ComputationDescription<ComputationPool<Req, Res>> {
   readonly config: ComputationPoolConfig<Req, Res>;
 
   constructor(config: ComputationPoolConfig<Req, Res>) {
+    super();
     this.config = config;
   }
 
@@ -89,7 +90,24 @@ export class ComputationPoolDescription<Req, Res>
   hash() {
     return 0;
   }
+
+  key() {
+    return `Pool`;
+  }
 }
+
+serializationDB.register<
+  ComputationPoolDescription<any, any>,
+  ComputationPoolConfig<any, any>
+>(ComputationPoolDescription, {
+  name: "ComputationPoolDescription",
+  serialize(value) {
+    return value.config;
+  },
+  deserialize(out) {
+    return new ComputationPoolDescription(out);
+  },
+});
 
 export class ComputationPool<Req, Res>
   extends RawComputation<
@@ -154,7 +172,7 @@ export class ComputationPool<Req, Res>
     );
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.config = desc.config;
-    this.entryDescription = new ComputationEntryJobDescription(this);
+    this.entryDescription = new ComputationEntryJobDescription(desc);
     this.entryStatus = [0, 0, 0, 0];
     this.data = {
       reachable: {
@@ -203,7 +221,7 @@ export class ComputationPool<Req, Res>
     >
   ) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result, false);
     return result;
   }
 
@@ -306,7 +324,9 @@ export class ComputationPool<Req, Res>
       status[to]++;
     }
 
-    this.react();
+    if (reachable) {
+      this.react();
+    }
   }
 
   onEntryStateChange(from: StateNotDeleted, to: StateNotCreating): void {

@@ -11,14 +11,12 @@ import {
   AnyRawComputation,
   RawComputationContext,
 } from "../computations/raw";
+import { ComputationDescription } from "./description";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "./mixins/subscribable";
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../incremental-lib";
+import { ComputationRegistry } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import { CacheableComputationMixin } from "./mixins/cacheable";
@@ -47,13 +45,15 @@ export function newComputationBuilder<Req, Res>(
   return (request: Req) => new BasicComputationDescription(config, request);
 }
 
-export class BasicComputationDescription<Req, Res>
-  implements ComputationDescription<BasicComputation<Req, Res>>
-{
+export class BasicComputationDescription<
+  Req,
+  Res,
+> extends ComputationDescription<BasicComputation<Req, Res>> {
   readonly config: BasicComputationConfig<Req, Res>;
   readonly request: Req;
 
   constructor(config: BasicComputationConfig<Req, Res>, request: Req) {
+    super();
     this.config = config;
     this.request = request;
   }
@@ -78,6 +78,10 @@ export class BasicComputationDescription<Req, Res>
       this.config.requestDef.hash(this.request) +
       31 * (this.config.root ? 1 : 0)
     );
+  }
+
+  key() {
+    return `Basic`;
   }
 }
 
@@ -132,7 +136,7 @@ export class BasicComputation<Req, Res>
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result, true);
     return result;
   }
 

@@ -6,17 +6,19 @@
 import EventEmitter from "node:events";
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
-import { SerializationDB } from "../util/serialization";
 import { assertion } from "../util/miscellaneous";
+import { SerializationDB } from "../util/serialization";
 import { HashMap } from "./utils/hash-map";
+import { serializationDB } from "./utils/serialization-db";
 import { AnyRawComputation, RawComputation, State } from "./computations/raw";
+import type { ComputationDescription } from "./computations/description";
 import { ComputationResult } from "./utils/result";
 import {
   SimpleEffectComputationExec,
   newSimpleEffectComputation,
 } from "./computations/simple-effect";
 import { EffectComputation } from "./computations/effect";
-import { CacheDB } from "./computations/mixins/cacheable";
+import { CacheDB, CacheSaveOpts } from "./computations/mixins/cacheable";
 import { FileSystem } from "./computations/file-system/file-system";
 
 const determinismSym = Symbol("deterministic");
@@ -36,22 +38,6 @@ function deterministic<Arg, Ret>(
 export type ResultTypeOfComputation<C> =
   C extends RawComputation<any, infer Res> ? Res : never;
 
-export type ComputationDescription<C extends AnyRawComputation> = {
-  readonly create: (registry: ComputationRegistry) => C;
-  readonly equal: <O extends AnyRawComputation>(
-    other: ComputationDescription<O>
-  ) => boolean;
-  readonly hash: () => number;
-};
-
-export type AnyComputationDescription =
-  ComputationDescription<AnyRawComputation>;
-
-type ComputationRegistryOpts = {
-  readonly canInvalidate: boolean;
-  readonly cacheDir: string;
-};
-
 export type ComputationRegistryEvents = {
   uncaughtError: [
     Readonly<{
@@ -63,9 +49,12 @@ export type ComputationRegistryEvents = {
 
 export type IncrementalOpts = {
   readonly cacheDir: string;
+  readonly cacheSaveOpts: CacheSaveOpts;
 };
 
-export const serializationDB = new SerializationDB();
+type ComputationRegistryOpts = IncrementalOpts & {
+  readonly canInvalidate: boolean;
+};
 
 export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
   private canInvalidate: boolean;
@@ -84,8 +73,9 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
 
   public readonly db: CacheDB;
   public readonly fs: FileSystem;
+  public readonly serializationDB: SerializationDB;
 
-  private constructor(opts: ComputationRegistryOpts) {
+  private constructor(private readonly opts: ComputationRegistryOpts) {
     super();
     this.canInvalidate = opts.canInvalidate;
     this.canExternalInvalidate = opts.canInvalidate;
@@ -104,7 +94,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.settledUnstable = this.computations[State.SETTLED_UNSTABLE];
     this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
     //
-    this.db = new CacheDB(opts.cacheDir, serializationDB);
+    this.serializationDB = serializationDB;
+    this.db = new CacheDB(opts.cacheDir);
     this.fs = new FileSystem();
   }
 
@@ -252,7 +243,17 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     } while (this.computationsCount() < count);
   }
 
-  private cleanupRun(rootComputation: EffectComputation<undefined, any>) {
+  private cleaningUp = false;
+
+  isCleaningUp() {
+    return this.cleaningUp;
+  }
+
+  private cleanupRun(
+    rootComputation: EffectComputation<undefined, any>,
+    interrupted: boolean
+  ) {
+    this.cleaningUp = true;
     this.scheduler1.cancel();
     this.scheduler2.cancel();
 
@@ -269,8 +270,18 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       throw new Error("Invariant violation: Cleanup failed");
     }
 
+    // Close file system watcher
     this.queueOtherJob(() => this.fs.close());
-    this.queueOtherJob(() => this.db.save());
+
+    // Save cache DB
+    // (if this run was interrupted, don't GC to avoid deleting useful entries that didn't get the chance to be flagged as "alive")
+    this.queueOtherJob(() =>
+      this.db.save(
+        interrupted
+          ? { ...this.opts.cacheSaveOpts, garbageCollect: false }
+          : this.opts.cacheSaveOpts
+      )
+    );
 
     const { otherJobs } = this;
     this.otherJobs = [];
@@ -282,24 +293,27 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     opts: IncrementalOpts
   ): Promise<ComputationResult<T>> {
     const registry = new ComputationRegistry({
-      cacheDir: opts.cacheDir,
+      ...opts,
       canInvalidate: false,
     });
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     const result = await computation.run();
-    await registry.cleanupRun(computation);
+    await registry.cleanupRun(computation, false);
     return result.result;
   }
 
-  static run<T>(
+  static async run<T>(
     exec: SimpleEffectComputationExec<T>,
     opts: IncrementalOpts
-  ): ComputationController<T> {
+  ): Promise<ComputationController<T>> {
     const registry = new ComputationRegistry({
-      cacheDir: opts.cacheDir,
+      ...opts,
       canInvalidate: true,
     });
+
+    await registry.db.load();
+
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     registry.wake();
@@ -311,7 +325,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       async interrupt() {
         if (interrupted) throw new Error("Already interrupted");
         interrupted = true;
-        await registry.cleanupRun(computation);
+        await registry.cleanupRun(computation, true);
       },
       async finish() {
         if (interrupted) throw new Error("Already interrupted");
@@ -322,7 +336,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
         registry.disableInvalidations();
         await registry.wait();
         const result = await computation.run();
-        await registry.cleanupRun(computation);
+        await registry.cleanupRun(computation, false);
         return result.result;
       },
       peekErrors() {

@@ -11,14 +11,12 @@ import {
   AnyRawComputation,
   RawComputationContext,
 } from "../computations/raw";
+import { ComputationDescription } from "./description";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "./mixins/subscribable";
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../incremental-lib";
+import { ComputationRegistry } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import {
@@ -50,13 +48,15 @@ export function newEffectComputationBuilder<Req, Res>(
   return (request: Req) => new EffectComputationDescription(config, request);
 }
 
-export class EffectComputationDescription<Req, Res>
-  implements ComputationDescription<EffectComputation<Req, Res>>
-{
+export class EffectComputationDescription<
+  Req,
+  Res,
+> extends ComputationDescription<EffectComputation<Req, Res>> {
   readonly config: EffectComputationConfig<Req, Res>;
   readonly request: Req;
 
   constructor(config: EffectComputationConfig<Req, Res>, request: Req) {
+    super();
     this.config = config;
     this.request = request;
   }
@@ -81,6 +81,10 @@ export class EffectComputationDescription<Req, Res>
       this.config.requestDef.hash(this.request) +
       31 * (this.config.root ? 1 : 0)
     );
+  }
+
+  key() {
+    return `Effect`;
   }
 }
 

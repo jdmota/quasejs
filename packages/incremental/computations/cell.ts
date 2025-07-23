@@ -6,14 +6,12 @@ import {
   AnyRawComputation,
   RawComputationContext,
 } from "../computations/raw";
+import { ComputationDescription } from "./description";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "./mixins/subscribable";
-import {
-  ComputationDescription,
-  ComputationRegistry,
-} from "../incremental-lib";
+import { ComputationRegistry } from "../incremental-lib";
 import { ValueDefinition } from "../utils/hash-map";
 import {
   ComputationResult,
@@ -32,12 +30,13 @@ export function newCell<Res>(config: CellConfig<Res>) {
   return new CellDescription(config);
 }
 
-export class CellDescription<Res>
-  implements ComputationDescription<CellComputation<Res>>
-{
+export class CellDescription<Res> extends ComputationDescription<
+  CellComputation<Res>
+> {
   readonly config: CellConfig<Res>;
 
   constructor(config: CellConfig<Res>) {
+    super();
     this.config = config;
   }
 
@@ -55,6 +54,10 @@ export class CellDescription<Res>
 
   hash() {
     return 31 * this.config.name.length;
+  }
+
+  key() {
+    return `Cell`;
   }
 }
 
@@ -124,7 +127,7 @@ export class CellComputation<Res>
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result);
+    result = this.cacheableMixin.finishRoutine(result, false);
     return result;
   }
 

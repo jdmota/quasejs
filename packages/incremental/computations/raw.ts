@@ -7,10 +7,8 @@ import {
   WrappedResult,
 } from "../utils/result";
 import { RunId } from "../utils/run-id";
-import {
-  ComputationRegistry,
-  ComputationDescription,
-} from "../incremental-lib";
+import { ComputationRegistry } from "../incremental-lib";
+import { ComputationDescription } from "./description";
 
 export enum State {
   PENDING = 0,
@@ -172,6 +170,10 @@ export abstract class RawComputation<Ctx, Res> {
           : State.SETTLED_UNSTABLE
       );
     }
+  }
+
+  checkResult(result: VersionedComputationResult<Res>) {
+    return this.result === result;
   }
 
   invalidate() {
