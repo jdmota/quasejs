@@ -1,4 +1,4 @@
-import { AnyRawComputation, RunId } from "../raw";
+import { AnyRawComputation } from "../raw";
 
 export type CleanupFn = (deleting: boolean) => void | Promise<void>;
 
@@ -21,7 +21,7 @@ export class EffectComputationMixin {
     this.cleanup = NOOP_CLEANUP;
   }
 
-  makeContextRoutine(runId: RunId): EffectContext {
+  makeContextRoutine(runId: number): EffectContext {
     return {
       cleanup: fn => {
         this.source.checkActive(runId);

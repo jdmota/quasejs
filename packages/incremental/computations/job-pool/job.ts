@@ -18,7 +18,6 @@ import {
 } from "../mixins/parent";
 import {
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   RawComputation,
@@ -112,12 +111,12 @@ class ComputationJob<Req, Res>
 
   protected exec(
     ctx: ComputationJobContext<Req>,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<Res>> {
     return this.cacheableMixin.exec(this.pool.config.exec, ctx, runId);
   }
 
-  protected makeContext(runId: RunId): ComputationJobContext<Req> {
+  protected makeContext(runId: number): ComputationJobContext<Req> {
     return this.registry.fs.extend({
       request: this.request,
       checkActive: () => this.checkActive(runId),
@@ -180,6 +179,4 @@ class ComputationJob<Req, Res>
       to
     );
   }
-
-  onNewResult(result: VersionedComputationResult<Res>): void {}
 }

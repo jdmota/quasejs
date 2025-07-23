@@ -20,7 +20,6 @@ import {
   AnyRawComputation,
   RawComputation,
   RawComputationContext,
-  RunId,
   State,
   StateNotCreating,
   StateNotDeleted,
@@ -106,7 +105,7 @@ class FileComputation
     }
   }
 
-  protected makeContext(runId: RunId): RawComputationContext {
+  protected makeContext(runId: number): RawComputationContext {
     return {
       checkActive: () => this.checkActive(runId),
     };
@@ -134,8 +133,6 @@ class FileComputation
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
-
-  onNewResult(result: VersionedComputationResult<bigint>): void {}
 }
 
 class FileInfo {

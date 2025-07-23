@@ -8,12 +8,12 @@ import {
   EmitterComputation,
   EmitterComputationMixin,
   EmitterContext,
-} from "./mixins/events/emitter";
+} from "./mixins/emitter";
 import {
   ObserverComputation,
   ObserverComputationMixin,
   ObserverContext,
-} from "./mixins/events/observer";
+} from "./mixins/observer";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
@@ -22,7 +22,6 @@ import {
   AnyRawComputation,
   RawComputation,
   RawComputationContext,
-  RunId,
   State,
   StateNotCreating,
   StateNotDeleted,
@@ -114,7 +113,7 @@ export class StatefulComputation<K, V, R>
 
   protected async exec(
     ctx: RawComputationContext,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<R>> {
     let emitId;
     try {
@@ -139,7 +138,7 @@ export class StatefulComputation<K, V, R>
     return this.emitterMixin.exec(runId, emitId);
   }
 
-  protected makeContext(runId: RunId): RawComputationContext {
+  protected makeContext(runId: number): RawComputationContext {
     return {
       checkActive: () => this.checkActive(runId),
     };
@@ -156,7 +155,6 @@ export class StatefulComputation<K, V, R>
 
   private resetRoutine() {
     this.phase = StatefulPhase.PENDING;
-    this.subscribableMixin.deleteRoutine();
     this.emitterMixin.resetRoutine();
     this.observerMixin.resetRoutine();
   }
@@ -167,10 +165,9 @@ export class StatefulComputation<K, V, R>
   }
 
   protected deleteRoutine() {
+    this.subscribableMixin.deleteRoutine();
     this.resetRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
-
-  onNewResult(result: VersionedComputationResult<R>): void {}
 }

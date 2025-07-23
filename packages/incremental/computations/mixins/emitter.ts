@@ -1,7 +1,8 @@
-import { createNotifier } from "../../../../util/deferred";
-import { HashMap, MapEvent, ValueDefinition } from "../../../utils/hash-map";
-import { ComputationResult } from "../../../utils/result";
-import { RawComputation, RunId } from "../../raw";
+import { createNotifier } from "../../../util/deferred";
+import { HashMap, MapEvent, ValueDefinition } from "../../utils/hash-map";
+import { ComputationResult } from "../../utils/result";
+import { RunId } from "../../utils/run-id";
+import { RawComputation } from "../raw";
 import { ObserverComputation } from "./observer";
 
 export type EmitterEvent<K, V, R> =
@@ -54,7 +55,7 @@ export class EmitterComputationMixin<K, V, R> {
   private doneResult: ComputationResult<R> | null;
   private readonly notifier = createNotifier();
   private executed: boolean;
-  private emitRunId: number;
+  private emitRunId: RunId;
 
   constructor(
     source: RawComputation<any, any> & EmitterComputation<K, V, R>,
@@ -66,7 +67,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.results = new ObservableHashMap<K, V>(keyDef, e => this.emitEvent(e));
     this.executed = false;
     this.doneResult = null;
-    this.emitRunId = 0;
+    this.emitRunId = new RunId();
   }
 
   getResults() {
@@ -74,20 +75,19 @@ export class EmitterComputationMixin<K, V, R> {
   }
 
   getEmitRunId() {
-    return this.emitRunId;
+    return this.emitRunId.getId();
   }
 
   newEmitRunId() {
-    this.emitRunId = Math.abs(this.emitRunId) + 1;
-    return this.emitRunId;
+    return this.emitRunId.newId();
   }
 
   cancelEmit() {
-    this.emitRunId = -this.emitRunId;
+    this.emitRunId.cancel();
   }
 
   checkEmitActive(emitRunId: number) {
-    if (emitRunId !== this.emitRunId) {
+    if (this.emitRunId.isNotActive(emitRunId)) {
       throw new Error("Cannot emit in this state");
     }
   }
@@ -115,6 +115,7 @@ export class EmitterComputationMixin<K, V, R> {
   private emitEvent(event: MapEvent<K, V>): void {
     this.setDone(null);
     for (const fn of this.observers.values()) {
+      // TODO next tick?
       fn(event);
     }
   }
@@ -124,6 +125,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.checkEmitActive(emitRunId);
     this.setDone(result);
     for (const fn of this.observers.values()) {
+      // TODO next tick?
       fn({
         type: "done",
         result,
@@ -181,7 +183,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.doneResult = null;
   }
 
-  async exec(runId: RunId, emitRunId: number) {
+  async exec(runId: number, emitRunId: number) {
     this.executed = true;
     // Wait for done...
     while (this.doneResult == null) {

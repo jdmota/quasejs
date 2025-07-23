@@ -1,7 +1,6 @@
 import {
   RawComputation,
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
@@ -99,7 +98,7 @@ export class CellComputation<Res>
 
   protected async exec(
     ctx: RawComputationContext,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<Res>> {
     // Wait for the value...
     while (this.cellResult == null) {
@@ -112,7 +111,7 @@ export class CellComputation<Res>
     return this.cellResult;
   }
 
-  protected makeContext(runId: RunId): RawComputationContext {
+  protected makeContext(runId: number): RawComputationContext {
     return {
       checkActive: () => this.checkActive(runId),
     };
@@ -146,6 +145,4 @@ export class CellComputation<Res>
   override responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
-
-  onNewResult(result: VersionedComputationResult<Res>): void {}
 }

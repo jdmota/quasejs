@@ -1,20 +1,30 @@
 export type Defer<T> = {
+  readonly isFulfilled: () => boolean;
   readonly resolve: (value: T | PromiseLike<T>) => void;
   readonly reject: (error: Error) => void;
   readonly promise: Promise<T>;
 };
 
 export function createDefer<T>(): Defer<T> {
-  let resolve, reject;
+  let fulfilled = false;
+  let resolve: (value: T | PromiseLike<T>) => void;
+  let reject: (error: Error) => void;
   const promise = new Promise<T>((a, b) => {
     resolve = a;
     reject = b;
   });
   return {
-    //@ts-ignore
-    resolve,
-    //@ts-ignore
-    reject,
+    isFulfilled() {
+      return fulfilled;
+    },
+    resolve(value) {
+      fulfilled = true;
+      resolve(value);
+    },
+    reject(value) {
+      fulfilled = true;
+      reject(value);
+    },
     promise,
   };
 }

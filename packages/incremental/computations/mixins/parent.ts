@@ -1,6 +1,6 @@
 import { setAdd } from "../../../util/maps-sets";
 import { ChildComputation } from "./child";
-import { AnyRawComputation, RunId } from "../raw";
+import { AnyRawComputation } from "../raw";
 import { ReachableComputationMixin } from "./reachable";
 
 export interface ParentComputation {
@@ -49,7 +49,7 @@ export class ParentComputationMixin {
     }
   }
 
-  compute(child: AnyRawComputation & ChildComputation, runId: RunId) {
+  compute(child: AnyRawComputation & ChildComputation, runId: number) {
     child.inv();
     this.source.checkActive(runId);
     this.own(child);
@@ -71,9 +71,5 @@ export class ParentComputationMixin {
 
   deleteRoutine(): void {
     this.disconnect();
-  }
-
-  outNodesRoutine(): IterableIterator<AnyRawComputation> {
-    return this.children.values();
   }
 }

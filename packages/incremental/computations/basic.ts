@@ -6,7 +6,6 @@ import {
 import {
   RawComputation,
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
@@ -114,12 +113,12 @@ export class BasicComputation<Req, Res>
 
   protected exec(
     ctx: BasicComputationContext<Req>,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<Res>> {
     return this.cacheableMixin.exec(this.config.exec, ctx, runId);
   }
 
-  protected makeContext(runId: RunId): BasicComputationContext<Req> {
+  protected makeContext(runId: number): BasicComputationContext<Req> {
     return this.registry.fs.extend({
       request: this.request,
       checkActive: () => this.checkActive(runId),
@@ -154,8 +153,6 @@ export class BasicComputation<Req, Res>
   override responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
-
-  onNewResult(result: VersionedComputationResult<Res>): void {}
 
   unroot() {
     this.rooted = false;

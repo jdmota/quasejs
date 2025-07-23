@@ -35,3 +35,10 @@ export function intersection<V>(a: ReadonlySet<V>, b: ReadonlySet<V>): Set<V> {
   }
   return set;
 }
+
+export function transferSetItems<T>(from: Set<T>, to: Set<T>) {
+  for (const e of from) {
+    to.add(e);
+  }
+  from.clear();
+}

@@ -22,7 +22,6 @@ import {
 } from "../mixins/subscribable";
 import {
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   RawComputation,
@@ -102,12 +101,12 @@ export class ComputationEntryJob<Req, Res>
 
   protected exec(
     ctx: ComputationEntryJobContext<Req>,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<undefined>> {
     return this.cacheableMixin.exec(this.pool.config.startExec, ctx, runId);
   }
 
-  protected makeContext(runId: RunId): ComputationEntryJobContext<Req> {
+  protected makeContext(runId: number): ComputationEntryJobContext<Req> {
     return this.registry.fs.extend({
       checkActive: () => this.checkActive(runId),
       compute: req => this.parentMixin.compute(this.pool.make(req), runId),
@@ -146,6 +145,4 @@ export class ComputationEntryJob<Req, Res>
   }
 
   onReachabilityChange(from: boolean, to: boolean): void {}
-
-  onNewResult(result: VersionedComputationResult<undefined>): void {}
 }

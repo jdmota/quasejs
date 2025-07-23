@@ -5,7 +5,7 @@ import {
   promiseIfOk,
   VersionedComputationResult,
 } from "../../utils/result";
-import { AnyRawComputation, RawComputation, RunId } from "../raw";
+import { AnyRawComputation, RawComputation } from "../raw";
 import { SubscribableComputation } from "./subscribable";
 
 export type DependentContext = {
@@ -58,7 +58,7 @@ export class DependentComputationMixin {
     return this.getCallsAmount === this.getCalls.length ? this.getCalls : null;
   }
 
-  makeContextRoutine(runId: RunId): DependentContext {
+  makeContextRoutine(runId: number): DependentContext {
     return {
       get: dep => this.getDep(dep, runId).then(r => r.result),
       getOk: dep => promiseIfOk(this.getDep(dep, runId).then(r => r.result)),
@@ -68,15 +68,24 @@ export class DependentComputationMixin {
   private subscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
     dep.inv();
     if (setAdd(this.dependencies, dep)) {
-      dep.subscribableMixin.subscribers.add(this.source);
+      dep.subscribableMixin.pendingSubscribers.add(this.source);
     }
-    return dep;
+  }
+
+  private lockSubscribe<T>(
+    dep: AnyRawComputation & SubscribableComputation<T>
+  ) {
+    dep.inv();
+    if (this.dependencies.has(dep)) {
+      dep.subscribableMixin.pendingSubscribers.delete(this.source);
+      dep.subscribableMixin.lockedSubscribers.add(this.source);
+    }
   }
 
   private unsubscribe(dep: AnyRawComputation & SubscribableComputation<any>) {
     if (this.dependencies.delete(dep)) {
-      dep.subscribableMixin.subscribers.delete(this.source);
-      dep.subscribableMixin.oldSubscribers.delete(this.source);
+      dep.subscribableMixin.pendingSubscribers.delete(this.source);
+      dep.subscribableMixin.lockedSubscribers.delete(this.source);
     }
   }
 
@@ -84,19 +93,25 @@ export class DependentComputationMixin {
     description: ComputationDescription<
       RawComputation<any, T> & SubscribableComputation<T>
     >,
-    runId: RunId
+    runId: number
   ): Promise<VersionedComputationResult<T>> {
     this.source.checkActive(runId);
     this.getCallsAmount++;
     const computation = this.source.registry.make(description);
-    const result = await this.subscribe(computation).run();
-    this.source.checkActive(runId);
-    this.getCalls.push({
-      kind: "get",
-      computation,
-      version: result.version,
-    });
-    return result;
+    this.subscribe(computation);
+    while (true) {
+      const result = await computation.run();
+      this.source.checkActive(runId);
+      if (computation.subscribableMixin.checkResult(result)) {
+        this.lockSubscribe(computation);
+        this.getCalls.push({
+          kind: "get",
+          computation,
+          version: result.version,
+        });
+        return result;
+      }
+    }
   }
 
   private disconnect() {
@@ -112,11 +127,11 @@ export class DependentComputationMixin {
     this.getCalls = [];
   }
 
-  invalidateRoutine(): void {
+  invalidateRoutine() {
     this.disconnect();
   }
 
-  deleteRoutine(): void {
+  deleteRoutine() {
     this.disconnect();
   }
 

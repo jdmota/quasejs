@@ -6,7 +6,6 @@ import {
 import {
   RawComputation,
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
@@ -120,7 +119,7 @@ export class EffectComputation<Req, Res>
     return this.config.exec(ctx);
   }
 
-  protected makeContext(runId: RunId): EffectComputationContext<Req> {
+  protected makeContext(runId: number): EffectComputationContext<Req> {
     return {
       request: this.request,
       checkActive: () => this.checkActive(runId),
@@ -153,8 +152,6 @@ export class EffectComputation<Req, Res>
   override responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
-
-  onNewResult(result: VersionedComputationResult<Res>): void {}
 
   unroot() {
     this.rooted = false;

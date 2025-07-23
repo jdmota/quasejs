@@ -16,7 +16,6 @@ import {
   RawComputation,
   RawComputationContext,
   RawComputationExec,
-  RunId,
 } from "../raw";
 import { DependentContext, MaybeDependentComputation } from "./dependent";
 import { MaybeParentComputation, MaybeParentContext } from "./parent";
@@ -233,7 +232,7 @@ export class CacheableComputationMixin<
   async exec<Ctx extends CacheableCtx>(
     baseExec: RawComputationExec<Ctx, ResultTypeOfComputation<C>>,
     ctx: Ctx,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<ResultTypeOfComputation<C>>> {
     if (this.isCacheable && this.firstExec) {
       const currentEntry = this.db.get(this.desc);

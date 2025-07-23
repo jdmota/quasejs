@@ -5,7 +5,6 @@ import {
 import {
   RawComputation,
   State,
-  RunId,
   StateNotDeleted,
   StateNotCreating,
   AnyRawComputation,
@@ -34,10 +33,7 @@ import {
   ComputationEntryJobContext,
   ComputationEntryJobDescription,
 } from "./entry-job";
-import {
-  EmitterComputation,
-  EmitterComputationMixin,
-} from "../mixins/events/emitter";
+import { EmitterComputation, EmitterComputationMixin } from "../mixins/emitter";
 import { CacheableComputationMixin } from "../mixins/cacheable";
 
 type ComputationPoolContext = {
@@ -179,7 +175,7 @@ export class ComputationPool<Req, Res>
   // Note: do not use cacheableMixin.exec (see comment there)
   protected async exec(
     ctx: ComputationPoolContext,
-    runId: RunId
+    runId: number
   ): Promise<
     ComputationResult<ReadonlySnapshotHashMap<Req, ComputationResult<Res>>>
   > {
@@ -190,7 +186,7 @@ export class ComputationPool<Req, Res>
     return this.emitterMixin.exec(runId, this.emitRunId);
   }
 
-  protected makeContext(runId: RunId): ComputationPoolContext {
+  protected makeContext(runId: number): ComputationPoolContext {
     return {
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
@@ -233,12 +229,6 @@ export class ComputationPool<Req, Res>
   ): boolean {
     return a.strictContentEquals(b);
   }
-
-  onNewResult(
-    result: VersionedComputationResult<
-      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-    >
-  ): void {}
 
   make(request: Req) {
     return this.registry.make(

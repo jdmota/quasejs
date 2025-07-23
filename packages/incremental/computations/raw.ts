@@ -1,9 +1,12 @@
+import { createDefer, Defer } from "../../util/deferred";
+import { assertion, nonNull } from "../../util/miscellaneous";
 import {
   ComputationResult,
   error,
   VersionedComputationResult,
   WrappedResult,
 } from "../utils/result";
+import { RunId } from "../utils/run-id";
 import {
   ComputationRegistry,
   ComputationDescription,
@@ -40,8 +43,6 @@ export type RawComputationExec<Ctx, Res> = (
   ctx: Ctx
 ) => Promise<ComputationResult<Res>>;
 
-export type RunId = number;
-
 export type AnyRawComputation = RawComputation<any, any>;
 
 export abstract class RawComputation<Ctx, Res> {
@@ -51,7 +52,7 @@ export abstract class RawComputation<Ctx, Res> {
   private state: State;
   private runId: RunId; // If negative, it is not active
   private nextVersion: number;
-  private running: Promise<VersionedComputationResult<Res>> | null;
+  private running: Defer<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
   // Latest result
   protected result: VersionedComputationResult<Res> | null;
@@ -67,7 +68,7 @@ export abstract class RawComputation<Ctx, Res> {
     this.registry = registry;
     this.description = description;
     this.state = State.CREATING;
-    this.runId = 0;
+    this.runId = new RunId();
     this.nextVersion = 1;
     this.running = null;
     this.deleting = false;
@@ -93,9 +94,9 @@ export abstract class RawComputation<Ctx, Res> {
 
   protected abstract exec(
     ctx: Ctx,
-    runId: RunId
+    runId: number
   ): Promise<ComputationResult<Res>>;
-  protected abstract makeContext(runId: RunId): Ctx;
+  protected abstract makeContext(runId: number): Ctx;
   protected abstract isOrphan(): boolean;
   protected abstract onStateChange(
     from: StateNotDeleted,
@@ -125,60 +126,52 @@ export abstract class RawComputation<Ctx, Res> {
     }
   }
 
-  isActive(runId: RunId) {
-    return runId === this.runId;
-  }
-
-  checkActive(runId: RunId) {
-    if (!this.isActive(runId)) {
+  checkActive(runId: number) {
+    if (this.runId.isNotActive(runId)) {
       throw new Error("Computation not active");
     }
   }
 
   run(): Promise<VersionedComputationResult<Res>> {
     this.inv();
-    if (!this.running) {
-      const runId = Math.abs(this.runId) + 1;
+    if (this.state === State.PENDING) {
+      if (this.running == null) {
+        this.running = createDefer();
+      }
+      assertion(!this.running.isFulfilled());
+      const runId = this.runId.newId();
       const ctx = this.makeContext(runId);
-      this.runId = runId;
-      this.running = Promise.resolve()
+      Promise.resolve()
         .then(() => this.exec(ctx, runId))
         .then(
           v => this.finish(v, runId),
           e => {
             if (e instanceof WrappedResult) {
-              return this.finish(e.result, runId);
+              this.finish(e.result, runId);
+            } else {
+              this.finish(error(e, false), runId);
             }
-            return this.finish(error(e, false), runId);
           }
         );
       this.mark(State.RUNNING);
     }
-    return this.running;
+    return nonNull(this.running).promise;
   }
 
-  private finish(
-    result: ComputationResult<Res>,
-    runId: RunId
-  ): VersionedComputationResult<Res> {
-    if (this.isActive(runId)) {
-      const versionedResult: VersionedComputationResult<Res> = {
+  private finish(result: ComputationResult<Res>, runId: number) {
+    if (this.runId.isActive(runId)) {
+      this.runId.cancel();
+      this.result = this.finishRoutine({
         version: this.nextVersion++,
         result,
-      };
-      this.runId = -this.runId;
-      this.result = this.finishRoutine(versionedResult);
+      });
+      nonNull(this.running).resolve(this.result);
       this.mark(
         result.ok || result.deterministic
           ? State.SETTLED_STABLE
           : State.SETTLED_UNSTABLE
       );
-      return versionedResult;
     }
-    return {
-      version: 0,
-      result: error(new Error("Computation was cancelled"), false),
-    };
   }
 
   invalidate() {
@@ -186,8 +179,8 @@ export abstract class RawComputation<Ctx, Res> {
     if (!this.registry.invalidationsAllowed()) {
       throw new Error("Invariant violation: Invalidations are disabled");
     }
-    this.runId = -this.runId;
-    this.running = null;
+    this.runId.cancel();
+    if (this.running?.isFulfilled()) this.running = null;
     this.result = null;
     this.invalidateRoutine();
     this.mark(State.PENDING);
@@ -203,7 +196,7 @@ export abstract class RawComputation<Ctx, Res> {
     }
     this.registry.delete(this); // Remove immediately from registry to be safe
     this.deleting = true;
-    this.runId = -this.runId;
+    this.runId.cancel();
     this.running = null;
     this.result = null;
     this.deleteRoutine();

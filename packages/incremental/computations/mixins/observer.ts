@@ -1,6 +1,7 @@
-import { setAdd } from "../../../../util/maps-sets";
-import { ComputationDescription } from "../../../incremental-lib";
-import { AnyRawComputation, RawComputation, RunId } from "../../raw";
+import { setAdd } from "../../../util/maps-sets";
+import { ComputationDescription } from "../../incremental-lib";
+import { RunId } from "../../utils/run-id";
+import { AnyRawComputation, RawComputation } from "../raw";
 import { EmitterComputation, EventFn } from "./emitter";
 
 export type ObserverContext = {
@@ -21,37 +22,36 @@ export class ObserverComputationMixin {
   public readonly emitters: Set<
     AnyRawComputation & EmitterComputation<any, any, any>
   >;
-  private observerInitId: number;
+  private observerInitId: RunId;
 
   constructor(source: RawComputation<any, any> & ObserverComputation) {
     this.source = source;
     this.emitters = new Set();
-    this.observerInitId = 0;
+    this.observerInitId = new RunId();
   }
 
   newObserverInitId() {
-    this.observerInitId = Math.abs(this.observerInitId) + 1;
-    return this.observerInitId;
+    return this.observerInitId.newId();
   }
 
   finishObserverInit() {
-    this.observerInitId = -this.observerInitId;
+    this.observerInitId.cancel();
   }
 
   checkInitActive(observerInitId: number) {
-    if (observerInitId !== this.observerInitId) {
+    if (this.observerInitId.isNotActive(observerInitId)) {
       throw new Error("Cannot listen in this state");
     }
   }
 
-  makeContextRoutine(runId: RunId, observerInitId: number): ObserverContext {
+  makeContextRoutine(runId: number, observerInitId: number): ObserverContext {
     return {
       listen: (desc, fn) => this.listen(runId, observerInitId, desc, fn),
     };
   }
 
   private listen<K, V, R>(
-    runId: RunId,
+    runId: number,
     observerInitId: number,
     description: ComputationDescription<
       RawComputation<any, any> & EmitterComputation<K, V, R>
@@ -71,7 +71,7 @@ export class ObserverComputationMixin {
     }
   }
 
-  askForInitial(runId: RunId) {
+  askForInitial(runId: number) {
     this.source.checkActive(runId);
     for (const emitter of this.emitters) {
       emitter.emitterMixin.emitInitialFor(this.source);

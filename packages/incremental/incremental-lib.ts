@@ -6,6 +6,8 @@
 import EventEmitter from "node:events";
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
+import { SerializationDB } from "../util/serialization";
+import { assertion } from "../util/miscellaneous";
 import { HashMap } from "./utils/hash-map";
 import { AnyRawComputation, RawComputation, State } from "./computations/raw";
 import { ComputationResult } from "./utils/result";
@@ -16,7 +18,6 @@ import {
 import { EffectComputation } from "./computations/effect";
 import { CacheDB } from "./computations/mixins/cacheable";
 import { FileSystem } from "./computations/file-system/file-system";
-import { SerializationDB } from "../util/serialization";
 
 const determinismSym = Symbol("deterministic");
 
@@ -67,7 +68,7 @@ export type IncrementalOpts = {
 export const serializationDB = new SerializationDB();
 
 export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
-  private readonly canInvalidate: boolean;
+  private canInvalidate: boolean;
   private canExternalInvalidate: boolean;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
   readonly computations: readonly [
@@ -125,6 +126,10 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
 
   invalidationsAllowed() {
     return this.canInvalidate;
+  }
+
+  private disableInvalidations() {
+    this.canInvalidate = false;
   }
 
   externalInvalidationsAllowed() {
@@ -187,6 +192,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   }
 
   private async wait() {
+    assertion(!this.canInvalidate && !this.canExternalInvalidate);
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {
       this.wake();
       await this.running.peek()?.run();
@@ -313,6 +319,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
         finishing = true;
         registry.disableExternalInvalidations();
         registry.invalidateSettledUnstable();
+        registry.disableInvalidations();
         await registry.wait();
         const result = await computation.run();
         await registry.cleanupRun(computation);
