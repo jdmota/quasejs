@@ -111,9 +111,14 @@ export async function main() {
       return results;
     },
     {
-      cacheDir: "packages/incremental/__test/cache",
-      cacheSaveOpts: {
+      fs: {
+        reporter: console,
+      },
+      cache: {
+        dir: "packages/incremental/__test/cache",
+        log: true,
         garbageCollect: true,
+        reporter: console,
       },
     }
   );

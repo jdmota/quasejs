@@ -160,7 +160,7 @@ export abstract class RawComputation<Ctx, Res> {
     if (this.runId.isActive(runId)) {
       this.runId.cancel();
       this.result = this.finishRoutine({
-        version: [null, this.nextVersion++],
+        version: [this.registry.getSession(), this.nextVersion++],
         result,
       });
       nonNull(this.running).resolve(this.result);

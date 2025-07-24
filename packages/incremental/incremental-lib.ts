@@ -12,14 +12,15 @@ import { HashMap } from "./utils/hash-map";
 import { serializationDB } from "./utils/serialization-db";
 import { AnyRawComputation, RawComputation, State } from "./computations/raw";
 import type { ComputationDescription } from "./computations/description";
-import { ComputationResult } from "./utils/result";
+import { ComputationResult, VersionedComputationResult } from "./utils/result";
 import {
   SimpleEffectComputationExec,
   newSimpleEffectComputation,
 } from "./computations/simple-effect";
 import { EffectComputation } from "./computations/effect";
-import { CacheDB, CacheSaveOpts } from "./computations/mixins/cacheable";
+import { CacheDB } from "./computations/mixins/cacheable";
 import { FileSystem } from "./computations/file-system/file-system";
+import { createErrorDefer } from "../util/deferred";
 
 const determinismSym = Symbol("deterministic");
 
@@ -47,9 +48,21 @@ export type ComputationRegistryEvents = {
   ];
 };
 
+export type IncrementalReporter = {
+  log(message?: any, ...optionalParams: any[]): void;
+  error(message?: any, ...optionalParams: any[]): void;
+};
+
 export type IncrementalOpts = {
-  readonly cacheDir: string;
-  readonly cacheSaveOpts: CacheSaveOpts;
+  readonly fs: {
+    readonly reporter: IncrementalReporter;
+  };
+  readonly cache: {
+    readonly dir: string;
+    readonly log: boolean;
+    readonly garbageCollect: boolean;
+    readonly reporter: IncrementalReporter;
+  };
 };
 
 type ComputationRegistryOpts = IncrementalOpts & {
@@ -69,7 +82,9 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   private readonly pending: SpecialQueue<AnyRawComputation>;
   private readonly running: SpecialQueue<AnyRawComputation>;
   private readonly settledUnstable: SpecialQueue<AnyRawComputation>;
+  // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
+  private globalSession: number = -1;
 
   public readonly db: CacheDB;
   public readonly fs: FileSystem;
@@ -92,11 +107,11 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.pending = this.computations[State.PENDING];
     this.running = this.computations[State.RUNNING];
     this.settledUnstable = this.computations[State.SETTLED_UNSTABLE];
-    this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
+    this.otherJobs = [];
     //
     this.serializationDB = serializationDB;
     this.db = new CacheDB(opts);
-    this.fs = new FileSystem();
+    this.fs = new FileSystem(opts);
   }
 
   queueOtherJob(fn: () => Promise<unknown>) {
@@ -186,8 +201,17 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     assertion(!this.canInvalidate && !this.canExternalInvalidate);
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {
       this.wake();
-      await this.running.peek()?.run();
+      const computation = this.running.peek();
+      if (computation) {
+        await this.run(computation);
+      }
     }
+  }
+
+  run<T>(
+    computation: RawComputation<any, T>
+  ): Promise<VersionedComputationResult<T>> {
+    return Promise.race([computation.run(), this.interruptedDefer.promise]);
   }
 
   peekErrors() {
@@ -227,8 +251,6 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     }
   */
 
-  // TODO delete unneeed computations during execution?
-
   // It is key that we only destroy computations that are not attached with anything
   // Also because of the cache information:
   // We do not want to get confused about the computation versions,
@@ -243,6 +265,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     } while (this.computationsCount() < count);
   }
 
+  private interruptedDefer = createErrorDefer();
   private cleaningUp = false;
 
   isCleaningUp() {
@@ -253,7 +276,10 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     rootComputation: EffectComputation<undefined, any>,
     interrupted: boolean
   ) {
+    if (this.cleaningUp) return;
     this.cleaningUp = true;
+    this.interruptedDefer.reject(new Error("Interrupted"));
+
     this.scheduler1.cancel();
     this.scheduler2.cancel();
 
@@ -278,17 +304,36 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     return Promise.all(otherJobs);
   }
 
+  getSession() {
+    return this.globalSession;
+  }
+
+  async newSession() {
+    this.globalSession = await this.db.newGlobalSession();
+  }
+
+  // TODO delete unneeed computations when stable?
+  async gc() {
+    await this.newSession();
+    this.clearOrphans();
+  }
+
+  async load() {
+    await this.newSession();
+    return this;
+  }
+
   static async singleRun<T>(
     exec: SimpleEffectComputationExec<T>,
     opts: IncrementalOpts
   ): Promise<ComputationResult<T>> {
-    const registry = new ComputationRegistry({
+    const registry = await new ComputationRegistry({
       ...opts,
       canInvalidate: false,
-    });
+    }).load();
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
-    const result = await computation.run();
+    const result = await registry.run(computation);
     await registry.cleanupRun(computation, false);
     return result.result;
   }
@@ -297,13 +342,10 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     exec: SimpleEffectComputationExec<T>,
     opts: IncrementalOpts
   ): Promise<ComputationController<T>> {
-    const registry = new ComputationRegistry({
+    const registry = await new ComputationRegistry({
       ...opts,
       canInvalidate: true,
-    });
-
-    await registry.db.load();
-
+    }).load();
     const desc = newSimpleEffectComputation({ exec, root: true });
     const computation = registry.make(desc);
     registry.wake();
@@ -315,6 +357,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       async interrupt() {
         if (interrupted) throw new Error("Already interrupted");
         interrupted = true;
+        registry.disableExternalInvalidations();
+        registry.disableInvalidations();
         await registry.cleanupRun(computation, true);
       },
       async finish() {
@@ -325,7 +369,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
         registry.invalidateSettledUnstable();
         registry.disableInvalidations();
         await registry.wait();
-        const result = await computation.run();
+        const result = await registry.run(computation);
         await registry.cleanupRun(computation, false);
         return result.result;
       },

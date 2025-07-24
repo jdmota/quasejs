@@ -106,10 +106,18 @@ export class HashMap<K, V> implements ReadonlyHashMap<K, V> {
     return this.sizeCount;
   }
 
-  get(key: K): V | undefined {
+  private findEntry(key: K) {
     return this.map
       .get(this.hash(key))
-      ?.find(entry => this.equal(entry.key, key))?.value;
+      ?.find(entry => this.equal(entry.key, key));
+  }
+
+  has(key: K): boolean {
+    return this.findEntry(key) != null;
+  }
+
+  get(key: K): V | undefined {
+    return this.findEntry(key)?.value;
   }
 
   delete(key: K): V | undefined {

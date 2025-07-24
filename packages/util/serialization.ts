@@ -56,7 +56,7 @@ export class SerializationDB {
         value: {
           name: uniqueData.name,
           version: uniqueData.version,
-        } satisfies SerializedObject,
+        } satisfies SerializedUniqueObject,
       };
     }
     const constructor = (value as any).constructor;
@@ -88,7 +88,7 @@ export class SerializationDB {
     if (name === UNIQUE_OBJ_NAME) {
       const serData =
         value && typeof value === "object"
-          ? (value as SerializedObject)
+          ? (value as SerializedUniqueObject)
           : undefined;
       if (serData == null) {
         throw new UniqueObjectSerializationError(
@@ -146,6 +146,79 @@ export class SerializationDB {
   }
 }
 
+// Serialization of unique objects (such as functions)
+
+export type SerializedUniqueObject = {
+  readonly name: string;
+  readonly version: number;
+};
+
+export type NamedUniqueObject = {
+  readonly name: string;
+  readonly version: number;
+  readonly obj: Object;
+};
+
+class MyObject {}
+
+export class UniqueObjsDB {
+  private nameToObj: Map<string, NamedUniqueObject> = new Map();
+  private objToName: Map<unknown, NamedUniqueObject> = new Map();
+
+  getByName(name: string) {
+    return this.nameToObj.get(name);
+  }
+
+  getByObj(obj: unknown) {
+    return this.objToName.get(obj);
+  }
+
+  // If the constructor is exactly Object, msgpackr will use the routine to serialize plain objects
+  // and will not get to the code that uses the extensions
+  // So, we patch the constructor
+  private patch<T extends Object>(obj: T): T {
+    if (obj.constructor === Object) {
+      obj.constructor = MyObject;
+    }
+    return obj;
+  }
+
+  register<T extends Object>(name: string, version: number, obj: T): T {
+    if (this.nameToObj.has(name)) {
+      throw new Error(`Name ${name} for object already used`);
+    }
+
+    if (this.objToName.has(obj)) {
+      throw new Error("Object already registered");
+    }
+
+    const objWithName: NamedUniqueObject = {
+      name,
+      version,
+      obj,
+    };
+    this.nameToObj.set(name, objWithName);
+    this.objToName.set(obj, objWithName);
+    return this.patch(obj);
+  }
+
+  unregister(obj: Object) {
+    const objWithName = this.objToName.get(obj);
+    if (objWithName) {
+      this.nameToObj.delete(objWithName.name);
+      this.objToName.delete(objWithName.obj);
+    }
+  }
+}
+
+export class UniqueObjectSerializationError extends SerializationError {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+  }
+}
+
+//
+
 const SERIALIZATION_SYM = Symbol("quase_serialization");
 
 export function getObjSerializer<
@@ -183,74 +256,3 @@ export const bigintSerializer: Serializer<bigint, Buffer> = {
     return BigInt(`0x${buf.toString()}`);
   },
 };
-
-// Serialization of unique objects (such as functions)
-
-type SerializedObject = {
-  readonly name: string;
-  readonly version: number;
-};
-
-export type NamedObject = {
-  readonly name: string;
-  readonly version: number;
-  readonly obj: Object;
-};
-
-class MyObject {}
-
-export class UniqueObjsDB {
-  private nameToObj: Map<string, NamedObject> = new Map();
-  private objToName: Map<unknown, NamedObject> = new Map();
-
-  getByName(name: string) {
-    return this.nameToObj.get(name);
-  }
-
-  getByObj(obj: unknown) {
-    return this.objToName.get(obj);
-  }
-
-  // If the constructor is exactly Object, msgpackr will use the routine to serialize plain objects
-  // and will not get to the code that uses the extensions
-  // So, we patch the constructor
-  private patch<T extends Object>(obj: T): T {
-    if (obj.constructor === Object) {
-      obj.constructor = MyObject;
-    }
-    return obj;
-  }
-
-  register<T extends Object>(name: string, version: number, obj: T): T {
-    if (this.nameToObj.has(name)) {
-      throw new Error(`Name ${name} for object already used`);
-    }
-
-    if (this.objToName.has(obj)) {
-      throw new Error("Object already registered");
-    }
-
-    const objWithName: NamedObject = {
-      name,
-      version,
-      obj,
-    };
-    this.nameToObj.set(name, objWithName);
-    this.objToName.set(obj, objWithName);
-    return this.patch(obj);
-  }
-
-  unregister(obj: Object) {
-    const objWithName = this.objToName.get(obj);
-    if (objWithName) {
-      this.nameToObj.delete(objWithName.name);
-      this.objToName.delete(objWithName.obj);
-    }
-  }
-}
-
-export class UniqueObjectSerializationError extends SerializationError {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-  }
-}

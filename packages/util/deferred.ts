@@ -29,6 +29,16 @@ export function createDefer<T>(): Defer<T> {
   };
 }
 
+export type ErrorDefer = {
+  readonly isFulfilled: () => boolean;
+  readonly reject: (error: Error) => void;
+  readonly promise: Promise<never>;
+};
+
+export function createErrorDefer(): ErrorDefer {
+  return createDefer();
+}
+
 class Notifier<T> {
   private defer: Defer<T> | null;
 

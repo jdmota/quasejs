@@ -187,7 +187,6 @@ export class ComputationPool<Req, Res>
     this.mark(State.PENDING);
   }
 
-  // Note: do not use cacheableMixin.exec (see comment there)
   protected async exec(
     ctx: ComputationPoolContext,
     runId: number

@@ -108,6 +108,7 @@ export class CellComputation<Res>
     runId: number
   ): Promise<ComputationResult<Res>> {
     this.executed = true;
+    await this.cacheableMixin.preExec();
     // Wait for the value...
     while (this.cellResult == null) {
       // Ensure this running id is active before doing side-effects

@@ -63,6 +63,14 @@ export function strictArrayEquals<T>(
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
+export function arrayEquals<T>(
+  a: readonly T[],
+  b: readonly T[],
+  equals: (a: T, b: T) => boolean
+): boolean {
+  return a.length === b.length && a.every((v, i) => equals(v, b[i]));
+}
+
 export function find<A, B>(
   it: Iterable<A>,
   fn: (val: A) => B | null

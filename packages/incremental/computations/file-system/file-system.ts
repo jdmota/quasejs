@@ -3,7 +3,7 @@ import chokidarWatcher from "chokidar";
 import fsextra from "fs-extra";
 import { dirname } from "path";
 import { normalizePath } from "../../../util/path-url";
-import { ComputationRegistry } from "../../incremental-lib";
+import { ComputationRegistry, IncrementalOpts } from "../../incremental-lib";
 import { serializationDB } from "../../utils/serialization-db";
 import {
   ComputationResult,
@@ -115,6 +115,7 @@ class FileComputation
   protected async exec(
     ctx: RawComputationContext
   ): Promise<ComputationResult<bigint>> {
+    await this.cacheableMixin.preExec();
     if (this.registry.invalidationsAllowed()) {
       await this.fs._sub(this);
     }
@@ -246,13 +247,13 @@ export class FileSystem {
   // Watcher
   private watcher: chokidarWatcher.FSWatcher | null;
 
-  constructor() {
+  constructor(private readonly opts: IncrementalOpts) {
     this.files = new Map();
     this.watcher = null;
   }
 
   private react(event: FileChange, path: string) {
-    console.log("=====", event, path, "=====");
+    this.opts.fs.reporter.log("=====", event, path, "=====");
     const info = this.files.get(normalizePath(path));
     if (info) {
       for (const c of info.events[event].computations) {
