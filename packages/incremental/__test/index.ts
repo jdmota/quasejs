@@ -1,30 +1,20 @@
+import path from "path";
+import fsextra from "fs-extra";
+import { serializationDB } from "../utils/serialization-db";
+import { strictArrayEquals } from "../../util/miscellaneous";
 import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
 import { newStatefulComputation } from "../computations/stateful";
 import { ComputationResult, ok } from "../utils/result";
-import path from "path";
-import fsextra from "fs-extra";
-import { serializationDB } from "../utils/serialization-db";
-
-function deepClone(value: any): any {
-  if (Array.isArray(value)) {
-    return value.map(v => deepClone(v));
-  }
-  if (value != null && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, deepClone(v)])
-    );
-  }
-  return value;
-}
 
 type FILE = {
-  content: string;
-  deps?: string[];
+  readonly content: string;
+  readonly deps: string[];
 };
 
 const pool = newComputationPool<string, FILE>(
   serializationDB.uniqueObjDB.register("MY_POOL_CONFIG", 1, {
+    key: "MY_POOL_CONFIG",
     async startExec(ctx) {
       console.log("Running entry job...");
 
@@ -40,7 +30,7 @@ const pool = newComputationPool<string, FILE>(
         p => fsextra.readJson(p)
       );
 
-      for (const dep of json.deps ?? []) {
+      for (const dep of json.deps) {
         ctx.compute(dep);
       }
       return ok(json);
@@ -55,10 +45,10 @@ const pool = newComputationPool<string, FILE>(
     },
     responseDef: {
       hash(a) {
-        return a.deps?.length ?? 0;
+        return a.content.length * a.deps.length;
       },
       equal(a, b) {
-        return a === b;
+        return a.content === b.content && strictArrayEquals(a.deps, b.deps);
       },
     },
   })
@@ -68,7 +58,7 @@ const stateful = newStatefulComputation({
   init(ctx) {
     let num = 0;
     ctx.listen(pool, event => {
-      // console.log("EVENT", event);
+      console.log("EVENT", event);
       num++;
       if (event.type === "done") {
         ctx.done(ok(num));

@@ -56,6 +56,13 @@ export function equals(a: ObjectHashEquals | null, b: ObjectHashEquals | null) {
   return a.equals(b);
 }
 
+export function strictArrayEquals<T>(
+  a: readonly T[],
+  b: readonly T[]
+): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
 export function find<A, B>(
   it: Iterable<A>,
   fn: (val: A) => B | null

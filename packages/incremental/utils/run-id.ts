@@ -1,5 +1,5 @@
 export class RunId {
-  private id = 0;
+  private id = 0; // If negative, it is not active
 
   getId() {
     return this.id;

@@ -95,7 +95,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.otherJobs = []; // This includes jobs like cleanup tasks that might not fit into the computation lifecycles
     //
     this.serializationDB = serializationDB;
-    this.db = new CacheDB(opts.cacheDir);
+    this.db = new CacheDB(opts);
     this.fs = new FileSystem();
   }
 
@@ -270,18 +270,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       throw new Error("Invariant violation: Cleanup failed");
     }
 
-    // Close file system watcher
     this.queueOtherJob(() => this.fs.close());
-
-    // Save cache DB
-    // (if this run was interrupted, don't GC to avoid deleting useful entries that didn't get the chance to be flagged as "alive")
-    this.queueOtherJob(() =>
-      this.db.save(
-        interrupted
-          ? { ...this.opts.cacheSaveOpts, garbageCollect: false }
-          : this.opts.cacheSaveOpts
-      )
-    );
+    this.queueOtherJob(() => this.db.save(interrupted));
 
     const { otherJobs } = this;
     this.otherJobs = [];

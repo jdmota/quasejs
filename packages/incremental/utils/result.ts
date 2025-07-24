@@ -1,3 +1,5 @@
+import { Version } from "./versions";
+
 export type ComputationResult<T, E = unknown> =
   | {
       readonly ok: true;
@@ -10,7 +12,7 @@ export type ComputationResult<T, E = unknown> =
     };
 
 export type VersionedComputationResult<T, E = unknown> = {
-  readonly version: number;
+  readonly version: Version;
   readonly result: ComputationResult<T, E>;
 };
 

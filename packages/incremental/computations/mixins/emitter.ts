@@ -187,7 +187,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.executed = true;
     // Wait for done...
     while (this.doneResult == null) {
-      // Ensure this running version is active before doing side-effects
+      // Ensure this running id is active before doing side-effects
       this.source.checkActive(runId);
       this.checkEmitActive(emitRunId);
       await this.notifier.wait();

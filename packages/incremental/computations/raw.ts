@@ -48,7 +48,7 @@ export abstract class RawComputation<Ctx, Res> {
   public readonly description: ComputationDescription<any>;
   // Current state
   private state: State;
-  private runId: RunId; // If negative, it is not active
+  private runId: RunId;
   private nextVersion: number;
   private running: Defer<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
@@ -160,7 +160,7 @@ export abstract class RawComputation<Ctx, Res> {
     if (this.runId.isActive(runId)) {
       this.runId.cancel();
       this.result = this.finishRoutine({
-        version: this.nextVersion++,
+        version: [null, this.nextVersion++],
         result,
       });
       nonNull(this.running).resolve(this.result);

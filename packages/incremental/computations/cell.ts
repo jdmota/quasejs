@@ -73,6 +73,7 @@ export class CellComputation<Res>
   protected readonly config: CellConfig<Res>;
   protected cellResult: ComputationResult<Res> | null;
   private notifier: Notifier<null>;
+  private executed = false;
 
   constructor(
     registry: ComputationRegistry,
@@ -95,17 +96,21 @@ export class CellComputation<Res>
 
   set(value: Res) {
     this.cellResult = ok(value);
-    this.notifier.done(null);
-    this.registry.externalInvalidate(this);
+    if (this.notifier.isWaiting()) {
+      this.notifier.done(null);
+    } else if (this.executed) {
+      this.registry.externalInvalidate(this);
+    }
   }
 
   protected async exec(
     ctx: RawComputationContext,
     runId: number
   ): Promise<ComputationResult<Res>> {
+    this.executed = true;
     // Wait for the value...
     while (this.cellResult == null) {
-      // Ensure this running version is active before doing side-effects
+      // Ensure this running id is active before doing side-effects
       ctx.checkActive();
       await this.notifier.wait();
       // In case invalidations occured between notifier.done()
@@ -131,13 +136,15 @@ export class CellComputation<Res>
     return result;
   }
 
-  protected invalidateRoutine(): void {
+  protected invalidateRoutine() {
+    this.executed = false;
     this.notifier.cancel();
     this.subscribableMixin.invalidateRoutine();
     this.cacheableMixin.invalidateRoutine();
   }
 
-  protected deleteRoutine(): void {
+  protected deleteRoutine() {
+    this.executed = false;
     this.notifier.cancel();
     this.subscribableMixin.deleteRoutine();
     this.cacheableMixin.deleteRoutine();

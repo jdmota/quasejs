@@ -47,6 +47,7 @@ type ComputationPoolContext = {
 type ComputationExec<Ctx, Res> = (ctx: Ctx) => Promise<ComputationResult<Res>>;
 
 export type ComputationPoolConfig<Req, Res> = {
+  readonly key: string;
   readonly startExec: ComputationExec<
     ComputationEntryJobContext<Req>,
     undefined
@@ -92,7 +93,7 @@ export class ComputationPoolDescription<
   }
 
   key() {
-    return `Pool`;
+    return `Pool{${this.config.key}}`;
   }
 }
 
@@ -134,9 +135,6 @@ export class ComputationPool<Req, Res>
     ComputationResult<Res>,
     ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   >;
-  public readonly cacheableMixin: CacheableComputationMixin<
-    ComputationPool<Req, Res>
-  >;
   //
   public readonly config: ComputationPoolConfig<Req, Res>;
   private readonly entryDescription: ComputationEntryJobDescription<Req, Res>;
@@ -170,7 +168,6 @@ export class ComputationPool<Req, Res>
       desc.config.requestDef,
       this.equal
     );
-    this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.config = desc.config;
     this.entryDescription = new ComputationEntryJobDescription(desc);
     this.entryStatus = [0, 0, 0, 0];
@@ -221,21 +218,18 @@ export class ComputationPool<Req, Res>
     >
   ) {
     result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result, false);
     return result;
   }
 
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
-    this.cacheableMixin.invalidateRoutine();
     this.emitterMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
-    this.cacheableMixin.deleteRoutine();
     this.emitterMixin.resetRoutine();
   }
 
@@ -343,12 +337,17 @@ export class ComputationPool<Req, Res>
     this.react();
   }
 
+  private lastSeen: ReadonlySnapshotHashMap<
+    Req,
+    ComputationResult<Res>
+  > | null = null;
+
   // React to possible changes
   private react() {
-    if (this.isDone()) {
+    if (this.isDone() && (this.lastSeen == null || this.lastSeen.didChange())) {
       this.emitterMixin.done(
         this.emitRunId,
-        ok(this.data.reachable.results.getSnapshot())
+        ok((this.lastSeen = this.data.reachable.results.getSnapshot()))
       );
     }
   }

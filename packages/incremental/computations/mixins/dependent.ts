@@ -7,6 +7,7 @@ import {
 import { AnyRawComputation, RawComputation } from "../raw";
 import { ComputationDescription } from "../description";
 import { SubscribableComputation } from "./subscribable";
+import { Version } from "../../utils/versions";
 
 export type DependentContext = {
   readonly get: <T>(
@@ -32,7 +33,7 @@ export interface MaybeDependentComputation {
 export type GetCall = {
   readonly kind: "get";
   readonly computation: AnyRawComputation;
-  readonly version: number;
+  readonly version: Version;
 };
 
 export class DependentComputationMixin {

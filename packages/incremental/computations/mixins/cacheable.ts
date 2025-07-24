@@ -3,7 +3,10 @@ import fsextra from "fs-extra";
 import path from "node:path";
 import { inspect } from "node:util";
 import { never } from "../../../util/miscellaneous";
-import { ResultTypeOfComputation } from "../../incremental-lib";
+import type {
+  IncrementalOpts,
+  ResultTypeOfComputation,
+} from "../../incremental-lib";
 import { type ValueDefinition, HashMap, objValue } from "../../utils/hash-map";
 import {
   ComputationResult,
@@ -23,13 +26,33 @@ import { CtxWithFS } from "../file-system/file-system";
 import { MissingConstructorSerializerError } from "../../../util/serialization";
 import { SubscribableComputation } from "./subscribable";
 import { ChildComputation } from "./child";
+import {
+  sameVersion,
+  addSessionId,
+  InDiskVersion,
+  Version,
+} from "../../utils/versions";
+
+function checkArray<T>(val: T[] | number): T[] {
+  if (Array.isArray(val)) {
+    return val;
+  }
+  throw new Error("Value is " + val);
+}
+
+function checkNumber<T>(val: T[] | number): number {
+  if (typeof val === "number") {
+    return val;
+  }
+  throw new Error("Value is " + val);
+}
 
 export type CachedGet = {
   readonly kind: "get";
   readonly desc: ComputationDescription<
     RawComputation<any, any> & SubscribableComputation<any>
   >;
-  readonly version: number;
+  readonly version: Version;
 };
 
 export type CachedCompute = {
@@ -45,7 +68,7 @@ class CacheEntry<Res> {
   constructor(
     readonly value: Res,
     readonly deps: readonly CachedDep[],
-    readonly version: number,
+    readonly version: Version,
     readonly useDeps: boolean,
     readonly alive: boolean // If true, keep it. Otherwise, GC it
   ) {}
@@ -55,6 +78,7 @@ type CachedDepInDisk =
   | {
       readonly kind: "get";
       readonly desc: ComputationDescription<any>;
+      readonly version: InDiskVersion;
     }
   | {
       readonly kind: "compute";
@@ -66,6 +90,7 @@ type CacheEntryInDisk = {
   readonly value: unknown;
   readonly deps: readonly CachedDepInDisk[];
   readonly useDeps: boolean;
+  readonly version: InDiskVersion;
 };
 
 export type CacheSaveOpts = {
@@ -76,6 +101,10 @@ type DB_Val = Readonly<CacheEntryInDisk>[];
 
 export class CacheDB {
   private static DB_VERSION = 1;
+  private static CACHE_DB_SESSION_SYM = Symbol.for(
+    "quase_incremental_cache_session"
+  );
+
   private readonly dir: string;
   private readonly logFile: string;
 
@@ -83,22 +112,29 @@ export class CacheDB {
     ComputationDescription<any>,
     CacheEntry<any> | null // Null for deleted entries
   > = new HashMap(defaultValDef);
+  private globalSession = 0;
 
   private locked = false;
   private lastLog: Promise<void>;
+  private saveJobs: Map<string, Promise<void>>;
+  private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
 
-  constructor(dir: string) {
+  constructor(private readonly opts: IncrementalOpts) {
     this.dir =
-      path.resolve(dir) + path.sep + `quase_incremental_v${CacheDB.DB_VERSION}`;
+      path.resolve(opts.cacheDir) +
+      path.sep +
+      `quase_incremental_v${CacheDB.DB_VERSION}`;
     this.logFile = this.dir + path.sep + `log${Date.now()}.txt`;
     this.lastLog = Promise.resolve();
+    this.saveJobs = new Map();
+    this.db = this.openDB();
   }
 
-  _log(message: string, value: unknown = null) {
+  _log(message: string, value?: unknown) {
     this.lastLog = this.lastLog.then(() => {
       return fsextra.appendFile(
         this.logFile,
-        `\n\n${message}\n${inspect(value)}`
+        `\n\n${message}${value === undefined ? "" : "\n" + inspect(value)}`
       );
     });
   }
@@ -116,12 +152,14 @@ export class CacheDB {
 
   set<C extends AnyRawComputation>(
     desc: ComputationDescription<C>,
-    entry: CacheEntry<ResultTypeOfComputation<C>>
+    entry: CacheEntry<ResultTypeOfComputation<C>>,
+    save: boolean
   ) {
     if (this.locked) {
       return;
     }
     this.map.set(desc, entry);
+    if (save) this.saveOne(desc, entry);
   }
 
   delete(desc: ComputationDescription<any>) {
@@ -131,26 +169,49 @@ export class CacheDB {
     this.map.set(desc, null);
   }
 
-  // When loading, we assign -1 to the versions to avoid confusion
-  // between versions cached in disk (from a previous session)
-  // and versions created at runtime in this session
-  async load() {
-    const cacheDir = this.dir;
-    const db = lmdb.open<DB_Val, string>({
-      path: cacheDir,
+  private openDB() {
+    return lmdb.open<
+      DB_Val | number,
+      string | typeof CacheDB.CACHE_DB_SESSION_SYM
+    >({
+      path: this.dir,
+      sharedStructuresKey: Symbol.for("quase_incremental_cache_structures"),
+      encoder: {
+        structuredClone: true,
+      },
     });
+  }
+
+  // TODO loading everything to memory, is it ok? yes, big blobs should be handled separately
+  async load() {
+    // A global version number is stored in the DB
+    // and associated with entries that are going to be saved now
+    // This way nothing is confused, even if we crash in the middle of something
+    this.globalSession = await this.db.transaction(async () => {
+      const session = checkNumber(
+        this.db.get(CacheDB.CACHE_DB_SESSION_SYM) || 1
+      );
+      const newSession = session + 1;
+      await this.db.put(CacheDB.CACHE_DB_SESSION_SYM, newSession);
+      return newSession;
+    });
+
+    const deleteKeys = [];
+
+    this._log("=== NEW GLOBAL SESSION ===", this.globalSession);
 
     this._log("=== LOADING CACHE ===");
 
-    // TODO loading everything to memory, is it ok? yes, big blobs should be handled separately
-    for (const key of db.getKeys()) {
+    for (const key of this.db.getKeys()) {
+      if (typeof key === "symbol") continue;
       try {
-        const dbValue = db.get(key) ?? [];
-        for (const entry of dbValue) {
-          this.set(entry.desc, this.unpackEntry(entry));
+        const dbValue = this.db.get(key) ?? [];
+        for (const entry of checkArray(dbValue)) {
+          this.set(entry.desc, this.unpackEntry(entry), false);
           this._log("LOADED ENTRY", entry);
         }
       } catch (err) {
+        deleteKeys.push(key);
         this._log(
           "ERROR",
           this.addError(
@@ -162,7 +223,9 @@ export class CacheDB {
       }
     }
 
-    await db.close();
+    // Delete keys that may contain invalid data
+    // (e.g., due to a serialization format version change)
+    await Promise.all(deleteKeys.map(key => this.db.remove(key)));
 
     this._log("=== CACHE LOADED ===");
 
@@ -171,62 +234,102 @@ export class CacheDB {
     await this.lastLog;
   }
 
-  // When saving, we check that when a computation has a dependency, that version of the dependency is stored (see packEntry)
-  // This allows us to have a normalized cache and not store versions in disk (which in turn avoids future confusions)
-  // When loading, we assign -1 to all of them (see load())
-  // (e.g., it is possible that a dependency version is no longer available
-  // if the user interrupted the incremental library in the middle of something running)
-  async save(opts: CacheSaveOpts) {
-    const cacheDir = this.dir;
-    const db = lmdb.open<DB_Val, string>({
-      path: cacheDir,
-    });
+  private getKey(desc: ComputationDescription<any>) {
+    // max byte key size = 1978
+    // UTF-8 characters can be 1 to 4 bytes long
+    return desc.key().slice(0, 1978 / 4); // estimate...
+  }
+
+  private saveOne(desc: ComputationDescription<any>, entry: CacheEntry<any>) {
+    const key = this.getKey(desc);
+    const prevJob = this.saveJobs.get(key) ?? Promise.resolve();
+    this.saveJobs.set(
+      key,
+      prevJob.then(() => this._saveOne(key, desc, entry))
+    );
+  }
+
+  private async _saveOne(
+    key: string,
+    desc: ComputationDescription<any>,
+    entry: CacheEntry<any>
+  ) {
+    const packedEntry = this.packEntry(desc, entry);
+    try {
+      await this.db.transaction(async () => {
+        const entries = checkArray(this.db.get(key) ?? []);
+
+        for (let i = 0; i < entries.length; i++) {
+          if (entries[i].desc.equal(desc)) {
+            entries[i] = packedEntry;
+            await this.db.put(key, entries);
+            return;
+          }
+        }
+
+        entries.push(packedEntry);
+        await this.db.put(key, entries);
+      });
+
+      this._log("SAVED ENTRY", packedEntry);
+    } catch (err) {
+      this._log(
+        "ERROR",
+        this.addError(
+          new Error(`Error saving entry with description ${inspect(desc)}`, {
+            cause: err,
+          })
+        )
+      );
+    }
+  }
+
+  // Save cache DB
+  // (if this run was interrupted, don't GC to avoid deleting useful entries that didn't get the chance to be flagged as "alive")
+  async save(interrupted: boolean) {
+    const gc = !interrupted && this.opts.cacheSaveOpts.garbageCollect;
 
     this._log("=== SAVING CACHE ===");
 
-    for (const [desc, entry] of this.map) {
-      const key = desc.key().slice(0, 1978);
-      const packedEntry = entry ? this.packEntry(desc, entry, opts) : null;
-      try {
-        await db.transaction(async () => {
-          const entries = db.get(key) ?? [];
+    for (const [key, job] of this.saveJobs) {
+      await job;
+    }
 
-          for (let i = 0; i < entries.length; i++) {
-            if (entries[i].desc.equal(desc)) {
-              if (packedEntry) {
-                entries[i] = packedEntry;
-              } else {
-                entries.splice(i, 1);
+    // GC
+    if (gc) {
+      for (const [desc, entry] of this.map) {
+        if (entry == null || !entry.alive) {
+          const key = this.getKey(desc);
+          try {
+            const removed = await this.db.transaction(async () => {
+              const entries = checkArray(this.db.get(key) ?? []);
+              for (let i = 0; i < entries.length; i++) {
+                if (entries[i].desc.equal(desc)) {
+                  entries.splice(i, 1);
+                  await this.db.put(key, entries);
+                  return true;
+                }
               }
-              await db.put(key, entries);
-              return;
+              return false;
+            });
+            if (removed) {
+              this._log("GC ENTRY", desc);
             }
+          } catch (err) {
+            this._log(
+              "ERROR",
+              this.addError(
+                new Error(`Error gc entry with description ${inspect(desc)}`, {
+                  cause: err,
+                })
+              )
+            );
           }
-
-          if (packedEntry) {
-            entries.push(packedEntry);
-            await db.put(key, entries);
-          }
-        });
-
-        if (packedEntry) {
-          this._log("SAVED ENTRY", packedEntry);
-        } else {
-          this._log("GC ENTRY", desc);
         }
-      } catch (err) {
-        this._log(
-          "ERROR",
-          this.addError(
-            new Error(`Error saving entry with description ${inspect(desc)}`, {
-              cause: err,
-            })
-          )
-        );
       }
     }
 
-    await db.close();
+    await this.db.close();
 
     this._log("=== SAVED CACHE ===");
 
@@ -252,9 +355,11 @@ export class CacheDB {
     return error;
   }
 
+  private nextErrorIdx = 0;
+
   private printErrors() {
-    for (const error of this.errors) {
-      console.error("Error when saving cache:", error);
+    for (; this.nextErrorIdx < this.errors.length; this.nextErrorIdx++) {
+      console.error("Error when saving cache:", this.errors[this.nextErrorIdx]);
     }
 
     if (this.missingSerializers.size) {
@@ -263,27 +368,11 @@ export class CacheDB {
   }
 
   private unpackEntry(entry: CacheEntryInDisk) {
-    const { value, deps, useDeps } = entry;
+    const { value, deps, version, useDeps } = entry;
     return new CacheEntry(
       value,
-      deps.map(d => {
-        switch (d.kind) {
-          case "get":
-            return {
-              kind: "get",
-              desc: d.desc,
-              version: -1,
-            };
-          case "compute":
-            return {
-              kind: "compute",
-              desc: d.desc,
-            };
-          default:
-            never(d);
-        }
-      }),
-      -1,
+      deps,
+      version,
       useDeps,
       false // When unpacking from disk, set this flag to false
     );
@@ -291,27 +380,29 @@ export class CacheDB {
 
   private packEntry<Res>(
     desc: ComputationDescription<any>,
-    entry: CacheEntry<Res>,
-    opts: CacheSaveOpts
-  ): CacheEntryInDisk | null {
-    if (opts.garbageCollect && !entry.alive) {
-      return null;
-    }
-    const useDeps =
-      entry.useDeps &&
-      entry.deps.every(d =>
-        d.kind === "get" ? this.get(d.desc)?.version === d.version : true
-      );
+    entry: CacheEntry<Res>
+  ): CacheEntryInDisk {
     return {
       desc,
       value: entry.value,
-      deps: useDeps
-        ? entry.deps.map(d => ({
-            kind: d.kind,
-            desc: d.desc,
-          }))
+      deps: entry.useDeps
+        ? entry.deps.map(d => {
+            switch (d.kind) {
+              case "get":
+                return {
+                  kind: "get",
+                  desc: d.desc,
+                  version: addSessionId(d.version, this.globalSession),
+                };
+              case "compute":
+                return d;
+              default:
+                never(d);
+            }
+          })
         : [],
-      useDeps,
+      useDeps: entry.useDeps,
+      version: addSessionId(entry.version, this.globalSession),
     };
   }
 }
@@ -400,7 +491,7 @@ export class CacheableComputationMixin<
                 storeDeps,
                 true
               );
-              this.db.set(this.desc, entry);
+              this.db.set(this.desc, entry, true);
               this.db._log("REUSING", { desc: this.desc, entry });
               return {
                 result: ok(cached),
@@ -417,7 +508,7 @@ export class CacheableComputationMixin<
           storeDeps,
           true
         );
-        this.db.set(this.desc, entry);
+        this.db.set(this.desc, entry, true);
         this.db._log("NOT REUSING", { desc: this.desc, entry, currentEntry });
       } else {
         this.db.delete(this.desc);
@@ -465,7 +556,7 @@ export class CacheableComputationMixin<
                     this.source.dependentMixin
                       .getDep(dep.desc, runId)
                       .then(({ result, version }) => {
-                        if (!result.ok || version !== dep.version) {
+                        if (!result.ok || !sameVersion(version, dep.version)) {
                           throw new Error("Outdated");
                         }
                       })
