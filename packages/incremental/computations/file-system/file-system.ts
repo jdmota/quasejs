@@ -160,6 +160,10 @@ class FileComputation
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
+
+  responseEqual(a: bigint, b: bigint): boolean {
+    return a === b;
+  }
 }
 
 class FileInfo {

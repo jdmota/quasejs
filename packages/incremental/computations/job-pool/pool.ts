@@ -32,7 +32,6 @@ import {
   ComputationEntryJobDescription,
 } from "./entry-job";
 import { EmitterComputation, EmitterComputationMixin } from "../mixins/emitter";
-import { CacheableComputationMixin } from "../mixins/cacheable";
 import { serializationDB } from "../../utils/serialization-db";
 
 type ComputationPoolContext = {
@@ -81,6 +80,7 @@ export class ComputationPoolDescription<
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof ComputationPoolDescription &&
+      this.config.key === other.config.key &&
       this.config.startExec === other.config.startExec &&
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
@@ -234,7 +234,7 @@ export class ComputationPool<Req, Res>
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  override responseEqual(
+  responseEqual(
     a: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>,
     b: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
   ): boolean {

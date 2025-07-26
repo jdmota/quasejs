@@ -105,10 +105,7 @@ export abstract class RawComputation<Ctx, Res> {
   ): VersionedComputationResult<Res>;
   protected abstract invalidateRoutine(): void;
   protected abstract deleteRoutine(): void;
-
-  responseEqual(a: Res, b: Res): boolean {
-    return a === b;
-  }
+  abstract responseEqual(a: Res, b: Res): boolean;
 
   protected isDeleting() {
     return this.deleting;

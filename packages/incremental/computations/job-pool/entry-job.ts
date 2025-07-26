@@ -173,4 +173,8 @@ export class ComputationEntryJob<Req, Res>
   }
 
   onReachabilityChange(from: boolean, to: boolean): void {}
+
+  responseEqual(a: undefined, b: undefined): boolean {
+    return a === b;
+  }
 }

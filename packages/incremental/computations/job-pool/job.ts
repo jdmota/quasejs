@@ -73,7 +73,7 @@ export class ComputationJobDescription<Req, Res> extends ComputationDescription<
   }
 
   key() {
-    return `PoolJob{${this.poolDesc.key()}}`;
+    return `PoolJob{${this.poolDesc.key()},${this.poolDesc.config.requestDef.hash(this.request)}}`;
   }
 }
 
@@ -203,5 +203,9 @@ class ComputationJob<Req, Res>
       from,
       to
     );
+  }
+
+  responseEqual(a: Res, b: Res): boolean {
+    return this.pool.config.responseDef.equal(a, b);
   }
 }

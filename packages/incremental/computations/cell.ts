@@ -153,7 +153,7 @@ export class CellComputation<Res>
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  override responseEqual(a: Res, b: Res): boolean {
+  responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
 }

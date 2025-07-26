@@ -15,6 +15,7 @@ export type SimpleComputationConfig<T> = Omit<
 export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {
   return new BasicComputationDescription<undefined, T>(
     {
+      key: config.key,
       exec: config.exec,
       requestDef: anyValue,
       responseDef: anyValue,

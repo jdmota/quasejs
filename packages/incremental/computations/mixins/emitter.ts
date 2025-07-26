@@ -150,6 +150,7 @@ export class EmitterComputationMixin<K, V, R> {
     const fn = this.observers.get(observer);
     if (fn) {
       for (const [key, value] of this.results) {
+        // TODO next tick?
         fn({
           type: "added",
           key,
@@ -158,6 +159,7 @@ export class EmitterComputationMixin<K, V, R> {
         });
       }
       if (this.doneResult != null) {
+        // TODO next tick?
         fn({
           type: "done",
           result: this.doneResult,

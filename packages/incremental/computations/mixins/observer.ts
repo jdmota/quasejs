@@ -3,11 +3,13 @@ import { RunId } from "../../utils/run-id";
 import { AnyRawComputation, RawComputation } from "../raw";
 import { ComputationDescription } from "../description";
 import { EmitterComputation, EventFn } from "./emitter";
+import { EmitterDoneComputation } from "./emitter-done";
 
 export type ObserverContext = {
   readonly listen: <K, V, R>(
     description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<K, V, R>
+      RawComputation<any, any> &
+        (EmitterComputation<K, V, R> | EmitterDoneComputation<R>)
     >,
     fn: EventFn<K, V, R>
   ) => void;
@@ -20,7 +22,8 @@ export interface ObserverComputation {
 export class ObserverComputationMixin {
   public readonly source: RawComputation<any, any> & ObserverComputation;
   public readonly emitters: Set<
-    AnyRawComputation & EmitterComputation<any, any, any>
+    AnyRawComputation &
+      (EmitterComputation<any, any, any> | EmitterDoneComputation<any>)
   >;
   private observerInitId: RunId;
 
@@ -54,7 +57,8 @@ export class ObserverComputationMixin {
     runId: number,
     observerInitId: number,
     description: ComputationDescription<
-      RawComputation<any, any> & EmitterComputation<K, V, R>
+      RawComputation<any, any> &
+        (EmitterComputation<K, V, R> | EmitterDoneComputation<R>)
     >,
     fn: EventFn<K, V, R>
   ) {
@@ -81,7 +85,8 @@ export class ObserverComputationMixin {
   }
 
   private unsubscribe(
-    dep: AnyRawComputation & EmitterComputation<any, any, any>
+    dep: AnyRawComputation &
+      (EmitterComputation<any, any, any> | EmitterDoneComputation<any>)
   ) {
     if (this.emitters.delete(dep)) {
       dep.emitterMixin.observers.delete(this.source);

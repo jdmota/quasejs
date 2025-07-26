@@ -7,6 +7,8 @@ import { newComputationPool } from "../computations/job-pool/pool";
 import { newStatefulComputation } from "../computations/stateful";
 import { ComputationResult, ok } from "../utils/result";
 import { Logger } from "../../util/logger";
+import { anyValue } from "../utils/hash-map";
+import { newComputationBuilder } from "../computations/basic";
 
 type FILE = {
   readonly content: string;
@@ -55,34 +57,35 @@ const pool = newComputationPool<string, FILE>(
   })
 );
 
-const stateful = newStatefulComputation({
-  init(ctx) {
-    let num = 0;
-    ctx.listen(pool, event => {
-      console.log("EVENT", event);
-      num++;
-      if (event.type === "done") {
-        ctx.done(ok(num));
-      }
-    });
-  },
-  keyDef: {
-    hash(a) {
-      return 0;
+const stateful1 = newStatefulComputation<any, any, number>(
+  serializationDB.uniqueObjDB.register("MY_STATEFUL1_CONFIG", 1, {
+    key: "stateful1",
+    init(ctx) {
+      let num = 0;
+      ctx.listen(pool, event => {
+        console.log("EVENT", event);
+        num++;
+        if (event.type === "done") {
+          ctx.done(ok(num));
+        }
+      });
     },
-    equal(a, b) {
-      return a === b;
+    keyDef: anyValue,
+    valueDef: anyValue,
+    doneDef: anyValue,
+  })
+);
+
+const stateful2 = newComputationBuilder<undefined, number>(
+  serializationDB.uniqueObjDB.register("MY_STATEFUL2_CONFIG", 1, {
+    key: "stateful2",
+    async exec(ctx) {
+      return ctx.get(stateful1);
     },
-  },
-  valueDef: {
-    hash(a) {
-      return 0;
-    },
-    equal(a, b) {
-      return a === b;
-    },
-  },
-});
+    requestDef: anyValue,
+    responseDef: anyValue,
+  })
+)(undefined);
 
 export async function main() {
   const controller = await ComputationRegistry.run(
@@ -106,7 +109,7 @@ export async function main() {
         console.log("ERROR POOL RESULTS", results);
       }
 
-      const statefulNum = await ctx.get(stateful);
+      const statefulNum = await ctx.get(stateful2);
       console.log("STATEFUL NUM", statefulNum);
 
       return results;

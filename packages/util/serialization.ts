@@ -48,6 +48,13 @@ export class SerializationDB {
     });
   }
 
+  canSerialize(value: unknown) {
+    return (
+      this.uniqueObjDB.canSerialize(value) ||
+      this.ctorToSerializer.has((value as any).constructor)
+    );
+  }
+
   serialize(value: unknown): SerializedWithName<unknown> {
     const uniqueData = this.uniqueObjDB.getByObj(value);
     if (uniqueData) {
@@ -171,6 +178,10 @@ export class UniqueObjsDB {
 
   getByObj(obj: unknown) {
     return this.objToName.get(obj);
+  }
+
+  canSerialize(obj: unknown) {
+    return this.objToName.has(obj);
   }
 
   // If the constructor is exactly Object, msgpackr will use the routine to serialize plain objects

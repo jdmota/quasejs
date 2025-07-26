@@ -29,6 +29,7 @@ import { MaybeParentComputation, MaybeParentContext } from "./parent";
 import { CtxWithFS } from "../file-system/file-system";
 import { SubscribableComputation } from "./subscribable";
 import { ChildComputation } from "./child";
+import { serializationDB } from "../../utils/serialization-db";
 
 function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -347,12 +348,11 @@ export class CacheDB {
 
     this.logger.debug("=== SAVED CACHE ===");
 
-    this.printErrors();
+    this.printMissingSerializers();
 
     await finished(this.logFileStream);
   }
 
-  private errors: unknown[] = [];
   private missingSerializers: Set<string> = new Set();
 
   private addError(error: unknown) {
@@ -365,25 +365,12 @@ export class CacheDB {
     ) {
       this.missingSerializers.add(error.cause.constructorName);
     }
-    this.errors.push(error);
     return error;
   }
 
-  private nextErrorIdx = 0;
-
-  private printErrors() {
-    for (; this.nextErrorIdx < this.errors.length; this.nextErrorIdx++) {
-      this.opts.cache.logger.error(
-        "Error when saving cache:",
-        this.errors[this.nextErrorIdx]
-      );
-    }
-
+  private printMissingSerializers() {
     if (this.missingSerializers.size) {
-      this.opts.cache.logger.error(
-        "Missing serializers for:",
-        ...this.missingSerializers
-      );
+      this.logger.error("Missing serializers for:", ...this.missingSerializers);
     }
   }
 
@@ -407,12 +394,6 @@ export class CacheDB {
       version: entry.version,
     };
   }
-}
-
-export interface CacheableComputation<
-  C extends RawComputation<any, ResultTypeOfComputation<C>>,
-> {
-  readonly cacheableMixin: CacheableComputationMixin<C>;
 }
 
 type CacheableCtx = RawComputationContext &
@@ -444,7 +425,7 @@ export class CacheableComputationMixin<
 
   finishRoutine(
     original: VersionedComputationResult<ResultTypeOfComputation<C>>,
-    storeDeps: boolean // Should be true if CacheableComputationMixin#exec is going to be used!
+    useDeps: boolean // Should be true if CacheableComputationMixin#exec is going to be used!
   ): VersionedComputationResult<ResultTypeOfComputation<C>> {
     const { result, version } = original;
     if (this.isCacheable) {
@@ -454,7 +435,7 @@ export class CacheableComputationMixin<
       if (result.ok) {
         const calls: CachedDep[] = [];
 
-        if (storeDeps && this.source.dependentMixin) {
+        if (useDeps && this.source.dependentMixin) {
           const getCalls = this.source.dependentMixin.getAllGetCalls();
           if (!getCalls) {
             this.db.removeEntry(this.desc);
@@ -462,20 +443,32 @@ export class CacheableComputationMixin<
             return original;
           }
           for (const dep of getCalls) {
-            calls.push({
-              kind: "get",
-              desc: dep.computation.description,
-              version: dep.version,
-            });
+            if (serializationDB.canSerialize(dep.computation.description)) {
+              calls.push({
+                kind: "get",
+                desc: dep.computation.description,
+                version: dep.version,
+              });
+            } else {
+              useDeps = false;
+              calls.length = 0;
+              break;
+            }
           }
         }
 
-        if (storeDeps && this.source.parentMixin) {
+        if (useDeps && this.source.parentMixin) {
           for (const child of this.source.parentMixin.getChildren()) {
-            calls.push({
-              kind: "compute",
-              desc: child.description,
-            });
+            if (serializationDB.canSerialize(child.description)) {
+              calls.push({
+                kind: "compute",
+                desc: child.description,
+              });
+            } else {
+              useDeps = false;
+              calls.length = 0;
+              break;
+            }
           }
         }
 
@@ -491,7 +484,7 @@ export class CacheableComputationMixin<
               cached,
               calls,
               currentEntry.version,
-              storeDeps
+              useDeps
             );
             if (entry.equals(currentEntry)) {
               this.db.logger.debug("REUSING (ALREADY SAVED)", {
@@ -512,7 +505,7 @@ export class CacheableComputationMixin<
           }
         }
 
-        const entry = new CacheEntry(result.value, calls, version, storeDeps);
+        const entry = new CacheEntry(result.value, calls, version, useDeps);
         this.db.saveEntry(this.desc, entry);
         this.db.logger.debug("NOT REUSING", {
           desc: this.desc,

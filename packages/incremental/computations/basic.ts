@@ -1,8 +1,4 @@
-import {
-  DependentComputation,
-  DependentComputationMixin,
-  DependentContext,
-} from "./mixins/dependent";
+import { ComputationRegistry } from "../incremental-lib";
 import {
   RawComputation,
   State,
@@ -11,22 +7,32 @@ import {
   AnyRawComputation,
   RawComputationContext,
 } from "../computations/raw";
+import { ValueDefinition } from "../utils/hash-map";
+import { ComputationResult, VersionedComputationResult } from "../utils/result";
 import { ComputationDescription } from "./description";
+import { CtxWithFS } from "./file-system/file-system";
 import {
   SubscribableComputation,
   SubscribableComputationMixin,
 } from "./mixins/subscribable";
-import { ComputationRegistry } from "../incremental-lib";
-import { ValueDefinition } from "../utils/hash-map";
-import { ComputationResult, VersionedComputationResult } from "../utils/result";
+import {
+  DependentComputation,
+  DependentComputationMixin,
+  DependentContext,
+} from "./mixins/dependent";
 import { CacheableComputationMixin } from "./mixins/cacheable";
-import { CtxWithFS } from "./file-system/file-system";
+import {
+  EmitterDoneComputation,
+  EmitterDoneComputationMixin,
+} from "./mixins/emitter-done";
+import { serializationDB } from "../utils/serialization-db";
 
 export type BasicComputationExec<Req, Res> = (
   ctx: BasicComputationContext<Req>
 ) => Promise<ComputationResult<Res>>;
 
 export type BasicComputationConfig<Req, Res> = {
+  readonly key: string;
   readonly exec: BasicComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
@@ -44,6 +50,11 @@ export function newComputationBuilder<Req, Res>(
 ) {
   return (request: Req) => new BasicComputationDescription(config, request);
 }
+
+type BasicComputationDescriptionJSON<Req, Res> = {
+  readonly config: BasicComputationConfig<Req, Res>;
+  readonly request: Req;
+};
 
 export class BasicComputationDescription<
   Req,
@@ -65,6 +76,7 @@ export class BasicComputationDescription<
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof BasicComputationDescription &&
+      this.config.key === other.config.key &&
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
       this.config.responseDef === other.config.responseDef &&
@@ -81,13 +93,32 @@ export class BasicComputationDescription<
   }
 
   key() {
-    return `Basic`;
+    return `Basic{${this.config.key},${this.config.requestDef.hash(this.request)}}`;
   }
 }
 
+serializationDB.register<
+  BasicComputationDescription<any, any>,
+  BasicComputationDescriptionJSON<any, any>
+>(BasicComputationDescription, {
+  name: "BasicComputationDescription",
+  serialize(value) {
+    return {
+      request: value.request,
+      config: value.config,
+    };
+  },
+  deserialize(out) {
+    return new BasicComputationDescription(out.config, out.request);
+  },
+});
+
 export class BasicComputation<Req, Res>
   extends RawComputation<BasicComputationContext<Req>, Res>
-  implements DependentComputation, SubscribableComputation<Res>
+  implements
+    DependentComputation,
+    SubscribableComputation<Res>,
+    EmitterDoneComputation<Res>
 {
   public readonly desc: BasicComputationDescription<Req, Res>;
   public readonly dependentMixin: DependentComputationMixin;
@@ -95,6 +126,7 @@ export class BasicComputation<Req, Res>
   public readonly cacheableMixin: CacheableComputationMixin<
     BasicComputation<Req, Res>
   >;
+  public readonly emitterMixin: EmitterDoneComputationMixin<Res>;
   protected readonly config: BasicComputationConfig<Req, Res>;
   protected readonly request: Req;
   private rooted: boolean;
@@ -109,6 +141,7 @@ export class BasicComputation<Req, Res>
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
+    this.emitterMixin = new EmitterDoneComputationMixin(this);
     this.config = desc.config;
     this.request = desc.request;
     this.rooted = !!desc.config.root;
@@ -131,30 +164,37 @@ export class BasicComputation<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return this.rooted ? false : this.subscribableMixin.isOrphan();
+    return (
+      !this.rooted &&
+      this.subscribableMixin.isOrphan() &&
+      this.emitterMixin.isOrphan()
+    );
   }
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
     result = this.subscribableMixin.finishRoutine(result);
     result = this.cacheableMixin.finishRoutine(result, true);
+    result = this.emitterMixin.finishRoutine(result);
     return result;
   }
 
-  protected invalidateRoutine(): void {
+  protected invalidateRoutine() {
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
     this.cacheableMixin.invalidateRoutine();
+    this.emitterMixin.invalidateRoutine();
   }
 
-  protected deleteRoutine(): void {
+  protected deleteRoutine() {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
     this.cacheableMixin.deleteRoutine();
+    this.emitterMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  override responseEqual(a: Res, b: Res): boolean {
+  responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
   }
 
