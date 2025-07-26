@@ -3,16 +3,21 @@ import { RunId } from "../../utils/run-id";
 import { AnyRawComputation, RawComputation } from "../raw";
 import { ComputationDescription } from "../description";
 import { EmitterComputation, EventFn } from "./emitter";
-import { EmitterDoneComputation } from "./emitter-done";
+import { EmitterDoneComputation, EventDoneFn } from "./emitter-done";
 
 export type ObserverContext = {
-  readonly listen: <K, V, R>(
+  listen<K, V, R>(
     description: ComputationDescription<
-      RawComputation<any, any> &
-        (EmitterComputation<K, V, R> | EmitterDoneComputation<R>)
+      RawComputation<any, any> & EmitterComputation<K, V, R>
     >,
     fn: EventFn<K, V, R>
-  ) => void;
+  ): void;
+  listen<R>(
+    description: ComputationDescription<
+      RawComputation<any, any> & EmitterDoneComputation<R>
+    >,
+    fn: EventDoneFn<R>
+  ): void;
 };
 
 export interface ObserverComputation {
@@ -49,7 +54,8 @@ export class ObserverComputationMixin {
 
   makeContextRoutine(runId: number, observerInitId: number): ObserverContext {
     return {
-      listen: (desc, fn) => this.listen(runId, observerInitId, desc, fn),
+      listen: (desc: any, fn: any) =>
+        this.listen(runId, observerInitId, desc, fn),
     };
   }
 

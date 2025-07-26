@@ -36,7 +36,6 @@ export type BasicComputationConfig<Req, Res> = {
   readonly exec: BasicComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
-  readonly root?: boolean;
 };
 
 export type BasicComputationContext<Req> = {
@@ -80,19 +79,15 @@ export class BasicComputationDescription<
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
       this.config.responseDef === other.config.responseDef &&
-      !!this.config.root === !!other.config.root &&
       this.config.requestDef.equal(this.request, other.request)
     );
   }
 
   hash() {
-    return (
-      this.config.requestDef.hash(this.request) +
-      31 * (this.config.root ? 1 : 0)
-    );
+    return this.config.requestDef.hash(this.request) + 31;
   }
 
-  key() {
+  getCacheKey() {
     return `Basic{${this.config.key},${this.config.requestDef.hash(this.request)}}`;
   }
 }
@@ -129,14 +124,12 @@ export class BasicComputation<Req, Res>
   public readonly emitterMixin: EmitterDoneComputationMixin<Res>;
   protected readonly config: BasicComputationConfig<Req, Res>;
   protected readonly request: Req;
-  private rooted: boolean;
 
   constructor(
     registry: ComputationRegistry,
-    desc: BasicComputationDescription<Req, Res>,
-    mark: boolean = true
+    desc: BasicComputationDescription<Req, Res>
   ) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.desc = desc;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
@@ -144,8 +137,6 @@ export class BasicComputation<Req, Res>
     this.emitterMixin = new EmitterDoneComputationMixin(this);
     this.config = desc.config;
     this.request = desc.request;
-    this.rooted = !!desc.config.root;
-    if (mark) this.mark(State.PENDING);
   }
 
   protected exec(
@@ -164,11 +155,7 @@ export class BasicComputation<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return (
-      !this.rooted &&
-      this.subscribableMixin.isOrphan() &&
-      this.emitterMixin.isOrphan()
-    );
+    return this.subscribableMixin.isOrphan() && this.emitterMixin.isOrphan();
   }
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
@@ -196,9 +183,5 @@ export class BasicComputation<Req, Res>
 
   responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
-  }
-
-  unroot() {
-    this.rooted = false;
   }
 }

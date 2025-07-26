@@ -69,7 +69,7 @@ export class FileComputationDescription
     return this.path.length + 31 * this.type.length;
   }
 
-  key() {
+  getCacheKey() {
     return this.json;
   }
 }
@@ -100,12 +100,11 @@ class FileComputation
   public readonly fs: FileSystem;
 
   constructor(registry: ComputationRegistry, desc: FileComputationDescription) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.fs = registry.fs;
-    this.mark(State.PENDING);
   }
 
   externalInvalidate() {

@@ -57,16 +57,40 @@ const pool = newComputationPool<string, FILE>(
   })
 );
 
-const stateful1 = newStatefulComputation<any, any, number>(
-  serializationDB.uniqueObjDB.register("MY_STATEFUL1_CONFIG", 1, {
-    key: "stateful1",
+const number = newComputationBuilder<undefined, number>(
+  serializationDB.uniqueObjDB.register("MY_NUMBER_CONFIG", 1, {
+    key: "number",
+    async exec(ctx) {
+      return ok(123456789);
+    },
+    requestDef: anyValue,
+    responseDef: anyValue,
+  })
+)(undefined);
+
+const stateful = newStatefulComputation<any, any, [number, number]>(
+  serializationDB.uniqueObjDB.register("MY_STATEFUL_CONFIG", 1, {
+    key: "stateful",
     init(ctx) {
       let num = 0;
+      let num2 = 0;
+      ctx.listen(number, event => {
+        console.log("EVENT", event.result);
+        if (event.result.ok) {
+          num2 = event.result.value;
+          if (num !== 0) {
+            ctx.done(ok([num, num2]));
+          }
+        }
+      });
+
       ctx.listen(pool, event => {
         console.log("EVENT", event);
         num++;
         if (event.type === "done") {
-          ctx.done(ok(num));
+          if (num2 !== 0) {
+            ctx.done(ok([num, num2]));
+          }
         }
       });
     },
@@ -75,17 +99,6 @@ const stateful1 = newStatefulComputation<any, any, number>(
     doneDef: anyValue,
   })
 );
-
-const stateful2 = newComputationBuilder<undefined, number>(
-  serializationDB.uniqueObjDB.register("MY_STATEFUL2_CONFIG", 1, {
-    key: "stateful2",
-    async exec(ctx) {
-      return ctx.get(stateful1);
-    },
-    requestDef: anyValue,
-    responseDef: anyValue,
-  })
-)(undefined);
 
 export async function main() {
   const controller = await ComputationRegistry.run(
@@ -109,8 +122,8 @@ export async function main() {
         console.log("ERROR POOL RESULTS", results);
       }
 
-      const statefulNum = await ctx.get(stateful2);
-      console.log("STATEFUL NUM", statefulNum);
+      const statefulValue = await ctx.get(stateful);
+      console.log("STATEFUL", statefulValue);
 
       return results;
     },

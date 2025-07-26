@@ -19,7 +19,6 @@ export function newSimpleComputation<T>(config: SimpleComputationConfig<T>) {
       exec: config.exec,
       requestDef: anyValue,
       responseDef: anyValue,
-      root: config.root,
     },
     undefined
   );

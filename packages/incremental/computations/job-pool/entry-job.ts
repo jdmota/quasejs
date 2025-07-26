@@ -70,8 +70,8 @@ export class ComputationEntryJobDescription<
     return 0;
   }
 
-  key() {
-    return `PoolEntry{${this.poolDesc.key()}}`;
+  getCacheKey() {
+    return `PoolEntry{${this.poolDesc.getCacheKey()}}`;
   }
 }
 
@@ -117,14 +117,13 @@ export class ComputationEntryJob<Req, Res>
     desc: ComputationDescription<any>,
     pool: ComputationPool<Req, Res>
   ) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.pool = pool;
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.parentMixin = new ParentComputationMixin(this);
     this.reachableMixin = new ReachableComputationMixinRoot(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
-    this.mark(State.PENDING);
   }
 
   protected exec(

@@ -23,7 +23,6 @@ export function newSimpleEffectComputation<T>(
       exec: config.exec,
       requestDef: anyValue,
       responseDef: anyValue,
-      root: config.root,
     },
     undefined
   );

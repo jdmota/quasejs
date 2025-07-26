@@ -52,6 +52,7 @@ export abstract class RawComputation<Ctx, Res> {
   private nextVersion: number;
   private running: Defer<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
+  private root: boolean;
   // Latest result
   protected result: VersionedComputationResult<Res> | null;
   // Requirements of SpecialQueue
@@ -60,11 +61,11 @@ export abstract class RawComputation<Ctx, Res> {
 
   constructor(
     registry: ComputationRegistry,
-    description: ComputationDescription<any>,
-    mark: boolean = true
+    description: ComputationDescription<any>
   ) {
     this.registry = registry;
     this.description = description;
+    this.root = false;
     this.state = State.CREATING;
     this.runId = new RunId();
     this.nextVersion = 1;
@@ -73,7 +74,12 @@ export abstract class RawComputation<Ctx, Res> {
     this.result = null;
     this.prev = null;
     this.next = null;
-    if (mark) this.mark(State.PENDING);
+  }
+
+  init(root: boolean) {
+    this.root = root;
+    this.mark(State.PENDING);
+    return this;
   }
 
   peekResult() {
@@ -88,6 +94,14 @@ export abstract class RawComputation<Ctx, Res> {
       return this.result.result;
     }
     throw new Error("Invariant violation: no error");
+  }
+
+  isRoot() {
+    return this.root;
+  }
+
+  setRoot(root: boolean) {
+    this.root = root;
   }
 
   protected abstract exec(
@@ -186,9 +200,13 @@ export abstract class RawComputation<Ctx, Res> {
     this.registry.scheduleWake();
   }
 
+  private isAlone() {
+    return !this.root && this.isOrphan();
+  }
+
   destroy() {
     this.inv();
-    if (!this.isOrphan()) {
+    if (!this.isAlone()) {
       throw new Error(
         "Invariant violation: Some computation depends on this, cannot destroy"
       );
@@ -202,7 +220,7 @@ export abstract class RawComputation<Ctx, Res> {
     this.mark(State.DELETED);
   }
 
-  protected mark(state: StateNotCreating) {
+  private mark(state: StateNotCreating) {
     const prevState = this.state;
     if (prevState === State.DELETED) {
       throw new Error("Invariant violation: Unexpected deleted computation");
@@ -218,13 +236,13 @@ export abstract class RawComputation<Ctx, Res> {
   }
 
   maybeRun() {
-    if (this.state === State.PENDING && !this.isOrphan()) {
+    if (this.state === State.PENDING && !this.isAlone()) {
       this.run();
     }
   }
 
   maybeDestroy() {
-    if (this.isOrphan()) {
+    if (this.isAlone()) {
       this.destroy();
     }
   }

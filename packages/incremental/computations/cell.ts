@@ -56,8 +56,8 @@ export class CellDescription<Res> extends ComputationDescription<
     return 31 * this.config.name.length;
   }
 
-  key() {
-    return `Cell`;
+  getCacheKey() {
+    return `Cell{${this.config.name}}`;
   }
 }
 
@@ -75,19 +75,14 @@ export class CellComputation<Res>
   private notifier: Notifier<null>;
   private executed = false;
 
-  constructor(
-    registry: ComputationRegistry,
-    desc: CellDescription<Res>,
-    mark: boolean = true
-  ) {
-    super(registry, desc, false);
+  constructor(registry: ComputationRegistry, desc: CellDescription<Res>) {
+    super(registry, desc);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.config = desc.config;
     this.cellResult = null;
     this.notifier = createNotifier();
-    if (mark) this.mark(State.PENDING);
   }
 
   clear() {

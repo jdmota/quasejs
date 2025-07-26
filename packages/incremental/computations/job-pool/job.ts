@@ -72,8 +72,8 @@ export class ComputationJobDescription<Req, Res> extends ComputationDescription<
     return this.poolDesc.config.requestDef.hash(this.request);
   }
 
-  key() {
-    return `PoolJob{${this.poolDesc.key()},${this.poolDesc.config.requestDef.hash(this.request)}}`;
+  getCacheKey() {
+    return `PoolJob{${this.poolDesc.getCacheKey()},${this.poolDesc.config.requestDef.hash(this.request)}}`;
   }
 }
 
@@ -122,7 +122,7 @@ class ComputationJob<Req, Res>
     request: Req,
     pool: ComputationPool<Req, Res>
   ) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.pool = pool;
     this.request = request;
     this.subscribableMixin = new SubscribableComputationMixin(this);
@@ -131,7 +131,6 @@ class ComputationJob<Req, Res>
     this.childMixin = new ChildComputationMixin(this);
     this.reachableMixin = new ReachableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
-    this.mark(State.PENDING);
   }
 
   protected exec(

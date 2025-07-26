@@ -7,7 +7,7 @@ export abstract class ComputationDescription<C extends AnyRawComputation> {
     other: ComputationDescription<O>
   ): boolean;
   abstract hash(): number;
-  abstract key(): string;
+  abstract getCacheKey(): string;
 }
 
 export type AnyComputationDescription =

@@ -33,7 +33,6 @@ export type EffectComputationConfig<Req, Res> = {
   readonly exec: EffectComputationExec<Req, Res>;
   readonly requestDef: ValueDefinition<Req>;
   readonly responseDef: ValueDefinition<Res>;
-  readonly root?: boolean;
 };
 
 export type EffectComputationContext<Req> = {
@@ -71,20 +70,16 @@ export class EffectComputationDescription<
       this.config.exec === other.config.exec &&
       this.config.requestDef === other.config.requestDef &&
       this.config.responseDef === other.config.responseDef &&
-      !!this.config.root === !!other.config.root &&
       this.config.requestDef.equal(this.request, other.request)
     );
   }
 
   hash() {
-    return (
-      this.config.requestDef.hash(this.request) +
-      31 * (this.config.root ? 1 : 0)
-    );
+    return this.config.requestDef.hash(this.request) + 31;
   }
 
-  key() {
-    return `Effect`;
+  getCacheKey() {
+    return "";
   }
 }
 
@@ -100,20 +95,17 @@ export class EffectComputation<Req, Res>
   public readonly effectMixin: EffectComputationMixin;
   private readonly config: EffectComputationConfig<Req, Res>;
   private readonly request: Req;
-  private rooted: boolean;
 
   constructor(
     registry: ComputationRegistry,
     description: EffectComputationDescription<Req, Res>
   ) {
-    super(registry, description, false);
+    super(registry, description);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.effectMixin = new EffectComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
-    this.rooted = !!description.config.root;
-    this.mark(State.PENDING);
   }
 
   protected async exec(
@@ -133,7 +125,7 @@ export class EffectComputation<Req, Res>
   }
 
   protected isOrphan(): boolean {
-    return this.rooted ? false : this.subscribableMixin.isOrphan();
+    return this.subscribableMixin.isOrphan();
   }
 
   protected finishRoutine(result: VersionedComputationResult<Res>) {
@@ -155,9 +147,5 @@ export class EffectComputation<Req, Res>
 
   responseEqual(a: Res, b: Res): boolean {
     return this.config.responseDef.equal(a, b);
-  }
-
-  unroot() {
-    this.rooted = false;
   }
 }

@@ -92,7 +92,7 @@ export class ComputationPoolDescription<
     return 0;
   }
 
-  key() {
+  getCacheKey() {
     return `Pool{${this.config.key}}`;
   }
 }
@@ -159,7 +159,7 @@ export class ComputationPool<Req, Res>
     registry: ComputationRegistry,
     private readonly desc: ComputationPoolDescription<Req, Res>
   ) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.equal = (a, b) => resultEqual(desc.config.responseDef.equal, a, b);
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
@@ -184,7 +184,6 @@ export class ComputationPool<Req, Res>
       },
     };
     this.emitRunId = this.emitterMixin.newEmitRunId();
-    this.mark(State.PENDING);
   }
 
   protected async exec(

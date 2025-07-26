@@ -141,8 +141,14 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.canExternalInvalidate = false;
   }
 
-  make<C extends AnyRawComputation>(description: ComputationDescription<C>): C {
-    return this.map.computeIfAbsent(description, d => d.create(this)) as C;
+  make<C extends AnyRawComputation>(
+    desc: ComputationDescription<C>,
+    root: boolean = false
+  ): C {
+    return this.map.computeIfAbsent(
+      desc,
+      () => desc.create(this).init(root) satisfies C
+    ) as C;
   }
 
   delete(c: AnyRawComputation) {
@@ -283,7 +289,7 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.db.lock();
 
     // Now clear everything
-    rootComputation.unroot();
+    rootComputation.setRoot(false);
     rootComputation.destroy();
     this.clearOrphans();
 
@@ -326,8 +332,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       ...opts,
       canInvalidate: false,
     }).load();
-    const desc = newSimpleEffectComputation({ exec, root: true });
-    const computation = registry.make(desc);
+    const desc = newSimpleEffectComputation({ exec });
+    const computation = registry.make(desc, true);
     const result = await registry.run(computation);
     await registry.cleanupRun(computation, false);
     return result.result;
@@ -341,8 +347,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       ...opts,
       canInvalidate: true,
     }).load();
-    const desc = newSimpleEffectComputation({ exec, root: true });
-    const computation = registry.make(desc);
+    const desc = newSimpleEffectComputation({ exec });
+    const computation = registry.make(desc, true);
     registry.wake();
 
     let interrupted = false;

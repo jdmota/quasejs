@@ -188,7 +188,7 @@ export class CacheDB {
   private getKey(desc: ComputationDescription<any>) {
     // max byte key size = 1978
     // UTF-8 characters can be 1 to 4 bytes long
-    return desc.key().slice(0, 1978 / 4); // estimate...
+    return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
   }
 
   getEntry<C extends AnyRawComputation>(desc: ComputationDescription<C>) {
@@ -418,7 +418,7 @@ export class CacheableComputationMixin<
     public readonly desc: ComputationDescription<C>
   ) {
     this.db = source.registry.db;
-    this.isCacheable = true;
+    this.isCacheable = serializationDB.canSerialize(source.description);
     this.firstExec = true;
     this.inDisk = undefined;
   }

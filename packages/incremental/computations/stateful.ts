@@ -81,7 +81,7 @@ export class StatefulComputationDescription<
     return 0;
   }
 
-  key() {
+  getCacheKey() {
     return `Stateful${this.config.key}`;
   }
 }
@@ -123,10 +123,9 @@ export class StatefulComputation<K, V, R>
 
   constructor(
     registry: ComputationRegistry,
-    desc: StatefulComputationDescription<K, V, R>,
-    mark: boolean = true
+    desc: StatefulComputationDescription<K, V, R>
   ) {
-    super(registry, desc, false);
+    super(registry, desc);
     this.config = desc.config;
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
@@ -137,7 +136,6 @@ export class StatefulComputation<K, V, R>
     );
     this.observerMixin = new ObserverComputationMixin(this);
     this.phase = StatefulPhase.PENDING;
-    if (mark) this.mark(State.PENDING);
   }
 
   protected async exec(
