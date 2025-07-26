@@ -6,6 +6,7 @@ import { ComputationRegistry } from "../incremental-lib";
 import { newComputationPool } from "../computations/job-pool/pool";
 import { newStatefulComputation } from "../computations/stateful";
 import { ComputationResult, ok } from "../utils/result";
+import { Logger } from "../../util/logger";
 
 type FILE = {
   readonly content: string;
@@ -112,13 +113,14 @@ export async function main() {
     },
     {
       fs: {
-        reporter: console,
+        onEvent(event, path) {
+          console.log("=== CHANGED", event, path, "===");
+        },
       },
       cache: {
         dir: "packages/incremental/__test/cache",
-        log: true,
         garbageCollect: true,
-        reporter: console,
+        logger: new Logger("CACHE"),
       },
     }
   );

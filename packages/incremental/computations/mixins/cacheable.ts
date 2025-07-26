@@ -2,7 +2,10 @@ import * as lmdb from "lmdb";
 import fsextra from "fs-extra";
 import path from "node:path";
 import { inspect } from "node:util";
+import { finished } from "node:stream/promises";
+import { Logger, LoggerVerboseLevel } from "../../../util/logger";
 import { arrayEquals, assertion, never } from "../../../util/miscellaneous";
+import { MissingConstructorSerializerError } from "../../../util/serialization";
 import type {
   IncrementalOpts,
   ResultTypeOfComputation,
@@ -13,6 +16,7 @@ import {
   ok,
   VersionedComputationResult,
 } from "../../utils/result";
+import { sameVersion, Version } from "../../utils/versions";
 import {
   AnyRawComputation,
   RawComputation,
@@ -23,10 +27,8 @@ import type { ComputationDescription } from "../description";
 import { DependentContext, MaybeDependentComputation } from "./dependent";
 import { MaybeParentComputation, MaybeParentContext } from "./parent";
 import { CtxWithFS } from "../file-system/file-system";
-import { MissingConstructorSerializerError } from "../../../util/serialization";
 import { SubscribableComputation } from "./subscribable";
 import { ChildComputation } from "./child";
-import { sameVersion, Version } from "../../utils/versions";
 
 function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -125,8 +127,10 @@ export class CacheDB {
   private readonly alive: HashMap<ComputationDescription<any>, null> =
     new HashMap(defaultValDef);
 
+  public readonly logger: Logger;
+  private logFileStream: fsextra.WriteStream;
+
   private locked = false;
-  private lastLog: Promise<void>;
   private saveJobs: Map<string, Promise<void>>;
   private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
 
@@ -136,7 +140,7 @@ export class CacheDB {
       path.sep +
       `quase_incremental_v${CacheDB.DB_VERSION}`;
     this.logFile = this.dir + path.sep + `log${Date.now()}.txt`;
-    this.lastLog = Promise.resolve();
+    this.logger = opts.cache.logger;
     this.saveJobs = new Map();
     this.db = lmdb.open<
       DB_Val | number,
@@ -148,17 +152,13 @@ export class CacheDB {
         structuredClone: true,
       },
     });
-  }
-
-  _log(message: string, value?: unknown) {
-    if (this.opts.cache.log) {
-      this.lastLog = this.lastLog.then(() => {
-        return fsextra.appendFile(
-          this.logFile,
-          `\n\n${message}${value === undefined ? "" : "\n" + inspect(value)}`
-        );
-      });
-    }
+    this.logFileStream = fsextra.createWriteStream(this.logFile);
+    this.logger.setStream(process.stderr, l => l <= LoggerVerboseLevel.WARN);
+    this.logger.setStream(
+      process.stdout,
+      l => LoggerVerboseLevel.WARN < l && l <= LoggerVerboseLevel.LOG
+    );
+    this.logger.setStream(this.logFileStream, LoggerVerboseLevel.ALL);
   }
 
   lock() {
@@ -173,8 +173,7 @@ export class CacheDB {
       if (!this.saveJobs.has(key)) {
         this.corruptedKeys.add(key);
       }
-      this._log(
-        "ERROR",
+      this.logger.error(
         this.addError(
           new Error(`Corrupted key ${key}`, {
             cause: err,
@@ -277,13 +276,12 @@ export class CacheDB {
       });
 
       if (packedEntry) {
-        this._log("SAVED ENTRY", packedEntry);
+        this.logger.debug("SAVED ENTRY", packedEntry);
       } else {
-        this._log("DELETED ENTRY", desc);
+        this.logger.debug("DELETED ENTRY", desc);
       }
     } catch (err) {
-      this._log(
-        "ERROR",
+      this.logger.error(
         this.addError(
           new Error(
             `Error ${packedEntry ? "saving" : "deleting"} entry with description ${inspect(desc)}`,
@@ -318,7 +316,7 @@ export class CacheDB {
     // If this run was interrupted, don't GC to avoid deleting useful entries that didn't get the chance to be flagged as "alive"
     const gc = !interrupted && this.opts.cache.garbageCollect;
 
-    this._log("=== SAVING CACHE ===");
+    this.logger.debug("=== SAVING CACHE ===");
 
     if (gc) {
       for (const key of this.db.getKeys()) {
@@ -326,10 +324,10 @@ export class CacheDB {
         const dbValue = this.safeGet(key);
         for (const entry of dbValue) {
           if (!this.alive.has(entry.desc)) {
-            this._log("=== GC OLD ENTRY ===", entry.desc);
+            this.logger.debug("=== GC OLD ENTRY ===", entry.desc);
             this.saveOne(entry.desc, null);
           } else if (key !== this.getKey(entry.desc)) {
-            this._log("=== GC ENTRY WITH OUTDATED KEY ===", entry.desc);
+            this.logger.debug("=== GC ENTRY WITH OUTDATED KEY ===", entry.desc);
             this.removeEntryOutdatedKey(key, entry.desc);
           }
         }
@@ -342,16 +340,16 @@ export class CacheDB {
 
     for (const key of this.corruptedKeys) {
       await this.db.remove(key);
-      this._log("=== REMOVE CORRUPTED KEY ===", key);
+      this.logger.debug("=== REMOVE CORRUPTED KEY ===", key);
     }
 
     await this.db.close();
 
-    this._log("=== SAVED CACHE ===");
+    this.logger.debug("=== SAVED CACHE ===");
 
     this.printErrors();
 
-    await this.lastLog;
+    await finished(this.logFileStream);
   }
 
   private errors: unknown[] = [];
@@ -375,14 +373,14 @@ export class CacheDB {
 
   private printErrors() {
     for (; this.nextErrorIdx < this.errors.length; this.nextErrorIdx++) {
-      this.opts.cache.reporter.error(
+      this.opts.cache.logger.error(
         "Error when saving cache:",
         this.errors[this.nextErrorIdx]
       );
     }
 
     if (this.missingSerializers.size) {
-      this.opts.cache.reporter.error(
+      this.opts.cache.logger.error(
         "Missing serializers for:",
         ...this.missingSerializers
       );
@@ -460,7 +458,7 @@ export class CacheableComputationMixin<
           const getCalls = this.source.dependentMixin.getAllGetCalls();
           if (!getCalls) {
             this.db.removeEntry(this.desc);
-            this.db._log("DELETED", { desc: this.desc });
+            this.db.logger.debug("DELETED", { desc: this.desc });
             return original;
           }
           for (const dep of getCalls) {
@@ -496,13 +494,16 @@ export class CacheableComputationMixin<
               storeDeps
             );
             if (entry.equals(currentEntry)) {
-              this.db._log("REUSING (ALREADY SAVED)", {
+              this.db.logger.debug("REUSING (ALREADY SAVED)", {
                 desc: this.desc,
                 entry,
               });
             } else {
               this.db.saveEntry(this.desc, entry);
-              this.db._log("REUSING (RE-SAVING)", { desc: this.desc, entry });
+              this.db.logger.debug("REUSING (RE-SAVING)", {
+                desc: this.desc,
+                entry,
+              });
             }
             return {
               result: ok(cached),
@@ -513,10 +514,14 @@ export class CacheableComputationMixin<
 
         const entry = new CacheEntry(result.value, calls, version, storeDeps);
         this.db.saveEntry(this.desc, entry);
-        this.db._log("NOT REUSING", { desc: this.desc, entry, currentEntry });
+        this.db.logger.debug("NOT REUSING", {
+          desc: this.desc,
+          entry,
+          currentEntry,
+        });
       } else {
         this.db.removeEntry(this.desc);
-        this.db._log("DELETED", { desc: this.desc });
+        this.db.logger.debug("DELETED", { desc: this.desc });
       }
     }
     return original;

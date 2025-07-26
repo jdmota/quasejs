@@ -19,8 +19,9 @@ import {
 } from "./computations/simple-effect";
 import { EffectComputation } from "./computations/effect";
 import { CacheDB } from "./computations/mixins/cacheable";
-import { FileSystem } from "./computations/file-system/file-system";
+import { FileChange, FileSystem } from "./computations/file-system/file-system";
 import { createErrorDefer } from "../util/deferred";
+import { Logger } from "../util/logger";
 
 const determinismSym = Symbol("deterministic");
 
@@ -48,20 +49,14 @@ export type ComputationRegistryEvents = {
   ];
 };
 
-export type IncrementalReporter = {
-  log(message?: any, ...optionalParams: any[]): void;
-  error(message?: any, ...optionalParams: any[]): void;
-};
-
 export type IncrementalOpts = {
   readonly fs: {
-    readonly reporter: IncrementalReporter;
+    readonly onEvent: (event: FileChange, path: string) => void;
   };
   readonly cache: {
     readonly dir: string;
-    readonly log: boolean;
     readonly garbageCollect: boolean;
-    readonly reporter: IncrementalReporter;
+    readonly logger: Logger;
   };
 };
 
