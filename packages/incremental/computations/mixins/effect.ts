@@ -31,20 +31,14 @@ export class EffectComputationMixin {
   }
 
   async performCleanup(deleting: boolean) {
-    const { source, cleanup } = this;
+    const { cleanup } = this;
     this.cleanup = NOOP_CLEANUP;
-    try {
-      await cleanup(deleting);
-    } catch (err) {
-      if (deleting) {
-        source.registry.emitUncaughtError(source.description, err);
-      } else {
-        throw err;
-      }
-    }
+    await cleanup(deleting);
   }
 
   deleteRoutine() {
-    this.source.registry.queueOtherJob(() => this.performCleanup(true));
+    this.source.registry.queueOtherJob(this.source.description, () =>
+      this.performCleanup(true)
+    );
   }
 }

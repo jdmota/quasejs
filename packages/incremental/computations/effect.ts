@@ -24,6 +24,11 @@ import {
   IEffectComputation,
   EffectContext,
 } from "./mixins/effect";
+import {
+  SideEffectComputation,
+  SideEffectComputationMixin,
+  SideEffectContext,
+} from "./mixins/side-effects";
 
 export type EffectComputationExec<Req, Res> = (
   ctx: EffectComputationContext<Req>
@@ -37,8 +42,9 @@ export type EffectComputationConfig<Req, Res> = {
 
 export type EffectComputationContext<Req> = {
   readonly request: Req;
-} & EffectContext &
-  DependentContext &
+} & DependentContext &
+  EffectContext &
+  SideEffectContext &
   RawComputationContext;
 
 export function newEffectComputationBuilder<Req, Res>(
@@ -88,11 +94,13 @@ export class EffectComputation<Req, Res>
   implements
     DependentComputation,
     SubscribableComputation<Res>,
-    IEffectComputation
+    IEffectComputation,
+    SideEffectComputation
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<Res>;
   public readonly effectMixin: EffectComputationMixin;
+  public readonly sideEffectMixin: SideEffectComputationMixin;
   private readonly config: EffectComputationConfig<Req, Res>;
   private readonly request: Req;
 
@@ -104,15 +112,19 @@ export class EffectComputation<Req, Res>
     this.dependentMixin = new DependentComputationMixin(this);
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.effectMixin = new EffectComputationMixin(this);
+    this.sideEffectMixin = new SideEffectComputationMixin(this);
     this.config = description.config;
     this.request = description.request;
   }
 
   protected async exec(
-    ctx: EffectComputationContext<Req>
+    ctx: EffectComputationContext<Req>,
+    runId: number
   ): Promise<ComputationResult<Res>> {
     await this.effectMixin.performCleanup(false);
-    return this.config.exec(ctx);
+    const result = await this.config.exec(ctx);
+    await this.sideEffectMixin.postExec(runId);
+    return result;
   }
 
   protected makeContext(runId: number): EffectComputationContext<Req> {
@@ -121,6 +133,7 @@ export class EffectComputation<Req, Res>
       checkActive: () => this.checkActive(runId),
       ...this.dependentMixin.makeContextRoutine(runId),
       ...this.effectMixin.makeContextRoutine(runId),
+      ...this.sideEffectMixin.makeContextRoutine(runId),
     };
   }
 
@@ -135,12 +148,14 @@ export class EffectComputation<Req, Res>
   protected invalidateRoutine(): void {
     this.dependentMixin.invalidateRoutine();
     this.subscribableMixin.invalidateRoutine();
+    this.sideEffectMixin.invalidateRoutine();
   }
 
   protected deleteRoutine(): void {
     this.dependentMixin.deleteRoutine();
     this.subscribableMixin.deleteRoutine();
     this.effectMixin.deleteRoutine();
+    this.sideEffectMixin.deleteRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}

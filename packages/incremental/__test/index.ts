@@ -128,6 +128,9 @@ export async function main() {
       return results;
     },
     {
+      onUncaughtError(info) {
+        console.error("Uncaught Error", info);
+      },
       fs: {
         onEvent(event, path) {
           console.log("=== CHANGED", event, path, "===");

@@ -40,16 +40,13 @@ function deterministic<Arg, Ret>(
 export type ResultTypeOfComputation<C> =
   C extends RawComputation<any, infer Res> ? Res : never;
 
-export type ComputationRegistryEvents = {
-  uncaughtError: [
-    Readonly<{
-      description: ComputationDescription<any>;
-      error: unknown;
-    }>,
-  ];
-};
-
 export type IncrementalOpts = {
+  readonly onUncaughtError: (
+    info: Readonly<{
+      description: ComputationDescription<any> | null;
+      error: unknown;
+    }>
+  ) => void;
   readonly fs: {
     readonly onEvent: (event: FileChange, path: string) => void;
   };
@@ -64,7 +61,7 @@ type ComputationRegistryOpts = IncrementalOpts & {
   readonly canInvalidate: boolean;
 };
 
-export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents> {
+export class ComputationRegistry {
   private canInvalidate: boolean;
   private canExternalInvalidate: boolean;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
@@ -86,7 +83,6 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
   public readonly serializationDB: SerializationDB;
 
   private constructor(private readonly opts: ComputationRegistryOpts) {
-    super();
     this.canInvalidate = opts.canInvalidate;
     this.canExternalInvalidate = opts.canInvalidate;
     this.map = new HashMap({
@@ -109,16 +105,22 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
     this.fs = new FileSystem(opts);
   }
 
-  queueOtherJob(fn: () => Promise<unknown>) {
-    this.otherJobs.push(Promise.resolve().then(fn));
+  queueOtherJob(
+    desc: ComputationDescription<any> | null,
+    fn: () => Promise<unknown>
+  ) {
+    this.otherJobs.push(
+      Promise.resolve()
+        .then(fn)
+        .catch(err => this.emitUncaughtError(desc, err))
+    );
   }
 
-  emitUncaughtError(description: ComputationDescription<any>, error: unknown) {
-    if (this.listenerCount("uncaughtError") > 0) {
-      this.emit("uncaughtError", { description, error });
-    } else {
-      throw error;
-    }
+  private emitUncaughtError(
+    desc: ComputationDescription<any> | null,
+    error: unknown
+  ) {
+    this.opts.onUncaughtError({ description: desc, error });
   }
 
   private computationsCount() {
@@ -297,8 +299,8 @@ export class ComputationRegistry extends EventEmitter<ComputationRegistryEvents>
       throw new Error("Invariant violation: Cleanup failed");
     }
 
-    this.queueOtherJob(() => this.fs.close());
-    this.queueOtherJob(() => this.db.save(interrupted));
+    this.queueOtherJob(null, () => this.fs.close());
+    this.queueOtherJob(null, () => this.db.save(interrupted));
 
     const { otherJobs } = this;
     this.otherJobs = [];

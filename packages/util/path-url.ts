@@ -56,9 +56,19 @@ export function getType(id: string): string {
   return match ? match[1] : "";
 }
 
-// Receives import.meta.url
-export function getDirnameFromMetaUrl(url: string) {
-  return path.dirname(fileURLToPath(url));
+// Adapted from https://github.com/sindresorhus/is-path-inside/blob/main/index.js (4.0.0)
+export function isPathInside(
+  child: Path,
+  parent: Path,
+  allowSame: boolean = false
+): boolean {
+  const relative = path.relative(parent, child);
+  return (
+    (allowSame || relative.length > 0) &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`) &&
+    relative !== path.resolve(child)
+  );
 }
 
 // Urls

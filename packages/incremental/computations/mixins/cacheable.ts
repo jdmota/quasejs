@@ -45,7 +45,7 @@ function checkNumber<T>(val: T[] | number): number {
   throw new Error("Value is " + val);
 }
 
-export type CachedGet = {
+type CachedGet = {
   readonly kind: "get";
   readonly desc: ComputationDescription<
     RawComputation<any, any> & SubscribableComputation<any>
@@ -53,12 +53,12 @@ export type CachedGet = {
   readonly version: Version;
 };
 
-export type CachedCompute = {
+type CachedCompute = {
   readonly kind: "compute";
   readonly desc: ComputationDescription<AnyRawComputation & ChildComputation>;
 };
 
-export type CachedDep = CachedGet | CachedCompute;
+type CachedDep = CachedGet | CachedCompute;
 
 const defaultValDef: ValueDefinition<ComputationDescription<any>> = objValue;
 
@@ -77,44 +77,27 @@ function sameDep(a: CachedDep, b: CachedDep) {
   }
 }
 
-class CacheEntry<Res> {
-  constructor(
-    readonly value: Res,
-    readonly deps: readonly CachedDep[],
-    readonly version: Version,
-    readonly useDeps: boolean
-  ) {}
-
-  equals(other: CacheEntry<Res>) {
-    return (
-      this.value === other.value &&
-      this.useDeps === other.useDeps &&
-      sameVersion(this.version, other.version) &&
-      arrayEquals(this.deps, other.deps, sameDep)
-    );
-  }
+function sameCacheEntry<C extends AnyRawComputation>(
+  a: CacheEntry<C>,
+  b: CacheEntry<C>
+) {
+  return (
+    a.value === b.value &&
+    a.useDeps === b.useDeps &&
+    sameVersion(a.version, b.version) &&
+    arrayEquals(a.deps, b.deps, sameDep)
+  );
 }
 
-type CachedDepInDisk =
-  | {
-      readonly kind: "get";
-      readonly desc: ComputationDescription<any>;
-      readonly version: Version;
-    }
-  | {
-      readonly kind: "compute";
-      readonly desc: ComputationDescription<any>;
-    };
-
-type CacheEntryInDisk<C extends AnyRawComputation> = {
+type CacheEntry<C extends AnyRawComputation> = {
   readonly desc: ComputationDescription<C>;
   readonly value: ResultTypeOfComputation<C>;
-  readonly deps: readonly CachedDepInDisk[];
+  readonly deps: readonly CachedDep[];
   readonly useDeps: boolean;
   readonly version: Version;
 };
 
-type DB_Val = Readonly<CacheEntryInDisk<any>>[];
+type DB_Val = Readonly<CacheEntry<any>>[];
 
 export class CacheDB {
   private static DB_VERSION = 1;
@@ -191,20 +174,22 @@ export class CacheDB {
     return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
   }
 
-  getEntry<C extends AnyRawComputation>(desc: ComputationDescription<C>) {
+  getEntry<C extends AnyRawComputation>(
+    desc: ComputationDescription<C>
+  ): CacheEntry<C> | undefined {
     const key = this.getKey(desc);
     const dbValue = this.safeGet(key);
     for (const entry of dbValue) {
       if (entry.desc.equal(desc)) {
         this.alive.set(desc, null);
-        return this.unpackEntry<C>(entry as CacheEntryInDisk<C>);
+        return entry satisfies CacheEntry<any> as CacheEntry<C>;
       }
     }
   }
 
   saveEntry<C extends AnyRawComputation>(
     desc: ComputationDescription<C>,
-    entry: CacheEntry<ResultTypeOfComputation<C>>
+    entry: CacheEntry<C>
   ) {
     if (this.locked) {
       return;
@@ -251,17 +236,16 @@ export class CacheDB {
     desc: ComputationDescription<any>,
     entry: CacheEntry<any> | null
   ) {
-    const packedEntry = this.packEntry(desc, entry);
     try {
       await this.db.transaction(async () => {
         const entries = this.safeGet(key);
         const idx = entries.findIndex(e => e.desc.equal(desc));
 
-        if (packedEntry) {
+        if (entry) {
           if (idx >= 0) {
-            entries[idx] = packedEntry;
+            entries[idx] = entry;
           } else {
-            entries.push(packedEntry);
+            entries.push(entry);
           }
         } else {
           if (idx >= 0) {
@@ -276,8 +260,8 @@ export class CacheDB {
         }
       });
 
-      if (packedEntry) {
-        this.logger.debug("SAVED ENTRY", packedEntry);
+      if (entry) {
+        this.logger.debug("SAVED ENTRY", entry);
       } else {
         this.logger.debug("DELETED ENTRY", desc);
       }
@@ -285,7 +269,7 @@ export class CacheDB {
       this.logger.error(
         this.addError(
           new Error(
-            `Error ${packedEntry ? "saving" : "deleting"} entry with description ${inspect(desc)}`,
+            `Error ${entry ? "saving" : "deleting"} entry with description ${inspect(desc)}`,
             {
               cause: err,
             }
@@ -373,27 +357,6 @@ export class CacheDB {
       this.logger.error("Missing serializers for:", ...this.missingSerializers);
     }
   }
-
-  private unpackEntry<C extends AnyRawComputation>(entry: CacheEntryInDisk<C>) {
-    const { value, deps, version, useDeps } = entry;
-    return new CacheEntry(value, deps, version, useDeps);
-  }
-
-  private packEntry<C extends AnyRawComputation>(
-    desc: ComputationDescription<C>,
-    entry: CacheEntry<ResultTypeOfComputation<C>> | null
-  ): CacheEntryInDisk<C> | null {
-    if (entry == null) {
-      return null;
-    }
-    return {
-      desc,
-      value: entry.value,
-      deps: entry.useDeps ? entry.deps : [],
-      useDeps: entry.useDeps,
-      version: entry.version,
-    };
-  }
 }
 
 type CacheableCtx = RawComputationContext &
@@ -409,7 +372,7 @@ export class CacheableComputationMixin<
   public readonly db: CacheDB;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
-  private inDisk: CacheEntry<ResultTypeOfComputation<C>> | undefined;
+  private inDisk: CacheEntry<C> | undefined;
 
   constructor(
     public readonly source: C &
@@ -480,13 +443,14 @@ export class CacheableComputationMixin<
             this.source.responseEqual(cached, result.value)
           ) {
             // If the final value is the same, keep the cached version number
-            const entry = new CacheEntry(
-              cached,
-              calls,
-              currentEntry.version,
-              useDeps
-            );
-            if (entry.equals(currentEntry)) {
+            const entry: CacheEntry<C> = {
+              desc: this.desc,
+              value: cached,
+              deps: calls,
+              useDeps,
+              version: currentEntry.version,
+            };
+            if (sameCacheEntry(entry, currentEntry)) {
               this.db.logger.debug("REUSING (ALREADY SAVED)", {
                 desc: this.desc,
                 entry,
@@ -505,7 +469,13 @@ export class CacheableComputationMixin<
           }
         }
 
-        const entry = new CacheEntry(result.value, calls, version, useDeps);
+        const entry: CacheEntry<C> = {
+          desc: this.desc,
+          value: result.value,
+          deps: calls,
+          useDeps,
+          version: version,
+        };
         this.db.saveEntry(this.desc, entry);
         this.db.logger.debug("NOT REUSING", {
           desc: this.desc,
