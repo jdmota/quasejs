@@ -2,20 +2,17 @@ import path from "path";
 import fsextra from "fs-extra";
 import { serializationDB } from "../utils/serialization-db";
 import { strictArrayEquals } from "../../util/miscellaneous";
-import { ComputationRegistry } from "../incremental-lib";
-import { newComputationPool } from "../computations/job-pool/pool";
-import { newStatefulComputation } from "../computations/stateful";
-import { ComputationResult, ok } from "../utils/result";
 import { Logger } from "../../util/logger";
+import { ok } from "../utils/result";
 import { anyValue } from "../utils/hash-map";
-import { newComputationBuilder } from "../computations/basic";
+import { IncrementalLib } from "../incremental-lib";
 
 type FILE = {
   readonly content: string;
   readonly deps: string[];
 };
 
-const pool = newComputationPool<string, FILE>(
+const pool = IncrementalLib.newPool<string, FILE>(
   serializationDB.uniqueObjDB.register("MY_POOL_CONFIG", 1, {
     key: "MY_POOL_CONFIG",
     async startExec(ctx) {
@@ -57,7 +54,7 @@ const pool = newComputationPool<string, FILE>(
   })
 );
 
-const number = newComputationBuilder<undefined, number>(
+const number = IncrementalLib.new(
   serializationDB.uniqueObjDB.register("MY_NUMBER_CONFIG", 1, {
     key: "number",
     async exec(ctx) {
@@ -66,9 +63,9 @@ const number = newComputationBuilder<undefined, number>(
     requestDef: anyValue,
     responseDef: anyValue,
   })
-)(undefined);
+);
 
-const stateful = newStatefulComputation<any, any, [number, number]>(
+const stateful = IncrementalLib.newStateful<any, any, [number, number]>(
   serializationDB.uniqueObjDB.register("MY_STATEFUL_CONFIG", 1, {
     key: "stateful",
     init(ctx) {
@@ -100,49 +97,53 @@ const stateful = newStatefulComputation<any, any, [number, number]>(
   })
 );
 
-export async function main() {
-  const controller = await ComputationRegistry.run(
-    async ctx => {
-      let map: Map<string, ComputationResult<FILE>> | null = null;
-      ctx.cleanup(() => {
-        console.log("Cleanup. Previous results:", map);
-      });
+const bundler = IncrementalLib.new(
+  serializationDB.uniqueObjDB.register("MY_BUNDLER_CONFIG", 1, {
+    key: "bundler",
+    async exec(ctx) {
+      console.log("Running bundler...");
 
-      console.log("Running main computation...");
-      const results = await ctx.get(pool);
-
-      if (results.ok) {
-        map = new Map(results.value);
-
-        console.log("Results", results.value.size());
-        for (const [key, value] of results.value) {
-          console.log(key, value.ok ? value.value : value.error);
-        }
-      } else {
-        console.log("ERROR POOL RESULTS", results);
-      }
-
-      const statefulValue = await ctx.get(stateful);
+      const [results, statefulValue] = await Promise.all([
+        ctx.getOk(pool),
+        ctx.getOk(stateful),
+      ]);
       console.log("STATEFUL", statefulValue);
 
-      return results;
+      let output = [];
+      for (const [key, value] of results) {
+        if (value.ok) {
+          output.push(`// ${key}\n${value.value.content}`);
+        } else {
+          output.push(`// ${key}\nERROR: ${value.error}`);
+        }
+      }
+      return ok(output.join("\n\n"));
     },
-    {
-      onUncaughtError(info) {
-        console.error("Uncaught Error", info);
+    requestDef: anyValue,
+    responseDef: anyValue,
+  })
+);
+
+export async function main() {
+  const controller = await IncrementalLib.run({
+    entry: bundler,
+    onResult(result) {
+      console.log("ON RESULT", result);
+    },
+    onUncaughtError(info) {
+      console.error("Uncaught Error", info);
+    },
+    fs: {
+      onEvent({ event, path }) {
+        console.log("=== CHANGED", event, path, "===");
       },
-      fs: {
-        onEvent(event, path) {
-          console.log("=== CHANGED", event, path, "===");
-        },
-      },
-      cache: {
-        dir: "packages/incremental/__test/cache",
-        garbageCollect: true,
-        logger: new Logger("CACHE"),
-      },
-    }
-  );
+    },
+    cache: {
+      dir: "packages/incremental/__test/cache",
+      garbageCollect: true,
+      logger: new Logger("CACHE"),
+    },
+  });
 
   return new Promise(resolve => {
     process.once("SIGINT", () => {

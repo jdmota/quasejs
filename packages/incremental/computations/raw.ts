@@ -44,7 +44,7 @@ export type RawComputationExec<Ctx, Res> = (
 export type AnyRawComputation = RawComputation<any, any>;
 
 export abstract class RawComputation<Ctx, Res> {
-  public readonly registry: ComputationRegistry;
+  public readonly registry: ComputationRegistry<any>;
   public readonly description: ComputationDescription<any>;
   // Current state
   private state: State;
@@ -60,7 +60,7 @@ export abstract class RawComputation<Ctx, Res> {
   public next: AnyRawComputation | null;
 
   constructor(
-    registry: ComputationRegistry,
+    registry: ComputationRegistry<any>,
     description: ComputationDescription<any>
   ) {
     this.registry = registry;
@@ -175,6 +175,9 @@ export abstract class RawComputation<Ctx, Res> {
         result,
       });
       nonNull(this.running).resolve(this.result);
+      if (this.root) {
+        this.registry.onRootResult(this.result);
+      }
       this.mark(
         result.ok || result.deterministic
           ? State.SETTLED_STABLE
@@ -238,7 +241,9 @@ export abstract class RawComputation<Ctx, Res> {
   maybeRun() {
     if (this.state === State.PENDING && !this.isAlone()) {
       this.run();
+      return true;
     }
+    return false;
   }
 
   maybeDestroy() {

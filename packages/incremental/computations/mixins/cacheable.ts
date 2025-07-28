@@ -118,7 +118,7 @@ export class CacheDB {
   private saveJobs: Map<string, Promise<void>>;
   private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
 
-  constructor(private readonly opts: IncrementalOpts) {
+  constructor(private readonly opts: IncrementalOpts<any>) {
     this.dir =
       path.resolve(opts.cache.dir) +
       path.sep +

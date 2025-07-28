@@ -18,7 +18,10 @@ export interface EmitterDoneComputation<R> {
 
 export class EmitterDoneComputationMixin<R> {
   public readonly source: RawComputation<any, any> & EmitterDoneComputation<R>;
-  public readonly observers: Map<ObserverComputation, EventDoneFn<R>>;
+  public readonly observers: Map<
+    RawComputation<any, any> & ObserverComputation,
+    EventDoneFn<R>
+  >;
   private result: VersionedComputationResult<R> | null;
 
   constructor(source: RawComputation<any, any> & EmitterDoneComputation<R>) {
@@ -30,6 +33,8 @@ export class EmitterDoneComputationMixin<R> {
   emitInitialFor(observer: RawComputation<any, any> & ObserverComputation) {
     const fn = this.observers.get(observer);
     if (fn) {
+      // No need to use registry.callUserFn here since this method
+      // is called inside the "exec" of the observer
       if (this.result != null) {
         fn({
           type: "done",
@@ -47,10 +52,10 @@ export class EmitterDoneComputationMixin<R> {
     result: VersionedComputationResult<R>
   ): VersionedComputationResult<R> {
     if (this.result !== result) {
+      const registry = this.source.registry;
       this.result = result;
-      for (const fn of this.observers.values()) {
-        // TODO next tick?
-        fn({
+      for (const [observer, fn] of this.observers) {
+        registry.callUserFn(observer.description, fn, {
           type: "done",
           result: result.result,
         });

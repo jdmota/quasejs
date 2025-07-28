@@ -3,7 +3,10 @@ import chokidarWatcher from "chokidar";
 import fsextra from "fs-extra";
 import { dirname } from "path";
 import { normalizePath } from "../../../util/path-url";
-import { ComputationRegistry, IncrementalOpts } from "../../incremental-lib";
+import type {
+  ComputationRegistry,
+  IncrementalOpts,
+} from "../../incremental-lib";
 import { serializationDB } from "../../utils/serialization-db";
 import {
   ComputationResult,
@@ -51,7 +54,7 @@ export class FileComputationDescription
     this.json = JSON.stringify({ path, type });
   }
 
-  create(registry: ComputationRegistry): FileComputation {
+  create(registry: ComputationRegistry<any>): FileComputation {
     return new FileComputation(registry, this);
   }
 
@@ -99,7 +102,10 @@ class FileComputation
   public readonly cacheableMixin: CacheableComputationMixin<FileComputation>;
   public readonly fs: FileSystem;
 
-  constructor(registry: ComputationRegistry, desc: FileComputationDescription) {
+  constructor(
+    registry: ComputationRegistry<any>,
+    desc: FileComputationDescription
+  ) {
     super(registry, desc);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);
@@ -244,19 +250,27 @@ const CHOKIDAR_EVENT_TO_FILE_CHANGE = {
   unlinkDir: FileChange.ADD_OR_REMOVE,
 } as const;
 
+export type FileChangeEvent = {
+  readonly event: FileChange;
+  readonly path: string;
+};
+
 export class FileSystem {
   // File infos
   private readonly files: Map<string, FileInfo>;
   // Watcher
   private watcher: chokidarWatcher.FSWatcher | null;
 
-  constructor(private readonly opts: IncrementalOpts) {
+  constructor(
+    private readonly opts: IncrementalOpts<any>,
+    private readonly registry: ComputationRegistry<any>
+  ) {
     this.files = new Map();
     this.watcher = null;
   }
 
   private react(event: FileChange, path: string) {
-    this.opts.fs.onEvent(event, path);
+    this.registry.callUserFn(null, this.opts.fs.onEvent, { event, path });
     const info = this.files.get(normalizePath(path));
     if (info) {
       for (const c of info.events[event].computations) {

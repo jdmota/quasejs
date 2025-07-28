@@ -1,6 +1,18 @@
-import { setAdd } from "../../../util/maps-sets";
-import { HashMap, ValueDefinition } from "../../utils/hash-map";
-import { RawComputation } from "../raw";
+import { setAdd } from "../../../../util/maps-sets";
+import { HashMap, ValueDefinition } from "../../../utils/hash-map";
+import { RawComputation } from "../../raw";
+
+// This idea was interesting, but I am not sure it is ideal
+// Side-effects create complications:
+// If we desire to use persistent cache in disk,
+// we actually need to write into the CacheDB first to log that we started an effect,
+// so that we can handle errors, undo effects, etc., later on
+
+// Since the intended purpose of the Incremental library
+// is to then output results to disk,
+// maybe it is easier to just track the files written in a folder
+// and then have a simple routine that checks for differences on re-runs
+// and removes the extraneous files
 
 export type SideEffectResult<D, U, E = unknown> =
   | {
@@ -98,7 +110,6 @@ const sideEffectDescValue: ValueDefinition<
   equal: (a, b) => a.equal(b),
 };
 
-// TODO support caching side-effects
 export class SideEffectComputationMixin {
   private readonly source: RawComputation<any, any> & SideEffectComputation;
   private readonly effects: HashMap<
@@ -135,7 +146,7 @@ export class SideEffectComputationMixin {
   async postExec(runId: number) {
     this.source.checkActive(runId);
     // Undo old effects that were not renewed in this run
-    const undo = [];
+    const undo: SideEffect<any, any, any>[] = [];
     for (const eff of this.effects.values()) {
       if (!this.activeEffects.has(eff)) undo.push(eff);
     }

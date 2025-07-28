@@ -1,27 +1,27 @@
-import { AnyRawComputation } from "../raw";
+import { AnyRawComputation } from "../../raw";
 
 export type CleanupFn = (deleting: boolean) => void | Promise<void>;
 
 const NOOP_CLEANUP: CleanupFn = () => {};
 
-export type EffectContext = {
+export type SimpleEffectContext = {
   readonly cleanup: (fn: CleanupFn) => void;
 };
 
-export interface IEffectComputation {
-  readonly effectMixin: EffectComputationMixin;
+export interface SimpleEffectComputation {
+  readonly simpleEffectMixin: SimpleEffectComputationMixin;
 }
 
-export class EffectComputationMixin {
-  public readonly source: AnyRawComputation & IEffectComputation;
+export class SimpleEffectComputationMixin {
+  public readonly source: AnyRawComputation & SimpleEffectComputation;
   private cleanup: CleanupFn;
 
-  constructor(source: AnyRawComputation & IEffectComputation) {
+  constructor(source: AnyRawComputation & SimpleEffectComputation) {
     this.source = source;
     this.cleanup = NOOP_CLEANUP;
   }
 
-  makeContextRoutine(runId: number): EffectContext {
+  makeContextRoutine(runId: number): SimpleEffectContext {
     return {
       cleanup: fn => {
         this.source.checkActive(runId);

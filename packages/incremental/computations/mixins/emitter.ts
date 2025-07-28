@@ -50,7 +50,10 @@ export interface EmitterComputation<K, V, R> {
 export class EmitterComputationMixin<K, V, R> {
   public readonly source: RawComputation<any, any> &
     EmitterComputation<K, V, R>;
-  public readonly observers: Map<ObserverComputation, EventFn<K, V, R>>;
+  public readonly observers: Map<
+    RawComputation<any, any> & ObserverComputation,
+    EventFn<K, V, R>
+  >;
   private readonly results: HashMap<K, V>;
   private doneResult: ComputationResult<R> | null;
   private readonly notifier = createNotifier();
@@ -114,9 +117,9 @@ export class EmitterComputationMixin<K, V, R> {
 
   private emitEvent(event: MapEvent<K, V>): void {
     this.setDone(null);
-    for (const fn of this.observers.values()) {
-      // TODO next tick?
-      fn(event);
+    const registry = this.source.registry;
+    for (const [observer, fn] of this.observers) {
+      registry.callUserFn(observer.description, fn, event);
     }
   }
 
@@ -124,9 +127,9 @@ export class EmitterComputationMixin<K, V, R> {
     this.source.inv();
     this.checkEmitActive(emitRunId);
     this.setDone(result);
-    for (const fn of this.observers.values()) {
-      // TODO next tick?
-      fn({
+    const registry = this.source.registry;
+    for (const [observer, fn] of this.observers) {
+      registry.callUserFn(observer.description, fn, {
         type: "done",
         result,
       });
@@ -149,8 +152,9 @@ export class EmitterComputationMixin<K, V, R> {
   emitInitialFor(observer: RawComputation<any, any> & ObserverComputation) {
     const fn = this.observers.get(observer);
     if (fn) {
+      // No need to use registry.callUserFn here since this method
+      // is called inside the "exec" of the observer
       for (const [key, value] of this.results) {
-        // TODO next tick?
         fn({
           type: "added",
           key,
@@ -159,7 +163,6 @@ export class EmitterComputationMixin<K, V, R> {
         });
       }
       if (this.doneResult != null) {
-        // TODO next tick?
         fn({
           type: "done",
           result: this.doneResult,

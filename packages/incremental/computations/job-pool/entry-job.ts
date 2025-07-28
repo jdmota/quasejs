@@ -51,7 +51,7 @@ export class ComputationEntryJobDescription<
     this.poolDesc = poolDesc;
   }
 
-  create(registry: ComputationRegistry): ComputationEntryJob<Req, Res> {
+  create(registry: ComputationRegistry<any>): ComputationEntryJob<Req, Res> {
     return new ComputationEntryJob(
       registry,
       this,
@@ -113,7 +113,7 @@ export class ComputationEntryJob<Req, Res>
   >;
 
   constructor(
-    registry: ComputationRegistry,
+    registry: ComputationRegistry<any>,
     desc: ComputationDescription<any>,
     pool: ComputationPool<Req, Res>
   ) {

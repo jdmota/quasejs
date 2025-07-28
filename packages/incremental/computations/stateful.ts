@@ -36,7 +36,7 @@ type StatefulComputationExec<K, V, R> = (
   ctx: StatefulComputationCtx<K, V, R>
 ) => void;
 
-type StatefulComputationConfig<K, V, R> = {
+export type StatefulComputationConfig<K, V, R> = {
   readonly key: string;
   readonly init: StatefulComputationExec<K, V, R>;
   readonly keyDef: ValueDefinition<K>;
@@ -62,18 +62,14 @@ export class StatefulComputationDescription<
     this.config = config;
   }
 
-  create(registry: ComputationRegistry): StatefulComputation<K, V, R> {
+  create(registry: ComputationRegistry<any>): StatefulComputation<K, V, R> {
     return new StatefulComputation(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof StatefulComputationDescription &&
-      this.config.key === other.config.key &&
-      this.config.init === other.config.init &&
-      this.config.keyDef === other.config.keyDef &&
-      this.config.valueDef === other.config.valueDef &&
-      this.config.doneDef === other.config.doneDef
+      this.config === other.config
     );
   }
 
@@ -122,7 +118,7 @@ export class StatefulComputation<K, V, R>
   private phase: StatefulPhase;
 
   constructor(
-    registry: ComputationRegistry,
+    registry: ComputationRegistry<any>,
     desc: StatefulComputationDescription<K, V, R>
   ) {
     super(registry, desc);

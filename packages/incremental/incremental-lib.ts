@@ -3,7 +3,6 @@
 // The arguments and results may be serialized and deserialized
 // They may also be associated with equality functions to avoid unnecessary recomputations
 // Since computations may be asynchronous, to ensure determinism, they may only depend on other computations and on the (immutable) arguments
-import EventEmitter from "node:events";
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
 import { assertion } from "../util/miscellaneous";
@@ -11,17 +10,32 @@ import { SerializationDB } from "../util/serialization";
 import { HashMap } from "./utils/hash-map";
 import { serializationDB } from "./utils/serialization-db";
 import { AnyRawComputation, RawComputation, State } from "./computations/raw";
-import type { ComputationDescription } from "./computations/description";
+import type {
+  AnyComputationDescription,
+  ComputationDescription,
+} from "./computations/description";
 import { ComputationResult, VersionedComputationResult } from "./utils/result";
-import {
-  SimpleEffectComputationExec,
-  newSimpleEffectComputation,
-} from "./computations/simple-effect";
-import { EffectComputation } from "./computations/effect";
 import { CacheDB } from "./computations/mixins/cacheable";
-import { FileChange, FileSystem } from "./computations/file-system/file-system";
+import {
+  FileChange,
+  FileChangeEvent,
+  FileSystem,
+} from "./computations/file-system/file-system";
 import { createErrorDefer } from "../util/deferred";
 import { Logger } from "../util/logger";
+import {
+  BasicComputationConfig,
+  newComputationBuilder,
+  newComputationBuilderNoReq,
+} from "./computations/basic";
+import {
+  ComputationPoolConfig,
+  newComputationPool,
+} from "./computations/job-pool/pool";
+import {
+  newStatefulComputation,
+  StatefulComputationConfig,
+} from "./computations/stateful";
 
 const determinismSym = Symbol("deterministic");
 
@@ -40,7 +54,11 @@ function deterministic<Arg, Ret>(
 export type ResultTypeOfComputation<C> =
   C extends RawComputation<any, infer Res> ? Res : never;
 
-export type IncrementalOpts = {
+export type IncrementalOpts<C extends AnyRawComputation> = {
+  readonly entry: ComputationDescription<C>;
+  readonly onResult: (
+    result: ComputationResult<ResultTypeOfComputation<C>>
+  ) => void;
   readonly onUncaughtError: (
     info: Readonly<{
       description: ComputationDescription<any> | null;
@@ -48,7 +66,7 @@ export type IncrementalOpts = {
     }>
   ) => void;
   readonly fs: {
-    readonly onEvent: (event: FileChange, path: string) => void;
+    readonly onEvent: (event: FileChangeEvent) => void;
   };
   readonly cache: {
     readonly dir: string;
@@ -57,11 +75,12 @@ export type IncrementalOpts = {
   };
 };
 
-type ComputationRegistryOpts = IncrementalOpts & {
-  readonly canInvalidate: boolean;
-};
+type ComputationRegistryOpts<C extends AnyRawComputation> =
+  IncrementalOpts<C> & {
+    readonly canInvalidate: boolean;
+  };
 
-export class ComputationRegistry {
+class ComputationRegistry<EntryC extends AnyRawComputation> {
   private canInvalidate: boolean;
   private canExternalInvalidate: boolean;
   private map: HashMap<ComputationDescription<any>, AnyRawComputation>;
@@ -82,7 +101,7 @@ export class ComputationRegistry {
   public readonly fs: FileSystem;
   public readonly serializationDB: SerializationDB;
 
-  private constructor(private readonly opts: ComputationRegistryOpts) {
+  private constructor(private readonly opts: ComputationRegistryOpts<EntryC>) {
     this.canInvalidate = opts.canInvalidate;
     this.canExternalInvalidate = opts.canInvalidate;
     this.map = new HashMap({
@@ -102,7 +121,7 @@ export class ComputationRegistry {
     //
     this.serializationDB = serializationDB;
     this.db = new CacheDB(opts);
-    this.fs = new FileSystem(opts);
+    this.fs = new FileSystem(opts, this);
   }
 
   queueOtherJob(
@@ -178,9 +197,11 @@ export class ComputationRegistry {
     // Since some computations might not be removed from the "pending" set,
     // in case they have no dependents, we use Array.from first,
     // also keeping in mind that "iterateAll" is not stable over modifications.
+    let started = false;
     for (const c of Array.from(this.pending.iterateAll())) {
-      c.maybeRun();
+      started = c.maybeRun() || started;
     }
+    return started;
   }
 
   // External invalidations (like those caused by file changes)
@@ -203,17 +224,21 @@ export class ComputationRegistry {
   private async wait() {
     assertion(!this.canInvalidate && !this.canExternalInvalidate);
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {
-      this.wake();
+      const started = this.wake();
       const computation = this.running.peek();
       if (computation) {
         await this.run(computation);
+      } else if (!started) {
+        // No running computation, and those that are pending did not start
+        // (because they are lonely), let's break to avoid infinite loop
+        break;
       }
     }
   }
 
-  run<T>(
-    computation: RawComputation<any, T>
-  ): Promise<VersionedComputationResult<T>> {
+  run<C extends AnyRawComputation>(
+    computation: C
+  ): Promise<VersionedComputationResult<ResultTypeOfComputation<C>>> {
     return Promise.race([computation.run(), this.interruptedDefer.promise]);
   }
 
@@ -275,10 +300,7 @@ export class ComputationRegistry {
     return this.cleaningUp;
   }
 
-  private cleanupRun(
-    rootComputation: EffectComputation<undefined, any>,
-    interrupted: boolean
-  ) {
+  private cleanupRun(rootComputation: EntryC, interrupted: boolean) {
     if (this.cleaningUp) return;
     this.cleaningUp = true;
     this.interruptedDefer.reject(new Error("Interrupted"));
@@ -326,31 +348,50 @@ export class ComputationRegistry {
     return this;
   }
 
-  static async singleRun<T>(
-    exec: SimpleEffectComputationExec<T>,
-    opts: IncrementalOpts
-  ): Promise<ComputationResult<T>> {
+  callUserFn<Arg>(
+    desc: AnyComputationDescription | null,
+    fn: (arg: Arg) => void,
+    arg: Arg
+  ) {
+    try {
+      fn(arg);
+    } catch (err) {
+      this.emitUncaughtError(desc, err);
+    }
+  }
+
+  onRootResult(
+    result: VersionedComputationResult<ResultTypeOfComputation<EntryC>>
+  ) {
+    // Invalidations are disallowed when:
+    // - in single run mode
+    // - interrupted or finishing
+    if (this.invalidationsAllowed()) {
+      this.callUserFn(this.opts.entry, this.opts.onResult, result.result);
+    }
+  }
+
+  static async singleRun<C extends AnyRawComputation>(
+    opts: IncrementalOpts<C>
+  ): Promise<ComputationResult<ResultTypeOfComputation<C>>> {
     const registry = await new ComputationRegistry({
       ...opts,
       canInvalidate: false,
     }).load();
-    const desc = newSimpleEffectComputation({ exec });
-    const computation = registry.make(desc, true);
+    const computation = registry.make(opts.entry, true);
     const result = await registry.run(computation);
     await registry.cleanupRun(computation, false);
     return result.result;
   }
 
-  static async run<T>(
-    exec: SimpleEffectComputationExec<T>,
-    opts: IncrementalOpts
-  ): Promise<ComputationController<T>> {
-    const registry = await new ComputationRegistry({
+  static async run<C extends AnyRawComputation>(
+    opts: IncrementalOpts<C>
+  ): Promise<ComputationController<ResultTypeOfComputation<C>>> {
+    const registry = await new ComputationRegistry<C>({
       ...opts,
       canInvalidate: true,
     }).load();
-    const desc = newSimpleEffectComputation({ exec });
-    const computation = registry.make(desc, true);
+    const computation = registry.make(opts.entry, true);
     registry.wake();
 
     let interrupted = false;
@@ -383,6 +424,8 @@ export class ComputationRegistry {
   }
 }
 
+export type { ComputationRegistry };
+
 type ComputationController<T> = {
   readonly interrupt: () => Promise<void>;
   readonly finish: () => Promise<ComputationResult<T>>;
@@ -391,3 +434,29 @@ type ComputationController<T> = {
     readonly nonDeterministic: unknown[];
   };
 };
+
+export class IncrementalLib {
+  static singleRun<C extends AnyRawComputation>(opts: IncrementalOpts<C>) {
+    return ComputationRegistry.singleRun(opts);
+  }
+
+  static run<C extends AnyRawComputation>(opts: IncrementalOpts<C>) {
+    return ComputationRegistry.run(opts);
+  }
+
+  static newBuilder<Req, Res>(config: BasicComputationConfig<Req, Res>) {
+    return newComputationBuilder(config);
+  }
+
+  static new<Res>(config: BasicComputationConfig<undefined, Res>) {
+    return newComputationBuilderNoReq(config);
+  }
+
+  static newPool<Req, Res>(config: ComputationPoolConfig<Req, Res>) {
+    return newComputationPool(config);
+  }
+
+  static newStateful<K, V, R>(config: StatefulComputationConfig<K, V, R>) {
+    return newStatefulComputation(config);
+  }
+}

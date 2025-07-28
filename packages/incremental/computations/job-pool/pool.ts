@@ -73,18 +73,14 @@ export class ComputationPoolDescription<
     this.config = config;
   }
 
-  create(registry: ComputationRegistry): ComputationPool<Req, Res> {
+  create(registry: ComputationRegistry<any>): ComputationPool<Req, Res> {
     return new ComputationPool(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof ComputationPoolDescription &&
-      this.config.key === other.config.key &&
-      this.config.startExec === other.config.startExec &&
-      this.config.exec === other.config.exec &&
-      this.config.requestDef === other.config.requestDef &&
-      this.config.responseDef === other.config.responseDef
+      this.config === other.config
     );
   }
 
@@ -156,7 +152,7 @@ export class ComputationPool<Req, Res>
   private readonly emitRunId: number;
 
   constructor(
-    registry: ComputationRegistry,
+    registry: ComputationRegistry<any>,
     private readonly desc: ComputationPoolDescription<Req, Res>
   ) {
     super(registry, desc);

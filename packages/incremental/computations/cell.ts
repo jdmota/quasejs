@@ -40,16 +40,12 @@ export class CellDescription<Res> extends ComputationDescription<
     this.config = config;
   }
 
-  create(registry: ComputationRegistry): CellComputation<Res> {
+  create(registry: ComputationRegistry<any>): CellComputation<Res> {
     return new CellComputation(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
-    return (
-      other instanceof CellDescription &&
-      this.config.name === other.config.name &&
-      this.config.responseDef === other.config.responseDef
-    );
+    return other instanceof CellDescription && this.config === other.config;
   }
 
   hash() {
@@ -75,7 +71,7 @@ export class CellComputation<Res>
   private notifier: Notifier<null>;
   private executed = false;
 
-  constructor(registry: ComputationRegistry, desc: CellDescription<Res>) {
+  constructor(registry: ComputationRegistry<any>, desc: CellDescription<Res>) {
     super(registry, desc);
     this.desc = desc;
     this.subscribableMixin = new SubscribableComputationMixin(this);

@@ -50,6 +50,12 @@ export function newComputationBuilder<Req, Res>(
   return (request: Req) => new BasicComputationDescription(config, request);
 }
 
+export function newComputationBuilderNoReq<Res>(
+  config: BasicComputationConfig<undefined, Res>
+) {
+  return new BasicComputationDescription(config, undefined);
+}
+
 type BasicComputationDescriptionJSON<Req, Res> = {
   readonly config: BasicComputationConfig<Req, Res>;
   readonly request: Req;
@@ -68,17 +74,14 @@ export class BasicComputationDescription<
     this.request = request;
   }
 
-  create(registry: ComputationRegistry): BasicComputation<Req, Res> {
+  create(registry: ComputationRegistry<any>): BasicComputation<Req, Res> {
     return new BasicComputation(registry, this);
   }
 
   equal<O extends AnyRawComputation>(other: ComputationDescription<O>) {
     return (
       other instanceof BasicComputationDescription &&
-      this.config.key === other.config.key &&
-      this.config.exec === other.config.exec &&
-      this.config.requestDef === other.config.requestDef &&
-      this.config.responseDef === other.config.responseDef &&
+      this.config === other.config &&
       this.config.requestDef.equal(this.request, other.request)
     );
   }
@@ -126,7 +129,7 @@ export class BasicComputation<Req, Res>
   protected readonly request: Req;
 
   constructor(
-    registry: ComputationRegistry,
+    registry: ComputationRegistry<any>,
     desc: BasicComputationDescription<Req, Res>
   ) {
     super(registry, desc);
