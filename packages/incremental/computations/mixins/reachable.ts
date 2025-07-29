@@ -1,6 +1,6 @@
 import { CounterMap } from "../../../util/data-structures/counter-map";
 import { LinkedList } from "../../../util/data-structures/linked-list";
-import { AnyRawComputation } from "../raw";
+import { type AnyRawComputation } from "../raw";
 
 type ReachabilityId = {
   readonly __opaque__: unique symbol;

@@ -1,25 +1,24 @@
 import {
   RawComputation,
-  State,
-  StateNotDeleted,
-  StateNotCreating,
-  AnyRawComputation,
-  RawComputationContext,
+  type StateNotDeleted,
+  type StateNotCreating,
+  type AnyRawComputation,
+  type RawComputationContext,
 } from "../computations/raw";
 import { ComputationDescription } from "./description";
 import {
-  SubscribableComputation,
+  type SubscribableComputation,
   SubscribableComputationMixin,
 } from "./mixins/subscribable";
-import { ComputationRegistry } from "../incremental-lib";
-import { ValueDefinition } from "../utils/hash-map";
+import { type ComputationRegistry } from "../incremental-lib";
+import { type ValueDefinition } from "../utils/hash-map";
 import {
-  ComputationResult,
+  type ComputationResult,
   ok,
-  VersionedComputationResult,
+  type VersionedComputationResult,
 } from "../utils/result";
 import { CacheableComputationMixin } from "./mixins/cacheable";
-import { createNotifier, Notifier } from "../../util/deferred";
+import { createNotifier, type Notifier } from "../../util/deferred";
 
 export type CellConfig<Res> = {
   readonly name: string;

@@ -1,9 +1,13 @@
 import { createNotifier } from "../../../util/deferred";
-import { HashMap, MapEvent, ValueDefinition } from "../../utils/hash-map";
-import { ComputationResult } from "../../utils/result";
+import {
+  HashMap,
+  type MapEvent,
+  type ValueDefinition,
+} from "../../utils/hash-map";
+import { type ComputationResult } from "../../utils/result";
 import { RunId } from "../../utils/run-id";
 import { RawComputation } from "../raw";
-import { ObserverComputation } from "./observer";
+import { type ObserverComputation } from "./observer";
 
 export type EmitterEvent<K, V, R> =
   | MapEvent<K, V>

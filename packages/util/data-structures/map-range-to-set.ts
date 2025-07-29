@@ -1,4 +1,4 @@
-import { ReadonlySpecialSet, SpecialSet } from "./map-key-to-set.ts";
+import { type ReadonlySpecialSet, type SpecialSet } from "./map-key-to-set.ts";
 import { allAfter, allBefore } from "../range-utils";
 
 type Node<T, S extends SpecialSet<T>> = {

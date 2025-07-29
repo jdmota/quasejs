@@ -1,5 +1,5 @@
 import { equals } from "../miscellaneous";
-import { MapEntry, MapKey } from "./map-key-to-set";
+import { type MapEntry, type MapKey } from "./map-key-to-set";
 
 const TABLE_SIZE = 1000;
 

@@ -1,7 +1,10 @@
 import { assertion } from "../../../util/miscellaneous";
-import { resultEqual, VersionedComputationResult } from "../../utils/result";
-import { DependentComputation } from "./dependent";
-import { AnyRawComputation, RawComputation } from "../raw";
+import {
+  resultEqual,
+  type VersionedComputationResult,
+} from "../../utils/result";
+import { type DependentComputation } from "./dependent";
+import { type AnyRawComputation, RawComputation } from "../raw";
 
 export interface SubscribableComputation<Res> {
   readonly subscribableMixin: SubscribableComputationMixin<Res>;

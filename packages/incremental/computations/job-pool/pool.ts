@@ -1,37 +1,40 @@
 import {
-  DependentComputation,
+  type DependentComputation,
   DependentComputationMixin,
 } from "../mixins/dependent";
 import {
   RawComputation,
   State,
-  StateNotDeleted,
-  StateNotCreating,
-  AnyRawComputation,
+  type StateNotDeleted,
+  type StateNotCreating,
+  type AnyRawComputation,
 } from "../raw";
 import { ComputationDescription } from "../description";
 import {
-  SubscribableComputation,
+  type SubscribableComputation,
   SubscribableComputationMixin,
 } from "../mixins/subscribable";
-import { ComputationRegistry } from "../../incremental-lib";
+import { type ComputationRegistry } from "../../incremental-lib";
 import {
-  ValueDefinition,
-  ReadonlySnapshotHashMap,
+  type ValueDefinition,
+  type ReadonlySnapshotHashMap,
   HashMap,
 } from "../../utils/hash-map";
 import {
-  ComputationResult,
+  type ComputationResult,
   resultEqual,
   ok,
-  VersionedComputationResult,
+  type VersionedComputationResult,
 } from "../../utils/result";
-import { ComputationJobContext, ComputationJobDescription } from "./job";
+import { type ComputationJobContext, ComputationJobDescription } from "./job";
 import {
-  ComputationEntryJobContext,
+  type ComputationEntryJobContext,
   ComputationEntryJobDescription,
 } from "./entry-job";
-import { EmitterComputation, EmitterComputationMixin } from "../mixins/emitter";
+import {
+  type EmitterComputation,
+  EmitterComputationMixin,
+} from "../mixins/emitter";
 import { serializationDB } from "../../utils/serialization-db";
 
 type ComputationPoolContext = {

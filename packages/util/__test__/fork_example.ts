@@ -1,5 +1,5 @@
 import { ChildProcessParent, WorkerParent } from "../workers";
-import { FromChild, FromParent } from "./protocol_example";
+import { type FromChild, type FromParent } from "./protocol_example";
 
 const parent = process.argv.includes("child_process")
   ? new ChildProcessParent<FromChild, FromParent>()

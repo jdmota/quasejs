@@ -1,4 +1,4 @@
-import { createDefer, Defer } from "./deferred";
+import { createDefer, type Defer } from "./deferred";
 import { never } from "./miscellaneous";
 import { Result } from "./monads";
 

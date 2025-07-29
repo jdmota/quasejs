@@ -1,5 +1,5 @@
-import { ParentComputation } from "./parent";
-import { AnyRawComputation } from "../raw";
+import { type ParentComputation } from "./parent";
+import { type AnyRawComputation } from "../raw";
 
 export interface ChildComputation {
   readonly childMixin: ChildComputationMixin;

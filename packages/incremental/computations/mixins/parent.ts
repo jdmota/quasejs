@@ -1,6 +1,6 @@
 import { setAdd } from "../../../util/maps-sets";
-import { ChildComputation } from "./child";
-import { AnyRawComputation } from "../raw";
+import { type ChildComputation } from "./child";
+import { type AnyRawComputation } from "../raw";
 import { ReachableComputationMixin } from "./reachable";
 
 export interface ParentComputation {

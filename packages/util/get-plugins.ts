@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { Obj } from "./miscellaneous";
+import { type Obj } from "./miscellaneous";
 
 type ProvidedPlugins<P> = readonly (P | [string, Obj] | null | undefined)[];
 

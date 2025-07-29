@@ -1,4 +1,4 @@
-import { Version } from "./versions";
+import { type Version } from "./versions";
 
 export type ComputationResult<T, E = unknown> =
   | {

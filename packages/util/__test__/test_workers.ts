@@ -1,6 +1,6 @@
 import path from "path";
 import { ChildProcessFork, WorkerFork } from "../workers";
-import { FromChild, FromParent } from "./protocol_example";
+import { type FromChild, type FromParent } from "./protocol_example";
 
 const file = path.resolve(import.meta.dirname, "./fork_example.ts");
 

@@ -1,4 +1,4 @@
-import { JsonValue, Jsonify, JsonPrimitive } from "type-fest";
+import type { JsonValue, Jsonify, JsonPrimitive } from "type-fest";
 
 type PluginRegistry = { readonly [key: string]: Plugin<any, any, any, any> };
 
@@ -6,7 +6,7 @@ type Plugin<
   R extends PluginRegistry,
   I extends JsonValue,
   O extends JsonValue,
-  M extends FileRequest<R, keyof R>
+  M extends FileRequest<R, keyof R>,
 > = (
   file: string,
   arg: I

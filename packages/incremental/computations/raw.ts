@@ -1,13 +1,13 @@
-import { createDefer, Defer } from "../../util/deferred";
+import { createDefer, type Defer } from "../../util/deferred";
 import { assertion, nonNull } from "../../util/miscellaneous";
 import {
-  ComputationResult,
+  type ComputationResult,
   error,
-  VersionedComputationResult,
+  type VersionedComputationResult,
   WrappedResult,
 } from "../utils/result";
 import { RunId } from "../utils/run-id";
-import { ComputationRegistry } from "../incremental-lib";
+import { type ComputationRegistry } from "../incremental-lib";
 import { ComputationDescription } from "./description";
 
 export enum State {

@@ -1,4 +1,9 @@
-import { fork, ChildProcess, ForkOptions, Serializable } from "child_process";
+import {
+  fork,
+  ChildProcess,
+  type ForkOptions,
+  type Serializable,
+} from "child_process";
 import {
   Worker,
   parentPort,

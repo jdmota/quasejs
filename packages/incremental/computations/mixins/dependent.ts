@@ -1,13 +1,13 @@
 import { setAdd } from "../../../util/maps-sets";
 import {
-  ComputationResult,
+  type ComputationResult,
   promiseIfOk,
-  VersionedComputationResult,
+  type VersionedComputationResult,
 } from "../../utils/result";
-import { AnyRawComputation, RawComputation } from "../raw";
+import { type AnyRawComputation, RawComputation } from "../raw";
 import { ComputationDescription } from "../description";
-import { SubscribableComputation } from "./subscribable";
-import { Version } from "../../utils/versions";
+import { type SubscribableComputation } from "./subscribable";
+import { type Version } from "../../utils/versions";
 
 export type DependentContext = {
   readonly get: <T>(

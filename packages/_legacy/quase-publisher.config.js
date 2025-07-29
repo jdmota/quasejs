@@ -1,6 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
-const { execObservable } = require("./packages/publisher");
+const { execObservable } = require("../publisher/src");
 
 // yarn n packages/publisher/bin --preview --folder <folder>
 

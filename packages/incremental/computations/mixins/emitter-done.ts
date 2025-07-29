@@ -1,9 +1,9 @@
 import {
-  ComputationResult,
-  VersionedComputationResult,
+  type ComputationResult,
+  type VersionedComputationResult,
 } from "../../utils/result";
 import { RawComputation } from "../raw";
-import { ObserverComputation } from "./observer";
+import { type ObserverComputation } from "./observer";
 
 export type EmitterDoneEvent<R> = Readonly<{
   type: "done";

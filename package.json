@@ -81,6 +81,7 @@
     "package-config": "^5.0.0",
     "prettier": "^3.2.5",
     "random-js": "^2.1.0",
+    "redent": "^4.0.0",
     "regexp-tree": "^0.1.27",
     "rxjs": "^7.5.6",
     "slash": "^5.1.0",

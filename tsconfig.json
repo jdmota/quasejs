@@ -13,7 +13,8 @@
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true
   },
   "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts", "**/_legacy/**"]
 }

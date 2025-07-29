@@ -1,4 +1,4 @@
-import { Range } from "../range-utils";
+import { type Range } from "../range-utils";
 
 type Node<T> = {
   range: Range;

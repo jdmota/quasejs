@@ -1,4 +1,4 @@
-import { equals, ObjectHashEquals } from "../miscellaneous";
+import { equals, type ObjectHashEquals } from "../miscellaneous";
 
 export interface ReadonlySpecialSet<T> {
   [Symbol.iterator](): Iterator<T>;
