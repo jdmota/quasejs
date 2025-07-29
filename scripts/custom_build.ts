@@ -131,14 +131,15 @@ async function build(input: string[], dir: string) {
   process.exitCode = buildFailed ? 1 : 0;
 }
 
-const input =
-  [
-    "./web-app-tools/async",
-    "./web-app-tools/router/pathname",
-    "./web-app-tools/router/router",
-    "./web-app-tools/router/router.scroll",
-    "./web-app-tools/ui",
-  ] ?? process.argv.slice(2);
+const input = [
+  "./web-app-tools/async",
+  "./web-app-tools/router/pathname",
+  "./web-app-tools/router/router",
+  "./web-app-tools/router/router.scroll",
+  "./web-app-tools/onload",
+  "./web-app-tools/simple-app",
+  "./web-app-tools/ui",
+]; /* ?? process.argv.slice(2) */
 
 const d = new Date();
 function n(n: number) {

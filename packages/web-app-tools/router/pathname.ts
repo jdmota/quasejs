@@ -1,4 +1,4 @@
-import { Opaque } from "../../util/miscellaneous";
+import type { Opaque } from "../../util/miscellaneous";
 
 export type NormalizedPathname = Opaque<string, "NormalizedPathname">;
 export type NormalizedSearch = Opaque<string, "NormalizedSearch">;

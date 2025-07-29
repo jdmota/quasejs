@@ -1,34 +1,4 @@
-export function onMount(svelteOnMount: (resolve: () => void) => void) {
-  return new Promise<void>(svelteOnMount);
-}
-
-function onLoad() {
-  return new Promise<void>(resolve => {
-    if (document.readyState === "complete") {
-      resolve();
-    } else {
-      const fn = () => {
-        window.removeEventListener("load", fn);
-        resolve();
-      };
-      window.addEventListener("load", fn);
-    }
-  });
-}
-
 const DEFAULT_SPLASH_ID = "quase_app_splash";
-
-function removeSplash(id: string) {
-  const splash = document.getElementById(id);
-  if (splash) {
-    const callback = () => {
-      splash.style.display = "none";
-      splash.removeEventListener("transitionend", callback);
-    };
-    splash.addEventListener("transitionend", callback);
-    document.body.classList.remove("loading");
-  }
-}
 
 export type CreateSplashOpts = Readonly<{
   id?: string;
@@ -83,22 +53,14 @@ export function createSplash({
   };
 }
 
-type AppOptions = Readonly<{
-  splashId?: string;
-}>;
-
-export class App {
-  readonly opts: AppOptions;
-
-  constructor(opts: AppOptions = {}) {
-    this.opts = opts;
-  }
-
-  async init(jobs: Promise<unknown>[] = []) {
-    await Promise.all(jobs);
-    await onLoad();
-    removeSplash(this.opts.splashId ?? DEFAULT_SPLASH_ID);
+export function removeSplash(id: string = DEFAULT_SPLASH_ID) {
+  const splash = document.getElementById(id);
+  if (splash) {
+    const callback = () => {
+      splash.style.display = "none";
+      splash.removeEventListener("transitionend", callback);
+    };
+    splash.addEventListener("transitionend", callback);
+    document.body.classList.remove("loading");
   }
 }
-
-export const app = new App();

@@ -2,15 +2,15 @@ import { sessionGet, sessionSet } from "../session-storage";
 import lifecycle from "./lifecycle/export";
 import { type NormalizedHash } from "./pathname";
 import {
-  Transition,
-  LocationAndIndex,
-  RouterEvents,
+  type Transition,
+  type LocationAndIndex,
+  type RouterEvents,
   RouterMixin,
   Router,
 } from "./router";
 import { TypedEvent } from "../events";
 import { SSR } from "../support";
-import { never, ObjRecord } from "../../util/miscellaneous";
+import { never, type ObjRecord } from "../../util/miscellaneous";
 
 const SCROLL_KEY = "quase_router_scroll";
 

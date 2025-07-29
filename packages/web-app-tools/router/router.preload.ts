@@ -1,7 +1,10 @@
 import { TypedEvent } from "../events";
-import { SimpleLocationNoHash, createSimpleLocationNoHash } from "./pathname";
+import {
+  type SimpleLocationNoHash,
+  createSimpleLocationNoHash,
+} from "./pathname";
 import { findAnchor, considerAnchor } from "./anchors";
-import { RouterEvents, RouterMixin, Router } from "./router";
+import { type RouterEvents, RouterMixin, Router } from "./router";
 
 // Adapted from https://github.com/sveltejs/kit
 /*

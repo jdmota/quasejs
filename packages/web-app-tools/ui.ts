@@ -8,5 +8,9 @@ export function onEnter(fn: () => void) {
   };
 }
 
-export const scrollToTop =
+export const goTop =
   typeof scrollTo === "undefined" ? noop : () => scrollTo(0, 0);
+
+export function goTopSmooth() {
+  document.body.scrollIntoView({ behavior: "smooth" });
+}
