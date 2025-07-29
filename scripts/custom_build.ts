@@ -33,7 +33,7 @@ async function resolveModule(
 
 type ProcessResult = Readonly<{ relativePath: string; code: string }>;
 
-async function collectFiles(inputFiles: string[], _outputDir: string) {
+async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
   const outputDir = path.resolve(ROOT, _outputDir);
   const jobs = new Map<string, Promise<ProcessResult>>();
 
@@ -97,6 +97,12 @@ async function collectFiles(inputFiles: string[], _outputDir: string) {
     console.log(`${pretty(filename)} -> ${pretty(dist)}`);
     await fs.outputFile(dist, code);
   }
+
+  const manifestFile = path.resolve(outputDir, "quasejs_build.json");
+  await fs.writeJSON(manifestFile, {
+    timestamp: d.toISOString(),
+    input,
+  });
 }
 
 async function build(input: string[], dir: string) {
@@ -139,7 +145,8 @@ function n(n: number) {
   return n < 10 ? "0" + n : "" + n;
 }
 
-collectFiles(
-  input,
-  `scripts/${d.getFullYear()}${n(d.getMonth() + 1)}${n(d.getDate())}${n(d.getHours())}${n(d.getMinutes())}${n(d.getSeconds())}`
-);
+function timestamp() {
+  return `${d.getFullYear()}${n(d.getMonth() + 1)}${n(d.getDate())}${n(d.getHours())}${n(d.getMinutes())}${n(d.getSeconds())}`;
+}
+
+collectFiles(input, `scripts/${timestamp()}`);
