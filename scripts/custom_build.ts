@@ -64,7 +64,7 @@ async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
           const resolved = await resolveModule(file, source);
           if (resolved) {
             processFile(resolved);
-          } else if (resolved == null) {
+          } else if (resolved == false) {
             throw new Error(`Could not resolve ${source} from ${pretty(file)}`);
           }
         }
