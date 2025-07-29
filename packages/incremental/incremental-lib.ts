@@ -60,6 +60,12 @@ function deterministic<Arg, Ret>(
 export type ResultTypeOfComputation<C> =
   C extends RawComputation<any, infer Res> ? Res : never;
 
+export type IncrementalCacheOpts = {
+  readonly dir: string;
+  readonly garbageCollect: boolean;
+  readonly logger: Logger;
+};
+
 export type IncrementalOpts<C extends AnyRawComputation> = {
   readonly entry: ComputationDescription<C>;
   readonly onResult: (
@@ -74,11 +80,7 @@ export type IncrementalOpts<C extends AnyRawComputation> = {
   readonly fs: {
     readonly onEvent: (event: FileChangeEvent) => void;
   };
-  readonly cache: {
-    readonly dir: string;
-    readonly garbageCollect: boolean;
-    readonly logger: Logger;
-  };
+  readonly cache: IncrementalCacheOpts | false;
 };
 
 type ComputationRegistryOpts<C extends AnyRawComputation> =
@@ -103,7 +105,7 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   private otherJobs: Promise<unknown>[];
   private globalSession: number = -1;
 
-  public readonly db: CacheDB;
+  public readonly db: CacheDB | null;
   public readonly fs: FileSystem;
   public readonly serializationDB: SerializationDB;
 
@@ -126,7 +128,7 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
     this.otherJobs = [];
     //
     this.serializationDB = serializationDB;
-    this.db = new CacheDB(opts);
+    this.db = opts.cache ? new CacheDB(opts.cache) : null;
     this.fs = new FileSystem(opts, this);
   }
 
@@ -316,7 +318,7 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
 
     // Basic clean up before locking the cache DB (preventing adding/deleting entries)
     this.clearOrphans();
-    this.db.lock();
+    this.db?.lock();
 
     // Now clear everything
     rootComputation.setRoot(false);
@@ -327,8 +329,9 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
       throw new Error("Invariant violation: Cleanup failed");
     }
 
-    this.queueOtherJob(null, () => this.fs.close());
-    this.queueOtherJob(null, () => this.db.save(interrupted));
+    const { db, fs } = this;
+    this.queueOtherJob(null, () => fs.close());
+    if (db) this.queueOtherJob(null, () => db.save(interrupted));
 
     const { otherJobs } = this;
     this.otherJobs = [];
@@ -340,7 +343,9 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   }
 
   async newSession() {
-    this.globalSession = await this.db.newGlobalSession();
+    if (this.db) {
+      this.globalSession = await this.db.newGlobalSession();
+    }
   }
 
   // TODO delete unneeed computations when stable?

@@ -7,7 +7,7 @@ import { Logger, LoggerVerboseLevel } from "../../../util/logger";
 import { arrayEquals, assertion, never } from "../../../util/miscellaneous";
 import { MissingConstructorSerializerError } from "../../../util/serialization";
 import type {
-  IncrementalOpts,
+  IncrementalCacheOpts,
   ResultTypeOfComputation,
 } from "../../incremental-lib";
 import { type ValueDefinition, HashMap, objValue } from "../../utils/hash-map";
@@ -121,13 +121,13 @@ export class CacheDB {
   private saveJobs: Map<string, Promise<void>>;
   private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
 
-  constructor(private readonly opts: IncrementalOpts<any>) {
+  constructor(private readonly opts: IncrementalCacheOpts) {
     this.dir =
-      path.resolve(opts.cache.dir) +
+      path.resolve(opts.dir) +
       path.sep +
       `quase_incremental_v${CacheDB.DB_VERSION}`;
     this.logFile = this.dir + path.sep + `log${Date.now()}.txt`;
-    this.logger = opts.cache.logger;
+    this.logger = opts.logger;
     this.saveJobs = new Map();
     this.db = lmdb.open<
       DB_Val | number,
@@ -302,7 +302,7 @@ export class CacheDB {
     assertion(this.locked);
 
     // If this run was interrupted, don't GC to avoid deleting useful entries that didn't get the chance to be flagged as "alive"
-    const gc = !interrupted && this.opts.cache.garbageCollect;
+    const gc = !interrupted && this.opts.garbageCollect;
 
     this.logger.debug("=== SAVING CACHE ===");
 
@@ -372,7 +372,7 @@ type CacheableCtx = RawComputationContext &
 export class CacheableComputationMixin<
   C extends RawComputation<any, ResultTypeOfComputation<C>>,
 > {
-  public readonly db: CacheDB;
+  public readonly db: CacheDB | null;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
   private inDisk: CacheEntry<C> | undefined;
@@ -384,7 +384,8 @@ export class CacheableComputationMixin<
     public readonly desc: ComputationDescription<C>
   ) {
     this.db = source.registry.db;
-    this.isCacheable = serializationDB.canSerialize(source.description);
+    this.isCacheable =
+      this.db != null && serializationDB.canSerialize(source.description);
     this.firstExec = true;
     this.inDisk = undefined;
   }
@@ -404,8 +405,8 @@ export class CacheableComputationMixin<
         if (useDeps && this.source.dependentMixin) {
           const getCalls = this.source.dependentMixin.getAllGetCalls();
           if (!getCalls) {
-            this.db.removeEntry(this.desc);
-            this.db.logger.debug("DELETED", { desc: this.desc });
+            this.db!.removeEntry(this.desc);
+            this.db!.logger.debug("DELETED", { desc: this.desc });
             return original;
           }
           for (const dep of getCalls) {
@@ -454,13 +455,13 @@ export class CacheableComputationMixin<
               version: currentEntry.version,
             };
             if (sameCacheEntry(entry, currentEntry)) {
-              this.db.logger.debug("REUSING (ALREADY SAVED)", {
+              this.db!.logger.debug("REUSING (ALREADY SAVED)", {
                 desc: this.desc,
                 entry,
               });
             } else {
-              this.db.saveEntry(this.desc, entry);
-              this.db.logger.debug("REUSING (RE-SAVING)", {
+              this.db!.saveEntry(this.desc, entry);
+              this.db!.logger.debug("REUSING (RE-SAVING)", {
                 desc: this.desc,
                 entry,
               });
@@ -479,15 +480,15 @@ export class CacheableComputationMixin<
           useDeps,
           version: version,
         };
-        this.db.saveEntry(this.desc, entry);
-        this.db.logger.debug("NOT REUSING", {
+        this.db!.saveEntry(this.desc, entry);
+        this.db!.logger.debug("NOT REUSING", {
           desc: this.desc,
           entry,
           currentEntry,
         });
       } else {
-        this.db.removeEntry(this.desc);
-        this.db.logger.debug("DELETED", { desc: this.desc });
+        this.db!.removeEntry(this.desc);
+        this.db!.logger.debug("DELETED", { desc: this.desc });
       }
     }
     return original;
@@ -506,13 +507,13 @@ export class CacheableComputationMixin<
     if (this.isCacheable) {
       this.firstExec = false;
       this.inDisk = undefined;
-      this.db.removeEntry(this.desc);
+      this.db!.removeEntry(this.desc);
     }
   }
 
   async preExec(): Promise<void> {
     if (this.isCacheable && this.firstExec) {
-      this.inDisk = this.db.getEntry(this.desc);
+      this.inDisk = this.db!.getEntry(this.desc);
     }
   }
 
@@ -525,7 +526,7 @@ export class CacheableComputationMixin<
     runId: number
   ): Promise<ComputationResult<ResultTypeOfComputation<C>>> {
     if (this.isCacheable && this.firstExec) {
-      const currentEntry = (this.inDisk = this.db.getEntry(this.desc));
+      const currentEntry = (this.inDisk = this.db!.getEntry(this.desc));
       // If currentEntry.useDeps is false, it means the cache does not have the version of the dependencies we need or that the computation depends on more than just the "ctx" calls
       // So, it is not worth to run this, just execute the computation again and rely on "finishRoutine"
       if (currentEntry && currentEntry.useDeps) {
