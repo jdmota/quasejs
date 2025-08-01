@@ -525,7 +525,7 @@ const opts: ToolInput = {
   ],
   tokenDecls: [
     tokenW,
-    // TODO restore tokenY
+    tokenY, // This adds ambiguity in the tokenizer
   ],
   startArguments: [typeBuilder.string()],
   externalFuncReturns: {

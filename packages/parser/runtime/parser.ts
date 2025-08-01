@@ -3,11 +3,11 @@ import { RuntimeContext } from "./context.ts";
 import { type Location, type Position } from "./input.ts";
 import { GLL } from "./gll.ts";
 
-export abstract class Parser<T> {
+export abstract class Parser<T, AST> {
   readonly ctx: RuntimeContext;
   readonly external: T;
   private tokenizer: Tokenizer<T>;
-  protected gll: GLL | null;
+  protected gll: GLL<AST> | null;
 
   constructor(tokenizer: Tokenizer<T>, external: T) {
     this.ctx = new RuntimeContext();
@@ -21,7 +21,7 @@ export abstract class Parser<T> {
     this.tokenizer.seek(pos);
   }
 
-  $setGLL(gll: GLL) {
+  $setGLL(gll: GLL<AST>) {
     this.gll = gll;
   }
 

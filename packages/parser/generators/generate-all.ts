@@ -47,7 +47,7 @@ export function generateAll(
     needGLL.has(INTERNAL_START_RULE)
       ? `  const parserGll = new GLL("rule",parser,"${INTERNAL_START_RULE}",[${grammar.startRule.args.map(a => `$${a.arg}`).join(",")}]); parser.$setGLL(parserGll);`
       : "",
-    `  return ${needGLL.has(INTERNAL_START_RULE) ? `parserGll.run()` : `parser.rule${grammar.startRule.name}_0(${grammar.startRule.args.map(a => `$${a.arg}`).join(",")})`};`,
+    `  return ${needGLL.has(INTERNAL_START_RULE) ? `parserGll.parse()` : `parser.rule${grammar.startRule.name}_0(${grammar.startRule.args.map(a => `$${a.arg}`).join(",")})`};`,
     `}\n`,
   ]);
 }

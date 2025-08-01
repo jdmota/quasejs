@@ -138,6 +138,51 @@ Condition $ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof
  - [Predicate]
 -----------
 -----------
+Ambiguities in rule $lexer, state 2, ll = 1
+Condition $ll1 === -1 /*-1*/ is not enough to choose between:
+ - [Action 10]
+ - [Range [-1,-1]]
+Condition $ll1 === 49 /*'1'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 60 /*'<'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 65 /*'A'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 66 /*'B'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 67 /*'C'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 68 /*'D'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 69 /*'E'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 70 /*'F'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 79 /*'O'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 80 /*'P'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 83 /*'S'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 87 /*'W'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 97 /*'a'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+-----------
+-----------
 Ambiguities in rule A, state 5, ll = 3
 Condition true may lead to left recursions via these decisions:
  - [Action { id: 10 }]
@@ -2698,7 +2743,7 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-REF-BENCHMARK: 5.154s
+REF-BENCHMARK: 5.339s
 -----------
 Ambiguities in rule A, state 2, ll = 3
 Condition $ll1 === 1 /*#string:A*/ && $ll2 === 3 /*#string:C*/ && $ll3 === 4 /*#string:D*/ && $ff1 === 0 /* $$START$$ 3 */ && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
@@ -2845,6 +2890,51 @@ Ambiguities in rule predicates2, state 2, ll = 3
 Condition $ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/ && $ff1 === -1 && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
  - [Predicate]
  - [Predicate]
+-----------
+-----------
+Ambiguities in rule $lexer, state 2, ll = 1
+Condition $ll1 === -1 /*-1*/ is not enough to choose between:
+ - [Action 10]
+ - [Range [-1,-1]]
+Condition $ll1 === 49 /*'1'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 60 /*'<'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 65 /*'A'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 66 /*'B'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 67 /*'C'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 68 /*'D'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 69 /*'E'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 70 /*'F'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 79 /*'O'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 80 /*'P'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 83 /*'S'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 87 /*'W'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
+Condition $ll1 === 97 /*'a'*/ is not enough to choose between:
+ - [Action @$startText()]
+ - [Action 10]
 -----------
 -----------
 Ambiguities in rule A, state 5, ll = 3
@@ -9202,4 +9292,4 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-BENCHMARK: 1.286s
+BENCHMARK: 1.139s

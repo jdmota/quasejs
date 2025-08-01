@@ -21,6 +21,7 @@ class GrammarTokenizer extends Tokenizer {
       "10": "#string:P",
       "11": "#string:W",
       "12": "W",
+      "13": "TY",
       "-1": "#eof"
     };
   }
@@ -80,107 +81,133 @@ class GrammarTokenizer extends Tokenizer {
           "channel1"
         ]
       },
+      "13": {
+        "s": false,
+        "c": [
+          "channel1"
+        ]
+      },
       "-1": {
         "s": false,
         "c": []
       }
     };
   }
-  token$lexer_0() {
-    let $ll1,$startPos=null,id=null,token=null,$0_t=null,$startMarker=null,$1_t=null,$2_t=null,$3_t=null,$4_t=null,$5_t=null,$6_t=null,$7_t=null,$8_t=null,$9_t=null,$10_t=null,$11_t=null,$12_text=null,$loc=null;
-    $startPos = this.$getPos();
-    do{
-      $ll1=this.$ll(1);
-      if($ll1 === -1 /*-1*/){
-        this.$e(-1 /*-1*/);
-        id = -1;
-        token = null;
-        break;
-      } else if($ll1 === 49 /*'1'*/ || $ll1 === 60 /*'<'*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
-        // epsilon
-      } else {
-        this.$err();
-      }
-      $startMarker = this.$startText();
-      $ll1=this.$ll(1);
-      if($ll1 === 49 /*'1'*/){
-        this.$e(49 /*'1'*/);
-        this.$e(87 /*'W'*/);
-        $12_text = this.$endText($startMarker);
-        id = 12;
-        token = $12_text;
-      } else if($ll1 === 60 /*'<'*/){
-        this.$e(60 /*'<'*/);
-        this.$e(60 /*'<'*/);
-        $8_t = this.$endText($startMarker);
-        id = 8;
-        token = $8_t;
-      } else if($ll1 === 65 /*'A'*/){
-        this.$e(65 /*'A'*/);
-        $1_t = this.$endText($startMarker);
-        id = 1;
-        token = $1_t;
-      } else if($ll1 === 66 /*'B'*/){
-        this.$e(66 /*'B'*/);
-        $2_t = this.$endText($startMarker);
-        id = 2;
-        token = $2_t;
-      } else if($ll1 === 67 /*'C'*/){
-        this.$e(67 /*'C'*/);
-        $3_t = this.$endText($startMarker);
-        id = 3;
-        token = $3_t;
-      } else if($ll1 === 68 /*'D'*/){
-        this.$e(68 /*'D'*/);
-        $4_t = this.$endText($startMarker);
-        id = 4;
-        token = $4_t;
-      } else if($ll1 === 69 /*'E'*/){
-        this.$e(69 /*'E'*/);
-        $5_t = this.$endText($startMarker);
-        id = 5;
-        token = $5_t;
-      } else if($ll1 === 70 /*'F'*/){
-        this.$e(70 /*'F'*/);
-        $6_t = this.$endText($startMarker);
-        id = 6;
-        token = $6_t;
-      } else if($ll1 === 79 /*'O'*/){
-        this.$e(79 /*'O'*/);
-        $0_t = this.$endText($startMarker);
-        id = 0;
-        token = $0_t;
-      } else if($ll1 === 80 /*'P'*/){
-        this.$e(80 /*'P'*/);
-        $10_t = this.$endText($startMarker);
-        id = 10;
-        token = $10_t;
-      } else if($ll1 === 83 /*'S'*/){
-        this.$e(83 /*'S'*/);
-        this.$e(84 /*'T'*/);
-        this.$e(82 /*'R'*/);
-        this.$e(73 /*'I'*/);
-        this.$e(78 /*'N'*/);
-        this.$e(71 /*'G'*/);
-        $7_t = this.$endText($startMarker);
-        id = 7;
-        token = $7_t;
-      } else if($ll1 === 87 /*'W'*/){
-        this.$e(87 /*'W'*/);
-        $11_t = this.$endText($startMarker);
-        id = 11;
-        token = $11_t;
-      } else if($ll1 === 97 /*'a'*/){
-        this.$e(97 /*'a'*/);
-        $9_t = this.$endText($startMarker);
-        id = 9;
-        token = $9_t;
-      } else {
-        this.$err();
-      }
-    }while(0);
-    $loc = this.$getLoc($startPos);
-    return {id,token,$loc};
+  token$lexer_0($env) {
+    let $ll1;
+    $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
+    if($ll1 === -1 /*-1*/){
+      // Ambiguity
+      this.gll.u(this.$i(),$env);
+      this.gll.a("$lexer",1,$env);
+      this.gll.a("$lexer",2,$env);
+      return;
+    } else if($ll1 === 49 /*'1'*/ || $ll1 === 60 /*'<'*/ || $ll1 === 65 /*'A'*/ || $ll1 === 66 /*'B'*/ || $ll1 === 67 /*'C'*/ || $ll1 === 68 /*'D'*/ || $ll1 === 69 /*'E'*/ || $ll1 === 70 /*'F'*/ || $ll1 === 79 /*'O'*/ || $ll1 === 80 /*'P'*/ || $ll1 === 83 /*'S'*/ || $ll1 === 87 /*'W'*/ || $ll1 === 97 /*'a'*/){
+      // Ambiguity
+      this.gll.u(this.$i(),$env);
+      this.gll.a("$lexer",3,$env);
+      this.gll.a("$lexer",1,$env);
+      return;
+    } else {
+      this.$err();
+    }
+  }
+  token$lexer_1($env) {
+    $env.$13_num = 10;
+    $env.id = 13;
+    $env.token = $env.$13_num;
+    $env.$loc = this.$getLoc($env.$startPos);
+    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
+  }
+  token$lexer_2($env) {
+    this.$e(-1 /*-1*/);
+    $env.id = -1;
+    $env.token = null;
+    $env.$loc = this.$getLoc($env.$startPos);
+    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
+  }
+  token$lexer_3($env) {
+    let $ll1;
+    $env.$startMarker = this.$startText();
+    $ll1=this.$ll(1);
+    if($ll1 === 49 /*'1'*/){
+      this.$e(49 /*'1'*/);
+      this.$e(87 /*'W'*/);
+      $env.$12_text = this.$endText($env.$startMarker);
+      $env.id = 12;
+      $env.token = $env.$12_text;
+    } else if($ll1 === 60 /*'<'*/){
+      this.$e(60 /*'<'*/);
+      this.$e(60 /*'<'*/);
+      $env.$8_t = this.$endText($env.$startMarker);
+      $env.id = 8;
+      $env.token = $env.$8_t;
+    } else if($ll1 === 65 /*'A'*/){
+      this.$e(65 /*'A'*/);
+      $env.$1_t = this.$endText($env.$startMarker);
+      $env.id = 1;
+      $env.token = $env.$1_t;
+    } else if($ll1 === 66 /*'B'*/){
+      this.$e(66 /*'B'*/);
+      $env.$2_t = this.$endText($env.$startMarker);
+      $env.id = 2;
+      $env.token = $env.$2_t;
+    } else if($ll1 === 67 /*'C'*/){
+      this.$e(67 /*'C'*/);
+      $env.$3_t = this.$endText($env.$startMarker);
+      $env.id = 3;
+      $env.token = $env.$3_t;
+    } else if($ll1 === 68 /*'D'*/){
+      this.$e(68 /*'D'*/);
+      $env.$4_t = this.$endText($env.$startMarker);
+      $env.id = 4;
+      $env.token = $env.$4_t;
+    } else if($ll1 === 69 /*'E'*/){
+      this.$e(69 /*'E'*/);
+      $env.$5_t = this.$endText($env.$startMarker);
+      $env.id = 5;
+      $env.token = $env.$5_t;
+    } else if($ll1 === 70 /*'F'*/){
+      this.$e(70 /*'F'*/);
+      $env.$6_t = this.$endText($env.$startMarker);
+      $env.id = 6;
+      $env.token = $env.$6_t;
+    } else if($ll1 === 79 /*'O'*/){
+      this.$e(79 /*'O'*/);
+      $env.$0_t = this.$endText($env.$startMarker);
+      $env.id = 0;
+      $env.token = $env.$0_t;
+    } else if($ll1 === 80 /*'P'*/){
+      this.$e(80 /*'P'*/);
+      $env.$10_t = this.$endText($env.$startMarker);
+      $env.id = 10;
+      $env.token = $env.$10_t;
+    } else if($ll1 === 83 /*'S'*/){
+      this.$e(83 /*'S'*/);
+      this.$e(84 /*'T'*/);
+      this.$e(82 /*'R'*/);
+      this.$e(73 /*'I'*/);
+      this.$e(78 /*'N'*/);
+      this.$e(71 /*'G'*/);
+      $env.$7_t = this.$endText($env.$startMarker);
+      $env.id = 7;
+      $env.token = $env.$7_t;
+    } else if($ll1 === 87 /*'W'*/){
+      this.$e(87 /*'W'*/);
+      $env.$11_t = this.$endText($env.$startMarker);
+      $env.id = 11;
+      $env.token = $env.$11_t;
+    } else if($ll1 === 97 /*'a'*/){
+      this.$e(97 /*'a'*/);
+      $env.$9_t = this.$endText($env.$startMarker);
+      $env.id = 9;
+      $env.token = $env.$9_t;
+    } else {
+      this.$err();
+    }
+    $env.$loc = this.$getLoc($env.$startPos);
+    return (this.gll.u(this.$i(),$env), this.gll.p({id:$env.id,token:$env.token,$loc:$env.$loc}));
   }
   token$_1_0() {
     this.$e(-1 /*-1*/);
@@ -284,7 +311,13 @@ class GrammarTokenizer extends Tokenizer {
     text = this.$endText($startMarker);
     return text;
   }
+  tokenTY_0() {
+    let num=null;
+    num = 10;
+    return num;
+  }
   $createEnv(name,args){
+    if(name==="$lexer") return {$startPos:null,id:null,token:null,$0_t:null,$startMarker:null,$1_t:null,$2_t:null,$3_t:null,$4_t:null,$5_t:null,$6_t:null,$7_t:null,$8_t:null,$9_t:null,$10_t:null,$11_t:null,$12_text:null,$13_num:null,$loc:null};
     throw new Error(`Never: ${name} ${args}`);
   }
 }
@@ -1667,6 +1700,7 @@ export function parse(external, string, $arg) {
   const input = new Input({ string });
   const tokenizer = new GrammarTokenizer(input, external);
   const parser = new GrammarParser(tokenizer, external);
+  const tokGll = new GLL("token",tokenizer,"$lexer",[]); tokenizer.$setGLL(tokGll);
   const parserGll = new GLL("rule",parser,"$$START$$",[$arg]); parser.$setGLL(parserGll);
-  return parserGll.run();
+  return parserGll.parse();
 }

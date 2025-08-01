@@ -347,6 +347,7 @@ export abstract class GLLBase<
       .computeIfAbsent(v, () => new SSet())
       .add(new GLLPop(k, retValue));
     if (added) {
+      this.onPop(v, k, retValue);
       let hasChildren = false;
       for (const [{ label, env }, us] of v.children()) {
         for (const u of us) {
@@ -358,6 +359,8 @@ export abstract class GLLBase<
     }
     return true;
   }
+
+  onPop(node: GSSNode<L, Args, Env>, pos: number, retValue: Ret) {}
 
   ensureGLLNode(
     rule: string,

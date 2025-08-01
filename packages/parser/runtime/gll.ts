@@ -1,12 +1,13 @@
+import { MapArray } from "../../util/data-structures/map-array";
 import { jsonEquals, jsonHashCode } from "../../util/json";
 import { type ObjectHashEquals } from "../../util/miscellaneous";
 import {
   GLLBase,
   GLLDescriptor,
+  GSSNode,
   type IEnv,
   type IGLLLabel,
 } from "../gll/gll-base";
-import { INTERNAL_START_RULE } from "../grammar/grammar";
 
 class GLLLabel implements IGLLLabel {
   constructor(
@@ -65,22 +66,29 @@ class GLLValue implements ObjectHashEquals {
   }
 }
 
-export class GLL extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
+export class GLL<AST> extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
+  private readonly errors = new MapArray<number, unknown>();
+
   constructor(
     private readonly type: "rule" | "token",
     private readonly parser: {
       $createEnv: (rule: string, args: readonly unknown[]) => EnvObj;
       $jump: (pos: number) => void;
     },
-    rule: string,
-    args: readonly unknown[]
+    private readonly initialRule: string,
+    private readonly args: readonly unknown[],
+    pos: number = 0
   ) {
     super(
-      new GLLLabel(rule, 0),
+      new GLLLabel(initialRule, 0),
       new GLLArgs(args),
-      new GLLEnv(parser.$createEnv(rule, args))
+      new GLLEnv(parser.$createEnv(initialRule, args))
     );
-    this.addInitial(0);
+    this.addInitial(pos);
+  }
+
+  fork(pos: number): GLL<AST> {
+    return new GLL(this.type, this.parser, this.initialRule, this.args, pos);
   }
 
   protected override createEnv(rule: string, args: GLLArgs): GLLEnv {
@@ -115,28 +123,39 @@ export class GLL extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
   }
 
   override goto(desc: GLLDescriptor<GLLLabel, GLLArgs, GLLEnv>): void {
-    this.parser.$jump(this.pos);
+    const { pos } = this;
+    this.parser.$jump(pos);
     const method = labelToStr(this.type, desc.label);
     const parser = this.parser as any;
     try {
       parser[method]({ ...desc.env.obj });
     } catch (err) {
-      // Ignore
-      // console.log("Error", err);
+      this.errors.add(pos, err);
     }
   }
 
-  override run(): readonly unknown[] {
-    super.run();
-    const asts = [];
-    for (const [node, results] of this.pSet) {
-      if (node.rule === INTERNAL_START_RULE) {
-        for (const result of results) {
-          asts.push(result.retValue.value);
-        }
-      }
+  private readonly asts: (readonly [number, AST])[] = [];
+
+  override onPop(
+    node: GSSNode<GLLLabel, GLLArgs, GLLEnv>,
+    pos: number,
+    retValue: GLLValue
+  ) {
+    if (node.rule === this.initialRule) {
+      this.asts.push([pos, retValue.value as AST] as const);
     }
-    return asts;
+  }
+
+  override run(): readonly (readonly [number, AST])[] {
+    super.run();
+    if (this.asts.length === 0) {
+      console.error(Array.from(this.errors));
+    }
+    return this.asts;
+  }
+
+  parse(): readonly AST[] {
+    return this.run().map(r => r[1]);
   }
 }
 

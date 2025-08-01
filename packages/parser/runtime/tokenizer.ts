@@ -25,7 +25,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
   private idToLabels: IdToLabel;
   private idToChannels: IdToChannels;
   private channels: { [key: string]: Token[] | undefined };
-  protected gll: GLL | null;
+  protected gll: GLL<Token> | null;
 
   constructor(input: Input, external: T) {
     super();
@@ -38,11 +38,35 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     this.gll = null;
   }
 
-  $setGLL(gll: GLL) {
+  $jump(pos: number) {
+    this.input.seek(pos);
+  }
+
+  $setGLL(gll: GLL<Token>) {
     this.gll = gll;
   }
 
   protected override fetchMore(amountFetched: number, amountToFetch: number) {
+    if (this.gll) {
+      while (amountToFetch--) {
+        while (true) {
+          const [newPos, token] = this.gll.run().find(r => r[1].id != 13)!; // TODO remove this hack
+          this.gll = this.gll.fork(newPos);
+          const channels = this.idToChannels[token.id];
+          for (const chan of channels.c) {
+            const array = this.channels[chan] || (this.channels[chan] = []);
+            array.push(token);
+          }
+          if (channels.s) {
+            continue; // Skip
+          }
+          this.buffer.push(token);
+          break;
+        }
+      }
+      return;
+    }
+
     while (amountToFetch--) {
       while (true) {
         const token = this.token$lexer_0();

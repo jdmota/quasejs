@@ -10,14 +10,18 @@ import {
   inferAndCheckTypes,
 } from "./grammar/grammar-generate.ts";
 
+// TODO support disambiguation tactics
+// TODO gll: provide errors that caused the parse to fail... (just returning an empty array is not useful)
+
 // TODO runtime follow stack will not work with gll
 // TODO tokenizer with gll?... support parallel lexers?
 
-// TODO implement error recovery, and filling the missing tokens
-// TODO implement incremental parsings
-// TODO left recursion removal https://www.antlr.org/papers/allstar-techreport.pdf
+// TODO generate visitors
 
-// TODO deal with left recursive rules transformation!
+// TODO support error recovery, and filling the missing tokens
+// TODO support incremental parsings
+// TODO support importing other grammars
+// TODO left recursion removal https://www.antlr.org/papers/allstar-techreport.pdf
 
 /*
 E[1] -> E[2] ( + E[2] | - E[2] )* // left assoc

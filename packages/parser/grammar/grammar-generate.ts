@@ -234,7 +234,7 @@ export function inferAndCheckTypes(grammar: Grammar) {
     errors: inferrer.errors,
     genTypes: (needsGLL: boolean) =>
       `${typeDeclarations
-        .map(([name, type]) => `type ${name} = ${type};`)
+        .map(([name, type]) => `export type ${name} = ${type};`)
         .join("\n")}\nexport function parse(external: $Externals, ${[
         "string: string",
         ...grammar.startRule.args.map((a, i) => `$${a.arg}: ${argTypes[i]}`),
