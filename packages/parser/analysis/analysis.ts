@@ -114,8 +114,9 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
               const nextTree = decision.ensureNextTokenTree();
               assertion(nextTree.ll === this.llState);
               for (const { desc, gotos } of decision) {
-                // "gotos.size === 1" occurs because nodes from the initial GLL analyzers are considered different
-                // this is actually what we want, to avoid confusion and preserve soundness
+                // "gotos.size === 1" occurs because nodes (which appear in 'desc')
+                // from the initial GLL analyzers are considered different
+                // This is actually what we want, to avoid confusion and preserve soundness
                 // the example rule GLL1Follow2 is a regression test
                 assertion(gotos.size === 1);
                 const a = new AnalysisGLL(

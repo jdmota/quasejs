@@ -4,10 +4,8 @@ import { Automaton, type Frag } from "../automaton/automaton.ts";
 import { DState, State } from "../automaton/state.ts";
 import { FactoryRule } from "../automaton/factories/factory-rule.ts";
 import { FactoryToken } from "../automaton/factories/factory-token.ts";
-import {
-  LabelsManager,
-  ParserGenerator,
-} from "../generators/generate-parser.ts";
+import { CodeGenerator } from "../generators/generate-code.ts";
+import { LabelsManager, type RuleLabel } from "../generators/labels-manager.ts";
 import {
   type AugmentedDeclaration,
   Grammar,
@@ -23,11 +21,11 @@ import { runtimeTypes } from "../grammar/type-checker/default-types.ts";
 import { typeFormatter } from "../grammar/type-checker/types-formatter.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
-import { ParserCfgToCode } from "../generators/parser-cfg-to-code.ts";
+import { CfgToCode } from "../generators/cfg-to-code.ts";
 import {
   convertDFAtoCFG,
-  type ParserCFGNode,
-} from "../generators/parser-dfa-to-cfg.ts";
+  type GrammarCFGNode,
+} from "../generators/dfa-to-cfg.ts";
 import { setAdd } from "../../util/maps-sets.ts";
 import { traverse, walkUp } from "../../util/graph.ts";
 import { nonNull } from "../../util/miscellaneous.ts";
@@ -118,8 +116,8 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     {
       labels: LabelsManager;
       thisCfgs: (readonly [
-        Readonly<{ start: ParserCFGNode; nodes: ReadonlySet<ParserCFGNode> }>,
-        number,
+        Readonly<{ start: GrammarCFGNode; nodes: ReadonlySet<GrammarCFGNode> }>,
+        RuleLabel,
       ])[];
     }
   >();
@@ -131,7 +129,7 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     // Add start
     labels.add(null, automaton.start);
     // Generate all labels for this declaration
-    for (const [edge, id] of labels) {
+    for (const [edge, id] of labels.loopQueue()) {
       thisCfgs.push([
         convertDFAtoCFG(
           analyzer,
@@ -153,8 +151,8 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
 
   // Produce code from cfgs
   for (const [decl, { labels, thisCfgs }] of cfgs) {
-    const cfgToCode = new ParserCfgToCode();
-    const generator = new ParserGenerator(
+    const cfgToCode = new CfgToCode();
+    const generator = new CodeGenerator(
       grammar,
       analyzer,
       decl,
@@ -176,7 +174,7 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     }
   }
 
-  const { forTokens, forRules } = ParserGenerator.genCreateInitialEnvFunc(
+  const { forTokens, forRules } = CodeGenerator.genCreateInitialEnvFunc(
     allFields,
     needGLL
   );

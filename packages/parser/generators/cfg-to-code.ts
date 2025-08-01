@@ -3,20 +3,23 @@ import { type DecisionExpr } from "../analysis/decision-expr";
 import { DState } from "../automaton/state";
 import { type AnyTransition } from "../automaton/transitions";
 import { cfgToGroups } from "../../util/cfg-and-code/cfg";
-import { CfgToCode, type CodeBlock } from "../../util/cfg-and-code/cfg-to-code";
+import {
+  BaseCfgToCode,
+  type BaseCodeBlock,
+} from "../../util/cfg-and-code/base-cfg-to-code";
 import {
   type AmbiguityBlock,
   type CFGNodeCode,
-  type ParserCFGGroup,
-  type ParserCFGNode,
-} from "./parser-dfa-to-cfg";
+  type GrammarCFGGroup,
+  type GrammarCFGNode,
+} from "./dfa-to-cfg";
 
-export type ParserDecisionMetadata = Readonly<{
+export type GrammarDecisionMetadata = Readonly<{
   decisionOn: "ll" | "ff";
   decisionIdx: number;
 }>;
 
-export type ParserSimpleBlock =
+export type GrammarSimpleBlockData =
   | Readonly<{
       type: "expect_block";
       transition: AnyTransition;
@@ -24,38 +27,38 @@ export type ParserSimpleBlock =
     }>
   | AmbiguityBlock;
 
-export type ParserCodeBlock = CodeBlock<
-  ParserCFGNode,
-  ParserSimpleBlock,
+export type GrammarCodeBlock = BaseCodeBlock<
+  GrammarCFGNode,
+  GrammarSimpleBlockData,
   DState,
   DecisionExpr,
-  ParserDecisionMetadata
+  GrammarDecisionMetadata
 >;
 
-export class ParserCfgToCode extends CfgToCode<
+export class CfgToCode extends BaseCfgToCode<
   CFGNodeCode,
   DecisionExpr,
-  ParserCFGNode,
-  ParserSimpleBlock,
+  GrammarCFGNode,
+  GrammarSimpleBlockData,
   DState,
   DecisionExpr,
-  ParserDecisionMetadata
+  GrammarDecisionMetadata
 > {
   constructor() {
     super();
   }
 
   override handleNode(
-    node: ParserCFGNode,
-    parent: ParserCFGGroup
-  ): ParserCodeBlock {
+    node: GrammarCFGNode,
+    parent: GrammarCFGGroup
+  ): GrammarCodeBlock {
     const { code } = node;
-    let block: ParserCodeBlock;
+    let block: GrammarCodeBlock;
     let isLoop = false;
 
     switch (code?.type) {
       case "regular_block": {
-        const simpleBlock: ParserCodeBlock = {
+        const simpleBlock: GrammarCodeBlock = {
           type: "simple_block",
           block: {
             type: "expect_block",
@@ -120,7 +123,7 @@ export class ParserCfgToCode extends CfgToCode<
   }
 
   // Based on https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
-  process(start: ParserCFGNode, nodes: ReadonlySet<ParserCFGNode>) {
+  process(start: GrammarCFGNode, nodes: ReadonlySet<GrammarCFGNode>) {
     const ordered = cfgToGroups(start, nodes);
     return this.processGroup(ordered);
   }

@@ -2,10 +2,10 @@ import { first } from "../miscellaneous.ts";
 import { BaseComponent, BaseSCC } from "./strongly-connected-components.ts";
 import { BaseTopologicalOrder } from "./topological-order.ts";
 
-export class CFGNode<Code, Decision> {
+export class BaseCFGNode<Code, Decision> {
   readonly code: Code | null; // null is for a dispatch node
-  readonly inEdges: Set<CFGEdge<Code, Decision>>;
-  readonly outEdges: Set<CFGEdge<Code, Decision>>;
+  readonly inEdges: Set<BaseCFGEdge<Code, Decision>>;
+  readonly outEdges: Set<BaseCFGEdge<Code, Decision>>;
   entry: boolean;
 
   constructor(code: Code | null) {
@@ -26,17 +26,17 @@ export class CFGNode<Code, Decision> {
   }
 }
 
-export class CFGEdge<Code, Decision> {
-  start: CFGNode<Code, Decision>;
+export class BaseCFGEdge<Code, Decision> {
+  start: BaseCFGNode<Code, Decision>;
   decision: Decision | null; // null is for a dispatch decision or empty decision
-  dest: CFGNode<Code, Decision>;
+  dest: BaseCFGNode<Code, Decision>;
   type: "forward" | "back";
-  originalDest: CFGNode<Code, Decision> | null; // not null when we have a dispatch decision
+  originalDest: BaseCFGNode<Code, Decision> | null; // not null when we have a dispatch decision
 
   constructor(
-    start: CFGNode<Code, Decision>,
+    start: BaseCFGNode<Code, Decision>,
     decision: Decision | null,
-    dest: CFGNode<Code, Decision>,
+    dest: BaseCFGNode<Code, Decision>,
     type: "forward" | "back"
   ) {
     this.start = start;
@@ -51,7 +51,7 @@ export class CFGEdge<Code, Decision> {
     this.dest.inEdges.add(this);
   }
 
-  redirectToDispatchNode(replacement: CFGNode<Code, Decision>) {
+  redirectToDispatchNode(replacement: BaseCFGNode<Code, Decision>) {
     const original = this.dest;
     original.inEdges.delete(this);
     replacement.inEdges.add(this);
@@ -60,21 +60,21 @@ export class CFGEdge<Code, Decision> {
   }
 }
 
-export type CFGNodeOrGroup<Code, Decision> =
-  | CFGNode<Code, Decision>
-  | CFGGroup<Code, Decision>;
+export type BaseCFGNodeOrGroup<Code, Decision> =
+  | BaseCFGNode<Code, Decision>
+  | BaseCFGGroup<Code, Decision>;
 
-export class CFGGroup<Code, Decision> {
-  parent: CFGGroup<Code, Decision> | null;
+export class BaseCFGGroup<Code, Decision> {
+  parent: BaseCFGGroup<Code, Decision> | null;
   parentIdx: number | null;
-  readonly entry: CFGNode<Code, Decision>;
-  readonly contents: CFGNodeOrGroup<Code, Decision>[];
+  readonly entry: BaseCFGNode<Code, Decision>;
+  readonly contents: BaseCFGNodeOrGroup<Code, Decision>[];
 
   constructor(
-    parent: CFGGroup<Code, Decision> | null,
+    parent: BaseCFGGroup<Code, Decision> | null,
     parentIdx: number | null,
-    entry: CFGNode<Code, Decision>,
-    contents: CFGNodeOrGroup<Code, Decision>[]
+    entry: BaseCFGNode<Code, Decision>,
+    contents: BaseCFGNodeOrGroup<Code, Decision>[]
   ) {
     this.parent = parent;
     this.parentIdx = parentIdx;
@@ -87,13 +87,13 @@ export class CFGGroup<Code, Decision> {
   }
 
   find(
-    target: CFGNode<Code, Decision>,
+    target: BaseCFGNode<Code, Decision>,
     startIdx = 0
-  ): CFGNodeOrGroup<Code, Decision> {
+  ): BaseCFGNodeOrGroup<Code, Decision> {
     const { parent, parentIdx, contents } = this;
     for (let i = startIdx; i < contents.length; i++) {
       const content = contents[i];
-      if (content instanceof CFGGroup) {
+      if (content instanceof BaseCFGGroup) {
         if (content.entry === target) {
           return content;
         }
@@ -111,30 +111,30 @@ export class CFGGroup<Code, Decision> {
 }
 
 type CFGComponent<Code, Decision> = BaseComponent<
-  CFGEdge<Code, Decision>,
-  CFGNode<Code, Decision>
+  BaseCFGEdge<Code, Decision>,
+  BaseCFGNode<Code, Decision>
 >;
 
 class CFGScc<Code, Decision> extends BaseSCC<
-  CFGEdge<Code, Decision>,
-  CFGNode<Code, Decision>
+  BaseCFGEdge<Code, Decision>,
+  BaseCFGNode<Code, Decision>
 > {
-  readonly nodes: ReadonlySet<CFGNode<Code, Decision>>;
+  readonly nodes: ReadonlySet<BaseCFGNode<Code, Decision>>;
 
-  constructor(nodes: ReadonlySet<CFGNode<Code, Decision>>) {
+  constructor(nodes: ReadonlySet<BaseCFGNode<Code, Decision>>) {
     super();
     this.nodes = nodes;
   }
 
-  private considerInEdge(edge: CFGEdge<Code, Decision>) {
+  private considerInEdge(edge: BaseCFGEdge<Code, Decision>) {
     return edge.type === "forward" && this.nodes.has(edge.start);
   }
 
-  private considerOutEdge(edge: CFGEdge<Code, Decision>) {
+  private considerOutEdge(edge: BaseCFGEdge<Code, Decision>) {
     return edge.type === "forward" && this.nodes.has(edge.dest);
   }
 
-  *inEdges(node: CFGNode<Code, Decision>) {
+  *inEdges(node: BaseCFGNode<Code, Decision>) {
     for (const edge of node.inEdges) {
       if (this.considerInEdge(edge)) {
         yield edge;
@@ -142,7 +142,7 @@ class CFGScc<Code, Decision> extends BaseSCC<
     }
   }
 
-  override *destinations(node: CFGNode<Code, Decision>) {
+  override *destinations(node: BaseCFGNode<Code, Decision>) {
     for (const edge of node.outEdges) {
       if (this.considerOutEdge(edge)) {
         yield edge.dest;
@@ -164,9 +164,9 @@ class SccTopologicalOrder<Code, Decision> extends BaseTopologicalOrder<
 }
 
 export function cfgToGroups<Code, Decision>(
-  start: CFGNode<Code, Decision>,
-  nodes: ReadonlySet<CFGNode<Code, Decision>>
-): CFGGroup<Code, Decision> {
+  start: BaseCFGNode<Code, Decision>,
+  nodes: ReadonlySet<BaseCFGNode<Code, Decision>>
+): BaseCFGGroup<Code, Decision> {
   // What this function does:
   // 1. Compute multi-entry loops and add the dispatch nodes
   // 2. Distinguish forward edges from back edges
@@ -178,12 +178,12 @@ export function cfgToGroups<Code, Decision>(
   const components = new SccTopologicalOrder<Code, Decision>().process(
     scc.process(nodes)
   );
-  const group = new CFGGroup<Code, Decision>(null, null, start, []);
+  const group = new BaseCFGGroup<Code, Decision>(null, null, start, []);
 
   for (const c of components) {
     // A SCC with more than one element is a loop
     if (c.nodes.size > 1) {
-      let loopStart: CFGNode<Code, Decision>;
+      let loopStart: BaseCFGNode<Code, Decision>;
       // The entries are the nodes reachable from outside of the SCC
 
       // If there are no entries, this is the start component
@@ -201,7 +201,7 @@ export function cfgToGroups<Code, Decision>(
         }
       } else {
         // Get all edges that start in a node in "nodes" and end in one of these component's entries
-        const entriesInEdges: CFGEdge<Code, Decision>[] = [];
+        const entriesInEdges: BaseCFGEdge<Code, Decision>[] = [];
         for (const entry of c.entries) {
           for (const edge of scc.inEdges(entry)) {
             if (c.nodes.has(edge.start)) {
@@ -214,11 +214,11 @@ export function cfgToGroups<Code, Decision>(
 
         // If there is more than one entry, we have a multiple-entry loop
         if (c.entries.size > 1) {
-          loopStart = new CFGNode<Code, Decision>(null);
+          loopStart = new BaseCFGNode<Code, Decision>(null);
           loopStart.entry = true;
           // Add edges from the multi-entry to the current entries
           for (const currentEntry of c.entries) {
-            new CFGEdge(loopStart, null, currentEntry, "forward").connect();
+            new BaseCFGEdge(loopStart, null, currentEntry, "forward").connect();
           }
 
           // Now take the in-edges of the entries and connect them to the dispatch node

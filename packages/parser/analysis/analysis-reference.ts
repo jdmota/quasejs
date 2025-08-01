@@ -14,10 +14,7 @@ import {
 } from "../../util/miscellaneous.ts";
 import { MapSet } from "../../util/data-structures/map-set.ts";
 import { type Range } from "../../util/range-utils.ts";
-import {
-  LabelsManager,
-  ParserGenerator,
-} from "../generators/generate-parser.ts";
+import { CodeGenerator } from "../generators/generate-code.ts";
 import { type AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { type FollowInfo, FollowInfoDB } from "../grammar/follow-info.ts";
 import { getInFollowStack } from "./decision-expr.ts";
@@ -31,6 +28,7 @@ import {
 import { ANY_CHAR_RANGE } from "../utils/constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 import type { RuleName } from "../grammar/grammar-builder.ts";
+import { LabelsManager } from "../generators/labels-manager.ts";
 
 // IMPORTANT!
 // This reference implementation does not find all the possible "follow" sequences
@@ -234,7 +232,7 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
       return;
     }
     const { ambiguities, leftRecursions } = inverted;
-    const gen = new ParserGenerator(
+    const gen = new CodeGenerator(
       this.grammar,
       this,
       rule,

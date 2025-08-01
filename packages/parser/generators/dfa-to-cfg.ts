@@ -8,10 +8,10 @@ import {
 import { MapKeyToValue } from "../../util/data-structures/map-key-to-value.ts";
 import { DState } from "../automaton/state.ts";
 import {
-  CFGNode,
-  CFGEdge,
-  CFGGroup,
-  type CFGNodeOrGroup,
+  BaseCFGNode,
+  BaseCFGEdge,
+  BaseCFGGroup,
+  type BaseCFGNodeOrGroup,
 } from "../../util/cfg-and-code/cfg.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
 import { type AugmentedDeclaration } from "../grammar/grammar.ts";
@@ -21,7 +21,7 @@ import {
   type DecisionTree,
 } from "../analysis/decision-trees.ts";
 import { type DecisionExpr } from "../analysis/decision-expr.ts";
-import { LabelsManager } from "./generate-parser.ts";
+import { LabelsManager } from "./labels-manager.ts";
 
 export type ConditionalBlock = Readonly<{
   type: "conditional_block";
@@ -43,15 +43,18 @@ export type AmbiguityBlock = Readonly<{
 
 export type CFGNodeCode = ConditionalBlock | RegularBlock | AmbiguityBlock;
 
-export type ParserCFGNode = CFGNode<CFGNodeCode, DecisionExpr>;
+export type GrammarCFGNode = BaseCFGNode<CFGNodeCode, DecisionExpr>;
 
-export type ParserCFGEdge = CFGEdge<CFGNodeCode, DecisionExpr>;
+export type GrammarCFGEdge = BaseCFGEdge<CFGNodeCode, DecisionExpr>;
 
-export type ParserCFGGroup = CFGGroup<CFGNodeCode, DecisionExpr>;
+export type GrammarCFGGroup = BaseCFGGroup<CFGNodeCode, DecisionExpr>;
 
-export type ParserCFGNodeOrGroup = CFGNodeOrGroup<CFGNodeCode, DecisionExpr>;
+export type GrammarCFGNodeOrGroup = BaseCFGNodeOrGroup<
+  CFGNodeCode,
+  DecisionExpr
+>;
 
-type RegularNode = CFGNode<RegularBlock, DecisionExpr>;
+type RegularNode = BaseCFGNode<RegularBlock, DecisionExpr>;
 
 export class DStateEdge implements ObjectHashEquals {
   readonly transition: AnyTransition | null;
@@ -83,21 +86,21 @@ export function convertDFAtoCFG(
   acceptingSet: ReadonlySet<DState>,
   transition: AnyTransition | null,
   state: DState
-): Readonly<{ start: ParserCFGNode; nodes: ReadonlySet<ParserCFGNode> }> {
+): Readonly<{ start: GrammarCFGNode; nodes: ReadonlySet<GrammarCFGNode> }> {
   // Since all rules end with a return expression, there will be only one accepting state with exactly zero out edges
   for (const state of acceptingSet) {
     assertion(state.transitionAmount() === 0);
   }
 
-  const nodes: Set<ParserCFGNode> = new Set();
+  const nodes: Set<GrammarCFGNode> = new Set();
 
   function newNode<T extends CFGNodeCode>(code: T) {
-    const node = new CFGNode<T, DecisionExpr>(code);
+    const node = new BaseCFGNode<T, DecisionExpr>(code);
     nodes.add(node);
     return node;
   }
 
-  const stateToNode = new Map<DState, ParserCFGNode>();
+  const stateToNode = new Map<DState, GrammarCFGNode>();
   const cache = new MapKeyToValue<DStateEdge, RegularNode>();
   let queue: RegularNode[] = [];
 
@@ -162,7 +165,7 @@ export function convertDFAtoCFG(
       const anyGotos = [...tree.iterateAny()]; // Deal the left recursive rules
       for (const decision of tree.iterate()) {
         const expr = decision.decision;
-        let nextNode: ParserCFGNode;
+        let nextNode: GrammarCFGNode;
         if (anyGotos.length) {
           nextNode = newGotoBlock(state, [...anyGotos, ...decision.getGotos()]);
         } else if (decision.isAmbiguous()) {
@@ -173,7 +176,7 @@ export function convertDFAtoCFG(
         } else {
           nextNode = newGotoBlock(state, [decision.getSingleGoto()]);
         }
-        new CFGEdge(node, expr, nextNode, "forward").connect();
+        new BaseCFGEdge(node, expr, nextNode, "forward").connect();
       }
       return node;
     }
@@ -181,7 +184,7 @@ export function convertDFAtoCFG(
     return processTree(tree);
   }
 
-  function makeNodeFromState(state: DState): ParserCFGNode {
+  function makeNodeFromState(state: DState): GrammarCFGNode {
     let node = stateToNode.get(state);
     if (!node) {
       if (state.transitionAmount() === 1) {
@@ -198,7 +201,7 @@ export function convertDFAtoCFG(
   while (queue.length > 0) {
     const node = queue.pop()!;
     const destNode = makeNodeFromState(node.code!.dest);
-    new CFGEdge(node, null, destNode, "forward").connect();
+    new BaseCFGEdge(node, null, destNode, "forward").connect();
   }
 
   return {
