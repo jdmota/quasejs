@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { builder } from "../grammar/grammar-builder.ts";
 import { typeBuilder } from "../grammar/type-checker/types-builder.ts";
-import { type ToolInput, inferAndCheckTypes, tool } from "../tool.ts";
+import { type ToolInput, tool } from "../tool.ts";
 
 const {
   seq,
@@ -23,6 +23,7 @@ const {
   token,
   eof,
   empty,
+  predicate,
 } = builder;
 
 const ruleA = rule(
@@ -286,6 +287,7 @@ const ruleGLLAux2 = rule(
   null
 );
 
+// Important regression tests
 const ruleGLLFollowTest1 = rule(
   "GLL1Follow",
   choice(seq(int(1), call("GLLAux1", [])), seq(int(2), call("GLLAux1", []))),
@@ -315,6 +317,7 @@ const ruleGLLAuxOptional1 = rule(
   null
 );
 
+// Important regression tests
 const ruleGLLFollowTest2 = rule(
   "GLL1Follow2",
   choice(seq(int(1), call("GLLAuxOptional1", [])), int(2)),
@@ -423,6 +426,22 @@ const endAux = rule("endAux", choice(int(1), int(2)), [], {
   _debug: { worthIt: true, keepGoing: true },
 });
 
+const predicates1 = rule(
+  "predicates1",
+  choice(
+    seq(predicate(bool(false)), string("A")),
+    seq(predicate(bool(true)), string("B"))
+  )
+);
+
+const predicates2 = rule(
+  "predicates2",
+  choice(
+    seq(predicate(bool(false)), string("A")),
+    seq(predicate(bool(true)), string("A"))
+  )
+);
+
 // TODO restore string("W")
 const tokenW = token(
   "W",
@@ -501,6 +520,8 @@ const opts: ToolInput = {
     grammarEnd,
     grammarNotEnd,
     endAux,
+    predicates1,
+    predicates2,
   ],
   tokenDecls: [
     tokenW,
@@ -532,8 +553,10 @@ if (result) {
     path.join(import.meta.dirname, "example.analysis.txt"),
     result.grammar._debugAnalysis.join("\n")
   );
-  const { types } = inferAndCheckTypes(result.grammar, true);
-  fs.writeFileSync(path.join(import.meta.dirname, "example.gen.d.mts"), types);
+  fs.writeFileSync(
+    path.join(import.meta.dirname, "example.gen.d.mts"),
+    result.types
+  );
 }
 
 if (resultReference) {

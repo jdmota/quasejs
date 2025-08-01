@@ -1,4 +1,4 @@
-import { assertion, never } from "../../util/miscellaneous.ts";
+import { assertion, never } from "../../../util/miscellaneous.ts";
 import type {
   Assignables,
   FieldRule,
@@ -7,9 +7,12 @@ import type {
   RegExpRule,
   EofRule,
   TokenRules,
-} from "../grammar/grammar-builder.ts";
-import { type AugmentedRuleDeclaration, Grammar } from "../grammar/grammar.ts";
-import { type Frag, Automaton } from "../automaton/automaton.ts";
+} from "../../grammar/grammar-builder.ts";
+import {
+  type AugmentedRuleDeclaration,
+  Grammar,
+} from "../../grammar/grammar.ts";
+import { type Frag, Automaton } from "../automaton.ts";
 import {
   CallTransition,
   ReturnTransition,
@@ -17,10 +20,10 @@ import {
   ActionTransition,
   type FieldInfo,
   type AnyTransition,
-} from "../automaton/transitions.ts";
-import { type Location } from "../runtime/input.ts";
+} from "../transitions.ts";
+import { type Location } from "../../runtime/input.ts";
+import { State } from "../state.ts";
 import { AbstractFactory } from "./abstract-factory.ts";
-import { State } from "../automaton/state.ts";
 
 export class FactoryRule extends AbstractFactory {
   readonly rule: AugmentedRuleDeclaration;

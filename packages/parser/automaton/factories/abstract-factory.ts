@@ -20,9 +20,9 @@ import type {
   BoolRule,
   ExprRule,
   NullRule,
-} from "../grammar/grammar-builder.ts";
-import { Grammar } from "../grammar/grammar.ts";
-import { type Frag, Automaton } from "../automaton/automaton.ts";
+} from "../../grammar/grammar-builder.ts";
+import { Grammar } from "../../grammar/grammar.ts";
+import { type Frag, Automaton } from "../automaton.ts";
 import {
   PredicateTransition,
   ActionTransition,
@@ -30,8 +30,8 @@ import {
   RangeTransition,
   type FieldInfo,
   type AnyTransition,
-} from "../automaton/transitions.ts";
-import { State } from "../automaton/state.ts";
+} from "../transitions.ts";
+import { State } from "../state.ts";
 
 type Gen = {
   [key in keyof RuleMap]: (node: RuleMap[key]) => Frag<State, AnyTransition>;

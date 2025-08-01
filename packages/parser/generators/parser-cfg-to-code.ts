@@ -2,8 +2,8 @@ import { assertion, first, never, nonNull } from "../../util/miscellaneous";
 import { type DecisionExpr } from "../analysis/decision-expr";
 import { DState } from "../automaton/state";
 import { type AnyTransition } from "../automaton/transitions";
-import { cfgToGroups } from "./dfa-to-code/cfg";
-import { CfgToCode, type CodeBlock } from "./dfa-to-code/cfg-to-code";
+import { cfgToGroups } from "../../util/cfg-and-code/cfg";
+import { CfgToCode, type CodeBlock } from "../../util/cfg-and-code/cfg-to-code";
 import {
   type AmbiguityBlock,
   type CFGNodeCode,
@@ -103,12 +103,7 @@ export class ParserCfgToCode extends CfgToCode<
         break;
       }
       case undefined:
-        block = {
-          type: "dispatch_block",
-          node,
-        };
-        throw new Error("TODO");
-        break;
+        throw new Error("TODO do not support dispatch block yet");
       default:
         never(code);
     }

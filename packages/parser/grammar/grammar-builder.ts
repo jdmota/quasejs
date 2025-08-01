@@ -52,9 +52,11 @@ export type RuleModifiers = {
   };
 };
 
+export type RuleName = string;
+
 export type RuleDeclaration = {
   readonly type: "rule";
-  readonly name: string;
+  readonly name: RuleName;
   readonly rule: AnyRule;
   readonly args: readonly RuleDeclarationArg[];
   readonly return: ExprRule | null;
@@ -77,10 +79,10 @@ function ruleArg(arg: string): RuleDeclarationArg {
 }
 
 function rule(
-  name: string,
+  name: RuleName,
   rule: AnyRule,
-  args: readonly RuleDeclarationArg[],
-  modifiers: RuleModifiers,
+  args: readonly RuleDeclarationArg[] = [],
+  modifiers: RuleModifiers = {},
   returnCode: ExprRule | null = null
 ): RuleDeclaration {
   return {
@@ -107,7 +109,7 @@ export type TokenModifiers = {
 
 export type TokenDeclaration = {
   readonly type: "token";
-  readonly name: string;
+  readonly name: RuleName;
   readonly rule: AnyRule;
   readonly args: readonly RuleDeclarationArg[];
   readonly return: ExprRule | null;
@@ -116,10 +118,10 @@ export type TokenDeclaration = {
 };
 
 function token(
-  name: string,
+  name: RuleName,
   rule: AnyRule,
-  args: readonly RuleDeclarationArg[],
-  modifiers: TokenModifiers,
+  args: readonly RuleDeclarationArg[] = [],
+  modifiers: TokenModifiers = { type: "normal" },
   returnCode: ExprRule | null = null
 ): TokenDeclaration {
   return {
@@ -341,14 +343,6 @@ function predicate(code: ExprRule): PredicateRule {
     code,
     loc: null,
   };
-}
-
-function precedenceLeftAssoc(number: number, rule: AnyRule) {
-  // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
-}
-
-function precedenceRightAssoc(number: number, rule: AnyRule) {
-  // TODO https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl
 }
 
 export type IntRule = {

@@ -1,4 +1,4 @@
-import { first } from "../../../util/miscellaneous.ts";
+import { first } from "../miscellaneous.ts";
 import { BaseComponent, BaseSCC } from "./strongly-connected-components.ts";
 import { BaseTopologicalOrder } from "./topological-order.ts";
 
@@ -31,7 +31,7 @@ export class CFGEdge<Code, Decision> {
   decision: Decision | null; // null is for a dispatch decision or empty decision
   dest: CFGNode<Code, Decision>;
   type: "forward" | "back";
-  originalDest: CFGNode<Code, Decision> | null;
+  originalDest: CFGNode<Code, Decision> | null; // not null when we have a dispatch decision
 
   constructor(
     start: CFGNode<Code, Decision>,
@@ -69,6 +69,7 @@ export class CFGGroup<Code, Decision> {
   parentIdx: number | null;
   readonly entry: CFGNode<Code, Decision>;
   readonly contents: CFGNodeOrGroup<Code, Decision>[];
+
   constructor(
     parent: CFGGroup<Code, Decision> | null,
     parentIdx: number | null,
@@ -80,9 +81,11 @@ export class CFGGroup<Code, Decision> {
     this.entry = entry;
     this.contents = contents;
   }
+
   forwardPredecessors() {
     return this.entry.forwardPredecessors();
   }
+
   find(
     target: CFGNode<Code, Decision>,
     startIdx = 0

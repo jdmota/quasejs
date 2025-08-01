@@ -9,10 +9,10 @@ export function generateAll(
   needGLL: ReadonlySet<string>
 ) {
   return lines([
-    `import { Input } from "./runtime/input";`,
-    `import { Tokenizer } from "./runtime/tokenizer";`,
-    `import { Parser } from "./runtime/parser";`,
-    `import { GLL } from "./runtime/gll";\n`,
+    `import { Input } from "../runtime/input";`,
+    `import { Tokenizer } from "../runtime/tokenizer";`,
+    `import { Parser } from "../runtime/parser";`,
+    `import { GLL } from "../runtime/gll";\n`,
     ``,
     `const $$EMPTY_OBJ = {};\n`,
     ``,

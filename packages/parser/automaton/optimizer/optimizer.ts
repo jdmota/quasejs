@@ -1,14 +1,14 @@
-import { State, DState, EPSILON } from "../automaton/state.ts";
+import { State, DState, EPSILON } from "../state.ts";
 import {
   type AnyTransition,
   EpsilonTransition,
   CallTransition,
-} from "../automaton/transitions.ts";
+} from "../transitions.ts";
 import {
   AbstractNfaToDfa,
   AbstractDfaMinimizer,
 } from "./abstract-optimizer.ts";
-import { FollowInfoDB } from "../grammar/follow-info.ts";
+import { FollowInfoDB } from "../../grammar/follow-info.ts";
 
 const IGNORE_EPSILON = false;
 

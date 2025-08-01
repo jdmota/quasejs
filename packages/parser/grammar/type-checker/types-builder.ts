@@ -242,7 +242,6 @@ export class RecursiveTypeCreator {
 
   create(content: GType) {
     if (this.used) {
-      // TODO refine
       this.rec.content = content;
       if (!checkGuarded(content, this.variable)) {
         throw new Error("Unguarded recursive definition");

@@ -1,6 +1,11 @@
-import { never } from "../../../util/miscellaneous.ts";
+import { never } from "../miscellaneous.ts";
 import { CFGGroup, CFGNode, CFGEdge, type CFGNodeOrGroup } from "./cfg.ts";
 
+// N: node type
+// B: simple block data
+// S: decision block state
+// T: decision block transition
+// M: decision block metadata
 export type CodeBlock<N, B, S, T, M> =
   | SimpleBlock<B>
   | SeqBlock<N, B, S, T, M>
@@ -10,7 +15,7 @@ export type CodeBlock<N, B, S, T, M> =
   | ContinueBlock
   | BreakScopeBlock
   | EmptyBlock
-  | DispatchBlock<N>;
+  | DispatchBlock<N, B, S, T, M>;
 
 type Label = string;
 
@@ -32,9 +37,10 @@ export type DecisionBlock<N, B, S, T, M> = Readonly<{
   metadata: M;
 }>;
 
-export type DispatchBlock<N> = Readonly<{
+export type DispatchBlock<N, B, S, T, M> = Readonly<{
   type: "dispatch_block";
   node: N;
+  choices: readonly CodeBlock<N, B, S, T, M>[];
 }>;
 
 export type ScopeBlock<N, B, S, T, M> = Readonly<{
@@ -102,9 +108,8 @@ function usesLabel<N, B, S, T, M>(
       return block.label === label;
     case "simple_block":
     case "empty_block":
-      return false;
     case "dispatch_block":
-      throw new Error("TODO");
+      return false;
     default:
       never(block);
   }
@@ -138,15 +143,46 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T, M> {
         return blocks[0];
       default: {
         const firstBreakOrContinue = blocks.findIndex(endsWithFlowBreak);
-        return {
+        return this.optimizeSeq({
           type: "seq_block",
           blocks:
             firstBreakOrContinue === -1
               ? blocks
               : blocks.slice(0, firstBreakOrContinue + 1),
+        });
+      }
+    }
+  }
+
+  private optimizeSeq(
+    block: SeqBlock<N, B, S, T, M>
+  ): CodeBlock<N, B, S, T, M> {
+    const first = block.blocks[0];
+    if (first.type === "decision_block") {
+      // If all branches except one end flow, we can move whatever code comes next
+      // inside that unique branch
+      const indicesThatDoNotEnd = first.choices
+        .map(([_, c], idx) => {
+          return endsWithFlowBreak(c) ? -1 : idx;
+        })
+        .filter(i => i >= 0);
+      if (indicesThatDoNotEnd.length === 1) {
+        const idx = indicesThatDoNotEnd[0];
+        return {
+          ...first,
+          choices: first.choices.map((c, i) => {
+            if (i === idx) {
+              return [
+                c[0],
+                this.makeSeq([c[1], ...block.blocks.slice(1)]),
+              ] as const;
+            }
+            return c;
+          }),
         };
       }
     }
+    return block;
   }
 
   // The optimization removes "breaks" with this label if they are the last statement
@@ -190,9 +226,8 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T, M> {
       case "continue_block":
       case "simple_block":
       case "empty_block":
-        return block;
       case "dispatch_block":
-        throw new Error("TODO");
+        return block;
       default:
         never(block);
     }
@@ -236,9 +271,8 @@ export abstract class CfgToCode<Code, Decision, N, B, S, T, M> {
       case "continue_block":
       case "simple_block":
       case "empty_block":
-        return block;
       case "dispatch_block":
-        throw new Error("TODO");
+        return block;
       default:
         never(block);
     }

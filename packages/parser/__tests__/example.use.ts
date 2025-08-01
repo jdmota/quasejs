@@ -15,3 +15,5 @@ const asts = parse(
 //const d0 = d[0];
 
 console.log(asts);
+
+// yarn n packages/parser/__tests__/example.use.ts

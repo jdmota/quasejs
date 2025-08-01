@@ -28,8 +28,9 @@ import {
   InvertedDecisionTree,
   type DecisionTreeNoAdd,
 } from "./decision-trees.ts";
-import { ANY_CHAR_RANGE } from "../constants.ts";
+import { ANY_CHAR_RANGE } from "../utils/constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
+import type { RuleName } from "../grammar/grammar-builder.ts";
 
 // IMPORTANT!
 // This reference implementation does not find all the possible "follow" sequences
@@ -38,8 +39,6 @@ import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 // which then allows us to reconstruct the "follow" sequences
 // So, for left recursive rules, the "follows" produced herein are not trustworthy
 // Nonetheless, we can use this reference implementation to double-check non-left recursive rules
-
-type RuleName = string;
 
 class StackFrame implements ObjectHashEquals {
   readonly parent: StackFrame | null;

@@ -396,6 +396,37 @@ RULE endAux STATE DState{2}
 
     GOTO [Action 2] WHEN (or (and (range ll1 1 1) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 41 41) (follow ff2 -1 -1) (follow ff3 -1 -1)) (and (range ll1 1 1) (range ll2 2 2) (range ll3 3 3) (follow ff1 42 42) (follow ff2 -1 -1) (follow ff3 -1 -1)))
 
+RULE predicates1 STATE DState{0}
+RULE predicates1 STATE DState{1}
+    GOTO [Action @$getPos()] WHEN (or (range ll1 1 1) (range ll1 2 2))
+
+RULE predicates1 STATE DState{2}
+    GOTO [Predicate] WHEN (range ll1 1 1)
+
+    GOTO [Predicate] WHEN (range ll1 2 2)
+
+RULE predicates1 STATE DState{3}
+    GOTO [Range [1,1]] WHEN (range ll1 1 1)
+
+RULE predicates1 STATE DState{4}
+    GOTO [Action @$getLoc($startPos)] WHEN (range ll1 -1 -1)
+
+RULE predicates1 STATE DState{5}
+    GOTO [Return] WHEN (range ll1 -1 -1)
+
+RULE predicates1 STATE DState{6}
+    GOTO [Range [2,2]] WHEN (range ll1 2 2)
+
+RULE predicates1 STATE DState{7}
+RULE predicates2 STATE DState{0}
+RULE predicates2 STATE DState{1}
+    GOTO [Action @$getPos()] WHEN (range ll1 1 1)
+
+RULE predicates2 STATE DState{2}
+    GOTO [Predicate] WHEN (and (range ll1 1 1) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
+
+    GOTO [Predicate] WHEN (and (range ll1 1 1) (range ll2 -1 -1) (range ll3 -1 -1) (follow ff1 -1 -1) (follow ff2 -1 -1) (follow ff3 -1 -1))
+
 RULE $lexer STATE DState{0}
 RULE $lexer STATE DState{1}
     GOTO [Action @$getPos()] WHEN (or (range ll1 -1 -1) (range ll1 49 49) (range ll1 60 60) (range ll1 65 65) (range ll1 66 66) (range ll1 67 67) (range ll1 68 68) (range ll1 69 69) (range ll1 70 70) (range ll1 79 79) (range ll1 80 80) (range ll1 83 83) (range ll1 87 87) (range ll1 97 97))

@@ -18,10 +18,9 @@ import {
 import { GSSNode } from "../gll/gll-base.ts";
 import { IAnalyzer } from "./analysis-reference.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";
-import { ANY_CHAR_RANGE } from "../constants.ts";
+import { ANY_CHAR_RANGE } from "../utils/constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
-
-type RuleName = string;
+import type { RuleName } from "../grammar/grammar-builder.ts";
 
 export class Analyzer extends IAnalyzer<AnalysisPoint> {
   private llState: number;
@@ -43,40 +42,6 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
   getLLState() {
     return this.llState;
   }
-
-  // TODO deal with left recursive rules transformation!
-
-  /*
-  E[1] -> E[2] ( + E[2] | - E[2] )* // left assoc
-  E[2] -> E[3] ( ** E[2] )? // right assoc
-  E[3] -> - E[3] | E[4]
-  E[4] -> num | ( E[1] )
-
-  E -> E + E
-       E - E
-       E ** E
-       - E
-       ( E )
-       num
-
-  E -> E prec(+,1) E
-       E prec(-,1) E
-       E prec(**,2,right) E
-       prec(-,3) E
-       ( E )
-       num
-
-  // https://tree-sitter.github.io/tree-sitter/creating-parsers#using-precedence
-
-  E -> prec.left(1, E + E)
-       prec.left(1, E - E)
-       prec.right(2, E ** E)
-       prec(3, - E)
-       ( E )
-       num
-
-  // If precedences are equal, then associativity is used
-  */
 
   private readonly cache = new WeakMap<
     DState,

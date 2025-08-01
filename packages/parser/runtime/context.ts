@@ -11,4 +11,10 @@ export class RuntimeContext {
   ff(index: number) {
     return this.stack[this.stack.length - index] ?? -1;
   }
+
+  c(b: boolean) {
+    if (!b) {
+      throw new Error("Predicate condition failed");
+    }
+  }
 }

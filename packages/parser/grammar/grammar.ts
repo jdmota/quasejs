@@ -11,6 +11,7 @@ import {
   type RuleDeclaration,
   type RuleDeclarationArg,
   type RuleModifiers,
+  type RuleName,
   type TokenDeclaration,
   type TokenModifiers,
   type TokenRules,
@@ -33,16 +34,18 @@ export type GrammarError = Readonly<{
   loc2: Location | undefined | null;
 }>;
 
-type GrammarOrErrors =
-  | Readonly<{
-      grammar: Grammar;
-      errors: null;
-      referencesGraph: Graph<string, null>;
-    }>
-  | Readonly<{
-      grammar: null;
-      errors: readonly GrammarError[];
-    }>;
+export type GrammarResult = Readonly<{
+  grammar: Grammar;
+  errors: null;
+  referencesGraph: Graph<RuleName, null>;
+}>;
+
+export type GrammarErrors = Readonly<{
+  grammar: null;
+  errors: readonly GrammarError[];
+}>;
+
+export type GrammarOrErrors = GrammarResult | GrammarErrors;
 
 export function err(
   message: string,
@@ -64,6 +67,7 @@ function augmentToolInput({
   externalFuncReturns = {},
   maxLL = 3,
   maxFF = 3,
+  _useReferenceAnalysis,
 }: ToolInput) {
   const augmentedRules = ruleDecls.map(r =>
     augmentRule(cloneRuleDeclaration(r))
@@ -91,6 +95,7 @@ function augmentToolInput({
     decls,
     maxLL,
     maxFF,
+    _useReferenceAnalysis,
   };
 }
 
@@ -99,7 +104,7 @@ export const INTERNAL_START_RULE = "$$START$$";
 export function createGrammar(options: ToolInput): GrammarOrErrors {
   const errors: GrammarError[] = [];
   const externalCalls = new ExternalCallsCollector();
-  const referencesGraph = new Graph<string, null>();
+  const referencesGraph = new Graph<RuleName, null>();
 
   const {
     name,
@@ -109,6 +114,7 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
     tokens,
     maxLL,
     maxFF,
+    _useReferenceAnalysis,
   } = augmentToolInput(options);
 
   // Find start rule
@@ -333,7 +339,8 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
       startArguments,
       externalFuncReturns,
       maxLL,
-      maxFF
+      maxFF,
+      _useReferenceAnalysis
     );
 
     return {
@@ -367,7 +374,8 @@ export class Grammar {
     startArguments: readonly GType[],
     externalFuncReturns: Readonly<Record<string, GType>>,
     public readonly maxLL: number,
-    public readonly maxFF: number
+    public readonly maxFF: number,
+    public readonly _useReferenceAnalysis: boolean | undefined
   ) {
     this.name = name;
     this.rules = rules;

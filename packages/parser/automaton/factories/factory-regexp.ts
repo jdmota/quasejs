@@ -12,10 +12,10 @@ import type {
   Assertion,
   Expression,
 } from "regexp-tree/ast";
-import { type Frag, Automaton } from "../automaton/automaton.ts";
-import { MIN_CHAR, MAX_CHAR } from "../constants.ts";
-import { State } from "../automaton/state.ts";
-import { type AnyTransition } from "../automaton/transitions.ts";
+import { type Frag, Automaton } from "../automaton.ts";
+import { MIN_CHAR, MAX_CHAR } from "../../utils/constants.ts";
+import { State } from "../state.ts";
+import { type AnyTransition } from "../transitions.ts";
 
 const { parse: parseRegexp } = regexpTree;
 

@@ -53,6 +53,10 @@ export abstract class Parser<T> {
     return this.ctx.ff(n);
   }
 
+  $c(b: boolean) {
+    this.ctx.c(b);
+  }
+
   $err(): never {
     this.tokenizer.$unexpected(
       this.tokenizer.$getPos(),

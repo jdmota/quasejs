@@ -12,7 +12,7 @@ import {
   CFGEdge,
   CFGGroup,
   type CFGNodeOrGroup,
-} from "./dfa-to-code/cfg.ts";
+} from "../../util/cfg-and-code/cfg.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
 import { type AugmentedDeclaration } from "../grammar/grammar.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";

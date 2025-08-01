@@ -1,7 +1,7 @@
-import { Input } from "./runtime/input";
-import { Tokenizer } from "./runtime/tokenizer";
-import { Parser } from "./runtime/parser";
-import { GLL } from "./runtime/gll";
+import { Input } from "../runtime/input";
+import { Tokenizer } from "../runtime/tokenizer";
+import { Parser } from "../runtime/parser";
+import { GLL } from "../runtime/gll";
 
 const $$EMPTY_OBJ = {};
 
@@ -338,13 +338,13 @@ class GrammarParser extends Parser {
             } else {
               this.$err();
             }
+            $env.B = (this.gll.u(this.$i(),$env), this.gll.c("A",1,"B",[]));
+            return;
           } else if($ll1 === 2 /*#string:B*/){
             break;
           } else {
             this.$err();
           }
-          $env.B = (this.gll.u(this.$i(),$env), this.gll.c("A",1,"B",[]));
-          return;
         }while(0);
         this.$e(2 /*#string:B*/);
         break s5;
@@ -1465,10 +1465,10 @@ class GrammarParser extends Parser {
         } else {
           this.$err();
         }
+        this.$e(1 /*#string:A*/);
       } else {
         this.$err();
       }
-      this.$e(1 /*#string:A*/);
     }while(0);
     $env.$loc = this.$getLoc($env.$startPos);
     return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
@@ -1582,6 +1582,48 @@ class GrammarParser extends Parser {
     $env.$loc = this.$getLoc($env.$startPos);
     return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
   }
+  rulepredicates1_0() {
+    let $ll1,$startPos=null,$loc=null;
+    $startPos = this.$getPos();
+    $ll1=this.$ll(1);
+    if($ll1 === 1 /*#string:A*/){
+      this.$c(false);
+      this.$e(1 /*#string:A*/);
+    } else if($ll1 === 2 /*#string:B*/){
+      this.$c(true);
+      this.$e(2 /*#string:B*/);
+    } else {
+      this.$err();
+    }
+    $loc = this.$getLoc($startPos);
+    return {$loc};
+  }
+  rulepredicates2_0($env) {
+    let $ll1;
+    $env.$startPos = this.$getPos();
+    $ll1=this.$ll(1);
+    if($ll1 === 1 /*#string:A*/){
+      // Ambiguity
+      this.gll.u(this.$i(),$env);
+      this.gll.a("predicates2",1,$env);
+      this.gll.a("predicates2",2,$env);
+      return;
+    } else {
+      this.$err();
+    }
+  }
+  rulepredicates2_1($env) {
+    this.$c(false);
+    this.$e(1 /*#string:A*/);
+    $env.$loc = this.$getLoc($env.$startPos);
+    return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
+  }
+  rulepredicates2_2($env) {
+    this.$c(true);
+    this.$e(1 /*#string:A*/);
+    $env.$loc = this.$getLoc($env.$startPos);
+    return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
+  }
   $createEnv(name,args){
     if(name==="$$START$$") return {$startPos:null,$$ret:null,$loc:null,arg:args[0]};
     if(name==="A") return {$startPos:null,B:null,D:[],my_obj:null,C:null,T:null,$loc:null,arg:args[0]};
@@ -1616,6 +1658,7 @@ class GrammarParser extends Parser {
     if(name==="end") return {$startPos:null,$loc:null};
     if(name==="notEnd") return {$startPos:null,$loc:null};
     if(name==="endAux") return {$startPos:null,$loc:null};
+    if(name==="predicates2") return {$startPos:null,$loc:null};
     throw new Error(`Never: ${name} ${args}`);
   }
 }

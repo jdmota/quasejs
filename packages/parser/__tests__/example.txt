@@ -132,6 +132,12 @@ Condition $ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 3 /*#
  - [Action 2]
 -----------
 -----------
+Ambiguities in rule predicates2, state 2, ll = 3
+Condition $ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/ && $ff1 === -1 && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
+ - [Predicate]
+ - [Predicate]
+-----------
+-----------
 Ambiguities in rule A, state 5, ll = 3
 Condition true may lead to left recursions via these decisions:
  - [Action { id: 10 }]
@@ -2692,7 +2698,7 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-REF-BENCHMARK: 4.816s
+REF-BENCHMARK: 5.154s
 -----------
 Ambiguities in rule A, state 2, ll = 3
 Condition $ll1 === 1 /*#string:A*/ && $ll2 === 3 /*#string:C*/ && $ll3 === 4 /*#string:D*/ && $ff1 === 0 /* $$START$$ 3 */ && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
@@ -2833,6 +2839,12 @@ Condition $ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof
 Condition $ll1 === 1 /*#string:A*/ && $ll2 === 2 /*#string:B*/ && $ll3 === 3 /*#string:C*/ && $ff1 === 42 /* notEnd 3 */ && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
  - [Action 1]
  - [Action 2]
+-----------
+-----------
+Ambiguities in rule predicates2, state 2, ll = 3
+Condition $ll1 === 1 /*#string:A*/ && $ll2 === -1 /*#eof*/ && $ll3 === -1 /*#eof*/ && $ff1 === -1 && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
+ - [Predicate]
+ - [Predicate]
 -----------
 -----------
 Ambiguities in rule A, state 5, ll = 3
@@ -9190,4 +9202,4 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-BENCHMARK: 1.171s
+BENCHMARK: 1.286s

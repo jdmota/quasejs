@@ -126,6 +126,10 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     this.$unexpected(pos, token, a);
   }
 
+  $c(b: boolean) {
+    this.ctx.c(b);
+  }
+
   $unexpected(pos: Position, found: Token, expected?: number | string): never {
     throw error(
       `Unexpected token ${this.idToLabels[found.id]}${

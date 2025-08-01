@@ -1,7 +1,5 @@
 import { assertion, lines, never, nonNull } from "../../util/miscellaneous.ts";
-import { range } from "../../util/range-utils.ts";
 import { DEBUG_apply, DEBUG_unapply } from "../analysis/analysis-debug.ts";
-import { type DecisionTree } from "../analysis/decision-trees.ts";
 import {
   DecisionAnd,
   type DecisionExpr,
@@ -24,10 +22,6 @@ import {
 } from "../automaton/transitions.ts";
 import { type AugmentedDeclaration, Grammar } from "../grammar/grammar.ts";
 import { type ExprRule } from "../grammar/grammar-builder.ts";
-import {
-  type DecisionBlock,
-  endsWithFlowBreak,
-} from "./dfa-to-code/cfg-to-code.ts";
 import {
   DStateEdge,
   type ParserCFGEdge,
@@ -342,7 +336,7 @@ export class ParserGenerator {
       return this.renderCode(t.code);
     }
     if (t instanceof PredicateTransition) {
-      return "/* TODO predicate */";
+      return `this.$c(${this.renderCode(t.code)})`;
     }
     if (t instanceof ReturnTransition) {
       if (this.needsGLL) {
@@ -535,7 +529,6 @@ export class ParserGenerator {
       /*return lines([
           `${indent}switch(${this.markVar(`$d${this.nodeId(block.node)}`)}){`,
           ...block.choices.map(([t, d]) => {
-            assertion(t.transition instanceof DispatchTransition);
             return lines([
               `${indent}  case ${this.nodeId(t.dest)}:`,
               this.r(`${indent}    `, d),
