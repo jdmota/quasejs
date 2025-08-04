@@ -95,9 +95,11 @@ export class Input extends BufferedStream<number> {
   }
 
   $endText(marker: Marker) {
-    return this.slice(marker, this.pos)
+    const text = this.slice(marker, this.pos)
       .map(n => String.fromCodePoint(n))
       .join("");
+    this.release(marker);
+    return text;
   }
 
   $expect(id: number) {

@@ -28,7 +28,7 @@ import {
 } from "../generators/dfa-to-cfg.ts";
 import { setAdd } from "../../util/maps-sets.ts";
 import { traverse, walkUp } from "../../util/graph.ts";
-import { nonNull } from "../../util/miscellaneous.ts";
+import { assertion, first, nonNull } from "../../util/miscellaneous.ts";
 
 export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
   const rulesAutomaton = new Automaton();
@@ -124,6 +124,10 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
 
   // Produce cfgs from automatons
   for (const [decl, automaton] of automatons) {
+    // Assertion check: Since all rules end with a return expression, there will be only one accepting state with exactly zero out edges
+    assertion(automaton.acceptingSet.size === 1);
+    assertion(first(automaton.acceptingSet).transitionAmount() === 0);
+    //
     const thisCfgs = [];
     const labels = new LabelsManager(needGLL);
     // Add start

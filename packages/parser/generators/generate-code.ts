@@ -229,6 +229,14 @@ export class CodeGenerator {
         }
         return `${indent}${this.renderTransition(block.transition, block.dest)};${end}`;
       }
+      case "jump_block": {
+        assertion(this.needsGLL);
+        const lStr = labelToStr(this.decl.type, {
+          rule: this.decl.name,
+          label: block.label,
+        });
+        return `${indent}return this.${lStr}($env);`;
+      }
       case "ambiguity_block": {
         assertion(this.needsGLL);
         return lines([

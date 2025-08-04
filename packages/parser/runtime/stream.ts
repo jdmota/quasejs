@@ -1,3 +1,38 @@
+class Markers {
+  // invariant: minMarkedPos == -1 || minMarkedPos >= 0
+  private markers = new Set<Marker>();
+  private minMarkedPos = -1;
+
+  min() {
+    return this.minMarkedPos;
+  }
+
+  mark(pos: number): Marker {
+    const m = { pos: pos };
+    this.markers.add(m);
+    // Update minimum marker
+    if (this.minMarkedPos === -1 || pos < this.minMarkedPos) {
+      this.minMarkedPos = pos;
+    }
+    return m;
+  }
+
+  release(marker: Marker) {
+    if (this.markers.delete(marker)) {
+      // Update minimum marker
+      if (marker.pos === this.minMarkedPos) {
+        let min = -1;
+        for (const { pos } of this.markers) {
+          if (min === -1 || pos < min) {
+            min = pos;
+          }
+        }
+        this.minMarkedPos = min;
+      }
+    }
+  }
+}
+
 // Inspiration https://github.com/antlr/antlr4/blob/dev/runtime/Java/src/org/antlr/v4/runtime/IntStream.java
 
 export abstract class IStream<T> {
@@ -18,7 +53,7 @@ export abstract class IStream<T> {
   abstract get(pos: number): T;
 
   // LA(1) gives the current token in position 'pos'
-  // LA(0) gives the previous token (if still in the buffer)
+  // LA(0) gives the previous token (if available)
   // LA with negative number may fail
   lookahead(n: number): T {
     return this.get(this.pos + n - 1);
@@ -108,18 +143,17 @@ export abstract class BufferedStream<T> extends IStream<T> {
   }
 
   private gc() {
+    const minMarkedPos = this.markers.min();
     const minPos =
-      this.minMarkedPos === -1
-        ? this.pos
-        : Math.min(this.minMarkedPos, this.pos);
+      minMarkedPos === -1 ? this.pos : Math.min(minMarkedPos, this.pos);
     /* e.g.
     released = 3 // [a,b,c]
     buffer = [d,e,f,g,h]
     minPos = 5 ('f')
     amountToRelease = 5 - 3 - 1 = 1
     */
-    const amountToRelease = minPos - this.released - 1;
     // Minus 1 to keep the previous token always
+    const amountToRelease = minPos - this.released - 1;
     if (amountToRelease <= 0) return;
     // Release fetched
     this.released += amountToRelease;
@@ -148,39 +182,17 @@ export abstract class BufferedStream<T> extends IStream<T> {
   slice(marker: Marker, endPos = this.pos) {
     const start = marker.pos - this.released;
     const end = endPos - this.released;
-    const arr = this.buffer.slice(start, end);
-    this.release(marker);
-    return arr;
+    return this.buffer.slice(start, end);
   }
 
-  // invariant: minMarkedPos == -1 || minMarkedPos >= 0
-  private markers = new Set<Marker>();
-  private minMarkedPos = -1;
+  private markers = new Markers();
 
   mark(): Marker {
-    const m = { pos: this.pos };
-    this.markers.add(m);
-    // Update minimum marker
-    if (this.minMarkedPos === -1 || this.pos < this.minMarkedPos) {
-      this.minMarkedPos = this.pos;
-    }
-    return m;
+    return this.markers.mark(this.pos);
   }
 
   release(marker: Marker) {
-    if (this.markers.delete(marker)) {
-      // Update minimum marker
-      if (marker.pos === this.minMarkedPos) {
-        let min = -1;
-        for (const { pos } of this.markers) {
-          if (min === -1 || pos < min) {
-            min = pos;
-          }
-        }
-        this.minMarkedPos = min;
-        this.gc();
-      }
-    }
+    this.markers.release(marker);
   }
 
   view(): StreamView<T, this> {

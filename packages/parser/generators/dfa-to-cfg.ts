@@ -1,7 +1,6 @@
 import {
   type ObjectHashEquals,
   equals,
-  assertion,
   first,
   nonNull,
 } from "../../util/miscellaneous.ts";
@@ -41,7 +40,16 @@ export type AmbiguityBlock = Readonly<{
   choices: readonly Readonly<{ transition: AnyTransition; label: number }>[];
 }>;
 
-export type CFGNodeCode = ConditionalBlock | RegularBlock | AmbiguityBlock;
+export type JumpBlock = Readonly<{
+  type: "jump_block";
+  label: number;
+}>;
+
+export type CFGNodeCode =
+  | ConditionalBlock
+  | RegularBlock
+  | AmbiguityBlock
+  | JumpBlock;
 
 export type GrammarCFGNode = BaseCFGNode<CFGNodeCode, DecisionExpr>;
 
@@ -87,11 +95,7 @@ export function convertDFAtoCFG(
   transition: AnyTransition | null,
   state: DState
 ): Readonly<{ start: GrammarCFGNode; nodes: ReadonlySet<GrammarCFGNode> }> {
-  // Since all rules end with a return expression, there will be only one accepting state with exactly zero out edges
-  for (const state of acceptingSet) {
-    assertion(state.transitionAmount() === 0);
-  }
-
+  const weNeedGLL = needGLL.has(rule.name);
   const nodes: Set<GrammarCFGNode> = new Set();
 
   function newNode<T extends CFGNodeCode>(code: T) {
@@ -106,7 +110,7 @@ export function convertDFAtoCFG(
 
   const startNode = transition
     ? newRegularBlock(transition, state)
-    : makeNodeFromState(state);
+    : makeNodeFromState(state, true);
 
   function newRegularBlock(transition: AnyTransition, dest: DState) {
     let cached = true;
@@ -184,14 +188,22 @@ export function convertDFAtoCFG(
     return processTree(tree);
   }
 
-  function makeNodeFromState(state: DState): GrammarCFGNode {
+  function makeNodeFromState(state: DState, start: boolean): GrammarCFGNode {
     let node = stateToNode.get(state);
     if (!node) {
-      if (state.transitionAmount() === 1) {
-        const [transition, dest] = first(state);
-        node = newRegularBlock(transition, dest);
+      if (weNeedGLL && !start && state.inTransitions > 1) {
+        // This is an optimization to reduce repeated code
+        node = newNode({
+          type: "jump_block",
+          label: labels.add(null, state),
+        });
       } else {
-        node = newConditionalBlock(state);
+        if (state.transitionAmount() === 1) {
+          const [transition, dest] = first(state);
+          node = newRegularBlock(transition, dest);
+        } else {
+          node = newConditionalBlock(state);
+        }
       }
       stateToNode.set(state, node);
     }
@@ -200,7 +212,7 @@ export function convertDFAtoCFG(
 
   while (queue.length > 0) {
     const node = queue.pop()!;
-    const destNode = makeNodeFromState(node.code!.dest);
+    const destNode = makeNodeFromState(node.code!.dest, false);
     new BaseCFGEdge(node, null, destNode, "forward").connect();
   }
 

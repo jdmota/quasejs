@@ -2743,7 +2743,7 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-REF-BENCHMARK: 5.339s
+REF-BENCHMARK: 4.912s
 -----------
 Ambiguities in rule A, state 2, ll = 3
 Condition $ll1 === 1 /*#string:A*/ && $ll2 === 3 /*#string:C*/ && $ll3 === 4 /*#string:D*/ && $ff1 === 0 /* $$START$$ 3 */ && $ff2 === -1 && $ff3 === -1 is not enough to choose between:
@@ -9292,4 +9292,4 @@ Condition true may lead to left recursions via these decisions:
 Condition $ll1 === 0 /*#string:O*/ may lead to left recursions via these decisions:
  - [Rule EmptyOrNot]
 -----------
-BENCHMARK: 1.139s
+BENCHMARK: 1.113s

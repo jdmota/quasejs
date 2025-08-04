@@ -12,6 +12,7 @@ import {
   type CFGNodeCode,
   type GrammarCFGGroup,
   type GrammarCFGNode,
+  type JumpBlock,
 } from "./dfa-to-cfg";
 
 export type GrammarDecisionMetadata = Readonly<{
@@ -25,7 +26,8 @@ export type GrammarSimpleBlockData =
       transition: AnyTransition;
       dest: DState;
     }>
-  | AmbiguityBlock;
+  | AmbiguityBlock
+  | JumpBlock;
 
 export type GrammarCodeBlock = BaseCodeBlock<
   GrammarCFGNode,
@@ -97,6 +99,7 @@ export class CfgToCode extends BaseCfgToCode<
         };
         break;
       }
+      case "jump_block":
       case "ambiguity_block": {
         block = {
           type: "simple_block",
