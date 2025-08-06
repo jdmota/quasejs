@@ -107,3 +107,5 @@ export class GrammarFormatter implements IGrammarFormatter {
     return this[node.type](node as any);
   }
 }
+
+export const grammarFormatter = new GrammarFormatter();

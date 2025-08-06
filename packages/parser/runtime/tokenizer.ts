@@ -50,7 +50,11 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
     if (this.gll) {
       while (amountToFetch--) {
         while (true) {
-          const [newPos, token] = this.gll.run().find(r => r[1].id != 13)!; // TODO remove this hack
+          const result = this.gll.parse();
+          if (!result.ok) {
+            throw new Error(`Could not tokenize`); // TODO
+          }
+          const [newPos, token] = result._asts.find(r => r[1].id != 13)!; // TODO remove this hack
           this.gll = this.gll.fork(newPos);
           const channels = this.idToChannels[token.id];
           for (const chan of channels.c) {
@@ -97,7 +101,7 @@ export abstract class Tokenizer<T> extends BufferedStream<Token> {
   abstract $getIdToLabel(): IdToLabel;
 
   $startText() {
-    return this.input.mark();
+    return this.input.$startText();
   }
 
   $endText(marker: Marker) {

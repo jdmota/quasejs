@@ -5,7 +5,7 @@ import {
   sameAssignable,
   type ExprRule,
 } from "../grammar/grammar-builder.ts";
-import { GrammarFormatter } from "../grammar/grammar-formatter.ts";
+import { grammarFormatter } from "../grammar/grammar-formatter.ts";
 
 export type AnyTransition =
   | EpsilonTransition
@@ -20,6 +20,13 @@ export type FieldInfo = Readonly<{
   name: string;
   multiple: boolean;
 }>;
+
+export function printFieldInfo(info: FieldInfo | null) {
+  if (info) {
+    return `${info.name} ${info.multiple ? "+=" : "="} `;
+  }
+  return "";
+}
 
 export abstract class Transition<E extends boolean> {
   readonly isEpsilon: E;
@@ -111,7 +118,7 @@ export class CallTransition extends AssignableTransition {
   }
 
   toString() {
-    return `[Rule ${this.ruleName}]`;
+    return `[${printFieldInfo(this.field)}Rule ${this.ruleName} (${this.args.map(a => grammarFormatter.visit(a))})]`;
   }
 }
 
@@ -135,7 +142,7 @@ export class PredicateTransition extends AbstractEpsilonTransition {
   }
 
   toString() {
-    return `[Predicate]`;
+    return `[Predicate ${grammarFormatter.visit(this.code)}]`;
   }
 }
 
@@ -160,7 +167,7 @@ export class ActionTransition extends AssignableTransition {
   }
 
   toString() {
-    return `[Action ${new GrammarFormatter().visit(this.code)}]`;
+    return `[${printFieldInfo(this.field)}Action ${grammarFormatter.visit(this.code)}]`;
   }
 }
 
@@ -192,7 +199,7 @@ export class RangeTransition extends AssignableTransition {
   }
 
   toString() {
-    return `[Range [${this.from},${this.to}]]`;
+    return `[${printFieldInfo(this.field)}Range [${this.from},${this.to}]]`;
   }
 }
 
@@ -219,7 +226,7 @@ export class ReturnTransition extends AbstractEpsilonTransition {
   }
 
   toString() {
-    return `[Return]`;
+    return `[Return ${grammarFormatter.visit(this.returnCode)}]`;
   }
 }
 
@@ -241,6 +248,6 @@ export class FieldTransition extends AbstractEpsilonTransition {
   }
 
   toString() {
-    return `[${this.field.name} ${this.field.multiple ? "+=" : ""} $val]`;
+    return `[${printFieldInfo(this.field)}$val]`;
   }
 }

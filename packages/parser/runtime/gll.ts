@@ -146,16 +146,16 @@ export class GLL<AST> extends GLLBase<GLLLabel, GLLArgs, GLLEnv, GLLValue> {
     }
   }
 
-  override run(): readonly (readonly [number, AST])[] {
-    super.run();
+  parse() {
+    this.run();
     if (this.asts.length === 0) {
-      console.error(Array.from(this.errors));
+      return { ok: false, errors: Array.from(this.errors) } as const;
     }
-    return this.asts;
-  }
-
-  parse(): readonly AST[] {
-    return this.run().map(r => r[1]);
+    return {
+      ok: true,
+      asts: this.asts.map(r => r[1]),
+      _asts: this.asts,
+    } as const;
   }
 }
 

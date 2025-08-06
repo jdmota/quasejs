@@ -1,7 +1,7 @@
 import { Tokenizer } from "./tokenizer.ts";
 import { RuntimeContext } from "./context.ts";
 import { type Location, type Position } from "./input.ts";
-import { GLL } from "./gll.ts";
+import { GLL, labelToStr } from "./gll.ts";
 
 export abstract class Parser<T, AST> {
   readonly ctx: RuntimeContext;
@@ -66,5 +66,18 @@ export abstract class Parser<T, AST> {
 
   $i() {
     return this.tokenizer.index();
+  }
+
+  parse(initialRule: string, args: readonly unknown[]) {
+    const parser = this as any;
+    const method = labelToStr("rule", { rule: initialRule, label: 0 });
+    try {
+      return {
+        ok: true,
+        ast: parser[method](...args) as AST,
+      } as const;
+    } catch (error) {
+      return { ok: false, error } as const;
+    }
   }
 }

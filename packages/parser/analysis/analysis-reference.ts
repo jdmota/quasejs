@@ -237,7 +237,8 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
       this,
       rule,
       new LabelsManager(new Set()),
-      new Map()
+      new Map(),
+      true
     );
     console.log("-----------");
     console.log(

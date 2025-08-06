@@ -10,11 +10,8 @@ import {
   inferAndCheckTypes,
 } from "./grammar/grammar-generate.ts";
 
+// TODO support parallel lexers? context-sensitive tokenization?
 // TODO support disambiguation tactics
-// TODO gll: provide errors that caused the parse to fail... (just returning an empty array is not useful)
-
-// TODO runtime follow stack will not work with gll
-// TODO tokenizer with gll?... support parallel lexers?
 
 // TODO generate visitors
 

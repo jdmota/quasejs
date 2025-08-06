@@ -8,6 +8,7 @@ export function generateAll(
   rulesCode: readonly string[],
   needGLL: ReadonlySet<string>
 ) {
+  const startArgs = grammar.startRule.args.map(a => `$${a.arg}`).join(", ");
   return lines([
     `import { Input } from "../runtime/input";`,
     `import { Tokenizer } from "../runtime/tokenizer";`,
@@ -34,10 +35,7 @@ export function generateAll(
     ...rulesCode.values(),
     `}\n`,
     ``,
-    `export function parse(external, ${[
-      "string",
-      ...grammar.startRule.args.map(a => `$${a.arg}`),
-    ].join(", ")}) {`,
+    `export function parse(external, string, ${startArgs}) {`,
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input, external);`,
     `  const parser = new GrammarParser(tokenizer, external);`,
@@ -45,9 +43,9 @@ export function generateAll(
       ? `  const tokGll = new GLL("token",tokenizer,"${LEXER_RULE_NAME}",[]); tokenizer.$setGLL(tokGll);`
       : "",
     needGLL.has(INTERNAL_START_RULE)
-      ? `  const parserGll = new GLL("rule",parser,"${INTERNAL_START_RULE}",[${grammar.startRule.args.map(a => `$${a.arg}`).join(",")}]); parser.$setGLL(parserGll);`
+      ? `  const parserGll = new GLL("rule",parser,"${INTERNAL_START_RULE}",[${startArgs}]); parser.$setGLL(parserGll);`
       : "",
-    `  return ${needGLL.has(INTERNAL_START_RULE) ? `parserGll.parse()` : `parser.rule${grammar.startRule.name}_0(${grammar.startRule.args.map(a => `$${a.arg}`).join(",")})`};`,
+    `  return ${needGLL.has(INTERNAL_START_RULE) ? `parserGll.parse()` : `parser.parse("${INTERNAL_START_RULE}",[${startArgs}])`};`,
     `}\n`,
   ]);
 }

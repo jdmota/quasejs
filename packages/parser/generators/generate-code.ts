@@ -40,7 +40,6 @@ export class CodeGenerator {
   private continuesStack: string[];
   private neededLabels: Set<string>;
   private readonly needsGLL: boolean;
-  private useStackContext = true;
   private DEBUG = true;
 
   constructor(
@@ -48,7 +47,8 @@ export class CodeGenerator {
     private readonly analyzer: IAnalyzer<any>,
     private readonly decl: AugmentedDeclaration,
     private readonly labels: LabelsManager,
-    private readonly fields: Map<string, boolean>
+    private readonly fields: Map<string, boolean>,
+    private readonly useFollow: boolean
   ) {
     this.nodes = new Map();
     this.nodeUuid = 1;
@@ -66,7 +66,6 @@ export class CodeGenerator {
     this.breaksStack.length = 0;
     this.continuesStack.length = 0;
     this.neededLabels.clear();
-    this.useStackContext = true;
   }
 
   private lastBreakScope() {
@@ -149,6 +148,7 @@ export class CodeGenerator {
   }
 
   private renderFollowCondition(test: DecisionTestFollow) {
+    assertion(this.useFollow);
     const { ff, from, to } = test;
     this.markInternalVar("$ff" + ff);
     return from === to
@@ -269,7 +269,6 @@ export class CodeGenerator {
       return this.renderField(t.field, `$env["#tmp"]`);
     }
     if (t instanceof CallTransition) {
-      const renderedFollowInfo = this.renderFollowInfoOfCall(t);
       const renderedArgs = t.args.map(a => this.renderCode(a)).join(",");
       return this.labels.needsGLLCall(
         t,
@@ -277,9 +276,10 @@ export class CodeGenerator {
           return `(this.gll.u(this.$i(),$env), this.gll.c("${this.decl.name}",${this.labels.get(t, dest)},"${t.ruleName}",[${renderedArgs}]))`;
         },
         t => {
+          const renderedFollowInfo = this.renderFollowInfoOfCall(t);
           const rule = this.grammar.getRule(t.ruleName);
           const code = `this.${this.renderRuleName(rule, 0)}(${renderedArgs})`;
-          return this.useStackContext
+          return this.useFollow
             ? `this.ctx.p(${renderedFollowInfo}, () => ${code})`
             : code;
         }
@@ -425,10 +425,6 @@ export class CodeGenerator {
 
     DEBUG_unapply();
     return result;
-  }
-
-  setUseStackContext(bool: boolean) {
-    this.useStackContext = bool;
   }
 
   static genCreateInitialEnvFunc(

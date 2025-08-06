@@ -111,6 +111,10 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     }
   }
 
+  const willUseGLL = needGLL.size > 0;
+  const canUseFollow = !willUseGLL;
+  const usesFollow = { ref: false };
+
   const cfgs = new Map<
     AugmentedDeclaration,
     {
@@ -140,9 +144,10 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
           needGLL,
           decl,
           labels,
-          automaton.acceptingSet,
           edge.transition,
-          edge.dest
+          edge.dest,
+          canUseFollow,
+          usesFollow
         ),
         id,
       ] as const);
@@ -161,7 +166,8 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
       analyzer,
       decl,
       labels,
-      nonNull(allFields.get(decl))
+      nonNull(allFields.get(decl)),
+      canUseFollow && usesFollow.ref
     );
     for (const [cfg, id] of thisCfgs) {
       const code = generator.process(
@@ -236,12 +242,25 @@ export function inferAndCheckTypes(grammar: Grammar) {
 
   return {
     errors: inferrer.errors,
-    genTypes: (needsGLL: boolean) =>
-      `${typeDeclarations
+    genTypes: (needsGLL: boolean) => {
+      if (needsGLL) {
+        typeDeclarations.push([
+          "$Result",
+          `Readonly<{ ok: true; asts: readonly $AST[] }> | Readonly<{ ok: false; errors: readonly (readonly [number, unknown])[] }>`,
+        ]);
+      } else {
+        typeDeclarations.push([
+          "$Result",
+          `Readonly<{ ok: true; ast: $AST }> | Readonly<{ ok: false; error: unknown }>`,
+        ]);
+      }
+
+      return `${typeDeclarations
         .map(([name, type]) => `export type ${name} = ${type};`)
         .join("\n")}\nexport function parse(external: $Externals, ${[
         "string: string",
         ...grammar.startRule.args.map((a, i) => `$${a.arg}: ${argTypes[i]}`),
-      ].join(", ")}): ${needsGLL ? "readonly $AST[]" : "$AST"};\n`,
+      ].join(", ")}): $Result;\n`;
+    },
   };
 }

@@ -16,6 +16,7 @@ import { IAnalyzer } from "../analysis/analysis-reference.ts";
 import { type AugmentedDeclaration } from "../grammar/grammar.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";
 import {
+  DecisionFollowTree,
   DecisionTokenTree,
   type DecisionTree,
 } from "../analysis/decision-trees.ts";
@@ -91,9 +92,10 @@ export function convertDFAtoCFG(
   needGLL: ReadonlySet<string>,
   rule: AugmentedDeclaration,
   labels: LabelsManager,
-  acceptingSet: ReadonlySet<DState>,
   transition: AnyTransition | null,
-  state: DState
+  state: DState,
+  canUseFollow: boolean,
+  usesFollow: { ref: boolean }
 ): Readonly<{ start: GrammarCFGNode; nodes: ReadonlySet<GrammarCFGNode> }> {
   const weNeedGLL = needGLL.has(rule.name);
   const nodes: Set<GrammarCFGNode> = new Set();
@@ -174,9 +176,18 @@ export function convertDFAtoCFG(
           nextNode = newGotoBlock(state, [...anyGotos, ...decision.getGotos()]);
         } else if (decision.isAmbiguous()) {
           const tree = decision.getNextTree();
-          nextNode = tree?.worthIt()
-            ? processTree(tree)
-            : newGotoBlock(state, decision.getGotos());
+          if (tree instanceof DecisionTokenTree) {
+            nextNode = tree?.worthIt()
+              ? processTree(tree)
+              : newGotoBlock(state, decision.getGotos());
+          } else if (canUseFollow && tree instanceof DecisionFollowTree) {
+            usesFollow.ref = true;
+            nextNode = tree?.worthIt()
+              ? processTree(tree)
+              : newGotoBlock(state, decision.getGotos());
+          } else {
+            nextNode = newGotoBlock(state, decision.getGotos());
+          }
         } else {
           nextNode = newGotoBlock(state, [decision.getSingleGoto()]);
         }
