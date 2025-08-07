@@ -1,5 +1,5 @@
 import { SourceMapExtractor } from "../../source-map/src";
-import { beautify, getStack, locToString } from "../src";
+import { beautify, getStack, locToString } from "../index";
 
 const cwd = process.cwd();
 

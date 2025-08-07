@@ -1,6 +1,6 @@
 import { inspect } from "node:util";
 import type { JsonValue } from "type-fest";
-import { getStack } from "../error/src/index";
+import { getStack } from "../error/index";
 import { createDefer, type Defer } from "../util/deferred";
 import {
   assertion,
