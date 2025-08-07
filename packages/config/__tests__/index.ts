@@ -1,12 +1,11 @@
 import path from "path";
-import { fileURLToPath } from "url";
-import { getConfig } from "../src";
+import { getConfig } from "..";
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+const fixturesFolder = path.resolve(import.meta.dirname, "__fixtures__");
 
 it("get config", async () => {
   let result = await getConfig({
-    cwd: dirname,
+    cwd: fixturesFolder,
     configFiles: ["quase-config.js"],
     failIfNotFound: true,
   });
@@ -15,7 +14,7 @@ it("get config", async () => {
   expect(typeof result.location).toBe("string");
 
   result = await getConfig({
-    cwd: dirname,
+    cwd: fixturesFolder,
     configFiles: ["non-existent-file.js"],
   });
 
@@ -23,7 +22,7 @@ it("get config", async () => {
   expect(result.location).toBe(undefined);
 
   result = await getConfig({
-    cwd: dirname,
+    cwd: fixturesFolder,
     configFiles: ["non-existent-file.js"],
     configKey: "my-key",
   });
@@ -33,26 +32,26 @@ it("get config", async () => {
   expect(result.location!.endsWith("package.json")).toBe(true);
 
   result = await getConfig({
-    cwd: dirname,
-    configFiles: ["quase-config-2.js"],
+    cwd: fixturesFolder,
+    configFiles: ["quase-config-2.mjs"],
     configKey: "my-key",
   });
 
   expect(result.config.default.iAmTheConfigFile2).toBe("yes");
   expect(result.config.configFromPkg).toBe(undefined);
   expect(typeof result.location).toBe("string");
-  expect(result.location!.endsWith("quase-config-2.js")).toBe(true);
+  expect(result.location!.endsWith("quase-config-2.mjs")).toBe(true);
 
   await expect(
     getConfig({
-      cwd: dirname,
+      cwd: fixturesFolder,
       configFiles: ["non-existante-file.js"],
       failIfNotFound: true,
     })
   ).rejects.toThrow(/^Config file was not found/);
 
   result = await getConfig({
-    cwd: dirname,
+    cwd: fixturesFolder,
     configFiles: [],
     configKey: "",
   });
@@ -61,7 +60,7 @@ it("get config", async () => {
   expect(result.location).toBe(undefined);
 
   result = await getConfig({
-    cwd: dirname,
+    cwd: fixturesFolder,
     configFiles: ["quase-config-3.js"],
   });
 
