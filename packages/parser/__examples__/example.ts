@@ -570,4 +570,4 @@ if (resultReference) {
   );
 }
 
-// yarn n packages/parser/__tests__/example.ts > packages/parser/__tests__/example.txt
+// yarn n packages/parser/__examples__/example.ts > packages/parser/__examples__/example.txt

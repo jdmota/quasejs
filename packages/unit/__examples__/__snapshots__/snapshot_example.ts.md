@@ -1,4 +1,4 @@
-# Quase-unit Snapshot Report for `packages/unit/__test__/snapshot_example.ts`
+# Quase-unit Snapshot Report for `packages/unit/__examples__/snapshot_example.ts`
 
 ## snapshot
 

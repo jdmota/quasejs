@@ -139,7 +139,7 @@ export async function main() {
       },
     },
     cache: {
-      dir: "packages/incremental/__test/cache",
+      dir: "packages/incremental/__examples__/cache",
       garbageCollect: true,
       logger: new Logger("CACHE"),
     },
@@ -155,5 +155,5 @@ export async function main() {
 
 main().catch(error => console.log("MAIN ERROR", error));
 
-// yarn n packages\incremental\__test\index.ts
-// yarn i packages\incremental\__test\index.ts
+// yarn n packages\incremental\__examples__\index.ts
+// yarn i packages\incremental\__examples__\index.ts

@@ -17,4 +17,4 @@ const result = parse(
 
 console.log(inspect(result, { depth: 6, colors: true }));
 
-// yarn n packages/parser/__tests__/example.use.ts
+// yarn n packages/parser/__examples__/example.use.ts
