@@ -1,12 +1,12 @@
 import turbocolor from "turbocolor";
 import logSymbols from "log-symbols";
-import ora, { Ora } from "ora";
+import ora, { type Ora } from "ora";
 import { codeFrameColumns } from "@babel/code-frame";
-import { prettify } from "../../../../util/path-url";
-import { never, Optional } from "../../../../util/miscellaneous";
-import { BeautifiedStackLine, beautify } from "../../../../error/src/index";
-import { SourceMapExtractor } from "../../../../source-map/src/extractor";
-import { IRunner } from "./runner";
+import { prettify } from "../util/path-url";
+import { never, type Optional } from "../util/miscellaneous";
+import { type BeautifiedStackLine, beautify } from "../error/src/index";
+import { SourceMapExtractor } from "../source-map/src/extractor";
+import { type IRunner } from "./runner";
 import { type RunnableResult } from "./runnable";
 import { type SimpleError } from "./errors";
 import { coloredConcordanceOptions } from "./concordance-options";
@@ -14,7 +14,7 @@ import { SKIP_ABORTED, SKIP_BAILED, SKIP_INTERRUPTED } from "./constants";
 import {
   addSnapshotStats,
   newMutableSnapshotStats,
-  SnapshotStats,
+  type SnapshotStats,
 } from "./snapshots";
 import { exit } from "./sanitizers/process-sanitizer";
 

@@ -1,20 +1,20 @@
 import { resolve } from "path";
 import EventEmitter from "events";
 import glob from "fast-glob";
-import { never, type Optional } from "../../../../util/miscellaneous";
+import { never, type Optional } from "../util/miscellaneous";
 import {
   ChildProcessFork,
   WorkerFork,
-  WorkerResult,
-} from "../../../../util/workers";
-import { sleep } from "../../../../util/async";
-import { prettify } from "../../../../util/path-url";
+  type WorkerResult,
+} from "../util/workers";
+import { sleep } from "../util/async";
+import { prettify } from "../util/path-url";
 import type { IRunner, RunnerEvents } from "./runner";
 import type * as forkInterface from "./fork";
 import type { FromForkToParent, FromParentToFork } from "./fork";
-import { RunnableOpts } from "./runnable-desc";
-import { RunnableResult } from "./runnable";
-import { SimpleError, processError } from "./errors";
+import { type RunnableOpts } from "./runnable-desc";
+import { type RunnableResult } from "./runnable";
+import { type SimpleError, processError } from "./errors";
 import { listenToDebugger } from "./debugger";
 import * as mainFork from "./fork";
 import { hasInspectArg } from "./utils";

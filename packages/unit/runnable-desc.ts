@@ -1,5 +1,5 @@
-import { getStack } from "../../../../error/src/index";
-import { Optional } from "../../../../util/miscellaneous";
+import { getStack } from "../error/src/index";
+import { type Optional } from "../util/miscellaneous";
 import { is32bitInteger } from "./random";
 import type { RunningContext } from "./runnable";
 
@@ -69,7 +69,7 @@ export const defaultOpts: RunnableOpts = {
   },
 };
 
-export class RunnableCtx {
+export class RunnableBuilder {
   constructor(
     public readonly opts: RunnableOpts,
     private readonly runnerTests: { ref: RunnableDesc[] | null }
@@ -79,7 +79,7 @@ export class RunnableCtx {
     if (this.opts.strict && !strict) {
       throw new Error("Strict mode cannot be disabled after being enabled");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         strict,
@@ -101,7 +101,7 @@ export class RunnableCtx {
     if (this.opts.strict && filter != null) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         filter,
@@ -114,7 +114,7 @@ export class RunnableCtx {
     if (this.opts.strict && runOnly) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         runOnly,
@@ -127,7 +127,7 @@ export class RunnableCtx {
     if (this.opts.strict && only) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         only,
@@ -140,7 +140,7 @@ export class RunnableCtx {
     if (this.opts.strict && failing) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         failing,
@@ -153,7 +153,7 @@ export class RunnableCtx {
     if (this.opts.strict && skip) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         skip,
@@ -167,7 +167,7 @@ export class RunnableCtx {
     if (this.opts.strict && todo) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         todo: true,
@@ -181,7 +181,7 @@ export class RunnableCtx {
     if (this.opts.strict && updateSnapshots) {
       throw new Error("In strict mode");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         updateSnapshots,
@@ -191,7 +191,7 @@ export class RunnableCtx {
   }
 
   if(_if: boolean) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         if: _if,
@@ -209,7 +209,7 @@ export class RunnableCtx {
     } else {
       bail = Math.max(b, 1);
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         bail,
@@ -227,7 +227,7 @@ export class RunnableCtx {
     } else {
       concurrency = Math.max(c, 1);
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         concurrency,
@@ -237,7 +237,7 @@ export class RunnableCtx {
   }
 
   signal(signal: AbortSignal | null) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         signal,
@@ -247,7 +247,7 @@ export class RunnableCtx {
   }
 
   plan(plan: number | null) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         plan,
@@ -257,7 +257,7 @@ export class RunnableCtx {
   }
 
   retries(retries: number, retryDelay: number = 0) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         retries,
@@ -268,7 +268,7 @@ export class RunnableCtx {
   }
 
   reruns(reruns: number, rerunDelay: number = 0) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         reruns,
@@ -279,7 +279,7 @@ export class RunnableCtx {
   }
 
   timeout(timeout: number | null) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         timeout,
@@ -289,7 +289,7 @@ export class RunnableCtx {
   }
 
   slow(slow: number | null) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         slow,
@@ -299,7 +299,7 @@ export class RunnableCtx {
   }
 
   logHeapUsage(logHeapUsage: boolean) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         logHeapUsage,
@@ -309,7 +309,7 @@ export class RunnableCtx {
   }
 
   snapshotLocation(snapshotLocation: string | null) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         snapshotLocation,
@@ -322,7 +322,7 @@ export class RunnableCtx {
     if (typeof random === "number" && !is32bitInteger(random)) {
       throw new Error("Invalid random seed. Expected 32-bit integer.");
     }
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         random,
@@ -332,7 +332,7 @@ export class RunnableCtx {
   }
 
   sanitize(opts: Partial<RunnableOpts["sanitize"]>) {
-    return new RunnableCtx(
+    return new RunnableBuilder(
       {
         ...this.opts,
         sanitize: { ...this.opts.sanitize, ...opts },

@@ -7,8 +7,8 @@ const pool = new RunnerPool(
   {
     ["--"]: [],
     files: [
-      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/example.ts",
-      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/src/core/NEW/__test__/snapshot_example.ts",
+      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/__test__/example.ts",
+      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/__test__/snapshot_example.ts",
     ],
     ignoreFiles: [],
     filterFiles: () => true,
@@ -24,3 +24,5 @@ const pool = new RunnerPool(
 const reporter = new Reporter(pool, pool.runnerGlobalOpts);
 
 pool.executeTests();
+
+// yarn n packages/unit/__test__/index.ts

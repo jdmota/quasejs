@@ -1,7 +1,7 @@
-import { never } from "../../../../util/miscellaneous";
-import { ChildProcessParent, WorkerParent } from "../../../../util/workers";
+import { never } from "../util/miscellaneous";
+import { ChildProcessParent, WorkerParent } from "../util/workers";
 import { runner, _setup } from "./index";
-import { RunnableOpts } from "./runnable-desc";
+import { type RunnableOpts } from "./runnable-desc";
 import type { RunnerEvents } from "./runner";
 import type { GlobalRunnerOptions } from "./runner-pool";
 

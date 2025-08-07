@@ -12,8 +12,8 @@ import {
   coloredConcordanceOptions,
   plainConcordanceOptions,
 } from "./concordance-options";
-import { prettify, prettifyPath } from "../../../../util/path-url";
-import { UUIDMap } from "../../../../util/data-structures/uuid-map";
+import { prettify, prettifyPath } from "../util/path-url";
+import { UUIDMap } from "../util/data-structures/uuid-map";
 
 const zip = promisify(zlib.gzip);
 const unzip = promisify(zlib.gunzip);

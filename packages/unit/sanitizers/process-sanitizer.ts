@@ -1,4 +1,4 @@
-import { getStack } from "../../../../../error/src/index";
+import { getStack } from "../../error/src/index";
 import { getContext } from "./context-tracker";
 
 const PROCESS_EXIT = process.exit;

@@ -1,16 +1,16 @@
 import { inspect } from "node:util";
 import type { JsonValue } from "type-fest";
-import { getStack } from "../../../../error/src/index";
-import { createDefer, Defer } from "../../../../util/deferred";
+import { getStack } from "../error/src/index";
+import { createDefer, type Defer } from "../util/deferred";
 import {
   assertion,
   never,
   nonNull,
-  Optional,
-} from "../../../../util/miscellaneous";
+  type Optional,
+} from "../util/miscellaneous";
 import { GlobalsSanitizer } from "./sanitizers/globals-sanitizer";
-import { defaultOpts, RunnableCtx, RunnableDesc } from "./runnable-desc";
-import { Randomizer, randomizer } from "./random";
+import { defaultOpts, RunnableBuilder, RunnableDesc } from "./runnable-desc";
+import { type Randomizer, randomizer } from "./random";
 import { Runner } from "./runner";
 import { runWithCtx } from "./sanitizers/context-tracker";
 import { enableUncaughtErrorsTracker } from "./sanitizers/uncaught-errors";
@@ -25,9 +25,9 @@ import {
   SnapshotError,
   SnapshotsOfFile,
   SnapshotsOfTest,
-  SnapshotStats,
+  type SnapshotStats,
 } from "./snapshots";
-import { ErrorOpts, processError, SimpleError } from "./errors";
+import { type ErrorOpts, processError, type SimpleError } from "./errors";
 
 function filter(pattern: Optional<string>, title: string) {
   if (pattern == null) return true;
@@ -91,7 +91,7 @@ export type RunnableStatus = RunnableResult["type"];
 export const SET_SNAPSHOTS_OF_FILE = Symbol("QUASE_UNIT_SET_SNAPSHOTS_OF_FILE");
 
 export interface RunningContext {
-  readonly t: RunnableCtx;
+  readonly t: RunnableBuilder;
   step(desc: RunnableDesc): RunnableResult | Promise<RunnableResult>;
   group(descs: readonly RunnableDesc[]): Promise<readonly RunnableResult[]>;
   cleanup(fn: () => void | Promise<void>): void;
@@ -128,8 +128,8 @@ export class RunnableTest {
   private readonly logs: string[];
   private assertionCount: number;
   private timeoutId: NodeJS.Timeout | number | null;
-  private deferred1: Defer<void> | null;
-  private deferred2: Defer<void> | null;
+  private deferred1: Defer<void> | null; // To allow the test to be interrupted
+  private deferred2: Defer<void> | null; // To allow the cleanup jobs to be interrupted
   private timeStart: number;
   private globals: GlobalsSanitizer | null;
   private random: Randomizer | null;
@@ -496,7 +496,7 @@ export class RunnableTest {
     }
 
     const ctx: RunningContext = {
-      t: new RunnableCtx(this.desc.opts, { ref: null }),
+      t: new RunnableBuilder(this.desc.opts, { ref: null }),
       step: desc => this.step(desc),
       group: descs => this.group(descs),
       cleanup: fn => this.addCleanup(fn),

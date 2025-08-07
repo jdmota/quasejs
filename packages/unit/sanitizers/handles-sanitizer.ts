@@ -1,7 +1,7 @@
 import { createHook } from "node:async_hooks";
-import { getStack } from "../../../../../error/src/index";
-import { getContext } from "./context-tracker";
+import { getStack } from "../../error/src/index";
 import { RunnableTest } from "../runnable";
+import { getContext } from "./context-tracker";
 
 // Based on https://github.com/jestjs/jest/blob/main/packages/jest-core/src/collectHandles.ts
 

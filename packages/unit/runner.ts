@@ -1,15 +1,15 @@
 import EventEmitter from "node:events";
 import { pathToFileURL } from "node:url";
-import { getStack } from "../../../../error/src/index";
+import { getStack } from "../error/src/index";
 import {
-  RunnableResult,
+  type RunnableResult,
   RunnableTest,
-  RunningContext,
+  type RunningContext,
   SET_SNAPSHOTS_OF_FILE,
 } from "./runnable";
-import { RunnableCtx, RunnableDesc } from "./runnable-desc";
-import { prettify } from "../../../../util/path-url";
-import { SimpleError } from "./errors";
+import { RunnableBuilder, RunnableDesc } from "./runnable-desc";
+import { prettify } from "../util/path-url";
+import { type SimpleError } from "./errors";
 import { SnapshotsOfFile } from "./snapshots";
 import { hasInspectArg } from "./utils";
 
@@ -37,7 +37,7 @@ export class Runner extends RunnableTest implements IRunner {
   private files: readonly string[];
 
   constructor(
-    readonly runnerCtx: RunnableCtx,
+    readonly runnerCtx: RunnableBuilder,
     readonly runnerTests: { ref: RunnableDesc[] | null }
   ) {
     super(
