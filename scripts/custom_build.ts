@@ -14,9 +14,11 @@ function pretty(file: string) {
 
 async function resolveModule(
   from: string,
-  source: string
+  source: string,
+  externals: string[]
 ): Promise<string | false | null> {
   if (!source.startsWith("./") && !source.startsWith("../")) {
+    externals.push(source);
     return null;
   }
   const attempt = path.resolve(from, "..", source);
@@ -36,6 +38,7 @@ type ProcessResult = Readonly<{ relativePath: string; code: string }>;
 async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
   const outputDir = path.resolve(ROOT, _outputDir);
   const jobs = new Map<string, Promise<ProcessResult>>();
+  const externals: string[] = [];
 
   function processFile(file: string) {
     const job = jobs.get(file) ?? _processFile(file);
@@ -61,7 +64,7 @@ async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
       ) {
         const source = node.source?.value;
         if (source) {
-          const resolved = await resolveModule(file, source);
+          const resolved = await resolveModule(file, source, externals);
           if (resolved) {
             processFile(resolved);
           } else if (resolved == false) {
@@ -83,7 +86,7 @@ async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
 
   const fakeFrom = path.resolve(ROOT, "./packages/FROM.ts");
   for (const input of inputFiles) {
-    const resolved = await resolveModule(fakeFrom, input);
+    const resolved = await resolveModule(fakeFrom, input, externals);
     if (resolved) {
       processFile(resolved);
     } else {
@@ -102,6 +105,7 @@ async function collectFiles(inputFiles: readonly string[], _outputDir: string) {
   await fs.writeJSON(manifestFile, {
     timestamp: d.toISOString(),
     input,
+    externals,
   });
 }
 
