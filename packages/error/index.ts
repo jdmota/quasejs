@@ -1,6 +1,6 @@
 import stackParser from "error-stack-parser";
 import { slash, prettify } from "../util/path-url";
-import { type SourceMapExtractor } from "../source-map/src/extractor";
+import { type SourceMapExtractor } from "../source-map/extractor";
 
 export const ignoreStackTraceRe =
   /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;

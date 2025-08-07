@@ -1,7 +1,9 @@
-import { isUrl, makeAbsolute, resolveAsUrl } from "../../util/path-url";
-import SourceMapExtractorBase, {
-  Original,
-  SourceMapInfoWithMap,
+import type { Position } from "source-map";
+import { isUrl, makeAbsolute, resolveAsUrl } from "../util/path-url";
+import {
+  type Original,
+  type SourceMapInfoWithMap,
+  SourceMapExtractorBase,
 } from "./extractor-base";
 import { GetFile } from "./readfile-fetch";
 
@@ -71,13 +73,13 @@ export class SourceMapExtractor extends SourceMapExtractorBase {
 
   async getOriginalLocation(
     file: string,
-    generated: { line: number; column: number; bias?: number }
-  ): Promise<Original | { code: string }> {
+    generated: Readonly<Position & { bias?: number }>
+  ): Promise<Original | { readonly code: string }> {
     const info = await this.getMap(file);
 
     if (info && info.map) {
       const { map, mapLocation } = info;
-      const original = await this.getOriginalLocationFromMap(
+      let original = await this.getOriginalLocationFromMap(
         map,
         mapLocation,
         generated
@@ -85,7 +87,10 @@ export class SourceMapExtractor extends SourceMapExtractorBase {
 
       if (original) {
         if (original.originalCode == null && original.originalFile) {
-          original.originalCode = await this.read(original.originalFile);
+          original = {
+            ...original,
+            originalCode: await this.read(original.originalFile),
+          };
         }
         return original;
       }

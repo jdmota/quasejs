@@ -1,6 +1,10 @@
-import { resolveAsUrl } from "../../util/path-url";
+import { resolveAsUrl } from "../util/path-url";
 import encoding from "./encoding";
-import { RawSourceMap, RawIndexMap, SourceMapConsumer } from "source-map";
+import {
+  type RawSourceMap,
+  type RawIndexMap,
+  SourceMapConsumer,
+} from "source-map";
 
 const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
   // Matches /* ... */ comments
@@ -12,26 +16,26 @@ const baseRegex = "\\s*[@#]\\s*sourceMappingURL\\s*=\\s*([^\\s]*)",
 
 export type SourceMapType = string | RawSourceMap | RawIndexMap;
 
-export type SourceMapInfo = {
+export type SourceMapInfo = Readonly<{
   map: RawSourceMap | null;
   mapLocation: string;
-};
+}>;
 
-export type SourceMapInfoWithMap = {
+export type SourceMapInfoWithMap = Readonly<{
   map: RawSourceMap;
   mapLocation: string;
-};
+}>;
 
-export type Original = {
+export type Original = Readonly<{
   source: string | null;
   line: number | null;
   column: number | null;
   name: string | null;
   originalFile: string | null;
   originalCode: string | null;
-};
+}>;
 
-export default class SourceMapExtractorBase {
+export class SourceMapExtractorBase {
   getMapFromUrl(fileLocation: string, url: string): SourceMapInfo {
     const dataUrlMatch = url.match(regexDataUrl);
 

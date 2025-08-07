@@ -24,6 +24,7 @@
     "roots": [
       "<rootDir>/packages/apps/debt-splitter",
       "<rootDir>/packages/error",
+      "<rootDir>/packages/source-map",
       "<rootDir>/packages/util"
     ]
   },

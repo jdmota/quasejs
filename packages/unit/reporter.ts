@@ -5,7 +5,7 @@ import { codeFrameColumns } from "@babel/code-frame";
 import { prettify } from "../util/path-url";
 import { never, type Optional } from "../util/miscellaneous";
 import { type BeautifiedStackLine, beautify } from "../error/index";
-import { SourceMapExtractor } from "../source-map/src/extractor";
+import { SourceMapExtractor } from "../source-map/extractor";
 import { type IRunner } from "./runner";
 import { type RunnableResult } from "./runnable";
 import { type SimpleError } from "./errors";

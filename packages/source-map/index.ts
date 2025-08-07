@@ -1,12 +1,16 @@
 import encoding from "./encoding";
 import { SourceMapExtractor } from "./extractor";
-import SourceMapExtractorBase, { SourceMapType } from "./extractor-base";
-import { SourceMapConsumer, SourceMapGenerator, Position } from "source-map";
+import { type SourceMapType, SourceMapExtractorBase } from "./extractor-base";
+import {
+  SourceMapConsumer,
+  SourceMapGenerator,
+  type Position,
+} from "source-map";
 
 export { SourceMapExtractor, SourceMapExtractorBase };
 export { SourceMapConsumer, SourceMapGenerator };
 
-export async function joinSourceMaps(maps: SourceMapType[]) {
+export async function joinSourceMaps(maps: readonly SourceMapType[]) {
   if (maps.length === 0) {
     throw new Error(`No sourcemaps provided`);
   }
@@ -52,7 +56,7 @@ export function sourceMapComment(url: string) {
 
 export function getOriginalLocation(
   map: SourceMapType,
-  generated: Position & { bias?: number }
+  generated: Readonly<Position & { bias?: number }>
 ) {
   return SourceMapConsumer.with(map, null, consumer => {
     return consumer.originalPositionFor(generated);

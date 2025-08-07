@@ -5,7 +5,7 @@ import {
   joinSourceMaps,
   SourceMapExtractor,
   SourceMapExtractorBase,
-} from "../src/index";
+} from "../index";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -28,8 +28,11 @@ test("get map from file content", async () => {
       await fs.readFile(fileLocation, "utf8")
     );
 
-    info!.mapLocation = relative(fixturesFolder, info!.mapLocation);
-    expect(info).toMatchSnapshot();
+    expect(info).not.toBeNull();
+    expect({
+      ...info,
+      mapLocation: relative(fixturesFolder, info!.mapLocation),
+    }).toMatchSnapshot();
   }
 });
 
@@ -45,8 +48,11 @@ test("get map from file", async () => {
     const fileLocation = path.join(dirname, "fixtures", file);
     const info = await extractor.getMap(fileLocation);
 
-    info!.mapLocation = relative(fixturesFolder, info!.mapLocation);
-    expect(info).toMatchSnapshot();
+    expect(info).not.toBeNull();
+    expect({
+      ...info,
+      mapLocation: relative(fixturesFolder, info!.mapLocation),
+    }).toMatchSnapshot();
   }
 });
 
@@ -65,8 +71,12 @@ test("get original location from map", async () => {
     }
   );
 
-  location!.originalFile = relative(fixturesFolder, location!.originalFile!);
-  expect(location).toMatchSnapshot();
+  expect(location).not.toBeNull();
+  expect(location!.originalFile).not.toBeNull();
+  expect({
+    ...location,
+    originalFile: relative(fixturesFolder, location!.originalFile!),
+  }).toMatchSnapshot();
 });
 
 test("joinSourceMaps", async () => {
