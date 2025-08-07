@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`banned files 1`] = `
+[
+  {
+    "errors": [
+      "Found _auth token in .npmrc",
+    ],
+    "filename": "packages/ban-sensitive-files/__tests__/examples/.npmrc",
+    "kind": "sensitive",
+  },
+  {
+    "filename": "packages/ban-sensitive-files/__tests__/examples/example.pem",
+    "kind": "banned",
+    "rules": [
+      {
+        "caption": "Potential cryptographic private key",
+        "description": null,
+        "part": "extension",
+        "pattern": "pem",
+        "type": "match",
+      },
+    ],
+  },
+]
+`;

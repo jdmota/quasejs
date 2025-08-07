@@ -23,7 +23,9 @@
     ],
     "roots": [
       "<rootDir>/packages/apps/debt-splitter",
+      "<rootDir>/packages/ban-sensitive-files",
       "<rootDir>/packages/error",
+      "<rootDir>/packages/git",
       "<rootDir>/packages/source-map",
       "<rootDir>/packages/util"
     ]
@@ -57,6 +59,7 @@
     "chokidar": "3.5.3",
     "circular-json": "^0.5.9",
     "concordance": "^5.0.4",
+    "dugite": "^2.7.1",
     "error-stack-parser": "^2.1.4",
     "execa": "^9.3.0",
     "fast-glob": "^3.3.3",

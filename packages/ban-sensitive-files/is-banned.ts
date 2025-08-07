@@ -1,6 +1,6 @@
 import path from "path";
-import { Rule, Banned, PART_VALUES, TYPE_VALUES } from "./types";
-import anyRules from "./git-deny-patterns.json";
+import { type Rule, PART_VALUES, TYPE_VALUES } from "./types";
+import anyRules from "./git-deny-patterns.json" with { type: "json" };
 
 function assertErr() {
   return new Error(`Assertion error`);
@@ -25,7 +25,7 @@ function validateJsonRules(anyRules: unknown): Rule[] {
   return rules;
 }
 
-const rules = validateJsonRules(anyRules);
+const ANY_RULES = validateJsonRules(anyRules);
 
 function toR(pattern: string) {
   const jsPattern = pattern.replace("\\A", "^").replace("\\z", "$");
@@ -34,10 +34,10 @@ function toR(pattern: string) {
 
 function extension(filename: string) {
   // Remove leading dot
-  return path.extname(filename).substr(1);
+  return path.extname(filename).slice(1);
 }
 
-const fileParts = {
+const filePartsGetters = {
   filename: path.basename as (x: string) => string,
   path: (x: string) => x,
   extension,
@@ -54,33 +54,22 @@ const regRules = {
 };
 
 function ruleToTester(rule: Rule) {
-  const getFilePart = fileParts[rule.part];
-  const getRegex = regRules[rule.type];
-  const getRegexFull = getRegex(rule.pattern);
-
-  return (str: string) => {
-    const part = getFilePart(str);
-    return getRegexFull(part);
+  const getFilePart = filePartsGetters[rule.part];
+  const matcher = regRules[rule.type](rule.pattern);
+  return (filename: string) => {
+    const part = getFilePart(filename);
+    return matcher(part);
   };
 }
 
-const testers = rules.map(rule => ({ rule, tester: ruleToTester(rule) }));
+const testers = ANY_RULES.map(rule => ({ rule, tester: ruleToTester(rule) }));
 
-export default function (filenames: string[]) {
-  const banned: Banned[] = [];
-  for (const filename of filenames) {
-    const b: Banned = {
-      filename,
-      rules: [],
-    };
-    for (const { rule, tester } of testers) {
-      if (tester(filename)) {
-        b.rules.push(rule);
-      }
-    }
-    if (b.rules.length > 0) {
-      banned.push(b);
+export function isBanned(filename: string) {
+  const rules: Rule[] = [];
+  for (const { rule, tester } of testers) {
+    if (tester(filename)) {
+      rules.push(rule);
     }
   }
-  return banned;
+  return rules;
 }

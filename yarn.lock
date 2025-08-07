@@ -4255,6 +4255,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dugite@npm:^2.7.1":
+  version: 2.7.1
+  resolution: "dugite@npm:2.7.1"
+  dependencies:
+    progress: "npm:^2.0.3"
+    tar: "npm:^6.1.11"
+  checksum: 10/125b7967da682953a51a2e48b19494acf05b435a09a2741612947da3cbde59697a1c7c825caa8289ed10591fbf20c659672c21e334d7e6aaa62875b769875ed1
+  languageName: node
+  linkType: hard
+
 "eastasianwidth@npm:^0.2.0":
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
@@ -7132,6 +7142,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"progress@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "progress@npm:2.0.3"
+  checksum: 10/e6f0bcb71f716eee9dfac0fe8a2606e3704d6a64dd93baaf49fbadbc8499989a610fe14cf1bc6f61b6d6653c49408d94f4a94e124538084efd8e4cf525e0293d
+  languageName: node
+  linkType: hard
+
 "promise-retry@npm:^2.0.1":
   version: 2.0.1
   resolution: "promise-retry@npm:2.0.1"
@@ -7197,6 +7214,7 @@ __metadata:
     chokidar: "npm:3.5.3"
     circular-json: "npm:^0.5.9"
     concordance: "npm:^5.0.4"
+    dugite: "npm:^2.7.1"
     error-stack-parser: "npm:^2.1.4"
     execa: "npm:^9.3.0"
     fast-glob: "npm:^3.3.3"
