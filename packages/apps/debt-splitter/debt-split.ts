@@ -1,48 +1,72 @@
-import { currency } from "./currency.js";
+import { roundRobin } from "../../util/iterators";
+
+const reCurrency = /^-?(\d+)?(?:\.(\d{1,2}))?$/;
+
+export function parseCurrency(value: string): bigint {
+  const match = value.match(reCurrency);
+  if (!match || value === "-") {
+    throw new Error(`Invalid value: ${value}`);
+  }
+  const negative = value.startsWith("-") ? -1n : 1n;
+  const integer = BigInt(match[1] || "0");
+  const cents = BigInt((match[2] || "0").padEnd(2, "0"));
+  return negative * (100n * integer + cents);
+}
+
+export function printCurrency(value: bigint) {
+  const str = value.toString();
+  return `${str.slice(0, -2) || "0"}.${str.slice(-2).padEnd(2, "0")}`;
+}
+
+function distribute(value: bigint, count: bigint) {
+  const split = value / count;
+  const leftOvers = value - split * count;
+  return { split, leftOvers } as const;
+}
 
 // null means the cost is evenly distributed between all persons (discounting the covers)
 type WhoPays = readonly string[] | null;
 
 type Cost = Readonly<{
-  amount: currency;
+  amount: bigint;
   where: string;
   covers: readonly Cover[];
   distribution: WhoPays;
 }>;
 
 type Cover = Readonly<{
-  amount: currency;
+  amount: bigint;
   who: string;
   why: string;
 }>;
 
-type CostsRegistry = {
+export type CostsRegistry = {
   readonly [key: string]: readonly Cost[];
 };
 
-const everyone: WhoPays = null;
+export const everyone: WhoPays = null;
 
-const cost = (
+export const cost = (
   amount: string,
   where: string,
   distribution: WhoPays,
   covers: readonly Cover[] = []
 ): Cost => ({
-  amount: currency(amount),
+  amount: parseCurrency(amount),
   where,
   covers,
   distribution,
 });
 
-const cover = (amount: string, who: string, why: string): Cover => ({
-  amount: currency(amount),
+export const cover = (amount: string, who: string, why: string): Cover => ({
+  amount: parseCurrency(amount),
   who,
   why,
 });
 
-const ZERO = currency(0);
+const ZERO = 0n;
 
-type Table = { [key: string]: currency };
+type Table = { [key: string]: bigint };
 
 function createTable(persons: string[]) {
   const personsNumber = persons.length;
@@ -53,7 +77,7 @@ function createTable(persons: string[]) {
   return table;
 }
 
-type Graph<D = currency> = { [key: string]: { [key: string]: D } };
+type Graph<D> = { [key: string]: { [key: string]: D } };
 
 function createGraph<D>(
   persons: string[],
@@ -70,142 +94,147 @@ function createGraph<D>(
   return graph;
 }
 
-type CurrencyTable = { [key: string]: null | currency | CurrencyTable };
+type CurrencyTable = { [key: string]: null | bigint | CurrencyTable };
 type CurrencyTableStr = { [key: string]: null | string | CurrencyTableStr };
 
-function print(info: null | currency | CurrencyTable) {
-  function convert(info: null | currency | CurrencyTable) {
-    if (info == null) {
-      return ZERO.toString();
-    }
-    if (info instanceof currency) {
-      return info.toString();
-    }
-    const print: CurrencyTableStr = {};
-    for (const [key, obj] of Object.entries(info)) {
-      print[key] = convert(obj);
-    }
-    return print;
+export function tableToString(info: null | bigint | CurrencyTable) {
+  if (info == null) {
+    return printCurrency(ZERO);
   }
-  console.table(convert(info));
+  if (typeof info === "bigint") {
+    return printCurrency(info);
+  }
+  const print: CurrencyTableStr = {};
+  for (const [key, obj] of Object.entries(info)) {
+    print[key] = tableToString(obj);
+  }
+  return print;
 }
 
-enum PennyLeftOversStrategy {
+export enum PennyLeftOversStrategy {
   RANDOM_DISTRIBUTION,
   COST_OWNER_TAKES_IT,
   ALL_EXCEPT_COST_OWNER_PAY_EXTRA,
   // TODO another strat: the ones who had less costs, pays the extra pennies
 }
 
-function computeGraph(
-  persons_: ReadonlySet<string>,
+export function computeGraph(
   registry: CostsRegistry,
   strat: PennyLeftOversStrategy | string
 ) {
-  const persons = [...persons_];
+  let leftOversExisted = false;
+  const persons = Object.keys(registry);
+  const rr = roundRobin(persons);
   // Compute diff (for display)
   const diff = createTable(persons);
   for (const [person, costs] of Object.entries(registry)) {
     for (const { amount } of costs) {
-      diff[person] = diff[person].subtract(amount);
+      diff[person] = diff[person] - amount;
     }
   }
   // Create graph and fill
   const graph = createGraph(persons, ZERO);
   for (const [person, costs] of Object.entries(registry)) {
-    const distributions = new Map<readonly string[], currency>();
+    const distributions = new Map<readonly string[], bigint>();
     // Discount covers and dedup before distributing
     for (const { amount, distribution, covers } of costs) {
       let actualAmount = amount;
       // Compute the actual amount to split by subtracting the covers
       for (const { amount: amountCover, who: whoCover } of covers) {
-        actualAmount = actualAmount.subtract(amountCover);
-        graph[whoCover][person] = graph[whoCover][person].add(amountCover);
+        actualAmount = actualAmount - amountCover;
+        graph[whoCover][person] = graph[whoCover][person] + amountCover;
       }
       // Dedup
       const whoPays = distribution ?? persons;
       distributions.set(
         whoPays,
-        (distributions.get(whoPays) ?? ZERO).add(actualAmount)
+        (distributions.get(whoPays) ?? ZERO) + actualAmount
       );
     }
     // Distribute
     for (const [whoPays, amount] of distributions) {
-      let distribution, leftOvers;
+      const { split, leftOvers } = distribute(amount, BigInt(whoPays.length));
+      for (const payer of whoPays) {
+        graph[payer][person] = graph[payer][person] + split;
+      }
+      const leftOversDiff = leftOvers > 0n ? 1n : -1n;
+      if (leftOvers !== 0n) {
+        leftOversExisted = true;
+      }
       switch (strat) {
         case PennyLeftOversStrategy.RANDOM_DISTRIBUTION: {
-          distribution = amount.distribute(whoPays.length);
+          if (leftOvers !== 0n) {
+            let leftOversToGive = leftOvers;
+            for (const payer of rr) {
+              if (!whoPays.includes(payer)) continue;
+              graph[payer][person] = graph[payer][person] + leftOversDiff;
+              leftOversToGive -= leftOversDiff;
+              if (leftOversToGive === 0n) break;
+            }
+          }
           break;
         }
         case PennyLeftOversStrategy.COST_OWNER_TAKES_IT: {
-          ({ distribution, leftOvers } = amount.distribute2(whoPays.length));
           // The one who contracted the cost, does not get payed for the left over pennies :(
-          graph[person][person] = graph[person][person].add(leftOvers);
+          graph[person][person] = graph[person][person] + leftOvers;
           break;
         }
         case PennyLeftOversStrategy.ALL_EXCEPT_COST_OWNER_PAY_EXTRA: {
-          distribution = amount.distribute3(
-            whoPays.length,
-            whoPays.indexOf(person)
-          );
+          if (leftOvers !== 0n) {
+            for (const payer of whoPays) {
+              if (payer !== person) {
+                graph[payer][person] = graph[payer][person] + leftOversDiff;
+              }
+            }
+          }
           break;
         }
         default: {
-          ({ distribution, leftOvers } = amount.distribute2(whoPays.length));
           // This hero takes the extra cost!
-          graph[strat][person] = graph[strat][person].add(leftOvers);
+          graph[strat][person] = graph[strat][person] + leftOvers;
         }
-      }
-      for (const [payer, num] of distribution.map(
-        (num, idx) => [whoPays[idx], num] as const
-      )) {
-        graph[payer][person] = graph[payer][person].add(num);
       }
     }
   }
   // Finish diff computation
   for (const pTo of persons) {
     for (const pFrom of persons) {
-      diff[pTo] = diff[pTo].add(graph[pFrom][pTo]);
+      diff[pTo] = diff[pTo] + graph[pFrom][pTo];
     }
   }
   // Compute net
   const net = createTable(persons);
   for (const pTo of persons) {
     for (const pFrom of persons) {
-      net[pTo] = net[pTo].add(graph[pFrom][pTo]).subtract(graph[pTo][pFrom]);
+      net[pTo] = net[pTo] + graph[pFrom][pTo] - graph[pTo][pFrom];
     }
   }
   // Compute givers and receivers
   const givers: Table = {};
   for (const [person, value] of Object.entries(net)) {
-    if (value.intValue < 0) {
+    if (value < 0n) {
       givers[person] = value;
     }
   }
   const receivers: Table = {};
   for (const [person, value] of Object.entries(net)) {
-    if (value.intValue > 0) {
+    if (value > 0n) {
       receivers[person] = value;
     }
   }
   // Compute transactions
-  const transactions = createGraph<currency | null>(
+  const transactions = createGraph<bigint | null>(
     Object.keys(givers),
     null,
     Object.keys(receivers)
   );
   // Based on https://www.geeksforgeeks.org/minimize-cash-flow-among-given-set-friends-borrowed-money/
   {
-    function minOf2(x: currency, y: currency) {
-      // x < y ? x : y
-      return x.compareTo(y) < 0 ? x : y;
+    function minOf2(x: bigint, y: bigint) {
+      return x < y ? x : y;
     }
 
-    function find(
-      net: Table,
-      fn: (acc: currency, amount: currency) => boolean
-    ) {
+    function find(net: Table, fn: (acc: bigint, amount: bigint) => boolean) {
       const entries = Object.entries(net);
       return entries.reduce(
         ([accPerson, accAmount], [person, amount]) =>
@@ -216,16 +245,16 @@ function computeGraph(
 
     function minCashFlowRec(net: Table) {
       // print(net);
-      const mxCredit: string = find(net, (max, x) => x.compareTo(max) > 0);
-      const mxDebit: string = find(net, (min, x) => x.compareTo(min) < 0);
+      const mxCredit: string = find(net, (max, x) => x - max > 0);
+      const mxDebit: string = find(net, (min, x) => x - min < 0);
 
       // If both amounts are 0, then all amounts are settled
-      if (net[mxCredit].intValue == 0 && net[mxDebit].intValue == 0) return;
+      if (net[mxCredit] === 0n && net[mxDebit] === 0n) return;
 
       // Find the minimum of two amounts
-      const min = minOf2(ZERO.subtract(net[mxDebit]), net[mxCredit]);
-      net[mxCredit] = net[mxCredit].subtract(min);
-      net[mxDebit] = net[mxDebit].add(min);
+      const min = minOf2(ZERO - net[mxDebit], net[mxCredit]);
+      net[mxCredit] = net[mxCredit] - min;
+      net[mxDebit] = net[mxDebit] + min;
 
       if (transactions[mxDebit][mxCredit]) throw new Error("Wrong");
       transactions[mxDebit][mxCredit] = min;
@@ -237,15 +266,14 @@ function computeGraph(
     graph,
     net,
     originalCost: Object.values(registry).reduce(
-      (acc, costs) => costs.reduce((acc, { amount }) => acc.add(amount), acc),
+      (acc, costs) => costs.reduce((acc, { amount }) => acc + amount, acc),
       ZERO
     ),
     diff,
-    sanityCheck: Object.values(net).reduce((acc, val) => acc.add(val), ZERO),
+    sanityCheck: Object.values(net).reduce((acc, val) => acc + val, ZERO),
     givers,
     receivers,
     transactions,
-  };
+    leftOversExisted,
+  } as const;
 }
-
-export { everyone, computeGraph, type CostsRegistry, cost, cover, print };

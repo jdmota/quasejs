@@ -22,7 +22,9 @@
       ".ts"
     ],
     "roots": [
-      "<rootDir>/packages/error"
+      "<rootDir>/packages/apps/debt-splitter",
+      "<rootDir>/packages/error",
+      "<rootDir>/packages/util"
     ]
   },
   "dependencies": {

@@ -1,11 +1,12 @@
 import {
+  type CostsRegistry,
   everyone,
   computeGraph,
-  type CostsRegistry,
   cost,
   cover,
-  print,
-} from "./debt-split";
+  tableToString,
+  printCurrency,
+} from "../debt-split";
 
 const carA = ["A", "E", "L", "L2"];
 const carJ2 = ["A2", "I", "J", "J2"];
@@ -18,8 +19,8 @@ const costs: CostsRegistry = {
   A2: [
     cost("10.00", "", everyone),
     cost("1.30", "", everyone),
-    cost("28.00", "", everyone),
-    cost("10.00", "", everyone),
+    cost("28", "", everyone),
+    cost("10", "", everyone),
     cost("8.67", "", J),
     cost("2.00", "", carJ2),
   ],
@@ -61,15 +62,17 @@ const {
   givers,
   receivers,
   transactions,
-} = computeGraph(new Set(Object.keys(costs)), costs, "J");
+} = computeGraph(costs, "J");
 
-print(graph);
-console.log("Original Total Cost", originalCost.toString());
-print(diff);
-console.log("Sanity Check", sanityCheck.toString());
+console.table(tableToString(graph));
+console.log("Original Total Cost", printCurrency(originalCost));
+console.table(tableToString(diff));
+console.log("Sanity Check", printCurrency(sanityCheck));
 console.log("Net");
-print(net);
-// print(givers);
-// print(receivers);
+console.table(tableToString(net));
+console.table(tableToString(givers));
+console.table(tableToString(receivers));
 console.log("Transactions to perform");
-print(transactions);
+console.table(tableToString(transactions));
+
+// yarn n packages\apps\debt-splitter\__examples__\example.ts > packages\apps\debt-splitter\__examples__\example.txt
