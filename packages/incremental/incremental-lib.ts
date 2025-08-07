@@ -22,7 +22,7 @@ import {
   type ComputationResult,
   type VersionedComputationResult,
 } from "./utils/result";
-import { CacheDB } from "./computations/mixins/cacheable";
+import { CacheDB } from "./computations/cache/cache-db";
 import {
   type FileChangeEvent,
   FileSystem,

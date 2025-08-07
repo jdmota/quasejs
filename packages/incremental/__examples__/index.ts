@@ -6,6 +6,7 @@ import { Logger } from "../../util/logger";
 import { ok } from "../utils/result";
 import { anyValue } from "../utils/hash-map";
 import { IncrementalLib } from "../incremental-lib";
+import { CachePrinter } from "../computations/cache/print-cache";
 
 type FILE = {
   readonly content: string;
@@ -124,7 +125,12 @@ const bundler = IncrementalLib.new(
   })
 );
 
-export async function main() {
+export async function main(printCache: boolean) {
+  if (printCache) {
+    new CachePrinter("packages/incremental/__examples__/cache").print();
+    return;
+  }
+
   const controller = await IncrementalLib.run({
     entry: bundler,
     onResult(result) {
@@ -153,7 +159,9 @@ export async function main() {
   });
 }
 
-main().catch(error => console.log("MAIN ERROR", error));
+main(process.argv.includes("--print-cache")).catch(error =>
+  console.log("MAIN ERROR", error)
+);
 
 // yarn n packages\incremental\__examples__\index.ts
-// yarn i packages\incremental\__examples__\index.ts
+// yarn n packages\incremental\__examples__\index.ts --print-cache
