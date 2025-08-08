@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import fs from "fs-extra";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,7 +14,7 @@ function relative(a: string, b: string) {
   return path.relative(a, b).replace(/\\/g, "/");
 }
 
-test("get map from file content", async () => {
+it("get map from file content", async () => {
   const extractor = new SourceMapExtractorBase();
   const fixturesFolder = path.join(dirname, "fixtures");
   const files = await fs.readdir(fixturesFolder);
@@ -36,7 +37,7 @@ test("get map from file content", async () => {
   }
 });
 
-test("get map from file", async () => {
+it("get map from file", async () => {
   const extractor = new SourceMapExtractor();
   const fixturesFolder = path.join(dirname, "fixtures");
   const files = await fs.readdir(fixturesFolder);
@@ -56,7 +57,7 @@ test("get map from file", async () => {
   }
 });
 
-test("get original location from map", async () => {
+it("get original location from map", async () => {
   const extractor = new SourceMapExtractorBase();
   const fixturesFolder = path.join(dirname, "fixtures");
   const mapLocation = path.join(fixturesFolder, "map-file-comment.css.map");
@@ -79,7 +80,7 @@ test("get original location from map", async () => {
   }).toMatchSnapshot();
 });
 
-test("joinSourceMaps", async () => {
+it("joinSourceMaps", async () => {
   // TODO better test
 
   const fixturesFolder = path.join(dirname, "fixtures");

@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import path from "path";
 import { getConfig } from "..";
 

@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import { prettifyPath } from "../../util/path-url";
 import { run } from "..";
 import type { FileReport } from "../types";

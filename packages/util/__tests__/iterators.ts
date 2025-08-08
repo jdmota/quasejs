@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import { roundRobin } from "../iterators";
 
 it("round robin basic", () => {

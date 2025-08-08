@@ -1934,7 +1934,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/globals@npm:30.0.5":
+"@jest/globals@npm:30.0.5, @jest/globals@npm:^30.0.5":
   version: 30.0.5
   resolution: "@jest/globals@npm:30.0.5"
   dependencies:
@@ -7188,6 +7188,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.27.1"
     "@babel/register": "npm:^7.18.9"
     "@babel/types": "npm:^7.24.7"
+    "@jest/globals": "npm:^30.0.5"
     "@parcel/watcher": "npm:^2.1.0"
     "@rollup/plugin-node-resolve": "npm:^16.0.1"
     "@rollup/plugin-swc": "npm:^0.4.0"

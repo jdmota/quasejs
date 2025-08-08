@@ -1,5 +1,6 @@
+import { expect, it } from "@jest/globals";
 import { SourceMapExtractor } from "../../source-map";
-import { beautify, getStack, locToString } from "../index";
+import { beautify, getStack, locToString } from "../errors";
 
 const cwd = process.cwd();
 
