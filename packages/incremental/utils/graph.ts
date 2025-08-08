@@ -1,5 +1,5 @@
 import { DefaultMap } from "../../util/data-structures/default-map";
-import { defaultSet, setAdd } from "../../util/miscellaneous";
+import { defaultSet, setAdd } from "../../util/maps-sets";
 
 export function createGraphTemplate<N, E>() {
   class GraphNode {

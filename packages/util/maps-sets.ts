@@ -1,3 +1,14 @@
+export const defaultSet = <T>() => new Set<T>();
+
+export function computeIfAbsent<K, V>(map: Map<K, V>, key: K, fn: () => V): V {
+  let value = map.get(key);
+  if (value === undefined) {
+    value = fn();
+    map.set(key, value);
+  }
+  return value;
+}
+
 export function setAdd<T>(set: Set<T>, value: T) {
   const size = set.size;
   set.add(value);

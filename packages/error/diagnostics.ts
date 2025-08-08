@@ -61,6 +61,12 @@ export class Diagnostic {
     this.codeFrame = codeFrame;
     this.related = related || [];
   }
+
+  attachStack(func: Function) {
+    if (!this.stack) {
+      Error.captureStackTrace(this, func);
+    }
+  }
 }
 
 function indentStr(str: string, indent: string) {

@@ -120,19 +120,6 @@ export function lines(
   return arr.filter(Boolean).join(separator);
 }
 
-export const defaultSet = <T>() => new Set<T>();
-
-export { setAdd };
-
-export function computeIfAbsent<K, V>(map: Map<K, V>, key: K, fn: () => V): V {
-  let value = map.get(key);
-  if (value === undefined) {
-    value = fn();
-    map.set(key, value);
-  }
-  return value;
-}
-
 // From https://github.com/sindresorhus/type-fest/blob/main/source/opaque.d.ts
 
 declare const tag: unique symbol;

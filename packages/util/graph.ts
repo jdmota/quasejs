@@ -1,4 +1,4 @@
-import { setAdd } from "./miscellaneous";
+import { setAdd } from "./maps-sets";
 
 export class Edge<N, E> {
   constructor(

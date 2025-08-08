@@ -30,7 +30,8 @@ https://pure.uva.nl/ws/files/36086100/Thesis.pdf
 */
 
 import { MapKeyToValue } from "../../util/data-structures/map-key-to-value";
-import { type ObjectHashEquals, setAdd } from "../../util/miscellaneous";
+import { type ObjectHashEquals } from "../../util/miscellaneous";
+import { setAdd } from "../../util/maps-sets";
 
 export interface IGLLLabel extends ObjectHashEquals {
   getRule(): string;

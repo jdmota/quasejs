@@ -1,5 +1,5 @@
 import path from "node:path";
-import url, { fileURLToPath } from "node:url";
+import url from "node:url";
 import slash from "slash";
 import urlRegexDefault from "url-regex";
 
@@ -29,11 +29,11 @@ export function resolvePathAsUrl(from: Path, to: Path) {
   return path.resolve(path.dirname(from), to);
 }
 
-export function relativePath(id: Path, cwd: Path): Path {
+export function relativePath(cwd: Path, id: Path): Path {
   return path.relative(cwd, id);
 }
 
-export function relativePathAsUrl(id: Path, cwd: Path): Path {
+export function relativePathAsUrl(cwd: Path, id: Path): Path {
   return path.relative(path.dirname(cwd), id);
 }
 

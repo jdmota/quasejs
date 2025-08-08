@@ -1,5 +1,21 @@
 import redent, { type Options } from "redent";
 
+export function countNewLineChars(string: string, end: number = string.length) {
+  let c = 0;
+  for (let i = 0; i < end; i++) {
+    const code = string.charCodeAt(i);
+    if (code === 10) {
+      c++;
+    } else if (code === 13) {
+      c++;
+      if (string.charCodeAt(i + 1) === 10) {
+        i++;
+      }
+    }
+  }
+  return c;
+}
+
 export function findLoc(start: number, content: string) {
   const lines = content.slice(0, start).split(/\r?\n/);
   const line = lines.length;
