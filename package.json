@@ -5,7 +5,7 @@
   "scripts": {
     "n": "node --enable-source-maps --import @swc-node/register/esm-register",
     "i": "node --inspect-brk --enable-source-maps --import @swc-node/register/esm-register",
-    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
+    "test": "yarn node --experimental-vm-modules --no-warnings=ExperimentalWarning $(yarn bin jest)",
     "build": "yarn n scripts/custom_build.ts",
     "prettier-check": "prettier --check \"**/*.{js,ts,json}\"",
     "prettier-write": "prettier --write \"**/*.{js,ts,json}\""
