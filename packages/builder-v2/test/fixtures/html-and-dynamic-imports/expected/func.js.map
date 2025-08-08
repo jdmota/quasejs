@@ -1,1 +1,0 @@
-{"version":3,"sources":["../files/func.js"],"names":["console","log"],"mappings":";qBAAA;AAAA,WAAe,YAAW;AACxBA,IAAAA,OAAO,CAACC,GAAR,CAAa,KAAb;AAAsB;AACvB;AAFD","file":"func.js","sourcesContent":["export default function() {\n  console.log( \"foo\" ); /* eslint no-console: 0 */\n}\n// Comment at the end\n"]}
