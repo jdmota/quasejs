@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
-import { type Obj } from "./miscellaneous";
+import type { Obj, Optional } from "./miscellaneous";
 
-type ProvidedPlugins<P> = readonly (P | [string, Obj] | null | undefined)[];
+type ProvidedPlugins<P> = readonly Optional<P | [string, Obj]>[];
 
 const relative = /^(\.|\.\.)(\/|\\)/;
 

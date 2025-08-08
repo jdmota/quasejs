@@ -10,7 +10,7 @@
 // TODO support state and key (based on index)
 // TODO https://codepen.io/morten-olsen/post/when-safari-broke-webapps
 
-import { never } from "../../util/miscellaneous";
+import { never, type Optional } from "../../util/miscellaneous";
 import { TypedEvent, TypedEventTarget } from "../events";
 import { findAnchor } from "./anchors";
 import {
@@ -75,7 +75,7 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
     this.mixins = mixins(this);
   }
 
-  private setCurrent(loc: SimpleLocation, index: number | undefined | null) {
+  private setCurrent(loc: SimpleLocation, index: Optional<number>) {
     this.current = loc;
     if (index == null) {
       this.index++;
@@ -219,7 +219,7 @@ export class Router<E extends RouterEvents> extends TypedEventTarget<E> {
   private makeNavigation(
     rawTo: RawSimpleLocation,
     kind: NAVIGATION_KIND,
-    index: number | undefined | null
+    index: Optional<number>
   ) {
     const delta = index == null ? null : index - this.index;
     const prevIndex = this.index;

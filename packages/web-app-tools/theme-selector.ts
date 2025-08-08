@@ -1,4 +1,4 @@
-import { noop } from "../util/miscellaneous";
+import { noop, type Optional } from "../util/miscellaneous";
 import { localStorage } from "./support";
 import { Subscribable } from "./subscribable";
 
@@ -14,7 +14,7 @@ export type ThemeModeDetails = Readonly<{
   mode: ThemeMode;
 }>;
 
-function validate(value: string | null | undefined): ThemeModeOrDefault {
+function validate(value: Optional<string>): ThemeModeOrDefault {
   return value === "light" || value === "dark" ? value : "default";
 }
 
@@ -53,7 +53,7 @@ export class ThemeSelector extends Subscribable<ThemeModeDetails> {
     this.internalSet(value);
   }
 
-  private internalSet(value: string | null | undefined) {
+  private internalSet(value: Optional<string>) {
     const old = this.savedValue;
     this.savedValue = validate(value);
     if (this.savedValue !== old) {

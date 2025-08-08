@@ -1,5 +1,5 @@
 import { Graph } from "../../util/graph.ts";
-import { never } from "../../util/miscellaneous.ts";
+import { never, type Optional } from "../../util/miscellaneous.ts";
 import { type Location } from "../runtime/input.ts";
 import { type LookaheadOpts, type ToolInput } from "../tool.ts";
 import { FollowInfoDB } from "./follow-info.ts";
@@ -29,8 +29,8 @@ import { type GType } from "./type-checker/types-builder.ts";
 
 export type GrammarError = Readonly<{
   message: string;
-  loc: Location | undefined | null;
-  loc2: Location | undefined | null;
+  loc: Optional<Location>;
+  loc2: Optional<Location>;
 }>;
 
 export type GrammarResult = Readonly<{
@@ -48,8 +48,8 @@ export type GrammarOrErrors = GrammarResult | GrammarErrors;
 
 export function err(
   message: string,
-  loc: Location | undefined | null,
-  loc2: Location | undefined | null = null
+  loc: Optional<Location>,
+  loc2: Optional<Location> = null
 ): GrammarError {
   return {
     message,
