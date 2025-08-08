@@ -7,8 +7,8 @@ const pool = new RunnerPool(
   {
     ["--"]: [],
     files: [
-      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/__examples__/example.ts",
-      "C:/Users/jdmota/Desktop/GitHub/quasejs/packages/unit/__examples__/snapshot_example.ts",
+      "packages/unit/__examples__/example.ts",
+      "packages/unit/__examples__/snapshot_example.ts",
     ],
     ignoreFiles: [],
     filterFiles: () => true,
