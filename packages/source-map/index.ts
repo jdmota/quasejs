@@ -1,4 +1,4 @@
-import encoding from "./encoding";
+import { encodeBase64 } from "../util/encoding";
 import { SourceMapExtractor } from "./extractor";
 import { type SourceMapType, SourceMapExtractorBase } from "./extractor-base";
 import {
@@ -37,14 +37,9 @@ export function sourceMapToString(map: SourceMapType) {
 }
 
 export function sourceMapToUrl(map: SourceMapType) {
-  if (!encoding.encode) {
-    throw new Error(
-      "Unsupported environment: `window.btoa` or `Buffer` should be supported."
-    );
-  }
   return (
     "data:application/json;charset=utf-8;base64," +
-    encoding.encode(sourceMapToString(map))
+    encodeBase64(sourceMapToString(map))
   );
 }
 

@@ -1,5 +1,5 @@
+import { decodeBase64 } from "../util/encoding";
 import { resolveAsUrl } from "../util/path-url";
-import encoding from "./encoding";
 import {
   type RawSourceMap,
   type RawIndexMap,
@@ -41,7 +41,7 @@ export class SourceMapExtractorBase {
 
     if (dataUrlMatch) {
       return {
-        map: JSON.parse(encoding.decode(dataUrlMatch[1])),
+        map: JSON.parse(decodeBase64(dataUrlMatch[1])),
         mapLocation: fileLocation,
       };
     }
