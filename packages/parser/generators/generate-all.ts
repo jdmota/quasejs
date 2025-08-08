@@ -1,4 +1,5 @@
 import { lines } from "../../util/miscellaneous.ts";
+import type { GLLInfo } from "../grammar/gll-info.ts";
 import { INTERNAL_START_RULE, type Grammar } from "../grammar/grammar.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 
@@ -6,7 +7,7 @@ export function generateAll(
   grammar: Grammar,
   tokensCode: readonly string[],
   rulesCode: readonly string[],
-  needGLL: ReadonlySet<string>
+  gllInfo: GLLInfo
 ) {
   const startArgs = grammar.startRule.args.map(a => `$${a.arg}`).join(", ");
   return lines([
@@ -39,13 +40,13 @@ export function generateAll(
     `  const input = new Input({ string });`,
     `  const tokenizer = new GrammarTokenizer(input, external);`,
     `  const parser = new GrammarParser(tokenizer, external);`,
-    needGLL.has(LEXER_RULE_NAME)
+    gllInfo.needsGLLByName(LEXER_RULE_NAME)
       ? `  const tokGll = new GLL("token",tokenizer,"${LEXER_RULE_NAME}",[]); tokenizer.$setGLL(tokGll);`
       : "",
-    needGLL.has(INTERNAL_START_RULE)
+    gllInfo.needsGLLByName(INTERNAL_START_RULE)
       ? `  const parserGll = new GLL("rule",parser,"${INTERNAL_START_RULE}",[${startArgs}]); parser.$setGLL(parserGll);`
       : "",
-    `  return ${needGLL.has(INTERNAL_START_RULE) ? `parserGll.parse()` : `parser.parse("${INTERNAL_START_RULE}",[${startArgs}])`};`,
+    `  return ${gllInfo.needsGLLByName(INTERNAL_START_RULE) ? `parserGll.parse()` : `parser.parse("${INTERNAL_START_RULE}",[${startArgs}])`};`,
     `}\n`,
   ]);
 }

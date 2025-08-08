@@ -6,6 +6,8 @@ import {
   CallTransition,
   FieldTransition,
 } from "../automaton/transitions";
+import type { GLLInfo } from "../grammar/gll-info";
+import type { AugmentedDeclaration } from "../grammar/grammar";
 import { DStateEdge } from "./dfa-to-cfg";
 
 export type RuleLabel = number;
@@ -15,10 +17,10 @@ export class LabelsManager {
   private readonly queue: [DStateEdge, RuleLabel][] = [];
   private uuid = 0;
 
-  constructor(private readonly needGLL: ReadonlySet<string>) {}
+  constructor(private readonly gllInfo: GLLInfo) {}
 
-  needsGLL(name: string) {
-    return this.needGLL.has(name);
+  needsGLL(rule: AugmentedDeclaration) {
+    return this.gllInfo.needsGLL(rule);
   }
 
   needsGLLCall<I extends AnyTransition | null, T>(
@@ -26,7 +28,8 @@ export class LabelsManager {
     then: (t: CallTransition) => T,
     elsee: (t: I) => T
   ) {
-    return t instanceof CallTransition && this.needGLL.has(t.ruleName)
+    return t instanceof CallTransition &&
+      this.gllInfo.needsGLLByName(t.ruleName)
       ? then(t)
       : elsee(t);
   }

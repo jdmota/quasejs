@@ -1392,7 +1392,7 @@ class GrammarParser extends Parser {
     return (this.gll.u(this.$i(),$env), this.gll.p({$loc:$env.$loc}));
   }
   ruleGLLAuxOptional1_0($env) {
-    let $ll3,$ll2,$ll1;
+    let $ll2,$ll1;
     $env.$startPos = this.$getPos();
     $ll1=this.$ll(1);
     if($ll1 === 0 /*#string:O*/){
@@ -1400,16 +1400,11 @@ class GrammarParser extends Parser {
     } else if($ll1 === 1 /*#string:A*/){
       $ll2=this.$ll(2);
       if($ll2 === 0 /*#string:O*/){
-        $ll3=this.$ll(3);
-        if($ll3 === -1 /*#eof*/){
-          // Ambiguity
-          this.gll.u(this.$i(),$env);
-          this.gll.a("GLLAuxOptional1",1,$env);
-          this.gll.a("GLLAuxOptional1",2,$env);
-          return;
-        } else {
-          this.$err();
-        }
+        // Ambiguity
+        this.gll.u(this.$i(),$env);
+        this.gll.a("GLLAuxOptional1",1,$env);
+        this.gll.a("GLLAuxOptional1",2,$env);
+        return;
       } else if($ll2 === 1 /*#string:A*/){
         this.$e(1 /*#string:A*/);
       } else {

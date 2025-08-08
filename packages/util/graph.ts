@@ -50,15 +50,11 @@ export class Graph<N, E> {
   }
 }
 
-export function* walkUp(
-  node: Node<string, null>
-): Iterable<Node<string, null>> {
+export function* walkUp<N>(node: Node<N, null>): Iterable<Node<N, null>> {
   for (const edge of node.inEdges) yield edge.a;
 }
 
-export function* walkDown(
-  node: Node<string, null>
-): Iterable<Node<string, null>> {
+export function* walkDown<N>(node: Node<N, null>): Iterable<Node<N, null>> {
   for (const edge of node.outEdges) yield edge.b;
 }
 

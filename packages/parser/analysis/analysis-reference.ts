@@ -29,6 +29,7 @@ import { ANY_CHAR_RANGE } from "../utils/constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 import type { RuleName } from "../grammar/grammar-builder.ts";
 import { LabelsManager } from "../generators/labels-manager.ts";
+import { GLLInfo } from "../grammar/gll-info.ts";
 
 // IMPORTANT!
 // This reference implementation does not find all the possible "follow" sequences
@@ -200,26 +201,50 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
   readonly grammar: Grammar;
   readonly follows: FollowInfoDB;
   readonly initialStates: ReadonlyMap<RuleName, DState>;
+  readonly gllInfo: GLLInfo;
 
   constructor({
     grammar,
     initialStates,
+    gllInfo,
   }: {
     grammar: Grammar;
     initialStates: ReadonlyMap<RuleName, DState>;
+    gllInfo: GLLInfo;
   }) {
     this.grammar = grammar;
     this.follows = grammar.follows;
     this.initialStates = initialStates;
+    this.gllInfo = gllInfo;
     grammar._debugAnalysis.push(`--------------------`);
   }
 
   abstract getLLState(): number;
-  abstract getAnyRange(): Range;
   abstract analyze(
     rule: AugmentedDeclaration,
     state: DState
   ): AnalysisResult<P>;
+
+  public currentRule: AugmentedDeclaration = null as any;
+
+  getAnyRange(): Range {
+    return this.currentRule.type === "rule"
+      ? this.grammar.tokens.anyRange()
+      : ANY_CHAR_RANGE;
+  }
+
+  getConfig(rule: AugmentedDeclaration) {
+    let maxLL, maxFF;
+    const opts =
+      rule.type === "rule"
+        ? this.grammar.parserOpts
+        : this.grammar.tokenizerOpts;
+    maxLL = opts?.maxLL ?? 3;
+    // If we already figured out that we need GLL,
+    // no point in trying to compute follow lookaheads
+    maxFF = this.gllInfo.canUseFollow(rule) ? opts?.maxFF ?? 3 : 0;
+    return { maxLL, maxFF } as const;
+  }
 
   printAmbiguities(
     rule: AugmentedDeclaration,
@@ -236,7 +261,7 @@ export abstract class IAnalyzer<P extends ObjectHashEquals> {
       this.grammar,
       this,
       rule,
-      new LabelsManager(new Set()),
+      new LabelsManager(new GLLInfo()),
       new Map(),
       true
     );
@@ -280,13 +305,16 @@ export class AnalyzerReference extends IAnalyzer<StackFrame> {
   constructor({
     grammar,
     initialStates,
+    gllInfo,
   }: {
     grammar: Grammar;
     initialStates: ReadonlyMap<RuleName, DState>;
+    gllInfo: GLLInfo;
   }) {
     super({
       grammar,
       initialStates,
+      gllInfo,
     });
     this.llState = 0;
   }
@@ -361,26 +389,11 @@ export class AnalyzerReference extends IAnalyzer<StackFrame> {
     }
   >();
 
-  public currentRule: AugmentedDeclaration = null as any;
-
-  getAnyRange() {
-    return this.currentRule.type === "rule"
-      ? this.grammar.tokens.anyRange()
-      : ANY_CHAR_RANGE;
-  }
-
   analyze(rule: AugmentedDeclaration, state: DState) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
 
-    let maxLL, maxFF;
-    if (rule.name === LEXER_RULE_NAME) {
-      maxLL = 1;
-      maxFF = 0;
-    } else {
-      maxLL = this.grammar.maxLL;
-      maxFF = this.grammar.maxFF;
-    }
+    const { maxLL, maxFF } = this.getConfig(rule);
 
     DEBUG_apply(rule);
     this.currentRule = rule;

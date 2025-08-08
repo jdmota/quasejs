@@ -26,9 +26,9 @@ import {
   convertDFAtoCFG,
   type GrammarCFGNode,
 } from "../generators/dfa-to-cfg.ts";
-import { setAdd } from "../../util/maps-sets.ts";
 import { traverse, walkUp } from "../../util/graph.ts";
 import { assertion, first, nonNull } from "../../util/miscellaneous.ts";
+import { GLLInfo } from "./gll-info.ts";
 
 export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
   const rulesAutomaton = new Automaton();
@@ -80,40 +80,38 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     }
   }
 
+  // Info
+  const gllInfo = new GLLInfo();
+
   // Init analyzer
   const analyzer = grammar._useReferenceAnalysis
     ? new AnalyzerReference({
         grammar,
         initialStates,
+        gllInfo,
       })
     : new Analyzer({
         grammar,
         initialStates,
+        gllInfo,
       });
-
-  // Rules that need GLL
-  const needGLL = new Set<string>();
 
   // Detect rules that need GLL
   for (const [decl, automaton] of automatons) {
-    if (needGLL.has(decl.name)) continue;
+    if (gllInfo.needsGLL(decl)) continue;
     for (const state of automaton.states) {
       // The analyzer performs caching, so this is ok
       const { inverted } = analyzer.analyze(decl, state);
       if (inverted.hasAmbiguities()) {
         // Mark this rule and others that use this one as needing GLL
-        const it = traverse(referencesGraph.node(decl.name), walkUp);
+        const it = traverse(referencesGraph.node(decl), walkUp);
         for (let step = it.next(); !step.done; ) {
-          step = it.next(setAdd(needGLL, step.value.data));
+          step = it.next(gllInfo.markNeedsGLL(step.value.data));
         }
         break;
       }
     }
   }
-
-  const willUseGLL = needGLL.size > 0;
-  const canUseFollow = !willUseGLL;
-  const usesFollow = { ref: false };
 
   const cfgs = new Map<
     AugmentedDeclaration,
@@ -133,7 +131,7 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
     assertion(first(automaton.acceptingSet).transitionAmount() === 0);
     //
     const thisCfgs = [];
-    const labels = new LabelsManager(needGLL);
+    const labels = new LabelsManager(gllInfo);
     // Add start
     labels.add(null, automaton.start);
     // Generate all labels for this declaration
@@ -141,13 +139,11 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
       thisCfgs.push([
         convertDFAtoCFG(
           analyzer,
-          needGLL,
+          gllInfo,
           decl,
           labels,
           edge.transition,
-          edge.dest,
-          canUseFollow,
-          usesFollow
+          edge.dest
         ),
         id,
       ] as const);
@@ -167,7 +163,7 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
       decl,
       labels,
       nonNull(allFields.get(decl)),
-      canUseFollow && usesFollow.ref
+      gllInfo.shouldUseFollow(decl)
     );
     for (const [cfg, id] of thisCfgs) {
       const code = generator.process(
@@ -186,14 +182,14 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
 
   const { forTokens, forRules } = CodeGenerator.genCreateInitialEnvFunc(
     allFields,
-    needGLL
+    gllInfo
   );
   tokensCode.push(forTokens);
   rulesCode.push(forRules);
 
   return {
-    code: generateAll(grammar, tokensCode, rulesCode, needGLL),
-    needGLL,
+    code: generateAll(grammar, tokensCode, rulesCode, gllInfo),
+    gllInfo,
   };
 }
 
@@ -242,8 +238,8 @@ export function inferAndCheckTypes(grammar: Grammar) {
 
   return {
     errors: inferrer.errors,
-    genTypes: (needsGLL: boolean) => {
-      if (needsGLL) {
+    genTypes: (gllInfo: GLLInfo) => {
+      if (gllInfo.parserUsesGLL()) {
         typeDeclarations.push([
           "$Result",
           `Readonly<{ ok: true; asts: readonly $AST[] }> | Readonly<{ ok: false; errors: readonly (readonly [number, unknown])[] }>`,

@@ -31,6 +31,7 @@ import { DState } from "../automaton/state.ts";
 import { IAnalyzer } from "../analysis/analysis-reference.ts";
 import { labelToStr } from "../runtime/gll.ts";
 import type { LabelsManager } from "./labels-manager.ts";
+import type { GLLInfo } from "../grammar/gll-info.ts";
 
 export class CodeGenerator {
   private nodes: Map<GrammarCFGNode, number>;
@@ -56,7 +57,7 @@ export class CodeGenerator {
     this.breaksStack = [];
     this.continuesStack = [];
     this.neededLabels = new Set();
-    this.needsGLL = labels.needsGLL(decl.name);
+    this.needsGLL = labels.needsGLL(decl);
   }
 
   reset() {
@@ -429,12 +430,12 @@ export class CodeGenerator {
 
   static genCreateInitialEnvFunc(
     allFields: Map<AugmentedDeclaration, Map<string, boolean>>,
-    needGLL: ReadonlySet<string>
+    gllInfo: GLLInfo
   ) {
     let forTokens = "  $createEnv(name,args){\n";
     let forRules = "  $createEnv(name,args){\n";
     for (const [decl, fields] of allFields) {
-      if (needGLL.has(decl.name)) {
+      if (gllInfo.needsGLL(decl)) {
         const env = Array.from(fields)
           .map(([name, multiple]) => `${name}:${multiple ? "[]" : "null"}`)
           .concat(decl.args.map(({ arg }, i) => `${arg}:args[${i}]`))

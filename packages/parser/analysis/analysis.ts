@@ -21,6 +21,7 @@ import { type AnyTransition } from "../automaton/transitions.ts";
 import { ANY_CHAR_RANGE } from "../utils/constants.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 import type { RuleName } from "../grammar/grammar-builder.ts";
+import type { GLLInfo } from "../grammar/gll-info.ts";
 
 export class Analyzer extends IAnalyzer<AnalysisPoint> {
   private llState: number;
@@ -28,13 +29,16 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
   constructor({
     grammar,
     initialStates,
+    gllInfo,
   }: {
     grammar: Grammar;
     initialStates: ReadonlyMap<RuleName, DState>;
+    gllInfo: GLLInfo;
   }) {
     super({
       grammar,
       initialStates,
+      gllInfo,
     });
     this.llState = 0;
   }
@@ -51,26 +55,11 @@ export class Analyzer extends IAnalyzer<AnalysisPoint> {
     }
   >();
 
-  public currentRule: AugmentedDeclaration = null as any;
-
-  getAnyRange() {
-    return this.currentRule.type === "rule"
-      ? this.grammar.tokens.anyRange()
-      : ANY_CHAR_RANGE;
-  }
-
   analyze(rule: AugmentedDeclaration, state: DState) {
     const inCache = this.cache.get(state);
     if (inCache) return inCache;
 
-    let maxLL, maxFF;
-    if (rule.name === LEXER_RULE_NAME) {
-      maxLL = 1;
-      maxFF = 0;
-    } else {
-      maxLL = this.grammar.maxLL;
-      maxFF = this.grammar.maxFF;
-    }
+    const { maxLL, maxFF } = this.getConfig(rule);
 
     DEBUG_apply(rule);
     this.currentRule = rule;

@@ -60,14 +60,19 @@ function precedenceRightAssoc(number: number, rule: AnyRule) {
 }
 */
 
+export type LookaheadOpts = Readonly<{
+  maxLL?: number;
+  maxFF?: number;
+}>;
+
 export type ToolInput = Readonly<{
   name: string;
   ruleDecls?: readonly RuleDeclaration[];
   tokenDecls?: readonly TokenDeclaration[];
   startArguments?: readonly GType[];
   externalFuncReturns?: Readonly<Record<string, GType>>;
-  maxLL?: number;
-  maxFF?: number;
+  parser?: LookaheadOpts;
+  tokenizer?: LookaheadOpts;
   _useReferenceAnalysis?: boolean;
 }>;
 
@@ -90,11 +95,11 @@ export function tool(opts: ToolInput) {
     return null;
   }
 
-  const { code, needGLL } = generateGrammar(result);
+  const { code, gllInfo } = generateGrammar(result);
 
   return {
     code,
-    types: genTypes(needGLL.size > 0),
+    types: genTypes(gllInfo),
     grammar: result.grammar,
   };
 }

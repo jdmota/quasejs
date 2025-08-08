@@ -531,6 +531,14 @@ const opts: ToolInput = {
   externalFuncReturns: {
     externalCall: typeBuilder.bool(),
   },
+  parser: {
+    maxLL: 3,
+    maxFF: 3,
+  },
+  tokenizer: {
+    maxLL: 1,
+    maxFF: 0,
+  },
 };
 
 console.time("REF-BENCHMARK");

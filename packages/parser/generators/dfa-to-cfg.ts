@@ -22,6 +22,7 @@ import {
 } from "../analysis/decision-trees.ts";
 import { type DecisionExpr } from "../analysis/decision-expr.ts";
 import { LabelsManager } from "./labels-manager.ts";
+import type { GLLInfo } from "../grammar/gll-info.ts";
 
 export type ConditionalBlock = Readonly<{
   type: "conditional_block";
@@ -89,15 +90,13 @@ export class DStateEdge implements ObjectHashEquals {
 
 export function convertDFAtoCFG(
   analyzer: IAnalyzer<any>,
-  needGLL: ReadonlySet<string>,
+  gllInfo: GLLInfo,
   rule: AugmentedDeclaration,
   labels: LabelsManager,
   transition: AnyTransition | null,
-  state: DState,
-  canUseFollow: boolean,
-  usesFollow: { ref: boolean }
+  state: DState
 ): Readonly<{ start: GrammarCFGNode; nodes: ReadonlySet<GrammarCFGNode> }> {
-  const weNeedGLL = needGLL.has(rule.name);
+  const weNeedGLL = gllInfo.needsGLL(rule);
   const nodes: Set<GrammarCFGNode> = new Set();
 
   function newNode<T extends CFGNodeCode>(code: T) {
@@ -180,8 +179,11 @@ export function convertDFAtoCFG(
             nextNode = tree?.worthIt()
               ? processTree(tree)
               : newGotoBlock(state, decision.getGotos());
-          } else if (canUseFollow && tree instanceof DecisionFollowTree) {
-            usesFollow.ref = true;
+          } else if (
+            gllInfo.canUseFollow(rule) &&
+            tree instanceof DecisionFollowTree
+          ) {
+            gllInfo.markUsesFollow(rule);
             nextNode = tree?.worthIt()
               ? processTree(tree)
               : newGotoBlock(state, decision.getGotos());

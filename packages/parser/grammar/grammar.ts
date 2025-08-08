@@ -1,7 +1,7 @@
 import { Graph } from "../../util/graph.ts";
 import { never } from "../../util/miscellaneous.ts";
 import { type Location } from "../runtime/input.ts";
-import { type ToolInput } from "../tool.ts";
+import { type LookaheadOpts, type ToolInput } from "../tool.ts";
 import { FollowInfoDB } from "./follow-info.ts";
 import {
   type AnyRule,
@@ -11,7 +11,6 @@ import {
   type RuleDeclaration,
   type RuleDeclarationArg,
   type RuleModifiers,
-  type RuleName,
   type TokenDeclaration,
   type TokenModifiers,
   type TokenRules,
@@ -37,7 +36,7 @@ export type GrammarError = Readonly<{
 export type GrammarResult = Readonly<{
   grammar: Grammar;
   errors: null;
-  referencesGraph: Graph<RuleName, null>;
+  referencesGraph: Graph<AugmentedDeclaration, null>;
 }>;
 
 export type GrammarErrors = Readonly<{
@@ -65,8 +64,8 @@ function augmentToolInput({
   tokenDecls = [],
   startArguments = [],
   externalFuncReturns = {},
-  maxLL = 3,
-  maxFF = 3,
+  parser,
+  tokenizer,
   _useReferenceAnalysis,
 }: ToolInput) {
   const augmentedRules = ruleDecls.map(r =>
@@ -93,8 +92,8 @@ function augmentToolInput({
     externalFuncReturns,
     tokens,
     decls,
-    maxLL,
-    maxFF,
+    parser,
+    tokenizer,
     _useReferenceAnalysis,
   };
 }
@@ -104,7 +103,7 @@ export const INTERNAL_START_RULE = "$$START$$";
 export function createGrammar(options: ToolInput): GrammarOrErrors {
   const errors: GrammarError[] = [];
   const externalCalls = new ExternalCallsCollector();
-  const referencesGraph = new Graph<RuleName, null>();
+  const referencesGraph = new Graph<AugmentedDeclaration, null>();
 
   const {
     name,
@@ -112,8 +111,8 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
     externalFuncReturns,
     decls,
     tokens,
-    maxLL,
-    maxFF,
+    parser: parserOpts,
+    tokenizer: tokenizerOpts,
     _useReferenceAnalysis,
   } = augmentToolInput(options);
 
@@ -243,7 +242,7 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
           } else {
             // Register in references graph
             if (decl.type === referenced.type) {
-              referencesGraph.edge(decl.name, null, referenced.name);
+              referencesGraph.edge(decl, null, referenced);
             }
 
             // Detect wrong number of arguments
@@ -338,8 +337,8 @@ export function createGrammar(options: ToolInput): GrammarOrErrors {
       internalStartRule,
       startArguments,
       externalFuncReturns,
-      maxLL,
-      maxFF,
+      parserOpts,
+      tokenizerOpts,
       _useReferenceAnalysis
     );
 
@@ -373,8 +372,8 @@ export class Grammar {
     startRule: AugmentedRuleDeclaration,
     startArguments: readonly GType[],
     externalFuncReturns: Readonly<Record<string, GType>>,
-    public readonly maxLL: number,
-    public readonly maxFF: number,
+    public readonly parserOpts: LookaheadOpts | undefined,
+    public readonly tokenizerOpts: LookaheadOpts | undefined,
     public readonly _useReferenceAnalysis: boolean | undefined
   ) {
     this.name = name;
