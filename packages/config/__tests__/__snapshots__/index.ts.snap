@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`get config multiple level 1`] = `
+[
+  {
+    "config": {
+      "iAmTheConfigFile": "yes",
+    },
+    "filename": "packages/config/__tests__/__fixtures__/quase-config.js",
+    "ok": true,
+    "source": {
+      "extensions": [
+        "ts",
+        "mts",
+        "cts",
+        "js",
+        "mjs",
+        "cjs",
+        "json",
+        "",
+      ],
+      "files": "quase-config",
+    },
+  },
+  {
+    "config": {
+      "dependency": 10,
+      "iAmTheConfigFile2": "yes",
+    },
+    "filename": "packages/config/__tests__/__fixtures__/quase-config.mjs",
+    "ok": true,
+    "source": {
+      "extensions": [
+        "ts",
+        "mts",
+        "cts",
+        "js",
+        "mjs",
+        "cjs",
+        "json",
+        "",
+      ],
+      "files": "quase-config",
+    },
+  },
+  {
+    "config": [Function],
+    "filename": "packages/config/__tests__/__fixtures__/quase-config.cjs",
+    "ok": true,
+    "source": {
+      "extensions": [
+        "ts",
+        "mts",
+        "cts",
+        "js",
+        "mjs",
+        "cjs",
+        "json",
+        "",
+      ],
+      "files": "quase-config",
+    },
+  },
+  {
+    "config": {
+      "configFromPkg": "yes",
+    },
+    "filename": "packages/config/__tests__/__fixtures__/package.json",
+    "ok": true,
+    "source": {
+      "extensions": [],
+      "files": "package.json",
+      "rewrite": [Function],
+    },
+  },
+]
+`;
+
+exports[`get config non-multiple level 1`] = `
+[
+  {
+    "config": {
+      "iAmTheConfigFile": "yes",
+    },
+    "filename": "packages/config/__tests__/__fixtures__/quase-config.js",
+    "ok": true,
+    "source": {
+      "extensions": [
+        "ts",
+        "mts",
+        "cts",
+        "js",
+        "mjs",
+        "cjs",
+        "json",
+        "",
+      ],
+      "files": "quase-config",
+    },
+  },
+  {
+    "config": {
+      "configFromPkg": "yes",
+    },
+    "filename": "packages/config/__tests__/__fixtures__/package.json",
+    "ok": true,
+    "source": {
+      "extensions": [],
+      "files": "package.json",
+      "rewrite": [Function],
+    },
+  },
+]
+`;

@@ -2,6 +2,8 @@ import { setAdd } from "./maps-sets";
 
 export type Optional<T> = T | undefined | null;
 
+export type MaybeAsync<T> = T | Promise<T>;
+
 export type Obj = { readonly [key: string]: unknown };
 
 export type ObjRecord<K extends PropertyKey, V> = {
@@ -39,10 +41,15 @@ export function nonNull<T>(val: Optional<T>): T {
   return val;
 }
 
-export function arrify<T>(val: Optional<T | T[]>): T[] {
+export type Arrayable<T> = T | T[];
+
+export type ReadonlyArrayable<T> = T | readonly T[];
+
+export function arrify<T>(val: Optional<ReadonlyArrayable<T>>): readonly T[] {
   if (val == null) {
     return [];
   }
+  //@ts-ignore
   return Array.isArray(val) ? val : [val];
 }
 

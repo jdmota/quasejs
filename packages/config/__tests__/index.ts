@@ -1,71 +1,75 @@
 import { expect, it } from "@jest/globals";
 import path from "path";
-import { getConfig } from "..";
+import { prettify } from "../../util/path-url";
+import { getConfig } from "../index";
 
 const fixturesFolder = path.resolve(import.meta.dirname, "__fixtures__");
 
-it("get config", async () => {
-  let result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: ["quase-config.js"],
-    failIfNotFound: true,
-  });
-
-  expect(result.config.default.iAmTheConfigFile).toBe("yes");
-  expect(typeof result.location).toBe("string");
-
-  result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: ["non-existent-file.js"],
-  });
-
-  expect(result.config).toBe(undefined);
-  expect(result.location).toBe(undefined);
-
-  result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: ["non-existent-file.js"],
-    configKey: "my-key",
-  });
-
-  expect(result.config.configFromPkg).toBe("yes");
-  expect(typeof result.location).toBe("string");
-  expect(result.location!.endsWith("package.json")).toBe(true);
-
-  result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: ["quase-config-2.mjs"],
-    configKey: "my-key",
-  });
-
-  expect(result.config.default.iAmTheConfigFile2).toBe("yes");
-  expect(result.config.configFromPkg).toBe(undefined);
-  expect(typeof result.location).toBe("string");
-  expect(result.location!.endsWith("quase-config-2.mjs")).toBe(true);
-
-  await expect(
-    getConfig({
+it("get config non-multiple level", async () => {
+  const results = await getConfig({
+    sources: [
+      {
+        files: "quase-config",
+        extensions: ["ts", "mts", "cts", "js", "mjs", "cjs", "json", ""],
+      },
+      {
+        files: "package.json",
+        extensions: [],
+        rewrite({ config }) {
+          return (config as any)["my-key"];
+        },
+      },
+      {
+        files: "non-existent-file",
+      },
+    ],
+    findUpOpts: {
       cwd: fixturesFolder,
-      configFiles: ["non-existante-file.js"],
-      failIfNotFound: true,
+      stopAt: process.cwd(),
+    },
+  });
+
+  expect(
+    results.map(r => {
+      return {
+        ...r,
+        filename: prettify(r.filename),
+      };
     })
-  ).rejects.toThrow(/^Config file was not found/);
+  ).toMatchSnapshot();
+});
 
-  result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: [],
-    configKey: "",
+it("get config multiple level", async () => {
+  const results = await getConfig({
+    sources: [
+      {
+        files: "quase-config",
+        extensions: ["ts", "mts", "cts", "js", "mjs", "cjs", "json", ""],
+      },
+      {
+        files: "package.json",
+        extensions: [],
+        rewrite({ config }) {
+          return (config as any)["my-key"];
+        },
+      },
+      {
+        files: "non-existent-file",
+      },
+    ],
+    findUpOpts: {
+      cwd: fixturesFolder,
+      stopAt: process.cwd(),
+      multipleAtLevel: true,
+    },
   });
 
-  expect(result.config).toBe(undefined);
-  expect(result.location).toBe(undefined);
-
-  result = await getConfig({
-    cwd: fixturesFolder,
-    configFiles: ["quase-config-3.js"],
-  });
-
-  expect(typeof result.config.default).toBe("function");
-  expect(typeof result.location).toBe("string");
-  expect(result.location!.endsWith("quase-config-3.js")).toBe(true);
+  expect(
+    results.map(r => {
+      return {
+        ...r,
+        filename: prettify(r.filename),
+      };
+    })
+  ).toMatchSnapshot();
 });

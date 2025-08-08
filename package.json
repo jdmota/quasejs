@@ -78,6 +78,7 @@
     "is-ci": "^3.0.1",
     "is-unicode-supported": "^2.1.0",
     "ix": "^4.5.2",
+    "jiti": "^2.5.1",
     "lmdb": "^3.4.1",
     "log-symbols": "^6.0.0",
     "luxon": "^3.0.4",
