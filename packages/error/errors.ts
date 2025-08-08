@@ -1,20 +1,24 @@
 import stackParser from "error-stack-parser";
 import { slash, prettify } from "../util/path-url";
 import { type SourceMapExtractor } from "../source-map/extractor";
+import type { Optional } from "../util/miscellaneous";
 
 export const ignoreStackTraceRe =
   /StackTrace\$\$|ErrorStackParser\$\$|StackTraceGPS\$\$|StackGenerator\$\$/;
 export const ignoreFileRe =
   /^([^()\s]*\/quasejs\/packages\/[^()\s/]+\/dist\/[^()\s]*|[^()\s]*\/node_modules\/@quase\/[^()\s]+|[^()\s/]+\.js|node:[^()\s]+|internal(\/[^()\s/]+)?\/[^()\s]+\.js|native)$/;
 
-type Opts = Readonly<{
+export type ErrorBeautifyOpts = Readonly<{
   extractor?: SourceMapExtractor;
-  ignore?:
-    | {
-        test(text: string): boolean;
-      }
-    | null
-    | undefined;
+  ignore?: Optional<{
+    test(text: string): boolean;
+  }>;
+}>;
+
+export type ErrorBeautifySimpleOpts = Readonly<{
+  ignore?: Optional<{
+    test(text: string): boolean;
+  }>;
 }>;
 
 type StackFrame = stackParser.StackFrame & { fileName: string };
@@ -26,16 +30,64 @@ function excludeFramesWithoutFilename(
 }
 
 export type BeautifiedStackLine = {
-  textLine: string;
-  file: string | null;
+  file: string;
   code: string | null;
   name: string | null;
   line: number | null;
   column: number | null;
+  args: readonly any[] | null;
 };
 
-export async function beautify(originalStack: string = "", options: Opts = {}) {
+export async function beautify(
+  originalStack: string,
+  options: ErrorBeautifyOpts = {}
+) {
   const extractor = options && options.extractor;
+  const { originalFirst, cleaned } = cleanErrorFrames(originalStack, options);
+  const cleaned2 = await Promise.all(
+    cleaned.map(async stackLine => {
+      if (extractor && stackLine.line && stackLine.column) {
+        try {
+          const pos = await extractor.getOriginalLocation(stackLine.file, {
+            line: stackLine.line,
+            column: stackLine.column,
+          });
+          if ("line" in pos) {
+            if (pos.originalFile != null) {
+              stackLine.file = pos.originalFile;
+              stackLine.code = pos.originalCode;
+              stackLine.name = pos.name || stackLine.name;
+              stackLine.line = pos.line;
+              stackLine.column = pos.column;
+            }
+          } else {
+            stackLine.code = pos.code;
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
+      return stackLine;
+    })
+  );
+  return printCleanedErrorFrames(originalStack, {
+    originalFirst,
+    cleaned: cleaned2,
+  });
+}
+
+export function beautifySimple(
+  originalStack: string,
+  options: ErrorBeautifySimpleOpts = {}
+) {
+  const { originalFirst, cleaned } = cleanErrorFrames(originalStack, options);
+  return printCleanedErrorFrames(originalStack, { originalFirst, cleaned });
+}
+
+export function cleanErrorFrames(
+  originalStack: string,
+  options: ErrorBeautifySimpleOpts = {}
+) {
   const ignore = options && options.ignore;
   const error = { name: "", message: "", stack: originalStack };
 
@@ -66,48 +118,36 @@ export async function beautify(originalStack: string = "", options: Opts = {}) {
     frames.push(originalFirst);
   }
 
-  const promises = frames.map(
-    async ({ fileName, functionName, args, lineNumber, columnNumber }) => {
-      const stackLine: BeautifiedStackLine = {
-        textLine: "",
-        file: fileName,
-        code: null,
-        name: functionName ?? null,
-        line: lineNumber ?? null,
-        column: columnNumber ?? null,
-      };
-
-      if (extractor && stackLine.line && stackLine.column) {
-        try {
-          const pos = await extractor.getOriginalLocation(fileName, {
-            line: stackLine.line,
-            column: stackLine.column,
-          });
-          if ("line" in pos) {
-            stackLine.file = pos.originalFile;
-            stackLine.code = pos.originalCode;
-            stackLine.name = pos.name || stackLine.name;
-            stackLine.line = pos.line;
-            stackLine.column = pos.column;
-          } else {
-            stackLine.code = pos.code;
-          }
-        } catch (e) {
-          // Ignore
-        }
+  return {
+    originalFirst,
+    cleaned: frames.map(
+      ({ fileName, functionName, args, lineNumber, columnNumber }) => {
+        const stackLine: BeautifiedStackLine = {
+          file: fileName,
+          code: null,
+          name: functionName ?? null,
+          line: lineNumber ?? null,
+          column: columnNumber ?? null,
+          args: args ?? null,
+        };
+        return stackLine;
       }
+    ),
+  };
+}
 
-      stackLine.textLine = `${stackLine.name}${
-        args ? `(${args.join(", ")})` : ""
-      }`;
-      return stackLine;
-    }
-  );
+function textLine(stackLine: BeautifiedStackLine) {
+  return `${stackLine.name}${
+    stackLine.args ? `(${stackLine.args.join(", ")})` : ""
+  }`;
+}
 
-  const cleaned = await Promise.all(promises);
+export function printCleanedErrorFrames(
+  originalStack: string,
+  { originalFirst, cleaned }: ReturnType<typeof cleanErrorFrames>
+) {
   const cleanedText = cleaned.map(
-    ({ textLine, file, line, column }) =>
-      `${textLine} (${file ? prettify(file) : "<unknown file>"}:${line}:${column})`
+    s => `${textLine(s)} (${prettify(s.file)}:${s.line}:${s.column})`
   );
 
   const title =
@@ -145,17 +185,19 @@ export function getStack(offset?: number) {
   return arr.join("\n");
 }
 
-type Loc = Readonly<{
-  line?: number | null | undefined;
-  column?: number | null | undefined;
+type Position = Readonly<{
+  line?: Optional<number>;
+  column?: Optional<number>;
 }>;
 
-export function locToString(loc: Loc) {
-  if (loc.line != null) {
-    if (loc.column != null) {
-      return `${loc.line}:${loc.column}`;
+export function positionToString(loc: Optional<Position>) {
+  if (loc) {
+    if (loc.line != null) {
+      if (loc.column != null) {
+        return `${loc.line}:${loc.column}`;
+      }
+      return `${loc.line}`;
     }
-    return `${loc.line}`;
   }
   return "";
 }

@@ -1,4 +1,4 @@
-import { getStack } from "../error/index";
+import { getStack } from "../error/errors";
 import { type Optional } from "../util/miscellaneous";
 import { is32bitInteger } from "./random";
 import type { RunningContext } from "./runnable";

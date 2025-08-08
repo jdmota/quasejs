@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { pathToFileURL } from "node:url";
-import { getStack } from "../error/index";
+import { getStack } from "../error/errors";
 import {
   type RunnableResult,
   RunnableTest,

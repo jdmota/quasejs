@@ -1,5 +1,5 @@
 import { formatWithOptions, stripVTControlCharacters } from "node:util";
-import { streamSupportColors } from "./colors";
+import { streamSupportColors } from "./terminal";
 
 export type LoggerLevel = number;
 

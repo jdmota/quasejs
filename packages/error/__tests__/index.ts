@@ -1,6 +1,7 @@
 import { expect, it } from "@jest/globals";
 import { SourceMapExtractor } from "../../source-map";
-import { beautify, getStack, locToString } from "../errors";
+import { beautify, getStack, positionToString } from "../errors";
+import { createDiagnosticFromError, formatDiagnostic } from "../diagnostics";
 
 const cwd = process.cwd();
 
@@ -45,7 +46,7 @@ it("beautify", async () => {
 });
 
 it("beautify with title", async () => {
-  const stack = new Error("title").stack;
+  const stack = new Error("title").stack ?? "";
   const extractor = new SourceMapExtractor();
 
   expect(
@@ -54,7 +55,7 @@ it("beautify with title", async () => {
 });
 
 it("handle multine error message correctly", async () => {
-  const stack = new Error("multine\nerror\nmessage").stack;
+  const stack = new Error("multine\nerror\nmessage").stack ?? "";
 
   expect(
     (await beautify(stack, { ignore: /node_modules/ })).stack
@@ -77,9 +78,14 @@ it("keep at least one stack line", async () => {
   ).toMatchSnapshot();
 });
 
-it("locToString", () => {
-  expect(locToString({})).toEqual("");
-  expect(locToString({ line: 1 })).toEqual("1");
-  expect(locToString({ column: 2 })).toEqual("");
-  expect(locToString({ line: 1, column: 2 })).toEqual("1:2");
+it("positionToString", () => {
+  expect(positionToString({})).toEqual("");
+  expect(positionToString({ line: 1 })).toEqual("1");
+  expect(positionToString({ column: 2 })).toEqual("");
+  expect(positionToString({ line: 1, column: 2 })).toEqual("1:2");
+});
+
+it("diagnostics", () => {
+  const d = createDiagnosticFromError(new Error("message"));
+  expect(formatDiagnostic(d)).toMatchSnapshot();
 });

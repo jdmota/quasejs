@@ -1,5 +1,5 @@
 import { createHook } from "node:async_hooks";
-import { getStack } from "../../error/index";
+import { getStack } from "../../error/errors";
 import { RunnableTest } from "../runnable";
 import { getContext } from "./context-tracker";
 
