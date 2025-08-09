@@ -1,8 +1,7 @@
 import path from "path";
-import type { FileReport, Options } from "./types";
-import { isBanned } from "./is-banned";
+import type { Options } from "./types";
+import { checkFile } from "./check-file";
 import { collectFiles } from "./collect-files";
-import { checkSensitiveFile } from "./check-sensitive-files";
 import { never } from "../util/miscellaneous";
 import { prettifyPath } from "../util/path-url";
 
@@ -37,13 +36,11 @@ export async function bin(partialOptions: Partial<Options> = {}) {
         banned++;
         console.error(`  BANNED ${prettifyPath(report.filename)}`);
         if (options.verbose) {
-          for (const rule of report.rules) {
-            if (rule.caption) {
-              console.error(`    ${rule.caption}`);
-            }
-            if (rule.description) {
-              console.error(`      ${rule.description}`);
-            }
+          if (report.rule.caption) {
+            console.error(`    ${report.rule.caption}`);
+          }
+          if (report.rule.description) {
+            console.error(`      ${report.rule.description}`);
           }
         }
         break;
@@ -52,9 +49,13 @@ export async function bin(partialOptions: Partial<Options> = {}) {
         sensitive++;
         console.error(`  SENSITIVE ${prettifyPath(report.filename)}`);
         if (options.verbose) {
-          for (const error of report.errors) {
-            console.error(`    ${error}`);
+          if (report.rule.caption) {
+            console.error(`    ${report.rule.caption}`);
           }
+          if (report.rule.description) {
+            console.error(`      ${report.rule.description}`);
+          }
+          console.error(`      Pattern: ${report.check.pattern}`);
         }
         break;
       }
@@ -73,26 +74,6 @@ export async function bin(partialOptions: Partial<Options> = {}) {
   return error;
 }
 
-async function runForFile(file: string): Promise<FileReport> {
-  const banned = isBanned(file);
-  if (banned.length > 0) {
-    return {
-      kind: "banned",
-      filename: file,
-      rules: banned,
-    };
-  }
-  const sensitive = await checkSensitiveFile(file);
-  if (sensitive.length > 0) {
-    return {
-      kind: "sensitive",
-      filename: file,
-      errors: sensitive,
-    };
-  }
-  return { kind: "ok", filename: file };
-}
-
 export async function* run(
   options: Options,
   providedFilenames?: readonly string[]
@@ -101,6 +82,6 @@ export async function* run(
     ? providedFilenames.map(f => path.resolve(options.folder, f))
     : collectFiles(options);
   for await (const file of filenames) {
-    yield runForFile(file);
+    yield checkFile(file);
   }
 }

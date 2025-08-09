@@ -1,0 +1,22 @@
+[
+  {
+    "part": "filename",
+    "type": "regex",
+    "pattern": "rc|config",
+    "caption": "config file",
+    "checks": [
+      {
+        "type": "regex",
+        "pattern": "auth\"?\\s*(:|=)"
+      },
+      {
+        "type": "regex",
+        "pattern": "password\"?\\s*(:|=)"
+      },
+      {
+        "type": "regex",
+        "pattern": "token\"?\\s*(:|=)"
+      }
+    ]
+  }
+]

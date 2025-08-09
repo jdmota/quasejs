@@ -30,6 +30,13 @@
   {
     "part": "extension",
     "type": "match",
+    "pattern": "ssh",
+    "caption": "Potential cryptographic private key",
+    "description": null
+  },
+  {
+    "part": "extension",
+    "type": "match",
     "pattern": "pem",
     "caption": "Potential cryptographic private key",
     "description": null
@@ -331,8 +338,15 @@
   {
     "part": "filename",
     "type": "regex",
-    "pattern": "private.*key",
-    "caption": "Contains words: private, key",
+    "pattern": "private",
+    "caption": "Contains words: private",
+    "description": null
+  },
+  {
+    "part": "filename",
+    "type": "regex",
+    "pattern": "key",
+    "caption": "Contains words: key",
     "description": null
   },
   {

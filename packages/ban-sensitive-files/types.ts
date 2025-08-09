@@ -4,17 +4,28 @@ export type Options = Readonly<{
   verbose: boolean;
 }>;
 
-export type Rule = Readonly<{
+export type CoreRule = Readonly<{
   part: "filename" | "extension" | "path";
-  type: "regex" | "match";
+  caption?: string | null | undefined;
+  description?: string | null | undefined;
+}>;
+
+export type BanRule = CoreRule & PatternCheck;
+
+export type ContentRule = CoreRule &
+  PatternCheck &
+  Readonly<{
+    checks: readonly PatternCheck[];
+  }>;
+
+export type PatternCheck = Readonly<{
+  type: "regex" | "match" | "contains";
   pattern: string;
-  caption: string;
-  description: string | null;
 }>;
 
 export const PART_VALUES = ["filename", "extension", "path"] as const;
 
-export const TYPE_VALUES = ["regex", "match"] as const;
+export const TYPE_VALUES = ["regex", "match", "contains"] as const;
 
 export type FileReport =
   | Readonly<{
@@ -24,10 +35,11 @@ export type FileReport =
   | Readonly<{
       kind: "banned";
       filename: string;
-      rules: readonly Rule[];
+      rule: BanRule;
     }>
   | Readonly<{
       kind: "sensitive";
       filename: string;
-      errors: readonly string[];
+      rule: ContentRule;
+      check: PatternCheck;
     }>;

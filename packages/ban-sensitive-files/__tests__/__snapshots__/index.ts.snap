@@ -3,24 +3,43 @@
 exports[`banned files 1`] = `
 [
   {
-    "errors": [
-      "Found _auth token in .npmrc",
-    ],
+    "check": {
+      "pattern": "auth"?\\s*(:|=)",
+      "type": "regex",
+    },
     "filename": "packages/ban-sensitive-files/__tests__/examples/.npmrc",
     "kind": "sensitive",
+    "rule": {
+      "caption": "config file",
+      "checks": [
+        {
+          "pattern": "auth"?\\s*(:|=)",
+          "type": "regex",
+        },
+        {
+          "pattern": "password"?\\s*(:|=)",
+          "type": "regex",
+        },
+        {
+          "pattern": "token"?\\s*(:|=)",
+          "type": "regex",
+        },
+      ],
+      "part": "filename",
+      "pattern": "rc|config",
+      "type": "regex",
+    },
   },
   {
     "filename": "packages/ban-sensitive-files/__tests__/examples/example.pem",
     "kind": "banned",
-    "rules": [
-      {
-        "caption": "Potential cryptographic private key",
-        "description": null,
-        "part": "extension",
-        "pattern": "pem",
-        "type": "match",
-      },
-    ],
+    "rule": {
+      "caption": "Potential cryptographic private key",
+      "description": null,
+      "part": "extension",
+      "pattern": "pem",
+      "type": "match",
+    },
   },
 ]
 `;
