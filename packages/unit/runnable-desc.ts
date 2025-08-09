@@ -17,10 +17,10 @@ export type RunnableOpts = Readonly<{
   if: boolean;
   failing: boolean;
   bail: number;
-  retries: number;
-  retryDelay: number;
-  reruns: number;
-  rerunDelay: number;
+  try: boolean;
+  wrap:
+    | null
+    | ((ctx: RunningContext, next: RunnableFn) => Promise<void> | void);
   timeout: Optional<number>;
   slow: Optional<number>;
   logHeapUsage: boolean;
@@ -55,10 +55,8 @@ export const defaultOpts: RunnableOpts = {
   bail: Infinity,
   concurrency: 1,
   random: false,
-  retries: 0, // TODO use
-  retryDelay: 0, // TODO use
-  reruns: 0, // TODO use
-  rerunDelay: 0, // TODO use
+  try: false,
+  wrap: null,
   updateSnapshots: false,
   snapshotLocation: null, // TODO use and custom serializer?
   sanitize: {
@@ -256,23 +254,21 @@ export class RunnableBuilder {
     );
   }
 
-  retries(retries: number, retryDelay: number = 0) {
+  try(_try: boolean) {
     return new RunnableBuilder(
       {
         ...this.opts,
-        retries,
-        retryDelay,
+        try: _try,
       },
       this.runnerTests
     );
   }
 
-  reruns(reruns: number, rerunDelay: number = 0) {
+  wrap(wrap: RunnableOpts["wrap"]) {
     return new RunnableBuilder(
       {
         ...this.opts,
-        reruns,
-        rerunDelay,
+        wrap,
       },
       this.runnerTests
     );
@@ -363,10 +359,12 @@ export class RunnableBuilder {
   }
 }
 
+export type RunnableFn = (ctx: RunningContext) => Promise<void> | void;
+
 export class RunnableDesc {
   constructor(
     readonly title: string,
-    readonly fn: (ctx: RunningContext) => Promise<void> | void,
+    readonly fn: RunnableFn,
     readonly opts: RunnableOpts,
     readonly stack: string
   ) {}

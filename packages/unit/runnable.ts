@@ -117,12 +117,14 @@ export class RunnableTest {
   private snapshotsOfFile: SnapshotsOfFile | null;
   private snapshots: SnapshotsOfTest | null;
   private state: RunnableState;
+  private committed: boolean;
+  private discarded: boolean;
   private finished: RunnableResult | null;
   private interrupted: string | null;
   private killed: boolean;
   private childFails: number;
   private bailed: boolean;
-  private readonly tests: RunnableTest[];
+  private readonly tests: Set<RunnableTest>;
   private readonly userErrors: SimpleError[];
   private readonly nonUserErrors: SimpleError[];
   private readonly logs: string[];
@@ -147,12 +149,14 @@ export class RunnableTest {
     this.snapshotsOfFile = parent?.snapshotsOfFile ?? null;
     this.snapshots = null;
     this.state = RunnableState.NotStarted;
+    this.committed = !desc.opts.try;
+    this.discarded = false;
     this.finished = null;
     this.interrupted = null;
     this.killed = false;
     this.childFails = 0;
     this.bailed = false;
-    this.tests = [];
+    this.tests = new Set();
     this.userErrors = [];
     this.nonUserErrors = [];
     this.logs = [];
@@ -332,9 +336,11 @@ export class RunnableTest {
   // @pre: this.state === RunnableState.Running
   private createRunnableStep(desc: RunnableDesc) {
     const runnable = new RunnableTest(this.runner, desc, this);
-    this.tests.push(runnable);
+    this.tests.add(runnable);
     if (this.interrupted) {
-      runnable.interrupt(`From parent: ${this.interrupted}`, false);
+      runnable.interrupt(`From parent: ${this.interrupted}`, this.killed);
+    } else if (this.bailed) {
+      runnable.interrupt(SKIP_BAILED.reason, false);
     }
     return runnable;
   }
@@ -354,16 +360,52 @@ export class RunnableTest {
   }
 
   // Called by child tests
-  private childFailed() {
-    this.childFails++;
-    if (!this.bailed && this.childFails === this.desc.opts.bail) {
-      this.bailed = true;
-      this.tests.forEach(t => t.interrupt(SKIP_BAILED.reason, false));
+  private childFinished(which: RunnableTest, result: RunnableResult) {
+    if (this.state === RunnableState.Running && !this.interrupted) {
+      if (which.committed) {
+        if (result.type === "failed") {
+          this.childFails++;
+          if (!this.bailed && this.childFails === this.desc.opts.bail) {
+            this.bailed = true;
+            this.tests.forEach(t => t.interrupt(SKIP_BAILED.reason, false));
+          }
+        }
+      }
+    }
+  }
+
+  // TODO expose this api
+  // TODO deal with snapshots in case we discard a test
+
+  private commitTest(test: RunnableTest) {
+    if (this.state === RunnableState.Running) {
+      const { committed, discarded } = test;
+      if (!committed && !discarded) {
+        test.committed = true;
+        if (test.finished) {
+          test.childFinished(test, test.finished);
+        }
+      }
+    } else {
+      this.addCtxError("Cannot commit child test of finished test");
+    }
+  }
+
+  private discardTest(test: RunnableTest) {
+    if (this.state === RunnableState.Running) {
+      const { committed, discarded } = test;
+      if (!committed && !discarded) {
+        test.discarded = true;
+        this.tests.delete(test);
+      }
+    } else {
+      this.addCtxError("Cannot discard child test of finished test");
     }
   }
 
   // Called by self or parent test
   interrupt(errorMsg: string, kill: boolean) {
+    assertion(errorMsg.length > 0);
     if (
       this.state === RunnableState.Exiting ||
       this.state === RunnableState.Finished
@@ -400,7 +442,7 @@ export class RunnableTest {
   // Called by parent test
   sigint(force: boolean, reason: string | null) {
     this.interrupt(
-      reason ?? (force ? "Forced shutdown" : "Interrupted"),
+      reason || (force ? "Forced shutdown" : "Interrupted"),
       force
     );
   }
@@ -418,9 +460,7 @@ export class RunnableTest {
     this.state = RunnableState.Finished;
     this.finished = r;
     this.runner?.emitter.emit("testFinish", this.title);
-    if (r.type === "failed") {
-      this.parent?.childFailed();
-    }
+    this.parent?.childFinished(this, r);
     return r;
   }
 
@@ -520,7 +560,10 @@ export class RunnableTest {
 
     let ret;
     try {
-      ret = runWithCtx(this, () => fn(ctx));
+      ret = runWithCtx(this, () => {
+        const { wrap } = this.desc.opts;
+        return wrap ? wrap(ctx, fn) : fn(ctx);
+      });
     } catch (err: unknown) {
       return this.exitError(err, true);
     }
@@ -579,15 +622,18 @@ export class RunnableTest {
       userErrors,
       nonUserErrors,
       logs,
-      tests,
+      tests: testsSet,
       cleanups,
       userMetadata,
     } = this;
-    const random = this.random?.hex ?? null;
 
-    tests.forEach(t =>
-      t.interrupt("Test did not finish before parent test finished", false)
-    );
+    const random = this.random?.hex ?? null;
+    const tests = [...testsSet];
+
+    tests.forEach(t => {
+      t.committed = true;
+      t.interrupt("Test did not finish before parent test finished", false);
+    });
 
     const children = [];
     let childFailed = false;
