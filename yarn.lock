@@ -3972,6 +3972,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clipanion@npm:^4.0.0-rc.4":
+  version: 4.0.0-rc.4
+  resolution: "clipanion@npm:4.0.0-rc.4"
+  dependencies:
+    typanion: "npm:^3.8.0"
+  peerDependencies:
+    typanion: "*"
+  checksum: 10/c3a94783318d91e6b35380a8aa4a6f166964082a51ff2df21a339266223aaab98f5986dd2c37ca7fd640ad1d233b3cd5b24aad64c51537b54ccc9c66ec070eeb
+  languageName: node
+  linkType: hard
+
 "cliui@npm:^8.0.1":
   version: 8.0.1
   resolution: "cliui@npm:8.0.1"
@@ -7230,6 +7241,7 @@ __metadata:
     babel-helper-evaluate-path: "npm:^0.5.0"
     chokidar: "npm:3.5.3"
     circular-json: "npm:^0.5.9"
+    clipanion: "npm:^4.0.0-rc.4"
     colorette: "npm:^2.0.20"
     concordance: "npm:^5.0.4"
     dugite: "npm:^2.7.1"
@@ -8133,6 +8145,13 @@ __metadata:
   version: 2.6.1
   resolution: "turbocolor@npm:2.6.1"
   checksum: 10/042830773122afe94dd1800d815653e60ac71a826fdf669152284a97202aaae63f2d7ee6e4f7c078c1e35804d4e0a228674a896ac6be2c2699361207f804d72d
+  languageName: node
+  linkType: hard
+
+"typanion@npm:^3.8.0":
+  version: 3.14.0
+  resolution: "typanion@npm:3.14.0"
+  checksum: 10/5e88d9e6121ff0ec543f572152fdd1b70e9cca35406d79013ec8e08defa8ef96de5fec9e98da3afbd1eb4426b9e8e8fe423163d0b482e34a40103cab1ef29abd
   languageName: node
   linkType: hard
 

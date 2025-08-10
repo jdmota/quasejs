@@ -1,7 +1,0 @@
-{
-  "private": true,
-  "name": "fake-name",
-  "my-key": {
-    "configFromPkg": "yes"
-  }
-}
