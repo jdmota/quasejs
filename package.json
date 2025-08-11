@@ -31,7 +31,7 @@
     ],
     "roots": [
       "<rootDir>/packages/apps/debt-splitter",
-      "<rootDir>/packages/ban-sensitive-files",
+      "<rootDir>/packages/ban-sensitive",
       "<rootDir>/packages/config",
       "<rootDir>/packages/error",
       "<rootDir>/packages/git",

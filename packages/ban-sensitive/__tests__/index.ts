@@ -14,7 +14,7 @@ it("banned files", async () => {
   const results = [];
 
   for await (const report of run({
-    folder: "packages/ban-sensitive-files",
+    folder: "packages/ban-sensitive",
     all: true,
     verbose: true,
   })) {

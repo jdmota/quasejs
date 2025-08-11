@@ -47,7 +47,7 @@ export async function bin(partialOptions: Partial<Options> = {}) {
       }
       case "sensitive": {
         sensitive++;
-        console.error(`  SENSITIVE ${prettifyPath(report.filename)}`);
+        console.error(`  SENSITIVE CONTENT ${prettifyPath(report.filename)}`);
         if (options.verbose) {
           if (report.rule.caption) {
             console.error(`    ${report.rule.caption}`);
