@@ -1,5 +1,5 @@
-import { setAdd, get, getSet, copy } from "../../../util/maps-sets";
-import { OneToMany } from "../../../util/data-structures/relationship";
+import { setAdd, get, getSet, copy } from "../../util/maps-sets";
+import { OneToMany } from "../../util/data-structures/relationship";
 import { hashName } from "./hash";
 
 const numberSorter = (a: number, b: number) => a - b;

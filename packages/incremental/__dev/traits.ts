@@ -16,7 +16,7 @@ type AsKey<T, K extends keyof T> = T[K] extends (...args: any[]) => any
 
 export type Impl<T extends TraitType<T>> = {
   [key in keyof T as AsKey<T, key>]: T[key] extends (...args: any[]) => any
-    ? /*typeof REQUIRED | */ AddSelf<T, T[key]>
+    ? typeof REQUIRED | AddSelf<T, T[key]>
     : never;
 };
 
