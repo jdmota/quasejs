@@ -22,6 +22,7 @@ export async function* collectFiles(options: Options) {
   }
 
   const dirtyAll = await checkDirty(options.folder, {
+    untrackedFiles: "all",
     showIgnored: false,
   });
 

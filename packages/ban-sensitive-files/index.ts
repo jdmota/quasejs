@@ -85,3 +85,7 @@ export async function* run(
     yield checkFile(file);
   }
 }
+
+if (import.meta.main) {
+  bin();
+}

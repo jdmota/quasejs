@@ -101,6 +101,7 @@ export function parseGitStatusShortFormat(line: string): GitStatusShortFormat {
 // Inspired in https://github.com/brandon-rhodes/uncommitted/blob/master/uncommitted/command.py
 
 export type CheckDirtyOpts = Readonly<{
+  untrackedFiles: "no" | "normal" | "all";
   showIgnored: boolean;
 }>;
 
@@ -112,7 +113,7 @@ export async function checkDirty(
   const result = await GitProcess.exec(
     [
       "status",
-      "--untracked-files=all",
+      `--untracked-files=${opts.untrackedFiles}`,
       opts.showIgnored ? "--ignored=traditional" : "--ignored=no",
       "--porcelain",
     ],

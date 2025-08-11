@@ -338,15 +338,8 @@
   {
     "part": "filename",
     "type": "regex",
-    "pattern": "private",
-    "caption": "Contains words: private",
-    "description": null
-  },
-  {
-    "part": "filename",
-    "type": "regex",
-    "pattern": "key",
-    "caption": "Contains words: key",
+    "pattern": "private.*key",
+    "caption": "Contains words: private, key",
     "description": null
   },
   {
