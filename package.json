@@ -5,7 +5,7 @@
   "scripts": {
     "n": "node --enable-source-maps --import @swc-node/register/esm-register",
     "i": "node --inspect-brk --enable-source-maps --import @swc-node/register/esm-register",
-    "b": "yarn n packages/$0/index.ts",
+    "b": "node scripts/bin.js",
     "test": "yarn node --experimental-vm-modules --no-warnings=ExperimentalWarning $(yarn bin jest)",
     "t": "yarn test --roots=packages/$0",
     "build": "yarn n scripts/custom_build.ts",
