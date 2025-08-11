@@ -21,35 +21,34 @@ export class GatherFiles {
   private readonly cwd: string;
   private spinner: Ora;
   private foundUntracked: boolean;
-  private interrupt: boolean;
+  private interrupted: boolean;
 
   constructor(cwd: string) {
     this.cwd = cwd;
     this.spinner = ora();
     this.spinner.prefixText = "";
     this.foundUntracked = false;
+    this.interrupted = false;
+  }
 
-    this.interrupt = false;
-    process.once("SIGINT", () => {
-      console.log("Interrupting...");
-      this.interrupt = true;
-    });
+  interrupt() {
+    this.interrupted = true;
   }
 
   private async checkGit(absoluteFolder: string, relativeFolder: string) {
-    if (this.interrupt) return;
+    if (this.interrupted) return;
     const dirty = await checkDirty(absoluteFolder, {
       untrackedFiles: "normal",
       showIgnored: true,
     });
 
-    if (this.interrupt) return;
+    if (this.interrupted) return;
     const unpushed = await checkUnpushed(absoluteFolder);
 
-    if (this.interrupt) return;
+    if (this.interrupted) return;
     const stashes = await checkStashes(absoluteFolder);
 
-    if (this.interrupt) return;
+    if (this.interrupted) return;
     const submodules = await checkSubmodules(absoluteFolder);
     // TODO deal with submodules
 
@@ -70,11 +69,11 @@ export class GatherFiles {
   }
 
   private async checkNonGit(absoluteFolder: string, relativeFolder: string) {
-    if (this.interrupt) return;
+    if (this.interrupted) return;
     const dir = await fs.promises.opendir(absoluteFolder);
 
     for await (const dirent of dir) {
-      if (this.interrupt) return;
+      if (this.interrupted) return;
 
       const absolute = path.join(absoluteFolder, dirent.name);
       const relative = relativeFolder + "/" + dirent.name;
@@ -117,7 +116,7 @@ export class GatherFiles {
 
     this.spinner.prefixText += "\n";
 
-    if (this.interrupt) {
+    if (this.interrupted) {
       this.spinner.fail(`Interrupted`);
     } else if (this.foundUntracked) {
       this.spinner.fail(`Found untracked files or unpushed changes`);
@@ -135,7 +134,14 @@ export async function bin() {
     folders.push(".");
   }
 
-  await new GatherFiles(process.cwd()).analyze(folders);
+  const gatherFiles = new GatherFiles(process.cwd());
+
+  process.once("SIGINT", () => {
+    console.log("Interrupting...");
+    gatherFiles.interrupt();
+  });
+
+  await gatherFiles.analyze(folders);
 }
 
 if (import.meta.main) {
