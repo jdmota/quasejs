@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`findUp 1`] = `
+[
+  "packages/util/__tests__/__fixtures__/a.txt",
+]
+`;
+
+exports[`findUp 2`] = `
+[
+  "packages/util/__tests__/__fixtures__/a.txt",
+  "packages/util/__tests__/__fixtures__/b.txt",
+]
+`;
+
+exports[`findUp 3`] = `
+[
+  "packages/util/__tests__/__fixtures__/folder/inner-a.txt",
+  "packages/util/__tests__/__fixtures__/a.txt",
+  "packages/util/__tests__/__fixtures__/b.txt",
+]
+`;

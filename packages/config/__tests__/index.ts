@@ -1,6 +1,5 @@
 import { expect, it } from "@jest/globals";
 import path from "path";
-import { prettify } from "../../util/path-url";
 import { getConfig } from "../index";
 
 const fixturesFolder = path.resolve(import.meta.dirname, "__fixtures__");
@@ -29,14 +28,7 @@ it("get config non-multiple level", async () => {
     },
   });
 
-  expect(
-    results.map(r => {
-      return {
-        ...r,
-        filename: prettify(r.filename),
-      };
-    })
-  ).toMatchSnapshot();
+  expect(results).toMatchSnapshot();
 });
 
 it("get config multiple level", async () => {
@@ -64,12 +56,5 @@ it("get config multiple level", async () => {
     },
   });
 
-  expect(
-    results.map(r => {
-      return {
-        ...r,
-        filename: prettify(r.filename),
-      };
-    })
-  ).toMatchSnapshot();
+  expect(results).toMatchSnapshot();
 });

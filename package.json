@@ -18,27 +18,6 @@
   },
   "author": "João Mota",
   "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/__tests__/**/*.?([mc])[jt]s?(x)",
-      "**/?(*.)+(spec|test).?([mc])[jt]s?(x)",
-      "!**/__fixtures__/**",
-      "!**/__examples__/**"
-    ],
-    "extensionsToTreatAsEsm": [
-      ".ts"
-    ],
-    "roots": [
-      "<rootDir>/packages/apps/debt-splitter",
-      "<rootDir>/packages/ban-sensitive",
-      "<rootDir>/packages/config",
-      "<rootDir>/packages/error",
-      "<rootDir>/packages/git",
-      "<rootDir>/packages/source-map",
-      "<rootDir>/packages/util"
-    ]
-  },
   "dependencies": {
     "@babel/cli": "^7.18.10",
     "@babel/code-frame": "^7.27.1",
