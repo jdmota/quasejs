@@ -11,17 +11,15 @@ In any case, it has been a great learning experience.
 
 **[builder](packages/builder)**: Web bundler.
 
-**[cli](packages/cli)**: Allows you to create a command line interface very easily.
+**[cli](packages/cli)**: Tools to create command line interfaces.
 
-**[config](packages/config)**: Utilities to get configuration from files or `package.json`.
+**[config](packages/config)**: Utilities to get configuration from files.
 
-**[error](packages/error)**: Some tools to work with Error objects and their stack.
+**[error](packages/error)**: Tools to work with Error objects and their stack.
 
 **[incremental](packages/incremental)**: A library for incremental computations.
 
 **[parser](packages/languages/parser)**: Parser generator.
-
-**[path-url](packages/path-url)**: Utilities to handle paths and urls.
 
 **[schema](packages/schema)**: Data validation, defaults application, merging.
 
@@ -29,11 +27,13 @@ In any case, it has been a great learning experience.
 
 **[unit](packages/unit)**: A unit testing framework.
 
+**[util](packages/util)**: Several utilities.
+
 **[view](packages/view)**: UI framework.
 
 **[web-app-tools](packages/web-app-tools)**: Tools for Web apps.
 
-And several others...
+And others...
 
 ## FAQ
 
