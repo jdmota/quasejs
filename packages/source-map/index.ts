@@ -10,6 +10,12 @@ import {
 export { SourceMapExtractor, SourceMapExtractorBase };
 export { SourceMapConsumer, SourceMapGenerator };
 
+// Likely that this produces a low resolution source map. Resources to consider:
+// https://github.com/mozilla/source-map/issues/216
+// https://github.com/Rich-Harris/sorcery
+// https://github.com/aleclarson/sorcery
+// https://github.com/rollup/rollup/blob/master/src/utils/collapseSourcemaps.ts
+// https://github.com/babel/babel/blob/master/packages/babel-core/src/transformation/file/merge-map.js
 export async function joinSourceMaps(maps: readonly SourceMapType[]) {
   if (maps.length === 0) {
     throw new Error(`No sourcemaps provided`);
@@ -43,7 +49,8 @@ export function sourceMapToUrl(map: SourceMapType) {
   );
 }
 
-export const SOURCE_MAP_URL = "source" + "MappingURL"; // eslint-disable-line
+// Prevent tooling from mistaking this for an actual sourceMappingURL
+export const SOURCE_MAP_URL = "source" + "MappingURL";
 
 export function sourceMapComment(url: string) {
   return `\n//# ${SOURCE_MAP_URL}=${url}`;
