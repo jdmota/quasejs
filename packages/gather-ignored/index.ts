@@ -1,7 +1,9 @@
 import fs from "fs";
 import path from "path";
 import ora, { type Ora } from "ora";
-import slash from "slash";
+import { Logger, LoggerVerboseLevel } from "../util/logger";
+import { prettifyPath } from "../util/path-url";
+import { timestamp } from "../util/tmp";
 import {
   checkDirty,
   checkStashes,
@@ -12,21 +14,30 @@ import {
 
 // Inspired in https://github.com/brandon-rhodes/uncommitted/blob/master/uncommitted/command.py
 
-function joinLines(lines: readonly string[]): string {
-  if (lines.length === 0) return "";
-  return lines.join("\n") + "\n";
-}
+const DEFAULT_GIT_DIRTY_IGNORE: ReadonlySet<string> = new Set([
+  ".yarn/build-state.yml",
+  ".yarn/install-state.gz",
+  ".yarn/unplugged/",
+  ".yarn/sdks/",
+  "node_modules/",
+]);
 
 export class GatherFiles {
-  private readonly cwd: string;
+  public readonly logger: Logger;
   private spinner: Ora;
   private foundUntracked: boolean;
   private interrupted: boolean;
 
-  constructor(cwd: string) {
-    this.cwd = cwd;
+  constructor(
+    private readonly cwd: string,
+    private readonly gitDirtyIgnore: ReadonlySet<string>
+  ) {
+    this.logger = new Logger("", {
+      colors: false,
+      streams: [],
+      renderPrefix: () => "",
+    });
     this.spinner = ora();
-    this.spinner.prefixText = "";
     this.foundUntracked = false;
     this.interrupted = false;
   }
@@ -35,12 +46,17 @@ export class GatherFiles {
     this.interrupted = true;
   }
 
-  private async checkGit(absoluteFolder: string, relativeFolder: string) {
+  private async checkGit(gitDir: string) {
     if (this.interrupted) return;
-    const dirty = await checkDirty(absoluteFolder, {
-      untrackedFiles: "normal",
-      showIgnored: true,
-    });
+
+    const absoluteFolder = path.resolve(gitDir, "..");
+
+    const dirty = (
+      await checkDirty(absoluteFolder, {
+        untrackedFiles: "normal",
+        showIgnored: true,
+      })
+    ).filter(p => !this.gitDirtyIgnore.has(p.path));
 
     if (this.interrupted) return;
     const unpushed = await checkUnpushed(absoluteFolder);
@@ -59,16 +75,28 @@ export class GatherFiles {
       submodules.length
     ) {
       this.foundUntracked = true;
-    }
 
-    this.spinner.prefixText +=
-      joinLines(dirty.map(d => d.path)) +
-      joinLines(unpushed) +
-      joinLines(stashes) +
-      joinLines(submodules);
+      this.logger.info(`Git folder: ${prettifyPath(absoluteFolder)}`);
+
+      for (const { path } of dirty) {
+        this.logger.info(`  ${path}`);
+      }
+
+      for (const path of unpushed) {
+        this.logger.info(`  ${path}`);
+      }
+
+      for (const path of stashes) {
+        this.logger.info(`  ${path}`);
+      }
+
+      for (const path of submodules) {
+        this.logger.info(`  ${path}`);
+      }
+    }
   }
 
-  private async checkNonGit(absoluteFolder: string, relativeFolder: string) {
+  private async checkNonGit(absoluteFolder: string) {
     if (this.interrupted) return;
     const dir = await fs.promises.opendir(absoluteFolder);
 
@@ -76,50 +104,46 @@ export class GatherFiles {
       if (this.interrupted) return;
 
       const absolute = path.join(absoluteFolder, dirent.name);
-      const relative = relativeFolder + "/" + dirent.name;
       if (dirent.isDirectory()) {
-        await this.check(absolute, relative, false);
+        await this.check(absolute, false);
       } else {
-        this.spinner.prefixText += `${relative}\n`;
         this.foundUntracked = true;
+        this.logger.info(`File: ${prettifyPath(absolute)}`);
       }
     }
   }
 
-  private async check(
-    absoluteFolder: string,
-    relativeFolder: string,
-    recursive: boolean
-  ) {
-    this.spinner.text = `Checking: ${relativeFolder}\n`;
+  private async check(absoluteFolder: string, recursive: boolean) {
+    this.spinner.text = `Checking: ${prettifyPath(absoluteFolder)}\n`;
 
     const gitDir = await getDotGitDir(absoluteFolder);
 
     if (gitDir) {
-      await this.checkGit(absoluteFolder, relativeFolder);
+      await this.checkGit(gitDir);
     } else if (recursive) {
-      await this.checkNonGit(absoluteFolder, relativeFolder);
+      await this.checkNonGit(absoluteFolder);
     } else {
-      this.spinner.prefixText += `${relativeFolder}/\n`;
       this.foundUntracked = true;
+      this.logger.info(`Non-git folder: ${prettifyPath(absoluteFolder)}`);
     }
   }
 
   async analyze(folders: readonly string[]) {
     this.spinner.start();
 
+    this.logger.info(`CWD: ${this.cwd}`);
+
     for (const folder of folders) {
       const absolute = path.resolve(this.cwd, folder);
-      const relative = slash(path.relative(this.cwd, absolute)) || ".";
-      await this.check(absolute, relative, true);
+      await this.check(absolute, true);
     }
-
-    this.spinner.prefixText += "\n";
 
     if (this.interrupted) {
       this.spinner.fail(`Interrupted`);
     } else if (this.foundUntracked) {
-      this.spinner.fail(`Found untracked files or unpushed changes`);
+      this.spinner.fail(
+        `Found untracked files or unpushed changes. See the log file.`
+      );
     } else {
       this.spinner.succeed(`No untracked files!`);
     }
@@ -134,7 +158,12 @@ export async function bin() {
     folders.push(".");
   }
 
-  const gatherFiles = new GatherFiles(process.cwd());
+  const gatherFiles = new GatherFiles(process.cwd(), DEFAULT_GIT_DIRTY_IGNORE);
+
+  gatherFiles.logger.setStream(
+    fs.createWriteStream(`ignored-found-${timestamp()}.txt`),
+    LoggerVerboseLevel.ALL
+  );
 
   process.once("SIGINT", () => {
     console.log("Interrupting...");
