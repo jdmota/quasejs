@@ -1,5 +1,5 @@
 import { expectType } from "../../../util/miscellaneous";
-import { SchemaInput, SchemaOutput, SchemaType } from "./schema";
+import { type SchemaInput, type SchemaOutput, SchemaType } from "./schema";
 import { dateTime } from "./types/datetime";
 import {
   string,

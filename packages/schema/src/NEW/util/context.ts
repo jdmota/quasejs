@@ -3,9 +3,9 @@ import { assertion } from "../../../../util/miscellaneous";
 import { type SchemaType } from "../schema";
 import { type JsType } from "../types/js-types";
 import { SchemaError } from "./errors";
-import { format, Formatter } from "./format";
+import { format, type Formatter } from "./format";
 import { Path } from "./path";
-import { ValidationError, ValidationResult } from "./result";
+import { type ValidationError, ValidationResult } from "./result";
 
 export type SchemaOpCtxOpts = {
   formatter?: Formatter;
@@ -21,7 +21,7 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
   public readonly allowCircular: boolean;
   private readonly busy: WeakMap<
     WeakKey,
-    Set<SchemaType<any, any> | JsType<any>>
+    Set<SchemaType<any, any> | JsType<any, any>>
   >;
 
   constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
@@ -122,7 +122,7 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     this.errorArr.length = 0;
   }
 
-  pushValue(value: unknown, type: SchemaType<any, any> | JsType<any>) {
+  pushValue(value: unknown, type: SchemaType<any, any> | JsType<any, any>) {
     if (typeof value === "object" && value != null) {
       const seenTypes = this.busy.get(value);
       if (seenTypes) {

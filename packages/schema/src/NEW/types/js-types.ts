@@ -1,6 +1,6 @@
 import { type Class } from "../../../../util/miscellaneous";
-import { SchemaInput, SchemaOutput, SchemaType } from "../schema";
-import { SchemaOpCtx as Ctx, SchemaOpCtxOpts } from "../util/context";
+import { type SchemaInput, type SchemaOutput, SchemaType } from "../schema";
+import { SchemaOpCtx as Ctx, type SchemaOpCtxOpts } from "../util/context";
 import { formatKey } from "../util/format";
 import { ValidationResult } from "../util/result";
 

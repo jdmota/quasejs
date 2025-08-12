@@ -1,6 +1,6 @@
-import { Opaque } from "../../../util/miscellaneous";
-import { FormElementOrPage } from "./forms/forms";
-import { SchemaOpCtx, SchemaOpCtxOpts } from "./util/context";
+import { type Opaque } from "../../../util/miscellaneous";
+import { type FormElementOrPage } from "./forms/forms";
+import { SchemaOpCtx, type SchemaOpCtxOpts } from "./util/context";
 import { ValidationResult } from "./util/result";
 
 export type RefinerOpts = Partial<{
