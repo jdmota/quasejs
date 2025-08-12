@@ -1,12 +1,10 @@
-import { format } from "./util/format";
-import { SchemaOpCtx } from "./util/context";
-
 // Inspired in:
 // https://zod.dev/
 // https://gcanti.github.io/io-ts/
 // https://github.com/sinclairzx81/typebox
 // https://mael.dev/clipanion/
 // https://jsonforms.io/
+// https://pure-parse.vercel.app/guide/why-pure-parse.html
 
 // Question: Why parse and not just validate? Or, why not support both?
 // Answer: I believe that one should use this schema tool to handle user options and other user input. If that is the case, one should be safe and just clone the objects (thus also avoiding unwanted and hidden properties that might be a source of security issues). Pure validation is probably not needed because, when it comes to objects internal to libraries, these ideally should be statically typed anyway.
@@ -24,5 +22,9 @@ import { SchemaOpCtx } from "./util/context";
 // TODO readonly: apply Object.freeze on parse?
 
 // TODO in form generation, we could make disabled options be marked with null, and customized with decorators (or other operators?)
+
+// - [ ] Parsing values
+// - [ ] Form generator
+// - [ ] Cli args generator
 
 export {};

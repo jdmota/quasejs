@@ -27,7 +27,7 @@ export class StringBuilder {
   private currentIndent: number;
   private result: string;
 
-  constructor(private readonly opts: Options) {
+  constructor(private readonly opts: Options = { indent: "  " }) {
     this.currentIndent = 0;
     this.result = "";
   }
@@ -44,11 +44,19 @@ export class StringBuilder {
     this.result += redent(str, this.currentIndent, this.opts);
   }
 
-  newline() {
-    this.result += "\n";
+  line(str: string) {
+    this.add(str + "\n");
   }
 
-  getResult() {
+  stmt(str: string) {
+    this.add(str + ";\n");
+  }
+
+  return(str: string) {
+    this.add(`return ${str};\n`);
+  }
+
+  toString() {
     return this.result;
   }
 }

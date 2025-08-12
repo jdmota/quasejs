@@ -1,7 +1,6 @@
-import { setAdd } from "../../../../util/maps-sets";
-import { assertion } from "../../../../util/miscellaneous";
-import { type SchemaType } from "../schema";
-import { type JsType } from "../types/js-types";
+import { setAdd } from "../../util/maps-sets";
+import { assertion } from "../../util/miscellaneous";
+import type { SchemaType } from "../schema-type";
 import { SchemaError } from "./errors";
 import { format, type Formatter } from "./format";
 import { Path } from "./path";
@@ -19,10 +18,7 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
   public readonly formatter: Formatter;
   public readonly abortEarly: boolean;
   public readonly allowCircular: boolean;
-  private readonly busy: WeakMap<
-    WeakKey,
-    Set<SchemaType<any, any> | JsType<any, any>>
-  >;
+  private readonly busy: WeakMap<WeakKey, Set<SchemaType>>;
 
   constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
     this.path = Path.create();
@@ -122,7 +118,9 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     this.errorArr.length = 0;
   }
 
-  pushValue(value: unknown, type: SchemaType<any, any> | JsType<any, any>) {
+  // TODO how to better deal with circular stuff?
+
+  pushValue(value: unknown, type: SchemaType) {
     if (typeof value === "object" && value != null) {
       const seenTypes = this.busy.get(value);
       if (seenTypes) {

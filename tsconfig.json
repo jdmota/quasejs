@@ -16,5 +16,5 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true
   },
-  "exclude": ["**/node_modules/**", "**/__dev__/**", "scripts", "**/_legacy/**"]
+  "exclude": ["**/node_modules/**", "**/__dev__/**", "**/_legacy/**"]
 }
