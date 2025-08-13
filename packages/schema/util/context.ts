@@ -1,6 +1,4 @@
-import { setAdd } from "../../util/maps-sets";
 import { assertion } from "../../util/miscellaneous";
-import type { SchemaType } from "../schema-type";
 import { SchemaError } from "./errors";
 import { format, type Formatter } from "./format";
 import { Path } from "./path";
@@ -9,7 +7,6 @@ import { type ValidationError, ValidationResult } from "./result";
 export type SchemaOpCtxOpts = {
   formatter?: Formatter;
   abortEarly?: boolean;
-  allowCircular?: boolean;
 };
 
 export class SchemaOpCtx implements SchemaOpCtxOpts {
@@ -17,19 +14,17 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
   private readonly errorArr: SchemaError[];
   public readonly formatter: Formatter;
   public readonly abortEarly: boolean;
-  public readonly allowCircular: boolean;
-  private readonly busy: WeakMap<WeakKey, Set<SchemaType>>;
+  private readonly busy: WeakSet<WeakKey>;
 
   constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
     this.path = Path.create();
     this.errorArr = [];
     this.formatter = opts.formatter ?? format;
-    this.abortEarly = opts.abortEarly ?? false;
-    this.allowCircular = opts.allowCircular ?? false;
-    this.busy = new WeakMap();
+    this.abortEarly = opts.abortEarly ?? true;
+    this.busy = new WeakSet();
   }
 
-  static new(ctx: SchemaOpCtxOpts | SchemaOpCtx) {
+  static new(ctx: SchemaOpCtxOpts | SchemaOpCtx = {}) {
     return new SchemaOpCtx(ctx);
   }
 
@@ -118,19 +113,12 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     this.errorArr.length = 0;
   }
 
-  // TODO how to better deal with circular stuff?
-
-  pushValue(value: unknown, type: SchemaType) {
+  pushValue(value: unknown) {
     if (typeof value === "object" && value != null) {
-      const seenTypes = this.busy.get(value);
-      if (seenTypes) {
-        if (!this.allowCircular) {
-          return false;
-        }
-        return setAdd(seenTypes, type);
-      } else {
-        this.busy.set(value, new Set([type]));
+      if (this.busy.has(value)) {
+        return false;
       }
+      this.busy.add(value);
     }
     return true;
   }

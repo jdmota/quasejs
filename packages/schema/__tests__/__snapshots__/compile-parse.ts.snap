@@ -1,0 +1,175 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`compile parse example 1`] = `
+{
+  "contents": "const parseCircular = (fn, value, ctx) => {
+  if (ctx.pushValue(value)) {
+    const r = fn(value, ctx);
+    ctx.popValue(value);
+    return r;
+  }
+  return ctx.error("Circular reference disallowed");
+};
+const hasOwn = Object.prototype.hasOwnProperty;
+const hasProp = (o, k) => hasOwn.call(o, k);
+const PROTO_KEY = "__proto__";
+const getProp = (o, k) => (hasProp(o, k) ? o[k] : undefined);
+const catchUnknownKeys = (object, ctx, newEntries, extraneousKeys, keyParse, valueParse, partial) => {
+  for (const key of extraneousKeys) {
+    ctx.push(key, "key");
+    const keyResult = keyParse(key, ctx);
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+    ctx.push(key, "value");
+    const value = getProp(object, key);
+    if (!partial || value !== undefined) {
+      const valueResult = valueParse(value, ctx);
+      if (keyResult.ok && valueResult.ok) {
+        newEntries.push([keyResult.value, valueResult.value]);
+      }
+    }
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+  }
+};
+const formatKey = key => JSON.stringify(key);
+const reportExtraneousKeys = (ctx, extraneousKeys) => {
+  return ctx.error(
+    \`Extraneous properties: \${Array.from(extraneousKeys)
+      .map(k => formatKey(k))
+      .join(", ")}\`
+  );
+};
+
+const parse_object = (value, ctx) => {
+  return parseCircular(parse_helper_object, value, ctx);
+};
+const parse_helper_object = (value, ctx) => {
+  const object = value;
+  if (typeof object === "object" && object != null) {
+    const newEntries = []; let value, decoded;
+    if (hasProp(object, PROTO_KEY)) {
+      ctx.addError("Object has own property __proto__");
+      if (ctx.shouldAbort()) return ctx.returnErrors();
+    }
+    const extraneousKeys = new Set(Object.keys(object));
+    ctx.push("a");
+    value = getProp(object, "a");
+    decoded = parse_null(value, ctx);
+    if (decoded.ok) {
+      newEntries.push(["a", decoded.value]);
+    }
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+    extraneousKeys.delete("a");
+    ctx.push("b");
+    value = getProp(object, "b");
+    decoded = parse_number(value, ctx);
+    if (decoded.ok) {
+      newEntries.push(["b", decoded.value]);
+    }
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+    extraneousKeys.delete("b");
+    ctx.push("c");
+    value = getProp(object, "c");
+    decoded = parse_array(value, ctx);
+    if (decoded.ok) {
+      newEntries.push(["c", decoded.value]);
+    }
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+    extraneousKeys.delete("c");
+    ctx.push("d");
+    value = getProp(object, "d");
+    decoded = parse_object0(value, ctx);
+    if (decoded.ok) {
+      newEntries.push(["d", decoded.value]);
+    }
+    ctx.pop();
+    if (ctx.shouldAbort()) return ctx.returnErrors();
+    extraneousKeys.delete("d");
+    if (extraneousKeys.size > 0) {
+      return reportExtraneousKeys(ctx, extraneousKeys);
+    }
+    return ctx.result(Object.fromEntries(newEntries));
+  }
+  return ctx.error("Value is not an object");
+};
+
+const parse_null = (value, ctx) => {
+  return value === null ? ctx.result(value) : ctx.error("Value is not null");
+};
+
+const parse_number = (value, ctx) => {
+  return typeof value === "number" ? ctx.result(value) : ctx.error("Value is not a number");
+};
+
+const parse_array = (value, ctx) => {
+  return parseCircular(parse_helper_array, value, ctx);
+};
+const parse_helper_array = (value, ctx) => {
+  if (Array.isArray(value)) {
+    const newArray = [];
+    for (let i = 0; i < value.length; i++) {
+      ctx.push(i);
+      const result = parse_string(value[i], ctx);
+      if (result.ok) newArray.push(result.value);
+      ctx.pop();
+      if (ctx.shouldAbort()) break;
+    }
+    return ctx.result(newArray);
+  }
+  return ctx.error("Value is not an array");
+};
+
+const parse_string = (value, ctx) => {
+  return typeof value === "string" ? ctx.result(value) : ctx.error("Value is not a string");
+};
+
+const parse_object0 = (value, ctx) => {
+  return parseCircular(parse_helper_object0, value, ctx);
+};
+const parse_helper_object0 = (value, ctx) => {
+  const object = value;
+  if (typeof object === "object" && object != null) {
+    const newEntries = []; let value, decoded;
+    if (hasProp(object, PROTO_KEY)) {
+      ctx.addError("Object has own property __proto__");
+      if (ctx.shouldAbort()) return ctx.returnErrors();
+    }
+    const extraneousKeys = new Set(Object.keys(object));
+    catchUnknownKeys(object, ctx, newEntries, extraneousKeys, parse_string, parse_bigint, false);
+    return ctx.result(Object.fromEntries(newEntries));
+  }
+  return ctx.error("Value is not an object");
+};
+
+const parse_bigint = (value, ctx) => {
+  return typeof value === "bigint" ? ctx.result(value) : ctx.error("Value is not a bigint");
+};
+",
+  "entryFunc": "parse_object",
+  "makeFunc": [Function],
+}
+`;
+
+exports[`compile parse example 2`] = `
+{
+  "errors": [
+    SchemaError {
+      "message": "Value is not null",
+      "path": Path {
+        "context": null,
+        "key": "a",
+        "parent": Path {
+          "context": null,
+          "key": null,
+          "parent": null,
+        },
+      },
+    },
+  ],
+  "ok": false,
+}
+`;

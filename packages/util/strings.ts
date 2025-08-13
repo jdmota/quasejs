@@ -34,26 +34,42 @@ export class StringBuilder {
 
   indent() {
     this.currentIndent++;
+    return this;
   }
 
   unindent() {
     this.currentIndent--;
+    return this;
   }
 
-  add(str: string) {
-    this.result += redent(str, this.currentIndent, this.opts);
+  block(fn: (s: StringBuilder) => void) {
+    this.indent();
+    fn(this);
+    this.unindent();
+    return this;
   }
 
-  line(str: string) {
-    this.add(str + "\n");
+  add(str: string, opts = { trimLeftNewLine: true }) {
+    let redented = redent(str, this.currentIndent, this.opts);
+    if (opts.trimLeftNewLine) {
+      if (redented.startsWith("\n")) {
+        redented = redented.slice(1);
+      }
+    }
+    this.result += redented;
+    return this;
+  }
+
+  line(str: string, opts = { trimLeftNewLine: true }) {
+    return this.add(str + "\n", opts);
   }
 
   stmt(str: string) {
-    this.add(str + ";\n");
+    return this.add(str + ";\n");
   }
 
   return(str: string) {
-    this.add(`return ${str};\n`);
+    return this.add(`return ${str};\n`);
   }
 
   toString() {
