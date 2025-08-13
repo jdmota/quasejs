@@ -37,7 +37,6 @@ const reportExtraneousKeys = (ctx, extraneousKeys) => {
       .join(", ")}`
   );
 };
-
 const parse_object = (value, ctx) => {
   return parseCircular(parse_helper_object, value, ctx);
 };
@@ -93,15 +92,12 @@ const parse_helper_object = (value, ctx) => {
   }
   return ctx.error("Value is not an object");
 };
-
 const parse_null = (value, ctx) => {
   return value === null ? ctx.result(value) : ctx.error("Value is not null");
 };
-
 const parse_number = (value, ctx) => {
   return typeof value === "number" ? ctx.result(value) : ctx.error("Value is not a number");
 };
-
 const parse_array = (value, ctx) => {
   return parseCircular(parse_helper_array, value, ctx);
 };
@@ -119,11 +115,9 @@ const parse_helper_array = (value, ctx) => {
   }
   return ctx.error("Value is not an array");
 };
-
 const parse_string = (value, ctx) => {
   return typeof value === "string" ? ctx.result(value) : ctx.error("Value is not a string");
 };
-
 const parse_object0 = (value, ctx) => {
   return parseCircular(parse_helper_object0, value, ctx);
 };
@@ -141,7 +135,6 @@ const parse_helper_object0 = (value, ctx) => {
   }
   return ctx.error("Value is not an object");
 };
-
 const parse_bigint = (value, ctx) => {
   return typeof value === "bigint" ? ctx.result(value) : ctx.error("Value is not a bigint");
 };

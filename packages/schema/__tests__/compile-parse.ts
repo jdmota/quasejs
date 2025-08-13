@@ -1,7 +1,14 @@
-import { expect, it } from "@jest/globals";
+import { beforeAll, expect, it } from "@jest/globals";
 import { builtin as t } from "../builtin-types";
-import { compileParse } from "../compilers/compile-parse";
+import {
+  compileParse,
+  registerParseCompilers,
+} from "../compilers/compile-parse";
 import { SchemaOpCtx } from "../util/context";
+
+beforeAll(async () => {
+  await registerParseCompilers();
+});
 
 it("compile parse example", () => {
   const obj = t.object({

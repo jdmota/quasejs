@@ -1,20 +1,18 @@
 import { StringBuilder } from "../../util/strings";
-import { UniqueNames } from "../../util/unique-names";
-import {
-  SchemaAlias,
-  SchemaWithDecorator,
-  type SchemaType,
-} from "../schema-type";
-import { isBuiltinType, requiresCircularCheck } from "../builtin-types";
+import { type SchemaType } from "../schema-type";
+import { BaseSchemaCompiler, SchemaCompilersRegistry } from "./common";
 
 type ParseCompileResult = { name: string; compiled: string };
 
 export type ParseCompileCtx = Readonly<{
+  compiler: ParseCompiler;
   name: string;
   helpers: StringBuilder;
   body: StringBuilder;
-  compiler: ParseCompiler;
 }>;
+
+export const parseCompilerRegistry =
+  new SchemaCompilersRegistry<ParseCompileCtx>("parse");
 
 const helpers = {
   formatKey: `key => JSON.stringify(key)`,
@@ -84,30 +82,13 @@ const helpers = {
   },
 } as const;
 
-export class ParseCompiler {
-  readonly names: UniqueNames;
-  private readonly helpers: Map<string, string>;
-  private readonly compiled: Map<SchemaType, ParseCompileResult>;
-
+export class ParseCompiler extends BaseSchemaCompiler<
+  typeof parseCompilerRegistry,
+  keyof typeof helpers,
+  ParseCompileResult
+> {
   constructor() {
-    this.names = new UniqueNames(Object.keys(helpers));
-    this.helpers = new Map();
-    this.compiled = new Map();
-  }
-
-  helper(kind: keyof typeof helpers) {
-    if (!this.helpers.has(kind)) {
-      const helper = helpers[kind];
-      if (typeof helper === "string") {
-        this.helpers.set(kind, helper);
-      } else {
-        for (const dep of helper.dependencies) {
-          this.helper(dep);
-        }
-        this.helpers.set(kind, helper.code);
-      }
-    }
-    return kind;
+    super(parseCompilerRegistry, helpers);
   }
 
   compile(type: SchemaType) {
@@ -120,54 +101,23 @@ export class ParseCompiler {
       const helpers = new StringBuilder();
       const body = new StringBuilder();
 
-      if (isBuiltinType(type)) {
-        body.line(`const ${result.name} = (value, ctx) => {`);
-        body.indent();
+      parseCompilerRegistry.compile(type, {
+        name,
+        helpers,
+        body,
+        compiler: this,
+      });
 
-        if (requiresCircularCheck(type)) {
-          const name2 = this.names.new(`parse_helper_${type.getName()}`);
-          body.return(`${this.helper("parseCircular")}(${name2}, value, ctx)`);
-          body.unindent();
-          body.line(`};`);
-          body.line(`const ${name2} = (value, ctx) => {`);
-          body.indent();
-        }
-
-        type.compileParse({
-          name: result.name,
-          helpers,
-          body,
-          compiler: this,
-        });
-
-        body.unindent();
-        body.add(`};`);
-      } else if (type instanceof SchemaWithDecorator) {
-        body.stmt(`const ${result.name} = ${this.compile(type.target)}`);
-      } else if (type instanceof SchemaAlias) {
-        body.stmt(`const ${result.name} = ${this.compile(type.target)}`);
-      } else {
-        // TODO thing better about how to support extensions...
-        body.line(`const ${result.name} = (value, ctx) => {`);
-        body.indent();
-        type.compile("Parse", {
-          name: result.name,
-          helpers,
-          body,
-          compiler: this,
-        });
-        body.unindent();
-        body.add(`};`);
-      }
-
-      result.compiled = helpers.toString() + "\n" + body.toString();
+      const helpersCode = helpers.toString();
+      const bodyCode = body.toString();
+      result.compiled = helpersCode ? helpersCode + "\n" + bodyCode : bodyCode;
     }
     return result.name;
   }
 
   toString() {
     let str = "";
-    for (const [name, code] of this.helpers) {
+    for (const [name, code] of this.usedHelpers) {
       str += `const ${name} = ${code};\n`;
     }
     for (const { compiled } of this.compiled.values()) {
@@ -175,6 +125,10 @@ export class ParseCompiler {
     }
     return str;
   }
+}
+
+export function registerParseCompilers() {
+  return import("./impl/parse");
 }
 
 export function compileParse(type: SchemaType) {

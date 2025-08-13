@@ -1,14 +1,14 @@
-export abstract class SchemaDecorator {
+export abstract class SchemaDecorator<
+  Target extends SchemaType,
+  Out extends SchemaType,
+> {
   abstract getName(): string;
-  abstract canCompile(kind: string): boolean;
-  abstract compile(
-    target: SchemaType,
-    kind: string,
-    ...args: readonly unknown[]
-  ): unknown;
+  abstract build(target: Target): Out;
 }
 
 export class SchemaType {
+  constructor(readonly metadata?: unknown) {}
+
   getName() {
     return "type";
   }
@@ -17,23 +17,8 @@ export class SchemaType {
     return new SchemaAlias(this, name);
   }
 
-  decorate(decorator: SchemaDecorator): SchemaWithDecorator {
-    return new SchemaWithDecorator(this, decorator);
-  }
-
-  compile(kind: string, ...args: readonly unknown[]) {
-    if (!kind) {
-      throw new Error(`Empty kind string`);
-    }
-
-    const method = `compile${kind}`;
-    const func = (this as any)[method];
-
-    if (typeof func !== "function") {
-      throw new Error(`Found no ${method} method`);
-    }
-
-    return func.call(this, ...args);
+  decorate<T extends SchemaType>(decorator: SchemaDecorator<this, T>) {
+    return decorator.build(this);
   }
 }
 
@@ -53,31 +38,5 @@ export class SchemaAlias extends SchemaType {
 
   override getName() {
     return this.name;
-  }
-}
-
-export class SchemaWithDecorator extends SchemaType {
-  static build(target: SchemaType, decorator: SchemaDecorator) {
-    return new SchemaWithDecorator(target, decorator);
-  }
-
-  readonly _tag = "SchemaWithDecorator";
-
-  constructor(
-    readonly target: SchemaType,
-    readonly decorator: SchemaDecorator
-  ) {
-    super();
-  }
-
-  override getName() {
-    return `${this.target.getName()}$${this.decorator.getName()}`;
-  }
-
-  override compile(kind: string, ...args: readonly unknown[]) {
-    if (this.decorator.canCompile(kind)) {
-      return this.decorator.compile(this, kind, ...args);
-    }
-    return super.compile(kind, ...args);
   }
 }

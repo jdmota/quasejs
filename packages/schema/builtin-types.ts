@@ -1,44 +1,18 @@
-import { never, nonNull } from "../util/miscellaneous";
+import { VALID_JS_ID } from "../util/js-identifiers";
 import { UniqueNames } from "../util/unique-names";
-import type { ParseCompileCtx } from "./compilers/compile-parse";
 import { SchemaType } from "./schema-type";
-import { SchemaOpCtx } from "./util/context";
-import { formatKey } from "./util/format";
-import type { ValidationResult } from "./util/result";
 
-type Parser = (
-  type: SchemaType,
-  value: unknown,
-  ctx: SchemaOpCtx
-) => ValidationResult<unknown>;
+abstract class BuiltinSchemaType extends SchemaType {}
 
-abstract class BuiltinSchemaType extends SchemaType {
-  abstract parse(
-    value: unknown,
-    ctx: SchemaOpCtx,
-    rec: Parser
-  ): ValidationResult<unknown>;
+export type { BuiltinSchemaType };
 
-  abstract compileParse(ctx: ParseCompileCtx): void;
-}
-
-abstract class BuiltinSchemaTypeWithCircularCheck extends BuiltinSchemaType {}
-
-export class UnknownType extends BuiltinSchemaTypeWithCircularCheck {
+export class UnknownType extends BuiltinSchemaType {
   static build = new UnknownType();
 
   readonly _tag = "UnknownType";
 
   override getName() {
     return "unknown";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return ctx.result(value);
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(`ctx.result(value)`);
   }
 }
 
@@ -50,18 +24,6 @@ export class UndefinedType extends BuiltinSchemaType {
   override getName() {
     return "undefined";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return value === undefined
-      ? ctx.result(value)
-      : ctx.error("Value is not undefined");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `value === undefined ? ctx.result(value) : ctx.error("Value is not undefined")`
-    );
-  }
 }
 
 export class NullType extends BuiltinSchemaType {
@@ -71,16 +33,6 @@ export class NullType extends BuiltinSchemaType {
 
   override getName() {
     return "null";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return value === null ? ctx.result(value) : ctx.error("Value is not null");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `value === null ? ctx.result(value) : ctx.error("Value is not null")`
-    );
   }
 }
 
@@ -103,37 +55,6 @@ export class LiteralType extends BuiltinSchemaType {
   override getName() {
     return "literal";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return value === this.value
-      ? ctx.result(this.value)
-      : ctx.error("Invalid literal");
-  }
-
-  private toJSLiteral(): string {
-    switch (typeof this.value) {
-      case "string":
-        return JSON.stringify(this.value);
-      case "number":
-        return this.value + "";
-      case "bigint":
-        return this.value + "n";
-      case "boolean":
-        return this.value + "";
-      case "symbol":
-        return `Symbol.for(${JSON.stringify(this.value.description)})`;
-      default:
-        never(this.value);
-    }
-  }
-
-  compileParse({ compiler, helpers, body }: ParseCompileCtx) {
-    const expected = compiler.names.new(`expected_${this.getName()}`);
-    helpers.stmt(`const ${expected} = ${this.toJSLiteral()}`);
-    body.return(
-      `value === ${expected} ? ctx.result(${expected}) : ctx.error("Invalid literal")`
-    );
-  }
 }
 
 // TODO https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
@@ -147,18 +68,6 @@ export class StringType extends BuiltinSchemaType {
   override getName() {
     return "string";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return typeof value === "string"
-      ? ctx.result(value)
-      : ctx.error("Value is not a string");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `typeof value === "string" ? ctx.result(value) : ctx.error("Value is not a string")`
-    );
-  }
 }
 
 export class NumberType extends BuiltinSchemaType {
@@ -168,18 +77,6 @@ export class NumberType extends BuiltinSchemaType {
 
   override getName() {
     return "number";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return typeof value === "number"
-      ? ctx.result(value)
-      : ctx.error("Value is not a number");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `typeof value === "number" ? ctx.result(value) : ctx.error("Value is not a number")`
-    );
   }
 }
 
@@ -191,18 +88,6 @@ export class BigintType extends BuiltinSchemaType {
   override getName() {
     return "bigint";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return typeof value === "bigint"
-      ? ctx.result(value)
-      : ctx.error("Value is not a bigint");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `typeof value === "bigint" ? ctx.result(value) : ctx.error("Value is not a bigint")`
-    );
-  }
 }
 
 export class BooleanType extends BuiltinSchemaType {
@@ -212,18 +97,6 @@ export class BooleanType extends BuiltinSchemaType {
 
   override getName() {
     return "boolean";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return typeof value === "boolean"
-      ? ctx.result(value)
-      : ctx.error("Value is not a boolean");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `typeof value === "boolean" ? ctx.result(value) : ctx.error("Value is not a boolean")`
-    );
   }
 }
 
@@ -235,21 +108,9 @@ export class SymbolType extends BuiltinSchemaType {
   override getName() {
     return "symbol";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return typeof value === "symbol"
-      ? ctx.result(value)
-      : ctx.error("Value is not a symbol");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    body.return(
-      `typeof value === "symbol" ? ctx.result(value) : ctx.error("Value is not a symbol")`
-    );
-  }
 }
 
-export class ArrayType extends BuiltinSchemaTypeWithCircularCheck {
+export class ArrayType extends BuiltinSchemaType {
   static build(element: SchemaType, readonly: boolean = true) {
     return new ArrayType(element, readonly);
   }
@@ -265,39 +126,6 @@ export class ArrayType extends BuiltinSchemaTypeWithCircularCheck {
 
   override getName() {
     return "array";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    if (Array.isArray(value)) {
-      const newArray = [];
-      for (let i = 0; i < value.length; i++) {
-        ctx.push(i);
-        const result = rec(this.element, value[i], ctx);
-        if (result.ok) newArray.push(result.value);
-        ctx.pop();
-        if (ctx.shouldAbort()) break;
-      }
-      return ctx.result(newArray);
-    }
-    return ctx.error("Value is not an array");
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.line(
-      `
-      if (Array.isArray(value)) {
-        const newArray = [];
-        for (let i = 0; i < value.length; i++) {
-          ctx.push(i);
-          const result = ${compiler.compile(this.element)}(value[i], ctx);
-          if (result.ok) newArray.push(result.value);
-          ctx.pop();
-          if (ctx.shouldAbort()) break;
-        }
-        return ctx.result(newArray);
-      }
-      return ctx.error("Value is not an array");`
-    );
   }
 }
 
@@ -315,7 +143,7 @@ type TupleItem = Readonly<{
   rest: boolean;
 }>;
 
-export class TupleType extends BuiltinSchemaTypeWithCircularCheck {
+export class TupleType extends BuiltinSchemaType {
   static build(elements: readonly TupleItemOpt[], readonly: boolean = true) {
     return new TupleType(elements, readonly);
   }
@@ -337,7 +165,10 @@ export class TupleType extends BuiltinSchemaTypeWithCircularCheck {
       if (!(item instanceof SchemaType)) {
         if (item.name) {
           if (!uniqNames.mark(item.name)) {
-            throw new Error(`Duplicate tuple item name ${item.name}`);
+            throw new Error(`Duplicate tuple item name: ${item.name}`);
+          }
+          if (!VALID_JS_ID.test(item.name)) {
+            throw new Error(`Invalid tuple item name: ${item.name}`);
           }
         }
         if (item.rest) {
@@ -364,80 +195,6 @@ export class TupleType extends BuiltinSchemaTypeWithCircularCheck {
 
   override getName() {
     return "tuple";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    if (
-      Array.isArray(value) &&
-      (this.hasRest == null
-        ? this.elements.length === value.length
-        : this.elements.length <= value.length)
-    ) {
-      const newTuple = [];
-      for (let i = 0; i < this.elements.length; i++) {
-        ctx.push(i);
-        const result = rec(this.elements[i].type, value[i], ctx);
-        if (result.ok) newTuple.push(result.value);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }
-      const restType = this.elements.at(-1)?.type;
-      for (let i = this.elements.length; i < value.length; i++) {
-        ctx.push(i);
-        const result = rec(restType!, value[i], ctx);
-        if (result.ok) newTuple.push(result.value);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }
-      return ctx.result(newTuple);
-    }
-    return ctx.error("Value is not a tuple of size " + this.elements.length);
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.line(
-      `
-      if (
-        Array.isArray(value) &&
-        ${
-          this.hasRest == null
-            ? `${this.elements.length} === value.length`
-            : `${this.elements.length} <= value.length`
-        }
-      ) {
-        const newTuple = []; let result;`
-    );
-    body.indent();
-    for (let i = 0; i < this.elements.length; i++) {
-      body.line(
-        `
-        ctx.push(${i});
-        result = ${compiler.compile(this.elements[i].type)}(value[${i}], ctx);
-        if (result.ok) newTuple.push(result.value);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();`
-      );
-    }
-    if (this.hasRest) {
-      const restType = nonNull(this.elements.at(-1)).type;
-      body.line(
-        `
-        for (let i = ${this.elements.length}; i < value.length; i++) {
-          ctx.push(i);
-          const result = ${compiler.compile(restType)}(value[i], ctx);
-          if (result.ok) newTuple.push(result.value);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-        }`
-      );
-    }
-    body.unindent();
-    body.line(
-      `
-        return ctx.result(newTuple);
-      }
-      return ctx.error("Value is not a tuple of size " + ${this.elements.length});`
-    );
   }
 }
 
@@ -480,7 +237,7 @@ const getProp = (o: any, k: string) => (hasProp(o, k) ? o[k] : undefined);
 
 const PROTO_KEY = "__proto__";
 
-export class ObjectType extends BuiltinSchemaTypeWithCircularCheck {
+export class ObjectType extends BuiltinSchemaType {
   static build(
     structure: ObjStructure,
     exact: boolean | UnknownKeysOpts = true
@@ -524,203 +281,26 @@ export class ObjectType extends BuiltinSchemaTypeWithCircularCheck {
   override getName() {
     return "object";
   }
-
-  parse(object: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    if (typeof object === "object" && object != null) {
-      const newEntries = [];
-      if (hasProp(object, PROTO_KEY)) {
-        ctx.addError("Object has own property __proto__");
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }
-      const extraneousKeys = new Set(Object.keys(object));
-      for (const [key, { partial, type }] of this.entries) {
-        ctx.push(key);
-        const value = getProp(object, key);
-        if (!partial || value !== undefined) {
-          const decoded = rec(type, value, ctx);
-          if (decoded.ok) {
-            newEntries.push([key, decoded.value]);
-          }
-        }
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-        extraneousKeys.delete(key);
-      }
-      if (this.exact === true) {
-        // Strict
-        if (extraneousKeys.size > 0) {
-          return ctx.error(
-            `Extraneous properties: ${Array.from(extraneousKeys)
-              .map(k => formatKey(k))
-              .join(", ")}`
-          );
-        }
-      } else if (this.exact === false) {
-        // Strip
-      } else {
-        // Catch unknown keys
-        for (const key of extraneousKeys) {
-          ctx.push(key, "key");
-          const keyResult = rec(this.exact.key, key, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          ctx.push(key, "value");
-          const value = getProp(object, key);
-          if (!this.exact.partial || value !== undefined) {
-            const valueResult = rec(this.exact.value, value, ctx);
-            if (keyResult.ok && valueResult.ok) {
-              newEntries.push([keyResult.value, valueResult.value]);
-            }
-          }
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-        }
-      }
-      return ctx.result(Object.fromEntries(newEntries));
-    }
-    return ctx.error("Value is not an object");
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.stmt("const object = value");
-    body.line(
-      `
-      if (typeof object === "object" && object != null) {
-        const newEntries = []; let value, decoded;`
-    );
-    body.indent();
-    body.line(
-      `
-      if (${compiler.helper("hasProp")}(object, ${compiler.helper("PROTO_KEY")})) {
-        ctx.addError("Object has own property __proto__");
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }`
-    );
-    if (this.exact !== false) {
-      body.line(`const extraneousKeys = new Set(Object.keys(object));`);
-    }
-    for (const [key, { partial, type }] of this.entries) {
-      body.line(`ctx.push(${JSON.stringify(key)});`);
-      body.line(
-        `value = ${compiler.helper("getProp")}(object, ${JSON.stringify(key)});`
-      );
-      if (partial) {
-        body.line(`if (value !== undefined) {`);
-        body.indent();
-      }
-      body.line(
-        `
-        decoded = ${compiler.compile(type)}(value, ctx);
-        if (decoded.ok) {
-          newEntries.push([${JSON.stringify(key)}, decoded.value]);
-        }`
-      );
-      if (partial) {
-        body.unindent();
-        body.line(`}`);
-      }
-      body.line(`ctx.pop();`);
-      body.line(`if (ctx.shouldAbort()) return ctx.returnErrors();`);
-      if (this.exact !== false) {
-        body.line(`extraneousKeys.delete(${JSON.stringify(key)});`);
-      }
-    }
-    if (this.exact === true) {
-      // Strict
-      body.line(
-        `
-        if (extraneousKeys.size > 0) {
-          return ${compiler.helper("reportExtraneousKeys")}(ctx, extraneousKeys);
-        }`
-      );
-    } else if (this.exact === false) {
-      // Strip
-    } else {
-      // Catch unknown keys
-      body.stmt(
-        `${compiler.helper("catchUnknownKeys")}(object, ctx, newEntries, extraneousKeys, ${compiler.compile(this.exact.key)}, ${compiler.compile(this.exact.value)}, ${this.exact.partial})`
-      );
-    }
-    body.unindent();
-    body.line(
-      `
-        return ctx.result(Object.fromEntries(newEntries));
-      }
-      return ctx.error("Value is not an object");`
-    );
-  }
 }
 
-export class RecordType extends BuiltinSchemaTypeWithCircularCheck {
-  static build(key: SchemaType, value: SchemaType) {
-    return new RecordType(key, value);
+export class RecordType extends BuiltinSchemaType {
+  static build(key: SchemaType, value: SchemaType, readonly = true) {
+    return new RecordType(key, value, readonly);
   }
 
   readonly _tag = "RecordType";
 
   constructor(
     readonly key: SchemaType,
-    readonly value: SchemaType
+    readonly value: SchemaType,
+    readonly readonly: boolean
   ) {
     super();
+    // TODO validate kind of key: string | number | symbol
   }
 
   override getName() {
     return "record";
-  }
-
-  parse(object: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    if (typeof object === "object" && object != null) {
-      if (hasProp(object, PROTO_KEY)) {
-        ctx.addError("Object has own property __proto__");
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }
-      const newEntries = [];
-      for (const [key, value] of Object.entries(object)) {
-        ctx.push(key, "key");
-        const keyResult = rec(this.key, key, ctx);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-        ctx.push(key, "value");
-        const valueResult = rec(this.value, value, ctx);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-        if (keyResult.ok && valueResult.ok) {
-          newEntries.push([keyResult.value, valueResult.value]);
-        }
-      }
-      return ctx.result(Object.fromEntries(newEntries));
-    }
-    return ctx.error("Value is not an object");
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.stmt("const object = value");
-    body.line(
-      `
-      if (typeof object === "object" && object != null) {
-        if (${compiler.helper("hasProp")}(object, ${compiler.helper("PROTO_KEY")})) {
-          ctx.addError("Object has own property __proto__");
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-        }
-        const newEntries = [];
-        for (const [key, value] of Object.entries(object)) {
-          ctx.push(key, "key");
-          const keyResult = ${compiler.compile(this.key)}(key, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          ctx.push(key, "value");
-          const valueResult = ${compiler.compile(this.value)}(value, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          if (keyResult.ok && valueResult.ok) {
-            newEntries.push([keyResult.value, valueResult.value]);
-          }
-        }
-        return ctx.result(Object.fromEntries(newEntries));
-      }
-      return ctx.error("Value is not an object");`
-    );
   }
 }
 
@@ -738,31 +318,6 @@ export class UnionType extends BuiltinSchemaType {
   override getName() {
     return "union";
   }
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    for (const item of this.items) {
-      const itemCtx = SchemaOpCtx.new(ctx);
-      const result = rec(item, value, itemCtx);
-      if (itemCtx.isOK()) {
-        return result;
-      }
-    }
-    return ctx.error("Value does not belong to union");
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    for (const item of this.items) {
-      body.line(
-        `
-        const itemCtx = SchemaOpCtx.new(ctx);
-        const result = ${compiler.compile(item)}(value, itemCtx);
-        if (itemCtx.isOK()) {
-          return result;
-        }`
-      );
-    }
-    body.return(`ctx.error("Value does not belong to union")`);
-  }
 }
 
 export class IntersectionType extends BuiltinSchemaType {
@@ -778,14 +333,6 @@ export class IntersectionType extends BuiltinSchemaType {
 
   override getName() {
     return "intersection";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser): never {
-    throw new Error("TODO");
-  }
-
-  compileParse({ body }: ParseCompileCtx) {
-    throw new Error("TODO");
   }
 }
 
@@ -807,58 +354,11 @@ export class FunctionType extends BuiltinSchemaType {
   override getName() {
     return "function";
   }
-
-  // TODO support "this" checking?
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    if (typeof value === "function") {
-      const lockCtx = SchemaOpCtx.new(ctx);
-      const funcType = this;
-      return ctx.result(function (this: unknown, ...args: any[]) {
-        const newCtx = SchemaOpCtx.new(lockCtx);
-        /* newCtx.push(null, "this");
-        const thisResult = funcType.thisS.par(this, newCtx);
-        newCtx.pop(); */
-        if (newCtx.shouldAbort()) return newCtx.returnErrors();
-        newCtx.push(null, "arguments");
-        const argsResult = rec(funcType.args, args, newCtx);
-        newCtx.pop();
-        if (/* !thisResult.ok || */ !argsResult.ok) return argsResult;
-        const result = Reflect.apply(
-          value,
-          /* thisResult.value */ this,
-          argsResult.value as any[]
-        );
-        newCtx.push(null, "return");
-        return rec(funcType.ret, result, newCtx);
-      });
-    }
-    return ctx.error("Value is not a function");
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.line(
-      `
-      if (typeof value === "function") {
-        const lockCtx = SchemaOpCtx.new(ctx);
-        return ctx.result(function (...args) {
-          const newCtx = SchemaOpCtx.new(lockCtx);
-          if (newCtx.shouldAbort()) return newCtx.returnErrors();
-          newCtx.push(null, "arguments");
-          const argsResult = ${compiler.compile(this.args)}(args, newCtx);
-          newCtx.pop();
-          if (!argsResult.ok) return argsResult;
-          const result = Reflect.apply(value, this, argsResult.value);
-          newCtx.push(null, "return");
-          return ${compiler.compile(this.ret)}(result, newCtx);
-        });
-      }
-      return ctx.error("Value is not a function");`
-    );
-  }
 }
 
-type EnumLike = {
+type EnumLike = EnumObj | readonly string[];
+
+type EnumObj = {
   readonly [k: string]: string | number;
 };
 
@@ -868,29 +368,19 @@ export class EnumType extends BuiltinSchemaType {
   }
 
   readonly _tag = "EnumType";
+  readonly obj: EnumObj;
   readonly values: readonly (string | number)[];
 
-  constructor(readonly enumeration: EnumLike) {
+  constructor(enumeration: EnumLike) {
     super();
-    this.values = Object.values(enumeration);
+    this.obj = Array.isArray(enumeration)
+      ? Object.fromEntries(enumeration.map((v, i) => [v, i]))
+      : enumeration;
+    this.values = Object.values(this.obj);
   }
 
   override getName() {
     return "enum";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx) {
-    return this.values.includes(value as any)
-      ? ctx.result(value)
-      : ctx.error("Value does not belong to enumeration");
-  }
-
-  compileParse({ compiler, helpers, body }: ParseCompileCtx) {
-    const expected = `values_${compiler.names.new(this.getName())}`;
-    helpers.stmt(`const ${expected} = ${JSON.stringify(this.values)}`);
-    body.return(
-      `${expected}.includes(value) ? ctx.result(value) : ctx.error("Value does not belong to enumeration")`
-    );
   }
 }
 
@@ -904,19 +394,12 @@ export class RecursiveType extends BuiltinSchemaType {
 
   constructor(readonly fn: (that: RecursiveType) => SchemaType) {
     super();
+    // TODO check guardedness
     this.content = fn(this);
   }
 
   override getName() {
     return "recursive";
-  }
-
-  parse(value: unknown, ctx: SchemaOpCtx, rec: Parser) {
-    return rec(this.content, value, ctx);
-  }
-
-  compileParse({ compiler, body }: ParseCompileCtx) {
-    body.return(`${compiler.compile(this.content)}(value, ctx)`);
   }
 }
 
@@ -954,8 +437,4 @@ export type BuiltinTypes = BuiltinTypesMap[keyof BuiltinTypesMap];
 
 export function isBuiltinType(schema: SchemaType): schema is BuiltinTypes {
   return schema instanceof BuiltinSchemaType;
-}
-
-export function requiresCircularCheck(schema: BuiltinSchemaType) {
-  return schema instanceof BuiltinSchemaTypeWithCircularCheck;
 }

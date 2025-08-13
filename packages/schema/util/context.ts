@@ -5,8 +5,8 @@ import { Path } from "./path";
 import { type ValidationError, ValidationResult } from "./result";
 
 export type SchemaOpCtxOpts = {
-  formatter?: Formatter;
-  abortEarly?: boolean;
+  readonly formatter?: Formatter;
+  readonly abortEarly?: boolean;
 };
 
 export class SchemaOpCtx implements SchemaOpCtxOpts {
@@ -40,10 +40,6 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     this.errorArr.push(this.createError(message));
   }
 
-  assert(bool: boolean, message: string) {
-    if (!bool) this.addError(message);
-  }
-
   format(value: unknown) {
     const { formatter } = this;
     return formatter(value);
@@ -65,19 +61,8 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     return this.errorArr.length > 0;
   }
 
-  getErrors(): readonly SchemaError[] {
-    return this.errorArr;
-  }
-
   error(message: string): ValidationError {
     this.addError(message);
-    return ValidationResult.errors(this.errorArr);
-  }
-
-  defaultError(message: string): ValidationError {
-    if (this.errorArr.length === 0) {
-      this.addError(message);
-    }
     return ValidationResult.errors(this.errorArr);
   }
 
@@ -90,23 +75,6 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     return this.errorArr.length === 0
       ? ValidationResult.ok(value as T)
       : ValidationResult.errors(this.errorArr);
-  }
-
-  validate<T>(
-    valid: boolean,
-    whatDesc: string,
-    value: unknown
-  ): ValidationResult<T> {
-    if (!valid) {
-      this.addError(`Expected ${whatDesc} (got ${this.format(value)})`);
-    }
-    return this.result(value as T);
-  }
-
-  transferTo(ctx: SchemaOpCtx) {
-    for (const error of ctx.errorArr) {
-      ctx.errorArr.push(error);
-    }
   }
 
   resetErrors() {

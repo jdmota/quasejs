@@ -16,7 +16,7 @@
 // Convert from one schema version to another
 
 // TODO support error object with format of the object https://zod.dev/ERROR_HANDLING
-// TODO compilation (We should rely more on this instead of trying to make Typescript accept our advanced stuff...)
+// TODO the structure (aka TS type) of the error object should be compiled
 
 // TODO intersection parse based on merge?
 // TODO readonly: apply Object.freeze on parse?
