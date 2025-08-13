@@ -16,6 +16,7 @@ const config = {
     "<rootDir>/packages/config",
     "<rootDir>/packages/error",
     "<rootDir>/packages/git",
+    "<rootDir>/packages/schema",
     "<rootDir>/packages/source-map",
     "<rootDir>/packages/util",
   ],
