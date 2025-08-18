@@ -1,5 +1,4 @@
-import { MapSet } from "../util/data-structures/map-set.ts";
-import type { SchemaType } from "./schema-type.ts";
+import { SchemaType } from "./schema-type.ts";
 import {
   ArrayType,
   BigintType,
@@ -19,22 +18,44 @@ import {
   UnionType,
   UnknownType,
 } from "./builtin-types.ts";
+import { computeIfAbsent } from "../util/maps-sets.ts";
 
-export function isSub(a: SchemaType, b: SchemaType) {
-  return isSubtype(new MapSet(), a, b);
+class Cache {
+  private readonly map = new Map<SchemaType, Map<SchemaType, boolean | null>>();
+
+  set(a: SchemaType, b: SchemaType, val: boolean | null) {
+    computeIfAbsent(
+      this.map,
+      a,
+      () => new Map<SchemaType, boolean | null>()
+    ).set(b, val);
+  }
+
+  get(a: SchemaType, b: SchemaType) {
+    return computeIfAbsent(
+      this.map,
+      a,
+      () => new Map<SchemaType, boolean | null>()
+    ).get(b);
+  }
 }
 
-export function isSubtype(
-  set: MapSet<SchemaType, SchemaType>,
-  a: SchemaType,
-  b: SchemaType
-): boolean {
+export function isSub(a: SchemaType, b: SchemaType) {
+  return isSubtype(new Cache(), a, b);
+}
+
+export function isSubtype(cache: Cache, a: SchemaType, b: SchemaType): boolean {
   // Short-path
   if (a === b) return true;
+  let curr = cache.get(a, b);
+  if (curr === null || curr === true) return true;
+  cache.set(a, b, null);
+  curr = isSubtypeImpl(cache, a, b);
+  cache.set(a, b, curr);
+  return curr;
+}
 
-  if (set.test(a, b)) return true;
-  set.add(a, b);
-
+function isSubtypeImpl(cache: Cache, a: SchemaType, b: SchemaType): boolean {
   // Handle recursive types
   if (a instanceof RecursiveType && b instanceof RecursiveType) {
     const cA = a.getContent();
@@ -43,23 +64,23 @@ export function isSubtype(
       if (cB == null) {
         return false;
       }
-      return isSubtype(set, a, cB);
+      return isSubtype(cache, a, cB);
     } else {
       if (cB == null) {
-        return isSubtype(set, cA, b);
+        return isSubtype(cache, cA, b);
       }
-      return isSubtype(set, cA, cB);
+      return isSubtype(cache, cA, cB);
     }
   }
 
   if (a instanceof RecursiveType) {
     const cA = a.getContent();
-    return cA == null ? false : isSubtype(set, cA, b);
+    return cA == null ? false : isSubtype(cache, cA, b);
   }
 
   if (b instanceof RecursiveType) {
     const cB = b.getContent();
-    return cB == null ? false : isSubtype(set, a, cB);
+    return cB == null ? false : isSubtype(cache, a, cB);
   }
 
   // Every type is a subtype of TOP
@@ -98,9 +119,9 @@ export function isSubtype(
       if (
         (a.exact.partial && !b.exact.partial) ||
         (a.exact.readonly && !b.exact.readonly) ||
-        !isSubtype(set, a.exact.key, b.exact.key) ||
-        !isSubtype(set, b.exact.key, a.exact.key) ||
-        !isSubtype(set, a.exact.value, b.exact.value)
+        !isSubtype(cache, a.exact.key, b.exact.key) ||
+        !isSubtype(cache, b.exact.key, a.exact.key) ||
+        !isSubtype(cache, a.exact.value, b.exact.value)
       ) {
         return false;
       }
@@ -115,7 +136,7 @@ export function isSubtype(
       if (
         (infoA.partial && !infoB.partial) ||
         (infoA.readonly && !infoB.readonly) ||
-        !isSubtype(set, infoA.type, infoB.type)
+        !isSubtype(cache, infoA.type, infoB.type)
       ) {
         return false;
       }
@@ -127,13 +148,13 @@ export function isSubtype(
     // ReadonlyArray<T1> <: ReadonlyArray<T2> if T1 <: T2
     // Array<T1> type is a subtype of ReadonlyArray<T2> if T1 <: T2
     if (b.readonly) {
-      return isSubtype(set, a.element, b.element);
+      return isSubtype(cache, a.element, b.element);
     }
     // Array<T1> type is a subtype of itself (both mutable)
     if (!a.readonly) {
       return (
-        isSubtype(set, a.element, b.element) &&
-        isSubtype(set, b.element, a.element)
+        isSubtype(cache, a.element, b.element) &&
+        isSubtype(cache, b.element, a.element)
       );
     }
     return false;
@@ -148,7 +169,7 @@ export function isSubtype(
       const elemsB = Array.from(b.iterate(num));
       return (
         elemsA.length >= elemsB.length &&
-        elemsB.every((inB, i) => isSubtype(set, elemsA[i].type, inB.type))
+        elemsB.every((inB, i) => isSubtype(cache, elemsA[i].type, inB.type))
       );
     }
     if (!a.readonly) {
@@ -159,8 +180,8 @@ export function isSubtype(
         elemsA.length === elemsB.length &&
         elemsB.every(
           (inB, i) =>
-            isSubtype(set, elemsA[i].type, inB.type) &&
-            isSubtype(set, inB.type, elemsA[i].type)
+            isSubtype(cache, elemsA[i].type, inB.type) &&
+            isSubtype(cache, inB.type, elemsA[i].type)
         )
       );
     }
@@ -170,51 +191,51 @@ export function isSubtype(
   // T1 -> T2 is a subtype of T3 -> T4 if T3 <: T1 and T2 <: T4
   if (a instanceof FunctionType && b instanceof FunctionType) {
     // Contravariant on the arguments and covariant on the return
-    return isSubtype(set, b.args, a.args) && isSubtype(set, a.ret, b.ret);
+    return isSubtype(cache, b.args, a.args) && isSubtype(cache, a.ret, b.ret);
   }
 
   if (a instanceof UnionType && b instanceof UnionType) {
     return (
-      a.items.every(inA => isSubtype(set, inA, b)) ||
-      b.items.some(inB => isSubtype(set, a, inB))
+      a.items.every(inA => isSubtype(cache, inA, b)) ||
+      b.items.some(inB => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof UnionType && b instanceof IntersectionType) {
     return (
-      a.items.every(inA => isSubtype(set, inA, b)) ||
-      b.items.every(inB => isSubtype(set, a, inB))
+      a.items.every(inA => isSubtype(cache, inA, b)) ||
+      b.items.every(inB => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof IntersectionType && b instanceof UnionType) {
     return (
-      a.items.some(inA => isSubtype(set, inA, b)) ||
-      b.items.some(inB => isSubtype(set, a, inB))
+      a.items.some(inA => isSubtype(cache, inA, b)) ||
+      b.items.some(inB => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof IntersectionType && b instanceof IntersectionType) {
     return (
-      a.items.some(inA => isSubtype(set, inA, b)) ||
-      b.items.every(inB => isSubtype(set, a, inB))
+      a.items.some(inA => isSubtype(cache, inA, b)) ||
+      b.items.every(inB => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof UnionType) {
-    return a.items.every(inA => isSubtype(set, inA, b));
+    return a.items.every(inA => isSubtype(cache, inA, b));
   }
 
   if (a instanceof IntersectionType) {
-    return a.items.some(inA => isSubtype(set, inA, b));
+    return a.items.some(inA => isSubtype(cache, inA, b));
   }
 
   if (b instanceof UnionType) {
-    return b.items.some(inB => isSubtype(set, a, inB));
+    return b.items.some(inB => isSubtype(cache, a, inB));
   }
 
   if (b instanceof IntersectionType) {
-    return b.items.every(inB => isSubtype(set, a, inB));
+    return b.items.every(inB => isSubtype(cache, a, inB));
   }
 
   // TODO complete...
