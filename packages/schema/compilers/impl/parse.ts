@@ -1,5 +1,5 @@
 import type { Class } from "type-fest";
-import { never, nonNull } from "../../../util/miscellaneous";
+import { never } from "../../../util/miscellaneous";
 import {
   type BuiltinSchemaType,
   ArrayType,
@@ -9,6 +9,7 @@ import {
   FunctionType,
   IntersectionType,
   LiteralType,
+  NeverType,
   NullType,
   NumberType,
   ObjectType,
@@ -58,6 +59,14 @@ function registerBuiltin<T extends BuiltinSchemaType>(
     body.add(`};`);
   });
 }
+
+registerBuiltin(
+  NeverType,
+  (type, { body }) => {
+    body.return(`ctx.error("Never")`);
+  },
+  false
+);
 
 registerBuiltin(
   UnknownType,
@@ -216,8 +225,8 @@ registerBuiltin(
         if (ctx.shouldAbort()) return ctx.returnErrors();`
       );
     }
-    if (type.hasRest) {
-      const restType = nonNull(type.elements.at(-1)).type;
+    const restType = type.getRest();
+    if (restType) {
       body.line(
         `
         for (let i = ${type.elements.length}; i < value.length; i++) {
@@ -413,7 +422,7 @@ registerBuiltin(
 registerBuiltin(
   RecursiveType,
   (type, { compiler, body }) => {
-    body.return(`${compiler.compile(type.content)}(value, ctx)`);
+    body.return(`${compiler.compile(type.getContentForSure())}(value, ctx)`);
   },
   false
 );

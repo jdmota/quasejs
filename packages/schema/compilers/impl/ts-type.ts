@@ -9,6 +9,7 @@ import {
   FunctionType,
   IntersectionType,
   LiteralType,
+  NeverType,
   NullType,
   NumberType,
   ObjectType,
@@ -46,6 +47,10 @@ function registerBuiltin<T extends BuiltinSchemaType>(
     body.add(`;`);
   });
 }
+
+registerBuiltin(NeverType, (type, { body }) => {
+  body.add(`never`);
+});
 
 registerBuiltin(UnknownType, (type, { body }) => {
   body.add(`unknown`);
@@ -113,7 +118,7 @@ registerBuiltin(TupleType, (tupleType, { compiler, body }) => {
   body.indent();
   for (const { name, type, rest } of tupleType.elements) {
     body.line(
-      `${rest ? "..." : ""}${name}: ${compiler.compile(type)}${rest ? "[]" : ""}`
+      `${rest ? "..." : ""}${name}: ${compiler.compile(type)}${rest ? "[]" : ""},`
     );
   }
   body.unindent();
@@ -125,16 +130,16 @@ registerBuiltin(ObjectType, (objType, { compiler, body }) => {
   body.indent();
   for (const [name, { readonly, partial, type }] of objType.entries) {
     body.line(
-      `${readonly ? "readonly " : ""}${compileJsKey(name)}${partial ? "?" : ""}: ${compiler.compile(type)},`
+      `${readonly ? "readonly " : ""}${compileJsKey(name)}${partial ? "?" : ""}: ${compiler.compile(type)};`
     );
   }
   if (objType.exact === true) {
     if (objType.entries.length === 0) {
-      body.line(`readonly [key: string]: never,`);
+      body.line(`readonly [key in string]: never`);
     }
   } else if (objType.exact !== false) {
     body.line(
-      `${objType.exact.readonly ? "readonly " : ""}[key: ${compiler.compile(objType.exact.key)}]${objType.exact.partial ? "?" : ""}: ${compiler.compile(objType.exact.value)},`
+      `${objType.exact.readonly ? "readonly " : ""}[key in ${compiler.compile(objType.exact.key)}]${objType.exact.partial ? "?" : ""}: ${compiler.compile(objType.exact.value)};`
     );
   }
   body.unindent();
@@ -146,7 +151,7 @@ registerBuiltin(RecordType, (type, { compiler, body }) => {
     body.add("Readonly<");
   }
   body.add(
-    `Record<${compiler.compile(type.key)}, ${compiler.compile(type.value)}>`
+    `{[key in ${compiler.compile(type.key)}]?: ${compiler.compile(type.value)}}`
   );
   if (type.readonly) {
     body.add(">");
@@ -172,5 +177,5 @@ registerBuiltin(EnumType, (type, { compiler, body }) => {
 });
 
 registerBuiltin(RecursiveType, (type, { compiler, body }) => {
-  body.add(compiler.compile(type.content));
+  body.add(compiler.compile(type.getContentForSure()));
 });

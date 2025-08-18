@@ -1,3 +1,5 @@
+import type { BuiltinSchemaType } from "./builtin-types";
+
 export abstract class SchemaDecorator<
   Target extends SchemaType,
   Out extends SchemaType,
@@ -6,12 +8,11 @@ export abstract class SchemaDecorator<
   abstract build(target: Target): Out;
 }
 
-export class SchemaType {
+export abstract class SchemaType {
   constructor(readonly metadata?: unknown) {}
 
-  getName() {
-    return "type";
-  }
+  abstract getName(): string;
+  abstract getBuiltin(): BuiltinSchemaType;
 
   alias(name: string) {
     return new SchemaAlias(this, name);
@@ -38,5 +39,9 @@ export class SchemaAlias extends SchemaType {
 
   override getName() {
     return this.name;
+  }
+
+  override getBuiltin() {
+    return this.target.getBuiltin();
   }
 }

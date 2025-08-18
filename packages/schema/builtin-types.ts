@@ -1,10 +1,25 @@
+import { nonNull } from "../util/miscellaneous";
 import { VALID_JS_ID } from "../util/js-identifiers";
 import { UniqueNames } from "../util/unique-names";
 import { SchemaType } from "./schema-type";
 
-abstract class BuiltinSchemaType extends SchemaType {}
+abstract class BuiltinSchemaType extends SchemaType {
+  override getBuiltin() {
+    return this;
+  }
+}
 
 export type { BuiltinSchemaType };
+
+export class NeverType extends BuiltinSchemaType {
+  static build = new NeverType();
+
+  readonly _tag = "NeverType";
+
+  override getName() {
+    return "never";
+  }
+}
 
 export class UnknownType extends BuiltinSchemaType {
   static build = new UnknownType();
@@ -196,6 +211,26 @@ export class TupleType extends BuiltinSchemaType {
   override getName() {
     return "tuple";
   }
+
+  getRest() {
+    return this.hasRest ? nonNull(this.elements.at(-1)).type : null;
+  }
+
+  *iterate(num: number) {
+    for (const elem of this.elements) {
+      if (!elem.rest) {
+        num--;
+        yield elem;
+      }
+    }
+    const rest = this.hasRest ? this.elements.at(-1) : null;
+    if (rest) {
+      while (num >= 0) {
+        num--;
+        yield rest;
+      }
+    }
+  }
 }
 
 type ObjStructure = {
@@ -208,14 +243,15 @@ type ObjStructure = {
       }>;
 };
 
-type ObjEntries = readonly (readonly [
-  string,
-  Readonly<{
-    readonly: boolean;
-    partial: boolean;
-    type: SchemaType;
-  }>,
-])[];
+type ObjEntry = Readonly<{
+  readonly: boolean;
+  partial: boolean;
+  type: SchemaType;
+}>;
+
+type ObjEntries = readonly (readonly [string, ObjEntry])[];
+
+type ObjEntriesRecord = Readonly<Record<string, ObjEntry | undefined>>;
 
 type UnknownKeysOpts = Readonly<{
   key: SchemaType;
@@ -233,8 +269,6 @@ type UnknownKeys = Readonly<{
 
 const hasOwn = Object.prototype.hasOwnProperty;
 const hasProp = (o: any, k: string) => hasOwn.call(o, k);
-const getProp = (o: any, k: string) => (hasProp(o, k) ? o[k] : undefined);
-
 const PROTO_KEY = "__proto__";
 
 export class ObjectType extends BuiltinSchemaType {
@@ -247,6 +281,7 @@ export class ObjectType extends BuiltinSchemaType {
 
   readonly _tag = "ObjectType";
   readonly entries: ObjEntries;
+  readonly entriesRecord: ObjEntriesRecord;
   readonly exact: boolean | UnknownKeys;
 
   constructor(structure: ObjStructure, exact: boolean | UnknownKeysOpts) {
@@ -267,6 +302,7 @@ export class ObjectType extends BuiltinSchemaType {
         },
       ];
     });
+    this.entriesRecord = Object.fromEntries(this.entries);
     this.exact =
       typeof exact === "boolean"
         ? exact
@@ -305,7 +341,14 @@ export class RecordType extends BuiltinSchemaType {
 }
 
 export class UnionType extends BuiltinSchemaType {
-  static build(items: readonly SchemaType[]) {
+  static build(...items: readonly SchemaType[]) {
+    return new UnionType(items);
+  }
+
+  static buildOptimized(...items: readonly SchemaType[]) {
+    items = items.filter(t => !(t instanceof NeverType));
+    if (items.length === 0) return NeverType.build;
+    if (items.length === 1) return items[0];
     return new UnionType(items);
   }
 
@@ -321,7 +364,14 @@ export class UnionType extends BuiltinSchemaType {
 }
 
 export class IntersectionType extends BuiltinSchemaType {
-  static build(items: readonly SchemaType[]) {
+  static build(...items: readonly SchemaType[]) {
+    return new IntersectionType(items);
+  }
+
+  static buildOptimized(...items: readonly SchemaType[]) {
+    items = items.filter(t => !(t instanceof UnknownType));
+    if (items.length === 0) return UnknownType.build;
+    if (items.length === 1) return items[0];
     return new IntersectionType(items);
   }
 
@@ -385,41 +435,88 @@ export class EnumType extends BuiltinSchemaType {
 }
 
 export class RecursiveType extends BuiltinSchemaType {
-  static build(fn: (that: RecursiveType) => SchemaType) {
+  static build(fn: null | ((that: RecursiveType) => SchemaType)) {
     return new RecursiveType(fn);
   }
 
   readonly _tag = "RecursiveType";
-  public readonly content: SchemaType;
+  private content: SchemaType | null;
 
-  constructor(readonly fn: (that: RecursiveType) => SchemaType) {
+  constructor(readonly fn: null | ((that: RecursiveType) => SchemaType)) {
     super();
-    // TODO check guardedness
-    this.content = fn(this);
+    this.content = null;
+    if (fn) {
+      this.setContent(fn(this));
+    }
   }
 
   override getName() {
     return "recursive";
+  }
+
+  getContent() {
+    return this.content;
+  }
+
+  getContentForSure() {
+    if (!this.content) {
+      throw new Error(`No recursive type content`);
+    }
+    return this.content;
+  }
+
+  setContent(content: SchemaType) {
+    if (this.content) {
+      throw new Error(`Already set`);
+    }
+    this.content = content;
+    if (!this.checkGuarded(this.content)) {
+      throw new Error(`Recursive type circularly references itself`);
+    }
+  }
+
+  private checkGuarded(_type: SchemaType): boolean {
+    const type = _type.getBuiltin();
+    if (type instanceof RecursiveType) {
+      if (this === type) {
+        return false;
+      }
+      if (type.content == null) {
+        // This recursive type was not built yet
+        // That is fine, it will be checked later
+        return true;
+      }
+      return this.checkGuarded(type.content);
+    }
+    if (type instanceof UnionType) {
+      return type.items.every(t => this.checkGuarded(t));
+    }
+    if (type instanceof IntersectionType) {
+      return type.items.every(t => this.checkGuarded(t));
+    }
+    return true;
   }
 }
 
 // TODO generics
 
 export const builtin = {
+  never: NeverType.build,
   unknown: UnknownType.build,
   undefined: UndefinedType.build,
   null: NullType.build,
   literal: LiteralType.build,
   string: StringType.build,
   number: NumberType.build,
+  boolean: BooleanType.build,
   bigint: BigintType.build,
   symbol: SymbolType.build,
   array: ArrayType.build,
   tuple: TupleType.build,
   object: ObjectType.build,
   record: RecordType.build,
-  union: UnionType.build,
-  inter: IntersectionType.build,
+  union: UnionType.buildOptimized,
+  inter: IntersectionType.buildOptimized,
   func: FunctionType.build,
   enum: EnumType.build,
   rec: RecursiveType.build,
@@ -437,4 +534,22 @@ export type BuiltinTypes = BuiltinTypesMap[keyof BuiltinTypesMap];
 
 export function isBuiltinType(schema: SchemaType): schema is BuiltinTypes {
   return schema instanceof BuiltinSchemaType;
+}
+
+export class RecursiveTypeCreator {
+  private readonly rec: RecursiveType = new RecursiveType(null);
+  private used = false;
+
+  getVar() {
+    this.used = true;
+    return this.rec;
+  }
+
+  create(content: SchemaType) {
+    if (this.used) {
+      this.rec.setContent(content);
+      return this.rec;
+    }
+    return content;
+  }
 }
