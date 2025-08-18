@@ -1,5 +1,5 @@
-import { builtin } from "../../../schema/builtin-types";
-import type { SchemaType } from "../../../schema/schema-type";
+import { builtin } from "../../schema/builtin-types";
+import type { SchemaType } from "../../schema/schema-type";
 
 const { unknown, literal, number, string, object, array, tuple, func, union } =
   builtin;

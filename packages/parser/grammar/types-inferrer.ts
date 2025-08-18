@@ -1,16 +1,13 @@
-import { assertion, nonNull } from "../../../util/miscellaneous.ts";
-import type { SchemaType } from "../../../schema/schema-type.ts";
-import {
-  builtin,
-  RecursiveTypeCreator,
-} from "../../../schema/builtin-types.ts";
-import { isSub } from "../../../schema/subtyping.ts";
-import { TsCompiler } from "../../../schema/compilers/compile-ts.ts";
+import { assertion, nonNull } from "../../util/miscellaneous.ts";
+import type { SchemaType } from "../../schema/schema-type.ts";
+import { builtin, RecursiveTypeCreator } from "../../schema/builtin-types.ts";
+import { isSub } from "../../schema/subtyping.ts";
+import { TsCompiler } from "../../schema/compilers/compile-ts.ts";
 import {
   type AugmentedDeclaration,
   Grammar,
   type GrammarError,
-} from "../grammar.ts";
+} from "./grammar.ts";
 import type {
   RuleMap,
   CallRule,
@@ -32,7 +29,7 @@ import type {
   IntRule,
   BoolRule,
   NullRule,
-} from "../grammar-builder.ts";
+} from "./grammar-builder.ts";
 import { runtimeFuncs, runtimeTypes } from "./default-types.ts";
 
 type RuleAnalyzer<T> = {

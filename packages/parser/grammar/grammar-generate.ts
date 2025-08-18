@@ -1,3 +1,5 @@
+import { traverse, walkUp } from "../../util/graph.ts";
+import { assertion, first, nonNull } from "../../util/miscellaneous.ts";
 import { builtin } from "../../schema/builtin-types.ts";
 import { TsCompiler } from "../../schema/compilers/compile-ts.ts";
 import "../../schema/compilers/impl/ts-type.ts";
@@ -9,30 +11,25 @@ import { FactoryRule } from "../automaton/factories/factory-rule.ts";
 import { FactoryToken } from "../automaton/factories/factory-token.ts";
 import { CodeGenerator } from "../generators/generate-code.ts";
 import { LabelsManager, type RuleLabel } from "../generators/labels-manager.ts";
-import {
-  type AugmentedDeclaration,
-  Grammar,
-  type GrammarResult,
-} from "../grammar/grammar.ts";
-import { type RuleName } from "../grammar/grammar-builder.ts";
 import { type DFA } from "../automaton/optimizer/abstract-optimizer.ts";
 import { DfaMinimizer, NfaToDfa } from "../automaton/optimizer/optimizer.ts";
 import { generateAll } from "../generators/generate-all.ts";
-import { TypesInferrer } from "../grammar/type-checker/inferrer.ts";
-import {
-  getResultType,
-  runtimeTypes,
-} from "../grammar/type-checker/default-types.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";
-import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 import { CfgToCode } from "../generators/cfg-to-code.ts";
 import {
   convertDFAtoCFG,
   type GrammarCFGNode,
 } from "../generators/dfa-to-cfg.ts";
-import { traverse, walkUp } from "../../util/graph.ts";
-import { assertion, first, nonNull } from "../../util/miscellaneous.ts";
 import { GLLInfo } from "./gll-info.ts";
+import { TypesInferrer } from "./types-inferrer.ts";
+import { getResultType, runtimeTypes } from "./default-types.ts";
+import {
+  type AugmentedDeclaration,
+  Grammar,
+  type GrammarResult,
+} from "./grammar.ts";
+import { type RuleName } from "./grammar-builder.ts";
+import { LEXER_RULE_NAME } from "./tokens.ts";
 
 export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
   const rulesAutomaton = new Automaton();
