@@ -1,4 +1,11 @@
 import { assertion, nonNull } from "../../../util/miscellaneous.ts";
+import type { SchemaType } from "../../../schema/schema-type.ts";
+import {
+  builtin,
+  RecursiveTypeCreator,
+} from "../../../schema/builtin-types.ts";
+import { isSub } from "../../../schema/subtyping.ts";
+import { TsCompiler } from "../../../schema/compilers/compile-ts.ts";
 import {
   type AugmentedDeclaration,
   Grammar,
@@ -26,30 +33,25 @@ import type {
   BoolRule,
   NullRule,
 } from "../grammar-builder.ts";
-import {
-  type GType,
-  RecursiveTypeCreator,
-  typeBuilder,
-} from "./types-builder.ts";
 import { runtimeFuncs, runtimeTypes } from "./default-types.ts";
-import { isSub } from "./subtyping.ts";
-import { typeFormatter } from "./types-formatter.ts";
 
 type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pair: T, node: RuleMap[key]) => void;
 };
 
-function merge(current: GType | undefined, type: GType) {
+function merge(current: SchemaType | undefined, type: SchemaType) {
   if (current && isSub(type, current)) {
     return current;
   }
-  return current ? typeBuilder.union([current, type]) : type;
+  return current ? builtin.union(current, type) : type;
 }
 
 class Store {
   private readonly t: TypesInferrer;
-  private readonly map: Map<string, { readonly array: boolean; type: GType }> =
-    new Map();
+  private readonly map: Map<
+    string,
+    { readonly array: boolean; type: SchemaType }
+  > = new Map();
   private changed = true; // Because it was just initialized
 
   constructor(t: TypesInferrer) {
@@ -66,16 +68,16 @@ class Store {
 
   read(name: AnyRule | string) {
     const { type, array } = nonNull(this.map.get(this.strName(name)));
-    return array ? typeBuilder.readArray(type) : type;
+    return array ? builtin.array(type) : type;
   }
 
-  set(name: AnyRule | string, type: GType, array: boolean) {
+  set(name: AnyRule | string, type: SchemaType, array: boolean) {
     this.map.set(this.strName(name), { array, type });
     this.changed = true;
     return true; // It changed
   }
 
-  merge(name: AnyRule | string, type: GType, array: boolean = false) {
+  merge(name: AnyRule | string, type: SchemaType, array: boolean = false) {
     name = this.strName(name);
     const current = this.map.get(name);
     if (current) {
@@ -125,7 +127,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   constructor(private readonly grammar: Grammar) {}
 
   private readonly stores = new Map<AnyRule, StorePair>();
-  private readonly allExternalArgs = new Map<string, GType[]>();
+  private readonly allExternalArgs = new Map<string, SchemaType[]>();
   private readonly nodeIds = new Map<AnyRule, string>();
 
   genId(node: AnyRule) {
@@ -225,32 +227,32 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
   eof({ pre, post }: StorePair, node: EofRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.null());
+    post.merge(node, builtin.null);
   }
 
   int({ pre, post }: StorePair, node: IntRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.int());
+    post.merge(node, builtin.number);
   }
 
   bool({ pre, post }: StorePair, node: BoolRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.bool());
+    post.merge(node, builtin.boolean);
   }
 
   null({ pre, post }: StorePair, node: NullRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.null());
+    post.merge(node, builtin.null);
   }
 
   string({ pre, post }: StorePair, node: StringRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.string());
+    post.merge(node, builtin.string);
   }
 
   regexp({ pre, post }: StorePair, node: RegExpRule) {
     pre.propagateTo(post);
-    post.merge(node, typeBuilder.string());
+    post.merge(node, builtin.string);
   }
 
   object(pair: StorePair, node: ObjectRule) {
@@ -263,7 +265,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
       node,
       node.fields.length === 0
         ? runtimeTypes.$Empty
-        : typeBuilder.readObject(
+        : builtin.object(
             Object.fromEntries(
               node.fields.map(([k, v]) => [k, pair.post.read(v)])
             )
@@ -278,7 +280,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   call2(pair: StorePair, node: Call2Rule) {
     this.visitSeq(pair, node.args);
     //
-    let retType: GType;
+    let retType: SchemaType;
     if (node.id.startsWith("$")) {
       retType = nonNull(runtimeFuncs[node.id as keyof typeof runtimeFuncs]).ret;
     } else {
@@ -321,12 +323,12 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     this.visit(node.code);
     postExpr.propagateTo(post);
     //
-    post.merge(node, typeBuilder.bool());
+    post.merge(node, builtin.boolean);
   }
 
   private ruleStack = new Map<string, RecursiveTypeCreator>();
 
-  declaration(rule: AugmentedDeclaration, argTypes: readonly GType[]) {
+  declaration(rule: AugmentedDeclaration, argTypes: readonly SchemaType[]) {
     let recCreator = this.ruleStack.get(rule.name);
     if (recCreator) {
       return recCreator.getVar();
@@ -347,9 +349,9 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
       for (const [name, [{ multiple }]] of rule.fields) {
         if (multiple) {
-          preRule.set(name, typeBuilder.never(), true);
+          preRule.set(name, builtin.never, true);
         } else {
-          preRule.set(name, typeBuilder.null(), false);
+          preRule.set(name, builtin.null, false);
         }
       }
 
@@ -375,18 +377,15 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   getExternalCallType(call: string) {
     const funcArgs = this.externalArgs(call);
     const ret = this.grammar.externalFuncReturns[call];
-    return typeBuilder.func(funcArgs, ret);
+    return builtin.func(funcArgs, ret);
   }
 
   print() {
-    const knownNames = new Map(
-      Object.entries(runtimeTypes).map(([a, b]) => [b, a])
-    );
-
+    const tsCompiler = new TsCompiler();
     for (const rule of this.grammar.rules.values()) {
       const { pre: preReturn, post: postReturn } = this.store(rule.return);
       const t = postReturn.read(rule.return);
-      console.log("rule", rule.name, typeFormatter(t, knownNames));
+      console.log("rule", rule.name, tsCompiler.compile(t));
     }
   }
 }

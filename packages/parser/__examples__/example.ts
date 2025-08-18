@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { builtin } from "../../schema/builtin-types.ts";
 import { builder } from "../grammar/grammar-builder.ts";
-import { typeBuilder } from "../grammar/type-checker/types-builder.ts";
 import { type ToolInput, tool } from "../tool.ts";
 
 const {
@@ -527,9 +527,9 @@ const opts: ToolInput = {
     tokenW,
     tokenY, // This adds ambiguity in the tokenizer
   ],
-  startArguments: [typeBuilder.string()],
+  startArguments: [builtin.string],
   externalFuncReturns: {
-    externalCall: typeBuilder.bool(),
+    externalCall: builtin.boolean,
   },
   parser: {
     maxLL: 3,

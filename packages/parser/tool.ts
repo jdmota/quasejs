@@ -1,10 +1,10 @@
+import type { SchemaType } from "../schema/schema-type.ts";
 import { createGrammar } from "./grammar/grammar.ts";
 import {
   type RuleDeclaration,
   type TokenDeclaration,
 } from "./grammar/grammar-builder.ts";
 import { locSuffix } from "./utils/index.ts";
-import { type GType } from "./grammar/type-checker/types-builder.ts";
 import {
   generateGrammar,
   inferAndCheckTypes,
@@ -69,8 +69,8 @@ export type ToolInput = Readonly<{
   name: string;
   ruleDecls?: readonly RuleDeclaration[];
   tokenDecls?: readonly TokenDeclaration[];
-  startArguments?: readonly GType[];
-  externalFuncReturns?: Readonly<Record<string, GType>>;
+  startArguments?: readonly SchemaType[];
+  externalFuncReturns?: Readonly<Record<string, SchemaType>>;
   parser?: LookaheadOpts;
   tokenizer?: LookaheadOpts;
   _useReferenceAnalysis?: boolean;

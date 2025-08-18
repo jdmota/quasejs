@@ -1,3 +1,6 @@
+import { builtin } from "../../schema/builtin-types.ts";
+import { TsCompiler } from "../../schema/compilers/compile-ts.ts";
+import "../../schema/compilers/impl/ts-type.ts";
 import { Analyzer } from "../analysis/analysis.ts";
 import { AnalyzerReference } from "../analysis/analysis-reference.ts";
 import { Automaton, type Frag } from "../automaton/automaton.ts";
@@ -15,10 +18,11 @@ import { type RuleName } from "../grammar/grammar-builder.ts";
 import { type DFA } from "../automaton/optimizer/abstract-optimizer.ts";
 import { DfaMinimizer, NfaToDfa } from "../automaton/optimizer/optimizer.ts";
 import { generateAll } from "../generators/generate-all.ts";
-import { typeBuilder } from "../grammar/type-checker/types-builder.ts";
 import { TypesInferrer } from "../grammar/type-checker/inferrer.ts";
-import { runtimeTypes } from "../grammar/type-checker/default-types.ts";
-import { typeFormatter } from "../grammar/type-checker/types-formatter.ts";
+import {
+  getResultType,
+  runtimeTypes,
+} from "../grammar/type-checker/default-types.ts";
 import { type AnyTransition } from "../automaton/transitions.ts";
 import { LEXER_RULE_NAME } from "../grammar/tokens.ts";
 import { CfgToCode } from "../generators/cfg-to-code.ts";
@@ -195,68 +199,44 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
 
 export function inferAndCheckTypes(grammar: Grammar) {
   const inferrer = new TypesInferrer(grammar);
-
-  const knownNames = new Map();
-  const typeDeclarations: [string, string][] = [];
+  const tsCompiler = new TsCompiler();
 
   for (const [name, type] of Object.entries(runtimeTypes)) {
-    const { typescript, eq } = typeFormatter(type, knownNames);
-    typeDeclarations.push(...eq);
-    typeDeclarations.push([name, typescript]);
-    knownNames.set(type, name);
+    tsCompiler.compile(type.alias(name));
   }
 
-  {
-    const astType = inferrer.declaration(
-      grammar.startRule,
-      grammar.startArguments
-    );
-    const { typescript, eq } = typeFormatter(astType, knownNames);
-    typeDeclarations.push(...eq);
-    typeDeclarations.push(["$AST", typescript]);
-  }
+  const astType = inferrer
+    .declaration(grammar.startRule, grammar.startArguments)
+    .alias("$AST");
+  tsCompiler.compile(astType);
 
-  {
-    const externalsType = typeBuilder.readObject(
-      Object.fromEntries(
-        Object.keys(grammar.externalFuncReturns).map(name => [
-          name,
-          inferrer.getExternalCallType(name),
-        ])
+  const externalsName = tsCompiler.compile(
+    builtin
+      .object(
+        Object.fromEntries(
+          Object.keys(grammar.externalFuncReturns).map(name => [
+            name,
+            inferrer.getExternalCallType(name),
+          ])
+        )
       )
-    );
-    const { typescript, eq } = typeFormatter(externalsType, knownNames);
-    typeDeclarations.push(...eq);
-    typeDeclarations.push(["$Externals", typescript]);
-  }
+      .alias("$Externals")
+  );
 
-  const argTypes = grammar.startArguments.map(t => {
-    const { typescript, eq } = typeFormatter(t, knownNames);
-    typeDeclarations.push(...eq);
-    return typescript;
-  });
+  const argTypeNames = grammar.startArguments.map(t => tsCompiler.compile(t));
 
   return {
     errors: inferrer.errors,
     genTypes: (gllInfo: GLLInfo) => {
-      if (gllInfo.parserUsesGLL()) {
-        typeDeclarations.push([
-          "$Result",
-          `Readonly<{ ok: true; asts: readonly $AST[] }> | Readonly<{ ok: false; errors: readonly (readonly [number, unknown])[] }>`,
-        ]);
-      } else {
-        typeDeclarations.push([
-          "$Result",
-          `Readonly<{ ok: true; ast: $AST }> | Readonly<{ ok: false; error: unknown }>`,
-        ]);
-      }
-
-      return `${typeDeclarations
-        .map(([name, type]) => `export type ${name} = ${type};`)
-        .join("\n")}\nexport function parse(external: $Externals, ${[
+      const resultName = tsCompiler.compile(
+        getResultType(astType, gllInfo.parserUsesGLL()).alias("$Result")
+      );
+      return `${tsCompiler.toString()}\nexport function parse(external: ${externalsName}, ${[
         "string: string",
-        ...grammar.startRule.args.map((a, i) => `$${a.arg}: ${argTypes[i]}`),
-      ].join(", ")}): $Result;\n`;
+        ...grammar.startRule.args.map(
+          (a, i) => `$${a.arg}: ${argTypeNames[i]}`
+        ),
+      ].join(", ")}): ${resultName};\n`;
     },
   };
 }
