@@ -9,6 +9,10 @@ const reRepeatedSlashes = /\/+/g;
 const reQuestion = /^\?+/;
 const reHash = /^#+/;
 
+export const DEFAULT_PATHNAME = "/" as NormalizedPathname;
+export const DEFAULT_SEARCH = "" as NormalizedSearch;
+export const DEFAULT_HASH = "" as NormalizedHash;
+
 export const normalizers = {
   // Should have one leading / but no trailing / nor repeated slashes ///
   pathname(str: string): NormalizedPathname {

@@ -9,12 +9,14 @@ import {
   type NormalizedPathname,
   type SimpleLocation,
   type SimpleLocationNoHash,
+  DEFAULT_PATHNAME,
+  DEFAULT_SEARCH,
   sameSimpleLocationExceptHash,
 } from "./router/pathname.ts";
+import { type InitialDataForHydration } from "./router/router.data.ts";
 import { Subscribable } from "./subscribable.ts";
 import type { AsyncResult } from "./async.ts";
 import { goTop } from "./ui.ts";
-import { type InitialDataForHydration } from "./router/router.data.ts";
 
 export class SimpleApp extends Subscribable<SimpleLocation> {
   readonly router: Router<RouterEvents & ScrollEvents>;
@@ -28,7 +30,7 @@ export class SimpleApp extends Subscribable<SimpleLocation> {
     this.pendingScrolls = new Map();
   }
 
-  init(server: boolean) {
+  attachListeners() {
     this.router.addEventListener("ready", ({ detail: { location } }) => {
       this.pendingScrolls.set(location.pathname, {
         pos: null,
@@ -64,6 +66,10 @@ export class SimpleApp extends Subscribable<SimpleLocation> {
         performScroll({ pos: null, hash: location.hash });
       }
     );
+  }
+
+  init(server: boolean) {
+    this.attachListeners();
 
     if (server) {
       this.router.serverInstall({ pathname: "/" });
@@ -87,23 +93,30 @@ export class SimpleApp extends Subscribable<SimpleLocation> {
   }
 }
 
+export type InitialProps = Readonly<{
+  props: SimpleLocationNoHash;
+  data: null;
+}>;
+
 export function getDefaultAsyncResult<T>(
-  initialData: InitialDataForHydration<T> | null
+  initial: InitialDataForHydration<T> | InitialProps | null
 ): AsyncResult<SimpleLocationNoHash, T> {
-  return initialData
+  return initial && initial.data != null
     ? {
-        props: initialData.props,
-        data: initialData.data,
+        props: initial.props,
+        data: initial.data,
         error: null,
         isPending: false,
         cancel: null,
         previous: null,
       }
     : {
-        props: {
-          pathname: "/",
-          search: "",
-        } as SimpleLocationNoHash,
+        props: initial
+          ? initial.props
+          : {
+              pathname: DEFAULT_PATHNAME,
+              search: DEFAULT_SEARCH,
+            },
         data: null,
         error: null,
         isPending: true,

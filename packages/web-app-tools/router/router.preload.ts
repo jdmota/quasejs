@@ -1,3 +1,4 @@
+import { noop } from "../../util/miscellaneous";
 import { TypedEvent } from "../events";
 import {
   type SimpleLocationNoHash,
@@ -15,7 +16,7 @@ import { type RouterEvents, RouterMixin, Router } from "./router";
 */
 type PreloadStrategy = "eager" | "viewport" | "hover" | "tap";
 
-function setupPreload<E extends RouterEvents>(
+export function setupPreload<E extends RouterEvents>(
   router: Router<E>,
   strategy: PreloadStrategy,
   notify: (anchor: HTMLAnchorElement) => void
@@ -47,7 +48,7 @@ function setupPreload<E extends RouterEvents>(
     { threshold: 0 }
   );
 
-  function afterNavigate() {
+  function navigationDone() {
     observer.disconnect();
 
     for (const a of container.querySelectorAll("a")) {
@@ -68,17 +69,21 @@ function setupPreload<E extends RouterEvents>(
     container.addEventListener("mousedown", preload);
     container.addEventListener("touchstart", preload, { passive: true });
   } else if (strategy === "viewport" || strategy === "eager") {
-    router.addEventListener("ready", afterNavigate);
-    router.addEventListener("navigation", afterNavigate);
+    router.addEventListener("ready", navigationDone);
+    router.addEventListener("navigation", navigationDone);
   }
 
-  return () => {
-    container.removeEventListener("mousemove", hover);
-    container.removeEventListener("mousedown", preload);
-    container.removeEventListener("touchstart", preload);
-    router.removeEventListener("ready", afterNavigate);
-    router.removeEventListener("navigation", afterNavigate);
-    observer.disconnect();
+  return {
+    navigationDone:
+      strategy === "viewport" || strategy === "eager" ? navigationDone : noop,
+    disconnect: () => {
+      container.removeEventListener("mousemove", hover);
+      container.removeEventListener("mousedown", preload);
+      container.removeEventListener("touchstart", preload);
+      router.removeEventListener("ready", navigationDone);
+      router.removeEventListener("navigation", navigationDone);
+      observer.disconnect();
+    },
   };
 }
 

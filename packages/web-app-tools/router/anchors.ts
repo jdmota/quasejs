@@ -19,11 +19,10 @@ export function considerAnchor(anchor: HTMLAnchorElement): boolean {
 
 export function findAnchor(event: Event) {
   // Adapted from https://github.com/Polymer/pwa-helpers/blob/master/src/router.ts
-  const anchor = event
-    .composedPath()
-    .filter(n => (n as HTMLElement).nodeName === "A")[0] as
-    | HTMLAnchorElement
-    | undefined;
-
+  let node: HTMLElement | null = event.target as HTMLElement;
+  while (node && node.nodeName !== "A") {
+    node = node.parentNode as HTMLElement | null;
+  }
+  const anchor = node as HTMLAnchorElement | null;
   return anchor && considerAnchor(anchor) ? anchor : null;
 }
