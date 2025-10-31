@@ -1,8 +1,6 @@
+import type { Optional } from "../../util/miscellaneous";
 import { SSR } from "../support";
-import {
-  sameSimpleLocationNoHash,
-  type SimpleLocationNoHash,
-} from "./pathname";
+import { type SimpleLocationNoHash } from "./pathname";
 
 export const DATA_KEY = "quase_router_data";
 
@@ -18,18 +16,16 @@ export function createInitialDataForHydration<Data>(
   return `<script id="${DATA_KEY}" type="application/json">${json}</script>`;
 }
 
-function getInitialDataForHydration<Data>(
-  props: SimpleLocationNoHash
-): InitialDataForHydration<Data> | undefined {
+function getInitialDataForHydration<Data>(): Optional<
+  InitialDataForHydration<Data>
+> {
   const element = document.getElementById(DATA_KEY);
   if (element) {
     const text = element.textContent;
     element.remove();
     if (text) {
       const initial = JSON.parse(text) as InitialDataForHydration<Data>;
-      if (sameSimpleLocationNoHash(initial.props, props)) {
-        return initial;
-      }
+      return initial;
     }
   }
   return undefined;
@@ -46,13 +42,10 @@ export class RouterData<Data> {
     this.initial = initial;
   }
 
-  getInitialData(props: SimpleLocationNoHash): Data | undefined {
+  getInitialData(): Optional<InitialDataForHydration<Data>> {
     if (SSR) {
-      if (this.initial && sameSimpleLocationNoHash(this.initial.props, props)) {
-        return this.initial.data;
-      }
-      return undefined;
+      return this.initial;
     }
-    return getInitialDataForHydration<Data>(props)?.data;
+    return getInitialDataForHydration<Data>();
   }
 }

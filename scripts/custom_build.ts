@@ -136,12 +136,15 @@ async function build(input: string[], dir: string) {
 }
 
 const input = [
+  "./incremental/incremental-lib",
+  "./web-app-tools/app-splash",
   "./web-app-tools/async",
   "./web-app-tools/router/pathname",
   "./web-app-tools/router/router",
   "./web-app-tools/router/router.scroll",
   "./web-app-tools/onload",
   "./web-app-tools/simple-app",
+  "./web-app-tools/theme-selector",
   "./web-app-tools/ui",
 ]; /* ?? process.argv.slice(2) */
 
