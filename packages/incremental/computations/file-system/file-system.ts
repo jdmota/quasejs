@@ -324,11 +324,9 @@ export class FileSystem {
         c.externalInvalidate();
       }
     }
-    if (event === FileChange.ADD_OR_REMOVE) {
-      const parent = normalizePath(dirname(path));
-      if (parent !== path) {
-        this.react(event, parent, true);
-      }
+    const parent = normalizePath(dirname(path));
+    if (parent !== path) {
+      this.react(event, parent, true);
     }
   }
 
