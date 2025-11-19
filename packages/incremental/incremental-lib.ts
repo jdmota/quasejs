@@ -251,6 +251,7 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   }
 
   peekErrors() {
+    this.clearOrphans();
     const deterministic = [];
     const nonDeterministic = [];
     for (const c of this.computations[State.SETTLED_STABLE].iterateAll()) {

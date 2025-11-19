@@ -36,6 +36,7 @@ export enum FileChange {
 type FileComputationDescriptionJSON = {
   readonly path: string;
   readonly type: FileChange;
+  readonly recursive: boolean;
 };
 
 export class FileComputationDescription
@@ -44,13 +45,15 @@ export class FileComputationDescription
 {
   readonly path: string;
   readonly type: FileChange;
+  readonly recursive: boolean;
   readonly json: string;
 
-  constructor(path: string, type: FileChange) {
+  constructor(path: string, type: FileChange, recursive: boolean) {
     super();
     this.path = path;
     this.type = type;
-    this.json = JSON.stringify({ path, type });
+    this.recursive = recursive;
+    this.json = JSON.stringify({ path, type, recursive });
   }
 
   create(registry: ComputationRegistry<any>): FileComputation {
@@ -63,12 +66,13 @@ export class FileComputationDescription
     return (
       other instanceof FileComputationDescription &&
       this.path === other.path &&
-      this.type === other.type
+      this.type === other.type &&
+      this.recursive === other.recursive
     );
   }
 
   hash() {
-    return this.path.length + 31 * this.type.length;
+    return this.path.length + 31 * this.type.length + (this.recursive ? 1 : 2);
   }
 
   getCacheKey() {
@@ -85,10 +89,11 @@ serializationDB.register<
     return {
       path: value.path,
       type: value.type,
+      recursive: value.recursive,
     };
   },
-  deserialize({ path, type }) {
-    return new FileComputationDescription(path, type);
+  deserialize({ path, type, recursive }) {
+    return new FileComputationDescription(path, type, recursive);
   },
 });
 
@@ -119,10 +124,13 @@ class FileComputation
   protected async exec(
     ctx: RawComputationContext
   ): Promise<ComputationResult<bigint>> {
-    await this.cacheableMixin.preExec();
     if (this.registry.invalidationsAllowed()) {
       await this.fs._sub(this);
     }
+    if (this.desc.recursive) {
+      return ok(0n);
+    }
+    await this.cacheableMixin.preExec();
     const { birthtimeNs, mtimeNs } = await fsextra.stat(this.desc.path, {
       bigint: true,
     });
@@ -166,7 +174,7 @@ class FileComputation
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
   responseEqual(a: bigint, b: bigint): boolean {
-    return a === b;
+    return this.desc.recursive ? false : a === b;
   }
 }
 
@@ -184,6 +192,16 @@ class FileInfo {
       computations: Set<FileComputation>;
     };
   };
+  readonly recEvents: {
+    [FileChange.ADD_OR_REMOVE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
+    [FileChange.CHANGE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
+  };
 
   constructor(path: string) {
     this.ready = null;
@@ -191,34 +209,52 @@ class FileInfo {
     this.parentPath = normalizePath(dirname(path));
     this.events = {
       ADD_OR_REMOVE: {
-        desc: new FileComputationDescription(path, FileChange.ADD_OR_REMOVE),
+        desc: new FileComputationDescription(
+          path,
+          FileChange.ADD_OR_REMOVE,
+          false
+        ),
         computations: new Set(),
       },
       CHANGE: {
-        desc: new FileComputationDescription(path, FileChange.CHANGE),
+        desc: new FileComputationDescription(path, FileChange.CHANGE, false),
+        computations: new Set(),
+      },
+    };
+    this.recEvents = {
+      ADD_OR_REMOVE: {
+        desc: new FileComputationDescription(
+          path,
+          FileChange.ADD_OR_REMOVE,
+          true
+        ),
+        computations: new Set(),
+      },
+      CHANGE: {
+        desc: new FileComputationDescription(path, FileChange.CHANGE, true),
         computations: new Set(),
       },
     };
   }
 
-  sub(
-    event: FileChange,
-    comp: FileComputation,
-    watcher: chokidarWatcher.FSWatcher
-  ) {
-    this.events[event].computations.add(comp);
+  sub(comp: FileComputation, watcher: chokidarWatcher.FSWatcher) {
+    if (comp.desc.recursive) {
+      this.recEvents[comp.desc.type].computations.add(comp);
+    } else {
+      this.events[comp.desc.type].computations.add(comp);
+    }
     if (!this.ready) {
       this.ready = watcher.addPromise(this.path);
     }
     return this.ready;
   }
 
-  unsub(
-    event: FileChange,
-    comp: FileComputation,
-    watcher: chokidarWatcher.FSWatcher | null
-  ) {
-    this.events[event].computations.delete(comp);
+  unsub(comp: FileComputation, watcher: chokidarWatcher.FSWatcher | null) {
+    if (comp.desc.recursive) {
+      this.recEvents[comp.desc.type].computations.delete(comp);
+    } else {
+      this.events[comp.desc.type].computations.delete(comp);
+    }
     if (this.subsCount() === 0) {
       this.ready = null;
       if (watcher) {
@@ -230,7 +266,9 @@ class FileInfo {
   subsCount() {
     return (
       this.events.ADD_OR_REMOVE.computations.size +
-      this.events.CHANGE.computations.size
+      this.events.CHANGE.computations.size +
+      this.recEvents.ADD_OR_REMOVE.computations.size +
+      this.recEvents.CHANGE.computations.size
     );
   }
 }
@@ -252,6 +290,7 @@ const CHOKIDAR_EVENT_TO_FILE_CHANGE = {
 export type FileChangeEvent = {
   readonly event: FileChange;
   readonly path: string;
+  readonly recursive: boolean;
 };
 
 export class FileSystem {
@@ -268,12 +307,27 @@ export class FileSystem {
     this.watcher = null;
   }
 
-  private react(event: FileChange, path: string) {
-    this.registry.callUserFn(null, this.opts.fs.onEvent, { event, path });
-    const info = this.files.get(normalizePath(path));
+  private react(event: FileChange, path: string, recursive: boolean) {
+    this.registry.callUserFn(null, this.opts.fs.onEvent, {
+      event,
+      path,
+      recursive,
+    });
+    const info = this.files.get(path);
     if (info) {
-      for (const c of info.events[event].computations) {
+      if (!recursive) {
+        for (const c of info.events[event].computations) {
+          c.externalInvalidate();
+        }
+      }
+      for (const c of info.recEvents[event].computations) {
         c.externalInvalidate();
+      }
+    }
+    if (event === FileChange.ADD_OR_REMOVE) {
+      const parent = normalizePath(dirname(path));
+      if (parent !== path) {
+        this.react(event, parent, true);
       }
     }
   }
@@ -297,37 +351,48 @@ export class FileSystem {
       });
       this.watcher = watcher;
       watcher.on("all", (event, path) => {
-        this.react(CHOKIDAR_EVENT_TO_FILE_CHANGE[event], path);
+        this.react(
+          CHOKIDAR_EVENT_TO_FILE_CHANGE[event],
+          normalizePath(path),
+          false
+        );
       });
     }
     return this.watcher;
   }
 
   async _sub(computation: FileComputation) {
-    const { path, type } = computation.desc;
-    await this.getInfo(path).sub(type, computation, this.getWatcher());
+    const { path } = computation.desc;
+    await this.getInfo(path).sub(computation, this.getWatcher());
   }
 
   _unsub(computation: FileComputation) {
-    const { path, type } = computation.desc;
-    this.getInfo(path).unsub(type, computation, this.watcher);
+    const { path } = computation.desc;
+    this.getInfo(path).unsub(computation, this.watcher);
   }
 
-  get(originalPath: string, type: FileChange): FileComputationDescription {
-    return this.getInfo(normalizePath(originalPath)).events[type].desc;
+  get(
+    originalPath: string,
+    type: FileChange,
+    recursive: boolean
+  ): FileComputationDescription {
+    return recursive
+      ? this.getInfo(normalizePath(originalPath)).recEvents[type].desc
+      : this.getInfo(normalizePath(originalPath)).events[type].desc;
   }
 
   async depend<T>(
     ctx: SimpleContext,
     originalPath: string,
     fn: (originalPath: string) => T | Promise<T>,
-    type: FileChange | null = null
+    type: FileChange | null = null,
+    rec: boolean = false
   ) {
     if (type == null) {
-      await ctx.get(this.get(originalPath, FileChange.ADD_OR_REMOVE));
-      await ctx.get(this.get(originalPath, FileChange.CHANGE));
+      await ctx.get(this.get(originalPath, FileChange.ADD_OR_REMOVE, rec));
+      await ctx.get(this.get(originalPath, FileChange.CHANGE, rec));
     } else {
-      await ctx.get(this.get(originalPath, type));
+      await ctx.get(this.get(originalPath, type, rec));
     }
     return fn(originalPath);
   }
@@ -335,7 +400,7 @@ export class FileSystem {
   extend<Ctx extends SimpleContext>(ctx: Ctx): Ctx & CtxWithFS {
     return {
       ...ctx,
-      fs: (a, b, c) => this.depend(ctx, a, b, c),
+      fs: (a, b, c, rec) => this.depend(ctx, a, b, c, rec),
     };
   }
 
@@ -356,7 +421,8 @@ export type CtxWithFS = {
   readonly fs: <T>(
     a: string,
     b: (originalPath: string) => T | Promise<T>,
-    c?: FileChange | null
+    c?: FileChange | null,
+    rec?: boolean
   ) => Promise<T>;
 };
 
