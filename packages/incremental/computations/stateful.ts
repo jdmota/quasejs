@@ -1,6 +1,7 @@
 import { type ComputationRegistry } from "../incremental-lib";
 import { type ValueDefinition } from "../utils/hash-map";
 import {
+  error,
   type ComputationResult,
   type VersionedComputationResult,
 } from "../utils/result";
@@ -141,24 +142,32 @@ export class StatefulComputation<K, V, R>
     runId: number
   ): Promise<ComputationResult<R>> {
     let emitId;
-    try {
-      if (this.phase === StatefulPhase.PENDING) {
-        this.phase = StatefulPhase.INITIALIZING;
-        emitId = this.emitterMixin.newEmitRunId();
+    if (this.phase === StatefulPhase.PENDING) {
+      this.phase = StatefulPhase.INITIALIZING;
+      emitId = this.emitterMixin.newEmitRunId();
+      try {
         const observerId = this.observerMixin.newObserverInitId();
-        this.config.init({
+        const initResult = this.config.init({
           ...this.observerMixin.makeContextRoutine(runId, observerId),
           ...this.emitterMixin.makeContextRoutine(emitId),
         });
+        //@ts-ignore
+        if (initResult instanceof Promise) {
+          throw new Error(
+            `Incremental: init() of stateful computation cannot be async`
+          );
+        }
         this.observerMixin.finishObserverInit();
         this.observerMixin.askForInitial(runId);
-        this.phase = StatefulPhase.READY;
-      } else {
-        emitId = this.emitterMixin.getEmitRunId();
+      } catch (err) {
+        const result: ComputationResult<R> = error(err, false);
+        this.emitterMixin.done(emitId, result);
+        this.resetRoutine();
+        return result;
       }
-    } catch (err) {
-      this.resetRoutine();
-      throw err;
+      this.phase = StatefulPhase.READY;
+    } else {
+      emitId = this.emitterMixin.getEmitRunId();
     }
     await this.cacheableMixin.preExec();
     return this.emitterMixin.exec(runId, emitId);

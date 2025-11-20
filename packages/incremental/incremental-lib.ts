@@ -230,7 +230,6 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   }
 
   private async wait() {
-    assertion(!this.canInvalidate && !this.canExternalInvalidate);
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {
       const started = this.wake();
       const computation = this.running.peek();
@@ -377,7 +376,7 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   ) {
     // Invalidations are disallowed when:
     // - in single run mode
-    // - interrupted or finishing
+    // - interrupted
     if (this.invalidationsAllowed()) {
       this.callUserFn(this.opts.entry, this.opts.onResult, result.result);
     }
@@ -423,8 +422,11 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
         finishing = true;
         registry.disableExternalInvalidations();
         registry.invalidateSettledUnstable();
-        registry.disableInvalidations();
         await registry.wait();
+        // If there are settled unstable computations (those that returned non-deterministic errors)
+        // there might be another round of invalidations
+        // so only disable general invalidations after waiting
+        registry.disableInvalidations();
         const result = await registry.run(computation);
         await registry.cleanupRun(computation, false);
         return result.result;

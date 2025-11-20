@@ -148,6 +148,7 @@ export class ComputationEntryJob<Req, Res>
     result = this.subscribableMixin.finishRoutine(result);
     result = this.cacheableMixin.finishRoutine(result, true);
     this.reachableMixin.finishOrDeleteRoutine();
+    this.pool.onEntryFinish(result);
     return result;
   }
 

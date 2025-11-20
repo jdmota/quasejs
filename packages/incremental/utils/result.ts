@@ -27,6 +27,13 @@ export function error<T, E>(
   return { ok: false, error, deterministic };
 }
 
+export function resultStrictEqual<T>(
+  prev: ComputationResult<T>,
+  next: ComputationResult<T>
+): boolean {
+  return resultEqual((a, b) => a === b, prev, next);
+}
+
 export function resultEqual<T>(
   equal: (a: T, b: T) => boolean,
   prev: ComputationResult<T>,
@@ -57,6 +64,7 @@ export function promiseIfOk<T>(promise: Promise<ComputationResult<T>>) {
       } else {
         reject(new WrappedResult(result));
       }
-    });
+    }, reject);
+    // Avoid uncaught exceptions due
   });
 }

@@ -22,9 +22,10 @@ import {
 } from "../../utils/hash-map";
 import {
   type ComputationResult,
-  resultEqual,
-  ok,
   type VersionedComputationResult,
+  resultEqual,
+  resultStrictEqual,
+  ok,
 } from "../../utils/result";
 import { type ComputationJobContext, ComputationJobDescription } from "./job";
 import {
@@ -109,35 +110,32 @@ serializationDB.register<
   },
 });
 
+export type PoolResult<Req, Res> = ReadonlySnapshotHashMap<
+  Req,
+  ComputationResult<Res>
+>;
+
 export class ComputationPool<Req, Res>
-  extends RawComputation<
-    ComputationPoolContext,
-    ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-  >
+  extends RawComputation<ComputationPoolContext, PoolResult<Req, Res>>
   implements
     DependentComputation,
-    SubscribableComputation<
-      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-    >,
-    EmitterComputation<
-      Req,
-      ComputationResult<Res>,
-      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-    >
+    SubscribableComputation<PoolResult<Req, Res>>,
+    EmitterComputation<Req, ComputationResult<Res>, PoolResult<Req, Res>>
 {
   public readonly dependentMixin: DependentComputationMixin;
   public readonly subscribableMixin: SubscribableComputationMixin<
-    ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
+    PoolResult<Req, Res>
   >;
   public readonly emitterMixin: EmitterComputationMixin<
     Req,
     ComputationResult<Res>,
-    ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
+    PoolResult<Req, Res>
   >;
   //
   public readonly config: ComputationPoolConfig<Req, Res>;
   private readonly entryDescription: ComputationEntryJobDescription<Req, Res>;
   private readonly entryStatus: [number, number, number, number];
+  private entryData: ComputationResult<undefined>;
   private readonly data: {
     readonly reachable: {
       results: HashMap<Req, ComputationResult<Res>>;
@@ -170,6 +168,7 @@ export class ComputationPool<Req, Res>
     this.config = desc.config;
     this.entryDescription = new ComputationEntryJobDescription(desc);
     this.entryStatus = [0, 0, 0, 0];
+    this.entryData = ok(undefined);
     this.data = {
       reachable: {
         results: this.emitterMixin.getResults(),
@@ -188,13 +187,9 @@ export class ComputationPool<Req, Res>
   protected async exec(
     ctx: ComputationPoolContext,
     runId: number
-  ): Promise<
-    ComputationResult<ReadonlySnapshotHashMap<Req, ComputationResult<Res>>>
-  > {
-    const startResult = await ctx.get(this.entryDescription);
-    if (!startResult.ok) {
-      return startResult;
-    }
+  ): Promise<ComputationResult<PoolResult<Req, Res>>> {
+    // Potential errors will be caught via "onEntryFinish"
+    await ctx.get(this.entryDescription);
     return this.emitterMixin.exec(runId, this.emitRunId);
   }
 
@@ -210,9 +205,7 @@ export class ComputationPool<Req, Res>
   }
 
   protected finishRoutine(
-    result: VersionedComputationResult<
-      ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-    >
+    result: VersionedComputationResult<PoolResult<Req, Res>>
   ) {
     result = this.subscribableMixin.finishRoutine(result);
     return result;
@@ -232,10 +225,7 @@ export class ComputationPool<Req, Res>
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 
-  responseEqual(
-    a: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>,
-    b: ReadonlySnapshotHashMap<Req, ComputationResult<Res>>
-  ): boolean {
+  responseEqual(a: PoolResult<Req, Res>, b: PoolResult<Req, Res>): boolean {
     return a.strictContentEquals(b);
   }
 
@@ -255,6 +245,11 @@ export class ComputationPool<Req, Res>
         status[State.RUNNING] ===
       0
     );
+  }
+
+  onEntryFinish(result: VersionedComputationResult<undefined>) {
+    if (this.isDeleting()) return;
+    this.entryData = result.result;
   }
 
   onFieldFinish(
@@ -334,17 +329,27 @@ export class ComputationPool<Req, Res>
     this.react();
   }
 
-  private lastSeen: ReadonlySnapshotHashMap<
+  private lastMapSeen: ReadonlySnapshotHashMap<
     Req,
     ComputationResult<Res>
   > | null = null;
 
+  private lastEntryData: ComputationResult<undefined> = ok(undefined);
+
   // React to possible changes
   private react() {
-    if (this.isDone() && (this.lastSeen == null || this.lastSeen.didChange())) {
+    const { entryData, lastEntryData, lastMapSeen } = this;
+    if (
+      this.isDone() &&
+      (lastMapSeen == null /* If first time */ ||
+        !resultStrictEqual(lastEntryData, entryData) ||
+        lastMapSeen.didChange())
+    ) {
+      this.lastEntryData = entryData;
+      this.lastMapSeen = this.data.reachable.results.getSnapshot();
       this.emitterMixin.done(
         this.emitRunId,
-        ok((this.lastSeen = this.data.reachable.results.getSnapshot()))
+        entryData.ok ? ok(this.lastMapSeen) : entryData
       );
     }
   }
