@@ -104,13 +104,15 @@ const bundler = IncrementalLib.new(
     async exec(ctx) {
       console.log("Running bundler...");
 
-      const [results, statefulValue] = await Promise.all([
-        ctx.getOk(pool),
-        ctx.getOk(stateful),
-      ]);
+      const results = await ctx.getOk(pool);
+
+      console.log("POOL", results);
+
+      const statefulValue = await ctx.getOk(stateful);
+
       console.log("STATEFUL", statefulValue);
 
-      let output = [];
+      let output: string[] = [];
       for (const [key, value] of results) {
         if (value.ok) {
           output.push(`// ${key}\n${value.value.content}`);

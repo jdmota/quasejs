@@ -18,7 +18,7 @@ import {
   type VersionedComputationResult,
 } from "../utils/result";
 import { CacheableComputationMixin } from "./mixins/cacheable";
-import { createNotifier, type Notifier } from "../../util/deferred";
+import { Notifier } from "../utils/notifier";
 
 export type CellConfig<Res> = {
   readonly name: string;
@@ -66,9 +66,7 @@ export class CellComputation<Res>
     CellComputation<Res>
   >;
   protected readonly config: CellConfig<Res>;
-  protected cellResult: ComputationResult<Res> | null;
-  private notifier: Notifier<null>;
-  private executed = false;
+  private readonly notifier: Notifier<Res>;
 
   constructor(registry: ComputationRegistry<any>, desc: CellDescription<Res>) {
     super(registry, desc);
@@ -76,19 +74,15 @@ export class CellComputation<Res>
     this.subscribableMixin = new SubscribableComputationMixin(this);
     this.cacheableMixin = new CacheableComputationMixin(this, desc);
     this.config = desc.config;
-    this.cellResult = null;
-    this.notifier = createNotifier();
+    this.notifier = new Notifier();
   }
 
   clear() {
-    this.cellResult = null;
+    this.notifier.reset();
   }
 
   set(value: Res) {
-    this.cellResult = ok(value);
-    if (this.notifier.isWaiting()) {
-      this.notifier.done(null);
-    } else if (this.executed) {
+    if (!this.notifier.done(ok(value))) {
       this.registry.externalInvalidate(this);
     }
   }
@@ -97,17 +91,11 @@ export class CellComputation<Res>
     ctx: RawComputationContext,
     runId: number
   ): Promise<ComputationResult<Res>> {
-    this.executed = true;
+    this.notifier.preExec();
     await this.cacheableMixin.preExec();
-    // Wait for the value...
-    while (this.cellResult == null) {
-      // Ensure this running id is active before doing side-effects
+    return this.notifier.exec(() => {
       ctx.checkActive();
-      await this.notifier.wait();
-      // In case invalidations occured between notifier.done()
-      // and this computation resuming, keep waiting if not done
-    }
-    return this.cellResult;
+    });
   }
 
   protected makeContext(runId: number): RawComputationContext {
@@ -128,15 +116,13 @@ export class CellComputation<Res>
   }
 
   protected invalidateRoutine() {
-    this.executed = false;
-    this.notifier.cancel();
+    this.notifier.invalidate();
     this.subscribableMixin.invalidateRoutine();
     this.cacheableMixin.invalidateRoutine();
   }
 
   protected deleteRoutine() {
-    this.executed = false;
-    this.notifier.cancel();
+    this.notifier.reset();
     this.subscribableMixin.deleteRoutine();
     this.cacheableMixin.deleteRoutine();
   }

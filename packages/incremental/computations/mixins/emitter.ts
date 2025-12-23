@@ -1,4 +1,4 @@
-import { createNotifier } from "../../../util/deferred";
+import { Notifier } from "../../utils/notifier";
 import {
   HashMap,
   type MapEvent,
@@ -59,9 +59,7 @@ export class EmitterComputationMixin<K, V, R> {
     EventFn<K, V, R>
   >;
   private readonly results: HashMap<K, V>;
-  private doneResult: ComputationResult<R> | null;
-  private readonly notifier = createNotifier();
-  private executed: boolean;
+  private readonly notifier: Notifier<R>;
   private emitRunId: RunId;
 
   constructor(
@@ -72,8 +70,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.source = source;
     this.observers = new Map();
     this.results = new ObservableHashMap<K, V>(keyDef, e => this.emitEvent(e));
-    this.executed = false;
-    this.doneResult = null;
+    this.notifier = new Notifier();
     this.emitRunId = new RunId();
   }
 
@@ -141,15 +138,8 @@ export class EmitterComputationMixin<K, V, R> {
   }
 
   private setDone(result: ComputationResult<R> | null) {
-    if (this.doneResult !== result) {
-      this.doneResult = result;
-      if (this.notifier.isWaiting()) {
-        if (result != null) {
-          this.notifier.done(null);
-        }
-      } else if (this.executed) {
-        this.source.invalidate();
-      }
+    if (!this.notifier.done(result)) {
+      this.source.invalidate();
     }
   }
 
@@ -166,10 +156,11 @@ export class EmitterComputationMixin<K, V, R> {
           oldValue: undefined,
         });
       }
-      if (this.doneResult != null) {
+      const result = this.notifier.getResult();
+      if (result != null) {
         fn({
           type: "done",
-          result: this.doneResult,
+          result,
         });
       }
     }
@@ -180,29 +171,20 @@ export class EmitterComputationMixin<K, V, R> {
   }
 
   invalidateRoutine() {
-    this.executed = false;
-    this.notifier.cancel();
+    this.notifier.invalidate();
   }
 
   resetRoutine() {
     this.cancelEmit();
-    this.executed = false;
-    this.notifier.cancel();
+    this.notifier.reset();
     this.results.clear();
-    this.doneResult = null;
   }
 
   async exec(runId: number, emitRunId: number) {
-    this.executed = true;
-    // Wait for done...
-    while (this.doneResult == null) {
-      // Ensure this running id is active before doing side-effects
+    this.notifier.preExec();
+    return this.notifier.exec(() => {
       this.source.checkActive(runId);
       this.checkEmitActive(emitRunId);
-      await this.notifier.wait();
-      // In case invalidations occured between notifier.done()
-      // and this computation resuming, keep waiting if !isDone()
-    }
-    return this.doneResult;
+    });
   }
 }

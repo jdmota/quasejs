@@ -5,7 +5,6 @@
 // Since computations may be asynchronous, to ensure determinism, they may only depend on other computations and on the (immutable) arguments
 import { SpecialQueue } from "../util/data-structures/linked-list";
 import { Scheduler } from "../util/schedule";
-import { assertion } from "../util/miscellaneous";
 import { SerializationDB } from "../util/serialization";
 import { HashMap } from "./utils/hash-map";
 import { serializationDB } from "./utils/serialization-db";
@@ -42,20 +41,6 @@ import {
   newStatefulComputation,
   type StatefulComputationConfig,
 } from "./computations/stateful";
-
-const determinismSym = Symbol("deterministic");
-
-type DeterministicFunc<Arg, Ret> = {
-  readonly [determinismSym]: (arg: Arg) => Ret;
-};
-
-function deterministic<Arg, Ret>(
-  func: (arg: Arg) => Ret
-): DeterministicFunc<Arg, Ret> {
-  return {
-    [determinismSym]: func,
-  };
-}
 
 export type ResultTypeOfComputation<C> =
   C extends RawComputation<any, infer Res> ? Res : never;
@@ -103,7 +88,8 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
   private readonly settledUnstable: SpecialQueue<AnyRawComputation>;
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
-  private globalSession: number = -1;
+  private diskSession: number = 0;
+  private nextVersion: number = 0;
 
   public readonly db: CacheDB | null;
   public readonly fs: FileSystem;
@@ -277,7 +263,6 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
     };
   }
 
-  // TODO The computations also have an implementation version so that results cached in disk can be invalidated if the plugin gets a new version?
   // TODO To avoid circular dependencies, we can force each computation to state the types of computations it will depend on. This will force the computation classes to be defined before the ones that will depend on it.
 
   // TODO peek errors and return a list of them? create a error pool and report only those?
@@ -287,10 +272,6 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
     }
   */
 
-  // It is key that we only destroy computations that are not attached with anything
-  // Also because of the cache information:
-  // We do not want to get confused about the computation versions,
-  // since destroying and then creating again a computation will effectively reset the version to 1
   private clearOrphans() {
     let count;
     do {
@@ -338,24 +319,23 @@ class ComputationRegistry<EntryC extends AnyRawComputation> {
     return Promise.all(otherJobs);
   }
 
-  getSession() {
-    return this.globalSession;
+  getNextVersion() {
+    return this.nextVersion++;
   }
 
-  async newSession() {
-    if (this.db) {
-      this.globalSession = await this.db.newGlobalSession();
-    }
+  getDiskSession() {
+    return this.diskSession;
   }
 
   // TODO delete unneeed computations when stable?
   async gc() {
-    await this.newSession();
     this.clearOrphans();
   }
 
   async load() {
-    await this.newSession();
+    if (this.db) {
+      this.diskSession = await this.db.newGlobalSession();
+    }
     return this;
   }
 

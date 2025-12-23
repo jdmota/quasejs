@@ -49,7 +49,6 @@ export abstract class RawComputation<Ctx, Res> {
   // Current state
   private state: State;
   private runId: RunId;
-  private nextVersion: number;
   private running: Defer<VersionedComputationResult<Res>> | null;
   private deleting: boolean;
   private root: boolean;
@@ -68,7 +67,6 @@ export abstract class RawComputation<Ctx, Res> {
     this.root = false;
     this.state = State.CREATING;
     this.runId = new RunId();
-    this.nextVersion = 1;
     this.running = null;
     this.deleting = false;
     this.result = null;
@@ -171,7 +169,14 @@ export abstract class RawComputation<Ctx, Res> {
     if (this.runId.isActive(runId)) {
       this.runId.cancel();
       this.result = this.finishRoutine({
-        version: [this.registry.getSession(), this.nextVersion++],
+        version: [
+          // Distinguish between different sessions
+          this.registry.getDiskSession(),
+          // Distinguish between different versions in this session
+          // (we rely on a global value to ensure that even
+          // deleted then recreated computations have different versions)
+          this.registry.getNextVersion(),
+        ],
         result,
       });
       nonNull(this.running).resolve(this.result);
