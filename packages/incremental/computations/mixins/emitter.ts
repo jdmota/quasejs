@@ -180,8 +180,7 @@ export class EmitterComputationMixin<K, V, R> {
     this.results.clear();
   }
 
-  async exec(runId: number, emitRunId: number) {
-    this.notifier.preExec();
+  exec(runId: number, emitRunId: number) {
     return this.notifier.exec(() => {
       this.source.checkActive(runId);
       this.checkEmitActive(emitRunId);

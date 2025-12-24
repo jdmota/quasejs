@@ -55,12 +55,9 @@ export class Notifier<T> {
     this.result = null;
   }
 
-  preExec() {
-    this.executed = true;
-  }
-
   // pre: call this.preExec() first!
   async exec(checkActive: () => void) {
+    this.executed = true;
     while (this.result == null) {
       // Ensure this execution is active before doing side-effects
       checkActive();

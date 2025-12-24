@@ -91,7 +91,6 @@ export class CellComputation<Res>
     ctx: RawComputationContext,
     runId: number
   ): Promise<ComputationResult<Res>> {
-    this.notifier.preExec();
     await this.cacheableMixin.preExec();
     return this.notifier.exec(() => {
       ctx.checkActive();
