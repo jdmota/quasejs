@@ -63,11 +63,6 @@ export class Notifier<T> {
       checkActive();
       const defer = (this.defer = createDefer());
       await defer.promise;
-      if (this.defer === defer) {
-        // Reset only if this execution is still valid
-        // (i.e., the defer is still the same)
-        this.defer = null;
-      }
       // In case invalidations occured between notifier.done()
       // and this computation resuming, keep waiting if not done!
     }
