@@ -12,9 +12,11 @@ export class IncrementalCellRuntime<Value> {
   readonly desc: IncrementalCellDescription<Value>;
   private result: VersionedValue<Value> | null = null;
   private defer: Defer<void> | null = null;
+  // This flag is used to delay resolution
+  // when we know a new value might be incoming
   private pending = true;
   // Dependents of this cell and the oldest version which they read
-  private dependents: Map<
+  public dependents: Map<
     IncrementalFunctionRuntime<any, any, any>,
     Version | null
   > = new Map();
@@ -40,12 +42,13 @@ export class IncrementalCellRuntime<Value> {
   }
 
   set(value: Value) {
+    this.owner.inv();
     this.pending = false;
     if (this.result == null || !this.valueDef.equal(this.result[0], value)) {
       this.result = [value, this.backend.getNextVersion()];
       for (const [consumer, versionRead] of this.dependents) {
         if (versionRead) {
-          consumer.setDirty();
+          consumer.invalidate();
         }
       }
     }
@@ -57,6 +60,7 @@ export class IncrementalCellRuntime<Value> {
     ctx: IncrementalContextRuntime<any, any, any>,
     consumer: IncrementalFunctionRuntime<any, any, any>
   ): Promise<Value> {
+    this.owner.inv();
     if (consumer === this.owner) {
       throw new Error("Cannot read own cell");
     }
@@ -77,7 +81,7 @@ export class IncrementalCellRuntime<Value> {
       this.dependents.set(consumer, result[1]);
       consumer.readCells.set(this, result[1]);
     } else if (versionRead !== result[1]) {
-      consumer.setDirty();
+      consumer.invalidate();
     }
 
     return result[0];

@@ -1,3 +1,4 @@
+import { serializationDB } from "../../utils/serialization-db";
 import type { IncrementalFunctionCallDescription } from "./functions";
 
 export class IncrementalCellDescription<Value> {
@@ -35,3 +36,26 @@ export type IncrementalCellDescriptionJSON = {
   readonly index: number;
   readonly resolved: boolean;
 };
+
+serializationDB.register<
+  IncrementalCellDescription<any>,
+  IncrementalCellDescriptionJSON
+>(IncrementalCellDescription, {
+  name: "IncrementalCellDescription",
+  serialize: value => {
+    return {
+      owner: value.owner,
+      key: value.key,
+      index: value.index,
+      resolved: value.resolved,
+    };
+  },
+  deserialize: out => {
+    return new IncrementalCellDescription(
+      out.owner,
+      out.key,
+      out.index,
+      out.resolved
+    );
+  },
+});

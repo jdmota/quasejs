@@ -78,12 +78,13 @@ type IncrementalFunctionCallDescriptionJSON = {
 };
 
 export class IncrementalFunctionRegistry {
+  public static SINGLETON = new IncrementalFunctionRegistry();
   private readonly funcs = new Map<
     string,
     IncrementalFunctionSchema<any, any, any>
   >();
 
-  constructor() {
+  private constructor() {
     serializationDB.register<
       IncrementalFunctionSchema<any, any, any>,
       IncrementalFunctionSchemaJSON
@@ -131,11 +132,14 @@ export class IncrementalFunctionRegistry {
     });
   }
 
-  register(schema: IncrementalFunctionSchema<any, any, any>) {
+  register<Input, Output, CellDefs extends CellValueDescriptions>(
+    schema: IncrementalFunctionSchema<Input, Output, CellDefs>
+  ) {
     if (this.funcs.has(schema.name)) {
       throw new Error(`Function '${schema.name}' was already registered`);
     }
     this.funcs.set(schema.name, schema);
+    return schema;
   }
 
   check(schema: IncrementalFunctionSchema<any, any, any>) {
@@ -151,3 +155,5 @@ export class IncrementalFunctionRegistry {
     }
   }
 }
+
+export const functions = IncrementalFunctionRegistry.SINGLETON;

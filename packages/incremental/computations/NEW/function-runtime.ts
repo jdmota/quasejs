@@ -67,10 +67,10 @@ export class IncrementalContextRuntime<
   }
 
   read<Value>(desc: IncrementalCellDescription<Value>): Promise<Value> {
-    const func = this.backend.make(desc.owner);
+    const func = this.backend.get(desc.owner);
     const cell = desc.resolved
-      ? func.ownedCells.get(desc.key)?.array[desc.index]
-      : func.outputCell;
+      ? func?.ownedCells.get(desc.key)?.array[desc.index]
+      : func?.outputCell;
     if (!cell) {
       throw new Error(
         `Invariant violation: cell ${desc.getCacheKey()} does not exist`
@@ -98,7 +98,6 @@ export class IncrementalFunctionRuntime<
   private ctx: IncrementalContextRuntime<Input, Output, CellDefs> | null;
   private running: Promise<void> | null;
   private deleting: boolean;
-  private dirty: boolean;
   private root: boolean;
   // Cells read and the oldest version which was read in this run
   readonly readCells: Map<IncrementalCellRuntime<any>, Version | null>;
@@ -110,6 +109,9 @@ export class IncrementalFunctionRuntime<
   // Output cell
   readonly outputCell: IncrementalCellRuntime<Output>;
 
+  next: IncrementalFunctionRuntime<any, any, any> | null = null;
+  prev: IncrementalFunctionRuntime<any, any, any> | null = null;
+
   constructor(
     private readonly backend: IncrementalBackend,
     readonly desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
@@ -119,7 +121,6 @@ export class IncrementalFunctionRuntime<
     this.ctx = null;
     this.running = null;
     this.deleting = false;
-    this.dirty = true;
     this.readCells = new Map();
     this.ownedCells = new Map();
     this.outputCell = new IncrementalCellRuntime(
@@ -178,13 +179,9 @@ export class IncrementalFunctionRuntime<
   }
 
   inv() {
-    if (this.isDeleting()) {
+    if (this.deleting) {
       throw new Error("Invariant violation: Unexpected deleted computation");
     }
-  }
-
-  setDirty() {
-    this.dirty = true;
   }
 
   init(root: boolean) {
@@ -196,7 +193,6 @@ export class IncrementalFunctionRuntime<
   run() {
     this.inv();
     if (this.running == null) {
-      this.outputCell.setPending();
       const ctx = (this.ctx = new IncrementalContextRuntime(
         this.backend,
         this
@@ -218,9 +214,8 @@ export class IncrementalFunctionRuntime<
   ) {
     if (ctx.isActive()) {
       this.ctx = null;
-      this.dirty = false;
-      this.mark(State.SETTLED_OK);
       this.outputCell.set(value);
+      this.mark(State.SETTLED_OK);
     }
   }
 
@@ -230,7 +225,6 @@ export class IncrementalFunctionRuntime<
   ) {
     if (ctx.isActive()) {
       this.ctx = null;
-      this.dirty = false;
       this.mark(State.SETTLED_ERR);
       this.backend.onFunctionError(this.desc, err);
     }
@@ -238,18 +232,27 @@ export class IncrementalFunctionRuntime<
 
   invalidate() {
     this.inv();
-    if (!this.registry.invalidationsAllowed()) {
+    if (!this.backend.invalidationsAllowed()) {
       throw new Error("Invariant violation: Invalidations are disabled");
     }
+    // Invalidate last run
     this.ctx = null;
+    // Clear last run promise
     this.running = null;
+    // Reset cells (but keep the instances for reuse)
     for (const slot of this.ownedCells.values()) {
       slot.activeLen = 0;
     }
-    this.readCells.clear(); // TODO clear in both directions
-    // this.invalidateRoutine();
+    // Mark output cell as pending
+    this.outputCell.setPending();
+    // Clear the dependencies
+    for (const cell of this.readCells.keys()) {
+      cell.dependents.delete(this);
+    }
+    this.readCells.clear();
+    // Mark as pending and schedule execution
     this.mark(State.PENDING);
-    this.registry.scheduleWake();
+    this.backend.scheduleWake();
   }
 
   destroy() {
@@ -259,12 +262,29 @@ export class IncrementalFunctionRuntime<
         "Invariant violation: Some computation depends on this, cannot destroy"
       );
     }
-    this.registry.delete(this); // Remove immediately from registry to be safe
-    this.deleting = true;
     this.ctx = null;
     this.running = null;
-    // this.deleteRoutine();
+    this.deleting = true;
+    this.backend.delete(this);
     this.mark(State.DELETED);
+  }
+
+  isAlone() {
+    return false; // TODO
+  }
+
+  maybeRun() {
+    if (this.state === State.PENDING && !this.isAlone()) {
+      this.run();
+      return true;
+    }
+    return false;
+  }
+
+  maybeDestroy() {
+    if (this.isAlone()) {
+      this.destroy();
+    }
   }
 
   private mark(state: StateNotCreating) {
@@ -273,10 +293,10 @@ export class IncrementalFunctionRuntime<
       throw new Error("Invariant violation: Unexpected deleted computation");
     }
     if (prevState !== State.CREATING) {
-      this.registry.computations[prevState].delete(this);
+      this.backend.computations[prevState].delete(this);
     }
     if (state !== State.DELETED) {
-      this.registry.computations[state].add(this);
+      this.backend.computations[state].add(this);
     }
     this.state = state;
     this.onStateChange(prevState, state);
