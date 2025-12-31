@@ -7,8 +7,8 @@ export type ValueDescription<T, Out> = {
   readonly deserialize: (out: Out) => T;
 };
 
-export type ValueOfDef<Def> =
-  Def extends ValueDescription<infer T, any> ? T : never;
+export type ValueOfDesc<Desc> =
+  Desc extends ValueDescription<infer T, any> ? T : never;
 
 export function valueDesc<T, Out>(
   equal: (a: T, b: T) => boolean,
@@ -25,3 +25,17 @@ export function valueDesc<T, Out>(
 }
 
 export type VersionedValue<T> = readonly [T, Version];
+
+export function sameValue<T>(): ValueDescription<T, T> {
+  return {
+    equal: (a, b) => a === b,
+    hash: () => 0,
+    serialize: v => v,
+    deserialize: v => v,
+  };
+}
+
+export type ChangedValue<Value> = {
+  readonly old: VersionedValue<Value> | null;
+  readonly new: VersionedValue<Value>;
+};

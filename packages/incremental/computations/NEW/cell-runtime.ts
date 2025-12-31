@@ -6,7 +6,7 @@ import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
 } from "./function-runtime";
-import type { VersionedValue, ValueDescription } from "./values";
+import type { VersionedValue, ValueDescription, ChangedValue } from "./values";
 
 export class IncrementalCellRuntime<Value> {
   readonly desc: IncrementalCellDescription<Value>;
@@ -41,8 +41,9 @@ export class IncrementalCellRuntime<Value> {
     this.pending = true;
   }
 
-  set(value: Value) {
+  set(value: Value): ChangedValue<Value> {
     this.owner.inv();
+    const { result } = this;
     this.pending = false;
     if (this.result == null || !this.valueDef.equal(this.result[0], value)) {
       this.result = [value, this.backend.getNextVersion()];
@@ -54,6 +55,7 @@ export class IncrementalCellRuntime<Value> {
     }
     this.defer?.resolve();
     this.defer = null;
+    return { old: result, new: this.result };
   }
 
   async get(
@@ -64,10 +66,16 @@ export class IncrementalCellRuntime<Value> {
     if (consumer === this.owner) {
       throw new Error("Cannot read own cell");
     }
+
     ctx.checkActive();
     if (!this.dependents.has(consumer)) {
       this.dependents.set(consumer, null);
       consumer.readCells.set(this, null);
+    }
+
+    if (this.owner.outputCell === this) {
+      // Ensure progress
+      this.owner.maybeRun();
     }
 
     while (!this.result || this.pending) {
@@ -84,6 +92,19 @@ export class IncrementalCellRuntime<Value> {
       consumer.invalidate();
     }
 
+    return result[0];
+  }
+
+  async entryGet(): Promise<Value> {
+    this.owner.inv();
+    if (this.owner.outputCell === this) {
+      // Ensure progress
+      this.owner.maybeRun();
+    }
+    while (!this.result || this.pending) {
+      await (this.defer ?? (this.defer = createDefer())).promise;
+    }
+    const result = this.result;
     return result[0];
   }
 }

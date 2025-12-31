@@ -1,7 +1,12 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
 import { SerializationError } from "../../../util/serialization";
 import { serializationDB } from "../../utils/serialization-db";
-import type { IncrementalContextRuntime } from "./function-runtime";
+import type { IncrementalBackend } from "./backend";
+import { IncrementalComputationDescription } from "./computations";
+import {
+  type IncrementalContextRuntime,
+  IncrementalFunctionRuntime,
+} from "./function-runtime";
 import type { ValueDescription } from "./values";
 
 export type IncrementalFunctionImpl<
@@ -17,17 +22,35 @@ export type CellValueDescriptions = {
   readonly [key in string]: ValueDescription<any, any>;
 };
 
+export type IncrementalFunctionSchemaOpts<
+  Input,
+  Output,
+  CellDefs extends CellValueDescriptions,
+> = {
+  readonly name: string;
+  readonly version: number;
+  readonly inputDef: ValueDescription<Input, any>;
+  readonly outputDef: ValueDescription<Output, any>;
+  readonly cellsDef: CellDefs;
+  readonly cacheable?: boolean;
+  readonly impl: IncrementalFunctionImpl<Input, Output, CellDefs>;
+};
+
 export class IncrementalFunctionSchema<
   Input,
   Output,
   CellDefs extends CellValueDescriptions,
 > {
+  // To distinguish from IncrementalFunctionSchemaOpts
+  private readonly instance = true;
+
   constructor(
     readonly name: string,
     readonly version: number,
     readonly inputDef: ValueDescription<Input, any>,
     readonly outputDef: ValueDescription<Output, any>,
     readonly cellsDef: CellDefs,
+    readonly cacheable: boolean,
     readonly impl: IncrementalFunctionImpl<Input, Output, CellDefs>
   ) {}
 }
@@ -41,13 +64,22 @@ export class IncrementalFunctionCallDescription<
   Input,
   Output,
   CellDefs extends CellValueDescriptions,
+> extends IncrementalComputationDescription<
+  IncrementalFunctionRuntime<Input, Output, CellDefs>
 > {
   private inputHash: number | null = null;
 
   constructor(
     readonly schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
     readonly input: Input
-  ) {}
+  ) {
+    super();
+  }
+
+  create(backend: IncrementalBackend) {
+    functions.check(this.schema);
+    return new IncrementalFunctionRuntime(backend, this);
+  }
 
   private getInputHash(): number {
     return (
@@ -133,12 +165,21 @@ export class IncrementalFunctionRegistry {
   }
 
   register<Input, Output, CellDefs extends CellValueDescriptions>(
-    schema: IncrementalFunctionSchema<Input, Output, CellDefs>
+    opts: IncrementalFunctionSchemaOpts<Input, Output, CellDefs>
   ) {
-    if (this.funcs.has(schema.name)) {
-      throw new Error(`Function '${schema.name}' was already registered`);
+    if (this.funcs.has(opts.name)) {
+      throw new Error(`Function '${opts.name}' was already registered`);
     }
-    this.funcs.set(schema.name, schema);
+    const schema = new IncrementalFunctionSchema(
+      opts.name,
+      opts.version,
+      opts.inputDef,
+      opts.outputDef,
+      opts.cellsDef,
+      opts.cacheable ?? true,
+      opts.impl
+    );
+    this.funcs.set(opts.name, schema);
     return schema;
   }
 

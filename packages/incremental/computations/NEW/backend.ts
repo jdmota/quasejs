@@ -10,6 +10,9 @@ import {
 import { IncrementalFunctionRuntime, State } from "./function-runtime";
 import { Scheduler } from "../../../util/schedule";
 import { createErrorDefer } from "../../../util/deferred";
+import type { FileChangeEvent } from "./file-system/file-system";
+import type { IncrementalComputationDescription } from "./computations";
+import type { IncrementalComputationRuntime } from "./computation-runtime";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -21,13 +24,13 @@ export type IncrementalOpts = {
   // readonly entry: ComputationDescription<C>;
   readonly onUncaughtError: (
     info: Readonly<{
-      description: IncrementalFunctionCallDescription<any, any, any> | null;
+      description: IncrementalComputationDescription<any> | null;
       error: unknown;
     }>
   ) => void;
-  /* readonly fs: {
+  readonly fs: {
     readonly onEvent: (event: FileChangeEvent) => void;
-  }; */
+  };
   readonly cache: IncrementalCacheOpts | false;
   readonly canInvalidate: boolean;
 };
@@ -36,27 +39,27 @@ export class IncrementalBackend {
   public static functions = functions;
 
   private map: HashMap<
-    IncrementalFunctionCallDescription<any, any, any>,
-    IncrementalFunctionRuntime<any, any, any>
+    IncrementalComputationDescription<any>,
+    IncrementalComputationRuntime<any, any>
   >;
   readonly computations: readonly [
-    SpecialQueue<IncrementalFunctionRuntime<any, any, any>>,
-    SpecialQueue<IncrementalFunctionRuntime<any, any, any>>,
-    SpecialQueue<IncrementalFunctionRuntime<any, any, any>>,
-    SpecialQueue<IncrementalFunctionRuntime<any, any, any>>,
+    SpecialQueue<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue<IncrementalComputationRuntime<any, any>>,
   ];
   private sessionVersion = 0;
   private nextVersion = 0;
   private canInvalidate: boolean;
   private canExternalInvalidate: boolean;
   private readonly pending: SpecialQueue<
-    IncrementalFunctionRuntime<any, any, any>
+    IncrementalComputationRuntime<any, any>
   >;
   private readonly running: SpecialQueue<
-    IncrementalFunctionRuntime<any, any, any>
+    IncrementalComputationRuntime<any, any>
   >;
   private readonly settledErr: SpecialQueue<
-    IncrementalFunctionRuntime<any, any, any>
+    IncrementalComputationRuntime<any, any>
   >;
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
@@ -80,8 +83,20 @@ export class IncrementalBackend {
     this.otherJobs = [];
   }
 
+  callUserFn<Arg>(
+    desc: IncrementalComputationDescription<any> | null,
+    fn: (arg: Arg) => void,
+    arg: Arg
+  ) {
+    try {
+      fn(arg);
+    } catch (err) {
+      this.emitUncaughtError(desc, err);
+    }
+  }
+
   queueOtherJob(
-    desc: IncrementalFunctionCallDescription<any, any, any> | null,
+    desc: IncrementalComputationDescription<any> | null,
     fn: () => Promise<unknown>
   ) {
     this.otherJobs.push(
@@ -92,7 +107,7 @@ export class IncrementalBackend {
   }
 
   private emitUncaughtError(
-    desc: IncrementalFunctionCallDescription<any, any, any> | null,
+    desc: IncrementalComputationDescription<any> | null,
     error: unknown
   ) {
     this.opts.onUncaughtError({ description: desc, error });
@@ -102,21 +117,21 @@ export class IncrementalBackend {
     desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
   ): IncrementalFunctionRuntime<Input, Output, CellDefs> | undefined {
     functions.check(desc.schema);
-    return this.map.get(desc);
+    return this.map.get(desc) as any;
   }
 
-  make<Input, Output, CellDefs extends CellValueDescriptions>(
-    desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
-  ): IncrementalFunctionRuntime<Input, Output, CellDefs> {
-    functions.check(desc.schema);
+  make<C extends IncrementalComputationRuntime<any, any>>(
+    desc: IncrementalComputationDescription<C>,
+    root: boolean = false
+  ): C {
     return this.map.computeIfAbsent(
       desc,
-      () => new IncrementalFunctionRuntime(this, desc)
-    );
+      () => desc.create(this).init(root) satisfies C
+    ) as C;
   }
 
-  delete(c: IncrementalFunctionRuntime<any, any, any>) {
-    this.map.delete(c.desc);
+  delete(c: IncrementalComputationRuntime<any, any>) {
+    this.map.delete(c.rawDesc);
   }
 
   getNextVersion(): Version {
@@ -128,10 +143,13 @@ export class IncrementalBackend {
   }
 
   onFunctionError(
-    desc: IncrementalFunctionCallDescription<any, any, any>,
-    err: any
+    description: IncrementalComputationDescription<any>,
+    error: unknown
   ) {
-    // TODO
+    this.opts.onUncaughtError({
+      description,
+      error,
+    });
   }
 
   invalidationsAllowed() {
@@ -209,8 +227,8 @@ export class IncrementalBackend {
     }
   }
 
-  run<Input, Output, CellDefs extends CellValueDescriptions>(
-    computation: IncrementalFunctionRuntime<Input, Output, CellDefs>
+  run<Ctx, Output>(
+    computation: IncrementalComputationRuntime<Ctx, Output>
   ): Promise<void> {
     return Promise.race([computation.run(), this.interruptedDefer.promise]);
   }

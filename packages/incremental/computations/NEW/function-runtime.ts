@@ -7,8 +7,9 @@ import {
   type CellValueDescriptions,
   type IncrementalFunctionSchema,
 } from "./functions";
-import type { ValueOfDef } from "./values";
+import type { ChangedValue, ValueOfDesc } from "./values";
 import type { IncrementalBackend } from "./backend";
+import { IncrementalComputationRuntime } from "./computation-runtime";
 
 export enum State {
   PENDING = 0,
@@ -59,7 +60,7 @@ export class IncrementalContextRuntime<
 
   cell<K extends string & keyof CellDefs>(
     key: K,
-    value: ValueOfDef<CellDefs[K]>
+    value: ValueOfDesc<CellDefs[K]>
   ) {
     const cell = this.runtime.alloc(this, key);
     cell.set(value);
@@ -93,12 +94,10 @@ export class IncrementalFunctionRuntime<
   Input,
   Output,
   CellDefs extends CellValueDescriptions,
+> extends IncrementalComputationRuntime<
+  IncrementalContextRuntime<Input, Output, CellDefs>,
+  Output
 > {
-  private state: State;
-  private ctx: IncrementalContextRuntime<Input, Output, CellDefs> | null;
-  private running: Promise<void> | null;
-  private deleting: boolean;
-  private root: boolean;
   // Cells read and the oldest version which was read in this run
   readonly readCells: Map<IncrementalCellRuntime<any>, Version | null>;
   // Owned resolved cells
@@ -109,18 +108,11 @@ export class IncrementalFunctionRuntime<
   // Output cell
   readonly outputCell: IncrementalCellRuntime<Output>;
 
-  next: IncrementalFunctionRuntime<any, any, any> | null = null;
-  prev: IncrementalFunctionRuntime<any, any, any> | null = null;
-
   constructor(
-    private readonly backend: IncrementalBackend,
+    backend: IncrementalBackend,
     readonly desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
   ) {
-    this.root = false;
-    this.state = State.CREATING;
-    this.ctx = null;
-    this.running = null;
-    this.deleting = false;
+    super(backend, desc);
     this.readCells = new Map();
     this.ownedCells = new Map();
     this.outputCell = new IncrementalCellRuntime(
@@ -146,7 +138,7 @@ export class IncrementalFunctionRuntime<
       array: [],
       activeLen: 0,
     }));
-    let cell: IncrementalCellRuntime<ValueOfDef<CellDefs[K]>>;
+    let cell: IncrementalCellRuntime<ValueOfDesc<CellDefs[K]>>;
     if (slot.activeLen < slot.array.length) {
       // Reusing the cell created in the last run
       cell = slot.array[slot.activeLen - 1];
@@ -166,79 +158,25 @@ export class IncrementalFunctionRuntime<
     return cell;
   }
 
-  protected isDeleting() {
-    return this.deleting;
+  protected createContext(): IncrementalContextRuntime<
+    Input,
+    Output,
+    CellDefs
+  > {
+    return new IncrementalContextRuntime(this.backend, this);
   }
 
-  protected getState() {
-    return this.state;
+  protected exec(ctx: IncrementalContextRuntime<Input, Output, CellDefs>) {
+    return this.desc.schema.impl(ctx, this.desc.input);
   }
 
-  isActive(ctx: IncrementalContextRuntime<Input, Output, CellDefs>) {
-    return this.ctx === ctx;
+  protected setOutputValue(value: Output) {
+    return this.outputCell.set(value);
   }
 
-  inv() {
-    if (this.deleting) {
-      throw new Error("Invariant violation: Unexpected deleted computation");
-    }
-  }
+  protected finishRoutine(set: ChangedValue<Output>): void {}
 
-  init(root: boolean) {
-    this.root = root;
-    this.mark(State.PENDING);
-    return this;
-  }
-
-  run() {
-    this.inv();
-    if (this.running == null) {
-      const ctx = (this.ctx = new IncrementalContextRuntime(
-        this.backend,
-        this
-      ));
-      this.running = Promise.resolve()
-        .then(() => this.desc.schema.impl(ctx, this.desc.input))
-        .then(
-          v => this.finishOk(ctx, v),
-          e => this.finishErr(ctx, e)
-        );
-      this.mark(State.RUNNING);
-    }
-    return this.running;
-  }
-
-  private finishOk(
-    ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
-    value: Output
-  ) {
-    if (ctx.isActive()) {
-      this.ctx = null;
-      this.outputCell.set(value);
-      this.mark(State.SETTLED_OK);
-    }
-  }
-
-  private finishErr(
-    ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
-    err: any
-  ) {
-    if (ctx.isActive()) {
-      this.ctx = null;
-      this.mark(State.SETTLED_ERR);
-      this.backend.onFunctionError(this.desc, err);
-    }
-  }
-
-  invalidate() {
-    this.inv();
-    if (!this.backend.invalidationsAllowed()) {
-      throw new Error("Invariant violation: Invalidations are disabled");
-    }
-    // Invalidate last run
-    this.ctx = null;
-    // Clear last run promise
-    this.running = null;
+  protected invalidateRoutine() {
     // Reset cells (but keep the instances for reuse)
     for (const slot of this.ownedCells.values()) {
       slot.activeLen = 0;
@@ -250,57 +188,9 @@ export class IncrementalFunctionRuntime<
       cell.dependents.delete(this);
     }
     this.readCells.clear();
-    // Mark as pending and schedule execution
-    this.mark(State.PENDING);
-    this.backend.scheduleWake();
   }
 
-  destroy() {
-    this.inv();
-    if (!this.isAlone()) {
-      throw new Error(
-        "Invariant violation: Some computation depends on this, cannot destroy"
-      );
-    }
-    this.ctx = null;
-    this.running = null;
-    this.deleting = true;
-    this.backend.delete(this);
-    this.mark(State.DELETED);
-  }
-
-  isAlone() {
-    return false; // TODO
-  }
-
-  maybeRun() {
-    if (this.state === State.PENDING && !this.isAlone()) {
-      this.run();
-      return true;
-    }
-    return false;
-  }
-
-  maybeDestroy() {
-    if (this.isAlone()) {
-      this.destroy();
-    }
-  }
-
-  private mark(state: StateNotCreating) {
-    const prevState = this.state;
-    if (prevState === State.DELETED) {
-      throw new Error("Invariant violation: Unexpected deleted computation");
-    }
-    if (prevState !== State.CREATING) {
-      this.backend.computations[prevState].delete(this);
-    }
-    if (state !== State.DELETED) {
-      this.backend.computations[state].add(this);
-    }
-    this.state = state;
-    this.onStateChange(prevState, state);
-  }
+  protected deleteRoutine() {}
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
 }
