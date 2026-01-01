@@ -1,38 +1,19 @@
 import { computeIfAbsent } from "../../../util/maps-sets";
 import type { Version } from "../../utils/versions";
-import { IncrementalCellDescription } from "./cells";
-import { IncrementalCellRuntime } from "./cell-runtime";
+import { IncrementalCellDescription } from "../descriptions/cells";
 import {
-  IncrementalFunctionCallDescription,
   type CellValueDescriptions,
   type IncrementalFunctionSchema,
-} from "./functions";
-import type { ChangedValue, ValueOfDesc } from "./values";
+  IncrementalFunctionCallDescription,
+} from "../descriptions/functions";
+import type { ChangedValue, ValueOfDesc } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
-import { IncrementalComputationRuntime } from "./computation-runtime";
-
-export enum State {
-  PENDING = 0,
-  RUNNING = 1,
-  SETTLED_ERR = 2,
-  SETTLED_OK = 3,
-  DELETED = 4,
-  CREATING = 5,
-}
-
-export type StateNotCreating =
-  | State.PENDING
-  | State.RUNNING
-  | State.SETTLED_ERR
-  | State.SETTLED_OK
-  | State.DELETED;
-
-export type StateNotDeleted =
-  | State.PENDING
-  | State.RUNNING
-  | State.SETTLED_ERR
-  | State.SETTLED_OK
-  | State.CREATING;
+import { IncrementalCellRuntime } from "./cells";
+import {
+  IncrementalComputationRuntime,
+  type StateNotDeleted,
+  type StateNotCreating,
+} from "./computations";
 
 export class IncrementalContextRuntime<
   Input,

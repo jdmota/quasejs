@@ -1,5 +1,5 @@
 import { IncrementalLib } from "../incremental-lib";
-import { sameValue } from "../values";
+import { sameValue } from "../descriptions/values";
 
 const lib = new IncrementalLib({
   fs: {

@@ -1,5 +1,5 @@
-import type { IncrementalBackend } from "./backend";
-import type { IncrementalComputationRuntime } from "./computation-runtime";
+import type { IncrementalBackend } from "../runtime/backend";
+import type { IncrementalComputationRuntime } from "../runtime/computations";
 
 export abstract class IncrementalComputationDescription<
   C extends IncrementalComputationRuntime<any, any>,

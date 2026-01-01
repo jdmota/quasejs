@@ -1,18 +1,18 @@
 import { SpecialQueue } from "../../../util/data-structures/linked-list";
 import type { Logger } from "../../../util/logger";
+import { Scheduler } from "../../../util/schedule";
+import { createErrorDefer } from "../../../util/deferred";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
+import type { FileChangeEvent } from "../file-system/file-system";
+import type { IncrementalComputationDescription } from "../descriptions/computations";
 import {
   type CellValueDescriptions,
   IncrementalFunctionCallDescription,
   functions,
-} from "./functions";
-import { IncrementalFunctionRuntime, State } from "./function-runtime";
-import { Scheduler } from "../../../util/schedule";
-import { createErrorDefer } from "../../../util/deferred";
-import type { FileChangeEvent } from "./file-system/file-system";
-import type { IncrementalComputationDescription } from "./computations";
-import type { IncrementalComputationRuntime } from "./computation-runtime";
+} from "../descriptions/functions";
+import { IncrementalFunctionRuntime } from "./functions";
+import { State, type IncrementalComputationRuntime } from "./computations";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -200,7 +200,7 @@ export class IncrementalBackend {
   // External invalidations (like those caused by file changes)
   // schedule invalidation of errored computations
   // together with a new execution
-  externalInvalidate(computation: IncrementalFunctionRuntime<any, any, any>) {
+  externalInvalidate(computation: IncrementalComputationRuntime<any, any>) {
     if (this.externalInvalidationsAllowed()) {
       this.scheduler2.schedule();
       computation.invalidate();

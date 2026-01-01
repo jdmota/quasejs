@@ -1,7 +1,7 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
+import type { IncrementalComputationDescription } from "../descriptions/computations";
+import type { ChangedValue } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
-import type { IncrementalComputationDescription } from "./computations";
-import type { ChangedValue } from "./values";
 
 export enum State {
   PENDING = 0,

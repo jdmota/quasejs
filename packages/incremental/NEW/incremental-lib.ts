@@ -1,10 +1,10 @@
-import { IncrementalBackend, type IncrementalOpts } from "./backend";
+import { IncrementalBackend, type IncrementalOpts } from "./runtime/backend";
 import {
-  IncrementalFunctionCallDescription,
-  IncrementalFunctionSchema,
   type CellValueDescriptions,
   type IncrementalFunctionSchemaOpts,
-} from "./functions";
+  IncrementalFunctionCallDescription,
+  IncrementalFunctionSchema,
+} from "./descriptions/functions";
 
 export class IncrementalLib {
   private readonly backend: IncrementalBackend;

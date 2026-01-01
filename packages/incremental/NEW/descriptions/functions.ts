@@ -1,13 +1,13 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
 import { SerializationError } from "../../../util/serialization";
 import { serializationDB } from "../../utils/serialization-db";
-import type { IncrementalBackend } from "./backend";
-import { IncrementalComputationDescription } from "./computations";
+import type { IncrementalBackend } from "../runtime/backend";
 import {
   type IncrementalContextRuntime,
   IncrementalFunctionRuntime,
-} from "./function-runtime";
+} from "../runtime/functions";
 import type { ValueDescription } from "./values";
+import { IncrementalComputationDescription } from "./computations";
 
 export type IncrementalFunctionImpl<
   Input,

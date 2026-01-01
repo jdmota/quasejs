@@ -1,12 +1,17 @@
 import { type Defer, createDefer } from "../../../util/deferred";
 import type { Version } from "../../utils/versions";
 import type { IncrementalBackend } from "./backend";
-import { IncrementalCellDescription } from "./cells";
+import { IncrementalCellDescription } from "../descriptions/cells";
+import type {
+  VersionedValue,
+  ValueDescription,
+  ChangedValue,
+} from "../descriptions/values";
 import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
-} from "./function-runtime";
-import type { VersionedValue, ValueDescription, ChangedValue } from "./values";
+} from "./functions";
+import type { IncrementalComputationRuntime } from "./computations";
 
 export class IncrementalCellRuntime<Value> {
   readonly desc: IncrementalCellDescription<Value>;
@@ -23,14 +28,14 @@ export class IncrementalCellRuntime<Value> {
 
   constructor(
     private readonly backend: IncrementalBackend,
-    private readonly owner: IncrementalFunctionRuntime<any, any, any>,
+    private readonly owner: IncrementalComputationRuntime<any, any>,
     private readonly valueDef: ValueDescription<Value, any>,
     private readonly key: string,
     private readonly index: number,
     private readonly resolved: boolean
   ) {
     this.desc = new IncrementalCellDescription(
-      owner.desc,
+      owner.rawDesc,
       key,
       index,
       resolved
@@ -73,7 +78,7 @@ export class IncrementalCellRuntime<Value> {
       consumer.readCells.set(this, null);
     }
 
-    if (this.owner.outputCell === this) {
+    if (!this.resolved) {
       // Ensure progress
       this.owner.maybeRun();
     }
@@ -97,7 +102,7 @@ export class IncrementalCellRuntime<Value> {
 
   async entryGet(): Promise<Value> {
     this.owner.inv();
-    if (this.owner.outputCell === this) {
+    if (!this.resolved) {
       // Ensure progress
       this.owner.maybeRun();
     }

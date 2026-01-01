@@ -1,8 +1,8 @@
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
-import { normalizePath } from "../../../../util/path-url";
-import type { IncrementalBackend, IncrementalOpts } from "../backend";
-import type { IncrementalFunctionRuntime } from "../function-runtime";
+import { normalizePath } from "../../../util/path-url";
+import type { IncrementalBackend, IncrementalOpts } from "../runtime/backend";
+import { FileComputationDescription, FileComputation } from "./file";
 
 export enum FileChange {
   ADD_OR_REMOVE = "ADD_OR_REMOVE",
@@ -14,12 +14,24 @@ class FileInfo {
   readonly path: string;
   readonly parentPath: string;
   readonly events: {
-    [FileChange.ADD_OR_REMOVE]: Set<FileComputation>;
-    [FileChange.CHANGE]: Set<FileComputation>;
+    [FileChange.ADD_OR_REMOVE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
+    [FileChange.CHANGE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
   };
   readonly recEvents: {
-    [FileChange.ADD_OR_REMOVE]: Set<FileComputation>;
-    [FileChange.CHANGE]: Set<FileComputation>;
+    [FileChange.ADD_OR_REMOVE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
+    [FileChange.CHANGE]: {
+      desc: FileComputationDescription;
+      computations: Set<FileComputation>;
+    };
   };
 
   constructor(path: string) {
