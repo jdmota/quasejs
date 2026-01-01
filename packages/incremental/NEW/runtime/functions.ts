@@ -10,9 +10,9 @@ import type { ChangedValue, ValueOfDesc } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
 import {
-  IncrementalComputationRuntime,
   type StateNotDeleted,
   type StateNotCreating,
+  IncrementalComputationRuntime,
 } from "./computations";
 
 export class IncrementalContextRuntime<
@@ -49,10 +49,7 @@ export class IncrementalContextRuntime<
   }
 
   read<Value>(desc: IncrementalCellDescription<Value>): Promise<Value> {
-    const func = this.backend.get(desc.owner);
-    const cell = desc.resolved
-      ? func?.ownedCells.get(desc.key)?.array[desc.index]
-      : func?.outputCell;
+    const cell = this.backend.get(desc.owner)?.getCell(desc);
     if (!cell) {
       throw new Error(
         `Invariant violation: cell ${desc.getCacheKey()} does not exist`
@@ -106,6 +103,15 @@ export class IncrementalFunctionRuntime<
     );
   }
 
+  override getCell<Value>(
+    desc: IncrementalCellDescription<Value>
+  ): IncrementalCellRuntime<Value> | undefined {
+    const cell = desc.resolved
+      ? this.ownedCells.get(desc.key)?.array[desc.index]
+      : this.outputCell;
+    return cell as any;
+  }
+
   alloc<K extends string & keyof CellDefs>(
     ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
     key: K
@@ -149,6 +155,11 @@ export class IncrementalFunctionRuntime<
 
   protected exec(ctx: IncrementalContextRuntime<Input, Output, CellDefs>) {
     return this.desc.schema.impl(ctx, this.desc.input);
+  }
+
+  protected override isAlone(): boolean {
+    // TODO
+    return false;
   }
 
   protected setOutputValue(value: Output) {

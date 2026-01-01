@@ -1,7 +1,9 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
-import type { IncrementalComputationDescription } from "../descriptions/computations";
+import type { IncrementalCellDescription } from "../descriptions/cells";
+import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
 import type { ChangedValue } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
+import type { IncrementalCellRuntime } from "./cells";
 
 export enum State {
   PENDING = 0,
@@ -38,7 +40,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output> {
 
   constructor(
     protected readonly backend: IncrementalBackend,
-    readonly rawDesc: IncrementalComputationDescription<any>
+    readonly rawDesc: AnyIncrementalComputationDescription
   ) {
     this.root = false;
     this.state = State.CREATING;
@@ -70,6 +72,10 @@ export abstract class IncrementalComputationRuntime<Ctx, Output> {
     this.mark(State.PENDING);
     return this;
   }
+
+  abstract getCell<Value>(
+    desc: IncrementalCellDescription<Value>
+  ): IncrementalCellRuntime<Value> | undefined;
 
   protected abstract createContext(): Ctx;
 
@@ -145,9 +151,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output> {
 
   protected abstract deleteRoutine(): void;
 
-  isAlone() {
-    return false; // TODO
-  }
+  protected abstract isAlone(): boolean;
 
   maybeRun() {
     if (this.state === State.PENDING && !this.isAlone()) {

@@ -9,3 +9,6 @@ export abstract class IncrementalComputationDescription<
   abstract hash(): number;
   abstract getCacheKey(): string;
 }
+
+export type AnyIncrementalComputationDescription =
+  IncrementalComputationDescription<IncrementalComputationRuntime<any, any>>;

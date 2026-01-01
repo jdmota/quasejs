@@ -5,13 +5,11 @@ import { createErrorDefer } from "../../../util/deferred";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
 import type { FileChangeEvent } from "../file-system/file-system";
-import type { IncrementalComputationDescription } from "../descriptions/computations";
-import {
-  type CellValueDescriptions,
-  IncrementalFunctionCallDescription,
-  functions,
-} from "../descriptions/functions";
-import { IncrementalFunctionRuntime } from "./functions";
+import type {
+  AnyIncrementalComputationDescription,
+  IncrementalComputationDescription,
+} from "../descriptions/computations";
+import { functions } from "../descriptions/functions";
 import { State, type IncrementalComputationRuntime } from "./computations";
 
 export type IncrementalCacheOpts = {
@@ -24,7 +22,7 @@ export type IncrementalOpts = {
   // readonly entry: ComputationDescription<C>;
   readonly onUncaughtError: (
     info: Readonly<{
-      description: IncrementalComputationDescription<any> | null;
+      description: AnyIncrementalComputationDescription | null;
       error: unknown;
     }>
   ) => void;
@@ -39,7 +37,7 @@ export class IncrementalBackend {
   public static functions = functions;
 
   private map: HashMap<
-    IncrementalComputationDescription<any>,
+    AnyIncrementalComputationDescription,
     IncrementalComputationRuntime<any, any>
   >;
   readonly computations: readonly [
@@ -84,7 +82,7 @@ export class IncrementalBackend {
   }
 
   callUserFn<Arg>(
-    desc: IncrementalComputationDescription<any> | null,
+    desc: AnyIncrementalComputationDescription | null,
     fn: (arg: Arg) => void,
     arg: Arg
   ) {
@@ -96,7 +94,7 @@ export class IncrementalBackend {
   }
 
   queueOtherJob(
-    desc: IncrementalComputationDescription<any> | null,
+    desc: AnyIncrementalComputationDescription | null,
     fn: () => Promise<unknown>
   ) {
     this.otherJobs.push(
@@ -107,17 +105,16 @@ export class IncrementalBackend {
   }
 
   private emitUncaughtError(
-    desc: IncrementalComputationDescription<any> | null,
+    desc: AnyIncrementalComputationDescription | null,
     error: unknown
   ) {
     this.opts.onUncaughtError({ description: desc, error });
   }
 
-  get<Input, Output, CellDefs extends CellValueDescriptions>(
-    desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
-  ): IncrementalFunctionRuntime<Input, Output, CellDefs> | undefined {
-    functions.check(desc.schema);
-    return this.map.get(desc) as any;
+  get<C extends IncrementalComputationRuntime<any, any>>(
+    desc: IncrementalComputationDescription<C>
+  ): C | undefined {
+    return this.map.get(desc) as C | undefined;
   }
 
   make<C extends IncrementalComputationRuntime<any, any>>(
@@ -143,7 +140,7 @@ export class IncrementalBackend {
   }
 
   onFunctionError(
-    description: IncrementalComputationDescription<any>,
+    description: AnyIncrementalComputationDescription,
     error: unknown
   ) {
     this.opts.onUncaughtError({

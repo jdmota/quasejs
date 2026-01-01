@@ -1,11 +1,11 @@
 import { serializationDB } from "../../utils/serialization-db";
-import type { IncrementalComputationDescription } from "./computations";
+import type { AnyIncrementalComputationDescription } from "./computations";
 
 export class IncrementalCellDescription<Value> {
   _valueType!: Value;
 
   constructor(
-    readonly owner: IncrementalComputationDescription<any>,
+    readonly owner: AnyIncrementalComputationDescription,
     readonly key: string,
     readonly index: number,
     readonly resolved: boolean
@@ -31,7 +31,7 @@ export class IncrementalCellDescription<Value> {
 }
 
 export type IncrementalCellDescriptionJSON = {
-  readonly owner: IncrementalComputationDescription<any>;
+  readonly owner: AnyIncrementalComputationDescription;
   readonly key: string;
   readonly index: number;
   readonly resolved: boolean;

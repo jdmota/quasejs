@@ -14,10 +14,7 @@ type FileComputationDescriptionJSON = {
   readonly recursive: boolean;
 };
 
-export class FileComputationDescription
-  extends IncrementalComputationDescription<FileComputation>
-  implements FileComputationDescriptionJSON
-{
+export class FileComputationDescription extends IncrementalComputationDescription<FileComputation> {
   readonly path: string;
   readonly type: FileChange;
   readonly recursive: boolean;
