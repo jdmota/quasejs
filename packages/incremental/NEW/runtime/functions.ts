@@ -188,7 +188,15 @@ export class IncrementalFunctionRuntime<
     return this.outputCell.set(value);
   }
 
-  protected finishRoutine(set: ChangedValue<Output>) {}
+  protected finishRoutine(set: ChangedValue<Output>) {
+    // Delete cells that were not reused in this run
+    for (const slot of this.ownedCells.values()) {
+      for (let i = slot.activeLen; i < slot.array.length; i++) {
+        slot.array[i].setDeleted();
+      }
+      slot.array.length = slot.activeLen;
+    }
+  }
 
   protected invalidateRoutine() {
     // Reset cells (but keep the instances for reuse)

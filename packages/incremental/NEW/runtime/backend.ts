@@ -142,7 +142,7 @@ export class IncrementalBackend {
     // 0: Distinguish between different sessions
     // 1: Distinguish between different versions in this session
     // (we rely on a global value to ensure that even
-    // deleted then recreated computations have different versions)
+    // deleted then recreated cell have different versions)
     return [this.sessionVersion, this.nextVersion++];
   }
 

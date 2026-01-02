@@ -17,6 +17,9 @@ import type {
 
 // TODO support root level cells
 
+// Cell descriptions are similar to pointers
+// Trying to read a deleted cell is like dereferencing a dangling pointer
+
 export interface IncrementalCellOwner {
   readonly rawDesc: IncrementalCellOwnerDescription;
   inv(): void;
@@ -33,6 +36,8 @@ export class IncrementalCellRuntime<Value> {
   // This flag is used to delay resolution
   // when we know a new value might be incoming
   private pending = true;
+  // This flag indicates if this cell was deallocated
+  private deleted = false;
   // Dependents of this cell and the oldest version which they read
   public dependents: Map<
     IncrementalFunctionRuntime<any, any, any>,
@@ -55,12 +60,23 @@ export class IncrementalCellRuntime<Value> {
     );
   }
 
+  inv() {
+    if (this.deleted) {
+      throw new Error("This cell was deleted");
+    }
+    this.owner.inv();
+  }
+
+  setDeleted() {
+    this.deleted = true;
+  }
+
   setPending() {
     this.pending = true;
   }
 
   set(value: Value): ChangedValue<Value> {
-    this.owner.inv();
+    this.inv();
     const { result } = this;
     this.pending = false;
     if (this.result == null || !this.valueDef.equal(this.result[0], value)) {
@@ -80,12 +96,17 @@ export class IncrementalCellRuntime<Value> {
     ctx: IncrementalContextRuntime<any, any, any>,
     consumer: IncrementalFunctionRuntime<any, any, any>
   ): Promise<Value> {
-    this.owner.inv();
+    // Check first if this run is active
+    // If the owner of the cell was deleted,
+    // then this consumer should not be active
+    ctx.checkActive();
+    // Check that cell and owner still exist
+    this.inv();
+
     if (consumer === this.owner) {
       throw new Error("Cannot read own cell");
     }
 
-    ctx.checkActive();
     if (!this.dependents.has(consumer)) {
       this.dependents.set(consumer, null);
       consumer.readCells.set(this, null);
@@ -111,7 +132,7 @@ export class IncrementalCellRuntime<Value> {
   }
 
   async entryGet(): Promise<Value> {
-    this.owner.inv();
+    this.inv();
     this.owner.onReadCell(this);
     while (!this.result || this.pending) {
       await (this.defer ?? (this.defer = createDefer())).promise;

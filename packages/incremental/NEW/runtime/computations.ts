@@ -112,7 +112,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   protected abstract finishRoutine(set: ChangedValue<Output>): void;
 
-  private finishErr(ctx: Ctx, err: any) {
+  private finishErr(ctx: Ctx, err: unknown) {
     if (this.isActive(ctx)) {
       this.ctx = null;
       this.mark(State.SETTLED_ERR);
