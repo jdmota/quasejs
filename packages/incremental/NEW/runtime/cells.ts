@@ -1,7 +1,10 @@
 import { type Defer, createDefer } from "../../../util/deferred";
 import type { Version } from "../../utils/versions";
 import type { IncrementalBackend } from "./backend";
-import { IncrementalCellDescription } from "../descriptions/cells";
+import {
+  type IncrementalCellOwnerDescription,
+  IncrementalCellDescription,
+} from "../descriptions/cells";
 import type {
   VersionedValue,
   ValueDescription,
@@ -11,7 +14,17 @@ import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
 } from "./functions";
-import type { IncrementalComputationRuntime } from "./computations";
+
+// TODO support root level cells
+
+export interface IncrementalCellOwner {
+  readonly rawDesc: IncrementalCellOwnerDescription;
+  inv(): void;
+  getCell<Value>(
+    desc: IncrementalCellDescription<Value>
+  ): IncrementalCellRuntime<Value> | undefined;
+  onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
+}
 
 export class IncrementalCellRuntime<Value> {
   readonly desc: IncrementalCellDescription<Value>;
@@ -28,7 +41,7 @@ export class IncrementalCellRuntime<Value> {
 
   constructor(
     private readonly backend: IncrementalBackend,
-    private readonly owner: IncrementalComputationRuntime<any, any>,
+    private readonly owner: IncrementalCellOwner,
     private readonly valueDef: ValueDescription<Value, any>,
     private readonly key: string,
     private readonly index: number,
@@ -78,10 +91,7 @@ export class IncrementalCellRuntime<Value> {
       consumer.readCells.set(this, null);
     }
 
-    if (!this.resolved) {
-      // Ensure progress
-      this.owner.maybeRun();
-    }
+    this.owner.onReadCell(this);
 
     while (!this.result || this.pending) {
       await (this.defer ?? (this.defer = createDefer())).promise;
@@ -102,10 +112,7 @@ export class IncrementalCellRuntime<Value> {
 
   async entryGet(): Promise<Value> {
     this.owner.inv();
-    if (!this.resolved) {
-      // Ensure progress
-      this.owner.maybeRun();
-    }
+    this.owner.onReadCell(this);
     while (!this.result || this.pending) {
       await (this.defer ?? (this.defer = createDefer())).promise;
     }

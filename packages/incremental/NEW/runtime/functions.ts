@@ -7,6 +7,7 @@ import {
   IncrementalFunctionCallDescription,
 } from "../descriptions/functions";
 import type { ChangedValue, ValueOfDesc } from "../descriptions/values";
+import type { FileChange } from "../file-system/file-system";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
 import {
@@ -49,12 +50,17 @@ export class IncrementalContextRuntime<
   }
 
   read<Value>(desc: IncrementalCellDescription<Value>): Promise<Value> {
-    const cell = this.backend.get(desc.owner)?.getCell(desc);
+    const cell = this.backend.getCell(desc);
     if (!cell) {
       throw new Error(
         `Invariant violation: cell ${desc.getCacheKey()} does not exist`
       );
     }
+    return cell.get(this, this.runtime);
+  }
+
+  // Internal direct access
+  _read<Value>(cell: IncrementalCellRuntime<Value>): Promise<Value> {
     return cell.get(this, this.runtime);
   }
 
@@ -65,6 +71,15 @@ export class IncrementalContextRuntime<
     const desc = new IncrementalFunctionCallDescription(schema, input);
     const func = this.backend.make(desc);
     return func.outputCell.desc;
+  }
+
+  fs<T>(
+    originalPath: string,
+    fn: (path: string) => T | Promise<T>,
+    type: FileChange | null = null,
+    rec: boolean = false
+  ) {
+    return this.backend.fs.depend(this, originalPath, fn, type, rec);
   }
 }
 
@@ -110,6 +125,13 @@ export class IncrementalFunctionRuntime<
       ? this.ownedCells.get(desc.key)?.array[desc.index]
       : this.outputCell;
     return cell as any;
+  }
+
+  override onReadCell<Value>(cell: IncrementalCellRuntime<Value>) {
+    if (!cell.desc.resolved) {
+      // Ensure progress
+      this.maybeRun();
+    }
   }
 
   alloc<K extends string & keyof CellDefs>(
@@ -166,7 +188,7 @@ export class IncrementalFunctionRuntime<
     return this.outputCell.set(value);
   }
 
-  protected finishRoutine(set: ChangedValue<Output>): void {}
+  protected finishRoutine(set: ChangedValue<Output>) {}
 
   protected invalidateRoutine() {
     // Reset cells (but keep the instances for reuse)
@@ -184,5 +206,5 @@ export class IncrementalFunctionRuntime<
 
   protected deleteRoutine() {}
 
-  protected onStateChange(from: StateNotDeleted, to: StateNotCreating): void {}
+  protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
 }

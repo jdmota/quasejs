@@ -26,13 +26,15 @@ export function valueDesc<T, Out>(
 
 export type VersionedValue<T> = readonly [T, Version];
 
+const sameValueDesc: ValueDescription<any, any> = {
+  equal: (a, b) => a === b,
+  hash: () => 0,
+  serialize: v => v,
+  deserialize: v => v,
+};
+
 export function sameValue<T>(): ValueDescription<T, T> {
-  return {
-    equal: (a, b) => a === b,
-    hash: () => 0,
-    serialize: v => v,
-    deserialize: v => v,
-  };
+  return sameValueDesc;
 }
 
 export type ChangedValue<Value> = {

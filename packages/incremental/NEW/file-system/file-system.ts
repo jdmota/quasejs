@@ -2,6 +2,7 @@ import chokidarWatcher from "chokidar";
 import { dirname } from "path";
 import { normalizePath } from "../../../util/path-url";
 import type { IncrementalBackend, IncrementalOpts } from "../runtime/backend";
+import type { IncrementalContextRuntime } from "../runtime/functions";
 import { FileComputationDescription, FileComputation } from "./file";
 
 export enum FileChange {
@@ -10,9 +11,8 @@ export enum FileChange {
 }
 
 class FileInfo {
-  private ready: Promise<any> | null;
+  private ready: Promise<unknown> | null;
   readonly path: string;
-  readonly parentPath: string;
   readonly events: {
     [FileChange.ADD_OR_REMOVE]: {
       desc: FileComputationDescription;
@@ -37,7 +37,6 @@ class FileInfo {
   constructor(path: string) {
     this.ready = null;
     this.path = path;
-    this.parentPath = normalizePath(dirname(path));
     this.events = {
       ADD_OR_REMOVE: {
         desc: new FileComputationDescription(
@@ -125,9 +124,7 @@ export type FileChangeEvent = {
 };
 
 export class FileSystem {
-  // File infos
   private readonly files: Map<string, FileInfo>;
-  // Watcher
   private watcher: chokidarWatcher.FSWatcher | null;
 
   constructor(
@@ -200,39 +197,35 @@ export class FileSystem {
     this.getInfo(path).unsub(computation, this.watcher);
   }
 
-  get(
-    computation: IncrementalFunctionRuntime<any, any, any>,
-    originalPath: string,
+  private read(
+    ctx: IncrementalContextRuntime<any, any, any>,
+    path: string,
     type: FileChange,
-    recursive: boolean
+    rec: boolean = false
   ) {
-    const path = normalizePath(originalPath);
     const info = this.getInfo(path);
-
-    return recursive ? info.recEvents[type].desc : info.events[type].desc;
+    const desc = rec ? info.recEvents[type].desc : info.events[type].desc;
+    const file = this.backend.make(desc);
+    return ctx._read(file.outputCell);
   }
 
   async depend<T>(
-    ctx: SimpleContext,
+    ctx: IncrementalContextRuntime<any, any, any>,
     originalPath: string,
-    fn: (originalPath: string) => T | Promise<T>,
+    fn: (path: string) => T | Promise<T>,
     type: FileChange | null = null,
     rec: boolean = false
   ) {
+    const path = normalizePath(originalPath);
     if (type == null) {
-      await ctx.get(this.get(originalPath, FileChange.ADD_OR_REMOVE, rec));
-      await ctx.get(this.get(originalPath, FileChange.CHANGE, rec));
+      await Promise.all([
+        this.read(ctx, path, FileChange.ADD_OR_REMOVE, rec),
+        this.read(ctx, path, FileChange.CHANGE, rec),
+      ]);
     } else {
-      await ctx.get(this.get(originalPath, type, rec));
+      await this.read(ctx, path, type, rec);
     }
-    return fn(originalPath);
-  }
-
-  extend<Ctx extends SimpleContext>(ctx: Ctx): Ctx & CtxWithFS {
-    return {
-      ...ctx,
-      fs: (a, b, c, rec) => this.depend(ctx, a, b, c, rec),
-    };
+    return fn(path);
   }
 
   async close() {
@@ -247,12 +240,3 @@ export class FileSystem {
     }
   }
 }
-
-export type CtxWithFS = {
-  readonly fs: <T>(
-    a: string,
-    b: (originalPath: string) => T | Promise<T>,
-    c?: FileChange | null,
-    rec?: boolean
-  ) => Promise<T>;
-};

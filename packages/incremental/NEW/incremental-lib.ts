@@ -27,4 +27,8 @@ export class IncrementalLib {
     const func = this.backend.make(desc);
     return func.outputCell.entryGet();
   }
+
+  close() {
+    return this.backend.close();
+  }
 }

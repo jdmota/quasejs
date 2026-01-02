@@ -4,13 +4,18 @@ import { Scheduler } from "../../../util/schedule";
 import { createErrorDefer } from "../../../util/deferred";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
-import type { FileChangeEvent } from "../file-system/file-system";
+import { type FileChangeEvent, FileSystem } from "../file-system/file-system";
 import type {
   AnyIncrementalComputationDescription,
   IncrementalComputationDescription,
 } from "../descriptions/computations";
 import { functions } from "../descriptions/functions";
+import type {
+  IncrementalCellDescription,
+  IncrementalCellOwnerDescription,
+} from "../descriptions/cells";
 import { State, type IncrementalComputationRuntime } from "./computations";
+import type { IncrementalCellRuntime } from "./cells";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -37,7 +42,7 @@ export class IncrementalBackend {
   public static functions = functions;
 
   private map: HashMap<
-    AnyIncrementalComputationDescription,
+    IncrementalCellOwnerDescription,
     IncrementalComputationRuntime<any, any>
   >;
   readonly computations: readonly [
@@ -61,6 +66,7 @@ export class IncrementalBackend {
   >;
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
+  public readonly fs: FileSystem;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
@@ -79,6 +85,7 @@ export class IncrementalBackend {
     this.running = this.computations[State.RUNNING];
     this.settledErr = this.computations[State.SETTLED_ERR];
     this.otherJobs = [];
+    this.fs = new FileSystem(opts, this);
   }
 
   callUserFn<Arg>(
@@ -111,10 +118,10 @@ export class IncrementalBackend {
     this.opts.onUncaughtError({ description: desc, error });
   }
 
-  get<C extends IncrementalComputationRuntime<any, any>>(
-    desc: IncrementalComputationDescription<C>
-  ): C | undefined {
-    return this.map.get(desc) as C | undefined;
+  getCell<Value>(
+    desc: IncrementalCellDescription<Value>
+  ): IncrementalCellRuntime<Value> | undefined {
+    return this.map.get(desc.owner)?.getCell(desc);
   }
 
   make<C extends IncrementalComputationRuntime<any, any>>(
@@ -235,5 +242,40 @@ export class IncrementalBackend {
 
   isCleaningUp() {
     return this.cleaningUp;
+  }
+
+  private cleanupRun(interrupted: boolean) {
+    if (this.cleaningUp) return;
+    this.cleaningUp = true;
+    this.interruptedDefer.reject(new Error("Interrupted"));
+
+    this.scheduler1.cancel();
+    this.scheduler2.cancel();
+
+    // Basic clean up before locking the cache DB (preventing adding/deleting entries)
+    /* this.clearOrphans();
+    this.db?.lock(); */
+
+    // Now clear everything
+    /* rootComputation.setRoot(false);
+    rootComputation.destroy();
+    this.clearOrphans();
+
+    if (this.computationsCount() > 0) {
+      throw new Error("Invariant violation: Cleanup failed");
+    } */
+
+    const { /* db, */ fs } = this;
+    this.queueOtherJob(null, () => fs.close());
+    // if (db) this.queueOtherJob(null, () => db.save(interrupted));
+
+    const { otherJobs } = this;
+    this.otherJobs = [];
+    return Promise.all(otherJobs);
+  }
+
+  close() {
+    // TODO
+    return this.cleanupRun(false);
   }
 }

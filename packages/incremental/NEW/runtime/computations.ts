@@ -3,7 +3,7 @@ import type { IncrementalCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
 import type { ChangedValue } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
-import type { IncrementalCellRuntime } from "./cells";
+import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export enum State {
   PENDING = 0,
@@ -28,7 +28,9 @@ export type StateNotDeleted =
   | State.SETTLED_OK
   | State.CREATING;
 
-export abstract class IncrementalComputationRuntime<Ctx, Output> {
+export abstract class IncrementalComputationRuntime<Ctx, Output>
+  implements IncrementalCellOwner
+{
   protected state: State;
   protected ctx: Ctx | null;
   protected running: Promise<void> | null;
@@ -76,6 +78,8 @@ export abstract class IncrementalComputationRuntime<Ctx, Output> {
   abstract getCell<Value>(
     desc: IncrementalCellDescription<Value>
   ): IncrementalCellRuntime<Value> | undefined;
+
+  abstract onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
 
   protected abstract createContext(): Ctx;
 

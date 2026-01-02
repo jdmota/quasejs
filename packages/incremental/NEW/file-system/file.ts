@@ -1,12 +1,17 @@
+import fsextra from "fs-extra";
+import { never } from "../../../util/miscellaneous";
 import { IncrementalComputationDescription } from "../descriptions/computations";
 import { serializationDB } from "../../utils/serialization-db";
 import type { IncrementalBackend } from "../runtime/backend";
-import { FileChange } from "./file-system";
 import {
-  IncrementalComputationRuntime,
   type StateNotCreating,
   type StateNotDeleted,
+  IncrementalComputationRuntime,
 } from "../runtime/computations";
+import { IncrementalCellRuntime } from "../runtime/cells";
+import { type ChangedValue, sameValue } from "../descriptions/values";
+import type { IncrementalCellDescription } from "../descriptions/cells";
+import { FileSystem, FileChange } from "./file-system";
 
 type FileComputationDescriptionJSON = {
   readonly path: string;
@@ -68,10 +73,11 @@ serializationDB.register<
 });
 
 export class FileComputation extends IncrementalComputationRuntime<
-  void,
+  null,
   bigint
 > {
-  public readonly fs: FileSystem;
+  readonly fs: FileSystem;
+  readonly outputCell: IncrementalCellRuntime<bigint>;
 
   constructor(
     backend: IncrementalBackend,
@@ -79,57 +85,83 @@ export class FileComputation extends IncrementalComputationRuntime<
   ) {
     super(backend, desc);
     this.fs = backend.fs;
+    this.outputCell = new IncrementalCellRuntime(
+      backend,
+      this,
+      sameValue<bigint>(),
+      "",
+      0,
+      false
+    );
   }
 
   externalInvalidate() {
     this.backend.externalInvalidate(this);
   }
 
-  protected createContext() {}
+  override getCell<Value>(
+    desc: IncrementalCellDescription<Value>
+  ): IncrementalCellRuntime<Value> | undefined {
+    if (this.outputCell.desc.equal(desc)) {
+      return this.outputCell as any;
+    }
+  }
 
-  protected async exec(
-    ctx: RawComputationContext
-  ): Promise<ComputationResult<bigint>> {
-    if (this.registry.invalidationsAllowed()) {
-      await this.fs._sub(this);
+  override onReadCell<Value>(cell: IncrementalCellRuntime<Value>) {
+    if (!cell.desc.resolved) {
+      // Ensure progress
+      this.maybeRun();
+    }
+  }
+
+  protected createContext() {
+    return null;
+  }
+
+  protected async exec(ctx: null) {
+    if (this.backend.invalidationsAllowed()) {
+      await this.fs.sub(this);
     }
     if (this.desc.recursive) {
-      return ok(0n);
+      return 0n;
     }
-    await this.cacheableMixin.preExec();
+    // await this.cacheableMixin.preExec();
     const { birthtimeNs, mtimeNs } = await fsextra.stat(this.desc.path, {
       bigint: true,
     });
     switch (this.desc.type) {
       case FileChange.ADD_OR_REMOVE:
-        return ok(birthtimeNs);
+        return birthtimeNs;
       case FileChange.CHANGE:
-        return ok(mtimeNs);
+        return mtimeNs;
       default:
         never(this.desc.type);
     }
   }
 
-  protected finishRoutine(result: VersionedComputationResult<bigint>) {
-    result = this.subscribableMixin.finishRoutine(result);
-    result = this.cacheableMixin.finishRoutine(result, false);
-    return result;
+  protected override isAlone(): boolean {
+    // TODO
+    return false;
   }
 
-  protected invalidateRoutine() {
-    this.subscribableMixin.invalidateRoutine();
-    this.cacheableMixin.invalidateRoutine();
-  }
-
-  protected deleteRoutine() {
-    this.fs._unsub(this);
-    this.subscribableMixin.deleteRoutine();
-    this.cacheableMixin.deleteRoutine();
-  }
-
-  protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
-
+  // TODO
   responseEqual(a: bigint, b: bigint): boolean {
     return this.desc.recursive ? false : a === b;
   }
+
+  protected setOutputValue(value: bigint) {
+    return this.outputCell.set(value);
+  }
+
+  protected finishRoutine(set: ChangedValue<bigint>) {}
+
+  protected invalidateRoutine() {
+    this.outputCell.setPending();
+  }
+
+  protected deleteRoutine() {
+    this.fs.unsub(this);
+  }
+
+  protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
 }

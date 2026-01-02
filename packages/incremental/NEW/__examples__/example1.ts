@@ -47,6 +47,11 @@ const entry = IncrementalLib.register({
 });
 
 async function main() {
+  process.once("SIGINT", () => {
+    console.log("SIGINT...");
+    lib.close();
+  });
+
   console.log("Started...");
   console.log("Result", await lib.call(entry, undefined));
 }
