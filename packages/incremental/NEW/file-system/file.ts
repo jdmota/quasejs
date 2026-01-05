@@ -9,7 +9,7 @@ import {
   IncrementalComputationRuntime,
 } from "../runtime/computations";
 import { IncrementalCellRuntime } from "../runtime/cells";
-import { type ChangedValue, sameValue } from "../descriptions/values";
+import { type ChangedValue, valueDesc } from "../descriptions/values";
 import type { IncrementalCellDescription } from "../descriptions/cells";
 import { FileSystem, FileChange } from "./file-system";
 
@@ -88,7 +88,12 @@ export class FileComputation extends IncrementalComputationRuntime<
     this.outputCell = new IncrementalCellRuntime(
       backend,
       this,
-      sameValue<bigint>(),
+      valueDesc(
+        (a, b) => (this.desc.recursive ? false : a === b),
+        val => 0,
+        val => val,
+        val => val
+      ),
       "",
       0,
       false
@@ -142,11 +147,6 @@ export class FileComputation extends IncrementalComputationRuntime<
   protected override isAlone(): boolean {
     // TODO
     return false;
-  }
-
-  // TODO
-  responseEqual(a: bigint, b: bigint): boolean {
-    return this.desc.recursive ? false : a === b;
   }
 
   protected setOutputValue(value: bigint) {

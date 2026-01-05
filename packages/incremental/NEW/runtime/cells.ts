@@ -37,6 +37,7 @@ export class IncrementalCellRuntime<Value> {
   // when we know a new value might be incoming
   private pending = true;
   // This flag indicates if this cell was deallocated
+  // (the flag may be false, but the owner be deleted, see "inv()")
   private deleted = false;
   // Dependents of this cell and the oldest version which they read
   public dependents: Map<
@@ -64,6 +65,7 @@ export class IncrementalCellRuntime<Value> {
     if (this.deleted) {
       throw new Error("This cell was deleted");
     }
+    // Check if the owner was deleted
     this.owner.inv();
   }
 

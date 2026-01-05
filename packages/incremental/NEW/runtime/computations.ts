@@ -28,6 +28,9 @@ export type StateNotDeleted =
   | State.SETTLED_OK
   | State.CREATING;
 
+export type ResultTypeOfComputation<C> =
+  C extends IncrementalComputationRuntime<any, infer Output> ? Output : never;
+
 export abstract class IncrementalComputationRuntime<Ctx, Output>
   implements IncrementalCellOwner
 {
@@ -41,7 +44,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   prev: IncrementalComputationRuntime<any, any> | null = null;
 
   constructor(
-    protected readonly backend: IncrementalBackend,
+    readonly backend: IncrementalBackend,
     readonly rawDesc: AnyIncrementalComputationDescription
   ) {
     this.root = false;

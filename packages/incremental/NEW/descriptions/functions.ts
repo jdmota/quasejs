@@ -109,6 +109,9 @@ type IncrementalFunctionCallDescriptionJSON = {
   readonly inputJSON: any;
 };
 
+export type AnyIncrementalFunctionCallDescription =
+  IncrementalFunctionCallDescription<any, any, any>;
+
 export class IncrementalFunctionRegistry {
   public static SINGLETON = new IncrementalFunctionRegistry();
   private readonly funcs = new Map<

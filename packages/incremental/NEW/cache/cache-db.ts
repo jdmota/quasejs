@@ -6,12 +6,14 @@ import { finished } from "node:stream/promises";
 import { Logger, LoggerVerboseLevel } from "../../../util/logger";
 import { arrayEquals, assertion, never } from "../../../util/miscellaneous";
 import { MissingConstructorSerializerError } from "../../../util/serialization";
-import type {
-  IncrementalCacheOpts,
-  ResultTypeOfComputation,
-} from "../../incremental-lib";
 import { type ValueDefinition, HashMap, objValue } from "../../utils/hash-map";
 import { sameVersion, type Version } from "../../utils/versions";
+import type { ResultTypeOfComputation } from "../runtime/computations";
+import type {
+  AnyIncrementalFunctionCallDescription,
+  IncrementalFunctionCallDescription,
+} from "../descriptions/functions";
+import type { IncrementalFunctionRuntime } from "../runtime/functions";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -71,8 +73,8 @@ export function sameCacheEntry<C extends AnyRawComputation>(
   );
 }
 
-export type CacheEntry<C extends AnyRawComputation> = {
-  readonly desc: ComputationDescription<C>;
+export type CacheEntry<C extends IncrementalFunctionRuntime<any, any, any>> = {
+  readonly desc: AnyIncrementalFunctionCallDescription;
   readonly value: ResultTypeOfComputation<C>;
   readonly deps: readonly CachedDep[];
   readonly useDeps: boolean;

@@ -5,6 +5,7 @@ import { createErrorDefer } from "../../../util/deferred";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
 import { type FileChangeEvent, FileSystem } from "../file-system/file-system";
+import { CacheDB } from "../cache/cache-db";
 import type {
   AnyIncrementalComputationDescription,
   IncrementalComputationDescription,
@@ -67,6 +68,7 @@ export class IncrementalBackend {
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
   public readonly fs: FileSystem;
+  public readonly db: CacheDB | null;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
@@ -86,6 +88,7 @@ export class IncrementalBackend {
     this.settledErr = this.computations[State.SETTLED_ERR];
     this.otherJobs = [];
     this.fs = new FileSystem(opts, this);
+    this.db = opts.cache ? new CacheDB(opts.cache) : null;
   }
 
   callUserFn<Arg>(
