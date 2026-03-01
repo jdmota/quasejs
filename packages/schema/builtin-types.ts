@@ -3,13 +3,13 @@ import { VALID_JS_ID } from "../util/js-identifiers";
 import { UniqueNames } from "../util/unique-names";
 import { SchemaType } from "./schema-type";
 
-abstract class BuiltinSchemaType extends SchemaType {
+export abstract class BuiltinSchemaType extends SchemaType {
   override getBuiltin() {
     return this;
   }
-}
 
-export type { BuiltinSchemaType };
+  abstract isComplex(): boolean;
+}
 
 export class NeverType extends BuiltinSchemaType {
   static build = new NeverType();
@@ -18,6 +18,10 @@ export class NeverType extends BuiltinSchemaType {
 
   override getName() {
     return "never";
+  }
+
+  override isComplex() {
+    return false;
   }
 }
 
@@ -29,6 +33,10 @@ export class UnknownType extends BuiltinSchemaType {
   override getName() {
     return "unknown";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 export class UndefinedType extends BuiltinSchemaType {
@@ -39,6 +47,10 @@ export class UndefinedType extends BuiltinSchemaType {
   override getName() {
     return "undefined";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 export class NullType extends BuiltinSchemaType {
@@ -48,6 +60,10 @@ export class NullType extends BuiltinSchemaType {
 
   override getName() {
     return "null";
+  }
+
+  override isComplex() {
+    return false;
   }
 }
 
@@ -70,6 +86,10 @@ export class LiteralType extends BuiltinSchemaType {
   override getName() {
     return "literal";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 // TODO https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
@@ -83,6 +103,10 @@ export class StringType extends BuiltinSchemaType {
   override getName() {
     return "string";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 export class NumberType extends BuiltinSchemaType {
@@ -92,6 +116,10 @@ export class NumberType extends BuiltinSchemaType {
 
   override getName() {
     return "number";
+  }
+
+  override isComplex() {
+    return false;
   }
 }
 
@@ -103,6 +131,10 @@ export class BigintType extends BuiltinSchemaType {
   override getName() {
     return "bigint";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 export class BooleanType extends BuiltinSchemaType {
@@ -113,6 +145,10 @@ export class BooleanType extends BuiltinSchemaType {
   override getName() {
     return "boolean";
   }
+
+  override isComplex() {
+    return false;
+  }
 }
 
 export class SymbolType extends BuiltinSchemaType {
@@ -122,6 +158,10 @@ export class SymbolType extends BuiltinSchemaType {
 
   override getName() {
     return "symbol";
+  }
+
+  override isComplex() {
+    return false;
   }
 }
 
@@ -141,6 +181,10 @@ export class ArrayType extends BuiltinSchemaType {
 
   override getName() {
     return "array";
+  }
+
+  override isComplex() {
+    return true;
   }
 }
 
@@ -210,6 +254,10 @@ export class TupleType extends BuiltinSchemaType {
 
   override getName() {
     return "tuple";
+  }
+
+  override isComplex() {
+    return true;
   }
 
   getRest() {
@@ -317,6 +365,10 @@ export class ObjectType extends BuiltinSchemaType {
   override getName() {
     return "object";
   }
+
+  override isComplex() {
+    return true;
+  }
 }
 
 export class RecordType extends BuiltinSchemaType {
@@ -337,6 +389,10 @@ export class RecordType extends BuiltinSchemaType {
 
   override getName() {
     return "record";
+  }
+
+  override isComplex() {
+    return true;
   }
 }
 
@@ -361,6 +417,10 @@ export class UnionType extends BuiltinSchemaType {
   override getName() {
     return "union";
   }
+
+  override isComplex() {
+    return true;
+  }
 }
 
 export class IntersectionType extends BuiltinSchemaType {
@@ -384,6 +444,10 @@ export class IntersectionType extends BuiltinSchemaType {
   override getName() {
     return "intersection";
   }
+
+  override isComplex() {
+    return true;
+  }
 }
 
 export class FunctionType extends BuiltinSchemaType {
@@ -403,6 +467,10 @@ export class FunctionType extends BuiltinSchemaType {
 
   override getName() {
     return "function";
+  }
+
+  override isComplex() {
+    return true;
   }
 }
 
@@ -432,6 +500,10 @@ export class EnumType extends BuiltinSchemaType {
   override getName() {
     return "enum";
   }
+
+  override isComplex() {
+    return true;
+  }
 }
 
 export class RecursiveType extends BuiltinSchemaType {
@@ -452,6 +524,10 @@ export class RecursiveType extends BuiltinSchemaType {
 
   override getName() {
     return "recursive";
+  }
+
+  override isComplex() {
+    return true;
   }
 
   getContent() {

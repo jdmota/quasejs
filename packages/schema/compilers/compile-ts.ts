@@ -1,5 +1,5 @@
 import { StringBuilder } from "../../util/strings";
-
+import { BuiltinSchemaType } from "../builtin-types";
 import { type SchemaType } from "../schema-type";
 import { BaseSchemaCompiler, SchemaCompilersRegistry } from "./common";
 
@@ -8,7 +8,6 @@ type TsCompileResult = { name: string; compiled: string };
 export type TsCompileCtx = Readonly<{
   compiler: TsCompiler;
   name: string;
-  helpers: StringBuilder;
   body: StringBuilder;
 }>;
 
@@ -16,15 +15,15 @@ export const tsCompilerRegistry = new SchemaCompilersRegistry<TsCompileCtx>(
   "TS"
 );
 
-const helpers = {} as const;
+const HELPERS = {} as const;
 
 export class TsCompiler extends BaseSchemaCompiler<
   typeof tsCompilerRegistry,
-  keyof typeof helpers,
+  keyof typeof HELPERS,
   TsCompileResult
 > {
   constructor() {
-    super(tsCompilerRegistry, helpers);
+    super(tsCompilerRegistry, HELPERS);
   }
 
   compile(type: SchemaType) {
@@ -34,32 +33,29 @@ export class TsCompiler extends BaseSchemaCompiler<
       result = { name, compiled: "" };
       this.compiled.set(type, result);
 
-      const helpers = new StringBuilder();
       const body = new StringBuilder();
-
       tsCompilerRegistry.compile(type, {
         name,
-        helpers,
         body,
         compiler: this,
       });
-
-      const helpersCode = helpers.toString();
-      const bodyCode = body.toString();
-      result.compiled = helpersCode ? helpersCode + "\n" + bodyCode : bodyCode;
+      result.compiled = body.toString();
+    }
+    if (type instanceof BuiltinSchemaType && !type.isComplex()) {
+      return result.compiled;
     }
     return result.name;
   }
 
   toString() {
-    let str = "";
-    for (const [name, code] of this.usedHelpers) {
-      str += `type ${name} = ${code};\n`;
+    let str = new StringBuilder();
+    for (const [type, { name, compiled }] of this.compiled) {
+      if (type instanceof BuiltinSchemaType && !type.isComplex()) {
+        continue;
+      }
+      str.stmt(`type ${name} = ${compiled}`);
     }
-    for (const { compiled } of this.compiled.values()) {
-      str += compiled + "\n";
-    }
-    return str;
+    return str.toString();
   }
 }
 
@@ -69,10 +65,10 @@ export function registerTsCompilers() {
 
 export function compileTs(type: SchemaType) {
   const compiler = new TsCompiler();
-  const entryName = compiler.compile(type);
+  const entry = compiler.compile(type);
   const contents = compiler.toString();
   return {
-    entryName,
+    entry,
     contents,
   } as const;
 }

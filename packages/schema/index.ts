@@ -14,6 +14,7 @@
 // Form
 // Merge?
 // Convert from one schema version to another
+// TODO get inspiration from new version of Zod
 
 // TODO support error object with format of the object https://zod.dev/ERROR_HANDLING
 // TODO the structure (aka TS type) of the error object should be compiled

@@ -11,3 +11,5 @@ export class HelloCommand extends Command {
     this.context.stdout.write(`Hello ${this.name}!\n`);
   }
 }
+
+// https://github.com/arcanis/clipanion/blob/master/demos/advanced.ts

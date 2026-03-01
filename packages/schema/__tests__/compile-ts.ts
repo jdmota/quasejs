@@ -24,3 +24,25 @@ it("compile ts example", () => {
 
   expect(compiled).toMatchSnapshot();
 });
+
+it("compile ts alias", () => {
+  const type = t
+    .object({
+      a: t.array(t.string),
+    })
+    .alias("alias_name");
+
+  const compiled = compileTs(type);
+
+  expect(compiled).toMatchSnapshot();
+});
+
+it("compile ts recursive", () => {
+  const type = t.rec(that => {
+    return t.array(that);
+  });
+
+  const compiled = compileTs(type);
+
+  expect(compiled).toMatchSnapshot();
+});

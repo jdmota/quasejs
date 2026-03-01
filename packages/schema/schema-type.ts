@@ -1,11 +1,11 @@
 import type { BuiltinSchemaType } from "./builtin-types";
 
-export abstract class SchemaDecorator<
+export interface SchemaDecorator<
   Target extends SchemaType,
   Out extends SchemaType,
 > {
-  abstract getName(): string;
-  abstract build(target: Target): Out;
+  getName(): string;
+  build(target: Target): Out;
 }
 
 export abstract class SchemaType {

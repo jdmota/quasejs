@@ -30,21 +30,16 @@ import {
 import { SchemaAlias } from "../../schema-type";
 import { compileJsKey } from "../../../util/js-identifiers";
 
-registry.register(SchemaAlias, (type, { name, body, compiler }) => {
-  body.stmt(`type ${name} = ${compiler.compile(type.target)}`);
+registry.register(SchemaAlias, (type, { body, compiler }) => {
+  body.add(compiler.compile(type.target));
 });
-
-// TODO support inlining definitions
 
 function registerBuiltin<T extends BuiltinSchemaType>(
   clazz: Class<T>,
   impl: SchemaCompilerImpl<T, TsCompileCtx>
 ) {
   registry.register(clazz, (type, ctx) => {
-    const { name, body } = ctx;
-    body.add(`type ${name} = `);
     impl(type, ctx);
-    body.add(`;`);
   });
 }
 
@@ -172,7 +167,7 @@ registerBuiltin(FunctionType, (type, { compiler, body }) => {
   );
 });
 
-registerBuiltin(EnumType, (type, { compiler, body }) => {
+registerBuiltin(EnumType, (type, { body }) => {
   body.add(`${type.values.map(v => toTSLiteral(v)).join(" | ")}`);
 });
 
