@@ -1,22 +1,40 @@
 import { never } from "../../../util/miscellaneous";
-import { sameVersion } from "../../utils/versions";
+import { sameVersion, type Version } from "../../utils/versions";
 import { serializationDB } from "../../utils/serialization-db";
-import {
-  type CacheDB,
-  type CachedDep,
-  type CacheEntry,
-  sameCacheEntry,
-} from "../cache/cache-db";
+import { type CacheDB } from "../cache/cache-db";
 import type {
   IncrementalContextRuntime,
   IncrementalFunctionRuntime,
 } from "../runtime/functions";
 import type { VersionedValue } from "../descriptions/values";
 import type {
+  AnyIncrementalCellDescription,
+  IncrementalCellDescription,
+} from "../descriptions/cells";
+import type {
   AnyIncrementalFunctionCallDescription,
   IncrementalFunctionImpl,
 } from "../descriptions/functions";
 import type { ResultTypeOfComputation } from "../runtime/computations";
+
+export type CachedCell<C> = Readonly<{
+  type: "cell";
+  desc: IncrementalCellDescription<C>;
+  value: C;
+  version: Version;
+}>;
+
+export type VersionedCellDesc = readonly [
+  AnyIncrementalCellDescription,
+  Version | null,
+];
+
+export type CachedFunction = Readonly<{
+  type: "function";
+  desc: AnyIncrementalFunctionCallDescription;
+  readCells: readonly VersionedCellDesc[];
+  ownedCells: readonly AnyIncrementalCellDescription[];
+}>;
 
 export class CacheableComputationMixin<
   C extends IncrementalFunctionRuntime<any, any, any>,
@@ -25,7 +43,7 @@ export class CacheableComputationMixin<
   public readonly desc: AnyIncrementalFunctionCallDescription;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
-  private inDisk: CacheEntry<C> | undefined;
+  private inDisk: CachedFunction | undefined;
 
   constructor(public readonly source: C) {
     this.db = source.backend.db;
@@ -35,97 +53,34 @@ export class CacheableComputationMixin<
     this.inDisk = undefined;
   }
 
-  finishRoutine(
-    original: VersionedValue<ResultTypeOfComputation<C>>,
-    useDeps: boolean // Should be true if CacheableComputationMixin#exec is going to be used!
-  ): VersionedValue<ResultTypeOfComputation<C>> {
-    const [originalValue, originalVersion] = original;
+  finishRoutine() {
     if (this.isCacheable) {
-      const { firstExec } = this;
-      this.firstExec = false;
+      const readCells: VersionedCellDesc[] = [];
+      const ownedCells: AnyIncrementalCellDescription[] = [];
 
-      const calls: CachedDep[] = [];
+      for (const [cell, version] of this.source.readCells) {
+        readCells.push([cell.desc, version]);
+      }
 
-      if (useDeps && this.source.dependentMixin) {
-        const getCalls = this.source.dependentMixin.getAllGetCalls();
-        if (!getCalls) {
-          this.db!.removeEntry(this.desc);
-          this.db!.logger.debug("DELETED", { desc: this.desc });
-          return original;
-        }
-        for (const dep of getCalls) {
-          if (serializationDB.canSerialize(dep.computation.description)) {
-            calls.push({
-              kind: "get",
-              desc: dep.computation.description,
-              version: dep.version,
-            });
-          } else {
-            useDeps = false;
-            calls.length = 0;
-            break;
-          }
+      for (const { array, activeLen } of this.source.ownedCells.values()) {
+        for (let i = 0; i < activeLen; i++) {
+          ownedCells.push(array[i].desc);
         }
       }
 
-      if (useDeps && this.source.parentMixin) {
-        for (const child of this.source.parentMixin.getChildren()) {
-          if (serializationDB.canSerialize(child.description)) {
-            calls.push({
-              kind: "compute",
-              desc: child.description,
-            });
-          } else {
-            useDeps = false;
-            calls.length = 0;
-            break;
-          }
-        }
-      }
-
-      let currentEntry = this.inDisk;
-      if (firstExec && currentEntry) {
-        const cached = currentEntry.value;
-        if (this.desc.schema.outputDef.equal(cached, originalValue)) {
-          // If the final value is the same, keep the cached version number
-          const entry: CacheEntry<C> = {
-            desc: this.desc,
-            value: cached,
-            deps: calls,
-            useDeps,
-            version: currentEntry.version,
-          };
-          if (sameCacheEntry(entry, currentEntry)) {
-            this.db!.logger.debug("REUSING (ALREADY SAVED)", {
-              desc: this.desc,
-              entry,
-            });
-          } else {
-            this.db!.saveEntry(this.desc, entry);
-            this.db!.logger.debug("REUSING (RE-SAVING)", {
-              desc: this.desc,
-              entry,
-            });
-          }
-          return [cached, currentEntry.version];
-        }
-      }
-
-      const entry: CacheEntry<C> = {
+      const entry: CachedFunction = {
+        type: "function",
         desc: this.desc,
-        value: originalValue,
-        deps: calls,
-        useDeps,
-        version: originalVersion,
+        readCells,
+        ownedCells,
       };
+
       this.db!.saveEntry(this.desc, entry);
-      this.db!.logger.debug("NOT REUSING", {
+      this.db!.logger.debug("Saving", {
         desc: this.desc,
         entry,
-        currentEntry,
       });
     }
-    return original;
   }
 
   invalidateRoutine() {

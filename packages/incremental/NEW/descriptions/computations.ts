@@ -10,6 +10,7 @@ export abstract class IncrementalComputationDescription<
   abstract equal(other: unknown): boolean;
   abstract hash(): number;
   abstract getCacheKey(): string;
+  abstract format(): string;
 }
 
 export type AnyIncrementalComputationDescription =

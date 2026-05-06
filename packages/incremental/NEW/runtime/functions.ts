@@ -189,6 +189,14 @@ export class IncrementalFunctionRuntime<
   }
 
   protected finishRoutine(set: ChangedValue<Output>) {
+    // Warning the user if there are pending reads
+    for (const [cell, version] of this.readCells) {
+      if (version == null) {
+        this.backend.logger.warn(
+          `[function] [${this.desc.format()}] Pending read ${cell.desc.format()}`
+        );
+      }
+    }
     // Delete cells that were not reused in this run
     for (const slot of this.ownedCells.values()) {
       for (let i = slot.activeLen; i < slot.array.length; i++) {

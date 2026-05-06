@@ -102,6 +102,10 @@ export class IncrementalFunctionCallDescription<
   getCacheKey() {
     return `FunctionCall{${this.schema.name},${this.schema.version},${this.getInputHash()}}`;
   }
+
+  format() {
+    return `${this.schema.name}_${this.schema.version}(${this.getInputHash()})`;
+  }
 }
 
 type IncrementalFunctionCallDescriptionJSON = {

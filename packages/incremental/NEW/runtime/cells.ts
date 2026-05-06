@@ -31,7 +31,7 @@ export interface IncrementalCellOwner {
 
 export class IncrementalCellRuntime<Value> {
   readonly desc: IncrementalCellDescription<Value>;
-  private result: VersionedValue<Value> | null = null;
+  public result: VersionedValue<Value> | null = null;
   private defer: Defer<void> | null = null;
   // This flag is used to delay resolution
   // when we know a new value might be incoming

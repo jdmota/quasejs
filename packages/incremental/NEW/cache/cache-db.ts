@@ -14,6 +14,7 @@ import type {
   IncrementalFunctionCallDescription,
 } from "../descriptions/functions";
 import type { IncrementalFunctionRuntime } from "../runtime/functions";
+import type { IncrementalCacheOpts } from "../runtime/backend";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -95,14 +96,16 @@ export class CacheDB {
   private readonly alive: HashMap<ComputationDescription<any>, null> =
     new HashMap(defaultValDef);
 
-  public readonly logger: Logger;
   private logFileStream: fsextra.WriteStream;
 
   private locked = false;
   private saveJobs: Map<string, Promise<void>>;
   private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
 
-  constructor(private readonly opts: IncrementalCacheOpts) {
+  constructor(
+    private readonly opts: IncrementalCacheOpts,
+    private readonly logger: Logger
+  ) {
     this.dir =
       path.resolve(opts.dir) +
       path.sep +

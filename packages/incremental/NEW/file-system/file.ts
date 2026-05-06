@@ -53,6 +53,10 @@ export class FileComputationDescription extends IncrementalComputationDescriptio
   getCacheKey() {
     return this.json;
   }
+
+  format() {
+    return `File(${this.path},${this.type},${this.recursive})`;
+  }
 }
 
 serializationDB.register<

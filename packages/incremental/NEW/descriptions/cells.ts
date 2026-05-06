@@ -4,6 +4,7 @@ export interface IncrementalCellOwnerDescription {
   equal(other: unknown): boolean;
   hash(): number;
   getCacheKey(): string;
+  format(): string;
 }
 
 export class IncrementalCellDescription<Value> {
@@ -33,7 +34,13 @@ export class IncrementalCellDescription<Value> {
   getCacheKey() {
     return `Cell{${this.owner.getCacheKey()},${this.key},${this.index},${this.resolved}}`;
   }
+
+  format() {
+    return `${this.owner.format()}[${this.key}][${this.index}]`;
+  }
 }
+
+export type AnyIncrementalCellDescription = IncrementalCellDescription<any>;
 
 export type IncrementalCellDescriptionJSON = {
   readonly owner: IncrementalCellOwnerDescription;

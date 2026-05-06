@@ -21,7 +21,6 @@ import type { IncrementalCellRuntime } from "./cells";
 export type IncrementalCacheOpts = {
   readonly dir: string;
   readonly garbageCollect: boolean;
-  readonly logger: Logger;
 };
 
 export type IncrementalOpts = {
@@ -37,6 +36,7 @@ export type IncrementalOpts = {
   };
   readonly cache: IncrementalCacheOpts | false;
   readonly canInvalidate: boolean;
+  readonly logger: Logger;
 };
 
 export class IncrementalBackend {
@@ -69,6 +69,7 @@ export class IncrementalBackend {
   private otherJobs: Promise<unknown>[];
   public readonly fs: FileSystem;
   public readonly db: CacheDB | null;
+  public readonly logger: Logger;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
@@ -88,7 +89,8 @@ export class IncrementalBackend {
     this.settledErr = this.computations[State.SETTLED_ERR];
     this.otherJobs = [];
     this.fs = new FileSystem(opts, this);
-    this.db = opts.cache ? new CacheDB(opts.cache) : null;
+    this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
+    this.logger = opts.logger;
   }
 
   callUserFn<Arg>(
