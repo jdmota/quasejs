@@ -26,7 +26,7 @@ export type CachedCell<C> = Readonly<{
 
 export type VersionedCellDesc = readonly [
   AnyIncrementalCellDescription,
-  Version | null,
+  Version,
 ];
 
 export type CachedFunction = Readonly<{
@@ -43,14 +43,12 @@ export class CacheableComputationMixin<
   public readonly desc: AnyIncrementalFunctionCallDescription;
   public readonly isCacheable: boolean;
   private firstExec: boolean;
-  private inDisk: CachedFunction | undefined;
 
   constructor(public readonly source: C) {
     this.db = source.backend.db;
     this.desc = source.desc;
     this.isCacheable = this.db != null && this.desc.schema.cacheable;
     this.firstExec = true;
-    this.inDisk = undefined;
   }
 
   finishRoutine() {
@@ -59,6 +57,12 @@ export class CacheableComputationMixin<
       const ownedCells: AnyIncrementalCellDescription[] = [];
 
       for (const [cell, version] of this.source.readCells) {
+        if (version == null || !cell.isLatest(version)) {
+          // With a pending read, no point in caching
+          // If by any chance the cell was updated, also bail
+          this.db!.deleteFunc(this.desc);
+          return;
+        }
         readCells.push([cell.desc, version]);
       }
 
@@ -75,34 +79,31 @@ export class CacheableComputationMixin<
         ownedCells,
       };
 
-      this.db!.saveEntry(this.desc, entry);
-      this.db!.logger.debug("Saving", {
-        desc: this.desc,
-        entry,
-      });
+      this.db!.setFunc(this.desc, entry);
+      this.db!.flushFunc(this.desc);
     }
   }
 
   invalidateRoutine() {
     if (this.isCacheable) {
       this.firstExec = false;
-      this.inDisk = undefined;
+      this.db!.deleteFunc(this.desc);
       // When invalidating, we probably will re-execute soon
-      // Do not delete entry from the in disk cache
+      // Do not force a flush now
     }
   }
 
   deleteRoutine() {
     if (this.isCacheable) {
       this.firstExec = false;
-      this.inDisk = undefined;
-      this.db!.removeEntry(this.desc);
+      this.db!.deleteFunc(this.desc);
+      this.db!.flushFunc(this.desc);
     }
   }
 
   async preExec(): Promise<void> {
     if (this.isCacheable && this.firstExec) {
-      this.inDisk = this.db!.getEntry(this.desc);
+      this.cachedEntry = this.entryInDisk = this.db!.getEntry(this.desc);
     }
   }
 

@@ -15,6 +15,8 @@ import type {
 } from "../descriptions/functions";
 import type { IncrementalFunctionRuntime } from "../runtime/functions";
 import type { IncrementalCacheOpts } from "../runtime/backend";
+import type { IncrementalCellDescription } from "../descriptions/cells";
+import type { CachedCell, CachedFunction } from "./cacheable";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -159,6 +161,43 @@ export class CacheDB {
     // max byte key size = 1978
     // UTF-8 characters can be 1 to 4 bytes long
     return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
+  }
+
+  getCell<C>(desc: IncrementalCellDescription<C>): CachedCell<C> {
+    throw new Error("TODO");
+  }
+
+  getFunc(desc: AnyIncrementalFunctionCallDescription): CachedFunction {
+    throw new Error("TODO");
+  }
+
+  setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
+    throw new Error("TODO");
+  }
+
+  setFunc(desc: AnyIncrementalFunctionCallDescription, entry: CachedFunction) {
+    this.logger.debug("Saving", {
+      desc,
+      entry,
+    });
+    throw new Error("TODO");
+  }
+
+  deleteCell<C>(desc: IncrementalCellDescription<C>) {
+    throw new Error("TODO");
+  }
+
+  deleteFunc(desc: AnyIncrementalFunctionCallDescription) {
+    // TODO and delete its cells
+    throw new Error("TODO");
+  }
+
+  flushCell<C>(desc: IncrementalCellDescription<C>) {
+    throw new Error("TODO");
+  }
+
+  flushFunc(desc: AnyIncrementalFunctionCallDescription) {
+    throw new Error("TODO");
   }
 
   getEntry<C extends AnyRawComputation>(

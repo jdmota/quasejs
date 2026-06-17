@@ -1,5 +1,5 @@
 import { type Defer, createDefer } from "../../../util/deferred";
-import type { Version } from "../../utils/versions";
+import { sameVersion, type Version } from "../../utils/versions";
 import type { IncrementalBackend } from "./backend";
 import {
   type IncrementalCellOwnerDescription,
@@ -75,6 +75,10 @@ export class IncrementalCellRuntime<Value> {
 
   setPending() {
     this.pending = true;
+  }
+
+  isLatest(version: Version) {
+    return this.result != null && sameVersion(this.result[1], version);
   }
 
   set(value: Value): ChangedValue<Value> {
