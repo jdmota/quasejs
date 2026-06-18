@@ -1,5 +1,7 @@
+import { ContextualLogger } from "../../../util/logger";
 import { computeIfAbsent } from "../../../util/maps-sets";
 import type { Version } from "../../utils/versions";
+import { CacheableComputationMixin } from "../cache/cacheable";
 import { IncrementalCellDescription } from "../descriptions/cells";
 import {
   type CellValueDescriptions,
@@ -91,6 +93,7 @@ export class IncrementalFunctionRuntime<
   IncrementalContextRuntime<Input, Output, CellDefs>,
   Output
 > {
+  readonly logger: ContextualLogger;
   // Cells read and the oldest version which was read in this run
   readonly readCells: Map<IncrementalCellRuntime<any>, Version | null>;
   // Owned resolved cells
@@ -100,12 +103,18 @@ export class IncrementalFunctionRuntime<
   >;
   // Output cell
   readonly outputCell: IncrementalCellRuntime<Output>;
+  readonly cacheableMixin: CacheableComputationMixin<this>;
 
   constructor(
     backend: IncrementalBackend,
     readonly desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
   ) {
     super(backend, desc);
+    this.logger = new ContextualLogger(
+      this.backend.logger,
+      `[function] [${this.desc.format()}]`
+    );
+    this.cacheableMixin = new CacheableComputationMixin(this);
     this.readCells = new Map();
     this.ownedCells = new Map();
     this.outputCell = new IncrementalCellRuntime(
@@ -134,6 +143,13 @@ export class IncrementalFunctionRuntime<
     }
   }
 
+  allocSlot(key: string) {
+    return computeIfAbsent(this.ownedCells, key, () => ({
+      array: [],
+      activeLen: 0,
+    }));
+  }
+
   alloc<K extends string & keyof CellDefs>(
     ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
     key: K
@@ -143,10 +159,7 @@ export class IncrementalFunctionRuntime<
     if (!valDef) {
       throw new Error(`Cannot alloc cell with unregistered key ${key}`);
     }
-    const slot = computeIfAbsent(this.ownedCells, key, () => ({
-      array: [],
-      activeLen: 0,
-    }));
+    const slot = this.allocSlot(key);
     let cell: IncrementalCellRuntime<ValueOfDesc<CellDefs[K]>>;
     if (slot.activeLen < slot.array.length) {
       // Reusing the cell created in the last run
@@ -188,13 +201,14 @@ export class IncrementalFunctionRuntime<
     return this.outputCell.set(value);
   }
 
-  protected finishRoutine(set: ChangedValue<Output>) {
-    // Warning the user if there are pending reads
+  protected finishRoutine(reloading: boolean) {
+    if (reloading) {
+      return;
+    }
+    // Warn the user if there are pending reads
     for (const [cell, version] of this.readCells) {
       if (version == null) {
-        this.backend.logger.warn(
-          `[function] [${this.desc.format()}] Pending read ${cell.desc.format()}`
-        );
+        this.logger.warn(`Pending read ${cell.desc.format()}`);
       }
     }
     // Delete cells that were not reused in this run
@@ -204,9 +218,11 @@ export class IncrementalFunctionRuntime<
       }
       slot.array.length = slot.activeLen;
     }
+    this.cacheableMixin.finishRoutine();
   }
 
   protected invalidateRoutine() {
+    this.cacheableMixin.invalidateRoutine();
     // Reset cells (but keep the instances for reuse)
     for (const slot of this.ownedCells.values()) {
       slot.activeLen = 0;
@@ -220,7 +236,13 @@ export class IncrementalFunctionRuntime<
     this.readCells.clear();
   }
 
-  protected deleteRoutine() {}
+  protected deleteRoutine() {
+    this.cacheableMixin.deleteRoutine();
+  }
+
+  protected reloadRoutine(): boolean {
+    return this.cacheableMixin.reloadRoutine();
+  }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
 }

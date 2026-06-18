@@ -157,7 +157,7 @@ export class FileComputation extends IncrementalComputationRuntime<
     return this.outputCell.set(value);
   }
 
-  protected finishRoutine(set: ChangedValue<bigint>) {}
+  protected finishRoutine(reloading: boolean) {}
 
   protected invalidateRoutine() {
     this.outputCell.setPending();
@@ -165,6 +165,12 @@ export class FileComputation extends IncrementalComputationRuntime<
 
   protected deleteRoutine() {
     this.fs.unsub(this);
+  }
+
+  // TODO is the reloading for files working?
+
+  protected reloadRoutine(): boolean {
+    return this.cacheableMixin.reloadRoutine();
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}

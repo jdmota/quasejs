@@ -14,6 +14,7 @@ import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
 } from "./functions";
+import type { CachedCell } from "../cache/cacheable";
 
 // TODO support root level cells
 
@@ -27,6 +28,7 @@ export interface IncrementalCellOwner {
     desc: IncrementalCellDescription<Value>
   ): IncrementalCellRuntime<Value> | undefined;
   onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
+  reload(): void;
 }
 
 export class IncrementalCellRuntime<Value> {
@@ -51,7 +53,8 @@ export class IncrementalCellRuntime<Value> {
     private readonly valueDef: ValueDescription<Value, any>,
     private readonly key: string,
     private readonly index: number,
-    private readonly resolved: boolean
+    private readonly resolved: boolean,
+    fromCache: CachedCell<Value> | null = null
   ) {
     this.desc = new IncrementalCellDescription(
       owner.rawDesc,
@@ -59,6 +62,10 @@ export class IncrementalCellRuntime<Value> {
       index,
       resolved
     );
+    if (fromCache) {
+      this.pending = false;
+      this.result = [fromCache.value, fromCache.version];
+    }
   }
 
   inv() {

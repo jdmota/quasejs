@@ -6,9 +6,9 @@ import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
 import { type FileChangeEvent, FileSystem } from "../file-system/file-system";
 import { CacheDB } from "../cache/cache-db";
-import type {
-  AnyIncrementalComputationDescription,
+import {
   IncrementalComputationDescription,
+  type AnyIncrementalComputationDescription,
 } from "../descriptions/computations";
 import { functions } from "../descriptions/functions";
 import type {
@@ -16,7 +16,7 @@ import type {
   IncrementalCellOwnerDescription,
 } from "../descriptions/cells";
 import { State, type IncrementalComputationRuntime } from "./computations";
-import type { IncrementalCellRuntime } from "./cells";
+import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -70,6 +70,7 @@ export class IncrementalBackend {
   public readonly fs: FileSystem;
   public readonly db: CacheDB | null;
   public readonly logger: Logger;
+  private reloading: boolean;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
@@ -91,6 +92,23 @@ export class IncrementalBackend {
     this.fs = new FileSystem(opts, this);
     this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
     this.logger = opts.logger;
+    this.reloading = false;
+  }
+
+  isReloading() {
+    return this.reloading;
+  }
+
+  assertNotReloading() {
+    if (this.isReloading()) {
+      throw new Error("Invariant violation: reloading");
+    }
+  }
+
+  reloadingContext(func: () => void) {
+    this.reloading = true;
+    func();
+    this.reloading = false;
   }
 
   callUserFn<Arg>(
@@ -121,6 +139,15 @@ export class IncrementalBackend {
     error: unknown
   ) {
     this.opts.onUncaughtError({ description: desc, error });
+  }
+
+  makeCellOwner(
+    desc: IncrementalCellOwnerDescription
+  ): IncrementalCellOwner | undefined {
+    if (desc instanceof IncrementalComputationDescription) {
+      return this.make(desc);
+    }
+    // TODO support root cells
   }
 
   getCell<Value>(
@@ -184,10 +211,12 @@ export class IncrementalBackend {
   }, 200);
 
   scheduleWake() {
+    this.assertNotReloading();
     this.scheduler1.schedule();
   }
 
   wake() {
+    this.assertNotReloading();
     this.scheduler1.cancel();
     // TODO FIXME
 
@@ -210,6 +239,7 @@ export class IncrementalBackend {
   // schedule invalidation of errored computations
   // together with a new execution
   externalInvalidate(computation: IncrementalComputationRuntime<any, any>) {
+    this.assertNotReloading();
     if (this.externalInvalidationsAllowed()) {
       this.scheduler2.schedule();
       computation.invalidate();

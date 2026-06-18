@@ -84,20 +84,29 @@ const DEFAULT_OPTS: LoggerDefaultOpts = {
   ],
 };
 
+export interface ILogger {
+  write(level: LoggerLevel, args: readonly unknown[]): void;
+  fatal(...args: readonly unknown[]): void;
+  error(...args: readonly unknown[]): void;
+  warn(...args: readonly unknown[]): void;
+  info(...args: readonly unknown[]): void;
+  log(...args: readonly unknown[]): void;
+  debug(...args: readonly unknown[]): void;
+  trace(...args: readonly unknown[]): void;
+}
+
 export class Logger {
   static DEFAULT_OPTS: LoggerDefaultOpts = DEFAULT_OPTS;
 
-  public readonly name: string;
   private renderPrefix: LoggerPrefixRender;
   private verbose: LoggerLevelFilterFn;
   private colors: boolean;
   private streams: Map<NodeJS.WritableStream, LoggerLevelFilterFn>;
 
   constructor(
-    name: string,
+    public readonly name: string,
     { renderPrefix, verbose, colors, streams }: LoggerOpts = {}
   ) {
-    this.name = name;
     this.renderPrefix = renderPrefix ?? DEFAULT_OPTS.renderPrefix;
     this.verbose = levelToFilter(verbose ?? DEFAULT_OPTS.verbose);
     this.colors = colors ?? DEFAULT_OPTS.colors;
@@ -180,5 +189,45 @@ export class Logger {
     };
     Error.captureStackTrace(err, this.trace);
     this.writeMessage(LoggerVerboseLevel.TRACE, (err as any).stack);
+  }
+}
+
+// Uses a root logger, but extends messages with a custom prefix before sending
+export class ContextualLogger implements ILogger {
+  constructor(
+    readonly logger: Logger,
+    readonly prefix: unknown
+  ) {}
+
+  write(level: LoggerLevel, args: readonly unknown[]) {
+    this.logger.write(level, [this.prefix, ...args]);
+  }
+
+  fatal(...args: readonly unknown[]) {
+    this.logger.fatal(this.prefix, ...args);
+  }
+
+  error(...args: readonly unknown[]) {
+    this.logger.error(this.prefix, ...args);
+  }
+
+  warn(...args: readonly unknown[]) {
+    this.logger.warn(this.prefix, ...args);
+  }
+
+  info(...args: readonly unknown[]) {
+    this.logger.info(this.prefix, ...args);
+  }
+
+  log(...args: readonly unknown[]) {
+    this.logger.log(this.prefix, ...args);
+  }
+
+  debug(...args: readonly unknown[]) {
+    this.logger.debug(this.prefix, ...args);
+  }
+
+  trace(...args: readonly unknown[]) {
+    this.logger.trace(this.prefix, ...args);
   }
 }

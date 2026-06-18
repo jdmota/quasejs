@@ -90,6 +90,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   run() {
     this.inv();
+    this.backend.assertNotReloading();
     if (this.running == null) {
       const ctx = (this.ctx = this.createContext());
       this.running = Promise.resolve()
@@ -108,12 +109,13 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   private finishOk(ctx: Ctx, value: Output) {
     if (this.isActive(ctx)) {
       this.ctx = null;
-      this.finishRoutine(this.setOutputValue(value));
+      this.setOutputValue(value);
+      this.finishRoutine(false);
       this.mark(State.SETTLED_OK);
     }
   }
 
-  protected abstract finishRoutine(set: ChangedValue<Output>): void;
+  protected abstract finishRoutine(reloading: boolean): void;
 
   private finishErr(ctx: Ctx, err: unknown) {
     if (this.isActive(ctx)) {
@@ -125,6 +127,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   invalidate() {
     this.inv();
+    this.backend.assertNotReloading();
     if (!this.backend.invalidationsAllowed()) {
       throw new Error("Invariant violation: Invalidations are disabled");
     }
@@ -143,6 +146,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   destroy() {
     this.inv();
+    this.backend.assertNotReloading();
     if (!this.isAlone()) {
       throw new Error(
         "Invariant violation: Some computation depends on this, cannot destroy"
@@ -158,9 +162,31 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   protected abstract deleteRoutine(): void;
 
+  reload() {
+    if (!this.backend.isReloading()) {
+      throw new Error("Invariant violation: not reloading");
+    }
+    if (this.state !== State.PENDING) {
+      throw new Error(
+        `Invariant violation: calling reload on state ${this.state}`
+      );
+    }
+    if (this.reloadRoutine()) {
+      this.running = Promise.resolve();
+      this.finishRoutine(true);
+      this.mark(State.SETTLED_OK);
+    } else {
+      this.invalidateRoutine();
+      this.mark(State.PENDING);
+    }
+  }
+
+  protected abstract reloadRoutine(): boolean;
+
   protected abstract isAlone(): boolean;
 
   maybeRun() {
+    this.backend.assertNotReloading();
     if (this.state === State.PENDING && !this.isAlone()) {
       this.run();
       return true;
@@ -169,6 +195,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   }
 
   maybeDestroy() {
+    this.backend.assertNotReloading();
     if (this.isAlone()) {
       this.destroy();
     }

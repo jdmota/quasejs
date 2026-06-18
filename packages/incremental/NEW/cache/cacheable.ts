@@ -1,21 +1,12 @@
-import { never } from "../../../util/miscellaneous";
-import { sameVersion, type Version } from "../../utils/versions";
-import { serializationDB } from "../../utils/serialization-db";
+import { type Version } from "../../utils/versions";
 import { type CacheDB } from "../cache/cache-db";
-import type {
-  IncrementalContextRuntime,
-  IncrementalFunctionRuntime,
-} from "../runtime/functions";
-import type { VersionedValue } from "../descriptions/values";
+import type { IncrementalFunctionRuntime } from "../runtime/functions";
 import type {
   AnyIncrementalCellDescription,
   IncrementalCellDescription,
 } from "../descriptions/cells";
-import type {
-  AnyIncrementalFunctionCallDescription,
-  IncrementalFunctionImpl,
-} from "../descriptions/functions";
-import type { ResultTypeOfComputation } from "../runtime/computations";
+import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
+import { IncrementalCellRuntime } from "../runtime/cells";
 
 export type CachedCell<C> = Readonly<{
   type: "cell";
@@ -42,13 +33,85 @@ export class CacheableComputationMixin<
   public readonly db: CacheDB | null;
   public readonly desc: AnyIncrementalFunctionCallDescription;
   public readonly isCacheable: boolean;
-  private firstExec: boolean;
+  private loadFromCache: boolean;
 
   constructor(public readonly source: C) {
     this.db = source.backend.db;
     this.desc = source.desc;
     this.isCacheable = this.db != null && this.desc.schema.cacheable;
-    this.firstExec = true;
+    this.loadFromCache = this.isCacheable;
+  }
+
+  reloadRoutine(): boolean {
+    if (!this.loadFromCache) {
+      return false;
+    }
+    this.loadFromCache = false;
+
+    const cachedFunc = this.db!.getFunc(this.desc);
+    if (!cachedFunc) {
+      return false;
+    }
+
+    for (const desc of cachedFunc.ownedCells) {
+      const { key } = desc;
+      const cachedCell = this.db!.getCell(desc);
+      if (!cachedCell) {
+        this.source.logger.warn(
+          `Function was in cache, but its cell ${desc.format()} was not`
+        );
+        return false;
+      }
+
+      const valDef = this.desc.schema.cellsDef[key];
+      if (!valDef) {
+        this.source.logger.warn(
+          `Function was in cache, but could not reload cell with key ${key} due to lack of type definition`
+        );
+        return false;
+      }
+
+      const slot = this.source.allocSlot(key);
+      const cell = new IncrementalCellRuntime(
+        this.source.backend,
+        this.source,
+        valDef,
+        key,
+        slot.activeLen,
+        desc.resolved,
+        cachedCell
+      );
+      slot.array.push(cell);
+      slot.activeLen++;
+    }
+
+    // TODO is the reloading for files working?
+
+    for (const [desc, version] of cachedFunc.readCells) {
+      const owner = this.source.backend.makeCellOwner(desc.owner);
+      if (!owner) {
+        this.source.logger.warn(
+          `Could not create or find cell owner ${desc.owner.format()}`
+        );
+        return false;
+      }
+      owner.reload();
+      const cell = owner.getCell(desc);
+      if (!cell) {
+        this.source.logger.warn(`Could not find cell ${desc.format()}`);
+        return false;
+      }
+      if (!cell.isLatest(version)) {
+        // Version missmatch, we need to rerun this function
+        return false;
+      }
+      cell.dependents.set(this.source, version);
+      this.source.logger.trace(
+        `${this.source.desc.format()} -> ${desc.format()}`
+      );
+    }
+
+    return true;
   }
 
   finishRoutine() {
@@ -68,9 +131,22 @@ export class CacheableComputationMixin<
 
       for (const { array, activeLen } of this.source.ownedCells.values()) {
         for (let i = 0; i < activeLen; i++) {
-          ownedCells.push(array[i].desc);
+          const { desc, result } = array[i];
+          if (result == null) {
+            throw new Error(`Invariant violation: owned cell has no result`);
+          }
+          ownedCells.push(desc);
+          this.db!.setCell(desc, {
+            type: "cell",
+            desc,
+            value: result[0],
+            version: result[1],
+          });
+          this.db!.flushCell(desc);
         }
       }
+
+      // TODO account for root cells
 
       const entry: CachedFunction = {
         type: "function",
@@ -86,7 +162,7 @@ export class CacheableComputationMixin<
 
   invalidateRoutine() {
     if (this.isCacheable) {
-      this.firstExec = false;
+      this.loadFromCache = false;
       this.db!.deleteFunc(this.desc);
       // When invalidating, we probably will re-execute soon
       // Do not force a flush now
@@ -95,80 +171,9 @@ export class CacheableComputationMixin<
 
   deleteRoutine() {
     if (this.isCacheable) {
-      this.firstExec = false;
+      this.loadFromCache = false;
       this.db!.deleteFunc(this.desc);
       this.db!.flushFunc(this.desc);
     }
-  }
-
-  async preExec(): Promise<void> {
-    if (this.isCacheable && this.firstExec) {
-      this.cachedEntry = this.entryInDisk = this.db!.getEntry(this.desc);
-    }
-  }
-
-  // If a computation only relies on "ctx" calls, then we can use this
-  // Otherwise, use "preExec" instead, and rely on the "finishRoutine"
-  // to give subscribers the correct version by using "responseEqual"
-  async exec(
-    baseExec: IncrementalFunctionImpl<any, any, any>,
-    ctx: IncrementalContextRuntime<any, any, any>,
-    input: any
-  ): Promise<ResultTypeOfComputation<C>> {
-    if (this.isCacheable && this.firstExec) {
-      const currentEntry = (this.inDisk = this.db!.getEntry(this.desc));
-      // If currentEntry.useDeps is false, it means the cache does not have the version of the dependencies we need
-      // or that the computation depends on more than just the "ctx" calls
-      // So, just execute the computation again and rely on "finishRoutine"
-      if (currentEntry && currentEntry.useDeps) {
-        const cached = currentEntry.value;
-        try {
-          const jobs = [];
-          for (const dep of currentEntry.deps) {
-            switch (dep.kind) {
-              case "get": {
-                if (this.source.dependentMixin) {
-                  jobs.push(
-                    this.source.dependentMixin
-                      .getDep(dep.desc, runId)
-                      .then(({ result, version }) => {
-                        if (!result.ok || !sameVersion(version, dep.version)) {
-                          throw new Error("Outdated");
-                        }
-                      })
-                  );
-                } else {
-                  throw new Error("Outdated");
-                }
-                break;
-              }
-              case "compute":
-                if (this.source.parentMixin) {
-                  this.source.parentMixin.compute(
-                    this.source.registry.make(dep.desc),
-                    runId
-                  );
-                } else {
-                  throw new Error("Outdated");
-                }
-                break;
-              default:
-                never(dep);
-            }
-          }
-          await Promise.all(jobs);
-          return cached;
-        } catch (err) {
-          // Check we are still running
-          ctx.checkActive();
-          // Invalidate
-          this.source.dependentMixin?.invalidateRoutine();
-          this.source.parentMixin?.invalidateRoutine();
-          this.invalidateRoutine();
-        }
-      }
-    }
-    // Execute from scratch
-    return baseExec(ctx, input);
   }
 }

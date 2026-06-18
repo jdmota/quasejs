@@ -163,11 +163,13 @@ export class CacheDB {
     return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
   }
 
-  getCell<C>(desc: IncrementalCellDescription<C>): CachedCell<C> {
+  getCell<C>(desc: IncrementalCellDescription<C>): CachedCell<C> | undefined {
     throw new Error("TODO");
   }
 
-  getFunc(desc: AnyIncrementalFunctionCallDescription): CachedFunction {
+  getFunc(
+    desc: AnyIncrementalFunctionCallDescription
+  ): CachedFunction | undefined {
     throw new Error("TODO");
   }
 

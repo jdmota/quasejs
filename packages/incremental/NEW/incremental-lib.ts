@@ -1,4 +1,4 @@
-import { IncrementalBackend, type IncrementalOpts } from "./runtime/backend";
+import { type IncrementalOpts, IncrementalBackend } from "./runtime/backend";
 import {
   type CellValueDescriptions,
   type IncrementalFunctionSchemaOpts,
@@ -21,10 +21,16 @@ export class IncrementalLib {
 
   async call<Input, Output, CellDefs extends CellValueDescriptions>(
     schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
-    input: Input
+    input: Input,
+    opts: Readonly<{ cache: boolean }>
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
     const func = this.backend.make(desc);
+    if (opts.cache) {
+      this.backend.reloadingContext(() => {
+        func.reload();
+      });
+    }
     return func.outputCell.entryGet();
   }
 
