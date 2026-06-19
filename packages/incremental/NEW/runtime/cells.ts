@@ -28,7 +28,10 @@ export interface IncrementalCellOwner {
     desc: IncrementalCellDescription<Value>
   ): IncrementalCellRuntime<Value> | undefined;
   onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
-  reload(): void;
+  run(): Promise<void>;
+  isOrphan(): boolean;
+  isRoot(): boolean;
+  markRoot(root: boolean): void;
 }
 
 export class IncrementalCellRuntime<Value> {
@@ -89,11 +92,16 @@ export class IncrementalCellRuntime<Value> {
   }
 
   set(value: Value): ChangedValue<Value> {
+    return this._set(value, null);
+  }
+
+  // Used internally
+  _set(value: Value, version: Version | null): ChangedValue<Value> {
     this.inv();
     const { result } = this;
     this.pending = false;
     if (this.result == null || !this.valueDef.equal(this.result[0], value)) {
-      this.result = [value, this.backend.getNextVersion()];
+      this.result = [value, version ?? this.backend.getNextVersion()];
       for (const [consumer, versionRead] of this.dependents) {
         if (versionRead) {
           consumer.invalidate();

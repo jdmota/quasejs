@@ -1,5 +1,6 @@
 import { SpecialQueue } from "../../../util/data-structures/linked-list";
 import type { Logger } from "../../../util/logger";
+import { className } from "../../../util/miscellaneous";
 import { Scheduler } from "../../../util/schedule";
 import { createErrorDefer } from "../../../util/deferred";
 import { HashMap } from "../../utils/hash-map";
@@ -70,7 +71,6 @@ export class IncrementalBackend {
   public readonly fs: FileSystem;
   public readonly db: CacheDB | null;
   public readonly logger: Logger;
-  private reloading: boolean;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
@@ -92,23 +92,6 @@ export class IncrementalBackend {
     this.fs = new FileSystem(opts, this);
     this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
     this.logger = opts.logger;
-    this.reloading = false;
-  }
-
-  isReloading() {
-    return this.reloading;
-  }
-
-  assertNotReloading() {
-    if (this.isReloading()) {
-      throw new Error("Invariant violation: reloading");
-    }
-  }
-
-  reloadingContext(func: () => void) {
-    this.reloading = true;
-    func();
-    this.reloading = false;
   }
 
   callUserFn<Arg>(
@@ -141,22 +124,23 @@ export class IncrementalBackend {
     this.opts.onUncaughtError({ description: desc, error });
   }
 
-  makeCellOwner(
-    desc: IncrementalCellOwnerDescription
-  ): IncrementalCellOwner | undefined {
+  getCellOwner(desc: IncrementalCellOwnerDescription): IncrementalCellOwner {
     if (desc instanceof IncrementalComputationDescription) {
-      return this.make(desc);
+      return this.getFunction(desc);
     }
     // TODO support root cells
+    throw new Error(
+      `Invariant violation: unknown cell owner type ${className(desc)}`
+    );
   }
 
   getCell<Value>(
     desc: IncrementalCellDescription<Value>
   ): IncrementalCellRuntime<Value> | undefined {
-    return this.map.get(desc.owner)?.getCell(desc);
+    return this.getCellOwner(desc.owner).getCell(desc);
   }
 
-  make<C extends IncrementalComputationRuntime<any, any>>(
+  getFunction<C extends IncrementalComputationRuntime<any, any>>(
     desc: IncrementalComputationDescription<C>,
     root: boolean = false
   ): C {
@@ -211,12 +195,10 @@ export class IncrementalBackend {
   }, 200);
 
   scheduleWake() {
-    this.assertNotReloading();
     this.scheduler1.schedule();
   }
 
   wake() {
-    this.assertNotReloading();
     this.scheduler1.cancel();
     // TODO FIXME
 
@@ -239,7 +221,6 @@ export class IncrementalBackend {
   // schedule invalidation of errored computations
   // together with a new execution
   externalInvalidate(computation: IncrementalComputationRuntime<any, any>) {
-    this.assertNotReloading();
     if (this.externalInvalidationsAllowed()) {
       this.scheduler2.schedule();
       computation.invalidate();
@@ -251,6 +232,10 @@ export class IncrementalBackend {
       c.invalidate();
     }
   }
+
+  // TODO on process.exit, we should loop and see the functions that may be stuck waiting for each other on a kind of deadlock. We know that with promises, the process may just exit if the event loop is empty
+
+  // TODO allow for demand driven executions
 
   private async wait() {
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {

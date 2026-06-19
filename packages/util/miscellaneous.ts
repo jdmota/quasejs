@@ -12,6 +12,14 @@ export function isObject(o: unknown): o is {} {
   return o != null && typeof o === "object";
 }
 
+export function className(o: unknown) {
+  return o == null
+    ? "null"
+    : typeof o === "object" && typeof o.constructor === "function"
+      ? o.constructor.name
+      : typeof o;
+}
+
 export function noop() {}
 
 export function assertion(bool: boolean) {

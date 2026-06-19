@@ -99,6 +99,14 @@ export class IncrementalFunctionCallDescription<
     return this.schema.name.length + this.getInputHash();
   }
 
+  getOutputDef(): ValueDescription<Output, any> {
+    return this.schema.outputDef;
+  }
+
+  isCacheable(): boolean {
+    return this.schema.cacheable;
+  }
+
   getCacheKey() {
     return `FunctionCall{${this.schema.name},${this.schema.version},${this.getInputHash()}}`;
   }

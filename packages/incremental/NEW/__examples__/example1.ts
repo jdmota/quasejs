@@ -1,5 +1,6 @@
 import { IncrementalLib } from "../incremental-lib";
 import { sameValue } from "../descriptions/values";
+import { Logger } from "../../../util/logger";
 
 const lib = new IncrementalLib({
   fs: {
@@ -10,6 +11,7 @@ const lib = new IncrementalLib({
   onUncaughtError: ({ description, error }) => {
     console.log("Uncaught error", error, description);
   },
+  logger: new Logger("incremental"),
   canInvalidate: false,
   cache: false,
 });

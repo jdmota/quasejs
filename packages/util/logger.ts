@@ -63,6 +63,7 @@ function levelToFilter(level: LoggerLevelFilter): LoggerLevelFilterFn {
 export type LoggerPrefixRender = (
   name: string,
   date: Date,
+  context: string,
   level: LoggerLevel
 ) => string;
 
@@ -74,8 +75,8 @@ type LoggerDefaultOpts = {
 };
 
 const DEFAULT_OPTS: LoggerDefaultOpts = {
-  renderPrefix: (name, date, level) =>
-    `[${date.toISOString()}][${name}][${loggerLevelToStr(level)}]`,
+  renderPrefix: (name, date, context, level) =>
+    `[${date.toISOString()}][${name}]${context}[${loggerLevelToStr(level)}]`,
   verbose: l => l <= LoggerVerboseLevel.ALL,
   colors: true,
   streams: [
@@ -102,6 +103,7 @@ export class Logger {
   private verbose: LoggerLevelFilterFn;
   private colors: boolean;
   private streams: Map<NodeJS.WritableStream, LoggerLevelFilterFn>;
+  private contextStack: string[];
 
   constructor(
     public readonly name: string,
@@ -113,6 +115,7 @@ export class Logger {
     this.streams = new Map(
       (streams ?? DEFAULT_OPTS.streams).map(([s, l]) => [s, levelToFilter(l)])
     );
+    this.contextStack = [];
   }
 
   setRenderPrefix(renderPrefix: LoggerPrefixRender) {
@@ -135,16 +138,22 @@ export class Logger {
     this.streams.delete(stream);
   }
 
-  write(level: LoggerLevel, args: readonly unknown[]) {
-    if (!this.verbose(level)) return;
-    this.writeMessage(
-      level,
-      formatWithOptions({ colors: this.colors }, ...args)
-    );
+  pushContext(context: string) {
+    this.contextStack.push(context);
+  }
+
+  popContext() {
+    this.contextStack.pop();
   }
 
   private writeMessage(level: LoggerLevel, givenMessage: string) {
-    const formatedPrefix = this.renderPrefix(this.name, new Date(), level);
+    const context = this.contextStack.map(c => `[${c}]`).join("");
+    const formatedPrefix = this.renderPrefix(
+      this.name,
+      new Date(),
+      context,
+      level
+    );
     const message = formatedPrefix
       ? `${formatedPrefix} ${givenMessage}\n`
       : `${givenMessage}\n`;
@@ -156,6 +165,14 @@ export class Logger {
         stream.write(stripVTControlCharacters(message));
       }
     }
+  }
+
+  write(level: LoggerLevel, args: readonly unknown[]) {
+    if (!this.verbose(level)) return;
+    this.writeMessage(
+      level,
+      formatWithOptions({ colors: this.colors }, ...args)
+    );
   }
 
   fatal(...args: readonly unknown[]) {
@@ -187,7 +204,10 @@ export class Logger {
       name: "Trace",
       message: formatWithOptions({ colors: this.colors }, ...args),
     };
+    const { stackTraceLimit } = Error;
+    Error.stackTraceLimit = 4;
     Error.captureStackTrace(err, this.trace);
+    Error.stackTraceLimit = stackTraceLimit;
     this.writeMessage(LoggerVerboseLevel.TRACE, (err as any).stack);
   }
 }
@@ -196,38 +216,44 @@ export class Logger {
 export class ContextualLogger implements ILogger {
   constructor(
     readonly logger: Logger,
-    readonly prefix: unknown
+    readonly prefix: string
   ) {}
 
+  private inContext(fn: () => void) {
+    this.logger.pushContext(this.prefix);
+    fn();
+    this.logger.popContext();
+  }
+
   write(level: LoggerLevel, args: readonly unknown[]) {
-    this.logger.write(level, [this.prefix, ...args]);
+    this.inContext(() => this.logger.write(level, args));
   }
 
   fatal(...args: readonly unknown[]) {
-    this.logger.fatal(this.prefix, ...args);
+    this.inContext(() => this.logger.fatal(...args));
   }
 
   error(...args: readonly unknown[]) {
-    this.logger.error(this.prefix, ...args);
+    this.inContext(() => this.logger.error(...args));
   }
 
   warn(...args: readonly unknown[]) {
-    this.logger.warn(this.prefix, ...args);
+    this.inContext(() => this.logger.warn(...args));
   }
 
   info(...args: readonly unknown[]) {
-    this.logger.info(this.prefix, ...args);
+    this.inContext(() => this.logger.info(...args));
   }
 
   log(...args: readonly unknown[]) {
-    this.logger.log(this.prefix, ...args);
+    this.inContext(() => this.logger.log(...args));
   }
 
   debug(...args: readonly unknown[]) {
-    this.logger.debug(this.prefix, ...args);
+    this.inContext(() => this.logger.debug(...args));
   }
 
   trace(...args: readonly unknown[]) {
-    this.logger.trace(this.prefix, ...args);
+    this.inContext(() => this.logger.trace(...args));
   }
 }

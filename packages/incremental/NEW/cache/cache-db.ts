@@ -16,7 +16,9 @@ import type {
 import type { IncrementalFunctionRuntime } from "../runtime/functions";
 import type { IncrementalCacheOpts } from "../runtime/backend";
 import type { IncrementalCellDescription } from "../descriptions/cells";
-import type { CachedCell, CachedFunction } from "./cacheable";
+import type { CachedCell, CachedFileStat, CachedFunction } from "./cacheable";
+import type { FileComputationDescription } from "../file-system/file";
+import type { IncrementalCellRuntime } from "../runtime/cells";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -173,6 +175,10 @@ export class CacheDB {
     throw new Error("TODO");
   }
 
+  getFile(desc: FileComputationDescription): CachedFileStat | undefined {
+    throw new Error("TODO");
+  }
+
   setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
     throw new Error("TODO");
   }
@@ -185,6 +191,10 @@ export class CacheDB {
     throw new Error("TODO");
   }
 
+  setFile(desc: FileComputationDescription, entry: CachedFileStat) {
+    throw new Error("TODO");
+  }
+
   deleteCell<C>(desc: IncrementalCellDescription<C>) {
     throw new Error("TODO");
   }
@@ -194,12 +204,47 @@ export class CacheDB {
     throw new Error("TODO");
   }
 
+  deleteFile(desc: FileComputationDescription) {
+    throw new Error("TODO");
+  }
+
   flushCell<C>(desc: IncrementalCellDescription<C>) {
     throw new Error("TODO");
   }
 
   flushFunc(desc: AnyIncrementalFunctionCallDescription) {
     throw new Error("TODO");
+  }
+
+  flushFile(desc: FileComputationDescription) {
+    throw new Error("TODO");
+  }
+
+  saveCell(cell: IncrementalCellRuntime<any>) {
+    const { desc, result } = cell;
+    if (result == null) {
+      throw new Error(
+        `Invariant violation: trying to save a cell with no result`
+      );
+    }
+    this.setCell(desc, {
+      type: "cell",
+      desc,
+      value: result[0],
+      version: result[1],
+    });
+    this.flushCell(desc);
+  }
+
+  unsaveCell(cell: IncrementalCellRuntime<any>) {
+    const { desc, result } = cell;
+    if (result == null) {
+      throw new Error(
+        `Invariant violation: trying to save a cell with no result`
+      );
+    }
+    this.deleteCell(desc);
+    this.flushCell(desc);
   }
 
   getEntry<C extends AnyRawComputation>(

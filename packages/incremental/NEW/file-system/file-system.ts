@@ -205,7 +205,7 @@ export class FileSystem {
   ) {
     const info = this.getInfo(path);
     const desc = rec ? info.recEvents[type].desc : info.events[type].desc;
-    const file = this.backend.make(desc);
+    const file = this.backend.getFunction(desc);
     return ctx._read(file.outputCell);
   }
 

@@ -1,9 +1,8 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
 import type { IncrementalCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
-import type { ChangedValue } from "../descriptions/values";
 import type { IncrementalBackend } from "./backend";
-import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { type IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export enum State {
   PENDING = 0,
@@ -34,11 +33,17 @@ export type ResultTypeOfComputation<C> =
 export abstract class IncrementalComputationRuntime<Ctx, Output>
   implements IncrementalCellOwner
 {
+  protected root: boolean;
   protected state: State;
   protected ctx: Ctx | null;
   protected running: Promise<void> | null;
   protected deleting: boolean;
-  protected root: boolean;
+
+  public readonly isCacheable: boolean;
+  private reload: boolean;
+
+  // Output cell
+  readonly outputCell: IncrementalCellRuntime<Output>;
 
   next: IncrementalComputationRuntime<any, any> | null = null;
   prev: IncrementalComputationRuntime<any, any> | null = null;
@@ -52,6 +57,16 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     this.ctx = null;
     this.running = null;
     this.deleting = false;
+    this.isCacheable = backend.db != null && rawDesc.isCacheable();
+    this.reload = this.isCacheable;
+    this.outputCell = new IncrementalCellRuntime(
+      backend,
+      this,
+      rawDesc.getOutputDef(),
+      "",
+      0,
+      false
+    );
   }
 
   protected isDeleting() {
@@ -73,9 +88,17 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   }
 
   init(root: boolean) {
-    this.root = root;
+    this.markRoot(root);
     this.mark(State.PENDING);
     return this;
+  }
+
+  markRoot(root: boolean) {
+    this.root = root;
+  }
+
+  isRoot() {
+    return this.root;
   }
 
   abstract getCell<Value>(
@@ -90,32 +113,51 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   run() {
     this.inv();
-    this.backend.assertNotReloading();
     if (this.running == null) {
       const ctx = (this.ctx = this.createContext());
-      this.running = Promise.resolve()
-        .then(() => this.exec(ctx))
-        .then(
-          v => this.finishOk(ctx, v),
-          e => this.finishErr(ctx, e)
-        );
+      this.running = this.runRoutine(ctx);
       this.mark(State.RUNNING);
     }
     return this.running;
   }
 
-  protected abstract setOutputValue(value: Output): ChangedValue<Output>;
+  private async runRoutine(ctx: Ctx): Promise<void> {
+    try {
+      // Attempt reload from cache
+      if (this.reload) {
+        this.reload = false;
+        if (await this.reloadRoutine(ctx)) {
+          this.finishReloaded(ctx);
+          return;
+        }
+      }
+      // Re-execute computation
+      const v = await this.exec(ctx);
+      this.finishOk(ctx, v);
+    } catch (err: unknown) {
+      this.finishErr(ctx, err);
+    }
+  }
 
-  private finishOk(ctx: Ctx, value: Output) {
+  protected abstract reloadRoutine(ctx: Ctx): Promise<boolean>;
+
+  protected abstract finishRoutine(): void;
+
+  private finishReloaded(ctx: Ctx) {
     if (this.isActive(ctx)) {
       this.ctx = null;
-      this.setOutputValue(value);
-      this.finishRoutine(false);
       this.mark(State.SETTLED_OK);
     }
   }
 
-  protected abstract finishRoutine(reloading: boolean): void;
+  private finishOk(ctx: Ctx, value: Output) {
+    if (this.isActive(ctx)) {
+      this.ctx = null;
+      this.outputCell.set(value);
+      this.finishRoutine();
+      this.mark(State.SETTLED_OK);
+    }
+  }
 
   private finishErr(ctx: Ctx, err: unknown) {
     if (this.isActive(ctx)) {
@@ -127,7 +169,6 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   invalidate() {
     this.inv();
-    this.backend.assertNotReloading();
     if (!this.backend.invalidationsAllowed()) {
       throw new Error("Invariant violation: Invalidations are disabled");
     }
@@ -135,6 +176,10 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     this.ctx = null;
     // Clear last run promise
     this.running = null;
+    // Do not reload later
+    this.reload = false;
+    // Set output cell to pending
+    this.outputCell.setPending();
     // Invalidate routine
     this.invalidateRoutine();
     // Mark as pending and schedule execution
@@ -146,14 +191,14 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   destroy() {
     this.inv();
-    this.backend.assertNotReloading();
-    if (!this.isAlone()) {
+    if (!this.isOrphan()) {
       throw new Error(
         "Invariant violation: Some computation depends on this, cannot destroy"
       );
     }
     this.ctx = null;
     this.running = null;
+    this.reload = false;
     this.deleting = true;
     this.backend.delete(this);
     this.deleteRoutine();
@@ -162,32 +207,10 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   protected abstract deleteRoutine(): void;
 
-  reload() {
-    if (!this.backend.isReloading()) {
-      throw new Error("Invariant violation: not reloading");
-    }
-    if (this.state !== State.PENDING) {
-      throw new Error(
-        `Invariant violation: calling reload on state ${this.state}`
-      );
-    }
-    if (this.reloadRoutine()) {
-      this.running = Promise.resolve();
-      this.finishRoutine(true);
-      this.mark(State.SETTLED_OK);
-    } else {
-      this.invalidateRoutine();
-      this.mark(State.PENDING);
-    }
-  }
-
-  protected abstract reloadRoutine(): boolean;
-
-  protected abstract isAlone(): boolean;
+  abstract isOrphan(): boolean;
 
   maybeRun() {
-    this.backend.assertNotReloading();
-    if (this.state === State.PENDING && !this.isAlone()) {
+    if (this.state === State.PENDING && !this.isOrphan()) {
       this.run();
       return true;
     }
@@ -195,8 +218,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   }
 
   maybeDestroy() {
-    this.backend.assertNotReloading();
-    if (this.isAlone()) {
+    if (this.isOrphan()) {
       this.destroy();
     }
   }

@@ -21,16 +21,10 @@ export class IncrementalLib {
 
   async call<Input, Output, CellDefs extends CellValueDescriptions>(
     schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
-    input: Input,
-    opts: Readonly<{ cache: boolean }>
+    input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
-    const func = this.backend.make(desc);
-    if (opts.cache) {
-      this.backend.reloadingContext(() => {
-        func.reload();
-      });
-    }
+    const func = this.backend.getFunction(desc, true);
     return func.outputCell.entryGet();
   }
 

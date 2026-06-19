@@ -9,7 +9,7 @@ import {
   IncrementalComputationRuntime,
 } from "../runtime/computations";
 import { IncrementalCellRuntime } from "../runtime/cells";
-import { type ChangedValue, valueDesc } from "../descriptions/values";
+import { valueDesc, type ValueDescription } from "../descriptions/values";
 import type { IncrementalCellDescription } from "../descriptions/cells";
 import { FileSystem, FileChange } from "./file-system";
 
@@ -50,6 +50,19 @@ export class FileComputationDescription extends IncrementalComputationDescriptio
     return this.path.length + 31 * this.type.length + (this.recursive ? 1 : 2);
   }
 
+  getOutputDef(): ValueDescription<bigint, any> {
+    return valueDesc(
+      (a, b) => (this.recursive ? false : a === b),
+      val => 0,
+      val => val,
+      val => val
+    );
+  }
+
+  isCacheable(): boolean {
+    return !this.recursive;
+  }
+
   getCacheKey() {
     return this.json;
   }
@@ -76,12 +89,28 @@ serializationDB.register<
   },
 });
 
+async function getTimestamp(desc: FileComputationDescription) {
+  if (desc.recursive) {
+    return 0n;
+  }
+  const { birthtimeNs, mtimeNs } = await fsextra.stat(desc.path, {
+    bigint: true,
+  });
+  switch (desc.type) {
+    case FileChange.ADD_OR_REMOVE:
+      return birthtimeNs;
+    case FileChange.CHANGE:
+      return mtimeNs;
+    default:
+      never(desc.type);
+  }
+}
+
 export class FileComputation extends IncrementalComputationRuntime<
   null,
   bigint
 > {
   readonly fs: FileSystem;
-  readonly outputCell: IncrementalCellRuntime<bigint>;
 
   constructor(
     backend: IncrementalBackend,
@@ -89,19 +118,6 @@ export class FileComputation extends IncrementalComputationRuntime<
   ) {
     super(backend, desc);
     this.fs = backend.fs;
-    this.outputCell = new IncrementalCellRuntime(
-      backend,
-      this,
-      valueDesc(
-        (a, b) => (this.desc.recursive ? false : a === b),
-        val => 0,
-        val => val,
-        val => val
-      ),
-      "",
-      0,
-      false
-    );
   }
 
   externalInvalidate() {
@@ -131,46 +147,42 @@ export class FileComputation extends IncrementalComputationRuntime<
     if (this.backend.invalidationsAllowed()) {
       await this.fs.sub(this);
     }
-    if (this.desc.recursive) {
-      return 0n;
+    return getTimestamp(this.desc);
+  }
+
+  protected async reloadRoutine(ctx: null): Promise<boolean> {
+    if (this.backend.invalidationsAllowed()) {
+      await this.fs.sub(this);
     }
-    // await this.cacheableMixin.preExec();
-    const { birthtimeNs, mtimeNs } = await fsextra.stat(this.desc.path, {
-      bigint: true,
-    });
-    switch (this.desc.type) {
-      case FileChange.ADD_OR_REMOVE:
-        return birthtimeNs;
-      case FileChange.CHANGE:
-        return mtimeNs;
-      default:
-        never(this.desc.type);
+    const cached = this.backend.db!.getCell(this.outputCell.desc);
+    const currentTimestamp = await getTimestamp(this.desc);
+    if (cached != null && currentTimestamp === cached.value) {
+      this.outputCell._set(cached.value, cached.version);
+    } else {
+      this.outputCell.set(currentTimestamp);
+    }
+    return true;
+  }
+
+  protected finishRoutine() {
+    if (this.isCacheable) {
+      this.backend.db!.saveCell(this.outputCell);
     }
   }
 
-  protected override isAlone(): boolean {
-    // TODO
-    return false;
-  }
-
-  protected setOutputValue(value: bigint) {
-    return this.outputCell.set(value);
-  }
-
-  protected finishRoutine(reloading: boolean) {}
-
-  protected invalidateRoutine() {
-    this.outputCell.setPending();
-  }
+  protected invalidateRoutine() {}
 
   protected deleteRoutine() {
     this.fs.unsub(this);
+
+    if (this.isCacheable) {
+      this.backend.db!.unsaveCell(this.outputCell);
+    }
   }
 
-  // TODO is the reloading for files working?
-
-  protected reloadRoutine(): boolean {
-    return this.cacheableMixin.reloadRoutine();
+  override isOrphan(): boolean {
+    // TODO
+    return false;
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}

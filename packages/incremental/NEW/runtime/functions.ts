@@ -1,4 +1,4 @@
-import { ContextualLogger } from "../../../util/logger";
+import { type ILogger, ContextualLogger } from "../../../util/logger";
 import { computeIfAbsent } from "../../../util/maps-sets";
 import type { Version } from "../../utils/versions";
 import { CacheableComputationMixin } from "../cache/cacheable";
@@ -8,7 +8,7 @@ import {
   type IncrementalFunctionSchema,
   IncrementalFunctionCallDescription,
 } from "../descriptions/functions";
-import type { ChangedValue, ValueOfDesc } from "../descriptions/values";
+import type { ValueOfDesc } from "../descriptions/values";
 import type { FileChange } from "../file-system/file-system";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
@@ -17,6 +17,27 @@ import {
   type StateNotCreating,
   IncrementalComputationRuntime,
 } from "./computations";
+
+export async function waitForCell<Value>(
+  backend: IncrementalBackend,
+  logger: ILogger,
+  desc: IncrementalCellDescription<Value>
+): Promise<IncrementalCellRuntime<Value> | undefined> {
+  const cellOwner = backend.getCellOwner(desc.owner);
+  if (!cellOwner) {
+    logger.warn(`Could not create or find cell owner ${desc.owner.format()}`);
+  }
+  let cell = cellOwner.getCell(desc);
+  if (!cell) {
+    // If the cell does not exist yet, wait for the computation to finish
+    await cellOwner.run();
+  }
+  cell = cellOwner.getCell(desc);
+  if (!cell) {
+    logger.warn(`Could not find cell ${desc.format()}`);
+  }
+  return cell;
+}
 
 export class IncrementalContextRuntime<
   Input,
@@ -42,6 +63,7 @@ export class IncrementalContextRuntime<
     }
   }
 
+  // TODO allow to allocate cell, and fill it later
   cell<K extends string & keyof CellDefs>(
     key: K,
     value: ValueOfDesc<CellDefs[K]>
@@ -51,12 +73,10 @@ export class IncrementalContextRuntime<
     return cell.desc;
   }
 
-  read<Value>(desc: IncrementalCellDescription<Value>): Promise<Value> {
-    const cell = this.backend.getCell(desc);
+  async read<Value>(desc: IncrementalCellDescription<Value>): Promise<Value> {
+    const cell = await waitForCell(this.backend, this.runtime.logger, desc);
     if (!cell) {
-      throw new Error(
-        `Invariant violation: cell ${desc.getCacheKey()} does not exist`
-      );
+      throw new Error(`Cell ${desc.getCacheKey()} does not exist`);
     }
     return cell.get(this, this.runtime);
   }
@@ -71,7 +91,7 @@ export class IncrementalContextRuntime<
     input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
-    const func = this.backend.make(desc);
+    const func = this.backend.getFunction(desc);
     return func.outputCell.desc;
   }
 
@@ -101,9 +121,8 @@ export class IncrementalFunctionRuntime<
     string,
     { array: IncrementalCellRuntime<any>[]; activeLen: number }
   >;
-  // Output cell
-  readonly outputCell: IncrementalCellRuntime<Output>;
-  readonly cacheableMixin: CacheableComputationMixin<this>;
+  // Cacheable mixin
+  readonly cacheableMixin: CacheableComputationMixin<this> | null;
 
   constructor(
     backend: IncrementalBackend,
@@ -112,19 +131,13 @@ export class IncrementalFunctionRuntime<
     super(backend, desc);
     this.logger = new ContextualLogger(
       this.backend.logger,
-      `[function] [${this.desc.format()}]`
+      `function > ${this.desc.format()}`
     );
-    this.cacheableMixin = new CacheableComputationMixin(this);
+    this.cacheableMixin = this.isCacheable
+      ? new CacheableComputationMixin(this)
+      : null;
     this.readCells = new Map();
     this.ownedCells = new Map();
-    this.outputCell = new IncrementalCellRuntime(
-      backend,
-      this,
-      desc.schema.outputDef,
-      "",
-      0,
-      false
-    );
   }
 
   override getCell<Value>(
@@ -189,22 +202,18 @@ export class IncrementalFunctionRuntime<
   }
 
   protected exec(ctx: IncrementalContextRuntime<Input, Output, CellDefs>) {
+    this.logger.debug("Executing...");
     return this.desc.schema.impl(ctx, this.desc.input);
   }
 
-  protected override isAlone(): boolean {
-    // TODO
-    return false;
+  protected reloadRoutine(
+    ctx: IncrementalContextRuntime<Input, Output, CellDefs>
+  ) {
+    this.logger.debug("Reloading...");
+    return this.cacheableMixin!.reloadRoutine(ctx);
   }
 
-  protected setOutputValue(value: Output) {
-    return this.outputCell.set(value);
-  }
-
-  protected finishRoutine(reloading: boolean) {
-    if (reloading) {
-      return;
-    }
+  protected finishRoutine() {
     // Warn the user if there are pending reads
     for (const [cell, version] of this.readCells) {
       if (version == null) {
@@ -218,17 +227,14 @@ export class IncrementalFunctionRuntime<
       }
       slot.array.length = slot.activeLen;
     }
-    this.cacheableMixin.finishRoutine();
+    this.cacheableMixin?.finishRoutine();
   }
 
   protected invalidateRoutine() {
-    this.cacheableMixin.invalidateRoutine();
     // Reset cells (but keep the instances for reuse)
     for (const slot of this.ownedCells.values()) {
       slot.activeLen = 0;
     }
-    // Mark output cell as pending
-    this.outputCell.setPending();
     // Clear the dependencies
     for (const cell of this.readCells.keys()) {
       cell.dependents.delete(this);
@@ -237,11 +243,12 @@ export class IncrementalFunctionRuntime<
   }
 
   protected deleteRoutine() {
-    this.cacheableMixin.deleteRoutine();
+    this.cacheableMixin?.deleteRoutine();
   }
 
-  protected reloadRoutine(): boolean {
-    return this.cacheableMixin.reloadRoutine();
+  override isOrphan(): boolean {
+    // TODO
+    return false;
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
