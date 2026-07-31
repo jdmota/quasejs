@@ -1,8 +1,10 @@
 import { type Defer, createDefer } from "../../../util/deferred";
-import { sameVersion, type Version } from "../../utils/versions";
+import { type Version, sameVersion } from "../../utils/versions";
 import type { IncrementalBackend } from "./backend";
+import type { CachedCell } from "../cache/cache-db";
 import {
   type IncrementalCellOwnerDescription,
+  type ResultOfCellDesc,
   IncrementalCellDescription,
 } from "../descriptions/cells";
 import type {
@@ -14,7 +16,6 @@ import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
 } from "./functions";
-import type { CachedCell } from "../cache/cacheable";
 
 // TODO support root level cells
 
@@ -22,21 +23,22 @@ import type { CachedCell } from "../cache/cacheable";
 // Trying to read a deleted cell is like dereferencing a dangling pointer
 
 export interface IncrementalCellOwner {
-  readonly rawDesc: IncrementalCellOwnerDescription;
+  readonly desc0: IncrementalCellOwnerDescription;
   inv(): void;
-  getCell<Value>(
-    desc: IncrementalCellDescription<Value>
-  ): IncrementalCellRuntime<Value> | undefined;
-  onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
-  run(): Promise<void>;
+  getCell<Desc extends IncrementalCellDescription<any>>(
+    desc: Desc
+  ): IncrementalCellRuntime<Desc> | undefined;
+  demand(): void;
+  demandAndWait(): Promise<void>;
   isOrphan(): boolean;
   isRoot(): boolean;
   markRoot(root: boolean): void;
 }
 
-export class IncrementalCellRuntime<Value> {
-  readonly desc: IncrementalCellDescription<Value>;
-  public result: VersionedValue<Value> | null = null;
+export class IncrementalCellRuntime<
+  Desc extends IncrementalCellDescription<any>,
+> {
+  public result: VersionedValue<ResultOfCellDesc<Desc>> | null = null;
   private defer: Defer<void> | null = null;
   // This flag is used to delay resolution
   // when we know a new value might be incoming
@@ -53,18 +55,10 @@ export class IncrementalCellRuntime<Value> {
   constructor(
     private readonly backend: IncrementalBackend,
     private readonly owner: IncrementalCellOwner,
-    private readonly valueDef: ValueDescription<Value, any>,
-    private readonly key: string,
-    private readonly index: number,
-    private readonly resolved: boolean,
-    fromCache: CachedCell<Value> | null = null
+    public readonly desc: Desc,
+    private readonly valueDef: ValueDescription<ResultOfCellDesc<Desc>, any>,
+    fromCache: CachedCell<ResultOfCellDesc<Desc>> | null = null
   ) {
-    this.desc = new IncrementalCellDescription(
-      owner.rawDesc,
-      key,
-      index,
-      resolved
-    );
     if (fromCache) {
       this.pending = false;
       this.result = [fromCache.value, fromCache.version];
@@ -91,12 +85,19 @@ export class IncrementalCellRuntime<Value> {
     return this.result != null && sameVersion(this.result[1], version);
   }
 
-  set(value: Value): ChangedValue<Value> {
+  readersCount() {
+    return this.dependents.size;
+  }
+
+  set(value: ResultOfCellDesc<Desc>): ChangedValue<ResultOfCellDesc<Desc>> {
     return this._set(value, null);
   }
 
   // Used internally
-  _set(value: Value, version: Version | null): ChangedValue<Value> {
+  _set(
+    value: ResultOfCellDesc<Desc>,
+    version: Version | null
+  ): ChangedValue<ResultOfCellDesc<Desc>> {
     this.inv();
     const { result } = this;
     this.pending = false;
@@ -116,7 +117,7 @@ export class IncrementalCellRuntime<Value> {
   async get(
     ctx: IncrementalContextRuntime<any, any, any>,
     consumer: IncrementalFunctionRuntime<any, any, any>
-  ): Promise<Value> {
+  ): Promise<ResultOfCellDesc<Desc>> {
     // Check first if this run is active
     // If the owner of the cell was deleted,
     // then this consumer should not be active
@@ -133,7 +134,7 @@ export class IncrementalCellRuntime<Value> {
       consumer.readCells.set(this, null);
     }
 
-    this.owner.onReadCell(this);
+    this.owner.demand();
 
     while (!this.result || this.pending) {
       await (this.defer ?? (this.defer = createDefer())).promise;
@@ -152,9 +153,9 @@ export class IncrementalCellRuntime<Value> {
     return result[0];
   }
 
-  async entryGet(): Promise<Value> {
+  async entryGet(): Promise<ResultOfCellDesc<Desc>> {
     this.inv();
-    this.owner.onReadCell(this);
+    this.owner.demand();
     while (!this.result || this.pending) {
       await (this.defer ?? (this.defer = createDefer())).promise;
     }

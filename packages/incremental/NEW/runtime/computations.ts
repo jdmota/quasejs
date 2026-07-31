@@ -27,9 +27,6 @@ export type StateNotDeleted =
   | State.SETTLED_OK
   | State.CREATING;
 
-export type ResultTypeOfComputation<C> =
-  C extends IncrementalComputationRuntime<any, infer Output> ? Output : never;
-
 export abstract class IncrementalComputationRuntime<Ctx, Output>
   implements IncrementalCellOwner
 {
@@ -42,31 +39,20 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   public readonly isCacheable: boolean;
   private reload: boolean;
 
-  // Output cell
-  readonly outputCell: IncrementalCellRuntime<Output>;
-
   next: IncrementalComputationRuntime<any, any> | null = null;
   prev: IncrementalComputationRuntime<any, any> | null = null;
 
   constructor(
     readonly backend: IncrementalBackend,
-    readonly rawDesc: AnyIncrementalComputationDescription
+    readonly desc0: AnyIncrementalComputationDescription
   ) {
     this.root = false;
     this.state = State.CREATING;
     this.ctx = null;
     this.running = null;
     this.deleting = false;
-    this.isCacheable = backend.db != null && rawDesc.isCacheable();
+    this.isCacheable = backend.db != null && desc0.isCacheable();
     this.reload = this.isCacheable;
-    this.outputCell = new IncrementalCellRuntime(
-      backend,
-      this,
-      rawDesc.getOutputDef(),
-      "",
-      0,
-      false
-    );
   }
 
   protected isDeleting() {
@@ -101,17 +87,23 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     return this.root;
   }
 
-  abstract getCell<Value>(
-    desc: IncrementalCellDescription<Value>
-  ): IncrementalCellRuntime<Value> | undefined;
+  abstract isOrphan(): boolean;
 
-  abstract onReadCell<Value>(cell: IncrementalCellRuntime<Value>): void;
+  needed() {
+    return !this.isOrphan() || this.isRoot();
+  }
+
+  abstract getCell<Desc extends IncrementalCellDescription<any>>(
+    desc: Desc
+  ): IncrementalCellRuntime<Desc> | undefined;
+
+  abstract setOutputValue(value: Output): void;
 
   protected abstract createContext(): Ctx;
 
   protected abstract exec(ctx: Ctx): MaybeAsync<Output>;
 
-  run() {
+  run(): Promise<void> {
     this.inv();
     if (this.running == null) {
       const ctx = (this.ctx = this.createContext());
@@ -153,7 +145,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   private finishOk(ctx: Ctx, value: Output) {
     if (this.isActive(ctx)) {
       this.ctx = null;
-      this.outputCell.set(value);
+      this.setOutputValue(value);
       this.finishRoutine();
       this.mark(State.SETTLED_OK);
     }
@@ -163,7 +155,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     if (this.isActive(ctx)) {
       this.ctx = null;
       this.mark(State.SETTLED_ERR);
-      this.backend.onFunctionError(this.rawDesc, err);
+      this.backend.onFunctionError(this.desc0, err);
     }
   }
 
@@ -178,8 +170,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     this.running = null;
     // Do not reload later
     this.reload = false;
-    // Set output cell to pending
-    this.outputCell.setPending();
+
     // Invalidate routine
     this.invalidateRoutine();
     // Mark as pending and schedule execution
@@ -191,7 +182,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   destroy() {
     this.inv();
-    if (!this.isOrphan()) {
+    if (this.needed()) {
       throw new Error(
         "Invariant violation: Some computation depends on this, cannot destroy"
       );
@@ -207,10 +198,16 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   protected abstract deleteRoutine(): void;
 
-  abstract isOrphan(): boolean;
+  demand(): void {
+    this.run();
+  }
+
+  demandAndWait(): Promise<void> {
+    return this.run();
+  }
 
   maybeRun() {
-    if (this.state === State.PENDING && !this.isOrphan()) {
+    if (this.state === State.PENDING && this.needed()) {
       this.run();
       return true;
     }
@@ -218,7 +215,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   }
 
   maybeDestroy() {
-    if (this.isOrphan()) {
+    if (!this.needed()) {
       this.destroy();
     }
   }

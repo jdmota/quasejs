@@ -1,23 +1,19 @@
 import * as lmdb from "lmdb";
-import fsextra from "fs-extra";
 import path from "node:path";
 import { inspect } from "node:util";
-import { finished } from "node:stream/promises";
-import { Logger, LoggerVerboseLevel } from "../../../util/logger";
-import { arrayEquals, assertion, never } from "../../../util/miscellaneous";
+import { Logger } from "../../../util/logger";
+import { assertion } from "../../../util/miscellaneous";
 import { MissingConstructorSerializerError } from "../../../util/serialization";
-import { type ValueDefinition, HashMap, objValue } from "../../utils/hash-map";
-import { sameVersion, type Version } from "../../utils/versions";
-import type { ResultTypeOfComputation } from "../runtime/computations";
-import type {
-  AnyIncrementalFunctionCallDescription,
-  IncrementalFunctionCallDescription,
-} from "../descriptions/functions";
-import type { IncrementalFunctionRuntime } from "../runtime/functions";
+import { HashMap } from "../../utils/hash-map";
+import { type Version } from "../../utils/versions";
+import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
 import type { IncrementalCacheOpts } from "../runtime/backend";
-import type { IncrementalCellDescription } from "../descriptions/cells";
-import type { CachedCell, CachedFileStat, CachedFunction } from "./cacheable";
-import type { FileComputationDescription } from "../file-system/file";
+import type {
+  AnyIncrementalCellDescription,
+  IncrementalAllocatedCellDescription,
+  IncrementalCellDescription,
+  IncrementalOutputCellDescription,
+} from "../descriptions/cells";
 import type { IncrementalCellRuntime } from "../runtime/cells";
 
 export function checkArray<T>(val: T[] | number): T[] {
@@ -34,59 +30,35 @@ function checkNumber<T>(val: T[] | number): number {
   throw new Error("Value is " + val);
 }
 
-type CachedGet = {
-  readonly kind: "get";
-  readonly desc: ComputationDescription<
-    RawComputation<any, any> & SubscribableComputation<any>
-  >;
-  readonly version: Version;
-};
-
-type CachedCompute = {
-  readonly kind: "compute";
-  readonly desc: ComputationDescription<AnyRawComputation & ChildComputation>;
-};
-
-export type CachedDep = CachedGet | CachedCompute;
-
-const defaultValDef: ValueDefinition<ComputationDescription<any>> = objValue;
-
-function sameDep(a: CachedDep, b: CachedDep) {
-  switch (a.kind) {
-    case "get":
-      return (
-        b.kind === "get" &&
-        sameVersion(a.version, b.version) &&
-        a.desc.equal(b.desc)
-      );
-    case "compute":
-      return b.kind === "compute" && a.desc.equal(b.desc);
-    default:
-      never(a);
-  }
+export interface WithCacheKey {
+  equal(other: unknown): boolean;
+  hash(): number;
+  getCacheKey(): string;
 }
 
-export function sameCacheEntry<C extends AnyRawComputation>(
-  a: CacheEntry<C>,
-  b: CacheEntry<C>
-) {
-  return (
-    a.value === b.value &&
-    a.useDeps === b.useDeps &&
-    sameVersion(a.version, b.version) &&
-    arrayEquals(a.deps, b.deps, sameDep)
-  );
-}
+export type CachedCell<C> = Readonly<{
+  type: "cell";
+  desc: IncrementalCellDescription<C>;
+  value: C;
+  version: Version;
+}>;
 
-export type CacheEntry<C extends IncrementalFunctionRuntime<any, any, any>> = {
-  readonly desc: AnyIncrementalFunctionCallDescription;
-  readonly value: ResultTypeOfComputation<C>;
-  readonly deps: readonly CachedDep[];
-  readonly useDeps: boolean;
-  readonly version: Version;
-};
+export type VersionedCellDesc = readonly [
+  AnyIncrementalCellDescription,
+  Version,
+];
 
-export type DB_Val = Readonly<CacheEntry<any>>[];
+export type CachedFunction = Readonly<{
+  type: "function";
+  desc: AnyIncrementalFunctionCallDescription;
+  readCells: readonly VersionedCellDesc[];
+  ownedCells: readonly IncrementalAllocatedCellDescription<any>[];
+  outputCell: IncrementalOutputCellDescription<any>;
+}>;
+
+type CacheEntry = CachedFunction | CachedCell<any>;
+
+export type DB_Val = Readonly<CacheEntry>[];
 
 export class CacheDB {
   public static DB_VERSION = 1;
@@ -94,13 +66,13 @@ export class CacheDB {
     "quase_incremental_cache_session"
   );
 
+  private readonly logger: Logger;
   private readonly dir: string;
-  private readonly logFile: string;
 
-  private readonly alive: HashMap<ComputationDescription<any>, null> =
-    new HashMap(defaultValDef);
-
-  private logFileStream: fsextra.WriteStream;
+  private readonly alive: HashMap<WithCacheKey, null> = new HashMap({
+    equal: (a, b) => a.equal(b),
+    hash: a => a.hash(),
+  });
 
   private locked = false;
   private saveJobs: Map<string, Promise<void>>;
@@ -108,15 +80,15 @@ export class CacheDB {
 
   constructor(
     private readonly opts: IncrementalCacheOpts,
-    private readonly logger: Logger
+    logger: Logger
   ) {
     this.dir =
       path.resolve(opts.dir) +
       path.sep +
       `quase_incremental_v${CacheDB.DB_VERSION}`;
-    this.logFile = this.dir + path.sep + `log${Date.now()}.txt`;
-    this.logger = opts.logger;
+    // this.logFile = this.dir + path.sep + `log${Date.now()}.txt`;
     this.saveJobs = new Map();
+    this.logger = logger.createChildLogger("cache-db");
     this.db = lmdb.open<
       DB_Val | number,
       string | typeof CacheDB.CACHE_DB_SESSION_SYM
@@ -127,21 +99,21 @@ export class CacheDB {
         structuredClone: true,
       },
     });
-    this.logFileStream = fsextra.createWriteStream(this.logFile);
-    this.logger.setStream(process.stderr, l => l <= LoggerVerboseLevel.WARN);
-    this.logger.setStream(
-      process.stdout,
-      l => LoggerVerboseLevel.WARN < l && l <= LoggerVerboseLevel.LOG
-    );
-    this.logger.setStream(this.logFileStream, LoggerVerboseLevel.ALL);
   }
 
   lock() {
     this.locked = true;
   }
 
+  private getKey(desc: WithCacheKey) {
+    // max byte key size = 1978
+    // UTF-8 characters can be 1 to 4 bytes long
+    return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
+  }
+
   private corruptedKeys: Set<string> = new Set();
-  private safeGet(key: string) {
+
+  private safeGetEntries(key: string) {
     try {
       return checkArray(this.db.get(key) ?? []);
     } catch (err) {
@@ -159,131 +131,34 @@ export class CacheDB {
     }
   }
 
-  private getKey(desc: ComputationDescription<any>) {
-    // max byte key size = 1978
-    // UTF-8 characters can be 1 to 4 bytes long
-    return desc.getCacheKey().slice(0, 1978 / 4); // estimate...
-  }
-
-  getCell<C>(desc: IncrementalCellDescription<C>): CachedCell<C> | undefined {
-    throw new Error("TODO");
-  }
-
-  getFunc(
-    desc: AnyIncrementalFunctionCallDescription
-  ): CachedFunction | undefined {
-    throw new Error("TODO");
-  }
-
-  getFile(desc: FileComputationDescription): CachedFileStat | undefined {
-    throw new Error("TODO");
-  }
-
-  setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
-    throw new Error("TODO");
-  }
-
-  setFunc(desc: AnyIncrementalFunctionCallDescription, entry: CachedFunction) {
-    this.logger.debug("Saving", {
-      desc,
-      entry,
-    });
-    throw new Error("TODO");
-  }
-
-  setFile(desc: FileComputationDescription, entry: CachedFileStat) {
-    throw new Error("TODO");
-  }
-
-  deleteCell<C>(desc: IncrementalCellDescription<C>) {
-    throw new Error("TODO");
-  }
-
-  deleteFunc(desc: AnyIncrementalFunctionCallDescription) {
-    // TODO and delete its cells
-    throw new Error("TODO");
-  }
-
-  deleteFile(desc: FileComputationDescription) {
-    throw new Error("TODO");
-  }
-
-  flushCell<C>(desc: IncrementalCellDescription<C>) {
-    throw new Error("TODO");
-  }
-
-  flushFunc(desc: AnyIncrementalFunctionCallDescription) {
-    throw new Error("TODO");
-  }
-
-  flushFile(desc: FileComputationDescription) {
-    throw new Error("TODO");
-  }
-
-  saveCell(cell: IncrementalCellRuntime<any>) {
-    const { desc, result } = cell;
-    if (result == null) {
-      throw new Error(
-        `Invariant violation: trying to save a cell with no result`
-      );
-    }
-    this.setCell(desc, {
-      type: "cell",
-      desc,
-      value: result[0],
-      version: result[1],
-    });
-    this.flushCell(desc);
-  }
-
-  unsaveCell(cell: IncrementalCellRuntime<any>) {
-    const { desc, result } = cell;
-    if (result == null) {
-      throw new Error(
-        `Invariant violation: trying to save a cell with no result`
-      );
-    }
-    this.deleteCell(desc);
-    this.flushCell(desc);
-  }
-
-  getEntry<C extends AnyRawComputation>(
-    desc: ComputationDescription<C>
-  ): CacheEntry<C> | undefined {
+  private safeGet(desc: WithCacheKey): CacheEntry | undefined {
     const key = this.getKey(desc);
-    const dbValue = this.safeGet(key);
+    const dbValue = this.safeGetEntries(key);
     for (const entry of dbValue) {
       if (entry.desc.equal(desc)) {
         this.alive.set(desc, null);
-        return entry satisfies CacheEntry<any> as CacheEntry<C>;
+        return entry;
       }
     }
   }
 
-  saveEntry<C extends AnyRawComputation>(
-    desc: ComputationDescription<C>,
-    entry: CacheEntry<C>
-  ) {
+  private saveEntry(desc: WithCacheKey, entry: CacheEntry) {
     if (this.locked) {
       return;
     }
     this.alive.set(desc, null);
-    this.saveOne(desc, entry);
+    this.saveOne(this.getKey(desc), desc, entry);
   }
 
-  removeEntry(desc: ComputationDescription<any>) {
+  private removeEntry(desc: WithCacheKey) {
     if (this.locked) {
       return;
     }
     this.alive.delete(desc);
-    this.saveOne(desc, null);
+    this.saveOne(this.getKey(desc), desc, null);
   }
 
-  private saveOne(
-    desc: ComputationDescription<any>,
-    entry: CacheEntry<any> | null
-  ) {
-    const key = this.getKey(desc);
+  private saveOne(key: string, desc: WithCacheKey, entry: CacheEntry | null) {
     this.corruptedKeys.delete(key);
     const prevJob = this.saveJobs.get(key) ?? Promise.resolve();
     this.saveJobs.set(
@@ -292,27 +167,16 @@ export class CacheDB {
     );
   }
 
-  private removeEntryOutdatedKey(
-    key: string,
-    desc: ComputationDescription<any>
-  ) {
-    this.corruptedKeys.delete(key);
-    const prevJob = this.saveJobs.get(key) ?? Promise.resolve();
-    this.saveJobs.set(
-      key,
-      prevJob.then(() => this._saveOne(key, desc, null))
-    );
-  }
-
   private async _saveOne(
     key: string,
-    desc: ComputationDescription<any>,
-    entry: CacheEntry<any> | null
+    desc: WithCacheKey,
+    entry: CacheEntry | null
   ) {
     try {
       await this.db.transaction(async () => {
-        const entries = this.safeGet(key);
+        const entries = this.safeGetEntries(key);
         const idx = entries.findIndex(e => e.desc.equal(desc));
+        const currentEntry = idx >= 0 ? entries[idx] : null;
 
         if (entry) {
           if (idx >= 0) {
@@ -331,13 +195,14 @@ export class CacheDB {
         } else {
           await this.db.remove(key);
         }
-      });
 
-      if (entry) {
-        this.logger.debug("SAVED ENTRY", entry);
-      } else {
-        this.logger.debug("DELETED ENTRY", desc);
-      }
+        if (entry == null && currentEntry?.type === "function") {
+          for (const cell of currentEntry.ownedCells) {
+            this.deleteCell(cell);
+          }
+          this.deleteCell(currentEntry.outputCell);
+        }
+      });
     } catch (err) {
       this.logger.error(
         this.addError(
@@ -350,6 +215,67 @@ export class CacheDB {
         )
       );
     }
+  }
+
+  getCell<C>(desc: IncrementalCellDescription<C>): CachedCell<C> | undefined {
+    const entry = this.safeGet(desc);
+    if (entry?.type === "cell") {
+      return entry;
+    }
+  }
+
+  getFunc(
+    desc: AnyIncrementalFunctionCallDescription
+  ): CachedFunction | undefined {
+    const entry = this.safeGet(desc);
+    if (entry?.type === "function") {
+      return entry;
+    }
+  }
+
+  setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
+    this.logger.debug("Saving cell", desc.format(), entry.version);
+    this.saveEntry(desc, entry);
+  }
+
+  setFunc(desc: AnyIncrementalFunctionCallDescription, entry: CachedFunction) {
+    this.logger.debug("Saving function", desc.format());
+    this.saveEntry(desc, entry);
+  }
+
+  deleteCell<C>(desc: IncrementalCellDescription<C>) {
+    this.logger.debug("Deleting cell", desc.format());
+    this.removeEntry(desc);
+  }
+
+  deleteFunc(desc: AnyIncrementalFunctionCallDescription) {
+    this.logger.debug("Deleting function", desc.format());
+    this.removeEntry(desc);
+  }
+
+  saveCell(cell: IncrementalCellRuntime<any>) {
+    const { desc, result } = cell;
+    if (result == null) {
+      throw new Error(
+        `Invariant violation: trying to save a cell with no result`
+      );
+    }
+    this.setCell(desc, {
+      type: "cell",
+      desc,
+      value: result[0],
+      version: result[1],
+    });
+  }
+
+  unsaveCell(cell: IncrementalCellRuntime<any>) {
+    const { desc, result } = cell;
+    if (result == null) {
+      throw new Error(
+        `Invariant violation: trying to save a cell with no result`
+      );
+    }
+    this.deleteCell(desc);
   }
 
   async newGlobalSession() {
@@ -378,14 +304,14 @@ export class CacheDB {
     if (gc) {
       for (const key of this.db.getKeys()) {
         if (typeof key === "symbol") continue;
-        const dbValue = this.safeGet(key);
+        const dbValue = this.safeGetEntries(key);
         for (const entry of dbValue) {
           if (!this.alive.has(entry.desc)) {
             this.logger.debug("=== GC OLD ENTRY ===", entry.desc);
-            this.saveOne(entry.desc, null);
+            this.saveOne(key, entry.desc, null);
           } else if (key !== this.getKey(entry.desc)) {
             this.logger.debug("=== GC ENTRY WITH OUTDATED KEY ===", entry.desc);
-            this.removeEntryOutdatedKey(key, entry.desc);
+            this.saveOne(key, entry.desc, null);
           }
         }
       }
@@ -405,8 +331,6 @@ export class CacheDB {
     this.logger.debug("=== SAVED CACHE ===");
 
     this.printMissingSerializers();
-
-    await finished(this.logFileStream);
   }
 
   private missingSerializers: Set<string> = new Set();

@@ -61,22 +61,21 @@ function levelToFilter(level: LoggerLevelFilter): LoggerLevelFilterFn {
 }
 
 export type LoggerPrefixRender = (
-  name: string,
   date: Date,
   context: string,
   level: LoggerLevel
 ) => string;
 
-type LoggerDefaultOpts = {
+type LoggerOptsNoDefaults = {
   readonly renderPrefix: LoggerPrefixRender;
   readonly verbose: LoggerLevelFilter;
   readonly colors: boolean;
   readonly streams: LoggerStreams;
 };
 
-const DEFAULT_OPTS: LoggerDefaultOpts = {
-  renderPrefix: (name, date, context, level) =>
-    `[${date.toISOString()}][${name}]${context}[${loggerLevelToStr(level)}]`,
+const DEFAULT_OPTS: LoggerOptsNoDefaults = {
+  renderPrefix: (date, context, level) =>
+    `[${date.toISOString()}]${context}[${loggerLevelToStr(level)}]`,
   verbose: l => l <= LoggerVerboseLevel.ALL,
   colors: true,
   streams: [
@@ -85,19 +84,8 @@ const DEFAULT_OPTS: LoggerDefaultOpts = {
   ],
 };
 
-export interface ILogger {
-  write(level: LoggerLevel, args: readonly unknown[]): void;
-  fatal(...args: readonly unknown[]): void;
-  error(...args: readonly unknown[]): void;
-  warn(...args: readonly unknown[]): void;
-  info(...args: readonly unknown[]): void;
-  log(...args: readonly unknown[]): void;
-  debug(...args: readonly unknown[]): void;
-  trace(...args: readonly unknown[]): void;
-}
-
 export class Logger {
-  static DEFAULT_OPTS: LoggerDefaultOpts = DEFAULT_OPTS;
+  static DEFAULT_OPTS: LoggerOptsNoDefaults = DEFAULT_OPTS;
 
   private renderPrefix: LoggerPrefixRender;
   private verbose: LoggerLevelFilterFn;
@@ -105,17 +93,35 @@ export class Logger {
   private streams: Map<NodeJS.WritableStream, LoggerLevelFilterFn>;
   private contextStack: string[];
 
-  constructor(
+  private constructor(
     public readonly name: string,
-    { renderPrefix, verbose, colors, streams }: LoggerOpts = {}
+    { renderPrefix, verbose, colors, streams }: LoggerOptsNoDefaults,
+    private readonly parent: Logger | undefined = undefined
   ) {
-    this.renderPrefix = renderPrefix ?? DEFAULT_OPTS.renderPrefix;
-    this.verbose = levelToFilter(verbose ?? DEFAULT_OPTS.verbose);
-    this.colors = colors ?? DEFAULT_OPTS.colors;
-    this.streams = new Map(
-      (streams ?? DEFAULT_OPTS.streams).map(([s, l]) => [s, levelToFilter(l)])
+    this.renderPrefix = renderPrefix;
+    this.verbose = levelToFilter(verbose);
+    this.colors = colors;
+    this.streams = new Map(streams.map(([s, l]) => [s, levelToFilter(l)]));
+    this.contextStack = [this.name];
+  }
+
+  static create(name: string, opts: LoggerOpts = {}) {
+    return new Logger(name, {
+      ...DEFAULT_OPTS,
+      ...opts,
+    });
+  }
+
+  createChildLogger(name: string, opts: LoggerOpts = {}) {
+    return new Logger(
+      name,
+      {
+        ...DEFAULT_OPTS,
+        streams: [],
+        ...opts,
+      },
+      this
     );
-    this.contextStack = [];
   }
 
   setRenderPrefix(renderPrefix: LoggerPrefixRender) {
@@ -138,22 +144,9 @@ export class Logger {
     this.streams.delete(stream);
   }
 
-  pushContext(context: string) {
-    this.contextStack.push(context);
-  }
-
-  popContext() {
-    this.contextStack.pop();
-  }
-
   private writeMessage(level: LoggerLevel, givenMessage: string) {
     const context = this.contextStack.map(c => `[${c}]`).join("");
-    const formatedPrefix = this.renderPrefix(
-      this.name,
-      new Date(),
-      context,
-      level
-    );
+    const formatedPrefix = this.renderPrefix(new Date(), context, level);
     const message = formatedPrefix
       ? `${formatedPrefix} ${givenMessage}\n`
       : `${givenMessage}\n`;
@@ -169,10 +162,17 @@ export class Logger {
 
   write(level: LoggerLevel, args: readonly unknown[]) {
     if (!this.verbose(level)) return;
-    this.writeMessage(
-      level,
-      formatWithOptions({ colors: this.colors }, ...args)
-    );
+    if (this.streams.size > 0) {
+      this.writeMessage(
+        level,
+        formatWithOptions({ colors: this.colors }, ...args)
+      );
+    }
+    if (this.parent) {
+      this.parent.contextStack.push(this.name);
+      this.parent.write(level, args);
+      this.parent.contextStack.pop();
+    }
   }
 
   fatal(...args: readonly unknown[]) {
@@ -205,55 +205,9 @@ export class Logger {
       message: formatWithOptions({ colors: this.colors }, ...args),
     };
     const { stackTraceLimit } = Error;
-    Error.stackTraceLimit = 4;
+    Error.stackTraceLimit = 1;
     Error.captureStackTrace(err, this.trace);
     Error.stackTraceLimit = stackTraceLimit;
-    this.writeMessage(LoggerVerboseLevel.TRACE, (err as any).stack);
-  }
-}
-
-// Uses a root logger, but extends messages with a custom prefix before sending
-export class ContextualLogger implements ILogger {
-  constructor(
-    readonly logger: Logger,
-    readonly prefix: string
-  ) {}
-
-  private inContext(fn: () => void) {
-    this.logger.pushContext(this.prefix);
-    fn();
-    this.logger.popContext();
-  }
-
-  write(level: LoggerLevel, args: readonly unknown[]) {
-    this.inContext(() => this.logger.write(level, args));
-  }
-
-  fatal(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.fatal(...args));
-  }
-
-  error(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.error(...args));
-  }
-
-  warn(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.warn(...args));
-  }
-
-  info(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.info(...args));
-  }
-
-  log(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.log(...args));
-  }
-
-  debug(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.debug(...args));
-  }
-
-  trace(...args: readonly unknown[]) {
-    this.inContext(() => this.logger.trace(...args));
+    this.write(LoggerVerboseLevel.TRACE, [(err as any).stack]);
   }
 }

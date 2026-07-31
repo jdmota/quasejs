@@ -1,29 +1,50 @@
 import { serializationDB } from "../../utils/serialization-db";
+import type { WithCacheKey } from "../cache/cache-db";
+import type {
+  AnyIncrementalFunctionCallDescription,
+  IncrementalFunctionCallDescription,
+} from "./functions";
 
-export interface IncrementalCellOwnerDescription {
+export interface IncrementalCellOwnerDescription extends WithCacheKey {
   equal(other: unknown): boolean;
   hash(): number;
   getCacheKey(): string;
   format(): string;
 }
 
-export class IncrementalCellDescription<Value> {
+export abstract class IncrementalCellDescription<Value>
+  implements WithCacheKey
+{
   _valueType!: Value;
+  constructor(readonly owner0: IncrementalCellOwnerDescription) {}
+  abstract equal(other: unknown): boolean;
+  abstract hash(): number;
+  abstract format(): string;
+  abstract getCacheKey(): string;
+}
 
+export type ResultOfCellDesc<D> =
+  D extends IncrementalCellDescription<infer Value> ? Value : never;
+
+export type AnyIncrementalCellDescription = IncrementalCellDescription<any>;
+
+export class IncrementalAllocatedCellDescription<
+  Value,
+> extends IncrementalCellDescription<Value> {
   constructor(
-    readonly owner: IncrementalCellOwnerDescription,
+    readonly owner: AnyIncrementalFunctionCallDescription,
     readonly key: string,
-    readonly index: number,
-    readonly resolved: boolean
-  ) {}
+    readonly index: number
+  ) {
+    super(owner);
+  }
 
   equal(other: unknown): boolean {
     return (
-      other instanceof IncrementalCellDescription &&
+      other instanceof IncrementalAllocatedCellDescription &&
       this.owner.equal(other.owner) &&
       this.key === other.key &&
-      this.index === other.index &&
-      this.resolved === other.resolved
+      this.index === other.index
     );
   }
 
@@ -32,7 +53,7 @@ export class IncrementalCellDescription<Value> {
   }
 
   getCacheKey() {
-    return `Cell{${this.owner.getCacheKey()},${this.key},${this.index},${this.resolved}}`;
+    return `AllocatedCell{${this.owner.getCacheKey()},${this.key},${this.index}}`;
   }
 
   format() {
@@ -40,34 +61,77 @@ export class IncrementalCellDescription<Value> {
   }
 }
 
-export type AnyIncrementalCellDescription = IncrementalCellDescription<any>;
-
-export type IncrementalCellDescriptionJSON = {
-  readonly owner: IncrementalCellOwnerDescription;
+type IncrementalAllocatedCellDescriptionJSON = {
+  readonly owner: AnyIncrementalFunctionCallDescription;
   readonly key: string;
   readonly index: number;
-  readonly resolved: boolean;
 };
 
 serializationDB.register<
-  IncrementalCellDescription<any>,
-  IncrementalCellDescriptionJSON
->(IncrementalCellDescription, {
-  name: "IncrementalCellDescription",
+  IncrementalAllocatedCellDescription<any>,
+  IncrementalAllocatedCellDescriptionJSON
+>(IncrementalAllocatedCellDescription, {
+  name: "IncrementalAllocatedCellDescription",
   serialize: value => {
     return {
       owner: value.owner,
       key: value.key,
       index: value.index,
-      resolved: value.resolved,
     };
   },
   deserialize: out => {
-    return new IncrementalCellDescription(
+    return new IncrementalAllocatedCellDescription(
       out.owner,
       out.key,
-      out.index,
-      out.resolved
+      out.index
     );
+  },
+});
+
+export class IncrementalOutputCellDescription<
+  Output,
+> extends IncrementalCellDescription<Output> {
+  constructor(
+    readonly owner: IncrementalFunctionCallDescription<any, Output, any>
+  ) {
+    super(owner);
+  }
+
+  equal(other: unknown): boolean {
+    return (
+      other instanceof IncrementalOutputCellDescription &&
+      this.owner.equal(other.owner)
+    );
+  }
+
+  hash() {
+    return this.owner.hash();
+  }
+
+  getCacheKey() {
+    return `OutputCell{${this.owner.getCacheKey()}}`;
+  }
+
+  format() {
+    return `${this.owner.format()}#output`;
+  }
+}
+
+type IncrementalOutputCellDescriptionJSON = {
+  readonly owner: AnyIncrementalFunctionCallDescription;
+};
+
+serializationDB.register<
+  IncrementalOutputCellDescription<any>,
+  IncrementalOutputCellDescriptionJSON
+>(IncrementalOutputCellDescription, {
+  name: "IncrementalOutputCellDescription",
+  serialize: value => {
+    return {
+      owner: value.owner,
+    };
+  },
+  deserialize: out => {
+    return new IncrementalOutputCellDescription(out.owner);
   },
 });

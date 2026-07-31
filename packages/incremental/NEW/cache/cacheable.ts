@@ -1,36 +1,16 @@
-import { type Version } from "../../utils/versions";
-import { type CacheDB } from "../cache/cache-db";
+import {
+  type CacheDB,
+  type CachedFunction,
+  type VersionedCellDesc,
+} from "../cache/cache-db";
 import {
   waitForCell,
   type IncrementalContextRuntime,
   type IncrementalFunctionRuntime,
 } from "../runtime/functions";
-import type {
-  AnyIncrementalCellDescription,
-  IncrementalCellDescription,
-} from "../descriptions/cells";
+import { IncrementalAllocatedCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
 import { IncrementalCellRuntime } from "../runtime/cells";
-
-export type CachedCell<C> = Readonly<{
-  type: "cell";
-  desc: IncrementalCellDescription<C>;
-  value: C;
-  version: Version;
-}>;
-
-export type VersionedCellDesc = readonly [
-  AnyIncrementalCellDescription,
-  Version,
-];
-
-export type CachedFunction = Readonly<{
-  type: "function";
-  desc: AnyIncrementalFunctionCallDescription;
-  readCells: readonly VersionedCellDesc[];
-  ownedCells: readonly AnyIncrementalCellDescription[];
-  outputCell: AnyIncrementalCellDescription;
-}>;
 
 export class CacheableComputationMixin<
   C extends IncrementalFunctionRuntime<any, any, any>,
@@ -51,7 +31,7 @@ export class CacheableComputationMixin<
       const { key } = desc;
       const cachedCell = this.db!.getCell(desc);
       if (!cachedCell) {
-        this.source.logger.warn(
+        this.source.logger.debug(
           `Function was in cache, but its cell ${desc.format()} was not`
         );
         return false;
@@ -69,10 +49,8 @@ export class CacheableComputationMixin<
       const cell = new IncrementalCellRuntime(
         this.source.backend,
         this.source,
+        desc,
         valDef,
-        key,
-        slot.activeLen,
-        desc.resolved,
         cachedCell
       );
       slot.array.push(cell);
@@ -80,13 +58,6 @@ export class CacheableComputationMixin<
     }
 
     for (const [desc, version] of cachedFunc.readCells) {
-      const owner = this.source.backend.getCellOwner(desc.owner);
-      if (!owner) {
-        this.source.logger.warn(
-          `Could not create or find cell owner ${desc.owner.format()}`
-        );
-        return false;
-      }
       const cell = await waitForCell(
         this.source.backend,
         this.source.logger,
@@ -110,7 +81,7 @@ export class CacheableComputationMixin<
     // Reload output cell
     const cachedCell = this.db!.getCell(cachedFunc.outputCell);
     if (!cachedCell) {
-      this.source.logger.warn(
+      this.source.logger.debug(
         `Function was in cache, but its output cell was not`
       );
       return false;
@@ -147,7 +118,7 @@ export class CacheableComputationMixin<
   finishRoutine() {
     const outputCell = this.source.outputCell;
     const readCells: VersionedCellDesc[] = [];
-    const ownedCells: AnyIncrementalCellDescription[] = [];
+    const ownedCells: IncrementalAllocatedCellDescription<any>[] = [];
 
     // Save read cells
     for (const [cell, version] of this.source.readCells) {
@@ -180,12 +151,9 @@ export class CacheableComputationMixin<
       outputCell: outputCell.desc,
     };
     this.db!.setFunc(this.desc, entry);
-    this.db!.flushFunc(this.desc);
   }
 
   deleteRoutine() {
     this.db!.deleteFunc(this.desc);
-    this.db!.flushFunc(this.desc);
-    // TODO should also delete its cells
   }
 }

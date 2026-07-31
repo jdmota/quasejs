@@ -13,7 +13,7 @@ export function isObject(o: unknown): o is {} {
 }
 
 export function className(o: unknown) {
-  return o == null
+  return o === null
     ? "null"
     : typeof o === "object" && typeof o.constructor === "function"
       ? o.constructor.name

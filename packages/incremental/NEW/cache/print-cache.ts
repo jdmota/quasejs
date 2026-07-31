@@ -1,7 +1,7 @@
 import * as lmdb from "lmdb";
 import path from "node:path";
-import { CacheDB, checkArray, type DB_Val } from "./cache-db";
 import { inspect } from "node:util";
+import { type DB_Val, CacheDB, checkArray } from "./cache-db";
 
 export class CachePrinter {
   private readonly dir: string;

@@ -112,7 +112,7 @@ export class IncrementalFunctionCallDescription<
   }
 
   format() {
-    return `${this.schema.name}_${this.schema.version}(${this.getInputHash()})`;
+    return `${this.schema.name}@${this.schema.version}(${this.schema.inputDef.format(this.input)})`;
   }
 }
 

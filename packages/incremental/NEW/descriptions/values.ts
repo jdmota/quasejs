@@ -1,3 +1,4 @@
+import { className, isObject } from "../../../util/miscellaneous";
 import type { Version } from "../../utils/versions";
 
 export type ValueDescription<T, Out> = {
@@ -5,6 +6,7 @@ export type ValueDescription<T, Out> = {
   readonly hash: (a: T) => number;
   readonly serialize: (value: T) => Out;
   readonly deserialize: (out: Out) => T;
+  readonly format: (value: T) => string;
 };
 
 export type ValueOfDesc<Desc> =
@@ -14,13 +16,15 @@ export function valueDesc<T, Out>(
   equal: (a: T, b: T) => boolean,
   hash: (a: T) => number,
   serialize: (value: T) => Out,
-  deserialize: (out: Out) => T
+  deserialize: (out: Out) => T,
+  format: (value: T) => string
 ): ValueDescription<T, Out> {
   return {
     equal,
     hash,
     serialize,
     deserialize,
+    format,
   };
 }
 
@@ -31,6 +35,7 @@ const sameValueDesc: ValueDescription<any, any> = {
   hash: () => 0,
   serialize: v => v,
   deserialize: v => v,
+  format: v => (isObject(v) ? className(v) : String(v)),
 };
 
 export function sameValue<T>(): ValueDescription<T, T> {

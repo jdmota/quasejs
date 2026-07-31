@@ -55,7 +55,8 @@ export class FileComputationDescription extends IncrementalComputationDescriptio
       (a, b) => (this.recursive ? false : a === b),
       val => 0,
       val => val,
-      val => val
+      val => val,
+      val => val + ""
     );
   }
 
@@ -129,13 +130,6 @@ export class FileComputation extends IncrementalComputationRuntime<
   ): IncrementalCellRuntime<Value> | undefined {
     if (this.outputCell.desc.equal(desc)) {
       return this.outputCell as any;
-    }
-  }
-
-  override onReadCell<Value>(cell: IncrementalCellRuntime<Value>) {
-    if (!cell.desc.resolved) {
-      // Ensure progress
-      this.maybeRun();
     }
   }
 

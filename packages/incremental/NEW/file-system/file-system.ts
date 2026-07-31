@@ -1,90 +1,159 @@
+import type { BigIntStats, Stats } from "fs";
+import fsextra from "fs-extra";
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
+import { never } from "../../../util/miscellaneous";
 import { normalizePath } from "../../../util/path-url";
+import { serializationDB } from "../../utils/serialization-db";
+import { valueDesc } from "../descriptions/values";
+import {
+  type IncrementalCellOwnerDescription,
+  IncrementalCellDescription,
+} from "../descriptions/cells";
 import type { IncrementalBackend, IncrementalOpts } from "../runtime/backend";
 import type { IncrementalContextRuntime } from "../runtime/functions";
-import { FileComputationDescription, FileComputation } from "./file";
+import {
+  type IncrementalCellOwner,
+  IncrementalCellRuntime,
+} from "../runtime/cells";
 
 export enum FileChange {
   ADD_OR_REMOVE = "ADD_OR_REMOVE",
   CHANGE = "CHANGE",
 }
 
+const NO_TIMESTAMP: bigint = -1n;
+
+const timestampValDef = valueDesc<bigint, any>(
+  (a, b) => (a < 0 || b < 0 ? false : a === b),
+  val => 0,
+  val => val,
+  val => val,
+  val => val + ""
+);
+
+export class IncrementalFileDescription extends IncrementalCellDescription<bigint> {
+  constructor(
+    readonly path: string,
+    readonly type: FileChange,
+    readonly recursive: boolean
+  ) {
+    super(FileSystemDescription.SINGLETON);
+  }
+
+  equal(other: unknown): boolean {
+    return (
+      other instanceof IncrementalFileDescription &&
+      this.path === other.path &&
+      this.type === other.type &&
+      this.recursive === other.recursive
+    );
+  }
+
+  hash() {
+    return this.path.length + 31 * this.type.length + (this.recursive ? 1 : 2);
+  }
+
+  getCacheKey() {
+    return `File(${this.path},${this.type},${this.recursive})`;
+  }
+
+  format() {
+    return `File(${this.path},${this.type},${this.recursive})`;
+  }
+}
+
+type IncrementalFileDescriptionJSON = {
+  readonly path: string;
+  readonly type: FileChange;
+  readonly recursive: boolean;
+};
+
+serializationDB.register<
+  IncrementalFileDescription,
+  IncrementalFileDescriptionJSON
+>(IncrementalFileDescription, {
+  name: "IncrementalFileDescription",
+  serialize: value => {
+    return {
+      path: value.path,
+      type: value.type,
+      recursive: value.recursive,
+    };
+  },
+  deserialize: ({ path, type, recursive }) => {
+    return new IncrementalFileDescription(path, type, recursive);
+  },
+});
+
+type FileCell = IncrementalCellRuntime<IncrementalFileDescription>;
+
+function createFileCell(
+  fs: FileSystem,
+  path: string,
+  type: FileChange,
+  recursive: boolean
+): FileCell {
+  return new IncrementalCellRuntime(
+    fs.backend,
+    fs,
+    new IncrementalFileDescription(path, type, recursive),
+    timestampValDef
+  );
+}
+
+async function getTimestamp(
+  path: string,
+  type: FileChange,
+  stats: Stats | BigIntStats | null | undefined
+) {
+  const { birthtimeNs, mtimeNs } =
+    stats != null && "birthtimeNs" in stats
+      ? stats
+      : await fsextra.stat(path, {
+          bigint: true,
+        });
+  switch (type) {
+    case FileChange.ADD_OR_REMOVE:
+      return birthtimeNs;
+    case FileChange.CHANGE:
+      return mtimeNs;
+    default:
+      never(type);
+  }
+}
+
 class FileInfo {
-  private ready: Promise<unknown> | null;
   readonly path: string;
   readonly events: {
-    [FileChange.ADD_OR_REMOVE]: {
-      desc: FileComputationDescription;
-      computations: Set<FileComputation>;
-    };
-    [FileChange.CHANGE]: {
-      desc: FileComputationDescription;
-      computations: Set<FileComputation>;
-    };
+    [FileChange.ADD_OR_REMOVE]: [FileCell, FileCell]; // non-recursive and recursive
+    [FileChange.CHANGE]: [FileCell, FileCell];
   };
-  readonly recEvents: {
-    [FileChange.ADD_OR_REMOVE]: {
-      desc: FileComputationDescription;
-      computations: Set<FileComputation>;
-    };
-    [FileChange.CHANGE]: {
-      desc: FileComputationDescription;
-      computations: Set<FileComputation>;
-    };
-  };
+  private ready: Promise<unknown> | null;
 
-  constructor(path: string) {
+  constructor(fs: FileSystem, path: string) {
     this.ready = null;
     this.path = path;
     this.events = {
-      ADD_OR_REMOVE: {
-        desc: new FileComputationDescription(
-          path,
-          FileChange.ADD_OR_REMOVE,
-          false
-        ),
-        computations: new Set(),
-      },
-      CHANGE: {
-        desc: new FileComputationDescription(path, FileChange.CHANGE, false),
-        computations: new Set(),
-      },
-    };
-    this.recEvents = {
-      ADD_OR_REMOVE: {
-        desc: new FileComputationDescription(
-          path,
-          FileChange.ADD_OR_REMOVE,
-          true
-        ),
-        computations: new Set(),
-      },
-      CHANGE: {
-        desc: new FileComputationDescription(path, FileChange.CHANGE, true),
-        computations: new Set(),
-      },
+      ADD_OR_REMOVE: [
+        createFileCell(fs, path, FileChange.ADD_OR_REMOVE, false),
+        createFileCell(fs, path, FileChange.ADD_OR_REMOVE, true),
+      ],
+      CHANGE: [
+        createFileCell(fs, path, FileChange.CHANGE, false),
+        createFileCell(fs, path, FileChange.CHANGE, true),
+      ],
     };
   }
 
-  sub(comp: FileComputation, watcher: chokidarWatcher.FSWatcher) {
-    if (comp.desc.recursive) {
-      this.recEvents[comp.desc.type].computations.add(comp);
-    } else {
-      this.events[comp.desc.type].computations.add(comp);
-    }
+  sub(watcher: chokidarWatcher.FSWatcher) {
     if (!this.ready) {
       this.ready = watcher.addPromise(this.path);
     }
     return this.ready;
   }
 
-  unsub(comp: FileComputation, watcher: chokidarWatcher.FSWatcher | null) {
-    if (comp.desc.recursive) {
-      this.recEvents[comp.desc.type].computations.delete(comp);
-    } else {
-      this.events[comp.desc.type].computations.delete(comp);
-    }
+  unsub(watcher: chokidarWatcher.FSWatcher | null) {
     if (this.subsCount() === 0) {
       this.ready = null;
       if (watcher) {
@@ -93,12 +162,28 @@ class FileInfo {
     }
   }
 
+  reactFile(type: FileChange, timestamp: bigint) {
+    this.events[type][0].set(timestamp);
+  }
+
+  reactRecursive(type: FileChange) {
+    this.events[type][1].set(NO_TIMESTAMP);
+  }
+
+  depend(
+    ctx: IncrementalContextRuntime<any, any, any>,
+    change: FileChange,
+    recursive: boolean
+  ) {
+    return ctx._read(this.events[change][+recursive]);
+  }
+
   subsCount() {
     return (
-      this.events.ADD_OR_REMOVE.computations.size +
-      this.events.CHANGE.computations.size +
-      this.recEvents.ADD_OR_REMOVE.computations.size +
-      this.recEvents.CHANGE.computations.size
+      this.events.ADD_OR_REMOVE[0].readersCount() +
+      this.events.ADD_OR_REMOVE[1].readersCount() +
+      this.events.CHANGE[0].readersCount() +
+      this.events.CHANGE[1].readersCount()
     );
   }
 }
@@ -123,19 +208,87 @@ export type FileChangeEvent = {
   readonly recursive: boolean;
 };
 
-export class FileSystem {
+class FileSystemDescription implements IncrementalCellOwnerDescription {
+  static readonly SINGLETON = new FileSystemDescription();
+
+  equal(other: unknown): boolean {
+    return other instanceof FileSystemDescription;
+  }
+
+  hash(): number {
+    return 0;
+  }
+
+  getCacheKey(): string {
+    return "FileSystem";
+  }
+
+  format(): string {
+    return "FileSystem";
+  }
+}
+
+serializationDB.register<FileSystemDescription, string>(FileSystemDescription, {
+  name: "FileSystemDescription",
+  serialize: value => {
+    return "FileSystemDescription";
+  },
+  deserialize: out => {
+    return FileSystemDescription.SINGLETON;
+  },
+});
+
+export class FileSystem implements IncrementalCellOwner {
+  public readonly desc0: IncrementalCellOwnerDescription =
+    FileSystemDescription.SINGLETON;
   private readonly files: Map<string, FileInfo>;
   private watcher: chokidarWatcher.FSWatcher | null;
 
   constructor(
     private readonly opts: IncrementalOpts,
-    private readonly backend: IncrementalBackend
+    public readonly backend: IncrementalBackend
   ) {
     this.files = new Map();
     this.watcher = null;
   }
 
-  private react(event: FileChange, path: string, recursive: boolean) {
+  inv() {}
+
+  // TODO deal with caching and reloading from disk
+  // TODO on first sub, we need to get the timestamp
+
+  getCell<Desc extends IncrementalCellDescription<any>>(
+    desc: Desc
+  ): IncrementalCellRuntime<Desc> | undefined {
+    if (desc instanceof IncrementalFileDescription) {
+      return this.getInfo(desc.path).events[desc.type][+desc.recursive] as any;
+    }
+  }
+
+  demand(): void {}
+
+  demandAndWait(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  isOrphan(): boolean {
+    return false;
+  }
+
+  isRoot(): boolean {
+    return true;
+  }
+
+  markRoot(root: boolean): void {
+    // Always root
+  }
+
+  private react(
+    event: FileChange,
+    path: string,
+    recursive: boolean,
+    timestamp: bigint
+  ) {
     this.backend.callUserFn(null, this.opts.fs.onEvent, {
       event,
       path,
@@ -144,24 +297,20 @@ export class FileSystem {
     const info = this.files.get(path);
     if (info) {
       if (!recursive) {
-        for (const c of info.events[event].computations) {
-          c.externalInvalidate();
-        }
+        info.reactFile(event, timestamp);
       }
-      for (const c of info.recEvents[event].computations) {
-        c.externalInvalidate();
-      }
+      info.reactRecursive(event);
     }
     const parent = normalizePath(dirname(path));
     if (parent !== path) {
-      this.react(event, parent, true);
+      this.react(event, parent, true, NO_TIMESTAMP);
     }
   }
 
   private getInfo(path: string): FileInfo {
     let info = this.files.get(path);
     if (info == null) {
-      info = new FileInfo(path);
+      info = new FileInfo(this, path);
       this.files.set(path, info);
     }
     return info;
@@ -176,38 +325,24 @@ export class FileSystem {
         disableGlobbing: true,
       });
       this.watcher = watcher;
-      watcher.on("all", (event, path) => {
+      watcher.on("all", async (event, _path, stats) => {
+        const type = CHOKIDAR_EVENT_TO_FILE_CHANGE[event];
+        const path = normalizePath(_path);
+        // TODO handle errors, and eventual data-races
         this.react(
-          CHOKIDAR_EVENT_TO_FILE_CHANGE[event],
-          normalizePath(path),
-          false
+          type,
+          path,
+          false,
+          event.startsWith("unlink")
+            ? NO_TIMESTAMP
+            : await getTimestamp(path, type, stats)
         );
       });
     }
     return this.watcher;
   }
 
-  async sub(computation: FileComputation) {
-    const { path } = computation.desc;
-    await this.getInfo(path).sub(computation, this.getWatcher());
-  }
-
-  unsub(computation: FileComputation) {
-    const { path } = computation.desc;
-    this.getInfo(path).unsub(computation, this.watcher);
-  }
-
-  private read(
-    ctx: IncrementalContextRuntime<any, any, any>,
-    path: string,
-    type: FileChange,
-    rec: boolean = false
-  ) {
-    const info = this.getInfo(path);
-    const desc = rec ? info.recEvents[type].desc : info.events[type].desc;
-    const file = this.backend.getFunction(desc);
-    return ctx._read(file.outputCell);
-  }
+  // TODO when to unsub from watcher?
 
   async depend<T>(
     ctx: IncrementalContextRuntime<any, any, any>,
@@ -217,13 +352,19 @@ export class FileSystem {
     rec: boolean = false
   ) {
     const path = normalizePath(originalPath);
+    const info = this.getInfo(path);
+    if (this.backend.invalidationsAllowed()) {
+      // Subscribe to watcher
+      await info.sub(this.getWatcher());
+    }
+    // Depend on the cells
     if (type == null) {
       await Promise.all([
-        this.read(ctx, path, FileChange.ADD_OR_REMOVE, rec),
-        this.read(ctx, path, FileChange.CHANGE, rec),
+        info.depend(ctx, FileChange.ADD_OR_REMOVE, rec),
+        info.depend(ctx, FileChange.CHANGE, rec),
       ]);
     } else {
-      await this.read(ctx, path, type, rec);
+      await info.depend(ctx, type, rec);
     }
     return fn(path);
   }

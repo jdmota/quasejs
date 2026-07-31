@@ -11,7 +11,7 @@ const lib = new IncrementalLib({
   onUncaughtError: ({ description, error }) => {
     console.log("Uncaught error", error, description);
   },
-  logger: new Logger("incremental"),
+  logger: Logger.create("incremental"),
   canInvalidate: false,
   cache: false,
 });

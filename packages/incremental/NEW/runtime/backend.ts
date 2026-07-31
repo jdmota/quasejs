@@ -126,7 +126,7 @@ export class IncrementalBackend {
 
   getCellOwner(desc: IncrementalCellOwnerDescription): IncrementalCellOwner {
     if (desc instanceof IncrementalComputationDescription) {
-      return this.getFunction(desc);
+      return this.getFunction(desc, false);
     }
     // TODO support root cells
     throw new Error(
@@ -134,15 +134,15 @@ export class IncrementalBackend {
     );
   }
 
-  getCell<Value>(
-    desc: IncrementalCellDescription<Value>
-  ): IncrementalCellRuntime<Value> | undefined {
-    return this.getCellOwner(desc.owner).getCell(desc);
+  getCell<Desc extends IncrementalCellDescription<any>>(
+    desc: Desc
+  ): IncrementalCellRuntime<Desc> | undefined {
+    return this.getCellOwner(desc.owner0).getCell(desc);
   }
 
   getFunction<C extends IncrementalComputationRuntime<any, any>>(
     desc: IncrementalComputationDescription<C>,
-    root: boolean = false
+    root: boolean
   ): C {
     return this.map.computeIfAbsent(
       desc,

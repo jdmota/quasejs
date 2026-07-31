@@ -149,7 +149,7 @@ export async function main(printCache: boolean) {
     cache: {
       dir: "packages/incremental/__examples__/cache",
       garbageCollect: true,
-      logger: new Logger("CACHE"),
+      logger: Logger.create("CACHE"),
     },
   });
 

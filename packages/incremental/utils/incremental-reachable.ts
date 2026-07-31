@@ -1,6 +1,6 @@
 // The implementation of a incremental reachability algorithm
-import { CounterMap } from "../../../util/data-structures/counter-map";
-import { LinkedList } from "../../../util/data-structures/linked-list";
+import { CounterMap } from "../../util/data-structures/counter-map";
+import { LinkedList } from "../../util/data-structures/linked-list";
 
 type ReachabilityId = {
   readonly __opaque__: unique symbol;
