@@ -260,7 +260,7 @@ export class IncrementalFunctionRuntime<
     }
     // Clear the dependencies
     for (const cell of this.readCells.keys()) {
-      cell.dependents.delete(this);
+      cell.removeReader(this);
     }
     this.readCells.clear();
   }

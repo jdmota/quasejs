@@ -51,6 +51,8 @@ export class IncrementalCellRuntime<
     IncrementalFunctionRuntime<any, any, any>,
     Version | null
   > = new Map();
+  // Internal event handler for when a dependent unsubscribes
+  public _onUnsub: (() => void) | null = null;
 
   constructor(
     private readonly backend: IncrementalBackend,
@@ -89,6 +91,11 @@ export class IncrementalCellRuntime<
     return this.dependents.size;
   }
 
+  removeReader(reader: IncrementalFunctionRuntime<any, any, any>) {
+    this.dependents.delete(reader);
+    this._onUnsub?.();
+  }
+
   set(value: ResultOfCellDesc<Desc>): ChangedValue<ResultOfCellDesc<Desc>> {
     return this._set(value, null);
   }
@@ -112,6 +119,17 @@ export class IncrementalCellRuntime<
     this.defer?.resolve();
     this.defer = null;
     return { old: result, new: this.result };
+  }
+
+  _reload(
+    cached: CachedCell<ResultOfCellDesc<Desc>> | null | undefined,
+    newValue: ResultOfCellDesc<Desc>
+  ) {
+    if (cached != null && this.valueDef.equal(cached.value, newValue)) {
+      this._set(cached.value, cached.version);
+    } else {
+      this.set(newValue);
+    }
   }
 
   async get(

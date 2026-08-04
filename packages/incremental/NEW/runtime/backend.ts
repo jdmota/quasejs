@@ -8,15 +8,15 @@ import type { Version } from "../../utils/versions";
 import { type FileChangeEvent, FileSystem } from "../file-system/file-system";
 import { CacheDB } from "../cache/cache-db";
 import {
-  IncrementalComputationDescription,
   type AnyIncrementalComputationDescription,
+  IncrementalComputationDescription,
 } from "../descriptions/computations";
 import { functions } from "../descriptions/functions";
 import type {
   IncrementalCellDescription,
   IncrementalCellOwnerDescription,
 } from "../descriptions/cells";
-import { State, type IncrementalComputationRuntime } from "./computations";
+import { type IncrementalComputationRuntime, State } from "./computations";
 import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export type IncrementalCacheOpts = {
@@ -151,7 +151,7 @@ export class IncrementalBackend {
   }
 
   delete(c: IncrementalComputationRuntime<any, any>) {
-    this.map.delete(c.rawDesc);
+    this.map.delete(c.desc0);
   }
 
   getNextVersion(): Version {
@@ -272,10 +272,12 @@ export class IncrementalBackend {
     this.scheduler1.cancel();
     this.scheduler2.cancel();
 
+    // TODO
     // Basic clean up before locking the cache DB (preventing adding/deleting entries)
     /* this.clearOrphans();
     this.db?.lock(); */
 
+    // TODO
     // Now clear everything
     /* rootComputation.setRoot(false);
     rootComputation.destroy();

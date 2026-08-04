@@ -63,11 +63,13 @@ export class CacheableComputationMixin<
         this.source.logger,
         desc
       );
+      ctx.checkActive();
       if (!cell) {
         return false;
       }
       // Get cell result
       await cell.get(ctx, this.source);
+      ctx.checkActive();
       if (!cell.isLatest(version)) {
         // Version missmatch, we need to rerun this function
         return false;
@@ -100,13 +102,14 @@ export class CacheableComputationMixin<
     }
 
     const ok = await this.reloadAttempt(ctx, cachedFunc);
+    ctx.checkActive();
     if (!ok) {
       // Backtrack
       const { ownedCells, outputCell, readCells } = this.source;
       ownedCells.clear();
       outputCell.setPending();
       for (const cell of readCells.keys()) {
-        cell.dependents.delete(this.source);
+        cell.removeReader(this.source);
       }
       readCells.clear();
     }
