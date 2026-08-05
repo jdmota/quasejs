@@ -1,5 +1,4 @@
 import { IncrementalLib } from "../incremental-lib";
-import { sameValue } from "../descriptions/values";
 import { Logger } from "../../../util/logger";
 
 const lib = new IncrementalLib({
@@ -16,15 +15,13 @@ const lib = new IncrementalLib({
   cache: false,
 });
 
-const func1 = IncrementalLib.register({
+const func1 = IncrementalLib.register<
+  number,
+  number,
+  { cell1: number; cell2: string }
+>({
   name: "func1",
   version: 1,
-  inputDef: sameValue<number>(),
-  outputDef: sameValue<number>(),
-  cellsDef: {
-    cell1: sameValue<number>(),
-    cell2: sameValue<string>(),
-  },
   impl: (ctx, input) => {
     console.log("func1...", input);
     ctx.cell("cell1", 0);
@@ -33,12 +30,9 @@ const func1 = IncrementalLib.register({
   },
 });
 
-const entry = IncrementalLib.register({
+const entry = IncrementalLib.register<void, number, {}>({
   name: "entry",
   version: 1,
-  inputDef: sameValue<void>(),
-  outputDef: sameValue<number>(),
-  cellsDef: {},
   impl: async ctx => {
     console.log("func1 (a) read...");
     const val1 = await ctx.read(ctx.call(func1, 1));

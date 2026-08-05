@@ -1,12 +1,13 @@
+import { $FORMAT } from "../../../util/values";
 import {
   type CacheDB,
   type CachedFunction,
   type VersionedCellDesc,
 } from "../cache/cache-db";
 import {
-  waitForCell,
   type IncrementalContextRuntime,
   type IncrementalFunctionRuntime,
+  waitForCell,
 } from "../runtime/functions";
 import { IncrementalAllocatedCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
@@ -32,15 +33,7 @@ export class CacheableComputationMixin<
       const cachedCell = this.db!.getCell(desc);
       if (!cachedCell) {
         this.source.logger.debug(
-          `Function was in cache, but its cell ${desc.format()} was not`
-        );
-        return false;
-      }
-
-      const valDef = this.desc.schema.cellsDef[key];
-      if (!valDef) {
-        this.source.logger.warn(
-          `Function was in cache, but could not reload cell with key ${key} due to lack of type definition`
+          `Function was in cache, but its cell ${desc[$FORMAT]()} was not`
         );
         return false;
       }
@@ -50,7 +43,6 @@ export class CacheableComputationMixin<
         this.source.backend,
         this.source,
         desc,
-        valDef,
         cachedCell
       );
       slot.array.push(cell);
@@ -76,7 +68,7 @@ export class CacheableComputationMixin<
       }
       cell.dependents.set(this.source, version);
       this.source.logger.debug(
-        `${this.source.desc.format()} -> ${desc.format()}`
+        `${this.source.desc[$FORMAT]()} -> ${desc[$FORMAT]()}`
       );
     }
 
@@ -101,17 +93,12 @@ export class CacheableComputationMixin<
       return false;
     }
 
+    // TODO catch serialization errors
     const ok = await this.reloadAttempt(ctx, cachedFunc);
     ctx.checkActive();
     if (!ok) {
       // Backtrack
-      const { ownedCells, outputCell, readCells } = this.source;
-      ownedCells.clear();
-      outputCell.setPending();
-      for (const cell of readCells.keys()) {
-        cell.removeReader(this.source);
-      }
-      readCells.clear();
+      this.source.invalidateRoutine();
     }
     return ok;
   }
@@ -138,12 +125,12 @@ export class CacheableComputationMixin<
     for (const { array, activeLen } of this.source.ownedCells.values()) {
       for (let i = 0; i < activeLen; i++) {
         ownedCells.push(array[i].desc);
-        this.db!.saveCell(array[i]);
+        array[i]._cacheCell(this.db!);
       }
     }
 
     // Save output cell
-    this.db!.saveCell(outputCell);
+    outputCell._cacheCell(this.db!);
 
     // Save function
     const entry: CachedFunction = {

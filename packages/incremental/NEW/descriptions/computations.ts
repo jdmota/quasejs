@@ -1,7 +1,13 @@
+import type {
+  $EQUALS,
+  $FORMAT,
+  $HASHCODE,
+  $SERIALIZE,
+  SerializeResult,
+} from "../../../util/values";
 import type { IncrementalBackend } from "../runtime/backend";
 import type { IncrementalComputationRuntime } from "../runtime/computations";
 import type { IncrementalCellOwnerDescription } from "./cells";
-import type { ValueDescription } from "./values";
 
 export type ResultOfComputation<C> =
   C extends IncrementalComputationRuntime<any, infer Output> ? Output : never;
@@ -11,12 +17,12 @@ export abstract class IncrementalComputationDescription<
 > implements IncrementalCellOwnerDescription
 {
   abstract create(registry: IncrementalBackend): C;
-  abstract equal(other: unknown): boolean;
-  abstract hash(): number;
-  abstract getOutputDef(): ValueDescription<ResultOfComputation<C>, any>;
+  abstract [$EQUALS](other: unknown): boolean;
+  abstract [$HASHCODE](): number;
   abstract isCacheable(): boolean;
   abstract getCacheKey(): string;
-  abstract format(): string;
+  abstract [$FORMAT](): string;
+  abstract [$SERIALIZE](): SerializeResult<any>;
 }
 
 export type AnyIncrementalComputationDescription =

@@ -15,6 +15,13 @@ import type {
   IncrementalOutputCellDescription,
 } from "../descriptions/cells";
 import type { IncrementalCellRuntime } from "../runtime/cells";
+import {
+  $EQUALS,
+  $FORMAT,
+  $HASHCODE,
+  type EqualsTrait,
+  type HashCodeTrait,
+} from "../../../util/values";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {
@@ -30,9 +37,7 @@ function checkNumber<T>(val: T[] | number): number {
   throw new Error("Value is " + val);
 }
 
-export interface WithCacheKey {
-  equal(other: unknown): boolean;
-  hash(): number;
+export interface WithCacheKey extends EqualsTrait, HashCodeTrait {
   getCacheKey(): string;
 }
 
@@ -70,8 +75,8 @@ export class CacheDB {
   private readonly dir: string;
 
   private readonly alive: HashMap<WithCacheKey, null> = new HashMap({
-    equal: (a, b) => a.equal(b),
-    hash: a => a.hash(),
+    equal: (a, b) => a[$EQUALS](b),
+    hash: a => a[$HASHCODE](),
   });
 
   private locked = false;
@@ -135,7 +140,7 @@ export class CacheDB {
     const key = this.getKey(desc);
     const dbValue = this.safeGetEntries(key);
     for (const entry of dbValue) {
-      if (entry.desc.equal(desc)) {
+      if (entry.desc[$EQUALS](desc)) {
         this.alive.set(desc, null);
         return entry;
       }
@@ -175,7 +180,7 @@ export class CacheDB {
     try {
       await this.db.transaction(async () => {
         const entries = this.safeGetEntries(key);
-        const idx = entries.findIndex(e => e.desc.equal(desc));
+        const idx = entries.findIndex(e => e.desc[$EQUALS](desc));
         const currentEntry = idx >= 0 ? entries[idx] : null;
 
         if (entry) {
@@ -234,48 +239,23 @@ export class CacheDB {
   }
 
   setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
-    this.logger.debug("Saving cell", desc.format(), entry.version);
+    this.logger.debug("Saving cell", desc[$FORMAT](), entry.version);
     this.saveEntry(desc, entry);
   }
 
   setFunc(desc: AnyIncrementalFunctionCallDescription, entry: CachedFunction) {
-    this.logger.debug("Saving function", desc.format());
+    this.logger.debug("Saving function", desc[$FORMAT]());
     this.saveEntry(desc, entry);
   }
 
   deleteCell<C>(desc: IncrementalCellDescription<C>) {
-    this.logger.debug("Deleting cell", desc.format());
+    this.logger.debug("Deleting cell", desc[$FORMAT]());
     this.removeEntry(desc);
   }
 
   deleteFunc(desc: AnyIncrementalFunctionCallDescription) {
-    this.logger.debug("Deleting function", desc.format());
+    this.logger.debug("Deleting function", desc[$FORMAT]());
     this.removeEntry(desc);
-  }
-
-  saveCell(cell: IncrementalCellRuntime<any>) {
-    const { desc, result } = cell;
-    if (result == null) {
-      throw new Error(
-        `Invariant violation: trying to save a cell with no result`
-      );
-    }
-    this.setCell(desc, {
-      type: "cell",
-      desc,
-      value: result[0],
-      version: result[1],
-    });
-  }
-
-  unsaveCell(cell: IncrementalCellRuntime<any>) {
-    const { desc, result } = cell;
-    if (result == null) {
-      throw new Error(
-        `Invariant violation: trying to save a cell with no result`
-      );
-    }
-    this.deleteCell(desc);
   }
 
   async newGlobalSession() {

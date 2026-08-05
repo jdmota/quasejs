@@ -1,26 +1,33 @@
-import { serializationDB } from "../../utils/serialization-db";
+import { serializationRegistry } from "../../utils/serialization-db";
+import {
+  type FormatTrait,
+  type SerializeResult,
+  type SerializeTrait,
+  $EQUALS,
+  $FORMAT,
+  $HASHCODE,
+  $SERIALIZE,
+} from "../../../util/values";
 import type { WithCacheKey } from "../cache/cache-db";
 import type {
   AnyIncrementalFunctionCallDescription,
   IncrementalFunctionCallDescription,
 } from "./functions";
 
-export interface IncrementalCellOwnerDescription extends WithCacheKey {
-  equal(other: unknown): boolean;
-  hash(): number;
-  getCacheKey(): string;
-  format(): string;
-}
+export interface IncrementalCellOwnerDescription
+  extends WithCacheKey,
+    FormatTrait {}
 
 export abstract class IncrementalCellDescription<Value>
-  implements WithCacheKey
+  implements WithCacheKey, SerializeTrait<any>, FormatTrait
 {
   _valueType!: Value;
   constructor(readonly owner0: IncrementalCellOwnerDescription) {}
-  abstract equal(other: unknown): boolean;
-  abstract hash(): number;
-  abstract format(): string;
   abstract getCacheKey(): string;
+  abstract [$EQUALS](other: unknown): boolean;
+  abstract [$HASHCODE](): number;
+  abstract [$FORMAT](): string;
+  abstract [$SERIALIZE](): SerializeResult<any>;
 }
 
 export type ResultOfCellDesc<D> =
@@ -39,25 +46,37 @@ export class IncrementalAllocatedCellDescription<
     super(owner);
   }
 
-  equal(other: unknown): boolean {
+  [$EQUALS](other: unknown): boolean {
     return (
       other instanceof IncrementalAllocatedCellDescription &&
-      this.owner.equal(other.owner) &&
+      this.owner[$EQUALS](other.owner) &&
       this.key === other.key &&
       this.index === other.index
     );
   }
 
-  hash() {
-    return this.owner.hash() + this.key.length + this.index;
+  [$HASHCODE]() {
+    return this.owner[$HASHCODE]() + this.key.length + this.index;
   }
 
   getCacheKey() {
     return `AllocatedCell{${this.owner.getCacheKey()},${this.key},${this.index}}`;
   }
 
-  format() {
-    return `${this.owner.format()}[${this.key}][${this.index}]`;
+  [$FORMAT]() {
+    return `${this.owner[$FORMAT]()}[${this.key}][${this.index}]`;
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalAllocatedCellDescription",
+      version: 1,
+      value: {
+        owner: this.owner,
+        key: this.key,
+        index: this.index,
+      } satisfies IncrementalAllocatedCellDescriptionJSON,
+    };
   }
 }
 
@@ -67,25 +86,15 @@ type IncrementalAllocatedCellDescriptionJSON = {
   readonly index: number;
 };
 
-serializationDB.register<
-  IncrementalAllocatedCellDescription<any>,
-  IncrementalAllocatedCellDescriptionJSON
->(IncrementalAllocatedCellDescription, {
-  name: "IncrementalAllocatedCellDescription",
-  serialize: value => {
-    return {
-      owner: value.owner,
-      key: value.key,
-      index: value.index,
-    };
-  },
-  deserialize: out => {
-    return new IncrementalAllocatedCellDescription(
-      out.owner,
-      out.key,
-      out.index
-    );
-  },
+serializationRegistry.registerDeserializer<
+  IncrementalAllocatedCellDescriptionJSON,
+  IncrementalAllocatedCellDescription<any>
+>("IncrementalAllocatedCellDescription", ({ value }) => {
+  return new IncrementalAllocatedCellDescription(
+    value.owner,
+    value.key,
+    value.index
+  );
 });
 
 export class IncrementalOutputCellDescription<
@@ -97,23 +106,33 @@ export class IncrementalOutputCellDescription<
     super(owner);
   }
 
-  equal(other: unknown): boolean {
+  [$EQUALS](other: unknown): boolean {
     return (
       other instanceof IncrementalOutputCellDescription &&
-      this.owner.equal(other.owner)
+      this.owner[$EQUALS](other.owner)
     );
   }
 
-  hash() {
-    return this.owner.hash();
+  [$HASHCODE]() {
+    return this.owner[$HASHCODE]();
   }
 
   getCacheKey() {
     return `OutputCell{${this.owner.getCacheKey()}}`;
   }
 
-  format() {
-    return `${this.owner.format()}#output`;
+  [$FORMAT]() {
+    return `${this.owner[$FORMAT]()}#output`;
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalOutputCellDescription",
+      version: 1,
+      value: {
+        owner: this.owner,
+      } satisfies IncrementalOutputCellDescriptionJSON,
+    };
   }
 }
 
@@ -121,17 +140,9 @@ type IncrementalOutputCellDescriptionJSON = {
   readonly owner: AnyIncrementalFunctionCallDescription;
 };
 
-serializationDB.register<
-  IncrementalOutputCellDescription<any>,
-  IncrementalOutputCellDescriptionJSON
->(IncrementalOutputCellDescription, {
-  name: "IncrementalOutputCellDescription",
-  serialize: value => {
-    return {
-      owner: value.owner,
-    };
-  },
-  deserialize: out => {
-    return new IncrementalOutputCellDescription(out.owner);
-  },
+serializationRegistry.registerDeserializer<
+  IncrementalOutputCellDescriptionJSON,
+  IncrementalOutputCellDescription<any>
+>("IncrementalOutputCellDescription", ({ value }) => {
+  return new IncrementalOutputCellDescription(value.owner);
 });

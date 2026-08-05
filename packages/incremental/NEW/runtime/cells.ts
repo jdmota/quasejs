@@ -1,17 +1,18 @@
+import { valueEquals } from "../../../util/values";
 import { type Defer, createDefer } from "../../../util/deferred";
-import { type Version, sameVersion } from "../../utils/versions";
+import {
+  type ChangedValue,
+  type Version,
+  type VersionedValue,
+  sameVersion,
+} from "../../utils/versions";
 import type { IncrementalBackend } from "./backend";
-import type { CachedCell } from "../cache/cache-db";
+import type { CacheDB, CachedCell } from "../cache/cache-db";
 import {
   type IncrementalCellOwnerDescription,
   type ResultOfCellDesc,
   IncrementalCellDescription,
 } from "../descriptions/cells";
-import type {
-  VersionedValue,
-  ValueDescription,
-  ChangedValue,
-} from "../descriptions/values";
 import type {
   IncrementalFunctionRuntime,
   IncrementalContextRuntime,
@@ -38,7 +39,9 @@ export interface IncrementalCellOwner {
 export class IncrementalCellRuntime<
   Desc extends IncrementalCellDescription<any>,
 > {
+  // Versioned result
   public result: VersionedValue<ResultOfCellDesc<Desc>> | null = null;
+  // Deferred
   private defer: Defer<void> | null = null;
   // This flag is used to delay resolution
   // when we know a new value might be incoming
@@ -58,7 +61,6 @@ export class IncrementalCellRuntime<
     private readonly backend: IncrementalBackend,
     private readonly owner: IncrementalCellOwner,
     public readonly desc: Desc,
-    private readonly valueDef: ValueDescription<ResultOfCellDesc<Desc>, any>,
     fromCache: CachedCell<ResultOfCellDesc<Desc>> | null = null
   ) {
     if (fromCache) {
@@ -108,7 +110,7 @@ export class IncrementalCellRuntime<
     this.inv();
     const { result } = this;
     this.pending = false;
-    if (this.result == null || !this.valueDef.equal(this.result[0], value)) {
+    if (this.result == null || !valueEquals(this.result[0], value)) {
       this.result = [value, version ?? this.backend.getNextVersion()];
       for (const [consumer, versionRead] of this.dependents) {
         if (versionRead) {
@@ -125,7 +127,7 @@ export class IncrementalCellRuntime<
     cached: CachedCell<ResultOfCellDesc<Desc>> | null | undefined,
     newValue: ResultOfCellDesc<Desc>
   ) {
-    if (cached != null && this.valueDef.equal(cached.value, newValue)) {
+    if (cached != null && valueEquals(cached.value, newValue)) {
       this._set(cached.value, cached.version);
     } else {
       this.set(newValue);
@@ -179,5 +181,24 @@ export class IncrementalCellRuntime<
     }
     const result = this.result;
     return result[0];
+  }
+
+  _cacheCell(db: CacheDB) {
+    const { desc, result } = this;
+    if (result == null) {
+      throw new Error(
+        `Invariant violation: trying to save a cell with no result`
+      );
+    }
+    db.setCell(desc, {
+      type: "cell",
+      desc,
+      value: result[0],
+      version: result[1],
+    });
+  }
+
+  _uncacheCell(db: CacheDB) {
+    db.deleteCell(this.desc);
   }
 }

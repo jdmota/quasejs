@@ -1,58 +1,66 @@
+import {
+  type SerializeTrait,
+  $EQUALS,
+  $FORMAT,
+  $HASHCODE,
+  $SERIALIZE,
+  valueEquals,
+  valueFormat,
+  valueHashCode,
+} from "../../../util/values";
 import type { MaybeAsync } from "../../../util/miscellaneous";
 import { SerializationError } from "../../../util/serialization";
-import { serializationDB } from "../../utils/serialization-db";
+import { serializationRegistry } from "../../utils/serialization-db";
 import type { IncrementalBackend } from "../runtime/backend";
 import {
   type IncrementalContextRuntime,
   IncrementalFunctionRuntime,
 } from "../runtime/functions";
-import type { ValueDescription } from "./values";
 import { IncrementalComputationDescription } from "./computations";
 
-export type IncrementalFunctionImpl<
-  Input,
-  Output,
-  CellDefs extends CellValueDescriptions,
-> = (
-  ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
+export type IncrementalFunctionImpl<Input, Output, Cells extends CellsTypes> = (
+  ctx: IncrementalContextRuntime<Input, Output, Cells>,
   input: Input
 ) => MaybeAsync<Output>;
 
-export type CellValueDescriptions = {
-  readonly [key in string]: ValueDescription<any, any>;
+export type CellsTypes = {
+  readonly [key in string]: any;
 };
 
 export type IncrementalFunctionSchemaOpts<
   Input,
   Output,
-  CellDefs extends CellValueDescriptions,
+  Cells extends CellsTypes,
 > = {
   readonly name: string;
   readonly version: number;
-  readonly inputDef: ValueDescription<Input, any>;
-  readonly outputDef: ValueDescription<Output, any>;
-  readonly cellsDef: CellDefs;
   readonly cacheable?: boolean;
-  readonly impl: IncrementalFunctionImpl<Input, Output, CellDefs>;
+  readonly impl: IncrementalFunctionImpl<Input, Output, Cells>;
 };
 
-export class IncrementalFunctionSchema<
-  Input,
-  Output,
-  CellDefs extends CellValueDescriptions,
-> {
+export class IncrementalFunctionSchema<Input, Output, Cells extends CellsTypes>
+  implements SerializeTrait<IncrementalFunctionSchemaJSON>
+{
   // To distinguish from IncrementalFunctionSchemaOpts
   private readonly instance = true;
 
   constructor(
     readonly name: string,
     readonly version: number,
-    readonly inputDef: ValueDescription<Input, any>,
-    readonly outputDef: ValueDescription<Output, any>,
-    readonly cellsDef: CellDefs,
     readonly cacheable: boolean,
-    readonly impl: IncrementalFunctionImpl<Input, Output, CellDefs>
+    readonly impl: IncrementalFunctionImpl<Input, Output, Cells>
   ) {}
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalFunctionSchema",
+      version: 1,
+      value: {
+        name: this.name,
+        version: this.version,
+      },
+    };
+  }
 }
 
 type IncrementalFunctionSchemaJSON = {
@@ -63,14 +71,14 @@ type IncrementalFunctionSchemaJSON = {
 export class IncrementalFunctionCallDescription<
   Input,
   Output,
-  CellDefs extends CellValueDescriptions,
+  Cells extends CellsTypes,
 > extends IncrementalComputationDescription<
-  IncrementalFunctionRuntime<Input, Output, CellDefs>
+  IncrementalFunctionRuntime<Input, Output, Cells>
 > {
   private inputHash: number | null = null;
 
   constructor(
-    readonly schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
+    readonly schema: IncrementalFunctionSchema<Input, Output, Cells>,
     readonly input: Input
   ) {
     super();
@@ -82,25 +90,19 @@ export class IncrementalFunctionCallDescription<
   }
 
   private getInputHash(): number {
-    return (
-      this.inputHash ?? (this.inputHash = this.schema.inputDef.hash(this.input))
-    );
+    return this.inputHash ?? (this.inputHash = valueHashCode(this.input));
   }
 
-  equal(other: unknown): boolean {
+  [$EQUALS](other: unknown): boolean {
     return (
       other instanceof IncrementalFunctionCallDescription &&
       this.schema === other.schema &&
-      this.schema.inputDef.equal(this.input, other.input)
+      valueEquals(this.input, other.input)
     );
   }
 
-  hash() {
+  [$HASHCODE]() {
     return this.schema.name.length + this.getInputHash();
-  }
-
-  getOutputDef(): ValueDescription<Output, any> {
-    return this.schema.outputDef;
   }
 
   isCacheable(): boolean {
@@ -111,15 +113,33 @@ export class IncrementalFunctionCallDescription<
     return `FunctionCall{${this.schema.name},${this.schema.version},${this.getInputHash()}}`;
   }
 
-  format() {
-    return `${this.schema.name}@${this.schema.version}(${this.schema.inputDef.format(this.input)})`;
+  [$FORMAT]() {
+    return `${this.schema.name}@${this.schema.version}(${valueFormat(this.input)})`;
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalFunctionCallDescription",
+      version: 1,
+      value: {
+        schema: this.schema,
+        input: this.input,
+      } satisfies IncrementalFunctionCallDescriptionJSON,
+    };
   }
 }
 
 type IncrementalFunctionCallDescriptionJSON = {
   readonly schema: IncrementalFunctionSchema<any, any, any>;
-  readonly inputJSON: any;
+  readonly input: any;
 };
+
+serializationRegistry.registerDeserializer<
+  IncrementalFunctionCallDescriptionJSON,
+  IncrementalFunctionCallDescription<any, any, any>
+>("IncrementalFunctionCallDescription", ({ value }) => {
+  return new IncrementalFunctionCallDescription(value.schema, value.input);
+});
 
 export type AnyIncrementalFunctionCallDescription =
   IncrementalFunctionCallDescription<any, any, any>;
@@ -132,55 +152,27 @@ export class IncrementalFunctionRegistry {
   >();
 
   private constructor() {
-    serializationDB.register<
-      IncrementalFunctionSchema<any, any, any>,
-      IncrementalFunctionSchemaJSON
-    >(IncrementalFunctionSchema, {
-      name: "IncrementalFunctionSchema",
-      serialize: value => {
-        return {
-          name: value.name,
-          version: value.version,
-        };
-      },
-      deserialize: out => {
-        const desc = this.funcs.get(out.name);
-        if (!desc) {
-          throw new SerializationError(
-            `Function ${out.name} was not registered`
-          );
-        }
-        if (desc.version !== out.version) {
-          throw new SerializationError(
-            `Deserialized version ${out.version} of function ${out.name} but found version ${desc.version} in registry`
-          );
-        }
-        return desc;
-      },
-    });
-
-    serializationDB.register<
-      IncrementalFunctionCallDescription<any, any, any>,
-      IncrementalFunctionCallDescriptionJSON
-    >(IncrementalFunctionCallDescription, {
-      name: "IncrementalFunctionCallDescription",
-      serialize: value => {
-        return {
-          schema: value.schema,
-          inputJSON: value.schema.inputDef.serialize(value.input),
-        };
-      },
-      deserialize: out => {
-        return new IncrementalFunctionCallDescription(
-          out.schema,
-          out.schema.inputDef.deserialize(out.inputJSON)
+    serializationRegistry.registerDeserializer<
+      IncrementalFunctionSchemaJSON,
+      IncrementalFunctionSchema<any, any, any>
+    >("IncrementalFunctionSchema", ({ value }) => {
+      const desc = this.funcs.get(value.name);
+      if (!desc) {
+        throw new SerializationError(
+          `Function ${value.name} was not registered`
         );
-      },
+      }
+      if (desc.version !== value.version) {
+        throw new SerializationError(
+          `Deserialized version ${value.version} of function ${value.name} but found version ${desc.version} in registry`
+        );
+      }
+      return desc;
     });
   }
 
-  register<Input, Output, CellDefs extends CellValueDescriptions>(
-    opts: IncrementalFunctionSchemaOpts<Input, Output, CellDefs>
+  register<Input, Output, Cells extends CellsTypes>(
+    opts: IncrementalFunctionSchemaOpts<Input, Output, Cells>
   ) {
     if (this.funcs.has(opts.name)) {
       throw new Error(`Function '${opts.name}' was already registered`);
@@ -188,9 +180,6 @@ export class IncrementalFunctionRegistry {
     const schema = new IncrementalFunctionSchema(
       opts.name,
       opts.version,
-      opts.inputDef,
-      opts.outputDef,
-      opts.cellsDef,
       opts.cacheable ?? true,
       opts.impl
     );

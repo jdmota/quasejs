@@ -1,21 +1,21 @@
 import fsextra from "fs-extra";
+import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
 import { type TinyTask, tinyTask } from "../../../util/fiber-tiny";
-import { serializationDB } from "../../utils/serialization-db";
-import { valueDesc } from "../descriptions/values";
+import { serializationRegistry } from "../../utils/serialization-db";
 import { IncrementalCellDescription } from "../descriptions/cells";
 import type { IncrementalContextRuntime } from "../runtime/functions";
 import { IncrementalCellRuntime } from "../runtime/cells";
-import { FileChange, FileSystem, FileSystemDescription } from "./file-system";
+import {
+  FileChange,
+  IncrementalFS,
+  IncrementalFSDescription,
+} from "./file-system";
 
-const NO_TIMESTAMP: bigint = -1n;
-
-const timestampValDef = valueDesc<bigint, any>(
-  (a, b) => (a < 0 || b < 0 ? false : a === b),
-  val => 0,
-  val => val,
-  val => val,
-  val => val + ""
-);
+// By allows decreasing this value when using it,
+// we ensure we always invalid the cells.
+// Since it is negative,
+// it will never be confused with actual timestamps.
+let NO_TIMESTAMP: bigint = -1n;
 
 export class IncrementalFileDescription extends IncrementalCellDescription<bigint> {
   constructor(
@@ -23,10 +23,10 @@ export class IncrementalFileDescription extends IncrementalCellDescription<bigin
     readonly type: FileChange,
     readonly recursive: boolean
   ) {
-    super(FileSystemDescription.SINGLETON);
+    super(IncrementalFSDescription.SINGLETON);
   }
 
-  equal(other: unknown): boolean {
+  [$EQUALS](other: unknown): boolean {
     return (
       other instanceof IncrementalFileDescription &&
       this.path === other.path &&
@@ -35,7 +35,7 @@ export class IncrementalFileDescription extends IncrementalCellDescription<bigin
     );
   }
 
-  hash() {
+  [$HASHCODE]() {
     return this.path.length + 31 * this.type.length + (this.recursive ? 1 : 2);
   }
 
@@ -43,8 +43,20 @@ export class IncrementalFileDescription extends IncrementalCellDescription<bigin
     return `File(${this.path},${this.type},${this.recursive})`;
   }
 
-  format() {
+  [$FORMAT]() {
     return `File(${this.path},${this.type},${this.recursive})`;
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalFileDescription",
+      version: 1,
+      value: {
+        path: this.path,
+        type: this.type,
+        recursive: this.recursive,
+      } satisfies IncrementalFileDescriptionJSON,
+    };
   }
 }
 
@@ -54,27 +66,17 @@ type IncrementalFileDescriptionJSON = {
   readonly recursive: boolean;
 };
 
-serializationDB.register<
-  IncrementalFileDescription,
-  IncrementalFileDescriptionJSON
->(IncrementalFileDescription, {
-  name: "IncrementalFileDescription",
-  serialize: value => {
-    return {
-      path: value.path,
-      type: value.type,
-      recursive: value.recursive,
-    };
-  },
-  deserialize: ({ path, type, recursive }) => {
-    return new IncrementalFileDescription(path, type, recursive);
-  },
+serializationRegistry.registerDeserializer<
+  IncrementalFileDescriptionJSON,
+  IncrementalFileDescription
+>("IncrementalFileDescription", ({ value: { path, type, recursive } }) => {
+  return new IncrementalFileDescription(path, type, recursive);
 });
 
 type FileCell = IncrementalCellRuntime<IncrementalFileDescription>;
 
 function createFileCell(
-  fs: FileSystem,
+  fs: IncrementalFS,
   path: string,
   type: FileChange,
   recursive: boolean,
@@ -83,12 +85,11 @@ function createFileCell(
   const cell = new IncrementalCellRuntime(
     fs.backend,
     fs,
-    new IncrementalFileDescription(path, type, recursive),
-    timestampValDef
+    new IncrementalFileDescription(path, type, recursive)
   );
   cell._onUnsub = onUnsub;
   if (recursive) {
-    cell.set(NO_TIMESTAMP);
+    cell.set(NO_TIMESTAMP--);
   }
   return cell;
 }
@@ -98,10 +99,13 @@ async function getTimestamp(path: string) {
     .stat(path, {
       bigint: true,
     })
-    .catch(() => ({
-      birthtimeNs: NO_TIMESTAMP,
-      mtimeNs: NO_TIMESTAMP,
-    }));
+    .catch(() => {
+      NO_TIMESTAMP--;
+      return {
+        birthtimeNs: NO_TIMESTAMP,
+        mtimeNs: NO_TIMESTAMP,
+      };
+    });
   return { birthtimeNs, mtimeNs };
 }
 
@@ -120,7 +124,7 @@ export class FileInfo {
   private reload: boolean;
 
   constructor(
-    private readonly fs: FileSystem,
+    private readonly fs: IncrementalFS,
     readonly path: string
   ) {
     const onUnsubCell = () => {
@@ -159,7 +163,7 @@ export class FileInfo {
   }
 
   reactRecursive(type: FileChange) {
-    this.recCells[type].set(NO_TIMESTAMP);
+    this.recCells[type].set(NO_TIMESTAMP--);
   }
 
   depend(
@@ -198,10 +202,10 @@ export class FileInfo {
             this.mainCells[FileChange.CHANGE]._reload(cachedChange, mtimeNs);
 
             if (this.isCacheable) {
-              this.fs.backend.db!.saveCell(
-                this.mainCells[FileChange.ADD_REMOVE]
+              this.mainCells[FileChange.ADD_REMOVE]._cacheCell(
+                this.fs.backend.db!
               );
-              this.fs.backend.db!.saveCell(this.mainCells[FileChange.CHANGE]);
+              this.mainCells[FileChange.CHANGE]._cacheCell(this.fs.backend.db!);
             }
           }
         }
@@ -217,8 +221,8 @@ export class FileInfo {
         watcher.unwatch(this.path);
       }
       if (this.isCacheable) {
-        this.fs.backend.db!.unsaveCell(this.mainCells[FileChange.ADD_REMOVE]);
-        this.fs.backend.db!.unsaveCell(this.mainCells[FileChange.CHANGE]);
+        this.mainCells[FileChange.ADD_REMOVE]._uncacheCell(this.fs.backend.db!);
+        this.mainCells[FileChange.CHANGE]._uncacheCell(this.fs.backend.db!);
       }
       this.fs.logger.debug("Deleted", this.path);
       return true;

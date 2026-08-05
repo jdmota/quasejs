@@ -1,3 +1,10 @@
+export type VersionedValue<T> = readonly [T, Version];
+
+export type ChangedValue<Value> = {
+  readonly old: VersionedValue<Value> | null;
+  readonly new: VersionedValue<Value>;
+};
+
 export type Version = readonly [session: number, version: number];
 
 export function sameVersion(a: Version, b: Version): boolean {

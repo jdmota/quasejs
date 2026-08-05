@@ -1,5 +1,6 @@
 import { type Logger } from "../../../util/logger";
 import { computeIfAbsent } from "../../../util/maps-sets";
+import { $FORMAT } from "../../../util/values";
 import type { Version } from "../../utils/versions";
 import { CacheableComputationMixin } from "../cache/cacheable";
 import {
@@ -9,11 +10,10 @@ import {
   IncrementalOutputCellDescription,
 } from "../descriptions/cells";
 import {
-  type CellValueDescriptions,
+  type CellsTypes,
   type IncrementalFunctionSchema,
   IncrementalFunctionCallDescription,
 } from "../descriptions/functions";
-import type { ValueOfDesc } from "../descriptions/values";
 import type { FileChange } from "../file-system/file-system";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
@@ -36,7 +36,7 @@ export async function waitForCell<Desc extends IncrementalCellDescription<any>>(
   }
   cell = owner.getCell(desc);
   if (!cell) {
-    logger.debug(`Could not find cell ${desc.format()}`);
+    logger.debug(`Could not find cell ${desc[$FORMAT]()}`);
   }
   return cell;
 }
@@ -44,15 +44,11 @@ export async function waitForCell<Desc extends IncrementalCellDescription<any>>(
 export class IncrementalContextRuntime<
   Input,
   Output,
-  CellDefs extends CellValueDescriptions,
+  Cells extends CellsTypes,
 > {
   constructor(
     private readonly backend: IncrementalBackend,
-    private readonly runtime: IncrementalFunctionRuntime<
-      Input,
-      Output,
-      CellDefs
-    >
+    private readonly runtime: IncrementalFunctionRuntime<Input, Output, Cells>
   ) {}
 
   isActive() {
@@ -66,10 +62,7 @@ export class IncrementalContextRuntime<
   }
 
   // TODO allow to allocate cell, and fill it later
-  cell<K extends string & keyof CellDefs>(
-    key: K,
-    value: ValueOfDesc<CellDefs[K]>
-  ) {
+  cell<K extends string & keyof Cells>(key: K, value: Cells[K]) {
     const cell = this.runtime.alloc(this, key);
     cell.set(value);
     return cell.desc;
@@ -92,8 +85,8 @@ export class IncrementalContextRuntime<
     return cell.get(this, this.runtime);
   }
 
-  call<Input, Output, CellDefs extends CellValueDescriptions>(
-    schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
+  call<Input, Output, Cell extends CellsTypes>(
+    schema: IncrementalFunctionSchema<Input, Output, Cell>,
     input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
@@ -114,9 +107,9 @@ export class IncrementalContextRuntime<
 export class IncrementalFunctionRuntime<
   Input,
   Output,
-  CellDefs extends CellValueDescriptions,
+  Cells extends CellsTypes,
 > extends IncrementalComputationRuntime<
-  IncrementalContextRuntime<Input, Output, CellDefs>,
+  IncrementalContextRuntime<Input, Output, Cells>,
   Output
 > {
   readonly logger: Logger;
@@ -139,11 +132,11 @@ export class IncrementalFunctionRuntime<
 
   constructor(
     backend: IncrementalBackend,
-    readonly desc: IncrementalFunctionCallDescription<Input, Output, CellDefs>
+    readonly desc: IncrementalFunctionCallDescription<Input, Output, Cells>
   ) {
     super(backend, desc);
     this.logger = this.backend.logger.createChildLogger(
-      `function > ${this.desc.format()}`
+      `function > ${this.desc[$FORMAT]()}`
     );
     this.cacheableMixin = this.isCacheable
       ? new CacheableComputationMixin(this)
@@ -153,8 +146,7 @@ export class IncrementalFunctionRuntime<
     this.outputCell = new IncrementalCellRuntime(
       backend,
       this,
-      new IncrementalOutputCellDescription(desc),
-      desc.getOutputDef()
+      new IncrementalOutputCellDescription(desc)
     );
   }
 
@@ -180,18 +172,14 @@ export class IncrementalFunctionRuntime<
     }));
   }
 
-  alloc<K extends string & keyof CellDefs>(
-    ctx: IncrementalContextRuntime<Input, Output, CellDefs>,
+  alloc<K extends string & keyof Cells>(
+    ctx: IncrementalContextRuntime<Input, Output, Cells>,
     key: K
   ) {
     ctx.checkActive();
-    const valDef = this.desc.schema.cellsDef[key];
-    if (!valDef) {
-      throw new Error(`Cannot alloc cell with unregistered key ${key}`);
-    }
     const slot = this.allocSlot(key);
     let cell: IncrementalCellRuntime<
-      IncrementalAllocatedCellDescription<ValueOfDesc<CellDefs[K]>>
+      IncrementalAllocatedCellDescription<Cells[K]>
     >;
     if (slot.activeLen < slot.array.length) {
       // Reusing the cell created in the last run
@@ -201,8 +189,7 @@ export class IncrementalFunctionRuntime<
       cell = new IncrementalCellRuntime(
         this.backend,
         this,
-        new IncrementalAllocatedCellDescription(this.desc, key, slot.activeLen),
-        valDef
+        new IncrementalAllocatedCellDescription(this.desc, key, slot.activeLen)
       );
       slot.array.push(cell);
     }
@@ -210,21 +197,17 @@ export class IncrementalFunctionRuntime<
     return cell;
   }
 
-  protected createContext(): IncrementalContextRuntime<
-    Input,
-    Output,
-    CellDefs
-  > {
+  protected createContext(): IncrementalContextRuntime<Input, Output, Cells> {
     return new IncrementalContextRuntime(this.backend, this);
   }
 
-  protected exec(ctx: IncrementalContextRuntime<Input, Output, CellDefs>) {
+  protected exec(ctx: IncrementalContextRuntime<Input, Output, Cells>) {
     this.logger.debug("Executing...");
     return this.desc.schema.impl(ctx, this.desc.input);
   }
 
   protected async reloadRoutine(
-    ctx: IncrementalContextRuntime<Input, Output, CellDefs>
+    ctx: IncrementalContextRuntime<Input, Output, Cells>
   ) {
     this.logger.debug("Reloading...");
     const ok = await this.cacheableMixin!.reloadRoutine(ctx);
@@ -251,7 +234,7 @@ export class IncrementalFunctionRuntime<
     this.cacheableMixin?.finishRoutine();
   }
 
-  protected invalidateRoutine() {
+  invalidateRoutine() {
     // Set output cell to pending
     this.outputCell.setPending();
     // Reset cells (but keep the instances for reuse)

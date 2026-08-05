@@ -3,9 +3,13 @@ import type { Logger } from "../../../util/logger";
 import { className } from "../../../util/miscellaneous";
 import { Scheduler } from "../../../util/schedule";
 import { createErrorDefer } from "../../../util/deferred";
+import { $EQUALS, $HASHCODE } from "../../../util/values";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
-import { type FileChangeEvent, FileSystem } from "../file-system/file-system";
+import {
+  type FileChangeEvent,
+  IncrementalFS,
+} from "../file-system/file-system";
 import { CacheDB } from "../cache/cache-db";
 import {
   type AnyIncrementalComputationDescription,
@@ -68,14 +72,14 @@ export class IncrementalBackend {
   >;
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
-  public readonly fs: FileSystem;
+  public readonly fs: IncrementalFS;
   public readonly db: CacheDB | null;
   public readonly logger: Logger;
 
   constructor(private readonly opts: IncrementalOpts) {
     this.map = new HashMap({
-      equal: (a, b) => a.equal(b),
-      hash: a => a.hash(),
+      equal: (a, b) => a[$EQUALS](b),
+      hash: a => a[$HASHCODE](),
     });
     this.computations = [
       new SpecialQueue(),
@@ -89,9 +93,9 @@ export class IncrementalBackend {
     this.running = this.computations[State.RUNNING];
     this.settledErr = this.computations[State.SETTLED_ERR];
     this.otherJobs = [];
-    this.fs = new FileSystem(opts, this);
-    this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
     this.logger = opts.logger;
+    this.fs = new IncrementalFS(opts, this);
+    this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
   }
 
   callUserFn<Arg>(
@@ -158,7 +162,7 @@ export class IncrementalBackend {
     // 0: Distinguish between different sessions
     // 1: Distinguish between different versions in this session
     // (we rely on a global value to ensure that even
-    // deleted then recreated cell have different versions)
+    // deleted then recreated cells have different versions)
     return [this.sessionVersion, this.nextVersion++];
   }
 

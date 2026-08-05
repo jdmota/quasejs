@@ -170,7 +170,6 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     this.running = null;
     // Do not reload later
     this.reload = false;
-
     // Invalidate routine
     this.invalidateRoutine();
     // Mark as pending and schedule execution

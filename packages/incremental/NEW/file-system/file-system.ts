@@ -1,7 +1,8 @@
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
+import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
 import { normalizePath } from "../../../util/path-url";
-import { serializationDB } from "../../utils/serialization-db";
+import { serializationRegistry } from "../../utils/serialization-db";
 import type { Logger } from "../../../util/logger";
 import {
   type IncrementalCellOwnerDescription,
@@ -40,39 +41,44 @@ export type FileChangeEvent = {
   readonly recursive: boolean;
 };
 
-export class FileSystemDescription implements IncrementalCellOwnerDescription {
-  static readonly SINGLETON = new FileSystemDescription();
+export class IncrementalFSDescription
+  implements IncrementalCellOwnerDescription
+{
+  static readonly SINGLETON = new IncrementalFSDescription();
 
-  equal(other: unknown): boolean {
-    return other instanceof FileSystemDescription;
+  [$EQUALS](other: unknown): boolean {
+    return other instanceof IncrementalFSDescription;
   }
 
-  hash(): number {
+  [$HASHCODE](): number {
     return 0;
   }
 
   getCacheKey(): string {
-    return "FileSystem";
+    return "IncrementalFSDescription";
   }
 
-  format(): string {
-    return "FileSystem";
+  [$FORMAT](): string {
+    return "IncrementalFSDescription";
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalFSDescription",
+      version: 1,
+      value: null,
+    };
   }
 }
 
-serializationDB.register<FileSystemDescription, string>(FileSystemDescription, {
-  name: "FileSystemDescription",
-  serialize: value => {
-    return "FileSystemDescription";
-  },
-  deserialize: out => {
-    return FileSystemDescription.SINGLETON;
-  },
-});
+serializationRegistry.registerDeserializer<null, IncrementalFSDescription>(
+  "IncrementalFSDescription",
+  () => IncrementalFSDescription.SINGLETON
+);
 
-export class FileSystem implements IncrementalCellOwner {
+export class IncrementalFS implements IncrementalCellOwner {
   public readonly desc0: IncrementalCellOwnerDescription =
-    FileSystemDescription.SINGLETON;
+    IncrementalFSDescription.SINGLETON;
   public readonly logger: Logger;
   private readonly files: Map<string, FileInfo>;
   private readonly unreachable: Set<FileInfo>;
