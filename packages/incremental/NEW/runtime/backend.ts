@@ -15,13 +15,17 @@ import {
   type AnyIncrementalComputationDescription,
   IncrementalComputationDescription,
 } from "../descriptions/computations";
-import { functions } from "../descriptions/functions";
+import {
+  functions,
+  IncrementalFunctionCallDescription,
+} from "../descriptions/functions";
 import type {
   IncrementalCellDescription,
   IncrementalCellOwnerDescription,
 } from "../descriptions/cells";
 import { type IncrementalComputationRuntime, State } from "./computations";
 import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { IncrementalFileDescription } from "../file-system/file";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -129,13 +133,14 @@ export class IncrementalBackend {
   }
 
   getCellOwner(desc: IncrementalCellOwnerDescription): IncrementalCellOwner {
-    if (desc instanceof IncrementalComputationDescription) {
+    if (desc instanceof IncrementalFunctionCallDescription) {
       return this.getFunction(desc, false);
     }
+    if (desc instanceof IncrementalFileDescription) {
+      return this.fs.getFile(desc.path);
+    }
     // TODO support root cells
-    throw new Error(
-      `Invariant violation: unknown cell owner type ${className(desc)}`
-    );
+    throw new Error(`Unknown cell owner type ${className(desc)}`);
   }
 
   getCell<Desc extends IncrementalCellDescription<any>>(

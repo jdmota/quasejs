@@ -161,6 +161,14 @@ export class IncrementalFunctionRuntime<
     }
   }
 
+  override onSubscribed(cell: IncrementalCellRuntime<any>) {
+    // TODO
+  }
+
+  override onUnsubscribed(cell: IncrementalCellRuntime<any>) {
+    // TODO
+  }
+
   override setOutputValue(value: Output) {
     this.outputCell.set(value);
   }

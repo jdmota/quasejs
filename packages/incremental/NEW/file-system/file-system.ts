@@ -1,20 +1,10 @@
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
-import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
 import { normalizePath } from "../../../util/path-url";
-import { serializationRegistry } from "../../utils/serialization-db";
 import type { Logger } from "../../../util/logger";
-import {
-  type IncrementalCellOwnerDescription,
-  IncrementalCellDescription,
-} from "../descriptions/cells";
 import type { IncrementalBackend, IncrementalOpts } from "../runtime/backend";
 import type { IncrementalContextRuntime } from "../runtime/functions";
-import {
-  type IncrementalCellOwner,
-  IncrementalCellRuntime,
-} from "../runtime/cells";
-import { FileInfo, IncrementalFileDescription } from "./file";
+import { IncrementalFile } from "./file";
 
 export enum FileChange {
   ADD_REMOVE = "ADD_REMOVE",
@@ -41,47 +31,10 @@ export type FileChangeEvent = {
   readonly recursive: boolean;
 };
 
-export class IncrementalFSDescription
-  implements IncrementalCellOwnerDescription
-{
-  static readonly SINGLETON = new IncrementalFSDescription();
-
-  [$EQUALS](other: unknown): boolean {
-    return other instanceof IncrementalFSDescription;
-  }
-
-  [$HASHCODE](): number {
-    return 0;
-  }
-
-  getCacheKey(): string {
-    return "IncrementalFSDescription";
-  }
-
-  [$FORMAT](): string {
-    return "IncrementalFSDescription";
-  }
-
-  [$SERIALIZE]() {
-    return {
-      name: "IncrementalFSDescription",
-      version: 1,
-      value: null,
-    };
-  }
-}
-
-serializationRegistry.registerDeserializer<null, IncrementalFSDescription>(
-  "IncrementalFSDescription",
-  () => IncrementalFSDescription.SINGLETON
-);
-
-export class IncrementalFS implements IncrementalCellOwner {
-  public readonly desc0: IncrementalCellOwnerDescription =
-    IncrementalFSDescription.SINGLETON;
+export class IncrementalFS {
   public readonly logger: Logger;
-  private readonly files: Map<string, FileInfo>;
-  private readonly unreachable: Set<FileInfo>;
+  private readonly files: Map<string, IncrementalFile>;
+  private readonly unreachable: Set<IncrementalFile>;
   private watcher: chokidarWatcher.FSWatcher | null;
 
   constructor(
@@ -94,43 +47,12 @@ export class IncrementalFS implements IncrementalCellOwner {
     this.watcher = null;
   }
 
-  inv() {}
-
-  getCell<Desc extends IncrementalCellDescription<any>>(
-    desc: Desc
-  ): IncrementalCellRuntime<Desc> | undefined {
-    if (desc instanceof IncrementalFileDescription) {
-      const file = this.getFile(desc.path);
-      return (desc.recursive ? file.recCells : file.mainCells)[
-        desc.type
-      ] satisfies IncrementalCellRuntime<any> as any;
-    }
-  }
-
-  demand(): void {}
-
-  demandAndWait(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  isOrphan(): boolean {
-    return false;
-  }
-
-  isRoot(): boolean {
-    return true;
-  }
-
-  markRoot(root: boolean): void {
-    // Always root
-  }
-
-  markReachable(file: FileInfo) {
+  markReachable(file: IncrementalFile) {
     this.logger.debug("Reachable", file.path);
     this.unreachable.delete(file);
   }
 
-  markUnreachable(file: FileInfo) {
+  markUnreachable(file: IncrementalFile) {
     this.logger.debug("Unreachable", file.path);
     this.unreachable.add(file);
   }
@@ -170,10 +92,10 @@ export class IncrementalFS implements IncrementalCellOwner {
     }
   }
 
-  private getFile(path: string): FileInfo {
+  getFile(path: string): IncrementalFile {
     let info = this.files.get(path);
     if (info == null) {
-      info = new FileInfo(this, path);
+      info = new IncrementalFile(this, path);
       this.files.set(path, info);
     }
     return info;
@@ -212,7 +134,6 @@ export class IncrementalFS implements IncrementalCellOwner {
   ) {
     const path = normalizePath(originalPath);
     const info = this.getFile(path);
-    info.demand();
     if (type == null) {
       await Promise.all([
         info.depend(ctx, FileChange.ADD_REMOVE, rec),

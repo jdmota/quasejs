@@ -2,14 +2,13 @@ import fsextra from "fs-extra";
 import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
 import { type TinyTask, tinyTask } from "../../../util/fiber-tiny";
 import { serializationRegistry } from "../../utils/serialization-db";
-import { IncrementalCellDescription } from "../descriptions/cells";
-import type { IncrementalContextRuntime } from "../runtime/functions";
-import { IncrementalCellRuntime } from "../runtime/cells";
 import {
-  FileChange,
-  IncrementalFS,
-  IncrementalFSDescription,
-} from "./file-system";
+  type IncrementalCellOwnerDescription,
+  IncrementalCellDescription,
+} from "../descriptions/cells";
+import type { IncrementalContextRuntime } from "../runtime/functions";
+import { IncrementalCellRuntime, IncrementalCellOwner } from "../runtime/cells";
+import { FileChange, IncrementalFS } from "./file-system";
 
 // By allows decreasing this value when using it,
 // we ensure we always invalid the cells.
@@ -17,18 +16,59 @@ import {
 // it will never be confused with actual timestamps.
 let NO_TIMESTAMP: bigint = -1n;
 
-export class IncrementalFileDescription extends IncrementalCellDescription<bigint> {
+export class IncrementalFileDescription
+  implements IncrementalCellOwnerDescription
+{
+  constructor(readonly path: string) {}
+
+  [$EQUALS](other: unknown): boolean {
+    return (
+      other instanceof IncrementalFileDescription && this.path === other.path
+    );
+  }
+
+  [$HASHCODE]() {
+    return this.path.length;
+  }
+
+  getCacheKey() {
+    return `File(${this.path}`;
+  }
+
+  [$FORMAT]() {
+    return `File(${this.path})`;
+  }
+
+  [$SERIALIZE]() {
+    return {
+      name: "IncrementalFileDescription",
+      version: 1,
+      value: {
+        path: this.path,
+      },
+    };
+  }
+}
+
+serializationRegistry.registerDeserializer<
+  { path: string },
+  IncrementalFileDescription
+>("IncrementalFileDescription", ({ value: { path } }) => {
+  return new IncrementalFileDescription(path);
+});
+
+export class IncrementalFileEventDescription extends IncrementalCellDescription<bigint> {
   constructor(
     readonly path: string,
     readonly type: FileChange,
     readonly recursive: boolean
   ) {
-    super(IncrementalFSDescription.SINGLETON);
+    super(new IncrementalFileDescription(path));
   }
 
   [$EQUALS](other: unknown): boolean {
     return (
-      other instanceof IncrementalFileDescription &&
+      other instanceof IncrementalFileEventDescription &&
       this.path === other.path &&
       this.type === other.type &&
       this.recursive === other.recursive
@@ -40,54 +80,53 @@ export class IncrementalFileDescription extends IncrementalCellDescription<bigin
   }
 
   getCacheKey() {
-    return `File(${this.path},${this.type},${this.recursive})`;
+    return `FileEvent(${this.path},${this.type},${this.recursive})`;
   }
 
   [$FORMAT]() {
-    return `File(${this.path},${this.type},${this.recursive})`;
+    return `FileEvent(${this.path},${this.type},${this.recursive})`;
   }
 
   [$SERIALIZE]() {
     return {
-      name: "IncrementalFileDescription",
+      name: "IncrementalFileEventDescription",
       version: 1,
       value: {
         path: this.path,
         type: this.type,
         recursive: this.recursive,
-      } satisfies IncrementalFileDescriptionJSON,
+      } satisfies IncrementalFileEventDescriptionJSON,
     };
   }
 }
 
-type IncrementalFileDescriptionJSON = {
+type IncrementalFileEventDescriptionJSON = {
   readonly path: string;
   readonly type: FileChange;
   readonly recursive: boolean;
 };
 
 serializationRegistry.registerDeserializer<
-  IncrementalFileDescriptionJSON,
-  IncrementalFileDescription
->("IncrementalFileDescription", ({ value: { path, type, recursive } }) => {
-  return new IncrementalFileDescription(path, type, recursive);
+  IncrementalFileEventDescriptionJSON,
+  IncrementalFileEventDescription
+>("IncrementalFileEventDescription", ({ value: { path, type, recursive } }) => {
+  return new IncrementalFileEventDescription(path, type, recursive);
 });
 
-type FileCell = IncrementalCellRuntime<IncrementalFileDescription>;
+type FileCell = IncrementalCellRuntime<IncrementalFileEventDescription>;
 
 function createFileCell(
   fs: IncrementalFS,
+  file: IncrementalFile,
   path: string,
   type: FileChange,
-  recursive: boolean,
-  onUnsub: () => void
+  recursive: boolean
 ): FileCell {
   const cell = new IncrementalCellRuntime(
     fs.backend,
-    fs,
-    new IncrementalFileDescription(path, type, recursive)
+    file,
+    new IncrementalFileEventDescription(path, type, recursive)
   );
-  cell._onUnsub = onUnsub;
   if (recursive) {
     cell.set(NO_TIMESTAMP--);
   }
@@ -109,7 +148,7 @@ async function getTimestamp(path: string) {
   return { birthtimeNs, mtimeNs };
 }
 
-export class FileInfo {
+export class IncrementalFile extends IncrementalCellOwner {
   private ready: Promise<unknown> | null = null;
   readonly mainCells: {
     [FileChange.ADD_REMOVE]: FileCell;
@@ -127,33 +166,43 @@ export class FileInfo {
     private readonly fs: IncrementalFS,
     readonly path: string
   ) {
-    const onUnsubCell = () => {
-      if (this.subsCount() === 0) {
-        fs.markUnreachable(this);
-      }
-    };
+    super(new IncrementalFileDescription(path));
     this.mainCells = {
-      ADD_REMOVE: createFileCell(
-        fs,
-        path,
-        FileChange.ADD_REMOVE,
-        false,
-        onUnsubCell
-      ),
-      CHANGE: createFileCell(fs, path, FileChange.CHANGE, false, onUnsubCell),
+      ADD_REMOVE: createFileCell(fs, this, path, FileChange.ADD_REMOVE, false),
+      CHANGE: createFileCell(fs, this, path, FileChange.CHANGE, false),
     };
     this.recCells = {
-      ADD_REMOVE: createFileCell(
-        fs,
-        path,
-        FileChange.ADD_REMOVE,
-        true,
-        onUnsubCell
-      ),
-      CHANGE: createFileCell(fs, path, FileChange.CHANGE, true, onUnsubCell),
+      ADD_REMOVE: createFileCell(fs, this, path, FileChange.ADD_REMOVE, true),
+      CHANGE: createFileCell(fs, this, path, FileChange.CHANGE, true),
     };
     this.isCacheable = fs.backend.db != null;
     this.reload = this.isCacheable;
+  }
+
+  inv(): void {}
+
+  getCell<Desc extends IncrementalCellDescription<any>>(
+    desc: Desc
+  ): IncrementalCellRuntime<Desc> | undefined {
+    if (desc instanceof IncrementalFileEventDescription) {
+      return (desc.recursive ? this.recCells : this.mainCells)[
+        desc.type
+      ] satisfies FileCell as any;
+    }
+  }
+
+  isOrphan(): boolean {
+    return this.subsCount() === 0;
+  }
+
+  onSubscribed(cell: IncrementalCellRuntime<any>): void {
+    this.fs.markReachable(this);
+  }
+
+  onUnsubscribed(cell: IncrementalCellRuntime<any>): void {
+    if (this.subsCount() === 0) {
+      this.fs.markUnreachable(this);
+    }
   }
 
   reactFile() {
@@ -174,9 +223,8 @@ export class FileInfo {
     return ctx._read((recursive ? this.recCells : this.mainCells)[change]);
   }
 
-  demand() {
+  demandAndWait(): Promise<void> {
     if (!this.timestampJob) {
-      this.fs.markReachable(this);
       this.timestampJob = tinyTask(async ctx => {
         if (this.fs.backend.invalidationsAllowed()) {
           this.ready ||= this.fs.ensureWatcher().addPromise(this.path);
@@ -211,10 +259,11 @@ export class FileInfo {
         }
       });
     }
+    return this.timestampJob.promise;
   }
 
   delete() {
-    if (this.subsCount() === 0) {
+    if (this.isOrphan()) {
       const watcher = this.fs.getCurrentWatcher();
       this.ready = null;
       if (watcher) {

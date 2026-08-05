@@ -30,7 +30,7 @@ export class SerializationRegistry {
     deserializer: $DESERIALIZE_FN<S, O>
   ) {
     if (this.deserializers.has(name)) {
-      throw new Error("Name for deserializer already used");
+      throw new Error(`Name for deserializer already used: ${name}`);
     }
     this.deserializers.set(name, deserializer);
   }

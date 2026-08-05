@@ -6,7 +6,7 @@ import {
   IncrementalCellDescription,
 } from "../descriptions/cells";
 import type { IncrementalBackend } from "./backend";
-import { type IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export class IncrementalRootDescription
   implements IncrementalCellOwnerDescription
@@ -49,8 +49,7 @@ serializationRegistry.registerDeserializer<
   return new IncrementalRootDescription(value.name);
 });
 
-export class IncrementalRoot implements IncrementalCellOwner {
-  readonly desc0: IncrementalCellOwnerDescription;
+export class IncrementalRoot extends IncrementalCellOwner {
   private readonly cells: HashMap<
     IncrementalCellDescription<any>,
     IncrementalCellRuntime<any>
@@ -60,7 +59,7 @@ export class IncrementalRoot implements IncrementalCellOwner {
     readonly backend: IncrementalBackend,
     readonly name: string
   ) {
-    this.desc0 = new IncrementalRootDescription(name);
+    super(new IncrementalRootDescription(name));
     this.cells = new HashMap({
       equal: (a, b) => a[$EQUALS](b),
       hash: a => a[$HASHCODE](),
@@ -84,7 +83,15 @@ export class IncrementalRoot implements IncrementalCellOwner {
     );
   }
 
-  demand(): void {}
+  onSubscribed(cell: IncrementalCellRuntime<any>) {
+    // TODO
+  }
+
+  onUnsubscribed(cell: IncrementalCellRuntime<any>) {
+    // TODO
+  }
+
+  // TODO deal with caching
 
   demandAndWait(): Promise<void> {
     return Promise.resolve();
@@ -94,9 +101,7 @@ export class IncrementalRoot implements IncrementalCellOwner {
     return false;
   }
 
-  isRoot(): boolean {
+  override isRoot(): boolean {
     return true;
   }
-
-  markRoot(root: boolean): void {}
 }

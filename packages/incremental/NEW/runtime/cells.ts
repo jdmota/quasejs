@@ -18,22 +18,34 @@ import type {
   IncrementalContextRuntime,
 } from "./functions";
 
-// TODO support root level cells
-
 // Cell descriptions are similar to pointers
 // Trying to read a deleted cell is like dereferencing a dangling pointer
 
-export interface IncrementalCellOwner {
-  readonly desc0: IncrementalCellOwnerDescription;
-  inv(): void;
-  getCell<Desc extends IncrementalCellDescription<any>>(
+export abstract class IncrementalCellOwner {
+  private root = false;
+
+  constructor(readonly desc0: IncrementalCellOwnerDescription) {}
+
+  abstract inv(): void;
+  abstract getCell<Desc extends IncrementalCellDescription<any>>(
     desc: Desc
   ): IncrementalCellRuntime<Desc> | undefined;
-  demand(): void;
-  demandAndWait(): Promise<void>;
-  isOrphan(): boolean;
-  isRoot(): boolean;
-  markRoot(root: boolean): void;
+  abstract demandAndWait(): Promise<void>;
+  abstract isOrphan(): boolean;
+  abstract onSubscribed(cell: IncrementalCellRuntime<any>): void;
+  abstract onUnsubscribed(cell: IncrementalCellRuntime<any>): void;
+
+  markRoot(root: boolean) {
+    this.root = root;
+  }
+
+  isRoot() {
+    return this.root;
+  }
+
+  demand() {
+    this.demandAndWait();
+  }
 }
 
 export class IncrementalCellRuntime<
@@ -54,8 +66,6 @@ export class IncrementalCellRuntime<
     IncrementalFunctionRuntime<any, any, any>,
     Version | null
   > = new Map();
-  // Internal event handler for when a dependent unsubscribes
-  public _onUnsub: (() => void) | null = null;
 
   constructor(
     private readonly backend: IncrementalBackend,
@@ -95,7 +105,7 @@ export class IncrementalCellRuntime<
 
   removeReader(reader: IncrementalFunctionRuntime<any, any, any>) {
     this.dependents.delete(reader);
-    this._onUnsub?.();
+    this.owner.onUnsubscribed(this);
   }
 
   set(value: ResultOfCellDesc<Desc>): ChangedValue<ResultOfCellDesc<Desc>> {
@@ -154,6 +164,7 @@ export class IncrementalCellRuntime<
       consumer.readCells.set(this, null);
     }
 
+    this.owner.onSubscribed(this);
     this.owner.demand();
 
     while (!this.result || this.pending) {

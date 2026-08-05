@@ -103,8 +103,6 @@ export class CacheableComputationMixin<
     return ok;
   }
 
-  // TODO account for root cells
-
   finishRoutine() {
     const outputCell = this.source.outputCell;
     const readCells: VersionedCellDesc[] = [];

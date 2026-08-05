@@ -2,7 +2,7 @@ import type { MaybeAsync } from "../../../util/miscellaneous";
 import type { IncrementalCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
 import type { IncrementalBackend } from "./backend";
-import { type IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export enum State {
   PENDING = 0,
@@ -27,10 +27,10 @@ export type StateNotDeleted =
   | State.SETTLED_OK
   | State.CREATING;
 
-export abstract class IncrementalComputationRuntime<Ctx, Output>
-  implements IncrementalCellOwner
-{
-  protected root: boolean;
+export abstract class IncrementalComputationRuntime<
+  Ctx,
+  Output,
+> extends IncrementalCellOwner {
   protected state: State;
   protected ctx: Ctx | null;
   protected running: Promise<void> | null;
@@ -44,14 +44,14 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
 
   constructor(
     readonly backend: IncrementalBackend,
-    readonly desc0: AnyIncrementalComputationDescription
+    readonly desc1: AnyIncrementalComputationDescription
   ) {
-    this.root = false;
+    super(desc1);
     this.state = State.CREATING;
     this.ctx = null;
     this.running = null;
     this.deleting = false;
-    this.isCacheable = backend.db != null && desc0.isCacheable();
+    this.isCacheable = backend.db != null && desc1.isCacheable();
     this.reload = this.isCacheable;
   }
 
@@ -79,23 +79,9 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     return this;
   }
 
-  markRoot(root: boolean) {
-    this.root = root;
-  }
-
-  isRoot() {
-    return this.root;
-  }
-
-  abstract isOrphan(): boolean;
-
   needed() {
     return !this.isOrphan() || this.isRoot();
   }
-
-  abstract getCell<Desc extends IncrementalCellDescription<any>>(
-    desc: Desc
-  ): IncrementalCellRuntime<Desc> | undefined;
 
   abstract setOutputValue(value: Output): void;
 
@@ -155,7 +141,7 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
     if (this.isActive(ctx)) {
       this.ctx = null;
       this.mark(State.SETTLED_ERR);
-      this.backend.onFunctionError(this.desc0, err);
+      this.backend.onFunctionError(this.desc1, err);
     }
   }
 
@@ -196,10 +182,6 @@ export abstract class IncrementalComputationRuntime<Ctx, Output>
   }
 
   protected abstract deleteRoutine(): void;
-
-  demand(): void {
-    this.run();
-  }
 
   demandAndWait(): Promise<void> {
     return this.run();
