@@ -39,7 +39,7 @@ export class IncrementalAllocatedCellDescription<
   Value,
 > extends IncrementalCellDescription<Value> {
   constructor(
-    readonly owner: AnyIncrementalFunctionCallDescription,
+    readonly owner: IncrementalCellOwnerDescription,
     readonly key: string,
     readonly index: number
   ) {
@@ -81,7 +81,7 @@ export class IncrementalAllocatedCellDescription<
 }
 
 type IncrementalAllocatedCellDescriptionJSON = {
-  readonly owner: AnyIncrementalFunctionCallDescription;
+  readonly owner: IncrementalCellOwnerDescription;
   readonly key: string;
   readonly index: number;
 };

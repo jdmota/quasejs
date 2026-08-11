@@ -1,9 +1,9 @@
-import { SpecialQueue } from "../../../util/data-structures/linked-list";
+import { SpecialQueue2 } from "../../../util/data-structures/linked-list";
 import type { Logger } from "../../../util/logger";
-import { className } from "../../../util/miscellaneous";
+import { assertion, className } from "../../../util/miscellaneous";
 import { Scheduler } from "../../../util/schedule";
 import { createErrorDefer } from "../../../util/deferred";
-import { $EQUALS, $HASHCODE } from "../../../util/values";
+import { $EQUALS, $FORMAT, $HASHCODE } from "../../../util/values";
 import { HashMap } from "../../utils/hash-map";
 import type { Version } from "../../utils/versions";
 import {
@@ -18,14 +18,26 @@ import {
 import {
   functions,
   IncrementalFunctionCallDescription,
+  type CellsTypes,
 } from "../descriptions/functions";
 import type {
   IncrementalCellDescription,
   IncrementalCellOwnerDescription,
 } from "../descriptions/cells";
-import { type IncrementalComputationRuntime, State } from "./computations";
-import type { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import {
+  type IncrementalComputationRuntime,
+  NEXT_COMPUTATION,
+  PREV_COMPUTATION,
+  State,
+} from "./computations";
+import {
+  type IncrementalCellOwner,
+  type IncrementalCellRuntime,
+  NEXT_CELL_OWNER,
+  PREV_CELL_OWNER,
+} from "./cells";
 import { IncrementalFileDescription } from "../file-system/file";
+import { IncrementalRoot, IncrementalRootDescription } from "./root";
 
 export type IncrementalCacheOpts = {
   readonly dir: string;
@@ -48,7 +60,7 @@ export type IncrementalOpts = {
   readonly logger: Logger;
 };
 
-export class IncrementalBackend {
+export class IncrementalBackend<RootCells extends CellsTypes> {
   public static functions = functions;
 
   private computationsMap: HashMap<
@@ -56,25 +68,24 @@ export class IncrementalBackend {
     IncrementalComputationRuntime<any, any>
   >;
   readonly computations: readonly [
-    SpecialQueue<IncrementalComputationRuntime<any, any>>,
-    SpecialQueue<IncrementalComputationRuntime<any, any>>,
-    SpecialQueue<IncrementalComputationRuntime<any, any>>,
-    SpecialQueue<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue2<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue2<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue2<IncrementalComputationRuntime<any, any>>,
+    SpecialQueue2<IncrementalComputationRuntime<any, any>>,
   ];
-  private readonly pending: SpecialQueue<
+  private readonly pending: SpecialQueue2<
     IncrementalComputationRuntime<any, any>
   >;
-  private readonly running: SpecialQueue<
+  private readonly running: SpecialQueue2<
     IncrementalComputationRuntime<any, any>
   >;
-  private readonly settledErr: SpecialQueue<
+  private readonly settledErr: SpecialQueue2<
     IncrementalComputationRuntime<any, any>
   >;
 
-  private readonly orphanCellOwners: HashMap<
-    IncrementalCellOwnerDescription,
-    IncrementalCellOwner
-  >;
+  private readonly orphanCellOwners: SpecialQueue2<IncrementalCellOwner>;
+
+  public readonly rootCellOwner: IncrementalRoot<RootCells>;
 
   private sessionVersion = 0;
   private nextVersion = 0;
@@ -94,18 +105,15 @@ export class IncrementalBackend {
       hash: a => a[$HASHCODE](),
     });
     this.computations = [
-      new SpecialQueue(),
-      new SpecialQueue(),
-      new SpecialQueue(),
-      new SpecialQueue(),
+      new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
+      new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
+      new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
+      new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
     ];
     this.pending = this.computations[State.PENDING];
     this.running = this.computations[State.RUNNING];
     this.settledErr = this.computations[State.SETTLED_ERR];
-    this.orphanCellOwners = new HashMap({
-      equal: (a, b) => a[$EQUALS](b),
-      hash: a => a[$HASHCODE](),
-    });
+    this.orphanCellOwners = new SpecialQueue2(PREV_CELL_OWNER, NEXT_CELL_OWNER);
     this.canInvalidate = opts.canInvalidate;
     this.canExternalInvalidate = opts.canInvalidate;
     this.otherJobs = [];
@@ -113,6 +121,7 @@ export class IncrementalBackend {
     this.backendLogger = this.logger.createChildLogger("backend");
     this.fs = new IncrementalFS(opts, this);
     this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
+    this.rootCellOwner = new IncrementalRoot(this);
   }
 
   callUserFn<Arg>(
@@ -162,7 +171,9 @@ export class IncrementalBackend {
     if (desc instanceof IncrementalFileDescription) {
       return this.fs.getFile(desc.path);
     }
-    // TODO support root cells
+    if (desc instanceof IncrementalRootDescription) {
+      return this.rootCellOwner;
+    }
     throw new Error(`Unknown cell owner type ${className(desc)}`);
   }
 
@@ -186,22 +197,34 @@ export class IncrementalBackend {
     this.computationsMap.delete(c.desc0);
   }
 
-  markAsOrphan(owner: IncrementalCellOwner) {
-    this.orphanCellOwners.set(owner.desc0, owner);
-  }
-
-  markAsNeeded(owner: IncrementalCellOwner) {
-    this.orphanCellOwners.delete(owner.desc0);
+  markNeed(owner: IncrementalCellOwner, needed: boolean, init = false) {
+    if (init) {
+      if (!needed) {
+        this.orphanCellOwners.add(owner);
+      }
+    } else {
+      this.backendLogger.debug(
+        `Changing need of ${owner.desc0[$FORMAT]()} to ${needed}`
+      );
+      if (needed) {
+        this.orphanCellOwners.delete(owner);
+      } else {
+        this.orphanCellOwners.add(owner);
+      }
+    }
   }
 
   deleteOrphans() {
-    this.backendLogger.debug("Deleting orphans");
-    for (const owner of this.orphanCellOwners.values()) {
-      if (!owner.isRoot()) {
-        owner.delete();
-      }
+    this.backendLogger.debug(`Deleting orphans...`);
+    let deleted = 0;
+    for (const owner of this.orphanCellOwners.keepTaking()) {
+      owner.inv();
+      assertion(!owner.isNeeded());
+      owner.delete();
+      this.orphanCellOwners.delete(owner);
+      deleted++;
     }
-    this.orphanCellOwners.clear();
+    this.backendLogger.debug(`Deleted ${deleted} orphans`);
   }
 
   getNextVersion(): Version {
@@ -211,6 +234,10 @@ export class IncrementalBackend {
     // deleted then recreated cells have different versions)
     return [this.sessionVersion, this.nextVersion++];
   }
+
+  // TODO demand driven
+  // TODO when to gc?
+  // TODO re-implement safe closing routine
 
   invalidationsAllowed() {
     return this.canInvalidate;

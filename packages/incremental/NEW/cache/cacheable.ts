@@ -1,4 +1,5 @@
 import { $FORMAT } from "../../../util/values";
+import { nonNull } from "../../../util/miscellaneous";
 import {
   type CacheDB,
   type CachedFunction,
@@ -16,11 +17,11 @@ import { IncrementalCellRuntime } from "../runtime/cells";
 export class CacheableComputationMixin<
   C extends IncrementalFunctionRuntime<any, any, any>,
 > {
-  public readonly db: CacheDB | null;
+  public readonly db: CacheDB;
   public readonly desc: AnyIncrementalFunctionCallDescription;
 
   constructor(public readonly source: C) {
-    this.db = source.backend.db;
+    this.db = nonNull(source.backend.db);
     this.desc = source.desc;
   }
 
@@ -30,7 +31,7 @@ export class CacheableComputationMixin<
   ): Promise<boolean> {
     for (const desc of cachedFunc.ownedCells) {
       const { key } = desc;
-      const cachedCell = this.db!.getCell(desc);
+      const cachedCell = this.db.getCell(desc);
       if (!cachedCell) {
         this.source.logger.debug(
           `Function was in cache, but its cell ${desc[$FORMAT]()} was not`
@@ -73,7 +74,7 @@ export class CacheableComputationMixin<
     }
 
     // Reload output cell
-    const cachedCell = this.db!.getCell(cachedFunc.outputCell);
+    const cachedCell = this.db.getCell(cachedFunc.outputCell);
     if (!cachedCell) {
       this.source.logger.debug(
         `Function was in cache, but its output cell was not`
@@ -88,12 +89,11 @@ export class CacheableComputationMixin<
   async reloadRoutine(
     ctx: IncrementalContextRuntime<any, any, any>
   ): Promise<boolean> {
-    const cachedFunc = this.db!.getFunc(this.desc);
+    const cachedFunc = this.db.getFunc(this.desc);
     if (!cachedFunc) {
       return false;
     }
 
-    // TODO catch serialization errors
     const ok = await this.reloadAttempt(ctx, cachedFunc);
     ctx.checkActive();
     if (!ok) {
@@ -113,7 +113,7 @@ export class CacheableComputationMixin<
       if (version == null || !cell.isLatest(version)) {
         // With a pending read, no point in caching
         // If by any chance the cell was updated, also bail
-        this.db!.deleteFunc(this.desc);
+        this.db.deleteFunc(this.desc);
         return;
       }
       readCells.push([cell.desc, version]);
@@ -138,10 +138,10 @@ export class CacheableComputationMixin<
       ownedCells,
       outputCell: outputCell.desc,
     };
-    this.db!.setFunc(this.desc, entry);
+    this.db.setFunc(this.desc, entry);
   }
 
   deleteRoutine() {
-    this.db!.deleteFunc(this.desc);
+    this.db.deleteFunc(this.desc);
   }
 }

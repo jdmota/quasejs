@@ -1,11 +1,12 @@
 import { type IncrementalOpts, IncrementalBackend } from "./runtime/backend";
 import {
-  type CellValueDescriptions,
+  type CellsTypes,
   type IncrementalFunctionSchemaOpts,
   IncrementalFunctionCallDescription,
   IncrementalFunctionSchema,
 } from "./descriptions/functions";
 import type { ResultOfComputation } from "./descriptions/computations";
+import type { IncrementalRootAPI } from "./runtime/root";
 
 export type ComputationController<T> = {
   readonly interrupt: () => Promise<void>;
@@ -16,21 +17,23 @@ export type ComputationController<T> = {
   };
 };
 
-export class IncrementalLib {
-  private readonly backend: IncrementalBackend;
+export class IncrementalLib<RootCells extends CellsTypes> {
+  private readonly backend: IncrementalBackend<RootCells>;
+  public readonly rootCells: IncrementalRootAPI<RootCells>;
 
   constructor(opts: IncrementalOpts) {
     this.backend = new IncrementalBackend(opts);
+    this.rootCells = this.backend.rootCellOwner.publicApi;
   }
 
-  static register<Input, Output, CellDefs extends CellValueDescriptions>(
-    opts: IncrementalFunctionSchemaOpts<Input, Output, CellDefs>
+  static register<Input, Output, Cells extends CellsTypes>(
+    opts: IncrementalFunctionSchemaOpts<Input, Output, Cells>
   ) {
     return IncrementalBackend.functions.register(opts);
   }
 
-  async call<Input, Output, CellDefs extends CellValueDescriptions>(
-    schema: IncrementalFunctionSchema<Input, Output, CellDefs>,
+  async call<Input, Output, Cells extends CellsTypes>(
+    schema: IncrementalFunctionSchema<Input, Output, Cells>,
     input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
@@ -42,7 +45,7 @@ export class IncrementalLib {
     return this.backend.close();
   }
 
-  controller(): ComputationController<ResultOfComputation<C>> {
+  /* controller(): ComputationController<ResultOfComputation<C>> {
     const backend = this;
     let interrupted = false;
     let finishing = false;
@@ -74,5 +77,5 @@ export class IncrementalLib {
         return backend.peekErrors();
       },
     };
-  }
+  } */
 }

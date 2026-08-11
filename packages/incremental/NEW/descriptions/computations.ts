@@ -16,7 +16,7 @@ export abstract class IncrementalComputationDescription<
   C extends IncrementalComputationRuntime<any, any>,
 > implements IncrementalCellOwnerDescription
 {
-  abstract create(registry: IncrementalBackend): C;
+  abstract create(registry: IncrementalBackend<any>): C;
   abstract [$EQUALS](other: unknown): boolean;
   abstract [$HASHCODE](): number;
   abstract isCacheable(): boolean;

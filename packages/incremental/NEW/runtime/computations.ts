@@ -1,8 +1,10 @@
 import type { MaybeAsync } from "../../../util/miscellaneous";
-import type { IncrementalCellDescription } from "../descriptions/cells";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
-import type { IncrementalBackend } from "./backend";
-import { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { type IncrementalBackend } from "./backend";
+import { IncrementalCellOwner } from "./cells";
+
+export const PREV_COMPUTATION = Symbol("quase.incremental.prev.computation");
+export const NEXT_COMPUTATION = Symbol("quase.incremental.next.computation");
 
 export enum State {
   PENDING = 0,
@@ -39,11 +41,11 @@ export abstract class IncrementalComputationRuntime<
   public readonly isCacheable: boolean;
   private reload: boolean;
 
-  next: IncrementalComputationRuntime<any, any> | null = null;
-  prev: IncrementalComputationRuntime<any, any> | null = null;
+  [PREV_COMPUTATION]: IncrementalComputationRuntime<any, any> | null = null;
+  [NEXT_COMPUTATION]: IncrementalComputationRuntime<any, any> | null = null;
 
   constructor(
-    backend: IncrementalBackend,
+    backend: IncrementalBackend<any>,
     readonly desc1: AnyIncrementalComputationDescription
   ) {
     super(backend, desc1);
@@ -77,10 +79,6 @@ export abstract class IncrementalComputationRuntime<
     this.markRoot(root);
     this.mark(State.PENDING);
     return this;
-  }
-
-  needed() {
-    return !this.isOrphan() || this.isRoot();
   }
 
   abstract setOutputValue(value: Output): void;
@@ -167,7 +165,7 @@ export abstract class IncrementalComputationRuntime<
 
   delete() {
     this.inv();
-    if (this.needed()) {
+    if (this.isNeeded()) {
       throw new Error(
         "Invariant violation: Some computation depends on this, cannot delete"
       );
@@ -188,7 +186,7 @@ export abstract class IncrementalComputationRuntime<
   }
 
   maybeRun() {
-    if (this.state === State.PENDING && this.needed()) {
+    if (this.state === State.PENDING && this.isNeeded()) {
       this.run();
       return true;
     }
@@ -196,7 +194,7 @@ export abstract class IncrementalComputationRuntime<
   }
 
   maybeDelete() {
-    if (!this.needed()) {
+    if (!this.isNeeded()) {
       this.delete();
     }
   }

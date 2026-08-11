@@ -24,19 +24,31 @@ export class CachePrinter {
 
   async print() {
     for (const key of this.db.getKeys()) {
-      if (typeof key === "symbol") continue;
-      try {
-        const dbValue = checkArray(this.db.get(key) ?? []);
-        let i = 0;
-        for (const entry of dbValue) {
-          console.log(`==== ${key}[${i++}] ====`);
-          console.log(inspect(entry, { colors: true }));
+      if (typeof key === "symbol") {
+        try {
+          const value = this.db.get(key);
+          console.log(`==== ${String(key)} ====`);
+          console.log(inspect(value, { colors: true }));
+          console.log("===============");
+        } catch (err) {
+          console.log(`==== ERROR ${String(key)} ====`);
+          console.log(inspect(err, { colors: true }));
           console.log("===============");
         }
-      } catch (err) {
-        console.log(`==== ERROR ${key} ====`);
-        console.log(inspect(err, { colors: true }));
-        console.log("===============");
+      } else {
+        try {
+          const dbValue = checkArray(this.db.get(key) ?? []);
+          let i = 0;
+          for (const entry of dbValue) {
+            console.log(`==== ${key}[${i++}] ====`);
+            console.log(inspect(entry, { colors: true }));
+            console.log("===============");
+          }
+        } catch (err) {
+          console.log(`==== ERROR ${key} ====`);
+          console.log(inspect(err, { colors: true }));
+          console.log("===============");
+        }
       }
     }
   }

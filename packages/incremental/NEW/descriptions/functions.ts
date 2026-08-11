@@ -84,7 +84,7 @@ export class IncrementalFunctionCallDescription<
     super();
   }
 
-  create(backend: IncrementalBackend) {
+  create(backend: IncrementalBackend<any>) {
     functions.check(this.schema);
     return new IncrementalFunctionRuntime(backend, this);
   }

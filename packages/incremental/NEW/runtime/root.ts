@@ -1,43 +1,39 @@
+import { computeIfAbsent } from "../../../util/maps-sets";
 import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
-import { HashMap } from "../../utils/hash-map";
 import { serializationRegistry } from "../../utils/serialization-db";
 import {
   type IncrementalCellOwnerDescription,
+  IncrementalAllocatedCellDescription,
   IncrementalCellDescription,
 } from "../descriptions/cells";
+import type { CellsTypes } from "../descriptions/functions";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
 
 export class IncrementalRootDescription
   implements IncrementalCellOwnerDescription
 {
-  constructor(readonly name: string) {}
-
   [$EQUALS](other: unknown): boolean {
-    return (
-      other instanceof IncrementalRootDescription && other.name === this.name
-    );
+    return other instanceof IncrementalRootDescription;
   }
 
   [$HASHCODE](): number {
-    return this.name.length;
+    return 0;
   }
 
   getCacheKey(): string {
-    return `Root{${this.name}}`;
+    return `Root`;
   }
 
   [$FORMAT](): string {
-    return `Root{${this.name}}`;
+    return `Root`;
   }
 
   [$SERIALIZE]() {
     return {
       name: "IncrementalRootDescription",
       version: 1,
-      value: {
-        name: this.name,
-      },
+      value: null,
     };
   }
 }
@@ -45,25 +41,36 @@ export class IncrementalRootDescription
 serializationRegistry.registerDeserializer<
   { name: string },
   IncrementalRootDescription
->("IncrementalRootDescription", ({ value }) => {
-  return new IncrementalRootDescription(value.name);
+>("IncrementalRootDescription", () => {
+  return new IncrementalRootDescription();
 });
 
-export class IncrementalRoot extends IncrementalCellOwner {
-  private readonly cells: HashMap<
-    IncrementalCellDescription<any>,
-    IncrementalCellRuntime<any>
-  >;
+export class IncrementalRootAPI<Cells extends CellsTypes> {
+  constructor(private _root: IncrementalRoot<Cells>) {}
 
-  constructor(
-    backend: IncrementalBackend,
-    readonly name: string
-  ) {
-    super(backend, new IncrementalRootDescription(name));
-    this.cells = new HashMap({
-      equal: (a, b) => a[$EQUALS](b),
-      hash: a => a[$HASHCODE](),
-    });
+  get<K extends string & keyof Cells>(key: K) {
+    const cell = this._root.alloc(key);
+    return {
+      set(value: Cells[K]) {
+        cell.set(value);
+      },
+    };
+  }
+}
+
+export class IncrementalRoot<
+  Cells extends CellsTypes,
+> extends IncrementalCellOwner {
+  private readonly cells: Map<
+    string,
+    IncrementalCellRuntime<IncrementalAllocatedCellDescription<any>>
+  >;
+  public readonly publicApi: IncrementalRootAPI<Cells>;
+
+  constructor(backend: IncrementalBackend<Cells>) {
+    super(backend, new IncrementalRootDescription());
+    this.cells = new Map();
+    this.publicApi = new IncrementalRootAPI(this);
   }
 
   inv(): void {}
@@ -71,15 +78,26 @@ export class IncrementalRoot extends IncrementalCellOwner {
   getCell<Desc extends IncrementalCellDescription<any>>(
     desc: Desc
   ): IncrementalCellRuntime<Desc> | undefined {
-    return this.cells.get(desc);
+    if (
+      desc instanceof IncrementalAllocatedCellDescription &&
+      desc.owner[$EQUALS](this.desc0)
+    ) {
+      return this.cells.get(desc.key) as any;
+    }
   }
 
-  ensureCell<Desc extends IncrementalCellDescription<any>>(
-    desc: Desc
-  ): IncrementalCellRuntime<Desc> {
-    return this.cells.computeIfAbsent(
-      desc,
-      () => new IncrementalCellRuntime(this.backend, this, desc)
+  alloc<K extends string & keyof Cells>(
+    key: K
+  ): IncrementalCellRuntime<IncrementalAllocatedCellDescription<Cells[K]>> {
+    return computeIfAbsent(
+      this.cells,
+      key,
+      () =>
+        new IncrementalCellRuntime(
+          this.backend,
+          this,
+          new IncrementalAllocatedCellDescription(this.desc0, key, 0)
+        )
     );
   }
 

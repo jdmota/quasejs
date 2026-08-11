@@ -6,8 +6,8 @@ import {
   type VersionedValue,
   sameVersion,
 } from "../../utils/versions";
-import type { IncrementalBackend } from "./backend";
-import type { CacheDB, CachedCell } from "../cache/cache-db";
+import { type IncrementalBackend } from "./backend";
+import type { CachedCell } from "../cache/cache-db";
 import {
   type IncrementalCellOwnerDescription,
   type ResultOfCellDesc,
@@ -21,14 +21,22 @@ import type {
 // Cell descriptions are similar to pointers
 // Trying to read a deleted cell is like dereferencing a dangling pointer
 
+export const PREV_CELL_OWNER = Symbol("quase.incremental.prev.cell_owner");
+export const NEXT_CELL_OWNER = Symbol("quase.incremental.next.cell_owner");
+
 export abstract class IncrementalCellOwner {
   private root = false;
   protected subsCount = 0;
 
+  [PREV_CELL_OWNER]: IncrementalCellOwner | null = null;
+  [NEXT_CELL_OWNER]: IncrementalCellOwner | null = null;
+
   constructor(
-    readonly backend: IncrementalBackend,
+    readonly backend: IncrementalBackend<any>,
     readonly desc0: IncrementalCellOwnerDescription
-  ) {}
+  ) {
+    this.backend.markNeed(this, this.isNeeded(), true);
+  }
 
   abstract inv(): void;
   abstract getCell<Desc extends IncrementalCellDescription<any>>(
@@ -44,23 +52,32 @@ export abstract class IncrementalCellOwner {
   onSubscribed(cell: IncrementalCellRuntime<any>) {
     this.subsCount++;
     if (this.subsCount === 1) {
-      this.backend.markAsNeeded(this);
+      this.backend.markNeed(this, true);
     }
   }
 
   onUnsubscribed(cell: IncrementalCellRuntime<any>) {
     this.subsCount--;
-    if (this.subsCount === 0) {
-      this.backend.markAsOrphan(this);
+    if (this.subsCount === 0 && !this.root) {
+      this.backend.markNeed(this, false);
     }
   }
 
   markRoot(root: boolean) {
-    this.root = root;
+    if (this.root !== root) {
+      this.root = root;
+      if (this.subsCount === 0) {
+        this.backend.markNeed(this, this.root);
+      }
+    }
   }
 
   isRoot() {
     return this.root;
+  }
+
+  isNeeded() {
+    return !this.isOrphan() || this.isRoot();
   }
 
   demand() {
@@ -88,7 +105,7 @@ export class IncrementalCellRuntime<
   > = new Map();
 
   constructor(
-    private readonly backend: IncrementalBackend,
+    private readonly backend: IncrementalBackend<any>,
     private readonly owner: IncrementalCellOwner,
     public readonly desc: Desc,
     fromCache: CachedCell<ResultOfCellDesc<Desc>> | null = null

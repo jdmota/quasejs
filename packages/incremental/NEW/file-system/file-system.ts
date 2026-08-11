@@ -39,7 +39,7 @@ export class IncrementalFS {
 
   constructor(
     private readonly opts: IncrementalOpts,
-    public readonly backend: IncrementalBackend
+    public readonly backend: IncrementalBackend<any>
   ) {
     this.logger = backend.logger.createChildLogger("file-system");
     this.files = new Map();

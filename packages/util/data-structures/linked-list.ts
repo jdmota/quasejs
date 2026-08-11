@@ -94,6 +94,91 @@ export class LinkedList<V> {
   }
 }
 
+export class SpecialQueue2<N> {
+  private head: N | null = null;
+  private count: number = 0;
+
+  constructor(
+    private readonly prev: symbol,
+    private readonly next: symbol
+  ) {}
+
+  peek() {
+    return this.head;
+  }
+
+  size() {
+    return this.count;
+  }
+
+  isEmpty() {
+    return this.head == null;
+  }
+
+  private checkNew(node: N) {
+    if ((node as any)[this.prev] != null || (node as any)[this.next] != null) {
+      throw new Error(
+        "Invariant violation: Node already belongs to this linked-list"
+      );
+    }
+  }
+
+  private checkConnected(node: N) {
+    if (
+      (node as any)[this.prev] == null &&
+      (node as any)[this.next] == null &&
+      this.head !== node
+    ) {
+      throw new Error(
+        "Invariant violation: Node does not belong to this linked-list"
+      );
+    }
+  }
+
+  add(node: N) {
+    this.checkNew(node);
+    if (this.head) {
+      (this.head as any)[this.prev] = node;
+      (node as any)[this.next] = this.head;
+    }
+    this.head = node;
+    this.count++;
+  }
+
+  delete(node: N) {
+    this.checkConnected(node);
+
+    if ((node as any)[this.prev]) {
+      (node as any)[this.prev][this.next] = (node as any)[this.next];
+    } else {
+      this.head = (node as any)[this.next];
+    }
+    if ((node as any)[this.next]) {
+      (node as any)[this.next][this.prev] = (node as any)[this.prev];
+    }
+
+    (node as any)[this.prev] = null;
+    (node as any)[this.next] = null;
+    this.count--;
+  }
+
+  // Iteration to use while removing from the head
+  *keepTaking(): IterableIterator<N> {
+    while (this.head) {
+      yield this.head;
+    }
+  }
+
+  // Iteration not stable over modifications
+  *iterateAll(): IterableIterator<N> {
+    let node = this.head;
+    while (node) {
+      yield node;
+      node = (node as any)[this.next];
+    }
+  }
+}
+
 export class SpecialQueue<N extends { prev: N | null; next: N | null }> {
   private head: N | null;
 

@@ -3,7 +3,7 @@ import path from "node:path";
 import { inspect } from "node:util";
 import { Logger } from "../../../util/logger";
 import { assertion } from "../../../util/miscellaneous";
-import { MissingConstructorSerializerError } from "../../../util/serialization";
+import { SerializationError } from "../../../util/serialization-2";
 import { HashMap } from "../../utils/hash-map";
 import { type Version } from "../../utils/versions";
 import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
@@ -14,13 +14,12 @@ import type {
   IncrementalCellDescription,
   IncrementalOutputCellDescription,
 } from "../descriptions/cells";
-import type { IncrementalCellRuntime } from "../runtime/cells";
 import {
+  type EqualsTrait,
+  type HashCodeTrait,
   $EQUALS,
   $FORMAT,
   $HASHCODE,
-  type EqualsTrait,
-  type HashCodeTrait,
 } from "../../../util/values";
 
 export function checkArray<T>(val: T[] | number): T[] {
@@ -125,12 +124,10 @@ export class CacheDB {
       if (!this.saveJobs.has(key)) {
         this.corruptedKeys.add(key);
       }
-      this.logger.error(
-        this.addError(
-          new Error(`Corrupted key ${key}`, {
-            cause: err,
-          })
-        )
+      this.reportError(
+        new Error(`Corrupted key ${key}`, {
+          cause: err,
+        })
       );
       return [];
     }
@@ -209,14 +206,12 @@ export class CacheDB {
         }
       });
     } catch (err) {
-      this.logger.error(
-        this.addError(
-          new Error(
-            `Error ${entry ? "saving" : "deleting"} entry with description ${inspect(desc)}`,
-            {
-              cause: err,
-            }
-          )
+      this.reportError(
+        new Error(
+          `Error ${entry ? "saving" : "deleting"} entry with description ${inspect(desc)}`,
+          {
+            cause: err,
+          }
         )
       );
     }
@@ -315,22 +310,21 @@ export class CacheDB {
 
   private missingSerializers: Set<string> = new Set();
 
-  private addError(error: unknown) {
-    if (error instanceof MissingConstructorSerializerError) {
-      this.missingSerializers.add(error.constructorName);
+  private reportError(error: unknown) {
+    if (error instanceof SerializationError) {
+      if (error.message.startsWith("Missing ")) {
+        this.missingSerializers.add(error.message);
+      }
     }
-    if (
-      error instanceof Error &&
-      error.cause instanceof MissingConstructorSerializerError
-    ) {
-      this.missingSerializers.add(error.cause.constructorName);
-    }
-    return error;
+    this.logger.error(error);
   }
 
   private printMissingSerializers() {
     if (this.missingSerializers.size) {
-      this.logger.error("Missing serializers for:", ...this.missingSerializers);
+      this.logger.error(
+        "Missing serializers/deserializers for:",
+        ...this.missingSerializers
+      );
     }
   }
 }

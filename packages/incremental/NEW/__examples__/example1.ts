@@ -1,7 +1,7 @@
 import { IncrementalLib } from "../incremental-lib";
 import { Logger } from "../../../util/logger";
 
-const lib = new IncrementalLib({
+const lib = new IncrementalLib<{}>({
   fs: {
     onEvent({ event, path }) {
       console.log("=== CHANGED", event, path, "===");

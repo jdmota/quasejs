@@ -24,7 +24,7 @@ import {
 } from "./computations";
 
 export async function waitForCell<Desc extends IncrementalCellDescription<any>>(
-  backend: IncrementalBackend,
+  backend: IncrementalBackend<any>,
   logger: Logger,
   desc: Desc
 ): Promise<IncrementalCellRuntime<Desc> | undefined> {
@@ -47,7 +47,7 @@ export class IncrementalContextRuntime<
   Cells extends CellsTypes,
 > {
   constructor(
-    private readonly backend: IncrementalBackend,
+    private readonly backend: IncrementalBackend<any>,
     private readonly runtime: IncrementalFunctionRuntime<Input, Output, Cells>
   ) {}
 
@@ -115,7 +115,7 @@ export class IncrementalFunctionRuntime<
   readonly logger: Logger;
   // Cells read and the oldest version which was read in this run
   readonly readCells: Map<IncrementalCellRuntime<any>, Version | null>;
-  // Owned resolved cells
+  // Owned cells
   readonly ownedCells: Map<
     string,
     {
@@ -131,7 +131,7 @@ export class IncrementalFunctionRuntime<
   readonly cacheableMixin: CacheableComputationMixin<this> | null;
 
   constructor(
-    backend: IncrementalBackend,
+    backend: IncrementalBackend<any>,
     readonly desc: IncrementalFunctionCallDescription<Input, Output, Cells>
   ) {
     super(backend, desc);
