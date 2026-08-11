@@ -23,17 +23,37 @@ import type {
 
 export abstract class IncrementalCellOwner {
   private root = false;
+  protected subsCount = 0;
 
-  constructor(readonly desc0: IncrementalCellOwnerDescription) {}
+  constructor(
+    readonly backend: IncrementalBackend,
+    readonly desc0: IncrementalCellOwnerDescription
+  ) {}
 
   abstract inv(): void;
   abstract getCell<Desc extends IncrementalCellDescription<any>>(
     desc: Desc
   ): IncrementalCellRuntime<Desc> | undefined;
   abstract demandAndWait(): Promise<void>;
-  abstract isOrphan(): boolean;
-  abstract onSubscribed(cell: IncrementalCellRuntime<any>): void;
-  abstract onUnsubscribed(cell: IncrementalCellRuntime<any>): void;
+  abstract delete(): void;
+
+  isOrphan(): boolean {
+    return this.subsCount === 0;
+  }
+
+  onSubscribed(cell: IncrementalCellRuntime<any>) {
+    this.subsCount++;
+    if (this.subsCount === 1) {
+      this.backend.markAsNeeded(this);
+    }
+  }
+
+  onUnsubscribed(cell: IncrementalCellRuntime<any>) {
+    this.subsCount--;
+    if (this.subsCount === 0) {
+      this.backend.markAsOrphan(this);
+    }
+  }
 
   markRoot(root: boolean) {
     this.root = root;
@@ -52,7 +72,7 @@ export class IncrementalCellRuntime<
   Desc extends IncrementalCellDescription<any>,
 > {
   // Versioned result
-  public result: VersionedValue<ResultOfCellDesc<Desc>> | null = null;
+  private result: VersionedValue<ResultOfCellDesc<Desc>> | null = null;
   // Deferred
   private defer: Defer<void> | null = null;
   // This flag is used to delay resolution
@@ -99,23 +119,21 @@ export class IncrementalCellRuntime<
     return this.result != null && sameVersion(this.result[1], version);
   }
 
-  readersCount() {
-    return this.dependents.size;
-  }
-
   removeReader(reader: IncrementalFunctionRuntime<any, any, any>) {
-    this.dependents.delete(reader);
-    this.owner.onUnsubscribed(this);
+    if (this.dependents.delete(reader)) {
+      this.owner.onUnsubscribed(this);
+    }
   }
 
   set(value: ResultOfCellDesc<Desc>): ChangedValue<ResultOfCellDesc<Desc>> {
-    return this._set(value, null);
+    return this._set(value, null, false);
   }
 
   // Used internally
   _set(
     value: ResultOfCellDesc<Desc>,
-    version: Version | null
+    version: Version | null,
+    reloading: boolean
   ): ChangedValue<ResultOfCellDesc<Desc>> {
     this.inv();
     const { result } = this;
@@ -126,6 +144,9 @@ export class IncrementalCellRuntime<
         if (versionRead) {
           consumer.invalidate();
         }
+      }
+      if (!reloading) {
+        this._cacheCell();
       }
     }
     this.defer?.resolve();
@@ -138,7 +159,7 @@ export class IncrementalCellRuntime<
     newValue: ResultOfCellDesc<Desc>
   ) {
     if (cached != null && valueEquals(cached.value, newValue)) {
-      this._set(cached.value, cached.version);
+      this._set(cached.value, cached.version, true);
     } else {
       this.set(newValue);
     }
@@ -162,9 +183,9 @@ export class IncrementalCellRuntime<
     if (!this.dependents.has(consumer)) {
       this.dependents.set(consumer, null);
       consumer.readCells.set(this, null);
+      this.owner.onSubscribed(this);
     }
 
-    this.owner.onSubscribed(this);
     this.owner.demand();
 
     while (!this.result || this.pending) {
@@ -194,22 +215,28 @@ export class IncrementalCellRuntime<
     return result[0];
   }
 
-  _cacheCell(db: CacheDB) {
-    const { desc, result } = this;
-    if (result == null) {
-      throw new Error(
-        `Invariant violation: trying to save a cell with no result`
-      );
+  _cacheCell() {
+    const db = this.backend.db;
+    if (db) {
+      const { desc, result } = this;
+      if (result == null) {
+        throw new Error(
+          `Invariant violation: trying to save a cell with no result`
+        );
+      }
+      db.setCell(desc, {
+        type: "cell",
+        desc,
+        value: result[0],
+        version: result[1],
+      });
     }
-    db.setCell(desc, {
-      type: "cell",
-      desc,
-      value: result[0],
-      version: result[1],
-    });
   }
 
-  _uncacheCell(db: CacheDB) {
-    db.deleteCell(this.desc);
+  _uncacheCell() {
+    const db = this.backend.db;
+    if (db) {
+      db.deleteCell(this.desc);
+    }
   }
 }

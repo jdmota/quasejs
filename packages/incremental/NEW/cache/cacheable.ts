@@ -80,7 +80,7 @@ export class CacheableComputationMixin<
       );
       return false;
     }
-    this.source.outputCell._set(cachedCell.value, cachedCell.version);
+    this.source.outputCell._set(cachedCell.value, cachedCell.version, true);
 
     return true;
   }
@@ -123,12 +123,12 @@ export class CacheableComputationMixin<
     for (const { array, activeLen } of this.source.ownedCells.values()) {
       for (let i = 0; i < activeLen; i++) {
         ownedCells.push(array[i].desc);
-        array[i]._cacheCell(this.db!);
+        array[i]._cacheCell();
       }
     }
 
     // Save output cell
-    outputCell._cacheCell(this.db!);
+    outputCell._cacheCell();
 
     // Save function
     const entry: CachedFunction = {

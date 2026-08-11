@@ -43,10 +43,10 @@ export abstract class IncrementalComputationRuntime<
   prev: IncrementalComputationRuntime<any, any> | null = null;
 
   constructor(
-    readonly backend: IncrementalBackend,
+    backend: IncrementalBackend,
     readonly desc1: AnyIncrementalComputationDescription
   ) {
-    super(desc1);
+    super(backend, desc1);
     this.state = State.CREATING;
     this.ctx = null;
     this.running = null;
@@ -141,7 +141,7 @@ export abstract class IncrementalComputationRuntime<
     if (this.isActive(ctx)) {
       this.ctx = null;
       this.mark(State.SETTLED_ERR);
-      this.backend.onFunctionError(this.desc1, err);
+      this.backend.onComputationError(this.desc1, err);
     }
   }
 
@@ -165,18 +165,18 @@ export abstract class IncrementalComputationRuntime<
 
   protected abstract invalidateRoutine(): void;
 
-  destroy() {
+  delete() {
     this.inv();
     if (this.needed()) {
       throw new Error(
-        "Invariant violation: Some computation depends on this, cannot destroy"
+        "Invariant violation: Some computation depends on this, cannot delete"
       );
     }
     this.ctx = null;
     this.running = null;
     this.reload = false;
     this.deleting = true;
-    this.backend.delete(this);
+    this.backend.deleteComputation(this);
     this.deleteRoutine();
     this.mark(State.DELETED);
   }
@@ -195,9 +195,9 @@ export abstract class IncrementalComputationRuntime<
     return false;
   }
 
-  maybeDestroy() {
+  maybeDelete() {
     if (!this.needed()) {
-      this.destroy();
+      this.delete();
     }
   }
 

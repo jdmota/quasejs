@@ -90,7 +90,7 @@ export class IncrementalContextRuntime<
     input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
-    const func = this.backend.getFunction(desc, false);
+    const func = this.backend.getComputation(desc, false);
     return func.outputCell.desc;
   }
 
@@ -159,14 +159,6 @@ export class IncrementalFunctionRuntime<
     if (desc instanceof IncrementalAllocatedCellDescription) {
       return this.ownedCells.get(desc.key)?.array[desc.index] as any;
     }
-  }
-
-  override onSubscribed(cell: IncrementalCellRuntime<any>) {
-    // TODO
-  }
-
-  override onUnsubscribed(cell: IncrementalCellRuntime<any>) {
-    // TODO
   }
 
   override setOutputValue(value: Output) {
@@ -258,11 +250,6 @@ export class IncrementalFunctionRuntime<
 
   protected deleteRoutine() {
     this.cacheableMixin?.deleteRoutine();
-  }
-
-  override isOrphan(): boolean {
-    // TODO
-    return false;
   }
 
   protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}

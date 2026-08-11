@@ -47,25 +47,8 @@ export class IncrementalFS {
     this.watcher = null;
   }
 
-  markReachable(file: IncrementalFile) {
-    this.logger.debug("Reachable", file.path);
-    this.unreachable.delete(file);
-  }
-
-  markUnreachable(file: IncrementalFile) {
-    this.logger.debug("Unreachable", file.path);
-    this.unreachable.add(file);
-  }
-
-  // TODO when to call this?
-  gc() {
-    this.logger.debug("GC");
-    const unreachable = Array.from(this.unreachable);
-    for (const file of unreachable) {
-      if (file.delete()) {
-        this.files.delete(file.path);
-      }
-    }
+  _deleteFile(file: IncrementalFile) {
+    this.files.delete(file.path);
   }
 
   private react(event: FileChange, path: string, recursive: boolean) {
@@ -147,7 +130,7 @@ export class IncrementalFS {
 
   async close() {
     const { files, watcher } = this;
-    if ([...files.values()].some(f => f.subsCount() > 0)) {
+    if ([...files.values()].some(f => !f.isOrphan())) {
       throw new Error("There are dependencies on this file system");
     }
     files.clear();

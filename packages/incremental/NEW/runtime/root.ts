@@ -56,10 +56,10 @@ export class IncrementalRoot extends IncrementalCellOwner {
   >;
 
   constructor(
-    readonly backend: IncrementalBackend,
+    backend: IncrementalBackend,
     readonly name: string
   ) {
-    super(new IncrementalRootDescription(name));
+    super(backend, new IncrementalRootDescription(name));
     this.cells = new HashMap({
       equal: (a, b) => a[$EQUALS](b),
       hash: a => a[$HASHCODE](),
@@ -83,25 +83,27 @@ export class IncrementalRoot extends IncrementalCellOwner {
     );
   }
 
-  onSubscribed(cell: IncrementalCellRuntime<any>) {
-    // TODO
-  }
-
-  onUnsubscribed(cell: IncrementalCellRuntime<any>) {
-    // TODO
-  }
-
-  // TODO deal with caching
-
   demandAndWait(): Promise<void> {
     return Promise.resolve();
   }
 
-  isOrphan(): boolean {
+  override isRoot(): boolean {
+    return true;
+  }
+
+  delete() {
+    // Do nothing
+  }
+
+  override isOrphan(): boolean {
     return false;
   }
 
-  override isRoot(): boolean {
-    return true;
+  override onSubscribed(cell: IncrementalCellRuntime<any>): void {
+    // Do nothing because this will always be a root
+  }
+
+  override onUnsubscribed(cell: IncrementalCellRuntime<any>): void {
+    // Do nothing because this will always be a root
   }
 }

@@ -51,7 +51,7 @@ export type IncrementalOpts = {
 export class IncrementalBackend {
   public static functions = functions;
 
-  private map: HashMap<
+  private computationsMap: HashMap<
     IncrementalCellOwnerDescription,
     IncrementalComputationRuntime<any, any>
   >;
@@ -61,10 +61,6 @@ export class IncrementalBackend {
     SpecialQueue<IncrementalComputationRuntime<any, any>>,
     SpecialQueue<IncrementalComputationRuntime<any, any>>,
   ];
-  private sessionVersion = 0;
-  private nextVersion = 0;
-  private canInvalidate: boolean;
-  private canExternalInvalidate: boolean;
   private readonly pending: SpecialQueue<
     IncrementalComputationRuntime<any, any>
   >;
@@ -74,14 +70,26 @@ export class IncrementalBackend {
   private readonly settledErr: SpecialQueue<
     IncrementalComputationRuntime<any, any>
   >;
+
+  private readonly orphanCellOwners: HashMap<
+    IncrementalCellOwnerDescription,
+    IncrementalCellOwner
+  >;
+
+  private sessionVersion = 0;
+  private nextVersion = 0;
+  private canInvalidate: boolean;
+  private canExternalInvalidate: boolean;
+
   // Jobs like cleanup tasks that might not fit into the computation lifecycles
   private otherJobs: Promise<unknown>[];
   public readonly fs: IncrementalFS;
   public readonly db: CacheDB | null;
   public readonly logger: Logger;
+  private readonly backendLogger: Logger;
 
   constructor(private readonly opts: IncrementalOpts) {
-    this.map = new HashMap({
+    this.computationsMap = new HashMap({
       equal: (a, b) => a[$EQUALS](b),
       hash: a => a[$HASHCODE](),
     });
@@ -91,13 +99,18 @@ export class IncrementalBackend {
       new SpecialQueue(),
       new SpecialQueue(),
     ];
-    this.canInvalidate = opts.canInvalidate;
-    this.canExternalInvalidate = opts.canInvalidate;
     this.pending = this.computations[State.PENDING];
     this.running = this.computations[State.RUNNING];
     this.settledErr = this.computations[State.SETTLED_ERR];
+    this.orphanCellOwners = new HashMap({
+      equal: (a, b) => a[$EQUALS](b),
+      hash: a => a[$HASHCODE](),
+    });
+    this.canInvalidate = opts.canInvalidate;
+    this.canExternalInvalidate = opts.canInvalidate;
     this.otherJobs = [];
     this.logger = opts.logger;
+    this.backendLogger = this.logger.createChildLogger("backend");
     this.fs = new IncrementalFS(opts, this);
     this.db = opts.cache ? new CacheDB(opts.cache, opts.logger) : null;
   }
@@ -132,9 +145,19 @@ export class IncrementalBackend {
     this.opts.onUncaughtError({ description: desc, error });
   }
 
+  onComputationError(
+    description: AnyIncrementalComputationDescription,
+    error: unknown
+  ) {
+    this.opts.onUncaughtError({
+      description,
+      error,
+    });
+  }
+
   getCellOwner(desc: IncrementalCellOwnerDescription): IncrementalCellOwner {
     if (desc instanceof IncrementalFunctionCallDescription) {
-      return this.getFunction(desc, false);
+      return this.getComputation(desc, false);
     }
     if (desc instanceof IncrementalFileDescription) {
       return this.fs.getFile(desc.path);
@@ -149,18 +172,36 @@ export class IncrementalBackend {
     return this.getCellOwner(desc.owner0).getCell(desc);
   }
 
-  getFunction<C extends IncrementalComputationRuntime<any, any>>(
+  getComputation<C extends IncrementalComputationRuntime<any, any>>(
     desc: IncrementalComputationDescription<C>,
     root: boolean
   ): C {
-    return this.map.computeIfAbsent(
+    return this.computationsMap.computeIfAbsent(
       desc,
       () => desc.create(this).init(root) satisfies C
     ) as C;
   }
 
-  delete(c: IncrementalComputationRuntime<any, any>) {
-    this.map.delete(c.desc0);
+  deleteComputation(c: IncrementalComputationRuntime<any, any>) {
+    this.computationsMap.delete(c.desc0);
+  }
+
+  markAsOrphan(owner: IncrementalCellOwner) {
+    this.orphanCellOwners.set(owner.desc0, owner);
+  }
+
+  markAsNeeded(owner: IncrementalCellOwner) {
+    this.orphanCellOwners.delete(owner.desc0);
+  }
+
+  deleteOrphans() {
+    this.backendLogger.debug("Deleting orphans");
+    for (const owner of this.orphanCellOwners.values()) {
+      if (!owner.isRoot()) {
+        owner.delete();
+      }
+    }
+    this.orphanCellOwners.clear();
   }
 
   getNextVersion(): Version {
@@ -169,16 +210,6 @@ export class IncrementalBackend {
     // (we rely on a global value to ensure that even
     // deleted then recreated cells have different versions)
     return [this.sessionVersion, this.nextVersion++];
-  }
-
-  onFunctionError(
-    description: AnyIncrementalComputationDescription,
-    error: unknown
-  ) {
-    this.opts.onUncaughtError({
-      description,
-      error,
-    });
   }
 
   invalidationsAllowed() {

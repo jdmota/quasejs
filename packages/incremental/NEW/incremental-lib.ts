@@ -34,7 +34,7 @@ export class IncrementalLib {
     input: Input
   ) {
     const desc = new IncrementalFunctionCallDescription(schema, input);
-    const func = this.backend.getFunction(desc, true);
+    const func = this.backend.getComputation(desc, true);
     return func.outputCell.entryGet();
   }
 

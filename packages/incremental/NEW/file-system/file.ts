@@ -166,7 +166,7 @@ export class IncrementalFile extends IncrementalCellOwner {
     private readonly fs: IncrementalFS,
     readonly path: string
   ) {
-    super(new IncrementalFileDescription(path));
+    super(fs.backend, new IncrementalFileDescription(path));
     this.mainCells = {
       ADD_REMOVE: createFileCell(fs, this, path, FileChange.ADD_REMOVE, false),
       CHANGE: createFileCell(fs, this, path, FileChange.CHANGE, false),
@@ -188,20 +188,6 @@ export class IncrementalFile extends IncrementalCellOwner {
       return (desc.recursive ? this.recCells : this.mainCells)[
         desc.type
       ] satisfies FileCell as any;
-    }
-  }
-
-  isOrphan(): boolean {
-    return this.subsCount() === 0;
-  }
-
-  onSubscribed(cell: IncrementalCellRuntime<any>): void {
-    this.fs.markReachable(this);
-  }
-
-  onUnsubscribed(cell: IncrementalCellRuntime<any>): void {
-    if (this.subsCount() === 0) {
-      this.fs.markUnreachable(this);
     }
   }
 
@@ -250,10 +236,8 @@ export class IncrementalFile extends IncrementalCellOwner {
             this.mainCells[FileChange.CHANGE]._reload(cachedChange, mtimeNs);
 
             if (this.isCacheable) {
-              this.mainCells[FileChange.ADD_REMOVE]._cacheCell(
-                this.fs.backend.db!
-              );
-              this.mainCells[FileChange.CHANGE]._cacheCell(this.fs.backend.db!);
+              this.mainCells[FileChange.ADD_REMOVE]._cacheCell();
+              this.mainCells[FileChange.CHANGE]._cacheCell();
             }
           }
         }
@@ -263,28 +247,16 @@ export class IncrementalFile extends IncrementalCellOwner {
   }
 
   delete() {
-    if (this.isOrphan()) {
-      const watcher = this.fs.getCurrentWatcher();
-      this.ready = null;
-      if (watcher) {
-        watcher.unwatch(this.path);
-      }
-      if (this.isCacheable) {
-        this.mainCells[FileChange.ADD_REMOVE]._uncacheCell(this.fs.backend.db!);
-        this.mainCells[FileChange.CHANGE]._uncacheCell(this.fs.backend.db!);
-      }
-      this.fs.logger.debug("Deleted", this.path);
-      return true;
+    const watcher = this.fs.getCurrentWatcher();
+    this.ready = null;
+    this.fs._deleteFile(this);
+    if (watcher) {
+      watcher.unwatch(this.path);
     }
-    return false;
-  }
-
-  subsCount() {
-    return (
-      this.mainCells.ADD_REMOVE.readersCount() +
-      this.recCells.ADD_REMOVE.readersCount() +
-      this.mainCells.CHANGE.readersCount() +
-      this.recCells.CHANGE.readersCount()
-    );
+    if (this.isCacheable) {
+      this.mainCells[FileChange.ADD_REMOVE]._uncacheCell();
+      this.mainCells[FileChange.CHANGE]._uncacheCell();
+    }
+    this.fs.logger.debug("Deleted", this.path);
   }
 }

@@ -1,13 +1,18 @@
 // The implementation of a incremental reachability algorithm
+// which I now realize is like the "Simple Incremental" algorithm
+// which mantains a reachability tree rooted at some source
+// https://arxiv.org/pdf/1905.01216
 import { CounterMap } from "../../util/data-structures/counter-map";
 import { LinkedList } from "../../util/data-structures/linked-list";
 
-type ReachabilityId = {
+type ReachabilityId = number & {
   readonly __opaque__: unique symbol;
 };
 
+let reachabilityUuid = 1;
+
 function newReachabilityId(): ReachabilityId {
-  return {} as ReachabilityId;
+  return reachabilityUuid++ as ReachabilityId;
 }
 
 type ReachabilityStatus = {
@@ -175,7 +180,7 @@ export class ReachableMixinRoot extends ReachableMixin {
   }
 }
 
-// One alternative solution would be to use strong connected components.
+// One alternative solution would be to use strong connected components instead of nodes.
 // If the removed edge were inside a component, split the component.
 // All nodes in the previous component should still be reachable from the root.
 // If the removed edge goes from one component to another,
