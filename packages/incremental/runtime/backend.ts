@@ -1,11 +1,11 @@
-import { SpecialQueue2 } from "../../../util/data-structures/linked-list";
-import type { Logger } from "../../../util/logger";
-import { assertion, className } from "../../../util/miscellaneous";
-import { Scheduler } from "../../../util/schedule";
-import { createErrorDefer } from "../../../util/deferred";
-import { $EQUALS, $FORMAT, $HASHCODE } from "../../../util/values";
-import { HashMap } from "../../utils/hash-map";
-import type { Version } from "../../utils/versions";
+import { SpecialQueue2 } from "../../util/data-structures/linked-list";
+import type { Logger } from "../../util/logger";
+import { assertion, className } from "../../util/miscellaneous";
+import { Scheduler } from "../../util/schedule";
+import { createErrorDefer } from "../../util/deferred";
+import { $EQUALS, $FORMAT, $HASHCODE } from "../../util/values";
+import { HashMap } from "../utils/hash-map";
+import type { Version } from "../utils/versions";
 import {
   type FileChangeEvent,
   IncrementalFS,

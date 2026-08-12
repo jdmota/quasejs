@@ -1,11 +1,18 @@
 import * as lmdb from "lmdb";
 import path from "node:path";
 import { inspect } from "node:util";
-import { Logger } from "../../../util/logger";
-import { assertion } from "../../../util/miscellaneous";
-import { SerializationError } from "../../../util/serialization-2";
-import { HashMap } from "../../utils/hash-map";
-import { type Version } from "../../utils/versions";
+import { Logger } from "../../util/logger";
+import { assertion } from "../../util/miscellaneous";
+import { SerializationError } from "../../util/serialization-2";
+import { HashMap } from "../utils/hash-map";
+import { type Version } from "../utils/versions";
+import {
+  type EqualsTrait,
+  type HashCodeTrait,
+  $EQUALS,
+  $FORMAT,
+  $HASHCODE,
+} from "../../util/values";
 import type { AnyIncrementalFunctionCallDescription } from "../descriptions/functions";
 import type { IncrementalCacheOpts } from "../runtime/backend";
 import type {
@@ -14,13 +21,6 @@ import type {
   IncrementalCellDescription,
   IncrementalOutputCellDescription,
 } from "../descriptions/cells";
-import {
-  type EqualsTrait,
-  type HashCodeTrait,
-  $EQUALS,
-  $FORMAT,
-  $HASHCODE,
-} from "../../../util/values";
 
 export function checkArray<T>(val: T[] | number): T[] {
   if (Array.isArray(val)) {

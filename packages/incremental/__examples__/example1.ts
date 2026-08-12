@@ -1,5 +1,5 @@
 import { IncrementalLib } from "../incremental-lib";
-import { Logger } from "../../../util/logger";
+import { Logger } from "../../util/logger";
 
 const lib = new IncrementalLib<{}>({
   fs: {

@@ -1,7 +1,7 @@
-import { type Logger } from "../../../util/logger";
-import { computeIfAbsent } from "../../../util/maps-sets";
-import { $FORMAT } from "../../../util/values";
-import type { Version } from "../../utils/versions";
+import { type Logger } from "../../util/logger";
+import { computeIfAbsent } from "../../util/maps-sets";
+import { $FORMAT } from "../../util/values";
+import type { Version } from "../utils/versions";
 import { CacheableComputationMixin } from "../cache/cacheable";
 import {
   type ResultOfCellDesc,
@@ -12,6 +12,8 @@ import {
 import {
   type CellsTypes,
   type IncrementalFunctionSchema,
+  type InputOfFuncSchema,
+  type OutputOfFuncSchema,
   IncrementalFunctionCallDescription,
 } from "../descriptions/functions";
 import type { FileChange } from "../file-system/file-system";
@@ -85,11 +87,15 @@ export class IncrementalContextRuntime<
     return cell.get(this, this.runtime);
   }
 
-  call<Input, Output, Cell extends CellsTypes>(
-    schema: IncrementalFunctionSchema<Input, Output, Cell>,
-    input: Input
-  ) {
-    const desc = new IncrementalFunctionCallDescription(schema, input);
+  call<Schema extends IncrementalFunctionSchema<any, any, any>>(
+    schema: Schema,
+    input: InputOfFuncSchema<Schema>
+  ): IncrementalOutputCellDescription<OutputOfFuncSchema<Schema>> {
+    const desc = new IncrementalFunctionCallDescription<
+      InputOfFuncSchema<Schema>,
+      OutputOfFuncSchema<Schema>,
+      any
+    >(schema, input);
     const func = this.backend.getComputation(desc, false);
     return func.outputCell.desc;
   }

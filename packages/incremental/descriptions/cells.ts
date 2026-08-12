@@ -1,4 +1,4 @@
-import { serializationRegistry } from "../../utils/serialization-db";
+import { serializationRegistry } from "../utils/serialization-db";
 import {
   type FormatTrait,
   type SerializeResult,
@@ -7,7 +7,7 @@ import {
   $FORMAT,
   $HASHCODE,
   $SERIALIZE,
-} from "../../../util/values";
+} from "../../util/values";
 import type { WithCacheKey } from "../cache/cache-db";
 import type {
   AnyIncrementalFunctionCallDescription,

@@ -15,6 +15,11 @@ export interface ReachableNode {
   onReachabilityChange(from: boolean, to: boolean): void;
 }
 
+type Recheck = {
+  readonly queue: LinkedList<ReachableMixin>;
+  readonly id: ReachabilityId;
+};
+
 export class ReachableMixin {
   public readonly node: ReachableNode;
   // Reachability
@@ -34,7 +39,16 @@ export class ReachableMixin {
   // (See mark function)
   private readonly delayedRemovedOutNodes = new CounterMap<ReachableMixin>();
 
-  constructor(source: ReachableNode) {
+  // To implement nodes those "root" status changes,
+  // it is easier (and less error prone),
+  // to actually have a single "root" for the purposes of reachability
+  // and then connect that "root" to other nodes that
+  // are to be considered "roots" at the application level
+
+  constructor(
+    source: ReachableNode,
+    private readonly root: boolean
+  ) {
     this.node = source;
     this.reachable = null;
     this.reachabilityStatusId = null;
@@ -42,7 +56,7 @@ export class ReachableMixin {
   }
 
   isRoot(): boolean {
-    return false;
+    return this.root;
   }
 
   isReachable(): boolean {
@@ -81,8 +95,14 @@ export class ReachableMixin {
     }
   }
 
-  performDeletionsAndRecheck() {
-    const queue = new LinkedList<ReachableMixin>();
+  static prepareRecheck(): Recheck {
+    return {
+      queue: new LinkedList<ReachableMixin>(),
+      id: reachabilityUuid++ as ReachabilityId,
+    };
+  }
+
+  performDeletionsAndRecheck({ queue, id }: Recheck) {
     for (const [outNode, count] of this.delayedRemovedOutNodes.entries()) {
       // Perform the edge removals
       const c = outNode.inNodes.minus(this, count);
@@ -105,11 +125,8 @@ export class ReachableMixin {
     // The queue will contain all the nodes for which
     // this.reachable was the edge removed.
     // If this.reachable was already null, no need to add the node to the queue.
-    if (!queue.isEmpty()) {
-      const id = reachabilityUuid++ as ReachabilityId;
-      for (const node of queue.iterateAndRemove()) {
-        node.checkReachability(queue, id);
-      }
+    for (const node of queue.iterateAndRemove()) {
+      node.checkReachability(queue, id);
     }
   }
 
@@ -167,18 +184,6 @@ export class ReachableMixin {
   }
 }
 
-// To implement nodes those "root" status changes,
-// it is easier (and less error prone),
-// to actually have a single "root" for the purposes of reachability
-// and then connect that "root" to other nodes that
-// are to be considered "roots" at the application level
-
-export class ReachableMixinRoot extends ReachableMixin {
-  override isRoot(): boolean {
-    return true;
-  }
-}
-
 // One alternative solution would be to use strong connected components instead of nodes.
 // If the removed edge were inside a component, split the component.
 // All nodes in the previous component should still be reachable from the root.
@@ -186,7 +191,7 @@ export class ReachableMixinRoot extends ReachableMixin {
 // we just need to check if we have a reachable parent component,
 // because the cycles only exist inside the components.
 // The summary is that we should ignore the edges that lead to itself (i.e. a cycle).
-// But keeping track of the strong components, or even just the cyles,
+// But keeping track of the strong components, or even just the cycles,
 // is probably more complicated than what we have here.
 // In fact, if we use this to track needed computations (from the roots),
 // on that use case, we already should not have cycles.

@@ -1,7 +1,7 @@
 import chokidarWatcher from "chokidar";
 import { dirname } from "path";
-import { normalizePath } from "../../../util/path-url";
-import type { Logger } from "../../../util/logger";
+import { normalizePath } from "../../util/path-url";
+import type { Logger } from "../../util/logger";
 import type { IncrementalBackend, IncrementalOpts } from "../runtime/backend";
 import type { IncrementalContextRuntime } from "../runtime/functions";
 import { IncrementalFile } from "./file";

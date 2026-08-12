@@ -1,11 +1,11 @@
-import { valueEquals } from "../../../util/values";
-import { type Defer, createDefer } from "../../../util/deferred";
+import { valueEquals } from "../../util/values";
+import { type Defer, createDefer } from "../../util/deferred";
 import {
   type ChangedValue,
   type Version,
   type VersionedValue,
   sameVersion,
-} from "../../utils/versions";
+} from "../utils/versions";
 import { type IncrementalBackend } from "./backend";
 import type { CachedCell } from "../cache/cache-db";
 import {

@@ -1,7 +1,7 @@
 import fsextra from "fs-extra";
-import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
-import { type TinyTask, tinyTask } from "../../../util/fiber-tiny";
-import { serializationRegistry } from "../../utils/serialization-db";
+import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../util/values";
+import { type TinyTask, tinyTask } from "../../util/fiber-tiny";
+import { serializationRegistry } from "../utils/serialization-db";
 import {
   type IncrementalCellOwnerDescription,
   IncrementalCellDescription,

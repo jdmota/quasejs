@@ -7,10 +7,10 @@ import {
   valueEquals,
   valueFormat,
   valueHashCode,
-} from "../../../util/values";
-import type { MaybeAsync } from "../../../util/miscellaneous";
-import { SerializationError } from "../../../util/serialization";
-import { serializationRegistry } from "../../utils/serialization-db";
+} from "../../util/values";
+import type { MaybeAsync } from "../../util/miscellaneous";
+import { SerializationError } from "../../util/serialization";
+import { serializationRegistry } from "../utils/serialization-db";
 import type { IncrementalBackend } from "../runtime/backend";
 import {
   type IncrementalContextRuntime,
@@ -62,6 +62,12 @@ export class IncrementalFunctionSchema<Input, Output, Cells extends CellsTypes>
     };
   }
 }
+
+export type InputOfFuncSchema<T> =
+  T extends IncrementalFunctionSchema<infer Input, any, any> ? Input : never;
+
+export type OutputOfFuncSchema<T> =
+  T extends IncrementalFunctionSchema<any, infer Output, any> ? Output : never;
 
 type IncrementalFunctionSchemaJSON = {
   readonly name: string;

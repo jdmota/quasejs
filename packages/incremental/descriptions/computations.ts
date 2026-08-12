@@ -4,7 +4,7 @@ import type {
   $HASHCODE,
   $SERIALIZE,
   SerializeResult,
-} from "../../../util/values";
+} from "../../util/values";
 import type { IncrementalBackend } from "../runtime/backend";
 import type { IncrementalComputationRuntime } from "../runtime/computations";
 import type { IncrementalCellOwnerDescription } from "./cells";

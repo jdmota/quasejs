@@ -1,6 +1,6 @@
-import { computeIfAbsent } from "../../../util/maps-sets";
-import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../../util/values";
-import { serializationRegistry } from "../../utils/serialization-db";
+import { computeIfAbsent } from "../../util/maps-sets";
+import { $EQUALS, $FORMAT, $HASHCODE, $SERIALIZE } from "../../util/values";
+import { serializationRegistry } from "../utils/serialization-db";
 import {
   type IncrementalCellOwnerDescription,
   IncrementalAllocatedCellDescription,

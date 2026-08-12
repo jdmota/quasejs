@@ -1,4 +1,4 @@
-import type { MaybeAsync } from "../../../util/miscellaneous";
+import type { MaybeAsync } from "../../util/miscellaneous";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
 import { type IncrementalBackend } from "./backend";
 import { IncrementalCellOwner } from "./cells";
