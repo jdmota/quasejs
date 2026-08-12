@@ -12,6 +12,10 @@ export class LinkedList<V> {
     this.tail = null;
   }
 
+  isEmpty() {
+    return this.head == null;
+  }
+
   addLast(value: V) {
     const node: LinkedListNode<V> = {
       value,

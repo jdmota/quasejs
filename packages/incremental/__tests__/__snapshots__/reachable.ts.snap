@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`reachable (deterministic): log 1`] = `
+[
+  {
+    "from": false,
+    "id": 1,
+    "to": true,
+  },
+  {
+    "from": false,
+    "id": 2,
+    "to": true,
+  },
+  {
+    "from": false,
+    "id": 3,
+    "to": true,
+  },
+  {
+    "from": false,
+    "id": 4,
+    "to": true,
+  },
+  {
+    "from": true,
+    "id": 3,
+    "to": false,
+  },
+  {
+    "from": true,
+    "id": 4,
+    "to": false,
+  },
+]
+`;

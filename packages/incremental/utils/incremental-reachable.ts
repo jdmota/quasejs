@@ -11,28 +11,22 @@ type ReachabilityId = number & {
 
 let reachabilityUuid = 1;
 
-function newReachabilityId(): ReachabilityId {
-  return reachabilityUuid++ as ReachabilityId;
-}
-
-type ReachabilityStatus = {
-  confirmed: boolean;
-  id: ReachabilityId | null;
-};
-
 export interface ReachableNode {
-  readonly reachableMixin: ReachableMixin;
   onReachabilityChange(from: boolean, to: boolean): void;
 }
 
 export class ReachableMixin {
-  public readonly source: ReachableNode;
+  public readonly node: ReachableNode;
   // Reachability
   // By keeping track of one edge that leads to the root,
-  // we reduce the changes that we need to recheck each node,
+  // we reduce the chances that we need to recheck each node,
   // since most likely, the edge removed, is not this one.
   private reachable: ReachableMixin | null;
-  private readonly reachabilityStatus: ReachabilityStatus;
+  // If reachable != null, this information tells us if we can trust such value
+  // reachabilityStatusId says in which session reachability was checked
+  // reachabilityStatusConfirmed says if the check is done
+  private reachabilityStatusId: ReachabilityId | null;
+  private reachabilityStatusConfirmed: boolean;
   // Node -> number of edges associated with the same node
   private readonly inNodes = new CounterMap<ReachableMixin>();
   private readonly outNodes = new CounterMap<ReachableMixin>();
@@ -41,12 +35,10 @@ export class ReachableMixin {
   private readonly delayedRemovedOutNodes = new CounterMap<ReachableMixin>();
 
   constructor(source: ReachableNode) {
-    this.source = source;
+    this.node = source;
     this.reachable = null;
-    this.reachabilityStatus = {
-      confirmed: false,
-      id: null,
-    };
+    this.reachabilityStatusId = null;
+    this.reachabilityStatusConfirmed = false;
   }
 
   isRoot(): boolean {
@@ -83,7 +75,7 @@ export class ReachableMixin {
       return;
     }
     this.reachable = from;
-    this.source.onReachabilityChange(false, true);
+    this.node.onReachabilityChange(false, true);
     for (const child of this.outNodes) {
       child.markReachable(this);
     }
@@ -113,9 +105,11 @@ export class ReachableMixin {
     // The queue will contain all the nodes for which
     // this.reachable was the edge removed.
     // If this.reachable was already null, no need to add the node to the queue.
-    const id = newReachabilityId();
-    for (const node of queue.iterateAndRemove()) {
-      node.checkReachability(queue, id);
+    if (!queue.isEmpty()) {
+      const id = reachabilityUuid++ as ReachabilityId;
+      for (const node of queue.iterateAndRemove()) {
+        node.checkReachability(queue, id);
+      }
     }
   }
 
@@ -129,22 +123,22 @@ export class ReachableMixin {
     }
     // Since this routine was started to react to edge removals:
     // If this node was not reachable before, it remains unreachable
-    // If this node became unreachable now, the procedure to recheck out-nodes
-    // was already executed.
+    // If this node became unreachable now,
+    // then the procedure to recheck out-nodes was already executed.
     // In both cases, we can return here.
     if (this.reachable == null) {
       return false;
     }
     // If the id is the same, we already have seen this node in this session
-    if (this.reachabilityStatus.id === id) {
+    if (this.reachabilityStatusId === id) {
       // If confirmed is false, it means we are still computing this node's
       // reachability and we hit a cycle. Return false.
       // Otherwise, we can trust that this.reachable != null was confirmed.
-      return this.reachabilityStatus.confirmed;
+      return this.reachabilityStatusConfirmed;
     }
-    // First time seeing this node...
-    this.reachabilityStatus.id = id;
-    this.reachabilityStatus.confirmed = false;
+    // First time seeing this node in this session...
+    this.reachabilityStatusId = id;
+    this.reachabilityStatusConfirmed = false;
     // Check if this node is still reachable (by finding a root)
     for (const inNode of this.inNodes) {
       if (inNode.checkReachability(queue, id)) {
@@ -153,16 +147,15 @@ export class ReachableMixin {
         // No need to check the children
         // If their this.reachable was removed or is no longer reachable,
         // they will be added to the queue anyway.
-        this.reachabilityStatus.confirmed = true;
+        this.reachabilityStatusConfirmed = true;
         // Set this.reachable to a node we are sure will lead to the root
         this.reachable = inNode;
         return true;
       }
     }
     // This node is no longer reachable
-    this.reachabilityStatus.id = null;
     this.reachable = null;
-    this.source.onReachabilityChange(true, false);
+    this.node.onReachabilityChange(true, false);
     for (const outNode of this.outNodes) {
       if (outNode.reachable === this) {
         // If this outNode was reachable through this node
@@ -173,6 +166,12 @@ export class ReachableMixin {
     return false;
   }
 }
+
+// To implement nodes those "root" status changes,
+// it is easier (and less error prone),
+// to actually have a single "root" for the purposes of reachability
+// and then connect that "root" to other nodes that
+// are to be considered "roots" at the application level
 
 export class ReachableMixinRoot extends ReachableMixin {
   override isRoot(): boolean {
@@ -189,3 +188,5 @@ export class ReachableMixinRoot extends ReachableMixin {
 // The summary is that we should ignore the edges that lead to itself (i.e. a cycle).
 // But keeping track of the strong components, or even just the cyles,
 // is probably more complicated than what we have here.
+// In fact, if we use this to track needed computations (from the roots),
+// on that use case, we already should not have cycles.
