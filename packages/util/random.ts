@@ -14,3 +14,14 @@ export function randString(length: number, chars = CHARS) {
   }
   return result;
 }
+
+// From https://stackoverflow.com/a/12646864
+export function shuffleArray<T>(arr: T[]) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    let tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}

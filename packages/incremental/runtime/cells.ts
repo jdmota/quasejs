@@ -21,6 +21,7 @@ import type { IncrementalCellOwner } from "./cell-owners";
 export class IncrementalCellRuntime<
   Desc extends IncrementalCellDescription<any>,
 > {
+  public readonly isCacheable: boolean;
   // Versioned result
   private result: VersionedValue<ResultOfCellDesc<Desc>> | null = null;
   // Deferred
@@ -41,8 +42,10 @@ export class IncrementalCellRuntime<
     private readonly backend: IncrementalBackend<any>,
     private readonly owner: IncrementalCellOwner,
     public readonly desc: Desc,
+    isCacheable: boolean,
     fromCache: CachedCell<ResultOfCellDesc<Desc>> | null = null
   ) {
+    this.isCacheable = backend.db != null && isCacheable;
     if (fromCache) {
       this.pending = false;
       this.result = [fromCache.value, fromCache.version];
@@ -104,15 +107,17 @@ export class IncrementalCellRuntime<
     return { old: result, new: this.result };
   }
 
+  // Returns "true" if the cached value was accepted
   _reload(
     cached: CachedCell<ResultOfCellDesc<Desc>> | null | undefined,
     newValue: ResultOfCellDesc<Desc>
-  ) {
+  ): boolean {
     if (cached != null && valueEquals(cached.value, newValue)) {
       this._set(cached.value, cached.version, true);
-    } else {
-      this.set(newValue);
+      return true;
     }
+    this.set(newValue);
+    return false;
   }
 
   async get(
@@ -166,15 +171,14 @@ export class IncrementalCellRuntime<
   }
 
   _cacheCell() {
-    const db = this.backend.db;
-    if (db) {
+    if (this.isCacheable) {
       const { desc, result } = this;
       if (result == null) {
         throw new Error(
           `Invariant violation: trying to save a cell with no result`
         );
       }
-      db.setCell(desc, {
+      this.backend.db!.setCell(desc, {
         type: "cell",
         desc,
         value: result[0],

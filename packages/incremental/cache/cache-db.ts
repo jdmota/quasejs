@@ -234,7 +234,12 @@ export class CacheDB {
   }
 
   setCell<C>(desc: IncrementalCellDescription<C>, entry: CachedCell<C>) {
-    this.logger.debug("Saving cell", desc[$FORMAT](), entry.version);
+    this.logger.debug(
+      "Saving cell",
+      desc[$FORMAT](),
+      entry.version,
+      entry.value
+    );
     this.saveEntry(desc, entry);
   }
 

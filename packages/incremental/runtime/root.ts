@@ -97,7 +97,8 @@ export class IncrementalRoot<
         new IncrementalCellRuntime(
           this.backend,
           this,
-          new IncrementalAllocatedCellDescription(this.desc0, key, 0)
+          new IncrementalAllocatedCellDescription(this.desc0, key, 0),
+          true
         )
     );
   }

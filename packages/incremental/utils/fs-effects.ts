@@ -26,14 +26,6 @@ class FsEffects {
 
   constructor(readonly folder: string) {}
 
-  glob(patterns: string | string[], opts?: Omit<fastGlob.Options, "cwd">) {
-    return fastGlob.stream(patterns, {
-      absolute: true,
-      ...opts,
-      cwd: this.folder,
-    });
-  }
-
   async outputFile(
     file: string,
     contents: string | NodeJS.ArrayBufferView | Buffer,
@@ -53,8 +45,12 @@ class FsEffects {
 
   async clean() {
     const removeJobs = [];
-    for await (let file of this.glob("**", { onlyFiles: true })) {
-      file = file.toString();
+    for await (let file of fastGlob.stream("**", {
+      cwd: this.folder,
+      onlyFiles: true,
+      dot: true,
+    })) {
+      file = path.resolve(this.folder, file.toString());
       if (!this.files.has(file)) {
         removeJobs.push(fsextra.remove(file));
       }

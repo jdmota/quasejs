@@ -237,6 +237,15 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
     return [this.sessionVersion, this.nextVersion++];
   }
 
+  private loaded = false;
+
+  async load() {
+    if (this.db && !this.loaded) {
+      this.sessionVersion = await this.db.newGlobalSession();
+      this.loaded = true;
+    }
+  }
+
   // TODO demand driven
   // TODO when to gc?
   // TODO re-implement safe closing routine

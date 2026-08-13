@@ -4,6 +4,7 @@ import {
   ReachableMixin,
 } from "../utils/incremental-reachable";
 import { MapSet } from "../../util/data-structures/map-set";
+import { shuffleArray } from "../../util/random";
 
 type Log = {
   id: number;
@@ -63,17 +64,6 @@ it("reachable (deterministic)", async () => {
 
   expect(reachable).toStrictEqual([0, 1, 2]);
 });
-
-// From https://stackoverflow.com/a/12646864
-function shuffleArray<T>(arr: T[]) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    let tmp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = tmp;
-  }
-  return arr;
-}
 
 it("reachable (random)", async () => {
   const log: Log[] = [];

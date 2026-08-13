@@ -44,6 +44,7 @@ export class CacheableComputationMixin<
         this.source.backend,
         this.source,
         desc,
+        this.source.isCacheable,
         cachedCell
       );
       slot.array.push(cell);
@@ -65,12 +66,13 @@ export class CacheableComputationMixin<
       ctx.checkActive();
       if (!cell.isLatest(version)) {
         // Version missmatch, we need to rerun this function
+        this.source.logger.debug(
+          `Dependency ${desc[$FORMAT]()} in cache has outdated version`
+        );
         return false;
       }
       cell.dependents.set(this.source, version);
-      this.source.logger.debug(
-        `${this.source.desc[$FORMAT]()} -> ${desc[$FORMAT]()}`
-      );
+      this.source.logger.debug(`Read dependency ${desc[$FORMAT]()} from cache`);
     }
 
     // Reload output cell
@@ -91,13 +93,17 @@ export class CacheableComputationMixin<
   ): Promise<boolean> {
     const cachedFunc = this.db.getFunc(this.desc);
     if (!cachedFunc) {
+      this.source.logger.debug("Did not find function in cache");
       return false;
     }
 
     const ok = await this.reloadAttempt(ctx, cachedFunc);
     ctx.checkActive();
-    if (!ok) {
+    if (ok) {
+      this.source.logger.debug("Successful reloading");
+    } else {
       // Backtrack
+      this.source.logger.debug("Could not reload, backtracking");
       this.source.invalidateRoutine();
     }
     return ok;
@@ -113,7 +119,6 @@ export class CacheableComputationMixin<
       if (version == null || !cell.isLatest(version)) {
         // With a pending read, no point in caching
         // If by any chance the cell was updated, also bail
-        this.db.deleteFunc(this.desc);
         return;
       }
       readCells.push([cell.desc, version]);
@@ -123,12 +128,8 @@ export class CacheableComputationMixin<
     for (const { array, activeLen } of this.source.ownedCells.values()) {
       for (let i = 0; i < activeLen; i++) {
         ownedCells.push(array[i].desc);
-        array[i]._cacheCell();
       }
     }
-
-    // Save output cell
-    outputCell._cacheCell();
 
     // Save function
     const entry: CachedFunction = {

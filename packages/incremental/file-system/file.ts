@@ -126,7 +126,8 @@ function createFileCell(
   const cell = new IncrementalCellRuntime(
     fs.backend,
     file,
-    new IncrementalFileEventDescription(path, type, recursive)
+    new IncrementalFileEventDescription(path, type, recursive),
+    file.isCacheable && !recursive
   );
   if (recursive) {
     cell.set(NO_TIMESTAMP--);
@@ -159,8 +160,8 @@ export class IncrementalFile extends IncrementalCellOwner {
     [FileChange.ADD_REMOVE]: FileCell;
     [FileChange.CHANGE]: FileCell;
   };
+  public readonly isCacheable: boolean;
   private timestampJob: TinyTask<void> | null = null;
-  private readonly isCacheable: boolean;
   private reload: boolean;
 
   constructor(
@@ -232,15 +233,21 @@ export class IncrementalFile extends IncrementalCellOwner {
           }
           const { birthtimeNs, mtimeNs } = await getTimestamp(this.path);
           if (ctx.active) {
-            this.mainCells[FileChange.ADD_REMOVE]._reload(
-              cachedAddRemove,
-              birthtimeNs
+            const usedAddRemoveCache = this.mainCells[
+              FileChange.ADD_REMOVE
+            ]._reload(cachedAddRemove, birthtimeNs);
+            const usedChangeCache = this.mainCells[FileChange.CHANGE]._reload(
+              cachedChange,
+              mtimeNs
             );
-            this.mainCells[FileChange.CHANGE]._reload(cachedChange, mtimeNs);
 
             if (this.isCacheable) {
-              this.mainCells[FileChange.ADD_REMOVE]._cacheCell();
-              this.mainCells[FileChange.CHANGE]._cacheCell();
+              if (!usedAddRemoveCache) {
+                this.mainCells[FileChange.ADD_REMOVE]._cacheCell();
+              }
+              if (!usedChangeCache) {
+                this.mainCells[FileChange.CHANGE]._cacheCell();
+              }
             }
           }
         }

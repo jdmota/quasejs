@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { IncrementalLib } from "../incremental-lib";
 import { Logger, LoggerVerboseLevel } from "../../util/logger";
+import { CachePrinter } from "../cache/print-cache";
 
 const lib = new IncrementalLib<{}>({
   fs: {
@@ -16,7 +17,10 @@ const lib = new IncrementalLib<{}>({
     verbose: LoggerVerboseLevel.ALL,
   }),
   canInvalidate: true,
-  cache: false,
+  cache: {
+    dir: "packages/incremental/__examples__/cache",
+    garbageCollect: true,
+  },
 });
 
 type FILE = {
@@ -64,7 +68,14 @@ const entry = IncrementalLib.register<void, ReadonlyMap<string, FILE>, {}>({
   },
 });
 
+const PRINT_CACHE = process.argv.some(a => a.includes("print"));
+
 async function main() {
+  if (PRINT_CACHE) {
+    new CachePrinter("packages/incremental/__examples__/cache").print();
+    return;
+  }
+
   process.once("SIGINT", async () => {
     console.log("SIGINT...");
 

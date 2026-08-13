@@ -152,7 +152,8 @@ export class IncrementalFunctionRuntime<
     this.outputCell = new IncrementalCellRuntime(
       backend,
       this,
-      new IncrementalOutputCellDescription(desc)
+      new IncrementalOutputCellDescription(desc),
+      this.isCacheable
     );
   }
 
@@ -195,7 +196,8 @@ export class IncrementalFunctionRuntime<
       cell = new IncrementalCellRuntime(
         this.backend,
         this,
-        new IncrementalAllocatedCellDescription(this.desc, key, slot.activeLen)
+        new IncrementalAllocatedCellDescription(this.desc, key, slot.activeLen),
+        this.isCacheable
       );
       slot.array.push(cell);
     }

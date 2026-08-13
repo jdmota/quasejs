@@ -9,10 +9,11 @@ export class InDiskBlob {
   ) {}
 }
 
-// TODO when reloading a computation that has generated a blob
-// we need to check if it is in disk, because others might depend on it
-// This is like reloading a computation that previously had created a file system side-effect...
-// Maybe we need that! (which will also be useful, e.g., when we get to the find output of a bundler)
+// To use this properly, computations should pass
+// the "InDiskBlob pointer" between themselves,
+// and retrieve files as needed, creating a dependency on the file.
+// This ensures that if a file gets removed from the disk,
+// computations depending on the blob are invalidated.
 export class BlobsDB {
   private readonly dir: string;
 

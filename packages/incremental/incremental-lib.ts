@@ -28,6 +28,7 @@ export class IncrementalLib<RootCells extends CellsTypes> {
     schema: IncrementalFunctionSchema<Input, Output, Cells>,
     input: Input
   ) {
+    await this.backend.load();
     const desc = new IncrementalFunctionCallDescription(schema, input);
     const func = this.backend.getComputation(desc, true);
     return func.outputCell.entryGet();
