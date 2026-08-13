@@ -2,7 +2,7 @@ import { SpecialQueue2 } from "../../util/data-structures/linked-list";
 import type { Logger } from "../../util/logger";
 import { assertion, className } from "../../util/miscellaneous";
 import { Scheduler } from "../../util/schedule";
-import { createErrorDefer } from "../../util/deferred";
+import { createDefer } from "../../util/deferred";
 import { $EQUALS, $FORMAT, $HASHCODE } from "../../util/values";
 import { HashMap } from "../utils/hash-map";
 import type { Version } from "../utils/versions";
@@ -32,10 +32,10 @@ import {
 } from "./computations";
 import {
   type IncrementalCellOwner,
-  type IncrementalCellRuntime,
   NEXT_CELL_OWNER,
   PREV_CELL_OWNER,
-} from "./cells";
+} from "./cell-owners";
+import { type IncrementalCellRuntime } from "./cells";
 import { IncrementalFileDescription } from "../file-system/file";
 import { IncrementalRoot, IncrementalRootDescription } from "./root";
 
@@ -68,6 +68,7 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
     IncrementalComputationRuntime<any, any>
   >;
   readonly computations: readonly [
+    SpecialQueue2<IncrementalComputationRuntime<any, any>>,
     SpecialQueue2<IncrementalComputationRuntime<any, any>>,
     SpecialQueue2<IncrementalComputationRuntime<any, any>>,
     SpecialQueue2<IncrementalComputationRuntime<any, any>>,
@@ -105,6 +106,7 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
       hash: a => a[$HASHCODE](),
     });
     this.computations = [
+      new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
       new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
       new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
       new SpecialQueue2(PREV_COMPUTATION, NEXT_COMPUTATION),
@@ -189,7 +191,7 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
   ): C {
     return this.computationsMap.computeIfAbsent(
       desc,
-      () => desc.create(this).init(root) satisfies C
+      () => desc.create(this).markRoot(root) satisfies C
     ) as C;
   }
 
@@ -238,12 +240,14 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
   // TODO demand driven
   // TODO when to gc?
   // TODO re-implement safe closing routine
+  // TODO careful: closing or evicting should not delete from the cache
+  // TODO on process.exit, we should loop and see the functions that may be stuck waiting for each other on a kind of deadlock. We know that with promises, the process may just exit if the event loop is empty
 
   invalidationsAllowed() {
     return this.canInvalidate;
   }
 
-  private disableInvalidations() {
+  disableInvalidations() {
     this.canInvalidate = false;
   }
 
@@ -251,8 +255,14 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
     return this.canExternalInvalidate;
   }
 
-  private disableExternalInvalidations() {
+  disableExternalInvalidations() {
     this.canExternalInvalidate = false;
+  }
+
+  private invalidateSettledErr() {
+    for (const c of this.settledErr.keepTaking()) {
+      c.invalidate();
+    }
   }
 
   private scheduler1 = new Scheduler(() => this.wake(), 100);
@@ -262,26 +272,18 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
   }, 200);
 
   scheduleWake() {
-    this.scheduler1.schedule();
+    if (this.canInvalidate) {
+      this.scheduler1.schedule();
+    }
   }
 
-  wake() {
+  private wake() {
     this.scheduler1.cancel();
-    // TODO FIXME
-
-    // Since invalidations of a computation:
-    // - do not immediately invalidate the subscribers
-    // - immediately disconnect it from dependencies
-    // and since there is memoing,
-    // we actually do not need to start these in topological order.
-    // Since some computations might not be removed from the "pending" set,
-    // in case they have no dependents, we use Array.from first,
-    // also keeping in mind that "iterateAll" is not stable over modifications.
-    let started = false;
-    for (const c of Array.from(this.pending.iterateAll())) {
-      started = c.maybeRun() || started;
+    let computation;
+    while ((computation = this.pending.peek())) {
+      assertion(computation.isNeeded());
+      computation.run();
     }
-    return started;
   }
 
   // External invalidations (like those caused by file changes)
@@ -294,28 +296,16 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
     }
   }
 
-  private invalidateSettledErr() {
-    for (const c of this.settledErr.keepTaking()) {
-      c.invalidate();
-    }
-  }
-
-  // TODO on process.exit, we should loop and see the functions that may be stuck waiting for each other on a kind of deadlock. We know that with promises, the process may just exit if the event loop is empty
-
-  // TODO allow for demand driven executions
-
-  private async wait() {
+  async wait() {
+    this.backendLogger.debug("Waiting...");
     while (!this.pending.isEmpty() || !this.running.isEmpty()) {
-      const started = this.wake();
+      this.wake();
       const computation = this.running.peek();
       if (computation) {
         await this.run(computation);
-      } else if (!started) {
-        // No running computation, and those that are pending did not start
-        // (because they are lonely), let's break to avoid infinite loop
-        break;
       }
     }
+    this.backendLogger.debug("Wait done");
   }
 
   run<Ctx, Output>(
@@ -324,47 +314,50 @@ export class IncrementalBackend<RootCells extends CellsTypes> {
     return Promise.race([computation.run(), this.interruptedDefer.promise]);
   }
 
-  private interruptedDefer = createErrorDefer();
+  peekErrors() {
+    // this.deleteOrphans();
+    const errors: unknown[] = [];
+    // TODO
+    /* for (const c of this.computations[State.SETTLED_ERR].iterateAll()) {
+      const res = c.peekResult();
+      if (!res.ok) {
+        errors.push(res.error);
+      }
+    } */
+    return errors;
+  }
+
+  private interruptedDefer = createDefer<void>();
   private cleaningUp = false;
 
   isCleaningUp() {
     return this.cleaningUp;
   }
 
-  private cleanupRun(interrupted: boolean) {
+  cleanupRun(interrupted: boolean) {
     if (this.cleaningUp) return;
     this.cleaningUp = true;
-    this.interruptedDefer.reject(new Error("Interrupted"));
+    this.interruptedDefer.resolve();
 
     this.scheduler1.cancel();
     this.scheduler2.cancel();
 
-    // TODO
     // Basic clean up before locking the cache DB (preventing adding/deleting entries)
-    /* this.clearOrphans();
-    this.db?.lock(); */
+    this.deleteOrphans();
+    this.db?.lock();
 
-    // TODO
-    // Now clear everything
-    /* rootComputation.setRoot(false);
-    rootComputation.destroy();
-    this.clearOrphans();
+    // TODO evict everything, ensure it is cached
 
-    if (this.computationsCount() > 0) {
+    /* if (this.computationsCount() > 0) {
       throw new Error("Invariant violation: Cleanup failed");
     } */
 
-    const { /* db, */ fs } = this;
+    const { db, fs } = this;
     this.queueOtherJob(null, () => fs.close());
-    // if (db) this.queueOtherJob(null, () => db.save(interrupted));
+    if (db) this.queueOtherJob(null, () => db.save(interrupted));
 
     const { otherJobs } = this;
     this.otherJobs = [];
     return Promise.all(otherJobs);
-  }
-
-  close() {
-    // TODO
-    return this.cleanupRun(false);
   }
 }

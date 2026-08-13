@@ -1,33 +1,26 @@
 import type { MaybeAsync } from "../../util/miscellaneous";
 import type { AnyIncrementalComputationDescription } from "../descriptions/computations";
 import { type IncrementalBackend } from "./backend";
-import { IncrementalCellOwner } from "./cells";
+import { IncrementalCellOwner } from "./cell-owners";
 
 export const PREV_COMPUTATION = Symbol("quase.incremental.prev.computation");
 export const NEXT_COMPUTATION = Symbol("quase.incremental.next.computation");
 
 export enum State {
-  PENDING = 0,
-  RUNNING = 1,
-  SETTLED_ERR = 2,
-  SETTLED_OK = 3,
-  DELETED = 4,
-  CREATING = 5,
+  IDLE = 0,
+  PENDING = 1,
+  RUNNING = 2,
+  SETTLED_ERR = 3,
+  SETTLED_OK = 4,
+  DELETED = 5,
 }
 
-export type StateNotCreating =
-  | State.PENDING
-  | State.RUNNING
-  | State.SETTLED_ERR
-  | State.SETTLED_OK
-  | State.DELETED;
-
 export type StateNotDeleted =
+  | State.IDLE
   | State.PENDING
   | State.RUNNING
   | State.SETTLED_ERR
-  | State.SETTLED_OK
-  | State.CREATING;
+  | State.SETTLED_OK;
 
 export abstract class IncrementalComputationRuntime<
   Ctx,
@@ -49,12 +42,13 @@ export abstract class IncrementalComputationRuntime<
     readonly desc1: AnyIncrementalComputationDescription
   ) {
     super(backend, desc1);
-    this.state = State.CREATING;
+    this.state = State.IDLE;
     this.ctx = null;
     this.running = null;
     this.deleting = false;
     this.isCacheable = backend.db != null && desc1.isCacheable();
     this.reload = this.isCacheable;
+    this.backend.computations[this.state].add(this);
   }
 
   protected isDeleting() {
@@ -75,10 +69,16 @@ export abstract class IncrementalComputationRuntime<
     }
   }
 
-  init(root: boolean) {
-    this.markRoot(root);
-    this.mark(State.PENDING);
-    return this;
+  override onNeedChange(needed: boolean): void {
+    if (needed) {
+      if (this.state === State.IDLE) {
+        this.mark(State.PENDING);
+      }
+    } else {
+      if (this.state === State.PENDING) {
+        this.mark(State.IDLE);
+      }
+    }
   }
 
   abstract setOutputValue(value: Output): void;
@@ -156,9 +156,8 @@ export abstract class IncrementalComputationRuntime<
     this.reload = false;
     // Invalidate routine
     this.invalidateRoutine();
-    // Mark as pending and schedule execution
-    this.mark(State.PENDING);
-    this.backend.scheduleWake();
+    // If needed, mark as pending
+    this.mark(this.isNeeded() ? State.PENDING : State.IDLE);
   }
 
   protected abstract invalidateRoutine(): void;
@@ -185,37 +184,21 @@ export abstract class IncrementalComputationRuntime<
     return this.run();
   }
 
-  maybeRun() {
-    if (this.state === State.PENDING && this.isNeeded()) {
-      this.run();
-      return true;
-    }
-    return false;
-  }
-
-  maybeDelete() {
-    if (!this.isNeeded()) {
-      this.delete();
-    }
-  }
-
-  private mark(state: StateNotCreating) {
+  private mark(state: State) {
     const prevState = this.state;
     if (prevState === State.DELETED) {
       throw new Error("Invariant violation: Unexpected deleted computation");
     }
-    if (prevState !== State.CREATING) {
-      this.backend.computations[prevState].delete(this);
-    }
+    this.backend.computations[prevState].delete(this);
     if (state !== State.DELETED) {
       this.backend.computations[state].add(this);
     }
     this.state = state;
     this.onStateChange(prevState, state);
+    if (state === State.PENDING) {
+      this.backend.scheduleWake();
+    }
   }
 
-  protected abstract onStateChange(
-    from: StateNotDeleted,
-    to: StateNotCreating
-  ): void;
+  protected abstract onStateChange(from: StateNotDeleted, to: State): void;
 }

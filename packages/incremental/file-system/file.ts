@@ -7,7 +7,8 @@ import {
   IncrementalCellDescription,
 } from "../descriptions/cells";
 import type { IncrementalContextRuntime } from "../runtime/functions";
-import { IncrementalCellRuntime, IncrementalCellOwner } from "../runtime/cells";
+import { IncrementalCellRuntime } from "../runtime/cells";
+import { IncrementalCellOwner } from "../runtime/cell-owners";
 import { FileChange, IncrementalFS } from "./file-system";
 
 // By allows decreasing this value when using it,
@@ -190,6 +191,8 @@ export class IncrementalFile extends IncrementalCellOwner {
       ] satisfies FileCell as any;
     }
   }
+
+  override onNeedChange(needed: boolean): void {}
 
   reactFile() {
     this.timestampJob?.abort();

@@ -20,8 +20,8 @@ import type { FileChange } from "../file-system/file-system";
 import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
 import {
+  type State,
   type StateNotDeleted,
-  type StateNotCreating,
   IncrementalComputationRuntime,
 } from "./computations";
 
@@ -258,5 +258,7 @@ export class IncrementalFunctionRuntime<
     this.cacheableMixin?.deleteRoutine();
   }
 
-  protected onStateChange(from: StateNotDeleted, to: StateNotCreating) {}
+  protected onStateChange(from: StateNotDeleted, to: State) {
+    this.logger.debug(`State changing from ${from} to ${to}`);
+  }
 }

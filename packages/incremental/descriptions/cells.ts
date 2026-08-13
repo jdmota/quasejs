@@ -18,6 +18,9 @@ export interface IncrementalCellOwnerDescription
   extends WithCacheKey,
     FormatTrait {}
 
+// Cell descriptions are similar to pointers
+// Trying to read a deleted cell is like dereferencing a dangling pointer
+
 export abstract class IncrementalCellDescription<Value>
   implements WithCacheKey, SerializeTrait<any>, FormatTrait
 {

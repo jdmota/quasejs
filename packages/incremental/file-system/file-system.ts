@@ -28,7 +28,6 @@ const CHOKIDAR_EVENT_TO_FILE_CHANGE = {
 export type FileChangeEvent = {
   readonly event: FileChange;
   readonly path: string;
-  readonly recursive: boolean;
 };
 
 export class IncrementalFS {
@@ -51,13 +50,16 @@ export class IncrementalFS {
     this.files.delete(file.path);
   }
 
-  private react(event: FileChange, path: string, recursive: boolean) {
-    this.logger.debug({
+  private initialReact(event: FileChange, path: string) {
+    this.backend.callUserFn(null, this.opts.fs.onEvent, {
       event,
       path,
-      recursive,
     });
-    this.backend.callUserFn(null, this.opts.fs.onEvent, {
+    this.react(event, path, false);
+  }
+
+  private react(event: FileChange, path: string, recursive: boolean) {
+    this.logger.debug({
       event,
       path,
       recursive,
@@ -98,10 +100,9 @@ export class IncrementalFS {
       });
       this.watcher = watcher;
       watcher.on("all", async (event, path) => {
-        this.react(
+        this.initialReact(
           CHOKIDAR_EVENT_TO_FILE_CHANGE[event],
-          normalizePath(path),
-          false
+          normalizePath(path)
         );
       });
     }
@@ -129,11 +130,7 @@ export class IncrementalFS {
   }
 
   async close() {
-    const { files, watcher } = this;
-    if ([...files.values()].some(f => !f.isOrphan())) {
-      throw new Error("There are dependencies on this file system");
-    }
-    files.clear();
+    const { watcher } = this;
     if (watcher) {
       this.watcher = null;
       await watcher.close();

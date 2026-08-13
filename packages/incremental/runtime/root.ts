@@ -8,7 +8,8 @@ import {
 } from "../descriptions/cells";
 import type { CellsTypes } from "../descriptions/functions";
 import type { IncrementalBackend } from "./backend";
-import { IncrementalCellOwner, IncrementalCellRuntime } from "./cells";
+import { IncrementalCellRuntime } from "./cells";
+import { IncrementalCellOwner } from "./cell-owners";
 
 export class IncrementalRootDescription
   implements IncrementalCellOwnerDescription
@@ -124,4 +125,6 @@ export class IncrementalRoot<
   override onUnsubscribed(cell: IncrementalCellRuntime<any>): void {
     // Do nothing because this will always be a root
   }
+
+  override onNeedChange(needed: boolean): void {}
 }

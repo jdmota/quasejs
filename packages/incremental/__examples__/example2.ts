@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "fs-extra";
 import { IncrementalLib } from "../incremental-lib";
-import { Logger } from "../../util/logger";
+import { Logger, LoggerVerboseLevel } from "../../util/logger";
 
 const lib = new IncrementalLib<{}>({
   fs: {
@@ -12,8 +12,10 @@ const lib = new IncrementalLib<{}>({
   onUncaughtError: ({ description, error }) => {
     console.log("Uncaught error", error, description);
   },
-  logger: Logger.create("incremental"),
-  canInvalidate: false,
+  logger: Logger.create("incremental", {
+    verbose: LoggerVerboseLevel.ALL,
+  }),
+  canInvalidate: true,
   cache: false,
 });
 
@@ -57,14 +59,22 @@ const entry = IncrementalLib.register<void, ReadonlyMap<string, FILE>, {}>({
       }
     }
 
+    console.log("FILES", files);
     return files;
   },
 });
 
 async function main() {
-  process.once("SIGINT", () => {
+  process.once("SIGINT", async () => {
     console.log("SIGINT...");
-    lib.close();
+
+    process.once("SIGINT", async () => {
+      console.log("SIGINT (2)...");
+      await lib.interrupt();
+    });
+
+    const result = await lib.finish(entry, undefined);
+    console.log("Final result:", result);
   });
 
   console.log("Started...");

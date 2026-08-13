@@ -45,7 +45,7 @@ const entry = IncrementalLib.register<void, number, {}>({
 async function main() {
   process.once("SIGINT", () => {
     console.log("SIGINT...");
-    lib.close();
+    lib.interrupt();
   });
 
   console.log("Started...");
