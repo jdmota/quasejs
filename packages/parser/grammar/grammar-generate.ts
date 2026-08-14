@@ -106,7 +106,7 @@ export function generateGrammar({ grammar, referencesGraph }: GrammarResult) {
       if (inverted.hasAmbiguities()) {
         // Mark this rule and others that use this one as needing GLL
         const it = traverse(referencesGraph.node(decl), walkUp);
-        for (let step = it.next(); !step.done; ) {
+        for (let step = it.next(); !step.done;) {
           step = it.next(gllInfo.markNeedsGLL(step.value.data));
         }
         break;
@@ -199,15 +199,15 @@ export function inferAndCheckTypes(grammar: Grammar) {
   const tsCompiler = new TsCompiler();
 
   for (const [name, type] of Object.entries(runtimeTypes)) {
-    tsCompiler.compile(type.alias(name));
+    tsCompiler.compileType(type.alias(name));
   }
 
   const astType = inferrer
     .declaration(grammar.startRule, grammar.startArguments)
     .alias("$AST");
-  tsCompiler.compile(astType);
+  tsCompiler.compileType(astType);
 
-  const externalsName = tsCompiler.compile(
+  const externalsName = tsCompiler.compileType(
     builtin
       .object(
         Object.fromEntries(
@@ -220,15 +220,17 @@ export function inferAndCheckTypes(grammar: Grammar) {
       .alias("$Externals")
   );
 
-  const argTypeNames = grammar.startArguments.map(t => tsCompiler.compile(t));
+  const argTypeNames = grammar.startArguments.map(t =>
+    tsCompiler.compileType(t)
+  );
 
   return {
     errors: inferrer.errors,
     genTypes: (gllInfo: GLLInfo) => {
-      const resultName = tsCompiler.compile(
+      const resultName = tsCompiler.compileType(
         getResultType(astType, gllInfo.parserUsesGLL()).alias("$Result")
       );
-      return `${tsCompiler.toString()}\nexport function parse(external: ${externalsName}, ${[
+      return `${tsCompiler.toStringTypes()}\nexport function parse(external: ${externalsName}, ${[
         "string: string",
         ...grammar.startRule.args.map(
           (a, i) => `$${a.arg}: ${argTypeNames[i]}`

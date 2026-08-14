@@ -63,7 +63,7 @@ function registerBuiltin<T extends BuiltinSchemaType>(
 registerBuiltin(
   NeverType,
   (type, { body }) => {
-    body.return(`ctx.error("Never")`);
+    body.return(`ctx.error("invalid_type", "Never")`);
   },
   false
 );
@@ -80,7 +80,7 @@ registerBuiltin(
   UndefinedType,
   (type, { body }) => {
     body.return(
-      `value === undefined ? ctx.result(value) : ctx.error("Value is not undefined")`
+      `value === undefined ? ctx.result(value) : ctx.error("invalid_type", "Value is not undefined")`
     );
   },
   false
@@ -90,7 +90,7 @@ registerBuiltin(
   NullType,
   (type, { body }) => {
     body.return(
-      `value === null ? ctx.result(value) : ctx.error("Value is not null")`
+      `value === null ? ctx.result(value) : ctx.error("invalid_type", "Value is not null")`
     );
   },
   false
@@ -121,7 +121,7 @@ registerBuiltin(
     const expected = compiler.names.new(`expected_${type.getName()}`);
     helpers.stmt(`const ${expected} = ${toJSLiteral(type.value)}`);
     body.return(
-      `value === ${expected} ? ctx.result(${expected}) : ctx.error("Invalid literal")`
+      `value === ${expected} ? ctx.result(${expected}) : ctx.error("invalid_type", "Invalid literal")`
     );
   },
   false
@@ -131,7 +131,7 @@ registerBuiltin(
   StringType,
   (type, { body }) => {
     body.return(
-      `typeof value === "string" ? ctx.result(value) : ctx.error("Value is not a string")`
+      `typeof value === "string" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a string")`
     );
   },
   false
@@ -141,7 +141,7 @@ registerBuiltin(
   NumberType,
   (type, { body }) => {
     body.return(
-      `typeof value === "number" ? ctx.result(value) : ctx.error("Value is not a number")`
+      `typeof value === "number" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a number")`
     );
   },
   false
@@ -151,7 +151,7 @@ registerBuiltin(
   BigintType,
   (type, { body }) => {
     body.return(
-      `typeof value === "bigint" ? ctx.result(value) : ctx.error("Value is not a bigint")`
+      `typeof value === "bigint" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a bigint")`
     );
   },
   false
@@ -161,7 +161,7 @@ registerBuiltin(
   BooleanType,
   (type, { body }) => {
     body.return(
-      `typeof value === "boolean" ? ctx.result(value) : ctx.error("Value is not a boolean")`
+      `typeof value === "boolean" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a boolean")`
     );
   },
   false
@@ -171,7 +171,7 @@ registerBuiltin(
   SymbolType,
   (type, { body }) => {
     body.return(
-      `typeof value === "symbol" ? ctx.result(value) : ctx.error("Value is not a symbol")`
+      `typeof value === "symbol" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a symbol")`
     );
   },
   false
@@ -185,15 +185,15 @@ registerBuiltin(
       if (Array.isArray(value)) {
         const newArray = [];
         for (let i = 0; i < value.length; i++) {
-          ctx.push(i);
+          ctx.push();
           const result = ${compiler.compile(type.element)}(value[i], ctx);
-          if (result.ok) newArray.push(result.value);
-          ctx.pop();
-          if (ctx.shouldAbort()) break;
+          if (result.some) newArray.push(result.value);
+          ctx.popIdx(i);
+          if (ctx.shouldAbort()) return ctx.none;
         }
         return ctx.result(newArray);
       }
-      return ctx.error("Value is not an array");`
+      return ctx.error("invalid_type", "Value is not an array");`
     );
   },
   true
@@ -218,11 +218,11 @@ registerBuiltin(
     for (let i = 0; i < type.elements.length; i++) {
       body.line(
         `
-        ctx.push(${i});
+        ctx.push();
         result = ${compiler.compile(type.elements[i].type)}(value[${i}], ctx);
-        if (result.ok) newTuple.push(result.value);
-        ctx.pop();
-        if (ctx.shouldAbort()) return ctx.returnErrors();`
+        if (result.some) newTuple.push(result.value);
+        ctx.popIdx(${i});
+        if (ctx.shouldAbort()) return ctx.none;`
       );
     }
     const restType = type.getRest();
@@ -230,11 +230,11 @@ registerBuiltin(
       body.line(
         `
         for (let i = ${type.elements.length}; i < value.length; i++) {
-          ctx.push(i);
+          ctx.push();
           const result = ${compiler.compile(restType)}(value[i], ctx);
-          if (result.ok) newTuple.push(result.value);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
+          if (result.some) newTuple.push(result.value);
+          ctx.popIdx(i);
+          if (ctx.shouldAbort()) return ctx.none;
         }`
       );
     }
@@ -243,7 +243,7 @@ registerBuiltin(
       `
         return ctx.result(newTuple);
       }
-      return ctx.error("Value is not a tuple of size " + ${type.elements.length});`
+      return ctx.error("invalid_type", "Value is not a tuple of size " + ${type.elements.length});`
     );
   },
   true
@@ -259,18 +259,13 @@ registerBuiltin(
         const newEntries = []; let value, decoded;`
     );
     body.indent();
-    body.line(
-      `
-      if (${compiler.helper("hasProp")}(object, ${compiler.helper("PROTO_KEY")})) {
-        ctx.addError("Object has own property __proto__");
-        if (ctx.shouldAbort()) return ctx.returnErrors();
-      }`
-    );
+    body.line(`${compiler.helper("checkForbiddenKeys")}(object, ctx);`);
+    body.line(`if (ctx.shouldAbort()) return ctx.none;`);
     if (objType.exact !== false) {
-      body.line(`const extraneousKeys = new Set(Object.keys(object));`);
+      body.line(`const extraneousKeys = new Set(Reflect.ownKeys(object));`);
     }
     for (const [key, { partial, type }] of objType.entries) {
-      body.line(`ctx.push(${JSON.stringify(key)});`);
+      body.line(`ctx.push();`);
       body.line(
         `value = ${compiler.helper("getProp")}(object, ${JSON.stringify(key)});`
       );
@@ -281,7 +276,7 @@ registerBuiltin(
       body.line(
         `
         decoded = ${compiler.compile(type)}(value, ctx);
-        if (decoded.ok) {
+        if (decoded.some) {
           newEntries.push([${JSON.stringify(key)}, decoded.value]);
         }`
       );
@@ -289,8 +284,8 @@ registerBuiltin(
         body.unindent();
         body.line(`}`);
       }
-      body.line(`ctx.pop();`);
-      body.line(`if (ctx.shouldAbort()) return ctx.returnErrors();`);
+      body.line(`ctx.popKey(${JSON.stringify(key)});`);
+      body.line(`if (ctx.shouldAbort()) return ctx.none;`);
       if (objType.exact !== false) {
         body.line(`extraneousKeys.delete(${JSON.stringify(key)});`);
       }
@@ -316,7 +311,7 @@ registerBuiltin(
       `
         return ctx.result(Object.fromEntries(newEntries));
       }
-      return ctx.error("Value is not an object");`
+      return ctx.error("invalid_type", "Value is not an object");`
     );
   },
   true
@@ -329,27 +324,25 @@ registerBuiltin(
     body.line(
       `
       if (typeof object === "object" && object != null) {
-        if (${compiler.helper("hasProp")}(object, ${compiler.helper("PROTO_KEY")})) {
-          ctx.addError("Object has own property __proto__");
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-        }
+        ${compiler.helper("checkForbiddenKeys")}(object, ctx);
+        if (ctx.shouldAbort()) return ctx.none;
         const newEntries = [];
-        for (const [key, value] of Object.entries(object)) {
-          ctx.push(key, "key");
+        for (const key of Reflect.ownKeys(object)) {
+          ctx.push();
           const keyResult = ${compiler.compile(type.key)}(key, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          ctx.push(key, "value");
-          const valueResult = ${compiler.compile(type.value)}(value, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          if (keyResult.ok && valueResult.ok) {
+          ctx.popCtx(errors => ({code: "invalid_key", key, errors}));
+          if (ctx.shouldAbort()) return ctx.none;
+          ctx.push();
+          const valueResult = ${compiler.compile(type.value)}(object[key], ctx);
+          ctx.popKey(key);
+          if (ctx.shouldAbort()) return ctx.none;
+          if (keyResult.some && valueResult.some) {
             newEntries.push([keyResult.value, valueResult.value]);
           }
         }
         return ctx.result(Object.fromEntries(newEntries));
       }
-      return ctx.error("Value is not an object");`
+      return ctx.error("invalid_type", "Value is not an object");`
     );
   },
   true
@@ -368,7 +361,7 @@ registerBuiltin(
         }`
       );
     }
-    body.return(`ctx.error("Value does not belong to union")`);
+    body.return(`ctx.error("invalid_type", "Value does not belong to union")`);
   },
   false
 );
@@ -391,17 +384,19 @@ registerBuiltin(
         const lockCtx = SchemaOpCtx.new(ctx);
         return ctx.result(function (...args) {
           const newCtx = SchemaOpCtx.new(lockCtx);
-          if (newCtx.shouldAbort()) return newCtx.returnErrors();
-          newCtx.push(null, "arguments");
+          if (newCtx.shouldAbort()) return newCtx.none;
+          newCtx.push();
           const argsResult = ${compiler.compile(type.args)}(args, newCtx);
-          newCtx.pop();
-          if (!argsResult.ok) return argsResult;
-          const result = Reflect.apply(value, this, argsResult.value);
-          newCtx.push(null, "return");
-          return ${compiler.compile(type.ret)}(result, newCtx);
+          newCtx.popCtx(errors => ({code: "function_error", where: "arguments", errors}));
+          if (!argsResult.some) return argsResult;
+          const ret = Reflect.apply(value, this, argsResult.value);
+          newCtx.push();
+          const retResult = ${compiler.compile(type.ret)}(ret, newCtx);
+          newCtx.popCtx(errors => ({code: "function_error", where: "result", errors}));
+          return retResult;
         });
       }
-      return ctx.error("Value is not a function");`
+      return ctx.error("invalid_type", "Value is not a function");`
     );
   },
   false
@@ -413,7 +408,7 @@ registerBuiltin(
     const expected = `values_${compiler.names.new(type.getName())}`;
     helpers.stmt(`const ${expected} = ${JSON.stringify(type.values)}`);
     body.return(
-      `${expected}.includes(value) ? ctx.result(value) : ctx.error("Value does not belong to enumeration")`
+      `${expected}.includes(value) ? ctx.result(value) : ctx.error("invalid_type", "Value does not belong to enumeration")`
     );
   },
   false

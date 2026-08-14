@@ -1,8 +1,19 @@
-import { assertion } from "../../util/miscellaneous";
-import { SchemaError } from "./errors";
+import { Option } from "../../util/monads";
 import { format, type Formatter } from "./format";
-import { Path } from "./path";
-import { type ValidationError, ValidationResult } from "./result";
+import { ValidationResult } from "./result";
+
+export type ObjectKey = string | number | symbol;
+
+export type SchemaError = Readonly<{
+  code: string;
+  message: string;
+}>;
+
+export type SchemaErrorTree = {
+  errors: SchemaError[];
+  properties?: { [key: ObjectKey]: SchemaErrorTree | undefined };
+  items?: (SchemaErrorTree | undefined)[];
+};
 
 export type SchemaOpCtxOpts = {
   readonly formatter?: Formatter;
@@ -10,15 +21,15 @@ export type SchemaOpCtxOpts = {
 };
 
 export class SchemaOpCtx implements SchemaOpCtxOpts {
-  private path: Path;
-  private readonly errorArr: SchemaError[];
+  private ok: boolean;
+  private readonly errorTree: SchemaErrorTree[];
   public readonly formatter: Formatter;
   public readonly abortEarly: boolean;
   private readonly busy: WeakSet<WeakKey>;
 
   constructor(opts: SchemaOpCtxOpts | SchemaOpCtx = {}) {
-    this.path = Path.create();
-    this.errorArr = [];
+    this.ok = true;
+    this.errorTree = [{ errors: [] }];
     this.formatter = opts.formatter ?? format;
     this.abortEarly = opts.abortEarly ?? true;
     this.busy = new WeakSet();
@@ -28,57 +39,76 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     return new SchemaOpCtx(ctx);
   }
 
-  shouldAbort() {
-    return this.abortEarly && this.errorArr.length > 0;
+  some<T>(value: T) {
+    return Option.some(value);
   }
 
-  createError(message: string) {
-    return new SchemaError(this.path, message);
-  }
-
-  addError(message: string) {
-    this.errorArr.push(this.createError(message));
-  }
+  public readonly none = Option.none;
 
   format(value: unknown) {
     const { formatter } = this;
     return formatter(value);
   }
 
-  push(key: string | number | null, context: string | null = null) {
-    this.path = this.path.push(key, context);
-  }
-
-  pop() {
-    this.path = this.path.pop();
-  }
-
   isOK() {
-    return this.errorArr.length === 0;
+    return this.ok;
   }
 
-  hasErrors() {
-    return this.errorArr.length > 0;
+  shouldAbort() {
+    return this.abortEarly && !this.ok;
   }
 
-  error(message: string): ValidationError {
-    this.addError(message);
-    return ValidationResult.errors(this.errorArr);
+  addError(code: string, message: string) {
+    this.ok = false;
+    this.errorTree.at(-1)!.errors.push({
+      code,
+      message,
+    });
   }
 
-  returnErrors() {
-    assertion(this.hasErrors());
-    return ValidationResult.errors(this.errorArr);
+  error(code: string, message: string) {
+    this.addError(code, message);
+    return this.none;
   }
 
-  result<T>(value: T): ValidationResult<T> {
-    return this.errorArr.length === 0
-      ? ValidationResult.ok(value as T)
-      : ValidationResult.errors(this.errorArr);
+  result<T>(value: T) {
+    return this.ok ? this.some(value) : this.none;
   }
 
-  resetErrors() {
-    this.errorArr.length = 0;
+  validationResult<T>(value: T): ValidationResult<T> {
+    return this.ok
+      ? ValidationResult.ok(value)
+      : ValidationResult.errors(this.errorTree.at(-1)!);
+  }
+
+  push() {
+    this.errorTree.push({ errors: [] });
+  }
+
+  popKey(key: string | symbol) {
+    const tree = this.errorTree.pop()!;
+    if (tree.errors.length > 0) {
+      const parent = this.errorTree.at(-1)!;
+      parent.properties ??= {};
+      parent.properties[key] = tree;
+    }
+  }
+
+  popIdx(key: number) {
+    const tree = this.errorTree.pop()!;
+    if (tree.errors.length > 0) {
+      const parent = this.errorTree.at(-1)!;
+      parent.items ??= [];
+      parent.items[key] = tree;
+    }
+  }
+
+  popCtx(addCtxInfo: (tree: SchemaErrorTree) => SchemaError) {
+    const tree = this.errorTree.pop()!;
+    if (tree.errors.length > 0) {
+      const parent = this.errorTree.at(-1)!;
+      parent.errors.push(addCtxInfo(tree));
+    }
   }
 
   pushValue(value: unknown) {

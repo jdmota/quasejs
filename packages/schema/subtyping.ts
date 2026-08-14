@@ -20,7 +20,7 @@ import {
 } from "./builtin-types.ts";
 import { computeIfAbsent } from "../util/maps-sets.ts";
 
-class Cache {
+class SubtypingCache {
   private readonly map = new Map<SchemaType, Map<SchemaType, boolean | null>>();
 
   set(a: SchemaType, b: SchemaType, val: boolean | null) {
@@ -41,10 +41,14 @@ class Cache {
 }
 
 export function isSub(a: SchemaType, b: SchemaType) {
-  return isSubtype(new Cache(), a, b);
+  return isSubtype(new SubtypingCache(), a, b);
 }
 
-export function isSubtype(cache: Cache, a: SchemaType, b: SchemaType): boolean {
+export function isSubtype(
+  cache: SubtypingCache,
+  a: SchemaType,
+  b: SchemaType
+): boolean {
   // Short-path
   if (a === b) return true;
   let curr = cache.get(a, b);
@@ -55,7 +59,11 @@ export function isSubtype(cache: Cache, a: SchemaType, b: SchemaType): boolean {
   return curr;
 }
 
-function isSubtypeImpl(cache: Cache, a: SchemaType, b: SchemaType): boolean {
+function isSubtypeImpl(
+  cache: SubtypingCache,
+  a: SchemaType,
+  b: SchemaType
+): boolean {
   // Handle recursive types
   if (a instanceof RecursiveType && b instanceof RecursiveType) {
     const cA = a.getContent();

@@ -2,38 +2,87 @@
 
 exports[`compile ts alias 1`] = `
 {
-  "contents": "type type_alias_name = type_object;
+  "contents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type SchemaErrorTree = Readonly<{ errors: readonly SchemaError[]; }>;
+type SchemaCircularReference = Readonly<{ code: "circular"; message: string; }>;
+type SchemaInvalidType = Readonly<{ code: "invalid_type"; message: string; }>;
+type SchemaForbiddenKey = Readonly<{ code: "forbidden_key"; message: string; }>;
+type SchemaExtraneousKeys = Readonly<{ code: "extraneous_keys"; message: string; }>;
+type SchemaObjectError = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys;
+type type_alias_name = type_object;
+type type_alias_name$error = type_object$error;
 type type_object = {
   readonly a: type_array;
 };
+type type_object$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties: Readonly<{
+    a?: type_array$error | undefined;
+  }>;
+}>;
 type type_array = readonly (string)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items: readonly (type_string$error | undefined)[] }>;
+type type_string$error = SchemaErrorTree;
 ",
-  "entry": "type_alias_name",
+  "entryError": "type_alias_name$error",
+  "entryType": "type_alias_name",
 }
 `;
 
 exports[`compile ts example 1`] = `
 {
-  "contents": "type type_object = {
+  "contents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type SchemaErrorTree = Readonly<{ errors: readonly SchemaError[]; }>;
+type SchemaCircularReference = Readonly<{ code: "circular"; message: string; }>;
+type SchemaInvalidType = Readonly<{ code: "invalid_type"; message: string; }>;
+type SchemaForbiddenKey = Readonly<{ code: "forbidden_key"; message: string; }>;
+type SchemaExtraneousKeys = Readonly<{ code: "extraneous_keys"; message: string; }>;
+type SchemaObjectError = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys;
+type type_object = {
   readonly a: null;
   readonly b: number;
   readonly c: type_array;
   readonly d: type_object0;
 };
+type type_object$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties: Readonly<{
+    a?: type_null$error | undefined;
+    b?: type_number$error | undefined;
+    c?: type_array$error | undefined;
+    d?: type_object0$error | undefined;
+  }>;
+}>;
+type type_null$error = SchemaErrorTree;
+type type_number$error = SchemaErrorTree;
 type type_array = readonly (string)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items: readonly (type_string$error | undefined)[] }>;
+type type_string$error = SchemaErrorTree;
 type type_object0 = {
   readonly [key in string]: bigint;
 };
+type type_object0$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties: Readonly<{
+    [key in string]?: type_bigint$error;
+  }>;
+}>;
+type type_bigint$error = SchemaErrorTree;
 ",
-  "entry": "type_object",
+  "entryError": "type_object$error",
+  "entryType": "type_object",
 }
 `;
 
 exports[`compile ts recursive 1`] = `
 {
-  "contents": "type type_recursive = type_array;
+  "contents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type type_recursive = type_array;
+type type_recursive$error = type_array$error;
 type type_array = readonly (type_recursive)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items: readonly (type_recursive$error | undefined)[] }>;
 ",
-  "entry": "type_recursive",
+  "entryError": "type_recursive$error",
+  "entryType": "type_recursive",
 }
 `;

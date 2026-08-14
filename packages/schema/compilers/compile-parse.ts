@@ -1,4 +1,5 @@
 import { StringBuilder } from "../../util/strings";
+import { FORBIDDEN_KEYS } from "../builtin-types";
 import { type SchemaType } from "../schema-type";
 import { BaseSchemaCompiler, SchemaCompilersRegistry } from "./common";
 
@@ -25,7 +26,24 @@ const helpers = {
     code: `(o, k) => (hasProp(o, k) ? o[k] : undefined)`,
     dependencies: ["hasProp"],
   },
-  PROTO_KEY: `"__proto__"`,
+  checkForbiddenKeys: {
+    code: new StringBuilder()
+      .line("(obj, ctx) => {")
+      .block(s => {
+        for (const key of FORBIDDEN_KEYS) {
+          s.line(
+            `
+            if (hasProp(obj, ${JSON.stringify(key)})) {
+              ctx.addError("forbidden_key", "Object has own property ${key}");
+              if (ctx.shouldAbort()) return ctx.none;
+            }`
+          );
+        }
+      })
+      .add("}")
+      .toString(),
+    dependencies: ["hasProp"],
+  },
   parseCircular: new StringBuilder()
     .add(
       `
@@ -35,7 +53,7 @@ const helpers = {
           ctx.popValue(value);
           return r;
         }
-        return ctx.error("Circular reference disallowed");
+        return ctx.error("circular", "Circular reference disallowed");
       }`
     )
     .toString(),
@@ -46,7 +64,8 @@ const helpers = {
         `
         (ctx, extraneousKeys) => {
           return ctx.error(
-            \`Extraneous properties: \${Array.from(extraneousKeys)
+            "extraneous_keys",
+            \`Extraneous keys: \${Array.from(extraneousKeys)
               .map(k => formatKey(k))
               .join(", ")}\`
           );
@@ -61,20 +80,20 @@ const helpers = {
         `
       (object, ctx, newEntries, extraneousKeys, keyParse, valueParse, partial) => {
         for (const key of extraneousKeys) {
-          ctx.push(key, "key");
+          ctx.push();
           const keyResult = keyParse(key, ctx);
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
-          ctx.push(key, "value");
+          ctx.popCtx(errors => ({code: "invalid_key", key, errors}));
+          if (ctx.shouldAbort()) return ctx.none;
+          ctx.push();
           const value = getProp(object, key);
           if (!partial || value !== undefined) {
             const valueResult = valueParse(value, ctx);
-            if (keyResult.ok && valueResult.ok) {
+            if (keyResult.some && valueResult.some) {
               newEntries.push([keyResult.value, valueResult.value]);
             }
           }
-          ctx.pop();
-          if (ctx.shouldAbort()) return ctx.returnErrors();
+          ctx.popKey(key);
+          if (ctx.shouldAbort()) return ctx.none;
         }
       }`
       )

@@ -1,4 +1,4 @@
-import type { SchemaError } from "./errors";
+import type { SchemaErrorTree } from "./context";
 
 export type ValidationOK<T> = {
   readonly ok: true;
@@ -7,23 +7,19 @@ export type ValidationOK<T> = {
 
 export type ValidationError = {
   readonly ok: false;
-  readonly errors: readonly SchemaError[];
+  readonly tree: SchemaErrorTree;
 };
 
 export type ValidationResult<T> = ValidationOK<T> | ValidationError;
 
 export type ValidationResultMaybeAsync<T> =
-  | ValidationResult<T>
-  | Promise<ValidationResult<T>>;
+  ValidationResult<T> | Promise<ValidationResult<T>>;
 
 export const ValidationResult = {
   ok<T>(value: T): ValidationOK<T> {
     return { ok: true, value };
   },
-  error(error: SchemaError): ValidationError {
-    return { ok: false, errors: [error] };
-  },
-  errors(errors: readonly SchemaError[]): ValidationError {
-    return { ok: false, errors };
+  errors(tree: SchemaErrorTree): ValidationError {
+    return { ok: false, tree };
   },
 };

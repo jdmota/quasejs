@@ -16,6 +16,20 @@ const obj = t.object({
       value: t.bigint,
     }
   ),
+  e: t.tuple(
+    [
+      t.bigint,
+      t.boolean,
+      t.null,
+      {
+        type: t.literal("abc"),
+        rest: true,
+      },
+    ],
+    true
+  ),
+  f: t.record(t.number, t.string),
+  g: t.func([t.null, t.undefined, t.string], t.boolean),
 });
 
 const compiledParse = compileParse(obj);
@@ -31,7 +45,7 @@ const compiledTs = compileTs(obj);
 
 writeFileSync(
   "packages/schema/__examples__/parse.d.ts",
-  compiledTs.contents + `\nexport default ${compiledTs.entry};\n`
+  compiledTs.contents + `\nexport default ${compiledTs.entryType};\n`
 );
 
 // yarn n packages/schema/__examples__/index.ts

@@ -317,7 +317,11 @@ type UnknownKeys = Readonly<{
 
 const hasOwn = Object.prototype.hasOwnProperty;
 const hasProp = (o: any, k: string) => hasOwn.call(o, k);
-const PROTO_KEY = "__proto__";
+export const FORBIDDEN_KEYS: ReadonlySet<string> = new Set([
+  "__proto__",
+  "constructor",
+  "prototype",
+]);
 
 export class ObjectType extends BuiltinSchemaType {
   static build(
@@ -334,10 +338,10 @@ export class ObjectType extends BuiltinSchemaType {
 
   constructor(structure: ObjStructure, exact: boolean | UnknownKeysOpts) {
     super();
-    if (hasProp(structure, PROTO_KEY)) {
-      throw new Error("Object type includes __proto__ key");
-    }
     this.entries = Object.entries(structure).map(([k, v]) => {
+      if (FORBIDDEN_KEYS.has(k)) {
+        throw new Error(`Object type includes ${k} key`);
+      }
       if (v instanceof SchemaType) {
         return [k, { type: v, readonly: true, partial: false }];
       }

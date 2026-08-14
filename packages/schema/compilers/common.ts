@@ -72,6 +72,5 @@ export abstract class BaseSchemaCompiler<Registry, K extends string, Result> {
     return kind;
   }
 
-  abstract compile(type: SchemaType): void;
   abstract toString(): string;
 }

@@ -382,7 +382,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
     for (const rule of this.grammar.rules.values()) {
       const { pre: preReturn, post: postReturn } = this.store(rule.return);
       const t = postReturn.read(rule.return);
-      console.log("rule", rule.name, tsCompiler.compile(t));
+      console.log("rule", rule.name, tsCompiler.compileType(t));
     }
   }
 }

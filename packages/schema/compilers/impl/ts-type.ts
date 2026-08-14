@@ -30,8 +30,9 @@ import {
 import { SchemaAlias } from "../../schema-type";
 import { compileJsKey } from "../../../util/js-identifiers";
 
-registry.register(SchemaAlias, (type, { body, compiler }) => {
-  body.add(compiler.compile(type.target));
+registry.register(SchemaAlias, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(compiler.compileType(type.target));
+  errorBody.add(compiler.compileError(type.target));
 });
 
 function registerBuiltin<T extends BuiltinSchemaType>(
@@ -43,20 +44,24 @@ function registerBuiltin<T extends BuiltinSchemaType>(
   });
 }
 
-registerBuiltin(NeverType, (type, { body }) => {
-  body.add(`never`);
+registerBuiltin(NeverType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`never`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(UnknownType, (type, { body }) => {
-  body.add(`unknown`);
+registerBuiltin(UnknownType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`unknown`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(UndefinedType, (type, { body }) => {
-  body.add(`undefined`);
+registerBuiltin(UndefinedType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`undefined`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(NullType, (type, { body }) => {
-  body.add(`null`);
+registerBuiltin(NullType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`null`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
 function toTSLiteral(
@@ -78,99 +83,184 @@ function toTSLiteral(
   }
 }
 
-registerBuiltin(LiteralType, (type, { body }) => {
-  body.add(toTSLiteral(type.value));
+registerBuiltin(LiteralType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(toTSLiteral(type.value));
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(StringType, (type, { body }) => {
-  body.add(`string`);
+registerBuiltin(StringType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`string`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(NumberType, (type, { body }) => {
-  body.add(`number`);
+registerBuiltin(NumberType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`number`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(BigintType, (type, { body }) => {
-  body.add(`bigint`);
+registerBuiltin(BigintType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`bigint`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(BooleanType, (type, { body }) => {
-  body.add(`boolean`);
+registerBuiltin(BooleanType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`boolean`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(SymbolType, (type, { body }) => {
-  body.add(`symbol`);
+registerBuiltin(SymbolType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`symbol`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
 });
 
-registerBuiltin(ArrayType, (type, { compiler, body }) => {
-  body.add(
-    `${type.readonly ? "readonly " : ""}(${compiler.compile(type.element)})[]`
+registerBuiltin(ArrayType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(
+    `${type.readonly ? "readonly " : ""}(${compiler.compileType(type.element)})[]`
+  );
+  errorBody.add(
+    `Readonly<{ errors: readonly ${compiler.helper("SchemaError")}[]; items: readonly (${compiler.compileError(type.element)} | undefined)[] }>`
   );
 });
 
-registerBuiltin(TupleType, (tupleType, { compiler, body }) => {
-  body.line(`${tupleType.readonly ? "readonly " : ""}[`);
-  body.indent();
+registerBuiltin(TupleType, (tupleType, { typeBody, errorBody, compiler }) => {
+  typeBody.line(`${tupleType.readonly ? "readonly " : ""}[`);
+  typeBody.indent();
   for (const { name, type, rest } of tupleType.elements) {
-    body.line(
-      `${rest ? "..." : ""}${name}: ${compiler.compile(type)}${rest ? "[]" : ""},`
+    typeBody.line(
+      `${rest ? "..." : ""}${name}: ${compiler.compileType(type)}${rest ? "[]" : ""},`
     );
   }
-  body.unindent();
-  body.add(`]`);
+  typeBody.unindent();
+  typeBody.add(`]`);
+  //
+  errorBody.line(`Readonly<{`);
+  errorBody.block(() => {
+    errorBody.line(`errors: readonly ${compiler.helper("SchemaError")}[];`);
+    errorBody.line(`items: readonly [`);
+    errorBody.block(() => {
+      for (const { name, type, rest } of tupleType.elements) {
+        errorBody.line(
+          `${rest ? "..." : ""}${name}: (${compiler.compileError(type)} | undefined)${rest ? "[]" : ""},`
+        );
+      }
+    });
+    errorBody.line(`];`);
+  });
+  errorBody.add(`}>`);
 });
 
-registerBuiltin(ObjectType, (objType, { compiler, body }) => {
-  body.line(`{`);
-  body.indent();
+registerBuiltin(ObjectType, (objType, { typeBody, errorBody, compiler }) => {
+  typeBody.line(`{`);
+  typeBody.indent();
   for (const [name, { readonly, partial, type }] of objType.entries) {
-    body.line(
-      `${readonly ? "readonly " : ""}${compileJsKey(name)}${partial ? "?" : ""}: ${compiler.compile(type)};`
+    typeBody.line(
+      `${readonly ? "readonly " : ""}${compileJsKey(name)}${partial ? "?" : ""}: ${compiler.compileType(type)};`
     );
   }
   if (objType.exact === true) {
     if (objType.entries.length === 0) {
-      body.line(`readonly [key in string]: never`);
+      typeBody.line(`readonly [key in ${compiler.helper("ObjectKey")}]: never`);
     }
   } else if (objType.exact !== false) {
-    body.line(
-      `${objType.exact.readonly ? "readonly " : ""}[key in ${compiler.compile(objType.exact.key)}]${objType.exact.partial ? "?" : ""}: ${compiler.compile(objType.exact.value)};`
+    typeBody.line(
+      `${objType.exact.readonly ? "readonly " : ""}[key in ${compiler.compileType(objType.exact.key)}]${objType.exact.partial ? "?" : ""}: ${compiler.compileType(objType.exact.value)};`
     );
   }
-  body.unindent();
-  body.add(`}`);
+  typeBody.unindent();
+  typeBody.add(`}`);
+  //
+  errorBody.line(`Readonly<{`);
+  errorBody.block(() => {
+    errorBody.line(
+      `errors: readonly ${compiler.helper("SchemaObjectError")}[];`
+    );
+    errorBody.line(`properties: Readonly<{`);
+    errorBody.block(() => {
+      for (const [name, { type }] of objType.entries) {
+        errorBody.line(
+          `${compileJsKey(name)}?: ${compiler.compileError(type)} | undefined;`
+        );
+      }
+      if (objType.exact === true) {
+        if (objType.entries.length === 0) {
+          errorBody.line(`[key in ${compiler.helper("ObjectKey")}]: never`);
+        }
+      } else if (objType.exact !== false) {
+        errorBody.line(
+          `[key in ${compiler.compileType(objType.exact.key)}]?: ${compiler.compileError(objType.exact.value)};`
+        );
+      }
+    });
+    errorBody.line(`}>;`);
+  });
+  errorBody.add(`}>`);
 });
 
-registerBuiltin(RecordType, (type, { compiler, body }) => {
+registerBuiltin(RecordType, (type, { typeBody, errorBody, compiler }) => {
   if (type.readonly) {
-    body.add("Readonly<");
+    typeBody.add("Readonly<");
   }
-  body.add(
-    `{[key in ${compiler.compile(type.key)}]?: ${compiler.compile(type.value)}}`
+  typeBody.add(
+    `{[key in ${compiler.compileType(type.key)}]?: ${compiler.compileType(type.value)}}`
   );
   if (type.readonly) {
-    body.add(">");
+    typeBody.add(">");
   }
+  //
+  errorBody.line(`Readonly<{`);
+  errorBody.block(() => {
+    // Register the helper's use
+    compiler.helper("SchemaRecordError<K>");
+    errorBody.line(
+      `errors: readonly SchemaRecordError<${compiler.compileType(type.key)}>[];`
+    );
+    errorBody.line(`properties: Readonly<{`);
+    errorBody.block(() => {
+      errorBody.line(
+        `[key in ${compiler.compileType(type.key)}]?: ${compiler.compileError(type.value)};`
+      );
+    });
+    errorBody.line(`}>;`);
+  });
+  errorBody.add(`}>`);
 });
 
-registerBuiltin(UnionType, (type, { compiler, body }) => {
-  body.add(`(${type.items.map(t => compiler.compile(t)).join(" | ")})`);
-});
-
-registerBuiltin(IntersectionType, (type, { compiler, body }) => {
-  body.add(`(${type.items.map(t => compiler.compile(t)).join(" & ")})`);
-});
-
-registerBuiltin(FunctionType, (type, { compiler, body }) => {
-  body.add(
-    `((...args: ${compiler.compile(type.args)}) => ${compiler.compile(type.ret)})`
+registerBuiltin(UnionType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`(${type.items.map(t => compiler.compileType(t)).join(" | ")})`);
+  errorBody.add(
+    `(${type.items.map(t => compiler.compileError(t)).join(" | ")})`
   );
 });
 
-registerBuiltin(EnumType, (type, { body }) => {
-  body.add(`${type.values.map(v => toTSLiteral(v)).join(" | ")}`);
+registerBuiltin(IntersectionType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`(${type.items.map(t => compiler.compileType(t)).join(" & ")})`);
+  errorBody.add(
+    `(${type.items.map(t => compiler.compileError(t)).join(" | ")})`
+  );
 });
 
-registerBuiltin(RecursiveType, (type, { compiler, body }) => {
-  body.add(compiler.compile(type.getContentForSure()));
+registerBuiltin(FunctionType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(
+    `((...args: ${compiler.compileType(type.args)}) => ${compiler.compileType(type.ret)})`
+  );
+  //
+  errorBody.line(`Readonly<{`);
+  errorBody.block(() => {
+    // Register the helper's use
+    compiler.helper("SchemaFunctionError<A, R>");
+    errorBody.line(
+      `errors: readonly SchemaFunctionError<${compiler.compileError(type.args)}, ${compiler.compileError(type.ret)}>[];`
+    );
+  });
+  errorBody.add(`}>`);
+});
+
+registerBuiltin(EnumType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(`${type.values.map(v => toTSLiteral(v)).join(" | ")}`);
+  errorBody.add(compiler.helper("SchemaErrorTree"));
+});
+
+registerBuiltin(RecursiveType, (type, { typeBody, errorBody, compiler }) => {
+  typeBody.add(compiler.compileType(type.getContentForSure()));
+  errorBody.add(compiler.compileError(type.getContentForSure()));
 });

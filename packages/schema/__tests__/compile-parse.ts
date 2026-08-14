@@ -29,13 +29,11 @@ it("compile parse example", () => {
   expect(compiled).toMatchSnapshot();
 
   const parse = compiled.makeFunc();
+  const value = {
+    a: undefined,
+  };
+  const ctx = SchemaOpCtx.new();
 
-  expect(
-    parse(
-      {
-        a: undefined,
-      },
-      SchemaOpCtx.new()
-    )
-  ).toMatchSnapshot();
+  expect(parse(value, ctx)).toMatchSnapshot();
+  expect(ctx.validationResult(value)).toMatchSnapshot();
 });
