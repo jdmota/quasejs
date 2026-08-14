@@ -26,12 +26,12 @@ enum WorkerState {
 }
 
 export type WorkerResult =
-  | { errors: Error[]; exit: ExitInfo; hanging: false }
-  | { errors: Error[]; exit: null; hanging: true };
+  | Readonly<{ errors: readonly unknown[]; exit: ExitInfo; hanging: false }>
+  | Readonly<{ errors: readonly unknown[]; exit: null; hanging: true }>;
 
 export type ExitInfo =
-  | { code: number; signal: null }
-  | { code: null; signal: NodeJS.Signals };
+  | Readonly<{ code: number; signal: null }>
+  | Readonly<{ code: null; signal: NodeJS.Signals }>;
 
 export interface SimpleFork<
   Send extends Serializable,
@@ -46,9 +46,9 @@ export interface SimpleFork<
 }
 
 export class ChildProcessFork<
-    Send extends Serializable,
-    Receive extends Serializable,
-  >
+  Send extends Serializable,
+  Receive extends Serializable,
+>
   extends EventEmitter<ForkEvents<Receive>>
   implements SimpleFork<Send, Receive>
 {
@@ -190,7 +190,7 @@ export class WorkerFork<Send extends Serializable, Receive extends Serializable>
 {
   private readonly worker: Worker;
   private state: WorkerState;
-  private errors: Error[] = [];
+  private errors: unknown[] = [];
   private signal: NodeJS.Signals | null;
 
   constructor(
@@ -302,7 +302,7 @@ type ParentEvents<Receive extends Serializable> = {
   result: [ParentResult];
 };
 
-export type ParentResult = { errors: Error[] };
+export type ParentResult = { errors: unknown[] };
 
 export interface SimpleParent<
   Send extends Serializable,
@@ -313,9 +313,9 @@ export interface SimpleParent<
 }
 
 export class ChildProcessParent<
-    Send extends Serializable,
-    Receive extends Serializable,
-  >
+  Send extends Serializable,
+  Receive extends Serializable,
+>
   extends EventEmitter<ParentEvents<Receive>>
   implements SimpleParent<Send, Receive>
 {
@@ -326,7 +326,7 @@ export class ChildProcessParent<
   private readonly _onMessage: (msg: unknown) => void;
   private readonly deliverNext: (error: Error | null) => void;
   private disconnected = false;
-  private errors: Error[] = [];
+  private errors: unknown[] = [];
   private deliverImmediately = true;
   private backlog: Send[] = [];
 
@@ -387,16 +387,16 @@ export class ChildProcessParent<
 }
 
 export class WorkerParent<
-    Send extends Serializable,
-    Receive extends Serializable,
-  >
+  Send extends Serializable,
+  Receive extends Serializable,
+>
   extends EventEmitter<ParentEvents<Receive>>
   implements SimpleParent<Send, Receive>
 {
   private readonly parentPort: MessagePort;
   private readonly _onMessage: (msg: unknown) => void;
-  private readonly _onError: (error: Error) => void;
-  private errors: Error[] = [];
+  private readonly _onError: (error: unknown) => void;
+  private errors: unknown[] = [];
   private disconnected = false;
 
   constructor() {

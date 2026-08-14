@@ -19,6 +19,8 @@
   "license": "MIT",
   "dependencies": {
     "@babel/code-frame": "^7.29.7",
+    "@babel/core": "7.29.7",
+    "@babel/preset-typescript": "7.29.7",
     "@babel/types": "^7.29.8",
     "@parcel/watcher": "^2.1.0",
     "@types/babel__code-frame": "^7.27.0",
@@ -28,7 +30,7 @@
     "clipanion": "^4.0.0-rc.4",
     "colorette": "^2.0.20",
     "concordance": "^5.0.4",
-    "dugite": "^2.7.1",
+    "dugite": "^3.2.3",
     "error-stack-parser": "^2.1.4",
     "execa": "^9.6.1",
     "fast-glob": "^3.3.3",
@@ -38,7 +40,7 @@
     "jiti": "^2.7.0",
     "lmdb": "^3.5.6",
     "log-symbols": "^6.0.0",
-    "msgpackr": "1.11.5",
+    "msgpackr": "^1.12.1",
     "ora": "^8.2.0",
     "prettier": "^3.9.6",
     "random-js": "^2.1.0",
@@ -47,9 +49,9 @@
     "slash": "^5.1.0",
     "source-map": "0.8.0-beta.0",
     "turbocolor": "^2.6.1",
-    "type-fest": "^4.41.0",
-    "typescript": "^5.9.3",
-    "url-regex": "^5.0.0",
+    "type-fest": "^5.8.0",
+    "typescript": "^6.0.3",
+    "url-regex-safe": "^4.0.0",
     "write-file-atomic": "^5.0.1"
   },
   "devDependencies": {
@@ -60,12 +62,12 @@
     "@swc/core": "^1.15.47",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
-    "@types/jest-diff": "^24.3.0",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.2.0",
+    "@types/url-regex-safe": "^1.0.2",
     "jest": "^30.4.2",
     "rollup": "^4.62.4"
   },
-  "packageManager": "yarn@4.9.2",
+  "packageManager": "yarn@4.18.0",
   "resolutions": {
     "chokidar@3.5.3": "patch:chokidar@npm:3.5.3#.yarn/patches/chokidar-npm-3.5.3-c5f9b0a56a.patch"
   }

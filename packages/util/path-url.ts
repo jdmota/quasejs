@@ -1,7 +1,7 @@
 import path from "node:path";
 import url from "node:url";
 import slash from "slash";
-import urlRegexDefault from "url-regex";
+import urlRegexSafe from "url-regex-safe";
 
 type Url = string;
 type Path = string;
@@ -118,7 +118,7 @@ export function removeLastSlash(url: Url) {
 
 // Both
 
-const urlRegex = urlRegexDefault({ exact: true });
+const urlRegex = urlRegexSafe({ exact: true });
 
 export function isUrl(url: string) {
   return urlRegex.test(url.trim()) || url.startsWith("file://");

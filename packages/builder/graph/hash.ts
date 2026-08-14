@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 export function hashName(
-  input: crypto.BinaryLike,
+  input: string | NodeJS.ArrayBufferView<ArrayBufferLike>,
   used: Set<string>,
   initialLen: number
 ): string {

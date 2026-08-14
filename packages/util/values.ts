@@ -1,4 +1,4 @@
-import type { InspectOptions, InspectOptionsStylized } from "node:util";
+import type { InspectContext, inspect } from "node:util";
 import { className, isObject } from "./miscellaneous";
 
 export const $EQUALS = Symbol.for("quase.equals");
@@ -21,8 +21,8 @@ export type $DESERIALIZE_FN<S, O> = (serialized: SerializeResult<S>) => O;
 export type $FORMAT_FN = () => string;
 export type $INSPECT_FN = (
   depth: number,
-  inspectOptions: InspectOptionsStylized,
-  inspect: (object: any, options?: InspectOptions) => string
+  options: InspectContext,
+  _inspect: typeof inspect
 ) => string;
 
 export interface EqualsTrait {

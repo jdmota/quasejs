@@ -13,17 +13,17 @@ exports[`beautify with title 1`] = `
 exports[`diagnostics 1`] = `
 "🚨  [31m[1mError: message[22m[39m
 [90m    Object.<anonymous> (packages/error/__tests__/index.ts:89:39)
-    Promise.finally.completed (node_modules/jest-circus/build/jestadapterinit.js:1559:28)
-    callAsyncCircusFn (node_modules/jest-circus/build/jestadapterinit.js:1499:10)
-    _callCircusTest (node_modules/jest-circus/build/jestadapterinit.js:1009:40)
-    _runTest (node_modules/jest-circus/build/jestadapterinit.js:949:3)
-    _runTestsForDescribeBlock (node_modules/jest-circus/build/jestadapterinit.js:839:13)
-    run (node_modules/jest-circus/build/jestadapterinit.js:757:3)
-    runAndTransformResultsToJestFormat (node_modules/jest-circus/build/jestadapterinit.js:1920:21)
-    jestAdapter (node_modules/jest-circus/build/runner.js:101:19)
-    runTestInternal (node_modules/jest-runner/build/testworker.js:275:16)
-    runTest (node_modules/jest-runner/build/testworker.js:343:7)
-    Object.worker (node_modules/jest-runner/build/testworker.js:497:12)[39m"
+    Promise.finally.completed (node_modules/jest-circus/build/jestadapterinit.js:1561:28)
+    callAsyncCircusFn (node_modules/jest-circus/build/jestadapterinit.js:1501:10)
+    _callCircusTest (node_modules/jest-circus/build/jestadapterinit.js:1011:40)
+    _runTest (node_modules/jest-circus/build/jestadapterinit.js:951:3)
+    null (node_modules/jest-circus/build/jestadapterinit.js:853:7)
+    _runTestsForDescribeBlock (node_modules/jest-circus/build/jestadapterinit.js:866:11)
+    run (node_modules/jest-circus/build/jestadapterinit.js:765:3)
+    runAndTransformResultsToJestFormat (node_modules/jest-circus/build/jestadapterinit.js:1993:21)
+    jestAdapter (node_modules/jest-circus/build/runner.js:111:19)
+    runTestInternal (node_modules/jest-runner/build/index.js:276:16)
+    runTest (node_modules/jest-runner/build/index.js:344:7)[39m"
 `;
 
 exports[`getStack: -1 1`] = `
@@ -92,5 +92,5 @@ message
 
 exports[`keep at least one stack line 1`] = `
 "Error: 
-    Promise.finally.completed (node_modules/jest-circus/build/jestadapterinit.js:1559:28)"
+    Promise.finally.completed (node_modules/jest-circus/build/jestadapterinit.js:1561:28)"
 `;

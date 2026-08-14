@@ -1,5 +1,5 @@
 import path from "path";
-import { GitProcess, GitError, type IGitResult } from "dugite";
+import { exec, parseError, GitError, type IGitStringResult } from "dugite";
 
 function getLines(original: string): string[] {
   const string = original.replace(/\n$/, "");
@@ -7,19 +7,17 @@ function getLines(original: string): string[] {
   return string.split("\n");
 }
 
-function handleGitError(result: IGitResult): never {
-  throw new Error(
-    `Git error: ${GitProcess.parseError(result.stderr) ?? result.stderr}`
-  );
+function handleGitError(result: IGitStringResult): never {
+  throw new Error(`Git error: ${parseError(result.stderr) ?? result.stderr}`);
 }
 
 export async function getDotGitDir(folder: string): Promise<string | null> {
   // Get the path to the .git folder
-  const result = await GitProcess.exec(["rev-parse", "--git-dir"], folder);
+  const result = await exec(["rev-parse", "--git-dir"], folder);
   if (result.exitCode === 0) {
     return path.resolve(folder, result.stdout.trim());
   }
-  const error = GitProcess.parseError(result.stderr);
+  const error = parseError(result.stderr);
   if (error === GitError.NotAGitRepository) {
     return null;
   }
@@ -36,7 +34,7 @@ export async function gitLs(
   folder: string,
   opts: Partial<GitLsOpts> = {}
 ): Promise<readonly string[]> {
-  const result = await GitProcess.exec(
+  const result = await exec(
     [
       "ls-files",
       "--full-name",
@@ -110,7 +108,7 @@ export async function checkDirty(
   opts: CheckDirtyOpts
 ): Promise<readonly GitStatusShortFormat[]> {
   // Check whether current branch is dirty
-  const result = await GitProcess.exec(
+  const result = await exec(
     [
       "status",
       `--untracked-files=${opts.untrackedFiles}`,
@@ -131,7 +129,7 @@ export async function checkUnpushed(
   // Check all branches for unpushed commits or branches without upstream
   // %(upstream) will be an empty string if there is no upstream
   // %(push:track) prints something like "[ahead 1]" when there are unpushed commits
-  const result = await GitProcess.exec(
+  const result = await exec(
     [
       "for-each-ref",
       "--format=[%(refname:short)]%(upstream)%(push:track)",
@@ -147,7 +145,7 @@ export async function checkUnpushed(
 
 export async function checkStashes(folder: string): Promise<readonly string[]> {
   // Check all stashes
-  const result = await GitProcess.exec(["stash", "list"], folder);
+  const result = await exec(["stash", "list"], folder);
   if (result.exitCode === 0) {
     return getLines(result.stdout);
   }
@@ -158,7 +156,7 @@ export async function checkSubmodules(
   folder: string
 ): Promise<readonly string[]> {
   // Get submodules
-  const result = await GitProcess.exec(["submodule", "status"], folder);
+  const result = await exec(["submodule", "status"], folder);
   if (result.exitCode === 0) {
     return getLines(result.stdout)
       .map(l => (l.match(/^[-+U ]*\S+ (.*) \([^)]*\)$/) ?? ["", ""])[1])
