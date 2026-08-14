@@ -31,7 +31,7 @@ const compiledTs = compileTs(obj);
 
 writeFileSync(
   "packages/schema/__examples__/parse.d.ts",
-  compiledTs.contents + `\nexport default ${compiledTs.entryName};\n`
+  compiledTs.contents + `\nexport default ${compiledTs.entry};\n`
 );
 
 // yarn n packages/schema/__examples__/index.ts

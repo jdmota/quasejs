@@ -32,7 +32,7 @@ export class GatherFiles {
     private readonly cwd: string,
     private readonly gitDirtyIgnore: ReadonlySet<string>
   ) {
-    this.logger = new Logger("", {
+    this.logger = Logger.create("", {
       colors: false,
       streams: [],
       renderPrefix: () => "",
