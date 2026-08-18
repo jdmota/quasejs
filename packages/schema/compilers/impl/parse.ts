@@ -243,7 +243,7 @@ registerBuiltin(
       `
         return ctx.result(newTuple);
       }
-      return ctx.error("invalid_type", "Value is not a tuple of size " + ${type.elements.length});`
+      return ctx.error("invalid_type", "Value is not a tuple of${type.hasRest == null ? "" : " at least"} size " + ${type.elements.length});`
     );
   },
   true
@@ -374,6 +374,8 @@ registerBuiltin(
   false
 );
 
+// TODO is this what we want? if we are "parsing" a function given by a user
+// we want to check the return value, the arguments, we are the ones giving...
 registerBuiltin(
   FunctionType,
   (type, { compiler, body }) => {

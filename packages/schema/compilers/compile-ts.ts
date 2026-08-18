@@ -7,6 +7,7 @@ type TsCompileResult = {
   name: string;
   typeBody: string;
   errorBody: string;
+  inline: boolean;
 };
 
 export type TsCompileCtx = Readonly<{
@@ -14,6 +15,7 @@ export type TsCompileCtx = Readonly<{
   name: string;
   typeBody: StringBuilder;
   errorBody: StringBuilder;
+  opts: { inline: boolean };
 }>;
 
 export const tsCompilerRegistry = new SchemaCompilersRegistry<TsCompileCtx>(
@@ -31,7 +33,7 @@ const HELPERS = {
   SchemaInvalidType: `Readonly<{ code: "invalid_type"; message: string; }>`,
   SchemaForbiddenKey: `Readonly<{ code: "forbidden_key"; message: string; }>`,
   SchemaExtraneousKeys: `Readonly<{ code: "extraneous_keys"; message: string; }>`,
-  "SchemaInvalidKey<K>": `Readonly<{ code: "invalid_key"; message: string; errors: K; }>`,
+  "SchemaInvalidKey<K>": `Readonly<{ code: "invalid_key"; key: unknown; errors: K; }>`,
   SchemaObjectError: {
     code: `SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys`,
     dependencies: [
@@ -69,8 +71,9 @@ export class TsCompiler extends BaseSchemaCompiler<
   private _compile(type: SchemaType) {
     let result = this.compiled.get(type);
     if (!result) {
+      const opts = { inline: false };
       const name = this.names.new(`type_${type.getName()}`);
-      result = { name, typeBody: "", errorBody: "" };
+      result = { name, typeBody: "", errorBody: "", inline: false };
       this.compiled.set(type, result);
 
       const typeBody = new StringBuilder();
@@ -79,28 +82,24 @@ export class TsCompiler extends BaseSchemaCompiler<
         name,
         typeBody,
         errorBody,
+        opts,
         compiler: this,
       });
       result.typeBody = typeBody.toString();
       result.errorBody = errorBody.toString();
+      result.inline = opts.inline;
     }
     return result;
   }
 
   compileType(type: SchemaType): string {
     const result = this._compile(type);
-    if (type instanceof BuiltinSchemaType && !type.isComplex()) {
-      return result.typeBody;
-    }
-    return result.name;
+    return result.inline ? result.typeBody : result.name;
   }
 
   compileError(type: SchemaType): string {
     const result = this._compile(type);
-    /* if (type instanceof BuiltinSchemaType && !type.isComplex()) {
-      return result.error;
-    } */
-    return `${result.name}$error`;
+    return result.inline ? result.errorBody : `${result.name}$error`;
   }
 
   toString() {
@@ -108,8 +107,8 @@ export class TsCompiler extends BaseSchemaCompiler<
     for (const [name, type] of this.usedHelpers) {
       str.stmt(`type ${name} = ${type}`);
     }
-    for (const [type, { name, typeBody, errorBody }] of this.compiled) {
-      if (!(type instanceof BuiltinSchemaType) || type.isComplex()) {
+    for (const [type, { name, typeBody, errorBody, inline }] of this.compiled) {
+      if (!inline) {
         str.stmt(`type ${name} = ${typeBody}`);
       }
       str.stmt(`type ${name}$error = ${errorBody}`);
@@ -124,8 +123,8 @@ export class TsCompiler extends BaseSchemaCompiler<
         str.stmt(`type ${name} = ${type}`);
       }
     }
-    for (const [type, { name, typeBody }] of this.compiled) {
-      if (!(type instanceof BuiltinSchemaType) || type.isComplex()) {
+    for (const [type, { name, typeBody, inline }] of this.compiled) {
+      if (!inline) {
         str.stmt(`type ${name} = ${typeBody}`);
       }
     }

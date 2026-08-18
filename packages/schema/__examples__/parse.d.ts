@@ -5,7 +5,7 @@ type SchemaInvalidType = Readonly<{ code: "invalid_type"; message: string; }>;
 type SchemaForbiddenKey = Readonly<{ code: "forbidden_key"; message: string; }>;
 type SchemaExtraneousKeys = Readonly<{ code: "extraneous_keys"; message: string; }>;
 type SchemaObjectError = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys;
-type SchemaInvalidKey<K> = Readonly<{ code: "invalid_key"; message: string; errors: K; }>;
+type SchemaInvalidKey<K> = Readonly<{ code: "invalid_key"; key: unknown; errors: K; }>;
 type SchemaRecordError<K> = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys | SchemaInvalidKey<K>;
 type SchemaFunctionError<A, R> = Readonly<{ code: "function_error"; where: "arguments"; errors: A; }> | Readonly<{ code: "function_error"; where: "result"; errors: R; }>;
 type type_object = {
@@ -19,9 +19,9 @@ type type_object = {
 };
 type type_object$error = Readonly<{
   errors: readonly SchemaObjectError[];
-  properties: Readonly<{
-    a?: type_null$error | undefined;
-    b?: type_number$error | undefined;
+  properties?: Readonly<{
+    a?: SchemaErrorTree | undefined;
+    b?: SchemaErrorTree | undefined;
     c?: type_array$error | undefined;
     d?: type_object0$error | undefined;
     e?: type_tuple$error | undefined;
@@ -32,15 +32,15 @@ type type_object$error = Readonly<{
 type type_null$error = SchemaErrorTree;
 type type_number$error = SchemaErrorTree;
 type type_array = readonly (string)[];
-type type_array$error = Readonly<{ errors: readonly SchemaError[]; items: readonly (type_string$error | undefined)[] }>;
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items?: readonly (SchemaErrorTree | undefined)[] }>;
 type type_string$error = SchemaErrorTree;
 type type_object0 = {
   readonly [key in string]: bigint;
 };
 type type_object0$error = Readonly<{
   errors: readonly SchemaObjectError[];
-  properties: Readonly<{
-    [key in string]?: type_bigint$error;
+  properties?: Readonly<{
+    [key in string]?: SchemaErrorTree;
   }>;
 }>;
 type type_bigint$error = SchemaErrorTree;
@@ -48,29 +48,30 @@ type type_tuple = readonly [
   _arg0: bigint,
   _arg1: boolean,
   _arg2: null,
-  ..._arg3: "abc"[],
+  ..._arg3: type_literal[],
 ];
 type type_tuple$error = Readonly<{
   errors: readonly SchemaError[];
-  items: readonly [
-    _arg0: (type_bigint$error | undefined),
-    _arg1: (type_boolean$error | undefined),
-    _arg2: (type_null$error | undefined),
+  items?: readonly [
+    _arg0: (SchemaErrorTree | undefined),
+    _arg1: (SchemaErrorTree | undefined),
+    _arg2: (SchemaErrorTree | undefined),
     ..._arg3: (type_literal$error | undefined)[],
   ];
 }>;
 type type_boolean$error = SchemaErrorTree;
+type type_literal = "abc";
 type type_literal$error = SchemaErrorTree;
 type type_record = Readonly<{[key in number]?: string}>;
 type type_record$error = Readonly<{
   errors: readonly SchemaRecordError<number>[];
-  properties: Readonly<{
-    [key in number]?: type_string$error;
+  properties?: Readonly<{
+    [key in number]?: SchemaErrorTree;
   }>;
 }>;
 type type_function = ((...args: type_tuple0) => boolean);
 type type_function$error = Readonly<{
-  errors: readonly SchemaFunctionError<type_tuple0$error, type_boolean$error>[];
+  errors: readonly SchemaFunctionError<type_tuple0$error, SchemaErrorTree>[];
 }>;
 type type_tuple0 = readonly [
   _arg0: null,
@@ -79,10 +80,10 @@ type type_tuple0 = readonly [
 ];
 type type_tuple0$error = Readonly<{
   errors: readonly SchemaError[];
-  items: readonly [
-    _arg0: (type_null$error | undefined),
-    _arg1: (type_undefined$error | undefined),
-    _arg2: (type_string$error | undefined),
+  items?: readonly [
+    _arg0: (SchemaErrorTree | undefined),
+    _arg1: (SchemaErrorTree | undefined),
+    _arg2: (SchemaErrorTree | undefined),
   ];
 }>;
 type type_undefined$error = SchemaErrorTree;

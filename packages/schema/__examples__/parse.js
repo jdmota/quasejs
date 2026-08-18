@@ -213,7 +213,7 @@ const parse_helper_tuple = (value, ctx) => {
     }
     return ctx.result(newTuple);
   }
-  return ctx.error("invalid_type", "Value is not a tuple of size " + 4);
+  return ctx.error("invalid_type", "Value is not a tuple of at least size " + 4);
 };
 const parse_boolean = (value, ctx) => {
   return typeof value === "boolean" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a boolean");
@@ -294,7 +294,7 @@ const parse_helper_tuple0 = (value, ctx) => {
     if (ctx.shouldAbort()) return ctx.none;
     return ctx.result(newTuple);
   }
-  return ctx.error("invalid_type", "Value is not a tuple of size " + 3);
+  return ctx.error("invalid_type", "Value is not a tuple of at least size " + 3);
 };
 const parse_undefined = (value, ctx) => {
   return value === undefined ? ctx.result(value) : ctx.error("invalid_type", "Value is not undefined");

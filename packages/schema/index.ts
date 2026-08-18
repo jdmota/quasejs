@@ -14,7 +14,8 @@
 // Encode
 // Transforms, additional checks (before, after, etc.), coercions, defaults
 // Generate equals + hash + formatter
-// Form
+// Form generation
+// Cli args generator
 // Merge?
 // Convert from one schema version to another
 
@@ -23,9 +24,5 @@
 // TODO readonly: apply Object.freeze on parse?
 
 // TODO in form generation, we could make disabled options be marked with null, and customized with decorators (or other operators?)
-
-// - [ ] Parsing values
-// - [ ] Form generator
-// - [ ] Cli args generator
 
 export {};
