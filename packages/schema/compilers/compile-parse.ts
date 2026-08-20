@@ -1,6 +1,6 @@
 import { StringBuilder } from "../../util/strings";
 import { FORBIDDEN_KEYS } from "../builtin-types";
-import { type SchemaType } from "../schema-type";
+import type { SchemaType, AnySchema } from "../schema-type";
 import { BaseSchemaCompiler, SchemaCompilersRegistry } from "./common";
 
 type ParseCompileResult = { name: string; compiled: string };
@@ -35,7 +35,7 @@ const helpers = {
             `
             if (hasProp(obj, ${JSON.stringify(key)})) {
               ctx.addError("forbidden_key", "Object has own property ${key}");
-              if (ctx.shouldAbort()) return ctx.none;
+              if (ctx.shouldAbort()) return;
             }`
           );
         }
@@ -110,7 +110,7 @@ export class ParseCompiler extends BaseSchemaCompiler<
     super(parseCompilerRegistry, helpers);
   }
 
-  compile(type: SchemaType) {
+  compile(type: AnySchema) {
     let result = this.compiled.get(type);
     if (!result) {
       const name = this.names.new(`parse_${type.getName()}`);
@@ -150,18 +150,29 @@ export function registerParseCompilers() {
   return import("./impl/parse");
 }
 
-export function compileParse(type: SchemaType) {
+export function compileParse(type: AnySchema) {
   const compiler = new ParseCompiler();
   const entryFunc = compiler.compile(type);
   const contents = compiler.toString();
+  const mainFunction = new StringBuilder()
+    .line(`(value, opts) => {`)
+    .block(s => {
+      s.stmt(`const ctx = SchemaOpCtx.new(opts)`);
+      s.stmt(`const result = ${entryFunc}(value, ctx)`);
+      s.stmt(`return ctx.validationResult(result)`);
+    })
+    .add(`}`)
+    .toString();
+  const fileContents = `${contents}\nexport default ${mainFunction};\n`;
   return {
     entryFunc,
     contents,
+    fileContents,
     makeFunc: () => {
       return new Function(
         "value",
-        "ctx",
-        `${contents}\nreturn ${entryFunc}(value, ctx);`
+        "opts",
+        `${contents}\nreturn (${mainFunction})(value, opts);`
       );
     },
   } as const;

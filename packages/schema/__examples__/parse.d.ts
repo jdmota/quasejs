@@ -45,22 +45,21 @@ type type_object0$error = Readonly<{
 }>;
 type type_bigint$error = SchemaErrorTree;
 type type_tuple = readonly [
-  _arg0: bigint,
-  _arg1: boolean,
-  _arg2: null,
-  ..._arg3: type_literal[],
+  bigint,
+  boolean,
+  null,
+  ...("abc")[]
 ];
 type type_tuple$error = Readonly<{
   errors: readonly SchemaError[];
   items?: readonly [
-    _arg0: (SchemaErrorTree | undefined),
-    _arg1: (SchemaErrorTree | undefined),
-    _arg2: (SchemaErrorTree | undefined),
-    ..._arg3: (type_literal$error | undefined)[],
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    ...(SchemaErrorTree | undefined)[]
   ];
 }>;
 type type_boolean$error = SchemaErrorTree;
-type type_literal = "abc";
 type type_literal$error = SchemaErrorTree;
 type type_record = Readonly<{[key in number]?: string}>;
 type type_record$error = Readonly<{
@@ -74,18 +73,19 @@ type type_function$error = Readonly<{
   errors: readonly SchemaFunctionError<type_tuple0$error, SchemaErrorTree>[];
 }>;
 type type_tuple0 = readonly [
-  _arg0: null,
-  _arg1: undefined,
-  _arg2: string,
+  null,
+  undefined,
+  string,
 ];
 type type_tuple0$error = Readonly<{
   errors: readonly SchemaError[];
   items?: readonly [
-    _arg0: (SchemaErrorTree | undefined),
-    _arg1: (SchemaErrorTree | undefined),
-    _arg2: (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
   ];
 }>;
 type type_undefined$error = SchemaErrorTree;
 
-export default type_object;
+export { type_object, type_object$error };
+export default (value: unknown, opts?: SchemaOpCtxOpts) => ValidationResult<type_object, type_object$error>;

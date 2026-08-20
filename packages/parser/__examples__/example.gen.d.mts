@@ -56,8 +56,8 @@ type type_object012345678 = {
 };
 type type_function = ((...args: type_tuple) => boolean);
 type type_tuple = readonly [
-  _arg0: type_object0123,
-  _arg1: type_object012345,
+  type_object0123,
+  type_object012345,
 ];
 type type_$Result = type_union0123;
 type type_union0123 = (type_object0123456789 | type_object012345678910);
@@ -72,8 +72,8 @@ type type_object012345678910 = {
 };
 type type_array01 = readonly (type_tuple0)[];
 type type_tuple0 = readonly [
-  _arg0: number,
-  _arg1: unknown,
+  number,
+  unknown,
 ];
 
 export function parse(external: type_$Externals, string: string, $arg: string): type_$Result;

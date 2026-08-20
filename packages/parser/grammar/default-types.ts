@@ -1,5 +1,5 @@
 import { builtin } from "../../schema/builtin-types";
-import type { SchemaType } from "../../schema/schema-type";
+import type { AnySchema, SchemaType } from "../../schema/schema-type";
 
 const { unknown, literal, number, string, object, array, tuple, func, union } =
   builtin;
@@ -28,13 +28,13 @@ export const runtimeTypes = {
 };
 
 export const runtimeFuncs = {
-  $startText: func([], MARKER_TYPE),
-  $endText: func([MARKER_TYPE], string),
-  $getPos: func([], POSITION_TYPE),
-  $getLoc: func([POSITION_TYPE], LOCATION_TYPE),
+  $startText: func(tuple([]), MARKER_TYPE),
+  $endText: func(tuple([MARKER_TYPE]), string),
+  $getPos: func(tuple([]), POSITION_TYPE),
+  $getLoc: func(tuple([POSITION_TYPE]), LOCATION_TYPE),
 };
 
-export function getResultType(astType: SchemaType, gll: boolean) {
+export function getResultType(astType: AnySchema, gll: boolean) {
   if (gll) {
     return union(
       object({

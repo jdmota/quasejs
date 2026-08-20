@@ -1,5 +1,5 @@
 import { assertion, nonNull } from "../../util/miscellaneous.ts";
-import type { SchemaType } from "../../schema/schema-type.ts";
+import type { SchemaType, AnySchema } from "../../schema/schema-type.ts";
 import { builtin, RecursiveTypeCreator } from "../../schema/builtin-types.ts";
 import { isSub } from "../../schema/subtyping.ts";
 import { TsCompiler } from "../../schema/compilers/compile-ts.ts";
@@ -36,7 +36,7 @@ type RuleAnalyzer<T> = {
   [key in keyof RuleMap]: (pair: T, node: RuleMap[key]) => void;
 };
 
-function merge(current: SchemaType | undefined, type: SchemaType) {
+function merge(current: AnySchema | undefined, type: AnySchema) {
   if (current && isSub(type, current)) {
     return current;
   }
@@ -47,7 +47,7 @@ class Store {
   private readonly t: TypesInferrer;
   private readonly map: Map<
     string,
-    { readonly array: boolean; type: SchemaType }
+    { readonly array: boolean; type: AnySchema }
   > = new Map();
   private changed = true; // Because it was just initialized
 
@@ -68,13 +68,13 @@ class Store {
     return array ? builtin.array(type) : type;
   }
 
-  set(name: AnyRule | string, type: SchemaType, array: boolean) {
+  set(name: AnyRule | string, type: AnySchema, array: boolean) {
     this.map.set(this.strName(name), { array, type });
     this.changed = true;
     return true; // It changed
   }
 
-  merge(name: AnyRule | string, type: SchemaType, array: boolean = false) {
+  merge(name: AnyRule | string, type: AnySchema, array: boolean = false) {
     name = this.strName(name);
     const current = this.map.get(name);
     if (current) {
@@ -124,7 +124,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   constructor(private readonly grammar: Grammar) {}
 
   private readonly stores = new Map<AnyRule, StorePair>();
-  private readonly allExternalArgs = new Map<string, SchemaType[]>();
+  private readonly allExternalArgs = new Map<string, AnySchema[]>();
   private readonly nodeIds = new Map<AnyRule, string>();
 
   genId(node: AnyRule) {
@@ -277,7 +277,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   call2(pair: StorePair, node: Call2Rule) {
     this.visitSeq(pair, node.args);
     //
-    let retType: SchemaType;
+    let retType: AnySchema;
     if (node.id.startsWith("$")) {
       retType = nonNull(runtimeFuncs[node.id as keyof typeof runtimeFuncs]).ret;
     } else {
@@ -325,7 +325,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
 
   private ruleStack = new Map<string, RecursiveTypeCreator>();
 
-  declaration(rule: AugmentedDeclaration, argTypes: readonly SchemaType[]) {
+  declaration(rule: AugmentedDeclaration, argTypes: readonly AnySchema[]) {
     let recCreator = this.ruleStack.get(rule.name);
     if (recCreator) {
       return recCreator.getVar();
@@ -374,7 +374,7 @@ export class TypesInferrer implements RuleAnalyzer<StorePair> {
   getExternalCallType(call: string) {
     const funcArgs = this.externalArgs(call);
     const ret = this.grammar.externalFuncReturns[call];
-    return builtin.func(funcArgs, ret);
+    return builtin.func(builtin.tuple(funcArgs), ret);
   }
 
   print() {

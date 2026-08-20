@@ -1,28 +1,28 @@
 import type { Class } from "type-fest";
-import type { SchemaType } from "../schema-type";
+import type { AnySchema, SchemaType } from "../schema-type";
 import { UniqueNames } from "../../util/unique-names";
 
-export type SchemaCompilerImpl<T extends SchemaType, Ctx> = (
+export type SchemaCompilerImpl<T extends AnySchema, Ctx> = (
   type: T,
   ctx: Ctx
 ) => void;
 
 export class SchemaCompilersRegistry<Ctx> {
   private readonly impls = new WeakMap<
-    Class<SchemaType>,
-    SchemaCompilerImpl<SchemaType, Ctx>
+    Class<AnySchema>,
+    SchemaCompilerImpl<AnySchema, Ctx>
   >();
 
   constructor(readonly kind: string) {}
 
-  register<T extends SchemaType>(
+  register<T extends AnySchema>(
     clazz: Class<T>,
     impl: SchemaCompilerImpl<T, Ctx>
   ) {
     this.impls.set(clazz, impl as SchemaCompilerImpl<any, Ctx>);
   }
 
-  compile<T extends SchemaType>(type: T, ctx: Ctx) {
+  compile<T extends AnySchema>(type: T, ctx: Ctx) {
     const cons = (type as any).constructor;
     const impl = this.impls.get(cons) as SchemaCompilerImpl<T, Ctx> | undefined;
 
@@ -46,7 +46,7 @@ export type SchemaCompilerHelpers<K extends string> = {
 export abstract class BaseSchemaCompiler<Registry, K extends string, Result> {
   readonly names: UniqueNames;
   protected readonly usedHelpers: Map<K, string>;
-  protected readonly compiled: Map<SchemaType, Result>;
+  protected readonly compiled: Map<AnySchema, Result>;
 
   constructor(
     readonly registry: Registry,

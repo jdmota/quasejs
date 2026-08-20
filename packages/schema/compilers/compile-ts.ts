@@ -1,6 +1,5 @@
 import { StringBuilder } from "../../util/strings";
-import { BuiltinSchemaType } from "../builtin-types";
-import { type SchemaType } from "../schema-type";
+import type { SchemaType, AnySchema } from "../schema-type";
 import { BaseSchemaCompiler, SchemaCompilersRegistry } from "./common";
 
 type TsCompileResult = {
@@ -68,7 +67,7 @@ export class TsCompiler extends BaseSchemaCompiler<
     super(tsCompilerRegistry, HELPERS);
   }
 
-  private _compile(type: SchemaType) {
+  private _compile(type: AnySchema) {
     let result = this.compiled.get(type);
     if (!result) {
       const opts = { inline: false };
@@ -92,12 +91,12 @@ export class TsCompiler extends BaseSchemaCompiler<
     return result;
   }
 
-  compileType(type: SchemaType): string {
+  compileType(type: AnySchema): string {
     const result = this._compile(type);
     return result.inline ? result.typeBody : result.name;
   }
 
-  compileError(type: SchemaType): string {
+  compileError(type: AnySchema): string {
     const result = this._compile(type);
     return result.inline ? result.errorBody : `${result.name}$error`;
   }
@@ -136,14 +135,21 @@ export function registerTsCompilers() {
   return import("./impl/ts-type");
 }
 
-export function compileTs(type: SchemaType) {
+export function compileTs(type: AnySchema) {
   const compiler = new TsCompiler();
   const entryType = compiler.compileType(type);
   const entryError = compiler.compileError(type);
   const contents = compiler.toString();
+  const fileContents =
+    [
+      contents,
+      `export { ${entryType}, ${entryError} };`,
+      `export default (value: unknown, opts?: SchemaOpCtxOpts) => ValidationResult<${entryType}, ${entryError}>;`,
+    ].join("\n") + "\n";
   return {
     entryType,
     entryError,
     contents,
+    fileContents,
   } as const;
 }

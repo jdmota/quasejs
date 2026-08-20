@@ -1,4 +1,4 @@
-import type { SchemaType } from "../schema/schema-type.ts";
+import type { AnySchema, SchemaType } from "../schema/schema-type.ts";
 import { createGrammar } from "./grammar/grammar.ts";
 import {
   type RuleDeclaration,
@@ -69,8 +69,8 @@ export type ToolInput = Readonly<{
   name: string;
   ruleDecls?: readonly RuleDeclaration[];
   tokenDecls?: readonly TokenDeclaration[];
-  startArguments?: readonly SchemaType[];
-  externalFuncReturns?: Readonly<Record<string, SchemaType>>;
+  startArguments?: readonly AnySchema[];
+  externalFuncReturns?: Readonly<Record<string, AnySchema>>;
   parser?: LookaheadOpts;
   tokenizer?: LookaheadOpts;
   _useReferenceAnalysis?: boolean;

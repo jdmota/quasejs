@@ -1,4 +1,4 @@
-import { SchemaType } from "./schema-type.ts";
+import { SchemaType, type AnySchema } from "./schema-type.ts";
 import {
   ArrayType,
   BigintType,
@@ -21,33 +21,33 @@ import {
 import { computeIfAbsent } from "../util/maps-sets.ts";
 
 class SubtypingCache {
-  private readonly map = new Map<SchemaType, Map<SchemaType, boolean | null>>();
+  private readonly map = new Map<AnySchema, Map<AnySchema, boolean | null>>();
 
-  set(a: SchemaType, b: SchemaType, val: boolean | null) {
+  set(a: AnySchema, b: AnySchema, val: boolean | null) {
     computeIfAbsent(
       this.map,
       a,
-      () => new Map<SchemaType, boolean | null>()
+      () => new Map<AnySchema, boolean | null>()
     ).set(b, val);
   }
 
-  get(a: SchemaType, b: SchemaType) {
+  get(a: AnySchema, b: AnySchema) {
     return computeIfAbsent(
       this.map,
       a,
-      () => new Map<SchemaType, boolean | null>()
+      () => new Map<AnySchema, boolean | null>()
     ).get(b);
   }
 }
 
-export function isSub(a: SchemaType, b: SchemaType) {
+export function isSub(a: AnySchema, b: AnySchema) {
   return isSubtype(new SubtypingCache(), a, b);
 }
 
 export function isSubtype(
   cache: SubtypingCache,
-  a: SchemaType,
-  b: SchemaType
+  a: AnySchema,
+  b: AnySchema
 ): boolean {
   // Short-path
   if (a === b) return true;
@@ -61,8 +61,8 @@ export function isSubtype(
 
 function isSubtypeImpl(
   cache: SubtypingCache,
-  a: SchemaType,
-  b: SchemaType
+  a: AnySchema,
+  b: AnySchema
 ): boolean {
   // Handle recursive types
   if (a instanceof RecursiveType && b instanceof RecursiveType) {
@@ -177,7 +177,7 @@ function isSubtypeImpl(
       const elemsB = Array.from(b.iterate(num));
       return (
         elemsA.length >= elemsB.length &&
-        elemsB.every((inB, i) => isSubtype(cache, elemsA[i].type, inB.type))
+        elemsB.every((inB, i) => isSubtype(cache, elemsA[i], inB))
       );
     }
     if (!a.readonly) {
@@ -188,8 +188,7 @@ function isSubtypeImpl(
         elemsA.length === elemsB.length &&
         elemsB.every(
           (inB, i) =>
-            isSubtype(cache, elemsA[i].type, inB.type) &&
-            isSubtype(cache, inB.type, elemsA[i].type)
+            isSubtype(cache, elemsA[i], inB) && isSubtype(cache, inB, elemsA[i])
         )
       );
     }
@@ -204,46 +203,46 @@ function isSubtypeImpl(
 
   if (a instanceof UnionType && b instanceof UnionType) {
     return (
-      a.items.every(inA => isSubtype(cache, inA, b)) ||
-      b.items.some(inB => isSubtype(cache, a, inB))
+      a.items.every((inA: AnySchema) => isSubtype(cache, inA, b)) ||
+      b.items.some((inB: AnySchema) => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof UnionType && b instanceof IntersectionType) {
     return (
-      a.items.every(inA => isSubtype(cache, inA, b)) ||
-      b.items.every(inB => isSubtype(cache, a, inB))
+      a.items.every((inA: AnySchema) => isSubtype(cache, inA, b)) ||
+      b.items.every((inB: AnySchema) => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof IntersectionType && b instanceof UnionType) {
     return (
-      a.items.some(inA => isSubtype(cache, inA, b)) ||
-      b.items.some(inB => isSubtype(cache, a, inB))
+      a.items.some((inA: AnySchema) => isSubtype(cache, inA, b)) ||
+      b.items.some((inB: AnySchema) => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof IntersectionType && b instanceof IntersectionType) {
     return (
-      a.items.some(inA => isSubtype(cache, inA, b)) ||
-      b.items.every(inB => isSubtype(cache, a, inB))
+      a.items.some((inA: AnySchema) => isSubtype(cache, inA, b)) ||
+      b.items.every((inB: AnySchema) => isSubtype(cache, a, inB))
     );
   }
 
   if (a instanceof UnionType) {
-    return a.items.every(inA => isSubtype(cache, inA, b));
+    return a.items.every((inA: AnySchema) => isSubtype(cache, inA, b));
   }
 
   if (a instanceof IntersectionType) {
-    return a.items.some(inA => isSubtype(cache, inA, b));
+    return a.items.some((inA: AnySchema) => isSubtype(cache, inA, b));
   }
 
   if (b instanceof UnionType) {
-    return b.items.some(inB => isSubtype(cache, a, inB));
+    return b.items.some((inB: AnySchema) => isSubtype(cache, a, inB));
   }
 
   if (b instanceof IntersectionType) {
-    return b.items.every(inB => isSubtype(cache, a, inB));
+    return b.items.every((inB: AnySchema) => isSubtype(cache, a, inB));
   }
 
   // TODO complete...

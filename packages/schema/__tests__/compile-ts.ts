@@ -18,20 +18,9 @@ it("compile ts example", () => {
         value: t.bigint,
       }
     ),
-    e: t.tuple(
-      [
-        t.bigint,
-        t.boolean,
-        t.null,
-        {
-          type: t.literal("abc"),
-          rest: true,
-        },
-      ],
-      true
-    ),
+    e: t.tuple([t.bigint, t.boolean, t.null], t.literal("abc"), true),
     f: t.record(t.number, t.string),
-    g: t.func([t.null, t.undefined, t.string], t.boolean),
+    g: t.func(t.tuple([t.null, t.undefined, t.string]), t.boolean),
   });
 
   const compiled = compileTs(obj);

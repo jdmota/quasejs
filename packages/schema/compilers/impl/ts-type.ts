@@ -35,7 +35,7 @@ registry.register(SchemaAlias, (type, { typeBody, errorBody, compiler }) => {
   errorBody.add(compiler.compileError(type.target));
 });
 
-function registerBuiltin<T extends BuiltinSchemaType>(
+function registerBuiltin<T extends BuiltinSchemaType<any, any, any>>(
   clazz: Class<T>,
   impl: SchemaCompilerImpl<T, TsCompileCtx>
 ) {
@@ -93,10 +93,14 @@ function toTSLiteral(
   }
 }
 
-registerBuiltin(LiteralType, (type, { typeBody, errorBody, compiler }) => {
-  typeBody.add(toTSLiteral(type.value));
-  errorBody.add(compiler.helper("SchemaErrorTree"));
-});
+registerBuiltin(
+  LiteralType,
+  (type, { typeBody, errorBody, compiler, opts }) => {
+    opts.inline = true;
+    typeBody.add(toTSLiteral(type.value));
+    errorBody.add(compiler.helper("SchemaErrorTree"));
+  }
+);
 
 registerBuiltin(StringType, (type, { typeBody, errorBody, compiler, opts }) => {
   opts.inline = true;
@@ -143,10 +147,11 @@ registerBuiltin(ArrayType, (type, { typeBody, errorBody, compiler }) => {
 registerBuiltin(TupleType, (tupleType, { typeBody, errorBody, compiler }) => {
   typeBody.line(`${tupleType.readonly ? "readonly " : ""}[`);
   typeBody.indent();
-  for (const { name, type, rest } of tupleType.elements) {
-    typeBody.line(
-      `${rest ? "..." : ""}${name}: ${compiler.compileType(type)}${rest ? "[]" : ""},`
-    );
+  for (const type of tupleType.elements) {
+    typeBody.line(`${compiler.compileType(type)},`);
+  }
+  if (tupleType.rest) {
+    typeBody.line(`...(${compiler.compileType(tupleType.rest)})[]`);
   }
   typeBody.unindent();
   typeBody.add(`]`);
@@ -156,9 +161,12 @@ registerBuiltin(TupleType, (tupleType, { typeBody, errorBody, compiler }) => {
     errorBody.line(`errors: readonly ${compiler.helper("SchemaError")}[];`);
     errorBody.line(`items?: readonly [`);
     errorBody.block(() => {
-      for (const { name, type, rest } of tupleType.elements) {
+      for (const type of tupleType.elements) {
+        errorBody.line(`(${compiler.compileError(type)} | undefined),`);
+      }
+      if (tupleType.rest) {
         errorBody.line(
-          `${rest ? "..." : ""}${name}: (${compiler.compileError(type)} | undefined)${rest ? "[]" : ""},`
+          `...(${compiler.compileError(tupleType.rest)} | undefined)[]`
         );
       }
     });
@@ -171,6 +179,11 @@ registerBuiltin(ObjectType, (objType, { typeBody, errorBody, compiler }) => {
   typeBody.line(`{`);
   typeBody.indent();
   for (const [name, { readonly, partial, type }] of objType.entries) {
+    if (typeof name === "symbol") {
+      throw new Error(
+        `Cannot compile object type with symbol key: ${String(name)}`
+      );
+    }
     typeBody.line(
       `${readonly ? "readonly " : ""}${compileJsKey(name)}${partial ? "?" : ""}: ${compiler.compileType(type)};`
     );
@@ -195,6 +208,11 @@ registerBuiltin(ObjectType, (objType, { typeBody, errorBody, compiler }) => {
     errorBody.line(`properties?: Readonly<{`);
     errorBody.block(() => {
       for (const [name, { type }] of objType.entries) {
+        if (typeof name === "symbol") {
+          throw new Error(
+            `Cannot compile object type with symbol key: ${String(name)}`
+          );
+        }
         errorBody.line(
           `${compileJsKey(name)}?: ${compiler.compileError(type)} | undefined;`
         );
@@ -261,6 +279,10 @@ registerBuiltin(FunctionType, (type, { typeBody, errorBody, compiler }) => {
   typeBody.add(
     `((...args: ${compiler.compileType(type.args)}) => ${compiler.compileType(type.ret)})`
   );
+  // TODO what about the type of parsed stuff?
+  /* typeBody.add(
+    `((...args: ${compiler.compileType(type.args)}) => ValidationResult<${compiler.compileType(type.ret)}, ${compiler.compileError(type.ret)}>)`
+  ); */
   //
   errorBody.line(`Readonly<{`);
   errorBody.block(() => {

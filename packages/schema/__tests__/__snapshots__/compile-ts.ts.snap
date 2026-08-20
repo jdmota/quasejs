@@ -26,6 +26,31 @@ type type_string$error = SchemaErrorTree;
 ",
   "entryError": "type_alias_name$error",
   "entryType": "type_alias_name",
+  "fileContents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type SchemaErrorTree = Readonly<{ errors: readonly SchemaError[]; }>;
+type SchemaCircularReference = Readonly<{ code: "circular"; message: string; }>;
+type SchemaInvalidType = Readonly<{ code: "invalid_type"; message: string; }>;
+type SchemaForbiddenKey = Readonly<{ code: "forbidden_key"; message: string; }>;
+type SchemaExtraneousKeys = Readonly<{ code: "extraneous_keys"; message: string; }>;
+type SchemaObjectError = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys;
+type type_alias_name = type_object;
+type type_alias_name$error = type_object$error;
+type type_object = {
+  readonly a: type_array;
+};
+type type_object$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties?: Readonly<{
+    a?: type_array$error | undefined;
+  }>;
+}>;
+type type_array = readonly (string)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items?: readonly (SchemaErrorTree | undefined)[] }>;
+type type_string$error = SchemaErrorTree;
+
+export { type_alias_name, type_alias_name$error };
+export default (value: unknown, opts?: SchemaOpCtxOpts) => ValidationResult<type_alias_name, type_alias_name$error>;
+",
 }
 `;
 
@@ -78,22 +103,21 @@ type type_object0$error = Readonly<{
 }>;
 type type_bigint$error = SchemaErrorTree;
 type type_tuple = readonly [
-  _arg0: bigint,
-  _arg1: boolean,
-  _arg2: null,
-  ..._arg3: type_literal[],
+  bigint,
+  boolean,
+  null,
+  ...("abc")[]
 ];
 type type_tuple$error = Readonly<{
   errors: readonly SchemaError[];
   items?: readonly [
-    _arg0: (SchemaErrorTree | undefined),
-    _arg1: (SchemaErrorTree | undefined),
-    _arg2: (SchemaErrorTree | undefined),
-    ..._arg3: (type_literal$error | undefined)[],
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    ...(SchemaErrorTree | undefined)[]
   ];
 }>;
 type type_boolean$error = SchemaErrorTree;
-type type_literal = "abc";
 type type_literal$error = SchemaErrorTree;
 type type_record = Readonly<{[key in number]?: string}>;
 type type_record$error = Readonly<{
@@ -107,22 +131,114 @@ type type_function$error = Readonly<{
   errors: readonly SchemaFunctionError<type_tuple0$error, SchemaErrorTree>[];
 }>;
 type type_tuple0 = readonly [
-  _arg0: null,
-  _arg1: undefined,
-  _arg2: string,
+  null,
+  undefined,
+  string,
 ];
 type type_tuple0$error = Readonly<{
   errors: readonly SchemaError[];
   items?: readonly [
-    _arg0: (SchemaErrorTree | undefined),
-    _arg1: (SchemaErrorTree | undefined),
-    _arg2: (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
   ];
 }>;
 type type_undefined$error = SchemaErrorTree;
 ",
   "entryError": "type_object$error",
   "entryType": "type_object",
+  "fileContents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type SchemaErrorTree = Readonly<{ errors: readonly SchemaError[]; }>;
+type SchemaCircularReference = Readonly<{ code: "circular"; message: string; }>;
+type SchemaInvalidType = Readonly<{ code: "invalid_type"; message: string; }>;
+type SchemaForbiddenKey = Readonly<{ code: "forbidden_key"; message: string; }>;
+type SchemaExtraneousKeys = Readonly<{ code: "extraneous_keys"; message: string; }>;
+type SchemaObjectError = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys;
+type SchemaInvalidKey<K> = Readonly<{ code: "invalid_key"; key: unknown; errors: K; }>;
+type SchemaRecordError<K> = SchemaCircularReference | SchemaInvalidType | SchemaForbiddenKey | SchemaExtraneousKeys | SchemaInvalidKey<K>;
+type SchemaFunctionError<A, R> = Readonly<{ code: "function_error"; where: "arguments"; errors: A; }> | Readonly<{ code: "function_error"; where: "result"; errors: R; }>;
+type type_object = {
+  readonly a: null;
+  readonly b: number;
+  readonly c: type_array;
+  readonly d: type_object0;
+  readonly e: type_tuple;
+  readonly f: type_record;
+  readonly g: type_function;
+};
+type type_object$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties?: Readonly<{
+    a?: SchemaErrorTree | undefined;
+    b?: SchemaErrorTree | undefined;
+    c?: type_array$error | undefined;
+    d?: type_object0$error | undefined;
+    e?: type_tuple$error | undefined;
+    f?: type_record$error | undefined;
+    g?: type_function$error | undefined;
+  }>;
+}>;
+type type_null$error = SchemaErrorTree;
+type type_number$error = SchemaErrorTree;
+type type_array = readonly (string)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items?: readonly (SchemaErrorTree | undefined)[] }>;
+type type_string$error = SchemaErrorTree;
+type type_object0 = {
+  readonly [key in string]: bigint;
+};
+type type_object0$error = Readonly<{
+  errors: readonly SchemaObjectError[];
+  properties?: Readonly<{
+    [key in string]?: SchemaErrorTree;
+  }>;
+}>;
+type type_bigint$error = SchemaErrorTree;
+type type_tuple = readonly [
+  bigint,
+  boolean,
+  null,
+  ...("abc")[]
+];
+type type_tuple$error = Readonly<{
+  errors: readonly SchemaError[];
+  items?: readonly [
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    ...(SchemaErrorTree | undefined)[]
+  ];
+}>;
+type type_boolean$error = SchemaErrorTree;
+type type_literal$error = SchemaErrorTree;
+type type_record = Readonly<{[key in number]?: string}>;
+type type_record$error = Readonly<{
+  errors: readonly SchemaRecordError<number>[];
+  properties?: Readonly<{
+    [key in number]?: SchemaErrorTree;
+  }>;
+}>;
+type type_function = ((...args: type_tuple0) => boolean);
+type type_function$error = Readonly<{
+  errors: readonly SchemaFunctionError<type_tuple0$error, SchemaErrorTree>[];
+}>;
+type type_tuple0 = readonly [
+  null,
+  undefined,
+  string,
+];
+type type_tuple0$error = Readonly<{
+  errors: readonly SchemaError[];
+  items?: readonly [
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+    (SchemaErrorTree | undefined),
+  ];
+}>;
+type type_undefined$error = SchemaErrorTree;
+
+export { type_object, type_object$error };
+export default (value: unknown, opts?: SchemaOpCtxOpts) => ValidationResult<type_object, type_object$error>;
+",
 }
 `;
 
@@ -136,5 +252,14 @@ type type_array$error = Readonly<{ errors: readonly SchemaError[]; items?: reado
 ",
   "entryError": "type_recursive$error",
   "entryType": "type_recursive",
+  "fileContents": "type SchemaError = Readonly<{ code: string; message: string; }>;
+type type_recursive = type_array;
+type type_recursive$error = type_array$error;
+type type_array = readonly (type_recursive)[];
+type type_array$error = Readonly<{ errors: readonly SchemaError[]; items?: readonly (type_recursive$error | undefined)[] }>;
+
+export { type_recursive, type_recursive$error };
+export default (value: unknown, opts?: SchemaOpCtxOpts) => ValidationResult<type_recursive, type_recursive$error>;
+",
 }
 `;

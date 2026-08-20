@@ -1,4 +1,4 @@
-import type { SchemaType } from "../../schema/schema-type.ts";
+import type { AnySchema, SchemaType } from "../../schema/schema-type.ts";
 import { Graph } from "../../util/graph.ts";
 import { never, type Optional } from "../../util/miscellaneous.ts";
 import { type Location } from "../runtime/input.ts";
@@ -360,8 +360,8 @@ export class Grammar {
   public readonly rules: ReadonlyMap<string, AugmentedDeclaration>;
   public readonly tokens: TokensStore;
   public readonly startRule: AugmentedRuleDeclaration;
-  public readonly startArguments: readonly SchemaType[];
-  public readonly externalFuncReturns: Readonly<Record<string, SchemaType>>;
+  public readonly startArguments: readonly AnySchema[];
+  public readonly externalFuncReturns: Readonly<Record<string, AnySchema>>;
   public readonly follows: FollowInfoDB;
   public readonly _debugAnalysis: string[] = [];
 
@@ -370,8 +370,8 @@ export class Grammar {
     rules: ReadonlyMap<string, AugmentedDeclaration>,
     tokens: TokensStore,
     startRule: AugmentedRuleDeclaration,
-    startArguments: readonly SchemaType[],
-    externalFuncReturns: Readonly<Record<string, SchemaType>>,
+    startArguments: readonly AnySchema[],
+    externalFuncReturns: Readonly<Record<string, AnySchema>>,
     public readonly parserOpts: LookaheadOpts | undefined,
     public readonly tokenizerOpts: LookaheadOpts | undefined,
     public readonly _useReferenceAnalysis: boolean | undefined
@@ -432,8 +432,7 @@ export class Grammar {
 }
 
 export type AugmentedDeclaration =
-  | AugmentedRuleDeclaration
-  | AugmentedTokenDeclaration;
+  AugmentedRuleDeclaration | AugmentedTokenDeclaration;
 
 export type AugmentedRuleDeclaration = {
   readonly type: "rule";

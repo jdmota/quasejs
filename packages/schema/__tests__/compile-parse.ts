@@ -22,20 +22,9 @@ it("compile parse example", () => {
         value: t.bigint,
       }
     ),
-    e: t.tuple(
-      [
-        t.bigint,
-        t.boolean,
-        t.null,
-        {
-          type: t.literal("abc"),
-          rest: true,
-        },
-      ],
-      true
-    ),
+    e: t.tuple([t.bigint, t.boolean, t.null], t.literal("abc"), true),
     f: t.record(t.number, t.string),
-    g: t.func([t.null, t.undefined, t.string], t.boolean),
+    g: t.func(t.tuple([t.null, t.undefined, t.string]), t.boolean),
   });
 
   const compiled = compileParse(obj);
@@ -49,10 +38,12 @@ it("compile parse example", () => {
     c: {},
     d: [],
   };
-  const ctx = SchemaOpCtx.new({
+  const opts = {
     abortEarly: false,
-  });
+  };
 
-  expect(parse(value, ctx)).toMatchSnapshot();
-  expect(ctx.validationResult(value)).toMatchSnapshot();
+  //@ts-ignore
+  globalThis.SchemaOpCtx = SchemaOpCtx;
+
+  expect(parse(value, opts)).toMatchSnapshot();
 });

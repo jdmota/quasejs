@@ -1,4 +1,3 @@
-//@ts-check
 const parseCircular = (fn, value, ctx) => {
   if (ctx.pushValue(value)) {
     const r = fn(value, ctx);
@@ -12,15 +11,15 @@ const hasProp = (o, k) => hasOwn.call(o, k);
 const checkForbiddenKeys = (obj, ctx) => {
   if (hasProp(obj, "__proto__")) {
     ctx.addError("forbidden_key", "Object has own property __proto__");
-    if (ctx.shouldAbort()) return ctx.none;
+    if (ctx.shouldAbort()) return;
   }
   if (hasProp(obj, "constructor")) {
     ctx.addError("forbidden_key", "Object has own property constructor");
-    if (ctx.shouldAbort()) return ctx.none;
+    if (ctx.shouldAbort()) return;
   }
   if (hasProp(obj, "prototype")) {
     ctx.addError("forbidden_key", "Object has own property prototype");
-    if (ctx.shouldAbort()) return ctx.none;
+    if (ctx.shouldAbort()) return;
   }
 };
 const getProp = (o, k) => (hasProp(o, k) ? o[k] : undefined);
@@ -181,7 +180,7 @@ const parse_tuple = (value, ctx) => {
 const parse_helper_tuple = (value, ctx) => {
   if (
     Array.isArray(value) &&
-    4 <= value.length
+    3 <= value.length
   ) {
     const newTuple = []; let result;
     ctx.push();
@@ -199,12 +198,7 @@ const parse_helper_tuple = (value, ctx) => {
     if (result.some) newTuple.push(result.value);
     ctx.popIdx(2);
     if (ctx.shouldAbort()) return ctx.none;
-    ctx.push();
-    result = parse_literal(value[3], ctx);
-    if (result.some) newTuple.push(result.value);
-    ctx.popIdx(3);
-    if (ctx.shouldAbort()) return ctx.none;
-    for (let i = 4; i < value.length; i++) {
+    for (let i = 3; i < value.length; i++) {
       ctx.push();
       const result = parse_literal(value[i], ctx);
       if (result.some) newTuple.push(result.value);
@@ -213,7 +207,7 @@ const parse_helper_tuple = (value, ctx) => {
     }
     return ctx.result(newTuple);
   }
-  return ctx.error("invalid_type", "Value is not a tuple of at least size " + 4);
+  return ctx.error("invalid_type", "Value is not a tuple of at least size " + 3);
 };
 const parse_boolean = (value, ctx) => {
   return typeof value === "boolean" ? ctx.result(value) : ctx.error("invalid_type", "Value is not a boolean");
@@ -254,16 +248,16 @@ const parse_function = (value, ctx) => {
     const lockCtx = SchemaOpCtx.new(ctx);
     return ctx.result(function (...args) {
       const newCtx = SchemaOpCtx.new(lockCtx);
-      if (newCtx.shouldAbort()) return newCtx.none;
+      if (newCtx.shouldAbort()) return newCtx.validationResult(newCtx.none);
       newCtx.push();
       const argsResult = parse_tuple0(args, newCtx);
       newCtx.popCtx(errors => ({code: "function_error", where: "arguments", errors}));
-      if (!argsResult.some) return argsResult;
+      if (!argsResult.some) return newCtx.validationResult(argsResult);
       const ret = Reflect.apply(value, this, argsResult.value);
       newCtx.push();
       const retResult = parse_boolean(ret, newCtx);
       newCtx.popCtx(errors => ({code: "function_error", where: "result", errors}));
-      return retResult;
+      return newCtx.validationResult(retResult);
     });
   }
   return ctx.error("invalid_type", "Value is not a function");
@@ -274,7 +268,7 @@ const parse_tuple0 = (value, ctx) => {
 const parse_helper_tuple0 = (value, ctx) => {
   if (
     Array.isArray(value) &&
-    3 <= value.length
+    3 === value.length
   ) {
     const newTuple = []; let result;
     ctx.push();
@@ -294,10 +288,14 @@ const parse_helper_tuple0 = (value, ctx) => {
     if (ctx.shouldAbort()) return ctx.none;
     return ctx.result(newTuple);
   }
-  return ctx.error("invalid_type", "Value is not a tuple of at least size " + 3);
+  return ctx.error("invalid_type", "Value is not a tuple of size " + 3);
 };
 const parse_undefined = (value, ctx) => {
   return value === undefined ? ctx.result(value) : ctx.error("invalid_type", "Value is not undefined");
 };
 
-export default parse_object;
+export default (value, opts) => {
+  const ctx = SchemaOpCtx.new(opts);
+  const result = parse_object(value, ctx);
+  return ctx.validationResult(result);
+};

@@ -33,7 +33,7 @@ registry.register(SchemaAlias, (type, { name, body, compiler }) => {
   body.stmt(`const ${name} = ${compiler.compile(type.target)}`);
 });
 
-function registerBuiltin<T extends BuiltinSchemaType>(
+function registerBuiltin<T extends BuiltinSchemaType<any, any, any>>(
   clazz: Class<T>,
   impl: SchemaCompilerImpl<T, ParseCompileCtx>,
   checkCircular: boolean
@@ -118,6 +118,7 @@ function toJSLiteral(
 registerBuiltin(
   LiteralType,
   (type, { compiler, helpers, body }) => {
+    type.checkCompilableValue();
     const expected = compiler.names.new(`expected_${type.getName()}`);
     helpers.stmt(`const ${expected} = ${toJSLiteral(type.value)}`);
     body.return(
@@ -207,7 +208,7 @@ registerBuiltin(
       if (
         Array.isArray(value) &&
         ${
-          type.hasRest == null
+          type.rest == null
             ? `${type.elements.length} === value.length`
             : `${type.elements.length} <= value.length`
         }
@@ -219,13 +220,13 @@ registerBuiltin(
       body.line(
         `
         ctx.push();
-        result = ${compiler.compile(type.elements[i].type)}(value[${i}], ctx);
+        result = ${compiler.compile(type.elements[i])}(value[${i}], ctx);
         if (result.some) newTuple.push(result.value);
         ctx.popIdx(${i});
         if (ctx.shouldAbort()) return ctx.none;`
       );
     }
-    const restType = type.getRest();
+    const restType = type.rest;
     if (restType) {
       body.line(
         `
@@ -243,7 +244,7 @@ registerBuiltin(
       `
         return ctx.result(newTuple);
       }
-      return ctx.error("invalid_type", "Value is not a tuple of${type.hasRest == null ? "" : " at least"} size " + ${type.elements.length});`
+      return ctx.error("invalid_type", "Value is not a tuple of${type.rest == null ? "" : " at least"} size " + ${type.elements.length});`
     );
   },
   true
@@ -386,16 +387,16 @@ registerBuiltin(
         const lockCtx = SchemaOpCtx.new(ctx);
         return ctx.result(function (...args) {
           const newCtx = SchemaOpCtx.new(lockCtx);
-          if (newCtx.shouldAbort()) return newCtx.none;
+          if (newCtx.shouldAbort()) return newCtx.validationResult(newCtx.none);
           newCtx.push();
           const argsResult = ${compiler.compile(type.args)}(args, newCtx);
           newCtx.popCtx(errors => ({code: "function_error", where: "arguments", errors}));
-          if (!argsResult.some) return argsResult;
+          if (!argsResult.some) return newCtx.validationResult(argsResult);
           const ret = Reflect.apply(value, this, argsResult.value);
           newCtx.push();
           const retResult = ${compiler.compile(type.ret)}(ret, newCtx);
           newCtx.popCtx(errors => ({code: "function_error", where: "result", errors}));
-          return retResult;
+          return newCtx.validationResult(retResult);
         });
       }
       return ctx.error("invalid_type", "Value is not a function");`
@@ -410,7 +411,7 @@ registerBuiltin(
     const expected = `values_${compiler.names.new(type.getName())}`;
     helpers.stmt(`const ${expected} = ${JSON.stringify(type.values)}`);
     body.return(
-      `${expected}.includes(value) ? ctx.result(value) : ctx.error("invalid_type", "Value does not belong to enumeration")`
+      `${expected}.includes(value) ? ctx.result(value) : ctx.error("enum", "Value does not belong to enumeration")`
     );
   },
   false

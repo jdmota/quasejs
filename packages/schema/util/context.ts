@@ -75,9 +75,9 @@ export class SchemaOpCtx implements SchemaOpCtxOpts {
     return this.ok ? this.some(value) : this.none;
   }
 
-  validationResult<T>(value: T): ValidationResult<T> {
-    return this.ok
-      ? ValidationResult.ok(value)
+  validationResult(opt: Option<any>): ValidationResult<any, any> {
+    return this.ok && opt.some
+      ? ValidationResult.ok(opt.value)
       : ValidationResult.errors(this.errorTree.at(-1)!);
   }
 
