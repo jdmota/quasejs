@@ -3,6 +3,8 @@ import path from "node:path";
 import { inspect } from "node:util";
 import { type DB_Val, CacheDB, checkArray } from "./cache-db";
 
+const INSPECT_OPTS = { depth: 10, colors: true } as const;
+
 export class CachePrinter {
   private readonly dir: string;
   private db: lmdb.RootDatabase<number | DB_Val, string | symbol>;
@@ -28,11 +30,11 @@ export class CachePrinter {
         try {
           const value = this.db.get(key);
           console.log(`==== ${String(key)} ====`);
-          console.log(inspect(value, { colors: true }));
+          console.log(inspect(value, INSPECT_OPTS));
           console.log("===============");
         } catch (err) {
           console.log(`==== ERROR ${String(key)} ====`);
-          console.log(inspect(err, { colors: true }));
+          console.log(inspect(err, INSPECT_OPTS));
           console.log("===============");
         }
       } else {
@@ -41,12 +43,12 @@ export class CachePrinter {
           let i = 0;
           for (const entry of dbValue) {
             console.log(`==== ${key}[${i++}] ====`);
-            console.log(inspect(entry, { colors: true }));
+            console.log(inspect(entry, INSPECT_OPTS));
             console.log("===============");
           }
         } catch (err) {
           console.log(`==== ERROR ${key} ====`);
-          console.log(inspect(err, { colors: true }));
+          console.log(inspect(err, INSPECT_OPTS));
           console.log("===============");
         }
       }

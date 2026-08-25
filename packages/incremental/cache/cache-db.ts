@@ -55,6 +55,7 @@ export type VersionedCellDesc = readonly [
 export type CachedFunction = Readonly<{
   type: "function";
   desc: AnyIncrementalFunctionCallDescription;
+  calls: readonly AnyIncrementalFunctionCallDescription[];
   readCells: readonly VersionedCellDesc[];
   ownedCells: readonly IncrementalAllocatedCellDescription<any>[];
   outputCell: IncrementalOutputCellDescription<any>;

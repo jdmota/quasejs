@@ -1,5 +1,5 @@
 import { type Logger } from "../../util/logger";
-import { computeIfAbsent } from "../../util/maps-sets";
+import { computeIfAbsent, setAdd } from "../../util/maps-sets";
 import { $FORMAT } from "../../util/values";
 import type { Version } from "../utils/versions";
 import { CacheableComputationMixin } from "../cache/cacheable";
@@ -97,6 +97,10 @@ export class IncrementalContextRuntime<
       any
     >(schema, input);
     const func = this.backend.getComputation(desc, false);
+    if (setAdd(this.runtime.calls, func)) {
+      func.dependentCallers.add(this.runtime);
+      func.onSubscribed();
+    }
     return func.outputCell.desc;
   }
 
@@ -119,6 +123,9 @@ export class IncrementalFunctionRuntime<
   Output
 > {
   readonly logger: Logger;
+  // Calls
+  readonly calls: Set<IncrementalFunctionRuntime<any, any, any>>;
+  readonly dependentCallers: Set<IncrementalFunctionRuntime<any, any, any>>;
   // Cells read and the oldest version which was read in this run
   readonly readCells: Map<IncrementalCellRuntime<any>, Version | null>;
   // Owned cells
@@ -147,6 +154,8 @@ export class IncrementalFunctionRuntime<
     this.cacheableMixin = this.isCacheable
       ? new CacheableComputationMixin(this)
       : null;
+    this.calls = new Set();
+    this.dependentCallers = new Set();
     this.readCells = new Map();
     this.ownedCells = new Map();
     this.outputCell = new IncrementalCellRuntime(
@@ -249,7 +258,14 @@ export class IncrementalFunctionRuntime<
     for (const slot of this.ownedCells.values()) {
       slot.activeLen = 0;
     }
-    // Clear the dependencies
+    // Clear call dependencies
+    for (const func of this.calls) {
+      if (func.dependentCallers.delete(this)) {
+        func.onUnsubscribed();
+      }
+    }
+    this.calls.clear();
+    // Clear cell dependencies
     for (const cell of this.readCells.keys()) {
       cell.removeReader(this);
     }

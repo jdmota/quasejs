@@ -34,7 +34,7 @@ export abstract class IncrementalCellOwner {
     return this.subsCount === 0;
   }
 
-  onSubscribed(cell: IncrementalCellRuntime<any>) {
+  onSubscribed() {
     this.subsCount++;
     if (this.subsCount === 1) {
       this.backend.markNeed(this, true);
@@ -42,7 +42,7 @@ export abstract class IncrementalCellOwner {
     }
   }
 
-  onUnsubscribed(cell: IncrementalCellRuntime<any>) {
+  onUnsubscribed() {
     this.subsCount--;
     if (this.subsCount === 0 && !this.root) {
       this.backend.markNeed(this, false);

@@ -11,15 +11,13 @@ import { IncrementalCellRuntime } from "../runtime/cells";
 import { IncrementalCellOwner } from "../runtime/cell-owners";
 import { FileChange, IncrementalFS } from "./file-system";
 
-// By allows decreasing this value when using it,
-// we ensure we always invalid the cells.
+// By decreasing this value when using it,
+// we ensure we always invalidate the cells.
 // Since it is negative,
 // it will never be confused with actual timestamps.
 let NO_TIMESTAMP: bigint = -1n;
 
-export class IncrementalFileDescription
-  implements IncrementalCellOwnerDescription
-{
+export class IncrementalFileDescription implements IncrementalCellOwnerDescription {
   constructor(readonly path: string) {}
 
   [$EQUALS](other: unknown): boolean {
@@ -169,6 +167,9 @@ export class IncrementalFile extends IncrementalCellOwner {
     readonly path: string
   ) {
     super(fs.backend, new IncrementalFileDescription(path));
+    this.isCacheable = fs.backend.db != null;
+    this.reload = this.isCacheable;
+    // Call "createFileCell" only after fields initialization
     this.mainCells = {
       ADD_REMOVE: createFileCell(fs, this, path, FileChange.ADD_REMOVE, false),
       CHANGE: createFileCell(fs, this, path, FileChange.CHANGE, false),
@@ -177,8 +178,6 @@ export class IncrementalFile extends IncrementalCellOwner {
       ADD_REMOVE: createFileCell(fs, this, path, FileChange.ADD_REMOVE, true),
       CHANGE: createFileCell(fs, this, path, FileChange.CHANGE, true),
     };
-    this.isCacheable = fs.backend.db != null;
-    this.reload = this.isCacheable;
   }
 
   inv(): void {}

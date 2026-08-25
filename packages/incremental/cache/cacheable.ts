@@ -51,6 +51,10 @@ export class CacheableComputationMixin<
       slot.activeLen++;
     }
 
+    for (const call of cachedFunc.calls) {
+      ctx.call(call.schema, call.input);
+    }
+
     for (const [desc, version] of cachedFunc.readCells) {
       const cell = await waitForCell(
         this.source.backend,
@@ -111,8 +115,14 @@ export class CacheableComputationMixin<
 
   finishRoutine() {
     const outputCell = this.source.outputCell;
+    const calls: AnyIncrementalFunctionCallDescription[] = [];
     const readCells: VersionedCellDesc[] = [];
     const ownedCells: IncrementalAllocatedCellDescription<any>[] = [];
+
+    // Save calls
+    for (const call of this.source.calls) {
+      calls.push(call.desc);
+    }
 
     // Save read cells
     for (const [cell, version] of this.source.readCells) {
@@ -135,6 +145,7 @@ export class CacheableComputationMixin<
     const entry: CachedFunction = {
       type: "function",
       desc: this.desc,
+      calls,
       readCells,
       ownedCells,
       outputCell: outputCell.desc,

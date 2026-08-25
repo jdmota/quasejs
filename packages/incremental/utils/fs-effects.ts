@@ -23,6 +23,7 @@ export class FsEffectsDB<Owner> {
 
 class FsEffects {
   private files = new Set<string>();
+  private toClean = new Set<string>();
 
   constructor(readonly folder: string) {}
 
@@ -34,16 +35,31 @@ class FsEffects {
     const fullPath = path.resolve(this.folder, file);
     if (isPathInside(fullPath, this.folder)) {
       this.files.add(fullPath);
+      this.toClean.delete(fullPath);
       return fsextra.outputFile(fullPath, contents as any, options);
     }
     throw new Error(`Writing ${file} outside of folder`);
   }
 
   resetTracking() {
+    for (const file of this.files) {
+      this.toClean.add(file);
+    }
     this.files.clear();
   }
 
   async clean() {
+    const removeJobs = [];
+    for (const file of this.toClean) {
+      removeJobs.push(fsextra.remove(file));
+    }
+    this.toClean.clear();
+    for (const job of removeJobs) {
+      await job;
+    }
+  }
+
+  async cleanDeep() {
     const removeJobs = [];
     for await (let file of fastGlob.stream("**", {
       cwd: this.folder,

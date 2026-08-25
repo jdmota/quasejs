@@ -11,9 +11,7 @@ import type { IncrementalBackend } from "./backend";
 import { IncrementalCellRuntime } from "./cells";
 import { IncrementalCellOwner } from "./cell-owners";
 
-export class IncrementalRootDescription
-  implements IncrementalCellOwnerDescription
-{
+export class IncrementalRootDescription implements IncrementalCellOwnerDescription {
   [$EQUALS](other: unknown): boolean {
     return other instanceof IncrementalRootDescription;
   }
@@ -119,11 +117,11 @@ export class IncrementalRoot<
     return false;
   }
 
-  override onSubscribed(cell: IncrementalCellRuntime<any>): void {
+  override onSubscribed(): void {
     // Do nothing because this will always be a root
   }
 
-  override onUnsubscribed(cell: IncrementalCellRuntime<any>): void {
+  override onUnsubscribed(): void {
     // Do nothing because this will always be a root
   }
 

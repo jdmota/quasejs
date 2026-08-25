@@ -74,7 +74,7 @@ export class IncrementalCellRuntime<
 
   removeReader(reader: IncrementalFunctionRuntime<any, any, any>) {
     if (this.dependents.delete(reader)) {
-      this.owner.onUnsubscribed(this);
+      this.owner.onUnsubscribed();
     }
   }
 
@@ -138,7 +138,7 @@ export class IncrementalCellRuntime<
     if (!this.dependents.has(consumer)) {
       this.dependents.set(consumer, null);
       consumer.readCells.set(this, null);
-      this.owner.onSubscribed(this);
+      this.owner.onSubscribed();
     }
 
     this.owner.demand();
